@@ -61,10 +61,12 @@ export default {
         horde: {
           DEFAULT: "hsl(var(--horde))",
           foreground: "hsl(var(--horde-foreground))",
+          glow: "hsl(var(--horde-glow))",
         },
         alliance: {
           DEFAULT: "hsl(var(--alliance))",
           foreground: "hsl(var(--alliance-foreground))",
+          glow: "hsl(var(--alliance-glow))",
         },
         // Role colors
         tank: "hsl(var(--tank))",
@@ -100,24 +102,43 @@ export default {
           to: { height: "0" },
         },
         "fade-in": {
-          from: { opacity: "0", transform: "translateY(10px)" },
+          from: { opacity: "0", transform: "translateY(20px)" },
           to: { opacity: "1", transform: "translateY(0)" },
+        },
+        "scale-in": {
+          from: { opacity: "0", transform: "scale(0.95)" },
+          to: { opacity: "1", transform: "scale(1)" },
         },
         "slide-in": {
           from: { opacity: "0", transform: "translateX(-10px)" },
           to: { opacity: "1", transform: "translateX(0)" },
         },
+        "float": {
+          "0%, 100%": { transform: "translate(0, 0) scale(1)" },
+          "25%": { transform: "translate(10px, -20px) scale(1.05)" },
+          "50%": { transform: "translate(-5px, -10px) scale(0.95)" },
+          "75%": { transform: "translate(-15px, -25px) scale(1.02)" },
+        },
         "pulse-glow": {
-          "0%, 100%": { boxShadow: "0 0 10px hsl(var(--primary) / 0.3)" },
-          "50%": { boxShadow: "0 0 25px hsl(var(--primary) / 0.5)" },
+          "0%, 100%": { opacity: "0.4", filter: "blur(80px)" },
+          "50%": { opacity: "0.7", filter: "blur(100px)" },
+        },
+        "gradient-shift": {
+          "0%, 100%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "fade-in": "fade-in 0.3s ease-out",
+        "fade-in": "fade-in 0.5s ease-out forwards",
+        "scale-in": "scale-in 0.3s ease-out forwards",
         "slide-in": "slide-in 0.3s ease-out",
-        "pulse-glow": "pulse-glow 2s ease-in-out infinite",
+        "float": "float 8s ease-in-out infinite",
+        "float-delayed": "float 10s ease-in-out infinite -3s",
+        "float-slow": "float 12s ease-in-out infinite -5s",
+        "pulse-glow": "pulse-glow 3s ease-in-out infinite",
+        "gradient-shift": "gradient-shift 5s ease infinite",
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],

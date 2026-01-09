@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -11,7 +10,10 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { ClassSelector } from '@/components/ClassSelector';
 import { SpecSelector } from '@/components/SpecSelector';
-import { Loader2, ArrowLeft, Save } from 'lucide-react';
+import { CosmicBackground } from '@/components/CosmicBackground';
+import { GlowCard } from '@/components/GlowCard';
+import { CosmicButton } from '@/components/CosmicButton';
+import { Loader2, ArrowLeft, Save, Sparkles } from 'lucide-react';
 
 interface WishData {
   classId: string;
@@ -42,7 +44,6 @@ const Wishes = () => {
     }
 
     const fetchData = async () => {
-      // Fetch guild info
       const { data: guildData } = await supabase
         .from('guilds')
         .select('name, faction')
@@ -51,7 +52,6 @@ const Wishes = () => {
       
       if (guildData) setGuild(guildData);
 
-      // Fetch existing wishes
       const { data: wishesData } = await supabase
         .from('class_wishes')
         .select('*')
@@ -74,7 +74,6 @@ const Wishes = () => {
         setWishes(loadedWishes);
       }
 
-      // Fetch member status
       const { data: memberData } = await supabase
         .from('guild_members')
         .select('status')
@@ -93,7 +92,6 @@ const Wishes = () => {
   const updateWish = (index: number, field: keyof WishData, value: any) => {
     const updated = [...wishes];
     updated[index] = { ...updated[index], [field]: value };
-    // Reset specs when class changes
     if (field === 'classId') {
       updated[index].specIds = [];
     }
@@ -105,21 +103,18 @@ const Wishes = () => {
     setSaving(true);
 
     try {
-      // Update member status
       await supabase
         .from('guild_members')
         .update({ status: confirmed ? 'confirmed' : 'potential' })
         .eq('guild_id', guildId)
         .eq('user_id', user.id);
 
-      // Delete existing wishes
       await supabase
         .from('class_wishes')
         .delete()
         .eq('guild_id', guildId)
         .eq('user_id', user.id);
 
-      // Insert new wishes (only non-empty ones)
       const wishesToInsert = wishes
         .map((w, i) => ({
           guild_id: guildId,
@@ -146,63 +141,93 @@ const Wishes = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center">
+        <CosmicBackground />
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
+  const factionVariant = guild?.faction === 'horde' ? 'horde' : guild?.faction === 'alliance' ? 'alliance' : 'default';
+
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border/50 glass">
+    <div className="min-h-screen relative">
+      <CosmicBackground variant={factionVariant} />
+
+      <header className="sticky top-0 z-50 cosmic-header">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/guilds')}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => navigate('/guilds')}
+            className="text-muted-foreground hover:text-foreground hover:bg-white/5"
+          >
             <ArrowLeft className="h-4 w-4 mr-2" /> {t.common.back}
           </Button>
-          <h1 className="text-xl font-bold">{guild?.name}</h1>
-          <Button onClick={saveWishes} disabled={saving}>
-            {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+          <h1 className="text-xl font-bold text-foreground">{guild?.name}</h1>
+          <CosmicButton 
+            size="sm" 
+            onClick={saveWishes} 
+            loading={saving}
+            icon={<Save className="h-4 w-4" />}
+          >
             {t.wishes.saveWishes}
-          </Button>
+          </CosmicButton>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-3xl">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold mb-2">{t.wishes.title}</h2>
-          <p className="text-muted-foreground">{t.wishes.subtitle}</p>
+      <main className="container mx-auto px-4 py-8 max-w-3xl relative z-10">
+        <div className="text-center mb-10 animate-fade-in">
+          <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/25">
+            <Sparkles className="h-7 w-7 text-white" />
+          </div>
+          <h2 className="text-3xl font-bold cosmic-text mb-2">{t.wishes.title}</h2>
+          <p className="text-muted-foreground text-lg">{t.wishes.subtitle}</p>
         </div>
 
         {/* Status toggle */}
-        <Card className="glass mb-6">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label className="text-base">{t.wishes.status}</Label>
-                <p className="text-sm text-muted-foreground">
-                  {confirmed ? t.wishes.confirmed : t.wishes.potential}
-                </p>
-              </div>
-              <Switch checked={confirmed} onCheckedChange={setConfirmed} />
+        <GlowCard className="p-6 mb-8 animate-fade-in" style={{ animationDelay: '100ms' } as React.CSSProperties}>
+          <div className="flex items-center justify-between">
+            <div>
+              <Label className="text-base text-foreground">{t.wishes.status}</Label>
+              <p className={`text-sm mt-1 ${confirmed ? 'text-healer' : 'text-muted-foreground'}`}>
+                {confirmed ? t.wishes.confirmed : t.wishes.potential}
+              </p>
             </div>
-          </CardContent>
-        </Card>
+            <Switch 
+              checked={confirmed} 
+              onCheckedChange={setConfirmed}
+              className="data-[state=checked]:bg-healer"
+            />
+          </div>
+        </GlowCard>
 
         {/* Wish cards */}
         <div className="space-y-6">
           {wishes.map((wish, index) => (
-            <Card key={index} className="glass animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
-              <CardHeader>
-                <CardTitle className="text-lg">
-                  {t.wishes.choice} #{index + 1}
-                </CardTitle>
-                <CardDescription>
-                  {index === 0 ? 'Your preferred class' : index === 1 ? 'Second choice' : 'Third choice'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            <GlowCard 
+              key={index} 
+              className="p-6 animate-fade-in" 
+              style={{ animationDelay: `${200 + index * 100}ms` } as React.CSSProperties}
+              hoverable={false}
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center border border-primary/20">
+                  <span className="text-sm font-bold text-primary">{index + 1}</span>
+                </div>
                 <div>
-                  <Label>{t.wishes.selectClass}</Label>
+                  <h3 className="font-semibold text-foreground">
+                    {t.wishes.choice} #{index + 1}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {index === 0 ? 'Your preferred class' : index === 1 ? 'Second choice' : 'Third choice'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-5">
+                <div>
+                  <Label className="text-foreground mb-2 block">{t.wishes.selectClass}</Label>
                   <ClassSelector
                     value={wish.classId}
                     onChange={(classId) => updateWish(index, 'classId', classId)}
@@ -210,8 +235,8 @@ const Wishes = () => {
                 </div>
 
                 {wish.classId && (
-                  <div>
-                    <Label className="mb-2 block">{t.wishes.selectSpecs}</Label>
+                  <div className="animate-fade-in">
+                    <Label className="text-foreground mb-2 block">{t.wishes.selectSpecs}</Label>
                     <SpecSelector
                       classId={wish.classId}
                       selectedSpecs={wish.specIds}
@@ -221,24 +246,28 @@ const Wishes = () => {
                 )}
 
                 <div>
-                  <Label>{t.wishes.comment}</Label>
+                  <Label className="text-foreground mb-2 block">{t.wishes.comment}</Label>
                   <Textarea
                     placeholder={t.wishes.commentPlaceholder}
                     value={wish.comment}
                     onChange={(e) => updateWish(index, 'comment', e.target.value)}
-                    className="mt-1"
+                    className="cosmic-input min-h-[80px] resize-none"
                   />
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </GlowCard>
           ))}
         </div>
 
-        <div className="mt-8 text-center">
-          <Button size="lg" onClick={saveWishes} disabled={saving}>
-            {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+        <div className="mt-10 text-center animate-fade-in" style={{ animationDelay: '500ms' } as React.CSSProperties}>
+          <CosmicButton 
+            size="lg" 
+            onClick={saveWishes} 
+            loading={saving}
+            icon={<Save className="h-5 w-5" />}
+          >
             {t.wishes.saveWishes}
-          </Button>
+          </CosmicButton>
         </div>
       </main>
     </div>
