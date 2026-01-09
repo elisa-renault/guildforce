@@ -113,20 +113,20 @@ const Index = () => {
           {[
             { 
               icon: Users, 
-              gradient: 'from-primary to-[hsl(200_100%_55%)]',
-              glow: 'group-hover:shadow-[0_0_40px_hsl(var(--primary)/0.3)]',
+              gradient: 'from-primary/80 to-primary/60',
+              glow: 'group-hover:shadow-[0_0_30px_hsl(var(--primary)/0.2)]',
               ...t.home.features.collect 
             },
             { 
               icon: BarChart3, 
-              gradient: 'from-secondary to-[hsl(290_80%_55%)]',
-              glow: 'group-hover:shadow-[0_0_40px_hsl(var(--secondary)/0.3)]',
+              gradient: 'from-secondary/80 to-secondary/60',
+              glow: 'group-hover:shadow-[0_0_30px_hsl(var(--secondary)/0.2)]',
               ...t.home.features.visualize 
             },
             { 
               icon: FileSpreadsheet, 
-              gradient: 'from-accent to-[hsl(320_85%_55%)]',
-              glow: 'group-hover:shadow-[0_0_40px_hsl(var(--accent)/0.3)]',
+              gradient: 'from-accent/80 to-accent/60',
+              glow: 'group-hover:shadow-[0_0_30px_hsl(var(--accent)/0.2)]',
               ...t.home.features.export 
             },
           ].map((feature, i) => (
@@ -136,8 +136,8 @@ const Index = () => {
               hoverable
               style={{ animationDelay: `${400 + i * 100}ms` } as React.CSSProperties}
             >
-              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-lg`}>
-                <feature.icon className="h-7 w-7 text-white" />
+              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-6 group-hover:scale-105 transition-transform`}>
+                <feature.icon className="h-7 w-7 text-foreground/90" />
               </div>
               <h3 className="text-xl font-semibold mb-3 text-foreground">{feature.title}</h3>
               <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
