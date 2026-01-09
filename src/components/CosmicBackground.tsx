@@ -17,31 +17,31 @@ interface CosmicBackgroundProps {
 export const CosmicBackground = ({ variant = 'default' }: CosmicBackgroundProps) => {
   const orbs = useMemo<CosmicOrb[]>(() => {
     const baseOrbs: CosmicOrb[] = [
-      { id: 1, color: '', size: 350, x: 15, y: 10, animation: 'animate-float', opacity: 0.08 },
-      { id: 2, color: '', size: 300, x: 75, y: 55, animation: 'animate-float-delayed', opacity: 0.06 },
-      { id: 3, color: '', size: 250, x: 5, y: 75, animation: 'animate-float-slow', opacity: 0.05 },
-      { id: 4, color: '', size: 200, x: 85, y: 15, animation: 'animate-float', opacity: 0.07 },
+      { id: 1, color: '', size: 400, x: 15, y: 10, animation: 'animate-float', opacity: 0.04 },
+      { id: 2, color: '', size: 350, x: 75, y: 55, animation: 'animate-float-delayed', opacity: 0.03 },
+      { id: 3, color: '', size: 300, x: 5, y: 75, animation: 'animate-float-slow', opacity: 0.025 },
+      { id: 4, color: '', size: 250, x: 85, y: 15, animation: 'animate-float', opacity: 0.035 },
     ];
 
-    // Assign colors based on variant - more subtle palette
+    // Assign colors based on variant - very deep and subtle
     const colors = {
       default: [
-        'bg-[hsl(280_50%_40%)]', // plum
-        'bg-[hsl(42_60%_40%)]',  // gold muted
-        'bg-[hsl(270_45%_35%)]', // violet
-        'bg-[hsl(280_45%_38%)]', // plum lighter
+        'bg-[hsl(280_40%_18%)]', // deep plum
+        'bg-[hsl(42_45%_20%)]',  // dark gold
+        'bg-[hsl(270_35%_14%)]', // deep violet
+        'bg-[hsl(280_35%_16%)]', // dark plum
       ],
       horde: [
-        'bg-[hsl(5_70%_40%)]',
-        'bg-[hsl(15_65%_35%)]',
-        'bg-[hsl(0_60%_35%)]',
-        'bg-[hsl(10_70%_38%)]',
+        'bg-[hsl(5_50%_18%)]',
+        'bg-[hsl(15_45%_16%)]',
+        'bg-[hsl(0_45%_14%)]',
+        'bg-[hsl(10_50%_17%)]',
       ],
       alliance: [
-        'bg-[hsl(215_65%_45%)]',
-        'bg-[hsl(210_60%_40%)]',
-        'bg-[hsl(220_55%_38%)]',
-        'bg-[hsl(215_60%_42%)]',
+        'bg-[hsl(215_50%_20%)]',
+        'bg-[hsl(210_45%_18%)]',
+        'bg-[hsl(220_40%_16%)]',
+        'bg-[hsl(215_45%_19%)]',
       ],
     };
 
@@ -53,36 +53,36 @@ export const CosmicBackground = ({ variant = 'default' }: CosmicBackgroundProps)
 
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-      {/* Base gradient - subtle plum tones */}
+      {/* Base gradient - very dark and subtle */}
       <div 
         className="absolute inset-0"
         style={{
           background: variant === 'default' 
             ? `
-              radial-gradient(ellipse 70% 50% at 50% 0%, hsl(280 40% 20% / 0.12) 0%, transparent 60%),
-              radial-gradient(ellipse 50% 35% at 100% 100%, hsl(42 50% 30% / 0.08) 0%, transparent 50%),
-              radial-gradient(ellipse 40% 30% at 0% 80%, hsl(270 35% 25% / 0.08) 0%, transparent 50%),
+              radial-gradient(ellipse 70% 50% at 50% 0%, hsl(280 35% 12% / 0.2) 0%, transparent 60%),
+              radial-gradient(ellipse 50% 35% at 100% 100%, hsl(42 40% 15% / 0.12) 0%, transparent 50%),
+              radial-gradient(ellipse 40% 30% at 0% 80%, hsl(270 30% 12% / 0.12) 0%, transparent 50%),
               hsl(var(--background))
             `
             : variant === 'horde'
             ? `
-              radial-gradient(ellipse 70% 50% at 50% 0%, hsl(5 60% 25% / 0.15) 0%, transparent 60%),
-              radial-gradient(ellipse 50% 35% at 100% 100%, hsl(15 50% 20% / 0.1) 0%, transparent 50%),
+              radial-gradient(ellipse 70% 50% at 50% 0%, hsl(5 45% 14% / 0.2) 0%, transparent 60%),
+              radial-gradient(ellipse 50% 35% at 100% 100%, hsl(15 40% 12% / 0.12) 0%, transparent 50%),
               hsl(var(--background))
             `
             : `
-              radial-gradient(ellipse 70% 50% at 50% 0%, hsl(215 50% 30% / 0.15) 0%, transparent 60%),
-              radial-gradient(ellipse 50% 35% at 100% 100%, hsl(210 45% 25% / 0.1) 0%, transparent 50%),
+              radial-gradient(ellipse 70% 50% at 50% 0%, hsl(215 40% 16% / 0.2) 0%, transparent 60%),
+              radial-gradient(ellipse 50% 35% at 100% 100%, hsl(210 35% 14% / 0.12) 0%, transparent 50%),
               hsl(var(--background))
             `,
         }}
       />
 
-      {/* Animated orbs - very subtle */}
+      {/* Animated orbs - very subtle and blurred */}
       {orbs.map((orb) => (
         <div
           key={orb.id}
-          className={`absolute rounded-full ${orb.color} blur-[120px] ${orb.animation}`}
+          className={`absolute rounded-full ${orb.color} blur-[150px] ${orb.animation}`}
           style={{
             width: orb.size,
             height: orb.size,
@@ -93,14 +93,6 @@ export const CosmicBackground = ({ variant = 'default' }: CosmicBackgroundProps)
           }}
         />
       ))}
-
-      {/* Very subtle noise texture */}
-      <div 
-        className="absolute inset-0 opacity-[0.012]"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-        }}
-      />
     </div>
   );
 };
