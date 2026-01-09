@@ -2,129 +2,86 @@
 @tailwind components;
 @tailwind utilities;
 
-/* WoW Class Wishes - Design System
-   Inspired by Blizzard's dark aesthetic with modern touches
+/* WoW Class Wishes - Glassmorphism Modern Design
+   Glass effects, vibrant gradients, modern 2024 UI
    All colors in HSL format
 */
 
 @layer base {
   :root {
-    /* Light theme (not primary - dark theme is default) */
-    --background: 220 20% 97%;
-    --foreground: 220 30% 10%;
+    --background: 230 25% 10%;
+    --foreground: 210 40% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 220 30% 10%;
+    --card: 230 25% 14%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 30% 10%;
+    --popover: 230 25% 12%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 220 70% 50%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 200 100% 60%;
+    --primary-foreground: 230 25% 10%;
 
-    --secondary: 220 15% 90%;
-    --secondary-foreground: 220 30% 15%;
+    --secondary: 280 80% 65%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 220 15% 92%;
-    --muted-foreground: 220 10% 45%;
+    --muted: 230 20% 20%;
+    --muted-foreground: 220 15% 65%;
 
-    --accent: 265 80% 55%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 320 85% 60%;
+    --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 75% 50%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 220 15% 85%;
-    --input: 220 15% 85%;
-    --ring: 220 70% 50%;
+    --border: 230 20% 25%;
+    --input: 230 20% 20%;
+    --ring: 200 100% 60%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    /* Faction colors */
-    --horde: 0 70% 50%;
+    /* Faction colors - vivid */
+    --horde: 0 85% 55%;
     --horde-foreground: 0 0% 100%;
-    --alliance: 220 80% 50%;
+    --alliance: 210 100% 60%;
     --alliance-foreground: 0 0% 100%;
 
-    /* Role colors */
-    --tank: 220 70% 45%;
-    --healer: 145 60% 40%;
-    --dps: 0 70% 50%;
+    /* Role colors - neon */
+    --tank: 210 100% 55%;
+    --healer: 150 80% 50%;
+    --dps: 350 90% 60%;
 
-    /* WoW Class colors */
-    --class-warrior: 33 100% 50%;
-    --class-paladin: 330 60% 65%;
-    --class-hunter: 80 60% 45%;
-    --class-rogue: 55 100% 50%;
-    --class-priest: 0 0% 90%;
-    --class-death-knight: 0 70% 45%;
-    --class-shaman: 210 80% 55%;
-    --class-mage: 195 100% 70%;
-    --class-warlock: 270 50% 55%;
-    --class-monk: 160 50% 50%;
-    --class-druid: 30 70% 55%;
-    --class-demon-hunter: 280 80% 45%;
-    --class-evoker: 160 70% 45%;
+    /* WoW Class colors - vibrant */
+    --class-warrior: 33 100% 55%;
+    --class-paladin: 330 70% 70%;
+    --class-hunter: 85 70% 50%;
+    --class-rogue: 50 100% 55%;
+    --class-priest: 0 0% 95%;
+    --class-death-knight: 0 80% 50%;
+    --class-shaman: 200 90% 60%;
+    --class-mage: 190 100% 70%;
+    --class-warlock: 270 60% 60%;
+    --class-monk: 155 60% 55%;
+    --class-druid: 30 80% 60%;
+    --class-demon-hunter: 280 90% 55%;
+    --class-evoker: 165 80% 50%;
 
-    --sidebar-background: 220 20% 95%;
-    --sidebar-foreground: 220 30% 20%;
-    --sidebar-primary: 220 70% 50%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 15% 90%;
-    --sidebar-accent-foreground: 220 30% 15%;
-    --sidebar-border: 220 15% 85%;
-    --sidebar-ring: 220 70% 50%;
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(200 100% 60%) 0%, hsl(280 80% 65%) 50%, hsl(320 85% 60%) 100%);
+    --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+    --gradient-dark: linear-gradient(180deg, hsl(230 25% 12%) 0%, hsl(230 25% 8%) 100%);
+
+    --sidebar-background: 230 25% 12%;
+    --sidebar-foreground: 210 40% 90%;
+    --sidebar-primary: 200 100% 60%;
+    --sidebar-primary-foreground: 230 25% 10%;
+    --sidebar-accent: 230 20% 20%;
+    --sidebar-accent-foreground: 210 40% 90%;
+    --sidebar-border: 230 20% 22%;
+    --sidebar-ring: 200 100% 60%;
   }
 
   .dark {
-    /* Dark theme - Primary theme inspired by Blizzard */
-    --background: 225 35% 8%;
-    --foreground: 210 30% 95%;
-
-    --card: 225 30% 12%;
-    --card-foreground: 210 30% 95%;
-
-    --popover: 225 30% 10%;
-    --popover-foreground: 210 30% 95%;
-
-    --primary: 220 75% 55%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 225 25% 18%;
-    --secondary-foreground: 210 30% 90%;
-
-    --muted: 225 25% 16%;
-    --muted-foreground: 220 15% 60%;
-
-    --accent: 265 70% 60%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 65% 45%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 225 20% 20%;
-    --input: 225 20% 20%;
-    --ring: 220 75% 55%;
-
-    /* Faction colors */
-    --horde: 0 75% 45%;
-    --horde-foreground: 0 0% 100%;
-    --alliance: 220 85% 55%;
-    --alliance-foreground: 0 0% 100%;
-
-    /* Role colors */
-    --tank: 220 75% 50%;
-    --healer: 145 65% 45%;
-    --dps: 0 75% 55%;
-
-    --sidebar-background: 225 30% 10%;
-    --sidebar-foreground: 210 30% 90%;
-    --sidebar-primary: 220 75% 55%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 225 25% 16%;
-    --sidebar-accent-foreground: 210 30% 90%;
-    --sidebar-border: 225 20% 18%;
-    --sidebar-ring: 220 75% 55%;
+    /* Same as root - dark mode by default */
   }
 }
 
@@ -133,62 +90,189 @@
     @apply border-border;
   }
 
-  body {
-    @apply bg-background text-foreground;
+  html {
+    scroll-behavior: smooth;
   }
 
-  /* Custom scrollbar for dark theme */
+  body {
+    @apply bg-background text-foreground;
+    background: 
+      radial-gradient(ellipse 80% 50% at 50% -20%, hsl(280 80% 65% / 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse 60% 40% at 100% 100%, hsl(200 100% 60% / 0.1) 0%, transparent 50%),
+      radial-gradient(ellipse 50% 30% at 0% 80%, hsl(320 85% 60% / 0.1) 0%, transparent 50%),
+      var(--gradient-dark);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+
+  /* Custom scrollbar */
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-background;
+    background: transparent;
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-muted-foreground/30 rounded-full;
+    @apply bg-primary/30 rounded-full;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted-foreground/50;
+    @apply bg-primary/50;
+  }
+}
+
+@layer components {
+  /* Glass card effect */
+  .glass {
+    @apply relative overflow-hidden;
+    background: linear-gradient(135deg, 
+      hsl(230 25% 18% / 0.6) 0%, 
+      hsl(230 25% 14% / 0.4) 100%
+    );
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid hsl(230 20% 30% / 0.5);
+  }
+
+  .glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, 
+      rgba(255, 255, 255, 0.08) 0%, 
+      transparent 50%
+    );
+    pointer-events: none;
+  }
+
+  /* Glass card with glow */
+  .glass-glow {
+    @apply glass;
+    box-shadow: 
+      0 0 40px -10px hsl(200 100% 60% / 0.2),
+      0 0 80px -20px hsl(280 80% 65% / 0.15);
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Neon glow effects */
+  .glow-primary {
+    box-shadow: 
+      0 0 20px hsl(200 100% 60% / 0.4),
+      0 0 40px hsl(200 100% 60% / 0.2),
+      inset 0 0 20px hsl(200 100% 60% / 0.1);
+  }
+
+  .glow-accent {
+    box-shadow: 
+      0 0 20px hsl(320 85% 60% / 0.4),
+      0 0 40px hsl(320 85% 60% / 0.2);
+  }
+
+  .glow-horde {
+    box-shadow: 
+      0 0 25px hsl(var(--horde) / 0.5),
+      0 0 50px hsl(var(--horde) / 0.25);
+  }
+
+  .glow-alliance {
+    box-shadow: 
+      0 0 25px hsl(var(--alliance) / 0.5),
+      0 0 50px hsl(var(--alliance) / 0.25);
+  }
+
+  /* Gradient border */
+  .gradient-border {
+    position: relative;
+  }
+
+  .gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    background: var(--gradient-primary);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+  /* Gradient button */
+  .btn-gradient {
+    @apply relative overflow-hidden font-semibold;
+    background: var(--gradient-primary);
+    transition: all 0.3s ease;
+  }
+
+  .btn-gradient:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+      0 10px 30px -10px hsl(200 100% 60% / 0.5),
+      0 20px 50px -20px hsl(280 80% 65% / 0.3);
+  }
+
+  .btn-gradient::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .btn-gradient:hover::before {
+    opacity: 1;
+  }
+
+  /* Faction gradients */
+  .gradient-horde {
+    background: linear-gradient(135deg, hsl(0 85% 55%) 0%, hsl(15 80% 45%) 100%);
+  }
+
+  .gradient-alliance {
+    background: linear-gradient(135deg, hsl(210 100% 60%) 0%, hsl(230 90% 50%) 100%);
   }
 }
 
 @layer utilities {
-  /* Gradient utilities */
-  .gradient-horde {
-    background: linear-gradient(135deg, hsl(var(--horde)) 0%, hsl(0 60% 35%) 100%);
+  /* Animation utilities */
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
   }
 
-  .gradient-alliance {
-    background: linear-gradient(135deg, hsl(var(--alliance)) 0%, hsl(220 70% 40%) 100%);
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
   }
 
-  .gradient-primary {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+  .animate-pulse-slow {
+    animation: pulse-slow 3s ease-in-out infinite;
   }
 
-  /* Glass effect */
-  .glass {
-    @apply bg-card/80 backdrop-blur-sm border border-border/50;
+  @keyframes pulse-slow {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
   }
 
-  /* Glow effects */
-  .glow-primary {
-    box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient-shift 5s ease infinite;
   }
 
-  .glow-accent {
-    box-shadow: 0 0 20px hsl(var(--accent) / 0.3);
-  }
-
-  .glow-horde {
-    box-shadow: 0 0 20px hsl(var(--horde) / 0.4);
-  }
-
-  .glow-alliance {
-    box-shadow: 0 0 20px hsl(var(--alliance) / 0.4);
+  @keyframes gradient-shift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
   }
 }
