@@ -23,9 +23,9 @@ export const CosmicButton = forwardRef<HTMLButtonElement, CosmicButtonProps>(({
   const baseStyles = 'relative overflow-hidden font-semibold rounded-xl transition-all duration-300 inline-flex items-center justify-center gap-2';
   
   const variantStyles = {
-    default: 'bg-gradient-to-r from-primary via-[hsl(280_55%_45%)] to-secondary text-white hover:shadow-[0_8px_25px_hsl(var(--primary)/0.3)]',
-    horde: 'gradient-horde text-white hover:shadow-[0_8px_25px_hsl(var(--horde)/0.4)]',
-    alliance: 'gradient-alliance text-white hover:shadow-[0_8px_25px_hsl(var(--alliance)/0.4)]',
+    default: 'bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-[0_8px_25px_hsl(var(--primary)/0.25)]',
+    horde: 'bg-horde text-horde-foreground hover:bg-horde/90 hover:shadow-[0_8px_25px_hsl(var(--horde)/0.3)]',
+    alliance: 'bg-alliance text-alliance-foreground hover:bg-alliance/90 hover:shadow-[0_8px_25px_hsl(var(--alliance)/0.3)]',
     outline: 'bg-transparent border border-border/50 hover:border-primary/40 hover:bg-primary/5 text-foreground',
   };
 
