@@ -22,8 +22,8 @@ const App = () => (
       <AuthProvider>
         <TooltipProvider>
           <div className="dark">
+            <div className="grain-overlay" />
             <Toaster />
-            <Sonner />
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<Index />} />
