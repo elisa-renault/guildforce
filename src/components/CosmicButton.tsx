@@ -20,13 +20,13 @@ export const CosmicButton = forwardRef<HTMLButtonElement, CosmicButtonProps>(({
   disabled,
   ...props
 }, ref) => {
-  const baseStyles = 'relative overflow-hidden font-semibold rounded-xl transition-all duration-300 inline-flex items-center justify-center gap-2';
+  const baseStyles = 'relative overflow-hidden font-semibold rounded-lg transition-all duration-300 inline-flex items-center justify-center gap-2';
   
   const variantStyles = {
-    default: 'bg-gradient-to-r from-primary via-[hsl(280_55%_45%)] to-secondary text-white hover:shadow-[0_8px_25px_hsl(var(--primary)/0.3)]',
-    horde: 'gradient-horde text-white hover:shadow-[0_8px_25px_hsl(var(--horde)/0.4)]',
-    alliance: 'gradient-alliance text-white hover:shadow-[0_8px_25px_hsl(var(--alliance)/0.4)]',
-    outline: 'bg-transparent border border-border/50 hover:border-primary/40 hover:bg-primary/5 text-foreground',
+    default: 'bg-gradient-to-r from-[hsl(280_45%_32%)] to-[hsl(280_45%_44%)] text-white border border-white/5 hover:shadow-[0_8px_25px_hsl(var(--primary)/0.3)]',
+    horde: 'bg-gradient-to-r from-[hsl(5_60%_36%)] to-[hsl(5_60%_48%)] text-white border border-white/5 hover:shadow-[0_8px_25px_hsl(var(--horde)/0.4)]',
+    alliance: 'bg-gradient-to-r from-[hsl(215_55%_38%)] to-[hsl(215_55%_50%)] text-white border border-white/5 hover:shadow-[0_8px_25px_hsl(var(--alliance)/0.4)]',
+    outline: 'liquid-glass-button text-foreground',
   };
 
   const sizeStyles = {
