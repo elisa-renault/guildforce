@@ -9,82 +9,82 @@
 
 @layer base {
   :root {
-    /* Ultra-dark cosmic background */
-    --background: 235 30% 6%;
-    --foreground: 210 40% 98%;
+    /* Ultra-dark plum background */
+    --background: 270 25% 6%;
+    --foreground: 45 20% 95%;
 
-    /* Card with subtle luminosity */
-    --card: 235 25% 10%;
-    --card-foreground: 210 40% 98%;
+    /* Card with subtle warmth */
+    --card: 270 20% 10%;
+    --card-foreground: 45 20% 95%;
 
-    --popover: 235 25% 8%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 270 20% 8%;
+    --popover-foreground: 45 20% 95%;
 
-    /* Cosmic cyan primary */
-    --primary: 190 100% 55%;
-    --primary-foreground: 235 30% 6%;
+    /* Rich plum primary */
+    --primary: 280 60% 50%;
+    --primary-foreground: 45 20% 95%;
 
-    /* Ethereal purple secondary */
-    --secondary: 270 80% 60%;
-    --secondary-foreground: 210 40% 98%;
+    /* Warm gold secondary */
+    --secondary: 42 85% 55%;
+    --secondary-foreground: 270 25% 6%;
 
-    --muted: 235 20% 16%;
-    --muted-foreground: 220 15% 55%;
+    --muted: 270 15% 16%;
+    --muted-foreground: 270 10% 55%;
 
-    /* Cosmic magenta accent */
-    --accent: 300 85% 55%;
-    --accent-foreground: 210 40% 98%;
+    /* Soft gold accent */
+    --accent: 38 75% 50%;
+    --accent-foreground: 270 25% 6%;
 
-    --destructive: 0 75% 55%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 45 20% 95%;
 
-    --border: 235 20% 20%;
-    --input: 235 20% 14%;
-    --ring: 190 100% 55%;
+    --border: 270 15% 18%;
+    --input: 270 15% 12%;
+    --ring: 280 60% 50%;
 
     --radius: 1rem;
 
-    /* Faction colors - vivid neon */
-    --horde: 5 90% 55%;
-    --horde-glow: 15 100% 50%;
+    /* Faction colors - vivid */
+    --horde: 5 85% 50%;
+    --horde-glow: 15 90% 45%;
     --horde-foreground: 0 0% 100%;
-    --alliance: 210 100% 60%;
-    --alliance-glow: 200 100% 65%;
+    --alliance: 215 85% 55%;
+    --alliance-glow: 210 80% 50%;
     --alliance-foreground: 0 0% 100%;
 
-    /* Role colors - neon glow */
-    --tank: 210 100% 60%;
-    --healer: 145 80% 50%;
-    --dps: 350 90% 60%;
+    /* Role colors */
+    --tank: 215 80% 55%;
+    --healer: 145 70% 45%;
+    --dps: 350 80% 55%;
 
-    /* WoW Class colors - vibrant */
+    /* WoW Class colors */
     --class-warrior: 33 100% 55%;
-    --class-paladin: 330 70% 70%;
-    --class-hunter: 85 70% 50%;
-    --class-rogue: 50 100% 55%;
-    --class-priest: 0 0% 95%;
-    --class-death-knight: 0 80% 50%;
-    --class-shaman: 200 90% 60%;
-    --class-mage: 190 100% 70%;
-    --class-warlock: 270 60% 60%;
-    --class-monk: 155 60% 55%;
-    --class-druid: 30 80% 60%;
-    --class-demon-hunter: 280 90% 55%;
-    --class-evoker: 165 80% 50%;
+    --class-paladin: 330 65% 65%;
+    --class-hunter: 85 65% 45%;
+    --class-rogue: 48 100% 55%;
+    --class-priest: 0 0% 92%;
+    --class-death-knight: 0 75% 45%;
+    --class-shaman: 200 80% 55%;
+    --class-mage: 195 90% 65%;
+    --class-warlock: 270 55% 55%;
+    --class-monk: 155 55% 50%;
+    --class-druid: 30 75% 55%;
+    --class-demon-hunter: 280 80% 50%;
+    --class-evoker: 165 70% 45%;
 
-    /* Cosmic orb colors */
-    --orb-cyan: 190 100% 55%;
-    --orb-purple: 270 80% 60%;
-    --orb-magenta: 300 85% 55%;
+    /* Orb colors - plum & gold subtle */
+    --orb-plum: 280 50% 40%;
+    --orb-violet: 270 45% 35%;
+    --orb-gold: 42 60% 40%;
 
-    --sidebar-background: 235 25% 8%;
-    --sidebar-foreground: 210 40% 90%;
-    --sidebar-primary: 190 100% 55%;
-    --sidebar-primary-foreground: 235 30% 6%;
-    --sidebar-accent: 235 20% 16%;
-    --sidebar-accent-foreground: 210 40% 90%;
-    --sidebar-border: 235 20% 18%;
-    --sidebar-ring: 190 100% 55%;
+    --sidebar-background: 270 20% 8%;
+    --sidebar-foreground: 45 15% 85%;
+    --sidebar-primary: 280 60% 50%;
+    --sidebar-primary-foreground: 45 20% 95%;
+    --sidebar-accent: 270 15% 16%;
+    --sidebar-accent-foreground: 45 15% 85%;
+    --sidebar-border: 270 15% 16%;
+    --sidebar-ring: 280 60% 50%;
   }
 }
 
@@ -111,34 +111,34 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: hsl(235 25% 8%);
+    background: hsl(270 20% 8%);
   }
 
   ::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, hsl(var(--primary) / 0.5), hsl(var(--secondary) / 0.5));
+    background: linear-gradient(180deg, hsl(var(--primary) / 0.4), hsl(var(--secondary) / 0.4));
     border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, hsl(var(--primary) / 0.7), hsl(var(--secondary) / 0.7));
+    background: linear-gradient(180deg, hsl(var(--primary) / 0.6), hsl(var(--secondary) / 0.6));
   }
 }
 
 @layer components {
-  /* Cosmic glass card */
+  /* Plum glass card */
   .cosmic-glass {
     @apply relative overflow-hidden rounded-xl;
     background: linear-gradient(
       135deg,
-      hsl(235 25% 12% / 0.8) 0%,
-      hsl(235 25% 8% / 0.6) 100%
+      hsl(270 20% 11% / 0.85) 0%,
+      hsl(270 18% 8% / 0.7) 100%
     );
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid hsl(235 20% 25% / 0.5);
+    border: 1px solid hsl(270 15% 22% / 0.5);
   }
 
-  /* Luminous border effect */
+  /* Luminous border effect - plum to gold */
   .cosmic-glass::before {
     content: '';
     position: absolute;
@@ -146,9 +146,9 @@
     padding: 1px;
     background: linear-gradient(
       135deg,
-      hsl(var(--primary) / 0.3) 0%,
-      hsl(var(--secondary) / 0.2) 50%,
-      hsl(var(--accent) / 0.3) 100%
+      hsl(var(--primary) / 0.25) 0%,
+      hsl(var(--secondary) / 0.15) 50%,
+      hsl(var(--primary) / 0.2) 100%
     );
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -182,19 +182,19 @@
 
   .glow-card:hover {
     box-shadow: 
-      0 0 30px hsl(var(--primary) / 0.2),
-      0 0 60px hsl(var(--secondary) / 0.1),
-      inset 0 0 30px hsl(var(--primary) / 0.05);
-    border-color: hsl(var(--primary) / 0.4);
+      0 0 25px hsl(var(--primary) / 0.15),
+      0 0 50px hsl(var(--secondary) / 0.08),
+      inset 0 0 25px hsl(var(--primary) / 0.03);
+    border-color: hsl(var(--primary) / 0.3);
   }
 
-  /* Gradient text */
+  /* Gradient text - plum to gold */
   .cosmic-text {
     background: linear-gradient(
       135deg,
       hsl(var(--primary)) 0%,
-      hsl(var(--secondary)) 50%,
-      hsl(var(--accent)) 100%
+      hsl(var(--secondary)) 60%,
+      hsl(45 80% 65%) 100%
     );
     background-size: 200% 200%;
     -webkit-background-clip: text;
@@ -203,12 +203,13 @@
     animation: gradient-shift 5s ease infinite;
   }
 
-  /* Premium button with shine effect */
+  /* Premium button - plum to gold */
   .cosmic-button {
     @apply relative overflow-hidden font-semibold;
     background: linear-gradient(
       135deg,
       hsl(var(--primary)) 0%,
+      hsl(280 55% 45%) 50%,
       hsl(var(--secondary)) 100%
     );
     transition: all 0.3s ease;
@@ -217,8 +218,8 @@
   .cosmic-button:hover {
     transform: translateY(-2px);
     box-shadow: 
-      0 10px 30px hsl(var(--primary) / 0.4),
-      0 5px 15px hsl(var(--secondary) / 0.3);
+      0 8px 25px hsl(var(--primary) / 0.3),
+      0 4px 12px hsl(var(--secondary) / 0.2);
   }
 
   .cosmic-button::before {
@@ -231,7 +232,7 @@
     background: linear-gradient(
       90deg,
       transparent,
-      hsl(0 0% 100% / 0.3),
+      hsl(0 0% 100% / 0.2),
       transparent
     );
     transition: left 0.5s ease;
@@ -244,16 +245,14 @@
   /* Faction glow effects */
   .glow-horde {
     box-shadow: 
-      0 0 30px hsl(var(--horde) / 0.5),
-      0 0 60px hsl(var(--horde-glow) / 0.3),
-      inset 0 0 20px hsl(var(--horde) / 0.1);
+      0 0 25px hsl(var(--horde) / 0.4),
+      0 0 50px hsl(var(--horde-glow) / 0.2);
   }
 
   .glow-alliance {
     box-shadow: 
-      0 0 30px hsl(var(--alliance) / 0.5),
-      0 0 60px hsl(var(--alliance-glow) / 0.3),
-      inset 0 0 20px hsl(var(--alliance) / 0.1);
+      0 0 25px hsl(var(--alliance) / 0.4),
+      0 0 50px hsl(var(--alliance-glow) / 0.2);
   }
 
   /* Faction gradients */
@@ -284,22 +283,22 @@
   }
 
   .cosmic-input:focus {
-    border-color: hsl(var(--primary) / 0.6);
+    border-color: hsl(var(--primary) / 0.5);
     box-shadow: 
-      0 0 0 2px hsl(var(--primary) / 0.1),
-      0 0 20px hsl(var(--primary) / 0.2);
+      0 0 0 2px hsl(var(--primary) / 0.08),
+      0 0 15px hsl(var(--primary) / 0.12);
   }
 
   /* Header glass */
   .cosmic-header {
     background: linear-gradient(
       180deg,
-      hsl(235 25% 10% / 0.9) 0%,
-      hsl(235 25% 8% / 0.8) 100%
+      hsl(270 20% 9% / 0.92) 0%,
+      hsl(270 18% 7% / 0.85) 100%
     );
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid hsl(235 20% 20% / 0.5);
+    border-bottom: 1px solid hsl(270 15% 18% / 0.5);
   }
 
   /* Stats card with role glow */
