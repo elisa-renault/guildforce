@@ -9,38 +9,38 @@
 
 @layer base {
   :root {
-    /* Ultra-dark plum background */
-    --background: 270 25% 6%;
-    --foreground: 45 20% 95%;
+    /* Deep dark plum background */
+    --background: 270 30% 4%;
+    --foreground: 40 15% 88%;
 
-    /* Card with subtle warmth */
-    --card: 270 20% 10%;
-    --card-foreground: 45 20% 95%;
+    /* Card with dark plum */
+    --card: 270 25% 7%;
+    --card-foreground: 40 15% 88%;
 
-    --popover: 270 20% 8%;
-    --popover-foreground: 45 20% 95%;
+    --popover: 270 25% 5%;
+    --popover-foreground: 40 15% 88%;
 
-    /* Rich plum primary */
-    --primary: 280 60% 50%;
-    --primary-foreground: 45 20% 95%;
+    /* Deep plum primary */
+    --primary: 280 55% 45%;
+    --primary-foreground: 40 15% 92%;
 
     /* Warm gold secondary */
-    --secondary: 42 85% 55%;
-    --secondary-foreground: 270 25% 6%;
+    --secondary: 42 80% 50%;
+    --secondary-foreground: 270 30% 4%;
 
-    --muted: 270 15% 16%;
-    --muted-foreground: 270 10% 55%;
+    --muted: 270 20% 12%;
+    --muted-foreground: 270 12% 45%;
 
     /* Soft gold accent */
-    --accent: 38 75% 50%;
-    --accent-foreground: 270 25% 6%;
+    --accent: 38 70% 45%;
+    --accent-foreground: 270 30% 4%;
 
     --destructive: 0 70% 50%;
-    --destructive-foreground: 45 20% 95%;
+    --destructive-foreground: 40 15% 92%;
 
-    --border: 270 15% 18%;
-    --input: 270 15% 12%;
-    --ring: 280 60% 50%;
+    --border: 270 20% 14%;
+    --input: 270 25% 8%;
+    --ring: 280 55% 45%;
 
     --radius: 1rem;
 
@@ -72,19 +72,19 @@
     --class-demon-hunter: 280 80% 50%;
     --class-evoker: 165 70% 45%;
 
-    /* Orb colors - plum & gold subtle */
-    --orb-plum: 280 50% 40%;
-    --orb-violet: 270 45% 35%;
-    --orb-gold: 42 60% 40%;
+    /* Orb colors - very subtle deep tones */
+    --orb-plum: 280 40% 18%;
+    --orb-violet: 270 35% 14%;
+    --orb-gold: 42 45% 20%;
 
-    --sidebar-background: 270 20% 8%;
-    --sidebar-foreground: 45 15% 85%;
-    --sidebar-primary: 280 60% 50%;
-    --sidebar-primary-foreground: 45 20% 95%;
-    --sidebar-accent: 270 15% 16%;
-    --sidebar-accent-foreground: 45 15% 85%;
-    --sidebar-border: 270 15% 16%;
-    --sidebar-ring: 280 60% 50%;
+    --sidebar-background: 270 25% 5%;
+    --sidebar-foreground: 40 12% 75%;
+    --sidebar-primary: 280 55% 45%;
+    --sidebar-primary-foreground: 40 15% 92%;
+    --sidebar-accent: 270 20% 12%;
+    --sidebar-accent-foreground: 40 12% 75%;
+    --sidebar-border: 270 20% 12%;
+    --sidebar-ring: 280 55% 45%;
   }
 }
 
@@ -104,6 +104,16 @@
     overflow-x: hidden;
   }
 
+  /* Film Grain Overlay */
+  .grain-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  }
+
   /* Custom scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
@@ -111,7 +121,7 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: hsl(270 20% 8%);
+    background: hsl(270 25% 5%);
   }
 
   ::-webkit-scrollbar-thumb {
@@ -125,17 +135,17 @@
 }
 
 @layer components {
-  /* Plum glass card */
+  /* Deep plum glass card */
   .cosmic-glass {
     @apply relative overflow-hidden rounded-xl;
     background: linear-gradient(
       135deg,
-      hsl(270 20% 11% / 0.85) 0%,
-      hsl(270 18% 8% / 0.7) 100%
+      hsl(270 25% 8% / 0.9) 0%,
+      hsl(270 22% 5% / 0.8) 100%
     );
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid hsl(270 15% 22% / 0.5);
+    border: 1px solid hsl(270 20% 16% / 0.6);
   }
 
   /* Luminous border effect - plum to gold */
