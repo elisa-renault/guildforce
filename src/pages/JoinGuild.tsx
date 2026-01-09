@@ -11,7 +11,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, ArrowLeft, Users } from 'lucide-react';
+import { Loader2, ArrowLeft, Users, KeyRound } from 'lucide-react';
 
 const JoinGuild = () => {
   const navigate = useNavigate();
@@ -35,7 +35,6 @@ const JoinGuild = () => {
     setLoading(true);
     
     try {
-      // Find guild by invite key
       const { data: guild, error: guildError } = await supabase
         .from('guilds')
         .select('id, name')
@@ -47,7 +46,6 @@ const JoinGuild = () => {
         return;
       }
 
-      // Check if already member
       const { data: existing } = await supabase
         .from('guild_members')
         .select('id')
@@ -61,7 +59,6 @@ const JoinGuild = () => {
         return;
       }
 
-      // Join guild
       const { error: joinError } = await supabase
         .from('guild_members')
         .insert({
@@ -83,32 +80,43 @@ const JoinGuild = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-      <Card className="w-full max-w-md glass">
-        <CardHeader>
-          <Button variant="ghost" size="sm" className="w-fit mb-2" onClick={() => navigate('/')}>
+    <div className="min-h-screen flex items-center justify-center p-4 relative">
+      {/* Background */}
+      <div className="fixed top-1/3 left-1/4 w-96 h-96 bg-secondary/20 rounded-full blur-[120px] pointer-events-none" />
+      <div className="fixed bottom-1/3 right-1/4 w-80 h-80 bg-primary/15 rounded-full blur-[100px] pointer-events-none" />
+
+      <Card className="w-full max-w-md glass-glow gradient-border relative z-10">
+        <CardHeader className="text-center">
+          <Button variant="ghost" size="sm" className="absolute left-4 top-4 text-muted-foreground hover:text-foreground" onClick={() => navigate('/')}>
             <ArrowLeft className="h-4 w-4 mr-2" /> {t.common.back}
           </Button>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            {t.guild.join}
-          </CardTitle>
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-secondary to-accent flex items-center justify-center glow-accent">
+            <Users className="h-8 w-8 text-white" />
+          </div>
+          <CardTitle className="text-2xl">{t.guild.join}</CardTitle>
           <CardDescription>Enter the invite key shared by your GM</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
               <FormField control={form.control} name="inviteKey" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t.guild.inviteKey}</FormLabel>
+                  <FormLabel className="flex items-center gap-2">
+                    <KeyRound className="h-4 w-4" />
+                    {t.guild.inviteKey}
+                  </FormLabel>
                   <FormControl>
-                    <Input placeholder={t.guild.inviteKeyPlaceholder} {...field} />
+                    <Input 
+                      placeholder={t.guild.inviteKeyPlaceholder} 
+                      {...field} 
+                      className="glass border-border/50 focus:border-primary focus:glow-primary font-mono text-center"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
               
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" className="w-full btn-gradient text-white glow-accent mt-6" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {t.guild.join}
               </Button>
