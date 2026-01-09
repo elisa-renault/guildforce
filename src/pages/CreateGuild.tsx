@@ -12,7 +12,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, ArrowLeft, Shield } from 'lucide-react';
+import { Loader2, ArrowLeft, Shield, Swords } from 'lucide-react';
 
 const CreateGuild = () => {
   const navigate = useNavigate();
@@ -27,9 +27,11 @@ const CreateGuild = () => {
     faction: z.enum(['horde', 'alliance']),
   });
 
-  const form = useForm({
+  type FormValues = z.infer<typeof schema>;
+
+  const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { name: '', server: '', faction: 'alliance' as const },
+    defaultValues: { name: '', server: '', faction: 'alliance' },
   });
 
   const onSubmit = async (values: z.infer<typeof schema>) => {
@@ -37,7 +39,6 @@ const CreateGuild = () => {
     setLoading(true);
     
     try {
-      // Create guild
       const { data: guild, error: guildError } = await supabase
         .from('guilds')
         .insert({
@@ -51,7 +52,6 @@ const CreateGuild = () => {
 
       if (guildError) throw guildError;
 
-      // Add owner as GM member
       const { error: memberError } = await supabase
         .from('guild_members')
         .insert({
@@ -72,26 +72,35 @@ const CreateGuild = () => {
     }
   };
 
+  const selectedFaction = form.watch('faction');
+  const isHordeFaction = selectedFaction === 'horde';
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-      <Card className="w-full max-w-md glass">
-        <CardHeader>
-          <Button variant="ghost" size="sm" className="w-fit mb-2" onClick={() => navigate('/')}>
+    <div className="min-h-screen flex items-center justify-center p-4 relative">
+      {/* Background */}
+      <div className={`fixed top-1/3 left-1/4 w-96 h-96 rounded-full blur-[120px] pointer-events-none transition-colors duration-500 ${isHordeFaction ? 'bg-horde/20' : 'bg-alliance/20'}`} />
+      <div className={`fixed bottom-1/3 right-1/4 w-80 h-80 rounded-full blur-[100px] pointer-events-none transition-colors duration-500 ${isHordeFaction ? 'bg-orange-500/15' : 'bg-blue-400/15'}`} />
+
+      <Card className="w-full max-w-md glass-glow gradient-border relative z-10">
+        <CardHeader className="text-center">
+          <Button variant="ghost" size="sm" className="absolute left-4 top-4 text-muted-foreground hover:text-foreground" onClick={() => navigate('/')}>
             <ArrowLeft className="h-4 w-4 mr-2" /> {t.common.back}
           </Button>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            {t.guild.create}
-          </CardTitle>
+          <div className={`w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center transition-all duration-300 ${isHordeFaction ? 'gradient-horde glow-horde' : 'gradient-alliance glow-alliance'}`}>
+            <Shield className="h-8 w-8 text-white" />
+          </div>
+          <CardTitle className="text-2xl">{t.guild.create}</CardTitle>
           <CardDescription>Create a new guild to collect class wishes</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
               <FormField control={form.control} name="name" render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t.guild.name}</FormLabel>
-                  <FormControl><Input placeholder={t.guild.namePlaceholder} {...field} /></FormControl>
+                  <FormControl>
+                    <Input placeholder={t.guild.namePlaceholder} {...field} className="glass border-border/50 focus:border-primary" />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
@@ -99,31 +108,53 @@ const CreateGuild = () => {
               <FormField control={form.control} name="server" render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t.guild.server}</FormLabel>
-                  <FormControl><Input placeholder={t.guild.serverPlaceholder} {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-
-              <FormField control={form.control} name="faction" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t.guild.faction}</FormLabel>
                   <FormControl>
-                    <RadioGroup onValueChange={field.onChange} value={field.value} className="flex gap-4">
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="alliance" id="alliance" className="border-alliance text-alliance" />
-                        <label htmlFor="alliance" className="text-alliance font-medium cursor-pointer">{t.guild.alliance}</label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="horde" id="horde" className="border-horde text-horde" />
-                        <label htmlFor="horde" className="text-horde font-medium cursor-pointer">{t.guild.horde}</label>
-                      </div>
-                    </RadioGroup>
+                    <Input placeholder={t.guild.serverPlaceholder} {...field} className="glass border-border/50 focus:border-primary" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
 
-              <Button type="submit" className="w-full" disabled={loading}>
+              <FormField control={form.control} name="faction" render={({ field }) => {
+                const isAlliance = field.value === 'alliance';
+                const isHorde = field.value === 'horde';
+                return (
+                  <FormItem>
+                    <FormLabel>{t.guild.faction}</FormLabel>
+                    <FormControl>
+                      <RadioGroup onValueChange={field.onChange} value={field.value} className="grid grid-cols-2 gap-4">
+                        <label 
+                          htmlFor="alliance" 
+                          className={`flex items-center justify-center gap-2 p-4 rounded-xl cursor-pointer transition-all border-2 ${
+                            isAlliance 
+                              ? 'gradient-alliance glow-alliance border-alliance text-white' 
+                              : 'glass border-border/50 hover:border-alliance/50'
+                          }`}
+                        >
+                          <RadioGroupItem value="alliance" id="alliance" className="sr-only" />
+                          <Shield className="h-5 w-5" />
+                          <span className="font-semibold">{t.guild.alliance}</span>
+                        </label>
+                        <label 
+                          htmlFor="horde" 
+                          className={`flex items-center justify-center gap-2 p-4 rounded-xl cursor-pointer transition-all border-2 ${
+                            isHorde 
+                              ? 'gradient-horde glow-horde border-horde text-white' 
+                              : 'glass border-border/50 hover:border-horde/50'
+                          }`}
+                        >
+                          <RadioGroupItem value="horde" id="horde" className="sr-only" />
+                          <Swords className="h-5 w-5" />
+                          <span className="font-semibold">{t.guild.horde}</span>
+                        </label>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }} />
+
+              <Button type="submit" className={`w-full mt-6 text-white ${isHordeFaction ? 'gradient-horde glow-horde' : 'gradient-alliance glow-alliance'}`} disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {t.guild.create}
               </Button>
