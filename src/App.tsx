@@ -7,6 +7,11 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import CreateGuild from "./pages/CreateGuild";
+import JoinGuild from "./pages/JoinGuild";
+import GuildList from "./pages/GuildList";
+import Wishes from "./pages/Wishes";
+import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +28,11 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/guilds" element={<GuildList />} />
+                <Route path="/guild/create" element={<CreateGuild />} />
+                <Route path="/guild/join" element={<JoinGuild />} />
+                <Route path="/guild/:guildId" element={<Dashboard />} />
+                <Route path="/guild/:guildId/wishes" element={<Wishes />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
