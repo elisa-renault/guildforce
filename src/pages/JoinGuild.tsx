@@ -5,13 +5,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, ArrowLeft, Users, KeyRound } from 'lucide-react';
+import { CosmicBackground } from '@/components/CosmicBackground';
+import { GlowCard } from '@/components/GlowCard';
+import { CosmicButton } from '@/components/CosmicButton';
+import { ArrowLeft, Users, KeyRound } from 'lucide-react';
 
 const JoinGuild = () => {
   const navigate = useNavigate();
@@ -81,49 +83,56 @@ const JoinGuild = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative">
-      {/* Background */}
-      <div className="fixed top-1/3 left-1/4 w-96 h-96 bg-secondary/20 rounded-full blur-[120px] pointer-events-none" />
-      <div className="fixed bottom-1/3 right-1/4 w-80 h-80 bg-primary/15 rounded-full blur-[100px] pointer-events-none" />
+      <CosmicBackground />
 
-      <Card className="w-full max-w-md glass-glow gradient-border relative z-10">
-        <CardHeader className="text-center">
-          <Button variant="ghost" size="sm" className="absolute left-4 top-4 text-muted-foreground hover:text-foreground" onClick={() => navigate('/')}>
-            <ArrowLeft className="h-4 w-4 mr-2" /> {t.common.back}
-          </Button>
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-secondary to-accent flex items-center justify-center glow-accent">
+      <GlowCard className="w-full max-w-md p-8 relative z-10 animate-scale-in">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="absolute left-4 top-4 text-muted-foreground hover:text-foreground hover:bg-white/5" 
+          onClick={() => navigate('/')}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" /> {t.common.back}
+        </Button>
+
+        <div className="text-center mb-8 pt-4">
+          <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-secondary to-accent flex items-center justify-center shadow-lg shadow-secondary/25">
             <Users className="h-8 w-8 text-white" />
           </div>
-          <CardTitle className="text-2xl">{t.guild.join}</CardTitle>
-          <CardDescription>Enter the invite key shared by your GM</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-              <FormField control={form.control} name="inviteKey" render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2">
-                    <KeyRound className="h-4 w-4" />
-                    {t.guild.inviteKey}
-                  </FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder={t.guild.inviteKeyPlaceholder} 
-                      {...field} 
-                      className="glass border-border/50 focus:border-primary focus:glow-primary font-mono text-center"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              
-              <Button type="submit" className="w-full btn-gradient text-white glow-accent mt-6" disabled={loading}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {t.guild.join}
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+          <h2 className="text-2xl font-bold cosmic-text mb-2">{t.guild.join}</h2>
+          <p className="text-muted-foreground">Enter the invite key shared by your GM</p>
+        </div>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+            <FormField control={form.control} name="inviteKey" render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2 text-foreground">
+                  <KeyRound className="h-4 w-4 text-primary" />
+                  {t.guild.inviteKey}
+                </FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder={t.guild.inviteKeyPlaceholder} 
+                    {...field} 
+                    className="cosmic-input h-12 font-mono text-center tracking-wider"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            
+            <CosmicButton 
+              type="submit" 
+              className="w-full mt-6" 
+              size="lg"
+              loading={loading}
+            >
+              {t.guild.join}
+            </CosmicButton>
+          </form>
+        </Form>
+      </GlowCard>
     </div>
   );
 };

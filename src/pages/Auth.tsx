@@ -5,12 +5,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ArrowLeft, Sparkles } from 'lucide-react';
+import { CosmicBackground } from '@/components/CosmicBackground';
+import { GlowCard } from '@/components/GlowCard';
+import { CosmicButton } from '@/components/CosmicButton';
+import { ArrowLeft, Sparkles } from 'lucide-react';
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -65,94 +67,109 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative">
-      {/* Background orbs */}
-      <div className="fixed top-1/3 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[120px] pointer-events-none" />
-      <div className="fixed bottom-1/3 right-1/4 w-80 h-80 bg-accent/20 rounded-full blur-[100px] pointer-events-none" />
+      <CosmicBackground />
 
-      <Card className="w-full max-w-md glass-glow gradient-border relative z-10">
-        <CardHeader className="text-center">
-          <Button variant="ghost" size="sm" className="absolute left-4 top-4 text-muted-foreground hover:text-foreground" onClick={() => navigate('/')}>
-            <ArrowLeft className="h-4 w-4 mr-2" /> {t.common.back}
-          </Button>
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+      <GlowCard className="w-full max-w-md p-8 relative z-10 animate-scale-in">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="absolute left-4 top-4 text-muted-foreground hover:text-foreground hover:bg-white/5" 
+          onClick={() => navigate('/')}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" /> {t.common.back}
+        </Button>
+
+        <div className="text-center mb-8 pt-4">
+          <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/25">
             <Sparkles className="h-8 w-8 text-white" />
           </div>
-          <CardTitle className="text-2xl gradient-text">{isLogin ? t.auth.loginTitle : t.auth.signupTitle}</CardTitle>
-          <CardDescription className="text-muted-foreground">{isLogin ? t.auth.loginDescription : t.auth.signupDescription}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              {!isLogin && (
-                <FormField control={form.control} name="discordPseudo" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-foreground">{t.auth.discordPseudo}</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder={t.auth.discordPseudoPlaceholder} 
-                        {...field} 
-                        className="glass border-border/50 focus:border-primary focus:glow-primary transition-all"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-              )}
-              <FormField control={form.control} name="email" render={({ field }) => (
+          <h2 className="text-2xl font-bold cosmic-text mb-2">
+            {isLogin ? t.auth.loginTitle : t.auth.signupTitle}
+          </h2>
+          <p className="text-muted-foreground">
+            {isLogin ? t.auth.loginDescription : t.auth.signupDescription}
+          </p>
+        </div>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+            {!isLogin && (
+              <FormField control={form.control} name="discordPseudo" render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-foreground">{t.common.email}</FormLabel>
+                  <FormLabel className="text-foreground">{t.auth.discordPseudo}</FormLabel>
                   <FormControl>
                     <Input 
-                      type="email" 
+                      placeholder={t.auth.discordPseudoPlaceholder} 
                       {...field} 
-                      className="glass border-border/50 focus:border-primary focus:glow-primary transition-all"
+                      className="cosmic-input h-12"
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
-              <FormField control={form.control} name="password" render={({ field }) => (
+            )}
+            <FormField control={form.control} name="email" render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-foreground">{t.common.email}</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="email" 
+                    {...field} 
+                    className="cosmic-input h-12"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField control={form.control} name="password" render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-foreground">{t.common.password}</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="password" 
+                    {...field} 
+                    className="cosmic-input h-12"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            {!isLogin && (
+              <FormField control={form.control} name="confirmPassword" render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-foreground">{t.common.password}</FormLabel>
+                  <FormLabel className="text-foreground">{t.common.confirmPassword}</FormLabel>
                   <FormControl>
                     <Input 
                       type="password" 
                       {...field} 
-                      className="glass border-border/50 focus:border-primary focus:glow-primary transition-all"
+                      className="cosmic-input h-12"
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
-              {!isLogin && (
-                <FormField control={form.control} name="confirmPassword" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-foreground">{t.common.confirmPassword}</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="password" 
-                        {...field} 
-                        className="glass border-border/50 focus:border-primary focus:glow-primary transition-all"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-              )}
-              <Button type="submit" className="w-full btn-gradient text-white glow-primary mt-6" disabled={loading}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isLogin ? t.common.login : t.common.signup}
-              </Button>
-            </form>
-          </Form>
-          <p className="text-center text-sm mt-6 text-muted-foreground">
-            {isLogin ? t.auth.noAccount : t.auth.hasAccount}{' '}
-            <button className="text-primary hover:underline font-medium" onClick={() => setIsLogin(!isLogin)}>
-              {isLogin ? t.common.signup : t.common.login}
-            </button>
-          </p>
-        </CardContent>
-      </Card>
+            )}
+            <CosmicButton 
+              type="submit" 
+              className="w-full mt-6" 
+              size="lg"
+              loading={loading}
+            >
+              {isLogin ? t.common.login : t.common.signup}
+            </CosmicButton>
+          </form>
+        </Form>
+
+        <p className="text-center text-sm mt-8 text-muted-foreground">
+          {isLogin ? t.auth.noAccount : t.auth.hasAccount}{' '}
+          <button 
+            className="text-primary hover:text-primary/80 font-medium transition-colors" 
+            onClick={() => setIsLogin(!isLogin)}
+          >
+            {isLogin ? t.common.signup : t.common.login}
+          </button>
+        </p>
+      </GlowCard>
     </div>
   );
 };
