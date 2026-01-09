@@ -2,52 +2,59 @@
 @tailwind components;
 @tailwind utilities;
 
-/* WoW Class Wishes - Glassmorphism Modern Design
-   Glass effects, vibrant gradients, modern 2024 UI
+/* Cosmic WoW Fusion - Premium Gaming UI
+   Inspired by cosmic themes + WoW faction identity
    All colors in HSL format
 */
 
 @layer base {
   :root {
-    --background: 230 25% 10%;
+    /* Ultra-dark cosmic background */
+    --background: 235 30% 6%;
     --foreground: 210 40% 98%;
 
-    --card: 230 25% 14%;
+    /* Card with subtle luminosity */
+    --card: 235 25% 10%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 230 25% 12%;
+    --popover: 235 25% 8%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 200 100% 60%;
-    --primary-foreground: 230 25% 10%;
+    /* Cosmic cyan primary */
+    --primary: 190 100% 55%;
+    --primary-foreground: 235 30% 6%;
 
-    --secondary: 280 80% 65%;
+    /* Ethereal purple secondary */
+    --secondary: 270 80% 60%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 230 20% 20%;
-    --muted-foreground: 220 15% 65%;
+    --muted: 235 20% 16%;
+    --muted-foreground: 220 15% 55%;
 
-    --accent: 320 85% 60%;
+    /* Cosmic magenta accent */
+    --accent: 300 85% 55%;
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 75% 55%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 230 20% 25%;
-    --input: 230 20% 20%;
-    --ring: 200 100% 60%;
+    --border: 235 20% 20%;
+    --input: 235 20% 14%;
+    --ring: 190 100% 55%;
 
     --radius: 1rem;
 
-    /* Faction colors - vivid */
-    --horde: 0 85% 55%;
+    /* Faction colors - vivid neon */
+    --horde: 5 90% 55%;
+    --horde-glow: 15 100% 50%;
     --horde-foreground: 0 0% 100%;
     --alliance: 210 100% 60%;
+    --alliance-glow: 200 100% 65%;
     --alliance-foreground: 0 0% 100%;
 
-    /* Role colors - neon */
-    --tank: 210 100% 55%;
-    --healer: 150 80% 50%;
+    /* Role colors - neon glow */
+    --tank: 210 100% 60%;
+    --healer: 145 80% 50%;
     --dps: 350 90% 60%;
 
     /* WoW Class colors - vibrant */
@@ -65,23 +72,19 @@
     --class-demon-hunter: 280 90% 55%;
     --class-evoker: 165 80% 50%;
 
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(200 100% 60%) 0%, hsl(280 80% 65%) 50%, hsl(320 85% 60%) 100%);
-    --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
-    --gradient-dark: linear-gradient(180deg, hsl(230 25% 12%) 0%, hsl(230 25% 8%) 100%);
+    /* Cosmic orb colors */
+    --orb-cyan: 190 100% 55%;
+    --orb-purple: 270 80% 60%;
+    --orb-magenta: 300 85% 55%;
 
-    --sidebar-background: 230 25% 12%;
+    --sidebar-background: 235 25% 8%;
     --sidebar-foreground: 210 40% 90%;
-    --sidebar-primary: 200 100% 60%;
-    --sidebar-primary-foreground: 230 25% 10%;
-    --sidebar-accent: 230 20% 20%;
+    --sidebar-primary: 190 100% 55%;
+    --sidebar-primary-foreground: 235 30% 6%;
+    --sidebar-accent: 235 20% 16%;
     --sidebar-accent-foreground: 210 40% 90%;
-    --sidebar-border: 230 20% 22%;
-    --sidebar-ring: 200 100% 60%;
-  }
-
-  .dark {
-    /* Same as root - dark mode by default */
+    --sidebar-border: 235 20% 18%;
+    --sidebar-ring: 190 100% 55%;
   }
 }
 
@@ -96,13 +99,9 @@
 
   body {
     @apply bg-background text-foreground;
-    background: 
-      radial-gradient(ellipse 80% 50% at 50% -20%, hsl(280 80% 65% / 0.15) 0%, transparent 50%),
-      radial-gradient(ellipse 60% 40% at 100% 100%, hsl(200 100% 60% / 0.1) 0%, transparent 50%),
-      radial-gradient(ellipse 50% 30% at 0% 80%, hsl(320 85% 60% / 0.1) 0%, transparent 50%),
-      var(--gradient-dark);
-    background-attachment: fixed;
+    background: hsl(var(--background));
     min-height: 100vh;
+    overflow-x: hidden;
   }
 
   /* Custom scrollbar */
@@ -112,95 +111,45 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: transparent;
+    background: hsl(235 25% 8%);
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-primary/30 rounded-full;
+    background: linear-gradient(180deg, hsl(var(--primary) / 0.5), hsl(var(--secondary) / 0.5));
+    border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-primary/50;
+    background: linear-gradient(180deg, hsl(var(--primary) / 0.7), hsl(var(--secondary) / 0.7));
   }
 }
 
 @layer components {
-  /* Glass card effect */
-  .glass {
-    @apply relative overflow-hidden;
-    background: linear-gradient(135deg, 
-      hsl(230 25% 18% / 0.6) 0%, 
-      hsl(230 25% 14% / 0.4) 100%
+  /* Cosmic glass card */
+  .cosmic-glass {
+    @apply relative overflow-hidden rounded-xl;
+    background: linear-gradient(
+      135deg,
+      hsl(235 25% 12% / 0.8) 0%,
+      hsl(235 25% 8% / 0.6) 100%
     );
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid hsl(230 20% 30% / 0.5);
+    border: 1px solid hsl(235 20% 25% / 0.5);
   }
 
-  .glass::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, 
-      rgba(255, 255, 255, 0.08) 0%, 
-      transparent 50%
-    );
-    pointer-events: none;
-  }
-
-  /* Glass card with glow */
-  .glass-glow {
-    @apply glass;
-    box-shadow: 
-      0 0 40px -10px hsl(200 100% 60% / 0.2),
-      0 0 80px -20px hsl(280 80% 65% / 0.15);
-  }
-
-  /* Gradient text */
-  .gradient-text {
-    background: var(--gradient-primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  /* Neon glow effects */
-  .glow-primary {
-    box-shadow: 
-      0 0 20px hsl(200 100% 60% / 0.4),
-      0 0 40px hsl(200 100% 60% / 0.2),
-      inset 0 0 20px hsl(200 100% 60% / 0.1);
-  }
-
-  .glow-accent {
-    box-shadow: 
-      0 0 20px hsl(320 85% 60% / 0.4),
-      0 0 40px hsl(320 85% 60% / 0.2);
-  }
-
-  .glow-horde {
-    box-shadow: 
-      0 0 25px hsl(var(--horde) / 0.5),
-      0 0 50px hsl(var(--horde) / 0.25);
-  }
-
-  .glow-alliance {
-    box-shadow: 
-      0 0 25px hsl(var(--alliance) / 0.5),
-      0 0 50px hsl(var(--alliance) / 0.25);
-  }
-
-  /* Gradient border */
-  .gradient-border {
-    position: relative;
-  }
-
-  .gradient-border::before {
+  /* Luminous border effect */
+  .cosmic-glass::before {
     content: '';
     position: absolute;
     inset: 0;
     padding: 1px;
-    background: var(--gradient-primary);
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary) / 0.3) 0%,
+      hsl(var(--secondary) / 0.2) 50%,
+      hsl(var(--accent) / 0.3) 100%
+    );
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
@@ -209,70 +158,278 @@
     pointer-events: none;
   }
 
-  /* Gradient button */
-  .btn-gradient {
+  /* Inner light effect */
+  .cosmic-glass::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(
+      180deg,
+      hsl(0 0% 100% / 0.05) 0%,
+      transparent 100%
+    );
+    pointer-events: none;
+    border-radius: inherit;
+  }
+
+  /* Glow card with hover effect */
+  .glow-card {
+    @apply cosmic-glass transition-all duration-300;
+  }
+
+  .glow-card:hover {
+    box-shadow: 
+      0 0 30px hsl(var(--primary) / 0.2),
+      0 0 60px hsl(var(--secondary) / 0.1),
+      inset 0 0 30px hsl(var(--primary) / 0.05);
+    border-color: hsl(var(--primary) / 0.4);
+  }
+
+  /* Gradient text */
+  .cosmic-text {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--secondary)) 50%,
+      hsl(var(--accent)) 100%
+    );
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradient-shift 5s ease infinite;
+  }
+
+  /* Premium button with shine effect */
+  .cosmic-button {
     @apply relative overflow-hidden font-semibold;
-    background: var(--gradient-primary);
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--secondary)) 100%
+    );
     transition: all 0.3s ease;
   }
 
-  .btn-gradient:hover {
+  .cosmic-button:hover {
     transform: translateY(-2px);
     box-shadow: 
-      0 10px 30px -10px hsl(200 100% 60% / 0.5),
-      0 20px 50px -20px hsl(280 80% 65% / 0.3);
+      0 10px 30px hsl(var(--primary) / 0.4),
+      0 5px 15px hsl(var(--secondary) / 0.3);
   }
 
-  .btn-gradient::before {
+  .cosmic-button::before {
     content: '';
     position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
-    opacity: 0;
-    transition: opacity 0.3s;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(0 0% 100% / 0.3),
+      transparent
+    );
+    transition: left 0.5s ease;
   }
 
-  .btn-gradient:hover::before {
-    opacity: 1;
+  .cosmic-button:hover::before {
+    left: 100%;
+  }
+
+  /* Faction glow effects */
+  .glow-horde {
+    box-shadow: 
+      0 0 30px hsl(var(--horde) / 0.5),
+      0 0 60px hsl(var(--horde-glow) / 0.3),
+      inset 0 0 20px hsl(var(--horde) / 0.1);
+  }
+
+  .glow-alliance {
+    box-shadow: 
+      0 0 30px hsl(var(--alliance) / 0.5),
+      0 0 60px hsl(var(--alliance-glow) / 0.3),
+      inset 0 0 20px hsl(var(--alliance) / 0.1);
   }
 
   /* Faction gradients */
   .gradient-horde {
-    background: linear-gradient(135deg, hsl(0 85% 55%) 0%, hsl(15 80% 45%) 100%);
+    background: linear-gradient(135deg, hsl(var(--horde)) 0%, hsl(var(--horde-glow)) 100%);
   }
 
   .gradient-alliance {
-    background: linear-gradient(135deg, hsl(210 100% 60%) 0%, hsl(230 90% 50%) 100%);
+    background: linear-gradient(135deg, hsl(var(--alliance)) 0%, hsl(var(--alliance-glow)) 100%);
+  }
+
+  /* Role glow effects */
+  .glow-tank {
+    box-shadow: 0 0 20px hsl(var(--tank) / 0.5);
+  }
+
+  .glow-healer {
+    box-shadow: 0 0 20px hsl(var(--healer) / 0.5);
+  }
+
+  .glow-dps {
+    box-shadow: 0 0 20px hsl(var(--dps) / 0.5);
+  }
+
+  /* Luminous input */
+  .cosmic-input {
+    @apply bg-input border border-border/50 transition-all duration-300;
+  }
+
+  .cosmic-input:focus {
+    border-color: hsl(var(--primary) / 0.6);
+    box-shadow: 
+      0 0 0 2px hsl(var(--primary) / 0.1),
+      0 0 20px hsl(var(--primary) / 0.2);
+  }
+
+  /* Header glass */
+  .cosmic-header {
+    background: linear-gradient(
+      180deg,
+      hsl(235 25% 10% / 0.9) 0%,
+      hsl(235 25% 8% / 0.8) 100%
+    );
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid hsl(235 20% 20% / 0.5);
+  }
+
+  /* Stats card with role glow */
+  .stat-card {
+    @apply cosmic-glass p-6 text-center;
+    transition: all 0.3s ease;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .stat-card.tank:hover {
+    box-shadow: 0 0 40px hsl(var(--tank) / 0.3);
+    border-color: hsl(var(--tank) / 0.4);
+  }
+
+  .stat-card.healer:hover {
+    box-shadow: 0 0 40px hsl(var(--healer) / 0.3);
+    border-color: hsl(var(--healer) / 0.4);
+  }
+
+  .stat-card.dps:hover {
+    box-shadow: 0 0 40px hsl(var(--dps) / 0.3);
+    border-color: hsl(var(--dps) / 0.4);
+  }
+
+  .stat-card.confirmed:hover {
+    box-shadow: 0 0 40px hsl(var(--healer) / 0.3);
+    border-color: hsl(var(--healer) / 0.4);
+  }
+
+  .stat-card.total:hover {
+    box-shadow: 0 0 40px hsl(var(--primary) / 0.3);
+    border-color: hsl(var(--primary) / 0.4);
   }
 }
 
 @layer utilities {
-  /* Animation utilities */
+  /* Orb animations */
   .animate-float {
-    animation: float 6s ease-in-out infinite;
+    animation: float 8s ease-in-out infinite;
+  }
+
+  .animate-float-delayed {
+    animation: float 10s ease-in-out infinite;
+    animation-delay: -3s;
+  }
+
+  .animate-float-slow {
+    animation: float 12s ease-in-out infinite;
+    animation-delay: -5s;
   }
 
   @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
+    0%, 100% { 
+      transform: translate(0, 0) scale(1); 
+      opacity: 0.6;
+    }
+    25% { 
+      transform: translate(10px, -20px) scale(1.05); 
+      opacity: 0.8;
+    }
+    50% { 
+      transform: translate(-5px, -10px) scale(0.95); 
+      opacity: 0.5;
+    }
+    75% { 
+      transform: translate(-15px, -25px) scale(1.02); 
+      opacity: 0.7;
+    }
   }
 
-  .animate-pulse-slow {
-    animation: pulse-slow 3s ease-in-out infinite;
+  .animate-pulse-glow {
+    animation: pulse-glow 3s ease-in-out infinite;
   }
 
-  @keyframes pulse-slow {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-  }
-
-  .animate-gradient {
-    background-size: 200% 200%;
-    animation: gradient-shift 5s ease infinite;
+  @keyframes pulse-glow {
+    0%, 100% { 
+      opacity: 0.4;
+      filter: blur(80px);
+    }
+    50% { 
+      opacity: 0.7;
+      filter: blur(100px);
+    }
   }
 
   @keyframes gradient-shift {
     0%, 100% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-out forwards;
+  }
+
+  @keyframes fade-in {
+    from { 
+      opacity: 0; 
+      transform: translateY(20px); 
+    }
+    to { 
+      opacity: 1; 
+      transform: translateY(0); 
+    }
+  }
+
+  .animate-scale-in {
+    animation: scale-in 0.3s ease-out forwards;
+  }
+
+  @keyframes scale-in {
+    from { 
+      opacity: 0; 
+      transform: scale(0.95); 
+    }
+    to { 
+      opacity: 1; 
+      transform: scale(1); 
+    }
+  }
+
+  /* Shine effect for buttons */
+  .animate-shine {
+    animation: shine 3s ease-in-out infinite;
+  }
+
+  @keyframes shine {
+    0%, 100% { left: -100%; }
+    50% { left: 100%; }
   }
 }
