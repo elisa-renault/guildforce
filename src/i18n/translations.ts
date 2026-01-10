@@ -191,7 +191,7 @@ export const translations: Record<Language, Translations> = {
       },
     },
     auth: {
-      loginTitle: 'Welcome back',
+      loginTitle: 'Login',
       signupTitle: 'Create your account',
       loginDescription: 'Sign in to manage your guild wishes',
       signupDescription: 'Join to start collecting class wishes',
@@ -336,7 +336,7 @@ export const translations: Record<Language, Translations> = {
       },
     },
     auth: {
-      loginTitle: 'Bon retour',
+      loginTitle: 'Connexion',
       signupTitle: 'Créez votre compte',
       loginDescription: 'Connectez-vous pour gérer les vœux de votre guilde',
       signupDescription: 'Inscrivez-vous pour collecter les vœux de classes',
