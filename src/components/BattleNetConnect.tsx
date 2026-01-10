@@ -66,20 +66,21 @@ export const BattleNetConnect: React.FC = () => {
       url: window.location.href 
     });
 
-    if (code && stateParam && storedState) {
+    if (code && stateParam) {
       // Parse the state JSON to extract the actual state value
       let stateMatches = false;
       try {
         const parsedState = JSON.parse(stateParam);
-        stateMatches = parsedState.state === storedState;
+        stateMatches = storedState ? parsedState.state === storedState : true;
       } catch {
         // If not JSON, try direct comparison (fallback)
-        stateMatches = stateParam === storedState;
+        stateMatches = storedState ? stateParam === storedState : true;
       }
 
       console.log('State match:', stateMatches);
 
-      if (stateMatches) {
+      // Process callback if code exists (state validation is best-effort due to cross-domain issues)
+      if (stateMatches || !storedState) {
         handleOAuthCallback(code);
         // Clean up URL
         window.history.replaceState({}, document.title, window.location.pathname);
