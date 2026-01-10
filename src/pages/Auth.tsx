@@ -248,12 +248,13 @@ const Auth = () => {
 
           {!isLogin && (
             <div className="space-y-2">
-              <Label htmlFor="discord">{t.auth.discordPseudo}</Label>
+              <Label htmlFor="pseudo">{t.auth.pseudo}</Label>
               <Input
-                id="discord"
+                id="pseudo"
                 type="text"
                 value={discordPseudo}
                 onChange={(e) => setDiscordPseudo(e.target.value)}
+                placeholder={t.auth.pseudoPlaceholder}
                 required
               />
             </div>
