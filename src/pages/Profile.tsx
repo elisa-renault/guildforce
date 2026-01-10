@@ -26,14 +26,14 @@ const Profile = () => {
   const [saving, setSaving] = useState(false);
 
   const profileSchema = z.object({
-    discordPseudo: z.string().min(1, 'Required'),
+    username: z.string().min(1, 'Required'),
     mainCharacterName: z.string().optional(),
   });
 
   const form = useForm({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      discordPseudo: '',
+      username: '',
       mainCharacterName: '',
     },
   });
@@ -55,7 +55,7 @@ const Profile = () => {
     if (!profile) return;
 
     form.reset({
-      discordPseudo: profile.discord_pseudo || '',
+      username: profile.username || '',
       mainCharacterName: profile.main_character_name || '',
     });
   }, [profile, form]);
@@ -68,7 +68,7 @@ const Profile = () => {
       const { error } = await supabase
         .from('profiles')
         .update({
-          discord_pseudo: values.discordPseudo,
+          username: values.username,
           main_character_name: values.mainCharacterName || null,
           preferred_language: language,
         })
@@ -150,7 +150,7 @@ const Profile = () => {
                   )}
                 </div>
                 <h2 className="text-xl font-bold text-foreground">
-                  {profile?.discord_pseudo || 'Player'}
+                  {profile?.username || 'Player'}
                 </h2>
                 {profile?.battletag && (
                   <p className="text-muted-foreground text-sm mt-1">
@@ -204,7 +204,7 @@ const Profile = () => {
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FormField control={form.control} name="discordPseudo" render={({ field }) => (
+                    <FormField control={form.control} name="username" render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-foreground text-sm">{t.auth.pseudo}</FormLabel>
                         <FormControl>
