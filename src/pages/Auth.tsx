@@ -201,8 +201,9 @@ const Auth = () => {
 
         <div className="text-center mb-6 pt-8">
           <h2 className="font-display text-2xl font-normal gradient-text mb-2">
-            {isLogin ? t.auth.loginTitle : t.auth.signupTitle}
+            {t.auth.loginTitle}
           </h2>
+          <p className="text-sm text-muted-foreground">{t.auth.bnetNote}</p>
         </div>
 
         {/* Battle.net Login Button */}
