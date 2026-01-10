@@ -3,13 +3,13 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ClassSelector } from '@/components/ClassSelector';
-import { SpecSelector } from '@/components/SpecSelector';
+import { ClassGrid } from '@/components/ClassGrid';
+import { SpecButtons } from '@/components/SpecButtons';
+import { CommitmentToggle } from '@/components/CommitmentToggle';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
@@ -199,21 +199,9 @@ const Wishes = () => {
           <p className="text-muted-foreground text-lg">{t.wishes.subtitle}</p>
         </div>
 
-        {/* Status toggle */}
+        {/* Commitment toggle */}
         <GlowCard className="p-6 mb-8 animate-fade-in" style={{ animationDelay: '100ms' } as React.CSSProperties}>
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="text-base text-foreground">{t.wishes.status}</Label>
-              <p className={`text-sm mt-1 ${confirmed ? 'text-healer' : 'text-muted-foreground'}`}>
-                {confirmed ? t.wishes.confirmed : t.wishes.potential}
-              </p>
-            </div>
-            <Switch 
-              checked={confirmed} 
-              onCheckedChange={setConfirmed}
-              className="data-[state=checked]:bg-healer"
-            />
-          </div>
+          <CommitmentToggle confirmed={confirmed} onChange={setConfirmed} />
         </GlowCard>
 
         {/* Wish cards */}
@@ -241,8 +229,8 @@ const Wishes = () => {
 
               <div className="space-y-5">
                 <div>
-                  <Label className="text-foreground mb-2 block">{t.wishes.selectClass}</Label>
-                  <ClassSelector
+                  <Label className="text-foreground mb-3 block">{t.wishes.selectClass}</Label>
+                  <ClassGrid
                     value={wish.classId}
                     onChange={(classId) => updateWish(index, 'classId', classId)}
                   />
@@ -250,8 +238,8 @@ const Wishes = () => {
 
                 {wish.classId && (
                   <div className="animate-fade-in">
-                    <Label className="text-foreground mb-2 block">{t.wishes.selectSpecs}</Label>
-                    <SpecSelector
+                    <Label className="text-foreground mb-3 block">{t.wishes.selectSpecs}</Label>
+                    <SpecButtons
                       classId={wish.classId}
                       selectedSpecs={wish.specIds}
                       onChange={(specIds) => updateWish(index, 'specIds', specIds)}
