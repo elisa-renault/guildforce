@@ -222,7 +222,7 @@ const Auth = () => {
           size="lg"
           onClick={handleBattleNetLogin}
           disabled={bnetLoading}
-          icon={<BattleNetIcon className="h-6 w-6" />}
+          icon={<BattleNetIcon className="h-7 w-7" />}
         >
           {t.auth.loginWithBattleNet}
         </CosmicButton>
