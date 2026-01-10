@@ -46,15 +46,12 @@ const Index = () => {
       </header>
 
       {/* Hero */}
-      <main className="container mx-auto px-6 pt-32 pb-16 relative z-10">
-        <div className="text-center max-w-4xl mx-auto mb-24">
-          {/* Badge - like reference */}
-          
-
-          {/* Title with gradient - like reference */}
+      <main className="min-h-screen flex items-center justify-center relative z-10">
+        <div className="text-center max-w-4xl mx-auto px-6">
+          {/* Title with gradient */}
           <h1 className="font-display text-5xl md:text-7xl mb-8 animate-fade-in leading-tight" style={{
-          animationDelay: '100ms'
-        }}>
+            animationDelay: '100ms'
+          }}>
             <span className="text-foreground">{t.home.subtitle.split(' ').slice(0, 2).join(' ')}</span>
             {' '}
             <span className="gradient-text">{t.home.subtitle.split(' ').slice(2).join(' ')}</span>
@@ -62,15 +59,15 @@ const Index = () => {
 
           {/* Subtitle */}
           <p className="text-lg text-muted-foreground mb-12 max-w-2xl mx-auto animate-fade-in leading-relaxed" style={{
-          animationDelay: '200ms'
-        }}>
+            animationDelay: '200ms'
+          }}>
             {t.home.description}
           </p>
 
-          {/* CTA Buttons - like reference */}
+          {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in" style={{
-          animationDelay: '300ms'
-        }}>
+            animationDelay: '300ms'
+          }}>
             <CosmicButton size="lg" onClick={() => navigate(user ? '/guild/create' : '/auth')} icon={<Shield className="h-5 w-5" />}>
               {t.home.createGuild}
             </CosmicButton>
@@ -78,53 +75,6 @@ const Index = () => {
               {t.home.joinGuild}
             </CosmicButton>
           </div>
-        </div>
-
-        {/* Features - glass cards */}
-        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-20">
-          {[{
-          icon: Users,
-          ...t.home.features.collect
-        }, {
-          icon: BarChart3,
-          ...t.home.features.visualize
-        }, {
-          icon: FileSpreadsheet,
-          ...t.home.features.export
-        }].map((feature, i) => <GlowCard key={i} className="p-8 animate-fade-in" hoverable style={{
-          animationDelay: `${400 + i * 100}ms`
-        } as React.CSSProperties}>
-              <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-6">
-                <feature.icon className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="font-display text-lg mb-3 text-foreground">{feature.title}</h3>
-              <p className="text-muted-foreground text-sm leading-relaxed">{feature.description}</p>
-            </GlowCard>)}
-        </div>
-
-        {/* Stats section - like reference */}
-        <div className="max-w-4xl mx-auto">
-          <GlowCard className="p-8 animate-fade-in" style={{
-          animationDelay: '700ms'
-        } as React.CSSProperties}>
-            <div className="grid grid-cols-3 gap-8 divide-x divide-border">
-              <div className="text-center">
-                <p className="text-sm text-muted-foreground mb-2">{language === 'fr' ? 'Guildes actives' : 'Active Guilds'}</p>
-                <p className="font-display text-3xl gradient-text">100+</p>
-                <p className="text-xs text-muted-foreground mt-1">{language === 'fr' ? 'Et en croissance' : 'And growing'}</p>
-              </div>
-              <div className="text-center pl-8">
-                <p className="text-sm text-muted-foreground mb-2">{language === 'fr' ? 'Mise à jour' : 'Updates'}</p>
-                <p className="font-display text-3xl gradient-text">{language === 'fr' ? 'Temps réel' : 'Real-time'}</p>
-                <p className="text-xs text-muted-foreground mt-1">{language === 'fr' ? 'Synchronisation instantanée' : 'Instant sync'}</p>
-              </div>
-              <div className="text-center pl-8">
-                <p className="text-sm text-muted-foreground mb-2">{language === 'fr' ? 'Fiabilité' : 'Reliability'}</p>
-                <p className="font-display text-3xl gradient-text">99%</p>
-                <p className="text-xs text-muted-foreground mt-1">{language === 'fr' ? 'Disponibilité' : 'Uptime'}</p>
-              </div>
-            </div>
-          </GlowCard>
         </div>
       </main>
     </div>;
