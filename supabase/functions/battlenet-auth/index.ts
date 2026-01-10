@@ -231,19 +231,18 @@ Deno.serve(async (req) => {
         console.error('Failed to read profile by id:', profileByIdError);
       }
 
+      // ALWAYS include required fields to avoid not-null constraint violations.
+      // Use existing values if profile exists, otherwise use defaults.
       const profileUpsert: any = {
         id: userId,
         battlenet_id: String(userInfo.id),
         battlenet_token: tokenData.access_token,
         battlenet_token_expires_at: expiresAt,
         battletag: userInfo.battletag,
+        // Required fields - use existing or default
+        discord_pseudo: profileById?.discord_pseudo || battletagName,
+        preferred_language: profileById?.preferred_language || 'fr',
       };
-
-      // Only set defaults when inserting a missing profile, to avoid overriding user-edited values.
-      if (!profileById) {
-        profileUpsert.discord_pseudo = battletagName;
-        profileUpsert.preferred_language = 'fr';
-      }
 
       const { error: profileUpsertError } = await supabase
         .from('profiles')
@@ -413,7 +412,7 @@ Deno.serve(async (req) => {
 
       const { data: existingProfileRow, error: existingProfileErr } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, discord_pseudo, preferred_language')
         .eq('id', user.id)
         .maybeSingle();
 
@@ -421,19 +420,17 @@ Deno.serve(async (req) => {
         console.error('Failed to read profile before linking:', existingProfileErr);
       }
 
+      // ALWAYS include required fields to avoid not-null constraint violations
       const upsertPayload: any = {
         id: user.id,
         battlenet_id: String(userInfo.id),
         battlenet_token: tokenData.access_token,
         battlenet_token_expires_at: expiresAt,
         battletag: userInfo.battletag,
+        // Required fields - use existing or default
+        discord_pseudo: existingProfileRow?.discord_pseudo || battletagName,
+        preferred_language: existingProfileRow?.preferred_language || 'fr',
       };
-
-      // Required fields if profile row is missing
-      if (!existingProfileRow) {
-        upsertPayload.discord_pseudo = battletagName;
-        upsertPayload.preferred_language = 'fr';
-      }
 
       const { error: profileError } = await supabase
         .from('profiles')
