@@ -293,7 +293,7 @@
       0 4px 12px hsl(277 70% 25% / 0.4);
   }
 
-  /* Spotlight effect for buttons and cards */
+  /* Spotlight effect for buttons - small and dense */
   .primary-button .spotlight,
   .horde-button .spotlight,
   .alliance-button .spotlight,
@@ -302,9 +302,9 @@
     inset: 0;
     border-radius: inherit;
     background: radial-gradient(
-      circle 150px at var(--mouse-x, 50%) var(--mouse-y, 50%),
-      hsl(20 80% 65% / 0.2) 0%,
-      hsl(20 60% 60% / 0.08) 50%,
+      circle 80px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+      hsl(20 80% 65% / 0.35) 0%,
+      hsl(20 60% 60% / 0.15) 40%,
       transparent 100%
     );
     opacity: 0;
@@ -323,14 +323,15 @@
     z-index: 1;
   }
 
+  /* Spotlight effect for cards - large and diffuse */
   .glass-card .spotlight {
     position: absolute;
     inset: 0;
     border-radius: inherit;
     background: radial-gradient(
-      circle 250px at var(--mouse-x, 50%) var(--mouse-y, 50%),
-      hsl(20 80% 65% / 0.15) 0%,
-      hsl(20 60% 60% / 0.06) 50%,
+      circle 400px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+      hsl(20 80% 65% / 0.08) 0%,
+      hsl(20 60% 60% / 0.03) 50%,
       transparent 100%
     );
     opacity: 0;
