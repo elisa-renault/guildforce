@@ -91,7 +91,7 @@ const CreateGuild = () => {
           className="absolute left-4 top-4 text-muted-foreground hover:text-foreground hover:bg-white/5" 
           onClick={() => navigate('/')}
         >
-          <ArrowLeft className="h-4 w-4 mr-2" /> {t.common.back}
+          <ArrowLeft className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.common.back}
         </Button>
 
         <div className="text-center mb-8 pt-4">
@@ -102,7 +102,7 @@ const CreateGuild = () => {
                 : 'gradient-alliance shadow-alliance/30'
             }`}
           >
-            <Shield className="h-8 w-8 text-white" />
+            <Shield className="h-8 w-8 text-white" strokeWidth={1.5} />
           </div>
           <h2 className="text-2xl font-bold text-foreground mb-2">{t.guild.create}</h2>
           <p className="text-muted-foreground">Create a new guild to collect class wishes</p>
@@ -156,7 +156,7 @@ const CreateGuild = () => {
                       }`}
                     >
                       <RadioGroupItem value="alliance" id="alliance" className="sr-only" />
-                      <Shield className="h-5 w-5" />
+                      <Shield className="h-5 w-5" strokeWidth={1.5} />
                       <span className="font-semibold">{t.guild.alliance}</span>
                     </label>
                     <label 
@@ -168,7 +168,7 @@ const CreateGuild = () => {
                       }`}
                     >
                       <RadioGroupItem value="horde" id="horde" className="sr-only" />
-                      <Swords className="h-5 w-5" />
+                      <Swords className="h-5 w-5" strokeWidth={1.5} />
                       <span className="font-semibold">{t.guild.horde}</span>
                     </label>
                   </RadioGroup>
