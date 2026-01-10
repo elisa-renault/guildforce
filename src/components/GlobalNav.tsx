@@ -33,27 +33,27 @@ export const GlobalNav = () => {
               variant="ghost"
               size="sm"
               onClick={() => navigate('/guilds')}
-              className={`text-sm hover:bg-white/5 ${
+              className={`w-28 text-sm hover:bg-white/5 justify-center ${
                 isActive('/guilds') || location.pathname.startsWith('/guild/')
                   ? 'text-primary bg-primary/10'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              <Shield className="h-4 w-4 mr-1.5" strokeWidth={1.5} />
-              {t.common.myGuilds}
+              <Shield className="h-4 w-4 mr-1.5 flex-shrink-0" strokeWidth={1.5} />
+              <span className="truncate">{t.common.myGuilds}</span>
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => navigate('/profile')}
-              className={`text-sm hover:bg-white/5 ${
+              className={`w-28 text-sm hover:bg-white/5 justify-center ${
                 isActive('/profile')
                   ? 'text-primary bg-primary/10'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              <User className="h-4 w-4 mr-1.5" strokeWidth={1.5} />
-              {t.profile.title}
+              <User className="h-4 w-4 mr-1.5 flex-shrink-0" strokeWidth={1.5} />
+              <span className="truncate">{t.profile.title}</span>
             </Button>
           </nav>
         )}
