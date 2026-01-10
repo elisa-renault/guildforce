@@ -422,7 +422,7 @@ Deno.serve(async (req) => {
   }
 });
 
-// Helper function to fetch and store WoW characters
+// Helper function to fetch and store WoW characters and guild memberships
 async function fetchAndStoreCharacters(supabase: any, accessToken: string, userId: string) {
   try {
     console.log('Fetching WoW profile from Battle.net API...');
@@ -443,24 +443,25 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
     }
 
     const wowProfile = await wowProfileResponse.json();
-    
-    // Log the raw response structure to understand the API format
     console.log('WoW Profile raw response keys:', Object.keys(wowProfile));
-    console.log('WoW Profile full response:', JSON.stringify(wowProfile, null, 2));
 
-    const characters: Array<{
+    interface CharacterData {
       name: string;
       realm: string;
       realmSlug: string;
       classId: number;
       level: number;
       guildName?: string;
-    }> = [];
+      guildRealm?: string;
+      guildRealmSlug?: string;
+      guildFaction?: string;
+    }
+
+    const characters: CharacterData[] = [];
 
     // Check if wow_accounts exists and has data
     if (!wowProfile.wow_accounts || wowProfile.wow_accounts.length === 0) {
       console.log('No wow_accounts found in response');
-      console.log('Response structure:', JSON.stringify(wowProfile, null, 2));
       return;
     }
 
@@ -471,25 +472,15 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
       console.log(`Processing WoW account ID: ${account.id}, characters count: ${account.characters?.length || 0}`);
       
       if (!account.characters || account.characters.length === 0) {
-        console.log('No characters in this account');
         continue;
       }
 
-      // Log first character to understand structure
-      if (account.characters.length > 0) {
-        console.log('First character sample:', JSON.stringify(account.characters[0], null, 2));
-      }
-
       for (const char of account.characters) {
-        // Battle.net API returns characters directly with these fields:
-        // name, realm { name, slug, id }, playable_class { id }, level, faction, etc.
         const name = char.name;
         const realm = char.realm?.name || char.realm?.slug || 'Unknown';
         const realmSlug = char.realm?.slug || 'unknown';
         const classId = char.playable_class?.id || 0;
         const level = char.level || 0;
-
-        console.log(`Character: ${name} - ${realm} - Class ${classId} - Level ${level}`);
 
         if (name) {
           characters.push({
@@ -507,37 +498,218 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
     characters.sort((a, b) => b.level - a.level);
     console.log(`Total characters found: ${characters.length}`);
 
-    if (characters.length > 0) {
-      // First delete existing characters for this user
-      const { error: deleteError } = await supabase.from('wow_characters').delete().eq('user_id', userId);
-      if (deleteError) {
-        console.error('Failed to delete existing characters:', deleteError);
-      }
+    if (characters.length === 0) {
+      console.log('No characters to save');
+      return;
+    }
 
-      // Insert new characters
-      const insertData = characters.map((char, index) => ({
+    // First delete existing characters and guild memberships for this user
+    await supabase.from('wow_guild_memberships').delete().eq('user_id', userId);
+    await supabase.from('wow_characters').delete().eq('user_id', userId);
+
+    // Insert characters
+    const insertData = characters.map((char, index) => ({
+      user_id: userId,
+      name: char.name,
+      realm: char.realm,
+      realm_slug: char.realmSlug,
+      class_id: char.classId,
+      level: char.level,
+      guild_name: null,
+      is_main: index === 0,
+    }));
+
+    const { data: insertedChars, error: charError } = await supabase
+      .from('wow_characters')
+      .insert(insertData)
+      .select('id, name, realm_slug');
+
+    if (charError) {
+      console.error('Failed to insert characters:', charError);
+      return;
+    }
+
+    console.log(`Successfully saved ${characters.length} characters to database`);
+
+    // Now fetch detailed character info to get guild memberships
+    // Only check max level characters to save API calls
+    const maxLevelChars = characters.filter(c => c.level >= 70).slice(0, 20);
+    console.log(`Checking ${maxLevelChars.length} max-level characters for guild info...`);
+
+    const guildMemberships: Array<{
+      characterId: string;
+      guildName: string;
+      guildRealm: string;
+      guildRealmSlug: string;
+      guildFaction: string;
+      rankIndex: number;
+      rankName: string;
+    }> = [];
+
+    // Map to track unique guilds we need to fetch rosters for
+    const guildsToCheck: Map<string, { name: string; realmSlug: string; faction: string; characterIds: string[] }> = new Map();
+
+    // Fetch character details to get guild info
+    for (const char of maxLevelChars) {
+      try {
+        const charDetailUrl = `${BATTLENET_API_URL}/profile/wow/character/${char.realmSlug.toLowerCase()}/${char.name.toLowerCase()}?namespace=profile-eu&locale=en_GB`;
+        
+        const charDetailResponse = await fetch(charDetailUrl, {
+          headers: { 'Authorization': `Bearer ${accessToken}` },
+        });
+
+        if (!charDetailResponse.ok) {
+          console.log(`Failed to fetch details for ${char.name}: ${charDetailResponse.status}`);
+          continue;
+        }
+
+        const charDetail = await charDetailResponse.json();
+        
+        if (charDetail.guild) {
+          console.log(`Character ${char.name} is in guild: ${charDetail.guild.name}`);
+          
+          const guildKey = `${charDetail.guild.name}-${charDetail.guild.realm?.slug || char.realmSlug}`;
+          const guildRealmSlug = charDetail.guild.realm?.slug || char.realmSlug;
+          const guildFaction = charDetail.faction?.type || 'UNKNOWN';
+          
+          // Find the inserted character ID
+          const insertedChar = insertedChars?.find(
+            (ic: any) => ic.name.toLowerCase() === char.name.toLowerCase() && ic.realm_slug === char.realmSlug
+          );
+          
+          if (insertedChar) {
+            // Update the character with guild name
+            await supabase
+              .from('wow_characters')
+              .update({ 
+                guild_name: charDetail.guild.name,
+                guild_realm: charDetail.guild.realm?.name || char.realm,
+              })
+              .eq('id', insertedChar.id);
+
+            if (!guildsToCheck.has(guildKey)) {
+              guildsToCheck.set(guildKey, {
+                name: charDetail.guild.name,
+                realmSlug: guildRealmSlug,
+                faction: guildFaction,
+                characterIds: [insertedChar.id],
+              });
+            } else {
+              guildsToCheck.get(guildKey)!.characterIds.push(insertedChar.id);
+            }
+          }
+        }
+      } catch (err) {
+        console.error(`Error fetching details for ${char.name}:`, err);
+      }
+    }
+
+    console.log(`Found ${guildsToCheck.size} unique guilds to check for ranks`);
+
+    // Now fetch roster for each guild to get member ranks
+    for (const [guildKey, guildInfo] of guildsToCheck) {
+      try {
+        // Guild name needs to be slugified (lowercase, spaces to hyphens)
+        const guildSlug = guildInfo.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        const rosterUrl = `${BATTLENET_API_URL}/data/wow/guild/${guildInfo.realmSlug}/${encodeURIComponent(guildSlug)}/roster?namespace=profile-eu&locale=en_GB`;
+        
+        console.log(`Fetching roster for guild: ${guildInfo.name} (${rosterUrl})`);
+        
+        const rosterResponse = await fetch(rosterUrl, {
+          headers: { 'Authorization': `Bearer ${accessToken}` },
+        });
+
+        if (!rosterResponse.ok) {
+          console.log(`Failed to fetch roster for ${guildInfo.name}: ${rosterResponse.status}`);
+          
+          // Even without roster, save guild membership with unknown rank
+          for (const charId of guildInfo.characterIds) {
+            guildMemberships.push({
+              characterId: charId,
+              guildName: guildInfo.name,
+              guildRealm: guildInfo.realmSlug,
+              guildRealmSlug: guildInfo.realmSlug,
+              guildFaction: guildInfo.faction,
+              rankIndex: 99, // Unknown rank
+              rankName: 'Unknown',
+            });
+          }
+          continue;
+        }
+
+        const roster = await rosterResponse.json();
+        console.log(`Roster has ${roster.members?.length || 0} members`);
+
+        // Find our characters in the roster
+        for (const charId of guildInfo.characterIds) {
+          const insertedChar = insertedChars?.find((ic: any) => ic.id === charId);
+          if (!insertedChar) continue;
+
+          const rosterMember = roster.members?.find(
+            (m: any) => m.character?.name?.toLowerCase() === insertedChar.name.toLowerCase()
+          );
+
+          if (rosterMember) {
+            console.log(`Found ${insertedChar.name} in roster with rank ${rosterMember.rank}`);
+            guildMemberships.push({
+              characterId: charId,
+              guildName: guildInfo.name,
+              guildRealm: guildInfo.realmSlug,
+              guildRealmSlug: guildInfo.realmSlug,
+              guildFaction: guildInfo.faction,
+              rankIndex: rosterMember.rank ?? 99,
+              rankName: rosterMember.rank === 0 ? 'Guild Master' : `Rank ${rosterMember.rank}`,
+            });
+          } else {
+            // Character not found in roster, save with unknown rank
+            guildMemberships.push({
+              characterId: charId,
+              guildName: guildInfo.name,
+              guildRealm: guildInfo.realmSlug,
+              guildRealmSlug: guildInfo.realmSlug,
+              guildFaction: guildInfo.faction,
+              rankIndex: 99,
+              rankName: 'Unknown',
+            });
+          }
+        }
+      } catch (err) {
+        console.error(`Error fetching roster for ${guildInfo.name}:`, err);
+      }
+    }
+
+    // Insert guild memberships
+    if (guildMemberships.length > 0) {
+      console.log(`Inserting ${guildMemberships.length} guild memberships`);
+      
+      const membershipData = guildMemberships.map(gm => ({
         user_id: userId,
-        name: char.name,
-        realm: char.realm,
-        realm_slug: char.realmSlug,
-        class_id: char.classId,
-        level: char.level,
-        guild_name: char.guildName || null,
-        is_main: index === 0,
+        character_id: gm.characterId,
+        guild_name: gm.guildName,
+        guild_realm: gm.guildRealm,
+        guild_realm_slug: gm.guildRealmSlug,
+        guild_faction: gm.guildFaction,
+        rank_index: gm.rankIndex,
+        rank_name: gm.rankName,
       }));
 
-      console.log('Inserting characters:', JSON.stringify(insertData.slice(0, 3), null, 2));
+      const { error: membershipError } = await supabase
+        .from('wow_guild_memberships')
+        .insert(membershipData);
 
-      const { error: charError } = await supabase.from('wow_characters').insert(insertData);
-
-      if (charError) {
-        console.error('Failed to insert characters:', charError);
+      if (membershipError) {
+        console.error('Failed to insert guild memberships:', membershipError);
       } else {
-        console.log(`Successfully saved ${characters.length} characters to database`);
+        console.log(`Successfully saved ${guildMemberships.length} guild memberships`);
+        
+        // Log GM status
+        const gmMemberships = guildMemberships.filter(gm => gm.rankIndex === 0);
+        if (gmMemberships.length > 0) {
+          console.log(`User is Guild Master of ${gmMemberships.length} guild(s)!`);
+        }
       }
-    } else {
-      console.log('No characters to save');
     }
+
   } catch (error) {
     console.error('Error fetching characters:', error);
   }
