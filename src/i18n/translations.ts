@@ -105,6 +105,7 @@ export interface Translations {
     rank0: string;
     createInApp: string;
     alreadyInApp: string;
+    accessGuild: string;
   };
   // Wishes
   wishes: {
@@ -281,6 +282,7 @@ export const translations: Record<Language, Translations> = {
       rank0: 'GM',
       createInApp: 'Create in Guildforce',
       alreadyInApp: 'Already created in Guildforce',
+      accessGuild: 'Manage Guild',
     },
     wishes: {
       title: 'My Class Wishes',
@@ -451,6 +453,7 @@ export const translations: Record<Language, Translations> = {
       rank0: 'GM',
       createInApp: 'Créer dans Guildforce',
       alreadyInApp: 'Déjà créée dans Guildforce',
+      accessGuild: 'Gérer la guilde',
     },
     wishes: {
       title: 'Mes vœux de classe',
