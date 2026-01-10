@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -14,7 +13,7 @@ import { RoleBadge } from '@/components/RoleBadge';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
-import { Loader2, ArrowLeft, Copy, Download, Users, Shield, Heart, Swords, CheckCircle, HelpCircle, Search, Sparkles } from 'lucide-react';
+import { Loader2, Copy, Download, Users, Shield, Heart, Swords, CheckCircle, HelpCircle, Search, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface MemberWish {
@@ -212,20 +211,13 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-screen relative pt-16">
       <CosmicBackground />
 
-      <header className="sticky top-0 z-50 cosmic-header">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => navigate('/guilds')}
-            className="text-muted-foreground hover:text-foreground hover:bg-white/5"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.common.back}
-          </Button>
-          <h1 className="text-xl font-bold text-foreground">{guild?.name} - {t.dashboard.title}</h1>
+      {/* Sticky toolbar */}
+      <div className="sticky top-14 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+          <h1 className="text-lg font-semibold text-foreground">{guild?.name}</h1>
           <div className="flex gap-2">
             <CosmicButton size="sm" variant="outline" onClick={() => navigate(`/guild/${guildId}/wishes`)}>
               <Sparkles className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.wishes.title}
@@ -238,7 +230,7 @@ const Dashboard = () => {
             </CosmicButton>
           </div>
         </div>
-      </header>
+      </div>
 
       <main className="container mx-auto px-4 py-8 relative z-10">
         {/* Stats */}

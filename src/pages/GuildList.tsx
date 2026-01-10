@@ -1,14 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
-import { Shield, Users, Plus, ArrowLeft, Crown, Loader2, User } from 'lucide-react';
+import { Shield, Crown, Loader2 } from 'lucide-react';
 
 interface GuildWithMembership {
   id: string;
@@ -61,32 +59,8 @@ const GuildList = () => {
   }, [user, navigate]);
 
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-screen relative pt-16">
       <CosmicBackground />
-
-      <header className="sticky top-0 z-50 cosmic-header">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => navigate('/')}
-            className="text-muted-foreground hover:text-foreground hover:bg-white/5"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.common.back}
-          </Button>
-          <h1 className="text-xl font-bold text-foreground">{t.common.myGuilds}</h1>
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/profile')}
-              className="text-muted-foreground hover:text-foreground hover:bg-white/5"
-            >
-              <User className="h-4 w-4" strokeWidth={1.5} />
-            </Button>
-          </div>
-        </div>
-      </header>
 
       <main className="container mx-auto px-4 py-8 relative z-10">
         {loading ? (
