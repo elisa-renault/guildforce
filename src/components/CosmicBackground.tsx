@@ -1,98 +1,83 @@
-import { useMemo } from 'react';
-
-interface CosmicOrb {
-  id: number;
-  color: string;
-  size: number;
-  x: number;
-  y: number;
-  animation: string;
-  opacity: number;
-}
-
 interface CosmicBackgroundProps {
   variant?: 'default' | 'horde' | 'alliance';
 }
 
 export const CosmicBackground = ({ variant = 'default' }: CosmicBackgroundProps) => {
-  const orbs = useMemo<CosmicOrb[]>(() => {
-    const baseOrbs: CosmicOrb[] = [
-      { id: 1, color: '', size: 400, x: 15, y: 10, animation: 'animate-float', opacity: 0.04 },
-      { id: 2, color: '', size: 350, x: 75, y: 55, animation: 'animate-float-delayed', opacity: 0.03 },
-      { id: 3, color: '', size: 300, x: 5, y: 75, animation: 'animate-float-slow', opacity: 0.025 },
-      { id: 4, color: '', size: 250, x: 85, y: 15, animation: 'animate-float', opacity: 0.035 },
-    ];
-
-    // Assign colors based on variant - very deep and subtle
-    const colors = {
-      default: [
-        'bg-[hsl(280_40%_18%)]', // deep plum
-        'bg-[hsl(42_45%_20%)]',  // dark gold
-        'bg-[hsl(270_35%_14%)]', // deep violet
-        'bg-[hsl(280_35%_16%)]', // dark plum
-      ],
-      horde: [
-        'bg-[hsl(5_50%_18%)]',
-        'bg-[hsl(15_45%_16%)]',
-        'bg-[hsl(0_45%_14%)]',
-        'bg-[hsl(10_50%_17%)]',
-      ],
-      alliance: [
-        'bg-[hsl(215_50%_20%)]',
-        'bg-[hsl(210_45%_18%)]',
-        'bg-[hsl(220_40%_16%)]',
-        'bg-[hsl(215_45%_19%)]',
-      ],
-    };
-
-    return baseOrbs.map((orb, i) => ({
-      ...orb,
-      color: colors[variant][i],
-    }));
-  }, [variant]);
+  // Determine accent color based on variant
+  const accentColor = variant === 'horde' 
+    ? 'var(--horde)' 
+    : variant === 'alliance' 
+    ? 'var(--alliance)' 
+    : 'var(--primary)';
 
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-      {/* Base gradient - very dark and subtle */}
+      {/* Base very dark background */}
       <div 
         className="absolute inset-0"
         style={{
-          background: variant === 'default' 
-            ? `
-              radial-gradient(ellipse 70% 50% at 50% 0%, hsl(280 35% 12% / 0.2) 0%, transparent 60%),
-              radial-gradient(ellipse 50% 35% at 100% 100%, hsl(42 40% 15% / 0.12) 0%, transparent 50%),
-              radial-gradient(ellipse 40% 30% at 0% 80%, hsl(270 30% 12% / 0.12) 0%, transparent 50%),
-              hsl(var(--background))
-            `
-            : variant === 'horde'
-            ? `
-              radial-gradient(ellipse 70% 50% at 50% 0%, hsl(5 45% 14% / 0.2) 0%, transparent 60%),
-              radial-gradient(ellipse 50% 35% at 100% 100%, hsl(15 40% 12% / 0.12) 0%, transparent 50%),
-              hsl(var(--background))
-            `
-            : `
-              radial-gradient(ellipse 70% 50% at 50% 0%, hsl(215 40% 16% / 0.2) 0%, transparent 60%),
-              radial-gradient(ellipse 50% 35% at 100% 100%, hsl(210 35% 14% / 0.12) 0%, transparent 50%),
-              hsl(var(--background))
-            `,
+          background: `hsl(var(--background))`
         }}
       />
 
-      {/* Animated orbs - very subtle and blurred */}
-      {orbs.map((orb) => (
-        <div
-          key={orb.id}
-          className={`absolute rounded-full ${orb.color} blur-[150px] ${orb.animation}`}
-          style={{
-            width: orb.size,
-            height: orb.size,
-            left: `${orb.x}%`,
-            top: `${orb.y}%`,
-            transform: 'translate(-50%, -50%)',
-            opacity: orb.opacity,
-          }}
-        />
-      ))}
+      {/* Subtle top gradient glow */}
+      <div 
+        className="absolute top-0 left-0 right-0 h-[600px]"
+        style={{
+          background: `radial-gradient(ellipse 80% 50% at 50% 0%, hsl(${accentColor} / 0.08) 0%, transparent 70%)`
+        }}
+      />
+
+      {/* Central ellipse glow */}
+      <div 
+        className="absolute top-[40%] left-1/2 -translate-x-1/2 w-[800px] h-[400px]"
+        style={{
+          background: `radial-gradient(ellipse 50% 40% at 50% 50%, hsl(${accentColor} / 0.1) 0%, transparent 70%)`
+        }}
+      />
+
+      {/* Arc lines - decorative curves */}
+      <div 
+        className="absolute top-[35%] left-1/2 -translate-x-1/2 w-[900px] h-[450px] border border-white/[0.03] rounded-[50%]"
+      />
+      <div 
+        className="absolute top-[38%] left-1/2 -translate-x-1/2 w-[700px] h-[350px] border border-white/[0.02] rounded-[50%]"
+      />
+
+      {/* Light beam from center bottom */}
+      <div 
+        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[2px] h-[300px]"
+        style={{
+          background: `linear-gradient(to top, hsl(${accentColor} / 0.4) 0%, hsl(${accentColor} / 0.1) 50%, transparent 100%)`
+        }}
+      />
+
+      {/* Wider glow at beam base */}
+      <div 
+        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[200px] h-[150px]"
+        style={{
+          background: `radial-gradient(ellipse 50% 50% at 50% 100%, hsl(${accentColor} / 0.2) 0%, transparent 70%)`
+        }}
+      />
+
+      {/* Subtle side accent on the left */}
+      <div 
+        className="absolute top-0 left-0 w-[400px] h-full"
+        style={{
+          background: `linear-gradient(135deg, hsl(${accentColor} / 0.03) 0%, transparent 50%)`
+        }}
+      />
+
+      {/* Subtle side accent on the right */}
+      <div 
+        className="absolute top-0 right-0 w-[400px] h-full"
+        style={{
+          background: `linear-gradient(225deg, hsl(${accentColor} / 0.03) 0%, transparent 50%)`
+        }}
+      />
+
+      {/* Noise overlay */}
+      <div className="noise-overlay" />
     </div>
   );
 };
