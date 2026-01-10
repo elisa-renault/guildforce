@@ -211,7 +211,7 @@ Deno.serve(async (req) => {
       if (!tokenResponse.ok) {
         const errorText = await tokenResponse.text();
         log.error('Token exchange failed:', errorText);
-        return new Response(JSON.stringify({ error: 'Failed to exchange token', details: errorText }), {
+        return new Response(JSON.stringify({ error: 'Authentication failed. Please try again.' }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
@@ -415,7 +415,7 @@ Deno.serve(async (req) => {
       if (!tokenResponse.ok) {
         const errorText = await tokenResponse.text();
         log.error('Token exchange failed:', errorText);
-        return new Response(JSON.stringify({ error: 'Failed to exchange token', details: errorText }), {
+        return new Response(JSON.stringify({ error: 'Authentication failed. Please try again.' }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
@@ -560,7 +560,7 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     log.error('Error:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error', details: String(error) }), {
+    return new Response(JSON.stringify({ error: 'An error occurred. Please try again later.' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
