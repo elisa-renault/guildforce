@@ -96,7 +96,12 @@ const Auth = () => {
           description: `Connected as ${data.battletag}`,
         });
 
-        navigate('/guilds', { replace: true });
+        // Redirect new users to profile setup, existing users to guilds
+        if (data.isNewUser) {
+          navigate('/profile?setup=true', { replace: true });
+        } else {
+          navigate('/guilds', { replace: true });
+        }
       }
     } catch (error: any) {
       console.error('Battle.net callback error:', error);
