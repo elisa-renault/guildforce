@@ -92,12 +92,12 @@ const JoinGuild = () => {
           className="absolute left-4 top-4 text-muted-foreground hover:text-foreground hover:bg-white/5" 
           onClick={() => navigate('/')}
         >
-          <ArrowLeft className="h-4 w-4 mr-2" /> {t.common.back}
+          <ArrowLeft className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.common.back}
         </Button>
 
         <div className="text-center mb-8 pt-4">
           <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-secondary to-accent flex items-center justify-center shadow-lg shadow-secondary/25">
-            <Users className="h-8 w-8 text-white" />
+            <Users className="h-8 w-8 text-white" strokeWidth={1.5} />
           </div>
           <h2 className="text-2xl font-bold cosmic-text mb-2">{t.guild.join}</h2>
           <p className="text-muted-foreground">Enter the invite key shared by your GM</p>
@@ -108,7 +108,7 @@ const JoinGuild = () => {
             <FormField control={form.control} name="inviteKey" render={({ field }) => (
               <FormItem>
                 <FormLabel className="flex items-center gap-2 text-foreground">
-                  <KeyRound className="h-4 w-4 text-primary" />
+                  <KeyRound className="h-4 w-4 text-primary" strokeWidth={1.5} />
                   {t.guild.inviteKey}
                 </FormLabel>
                 <FormControl>
