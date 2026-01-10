@@ -14,7 +14,7 @@ import { RoleBadge } from '@/components/RoleBadge';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
-import { Loader2, ArrowLeft, Copy, Download, Users, Shield, Heart, Swords, CheckCircle, HelpCircle, Search } from 'lucide-react';
+import { Loader2, ArrowLeft, Copy, Download, Users, Shield, Heart, Swords, CheckCircle, HelpCircle, Search, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface MemberWish {
@@ -227,6 +227,9 @@ const Dashboard = () => {
           </Button>
           <h1 className="text-xl font-bold text-foreground">{guild?.name} - {t.dashboard.title}</h1>
           <div className="flex gap-2">
+            <CosmicButton size="sm" variant="outline" onClick={() => navigate(`/guild/${guildId}/wishes`)}>
+              <Sparkles className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.wishes.title}
+            </CosmicButton>
             <CosmicButton size="sm" variant="outline" onClick={copyInviteLink}>
               <Copy className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.guild.copyInvite}
             </CosmicButton>
