@@ -237,39 +237,61 @@ Deno.serve(async (req) => {
       const expiresAt = new Date(Date.now() + tokenData.expires_in * 1000).toISOString();
       const battletagName = userInfo.battletag.split('#')[0];
 
-      // If an auth user exists but their profile row was never created (or got deleted),
-      // we must provide required fields on insert (username, preferred_language).
-      const { data: profileById, error: profileByIdError } = await supabase
-        .from('profiles')
-        .select('id, username, preferred_language')
-        .eq('id', userId)
-        .maybeSingle();
+      // For new users, the trigger `handle_new_user` creates the profile row.
+      // There can be a race condition where our upsert runs before the trigger commits.
+      // We use retry logic to handle this gracefully.
+      const maxRetries = 3;
+      let profileUpsertSuccess = false;
+      let lastError: any = null;
 
-      if (profileByIdError) {
-        console.error('Failed to read profile by id:', profileByIdError);
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        // Wait a bit for the trigger to complete on new users (exponential backoff)
+        if (isNewUser && attempt > 1) {
+          await new Promise((resolve) => setTimeout(resolve, attempt * 100));
+        }
+
+        // Read current profile state
+        const { data: profileById, error: profileByIdError } = await supabase
+          .from('profiles')
+          .select('id, username, preferred_language')
+          .eq('id', userId)
+          .maybeSingle();
+
+        if (profileByIdError) {
+          console.error(`Attempt ${attempt}: Failed to read profile by id:`, profileByIdError);
+        }
+
+        // ALWAYS include required fields to avoid not-null constraint violations.
+        // Use existing values if profile exists, otherwise use defaults.
+        const profileUpsert: any = {
+          id: userId,
+          battlenet_id: battlenetIdStr,
+          battlenet_token: tokenData.access_token,
+          battlenet_token_expires_at: expiresAt,
+          battletag: userInfo.battletag,
+          // Required fields - use existing or default
+          username: profileById?.username || battletagName,
+          preferred_language: profileById?.preferred_language || 'fr',
+        };
+
+        const { error: profileUpsertError } = await supabase
+          .from('profiles')
+          .upsert(profileUpsert, { onConflict: 'id' });
+
+        if (!profileUpsertError) {
+          profileUpsertSuccess = true;
+          console.log(`Profile upsert succeeded on attempt ${attempt}`);
+          break;
+        }
+
+        lastError = profileUpsertError;
+        console.warn(`Attempt ${attempt}: Profile upsert failed:`, profileUpsertError.message);
       }
 
-      // ALWAYS include required fields to avoid not-null constraint violations.
-      // Use existing values if profile exists, otherwise use defaults.
-      const profileUpsert: any = {
-        id: userId,
-        battlenet_id: String(userInfo.id),
-        battlenet_token: tokenData.access_token,
-        battlenet_token_expires_at: expiresAt,
-        battletag: userInfo.battletag,
-        // Required fields - use existing or default
-        username: profileById?.username || battletagName,
-        preferred_language: profileById?.preferred_language || 'fr',
-      };
-
-      const { error: profileUpsertError } = await supabase
-        .from('profiles')
-        .upsert(profileUpsert, { onConflict: 'id' });
-
-      if (profileUpsertError) {
-        console.error('Failed to upsert profile:', profileUpsertError);
+      if (!profileUpsertSuccess) {
+        console.error('Failed to upsert profile after all retries:', lastError);
         return new Response(
-          JSON.stringify({ error: 'Failed to upsert profile', details: profileUpsertError.message }),
+          JSON.stringify({ error: 'Failed to upsert profile', details: lastError?.message }),
           {
             status: 500,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
