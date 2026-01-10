@@ -227,19 +227,19 @@
     position: relative;
     background: linear-gradient(
       180deg,
-      hsl(277 70% 28% / 0.85) 0%,
-      hsl(277 75% 22% / 0.9) 50%,
-      hsl(277 80% 16% / 0.95) 100%
+      hsl(277 65% 30% / 0.5) 0%,
+      hsl(277 70% 24% / 0.55) 50%,
+      hsl(277 75% 18% / 0.6) 100%
     );
-    backdrop-filter: blur(16px) saturate(140%);
-    -webkit-backdrop-filter: blur(16px) saturate(140%);
-    border: 1px solid hsl(277 60% 35% / 0.4);
-    border-top-color: hsl(277 50% 45% / 0.35);
-    border-bottom-color: hsl(277 80% 12% / 0.5);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    border: 1px solid hsl(277 50% 50% / 0.3);
+    border-top-color: hsl(277 45% 55% / 0.35);
+    border-bottom-color: hsl(277 70% 20% / 0.4);
     box-shadow: 
-      inset 0 1px 1px hsl(0 0% 100% / 0.08),
-      inset 0 -1px 2px hsl(277 90% 10% / 0.3),
-      0 2px 8px hsl(277 80% 15% / 0.3);
+      inset 0 1px 1px hsl(0 0% 100% / 0.1),
+      inset 0 -1px 2px hsl(277 80% 10% / 0.2),
+      0 2px 8px hsl(277 70% 20% / 0.25);
     transition: all 0.3s ease;
   }
 
@@ -252,7 +252,7 @@
     height: 50%;
     background: linear-gradient(
       180deg,
-      hsl(0 0% 100% / 0.06) 0%,
+      hsl(0 0% 100% / 0.08) 0%,
       transparent 100%
     );
     border-radius: inherit;
@@ -269,7 +269,7 @@
     background: linear-gradient(
       90deg,
       transparent 0%,
-      hsl(0 0% 100% / 0.2) 50%,
+      hsl(0 0% 100% / 0.25) 50%,
       transparent 100%
     );
     pointer-events: none;
@@ -278,15 +278,15 @@
   .primary-button:hover {
     background: linear-gradient(
       180deg,
-      hsl(277 70% 32% / 0.9) 0%,
-      hsl(277 75% 26% / 0.92) 50%,
-      hsl(277 80% 18% / 0.95) 100%
+      hsl(277 65% 35% / 0.6) 0%,
+      hsl(277 70% 28% / 0.65) 50%,
+      hsl(277 75% 22% / 0.7) 100%
     );
-    border-color: hsl(277 60% 40% / 0.5);
+    border-color: hsl(277 50% 55% / 0.4);
     transform: translateY(-1px);
     box-shadow: 
-      inset 0 1px 1px hsl(0 0% 100% / 0.1),
-      0 4px 12px hsl(277 80% 20% / 0.35);
+      inset 0 1px 1px hsl(0 0% 100% / 0.12),
+      0 4px 12px hsl(277 70% 25% / 0.3);
   }
 
   /* Horde liquid glass button */
