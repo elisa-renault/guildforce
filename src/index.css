@@ -294,10 +294,10 @@
   }
 
   /* Spotlight effect for buttons - small and dense */
-  .primary-button .spotlight,
-  .horde-button .spotlight,
-  .alliance-button .spotlight,
-  .glass-button .spotlight {
+  .primary-button > .spotlight,
+  .horde-button > .spotlight,
+  .alliance-button > .spotlight,
+  .glass-button > .spotlight {
     position: absolute;
     inset: 0;
     border-radius: inherit;
@@ -324,7 +324,7 @@
   }
 
   /* Spotlight effect for cards - large and diffuse */
-  .glass-card .spotlight {
+  .glass-card > .spotlight {
     position: absolute;
     inset: 0;
     border-radius: inherit;
@@ -341,11 +341,11 @@
     mix-blend-mode: overlay;
   }
 
-  .primary-button:hover .spotlight,
-  .horde-button:hover .spotlight,
-  .alliance-button:hover .spotlight,
-  .glass-button:hover .spotlight,
-  .glass-card:hover .spotlight {
+  .primary-button:hover > .spotlight,
+  .horde-button:hover > .spotlight,
+  .alliance-button:hover > .spotlight,
+  .glass-button:hover > .spotlight,
+  .glass-card:hover > .spotlight {
     opacity: 1;
   }
 
