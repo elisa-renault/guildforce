@@ -298,7 +298,7 @@
     inset: 0;
     border-radius: inherit;
     background: radial-gradient(
-      circle 100px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+      circle 60px at var(--mouse-x, 50%) var(--mouse-y, 50%),
       hsl(0 0% 100% / 0.25) 0%,
       transparent 100%
     );
@@ -314,7 +314,7 @@
     inset: 0;
     border-radius: inherit;
     background: radial-gradient(
-      circle 150px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+      circle 80px at var(--mouse-x, 50%) var(--mouse-y, 50%),
       hsl(0 0% 100% / 0.18) 0%,
       transparent 100%
     );
