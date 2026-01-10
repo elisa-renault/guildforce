@@ -1,15 +1,4 @@
-interface CosmicBackgroundProps {
-  variant?: 'default' | 'horde' | 'alliance';
-}
-
-export const CosmicBackground = ({ variant = 'default' }: CosmicBackgroundProps) => {
-  // Determine accent color based on variant
-  const accentColor = variant === 'horde' 
-    ? 'var(--horde)' 
-    : variant === 'alliance' 
-    ? 'var(--alliance)' 
-    : 'var(--primary)';
-
+export const CosmicBackground = () => {
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
       {/* Base very dark background */}
@@ -24,7 +13,7 @@ export const CosmicBackground = ({ variant = 'default' }: CosmicBackgroundProps)
       <div 
         className="absolute top-0 left-0 right-0 h-[600px]"
         style={{
-          background: `radial-gradient(ellipse 80% 50% at 50% 0%, hsl(${accentColor} / 0.08) 0%, transparent 70%)`
+          background: `radial-gradient(ellipse 80% 50% at 50% 0%, hsl(var(--primary) / 0.08) 0%, transparent 70%)`
         }}
       />
 
@@ -32,7 +21,7 @@ export const CosmicBackground = ({ variant = 'default' }: CosmicBackgroundProps)
       <div 
         className="absolute top-[40%] left-1/2 -translate-x-1/2 w-[800px] h-[400px]"
         style={{
-          background: `radial-gradient(ellipse 50% 40% at 50% 50%, hsl(${accentColor} / 0.1) 0%, transparent 70%)`
+          background: `radial-gradient(ellipse 50% 40% at 50% 50%, hsl(var(--primary) / 0.1) 0%, transparent 70%)`
         }}
       />
 
@@ -48,7 +37,7 @@ export const CosmicBackground = ({ variant = 'default' }: CosmicBackgroundProps)
       <div 
         className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[2px] h-[300px]"
         style={{
-          background: `linear-gradient(to top, hsl(${accentColor} / 0.4) 0%, hsl(${accentColor} / 0.1) 50%, transparent 100%)`
+          background: `linear-gradient(to top, hsl(var(--primary) / 0.4) 0%, hsl(var(--primary) / 0.1) 50%, transparent 100%)`
         }}
       />
 
@@ -56,7 +45,7 @@ export const CosmicBackground = ({ variant = 'default' }: CosmicBackgroundProps)
       <div 
         className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[200px] h-[150px]"
         style={{
-          background: `radial-gradient(ellipse 50% 50% at 50% 100%, hsl(${accentColor} / 0.2) 0%, transparent 70%)`
+          background: `radial-gradient(ellipse 50% 50% at 50% 100%, hsl(var(--primary) / 0.2) 0%, transparent 70%)`
         }}
       />
 
@@ -64,7 +53,7 @@ export const CosmicBackground = ({ variant = 'default' }: CosmicBackgroundProps)
       <div 
         className="absolute top-0 left-0 w-[400px] h-full"
         style={{
-          background: `linear-gradient(135deg, hsl(${accentColor} / 0.03) 0%, transparent 50%)`
+          background: `linear-gradient(135deg, hsl(var(--primary) / 0.03) 0%, transparent 50%)`
         }}
       />
 
@@ -72,7 +61,7 @@ export const CosmicBackground = ({ variant = 'default' }: CosmicBackgroundProps)
       <div 
         className="absolute top-0 right-0 w-[400px] h-full"
         style={{
-          background: `linear-gradient(225deg, hsl(${accentColor} / 0.03) 0%, transparent 50%)`
+          background: `linear-gradient(225deg, hsl(var(--primary) / 0.03) 0%, transparent 50%)`
         }}
       />
 
