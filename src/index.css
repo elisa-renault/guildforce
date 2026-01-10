@@ -466,17 +466,19 @@
     color: hsl(var(--muted-foreground));
   }
 
-  /* Gradient text - plum gradient */
+  /* Gradient text - warm plum gradient with glow */
   .gradient-text {
     background: linear-gradient(
       135deg,
       hsl(0 0% 100%) 0%,
-      hsl(var(--primary)) 50%,
-      hsl(var(--secondary)) 100%
+      hsl(295 70% 65%) 30%,
+      hsl(var(--primary)) 60%,
+      hsl(320 60% 55%) 100%
     );
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    filter: drop-shadow(0 0 20px hsl(320 60% 50% / 0.4)) drop-shadow(0 0 40px hsl(var(--primary) / 0.3));
   }
 
   /* Stats card with glass and gradient text */
