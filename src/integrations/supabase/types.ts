@@ -159,6 +159,9 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          battlenet_id: string | null
+          battlenet_token: string | null
+          battlenet_token_expires_at: string | null
           battletag: string | null
           created_at: string
           discord_pseudo: string
@@ -169,6 +172,9 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          battlenet_id?: string | null
+          battlenet_token?: string | null
+          battlenet_token_expires_at?: string | null
           battletag?: string | null
           created_at?: string
           discord_pseudo: string
@@ -179,6 +185,9 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          battlenet_id?: string | null
+          battlenet_token?: string | null
+          battlenet_token_expires_at?: string | null
           battletag?: string | null
           created_at?: string
           discord_pseudo?: string
@@ -186,6 +195,51 @@ export type Database = {
           main_character_name?: string | null
           preferred_language?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      wow_characters: {
+        Row: {
+          class_id: number
+          created_at: string
+          guild_name: string | null
+          guild_realm: string | null
+          id: string
+          is_main: boolean
+          level: number
+          name: string
+          realm: string
+          realm_slug: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          class_id: number
+          created_at?: string
+          guild_name?: string | null
+          guild_realm?: string | null
+          id?: string
+          is_main?: boolean
+          level?: number
+          name: string
+          realm: string
+          realm_slug: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          class_id?: number
+          created_at?: string
+          guild_name?: string | null
+          guild_realm?: string | null
+          id?: string
+          is_main?: boolean
+          level?: number
+          name?: string
+          realm?: string
+          realm_slug?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
