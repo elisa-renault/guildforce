@@ -51,7 +51,7 @@ export const GuildMemberships: React.FC = () => {
   const [memberships, setMemberships] = useState<GuildMembership[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [creatingGuild, setCreatingGuild] = useState<string | null>(null);
-  const [existingGuilds, setExistingGuilds] = useState<Set<string>>(new Set());
+  const [existingGuilds, setExistingGuilds] = useState<Map<string, string>>(new Map());
 
   const isConnected = !!profile?.battlenet_id;
 
@@ -73,12 +73,12 @@ export const GuildMemberships: React.FC = () => {
     
     const { data } = await supabase
       .from('guilds')
-      .select('name, server')
+      .select('id, name, server')
       .eq('owner_id', user.id);
     
     if (data) {
-      const keys = new Set(data.map(g => `${g.name.toLowerCase()}-${g.server.toLowerCase()}`));
-      setExistingGuilds(keys);
+      const guildMap = new Map(data.map(g => [`${g.name.toLowerCase()}-${g.server.toLowerCase()}`, g.id]));
+      setExistingGuilds(guildMap);
     }
   };
 
@@ -113,8 +113,8 @@ export const GuildMemberships: React.FC = () => {
     return BATTLENET_CLASS_MAP[classId] || 'unknown';
   };
 
-  const isGuildAlreadyCreated = (guildName: string, guildRealm: string) => {
-    return existingGuilds.has(`${guildName.toLowerCase()}-${guildRealm.toLowerCase()}`);
+  const getExistingGuildId = (guildName: string, guildRealm: string): string | null => {
+    return existingGuilds.get(`${guildName.toLowerCase()}-${guildRealm.toLowerCase()}`) || null;
   };
 
   const handleCreateGuild = async (guild: { guild_name: string; guild_realm: string; guild_faction: string }) => {
@@ -155,8 +155,8 @@ export const GuildMemberships: React.FC = () => {
 
       toast({ title: t.guild.guildCreated });
       
-      // Update existing guilds set
-      setExistingGuilds(prev => new Set([...prev, `${guild.guild_name.toLowerCase()}-${guild.guild_realm.toLowerCase()}`]));
+      // Update existing guilds map
+      setExistingGuilds(prev => new Map([...prev, [`${guild.guild_name.toLowerCase()}-${guild.guild_realm.toLowerCase()}`, newGuild.id]]));
       
       // Navigate to the guild dashboard
       navigate(`/guild/${newGuild.id}`);
@@ -278,26 +278,37 @@ export const GuildMemberships: React.FC = () => {
               {/* Actions based on role */}
               {guild.is_gm && (
                 <div className="mt-4 pt-3 border-t border-border/50 space-y-3">
-                  {isGuildAlreadyCreated(guild.guild_name, guild.guild_realm) ? (
-                    <p className="text-xs text-green-500/80">
-                      ✓ {t.guild.alreadyInApp}
-                    </p>
-                  ) : (
-                    <>
-                      <p className="text-xs text-amber-500/80">
-                        {t.guild.gmNote}
-                      </p>
-                      <CosmicButton
-                        size="sm"
-                        onClick={() => handleCreateGuild(guild)}
-                        loading={creatingGuild === `${guild.guild_name}-${guild.guild_realm}`}
-                        className="w-full"
-                      >
-                        <Plus className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                        {t.guild.createInApp}
-                      </CosmicButton>
-                    </>
-                  )}
+                  {(() => {
+                    const existingGuildId = getExistingGuildId(guild.guild_name, guild.guild_realm);
+                    if (existingGuildId) {
+                      return (
+                        <CosmicButton
+                          size="sm"
+                          onClick={() => navigate(`/guild/${existingGuildId}`)}
+                          className="w-full"
+                        >
+                          <Shield className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                          {t.guild.accessGuild}
+                        </CosmicButton>
+                      );
+                    }
+                    return (
+                      <>
+                        <p className="text-xs text-amber-500/80">
+                          {t.guild.gmNote}
+                        </p>
+                        <CosmicButton
+                          size="sm"
+                          onClick={() => handleCreateGuild(guild)}
+                          loading={creatingGuild === `${guild.guild_name}-${guild.guild_realm}`}
+                          className="w-full"
+                        >
+                          <Plus className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                          {t.guild.createInApp}
+                        </CosmicButton>
+                      </>
+                    );
+                  })()}
                 </div>
               )}
             </div>
