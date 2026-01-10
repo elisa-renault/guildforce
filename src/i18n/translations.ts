@@ -103,6 +103,8 @@ export interface Translations {
     gmNote: string;
     noGuilds: string;
     rank0: string;
+    createInApp: string;
+    alreadyInApp: string;
   };
   // Wishes
   wishes: {
@@ -274,9 +276,11 @@ export const translations: Record<Language, Translations> = {
       myGuilds: 'My WoW Guilds',
       guildMaster: 'Guild Master',
       yourCharacters: 'Your characters in this guild',
-      gmNote: 'You can manage this guild in the application',
+      gmNote: 'You can manage this guild in Guildforce',
       noGuilds: 'No guilds found. Link your Battle.net account to import your guilds.',
       rank0: 'GM',
+      createInApp: 'Create in Guildforce',
+      alreadyInApp: 'Already created in Guildforce',
     },
     wishes: {
       title: 'My Class Wishes',
@@ -442,9 +446,11 @@ export const translations: Record<Language, Translations> = {
       myGuilds: 'Mes Guildes WoW',
       guildMaster: 'Guild Master',
       yourCharacters: 'Tes personnages dans cette guilde',
-      gmNote: 'Tu peux gérer cette guilde dans l\'application',
+      gmNote: 'Tu peux gérer cette guilde dans Guildforce',
       noGuilds: 'Aucune guilde trouvée. Lie ton compte Battle.net pour importer tes guildes.',
       rank0: 'GM',
+      createInApp: 'Créer dans Guildforce',
+      alreadyInApp: 'Déjà créée dans Guildforce',
     },
     wishes: {
       title: 'Mes vœux de classe',
