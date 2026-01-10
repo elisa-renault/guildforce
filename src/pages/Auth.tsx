@@ -79,7 +79,7 @@ const Auth = () => {
           <ArrowLeft className="h-4 w-4 mr-2" /> {t.common.back}
         </Button>
 
-        <div className="text-center mb-8 pt-4">
+        <div className="text-center mb-4 pt-4">
           <h2 className="font-display text-2xl font-normal gradient-text">
             {isLogin ? t.auth.loginTitle : t.auth.signupTitle}
           </h2>
