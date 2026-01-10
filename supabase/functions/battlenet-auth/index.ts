@@ -21,25 +21,44 @@ interface TokenResponse {
   scope: string;
 }
 
+// Battle.net API character structure - characters are returned directly, not nested
 interface WoWCharacter {
-  character: {
+  name: string;
+  id: number;
+  realm: {
     name: string;
+    slug: string;
     id: number;
-    realm: {
-      name: string;
-      slug: string;
-    };
-    playable_class: {
-      id: number;
-    };
-    level: number;
+  };
+  playable_class: {
+    id: number;
+    name?: string;
+  };
+  playable_race?: {
+    id: number;
+    name?: string;
+  };
+  level: number;
+  faction?: {
+    type: string;
+    name: string;
+  };
+  gender?: {
+    type: string;
+    name: string;
   };
 }
 
 interface WoWProfile {
-  wow_accounts: Array<{
-    characters: WoWCharacter[];
+  _links?: any;
+  id?: number;
+  wow_accounts?: Array<{
+    id: number;
+    characters?: WoWCharacter[];
   }>;
+  collections?: {
+    href: string;
+  };
 }
 
 interface UserInfo {
@@ -406,6 +425,8 @@ Deno.serve(async (req) => {
 // Helper function to fetch and store WoW characters
 async function fetchAndStoreCharacters(supabase: any, accessToken: string, userId: string) {
   try {
+    console.log('Fetching WoW profile from Battle.net API...');
+    
     const wowProfileResponse = await fetch(
       `${BATTLENET_API_URL}/profile/user/wow?namespace=profile-eu&locale=en_GB`,
       {
@@ -416,12 +437,16 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
     );
 
     if (!wowProfileResponse.ok) {
-      console.log('No WoW profile found or error fetching');
+      const errorText = await wowProfileResponse.text();
+      console.error('WoW profile fetch failed:', wowProfileResponse.status, errorText);
       return;
     }
 
-    const wowProfile: WoWProfile = await wowProfileResponse.json();
-    console.log('Got WoW profile');
+    const wowProfile = await wowProfileResponse.json();
+    
+    // Log the raw response structure to understand the API format
+    console.log('WoW Profile raw response keys:', Object.keys(wowProfile));
+    console.log('WoW Profile full response:', JSON.stringify(wowProfile, null, 2));
 
     const characters: Array<{
       name: string;
@@ -432,21 +457,47 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
       guildName?: string;
     }> = [];
 
+    // Check if wow_accounts exists and has data
+    if (!wowProfile.wow_accounts || wowProfile.wow_accounts.length === 0) {
+      console.log('No wow_accounts found in response');
+      console.log('Response structure:', JSON.stringify(wowProfile, null, 2));
+      return;
+    }
+
+    console.log(`Found ${wowProfile.wow_accounts.length} WoW account(s)`);
+
     // Flatten all characters from all WoW accounts
-    for (const account of wowProfile.wow_accounts || []) {
-      for (const char of account.characters || []) {
-        // Handle both nested and flat character structures from Battle.net API
-        const charData = char.character || char;
-        const realmData = charData.realm || {};
-        const classData = charData.playable_class || {};
-        
-        if (charData.name) {
+    for (const account of wowProfile.wow_accounts) {
+      console.log(`Processing WoW account ID: ${account.id}, characters count: ${account.characters?.length || 0}`);
+      
+      if (!account.characters || account.characters.length === 0) {
+        console.log('No characters in this account');
+        continue;
+      }
+
+      // Log first character to understand structure
+      if (account.characters.length > 0) {
+        console.log('First character sample:', JSON.stringify(account.characters[0], null, 2));
+      }
+
+      for (const char of account.characters) {
+        // Battle.net API returns characters directly with these fields:
+        // name, realm { name, slug, id }, playable_class { id }, level, faction, etc.
+        const name = char.name;
+        const realm = char.realm?.name || char.realm?.slug || 'Unknown';
+        const realmSlug = char.realm?.slug || 'unknown';
+        const classId = char.playable_class?.id || 0;
+        const level = char.level || 0;
+
+        console.log(`Character: ${name} - ${realm} - Class ${classId} - Level ${level}`);
+
+        if (name) {
           characters.push({
-            name: charData.name,
-            realm: realmData.name || realmData.slug || 'Unknown',
-            realmSlug: realmData.slug || 'unknown',
-            classId: classData.id || 0,
-            level: charData.level || 0,
+            name,
+            realm,
+            realmSlug,
+            classId,
+            level,
           });
         }
       }
@@ -454,31 +505,38 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
 
     // Sort by level descending
     characters.sort((a, b) => b.level - a.level);
-    console.log(`Found ${characters.length} characters`);
+    console.log(`Total characters found: ${characters.length}`);
 
     if (characters.length > 0) {
       // First delete existing characters for this user
-      await supabase.from('wow_characters').delete().eq('user_id', userId);
+      const { error: deleteError } = await supabase.from('wow_characters').delete().eq('user_id', userId);
+      if (deleteError) {
+        console.error('Failed to delete existing characters:', deleteError);
+      }
 
       // Insert new characters
-      const { error: charError } = await supabase.from('wow_characters').insert(
-        characters.map((char, index) => ({
-          user_id: userId,
-          name: char.name,
-          realm: char.realm,
-          realm_slug: char.realmSlug,
-          class_id: char.classId,
-          level: char.level,
-          guild_name: char.guildName || null,
-          is_main: index === 0,
-        }))
-      );
+      const insertData = characters.map((char, index) => ({
+        user_id: userId,
+        name: char.name,
+        realm: char.realm,
+        realm_slug: char.realmSlug,
+        class_id: char.classId,
+        level: char.level,
+        guild_name: char.guildName || null,
+        is_main: index === 0,
+      }));
+
+      console.log('Inserting characters:', JSON.stringify(insertData.slice(0, 3), null, 2));
+
+      const { error: charError } = await supabase.from('wow_characters').insert(insertData);
 
       if (charError) {
         console.error('Failed to insert characters:', charError);
       } else {
-        console.log('Characters saved to database');
+        console.log(`Successfully saved ${characters.length} characters to database`);
       }
+    } else {
+      console.log('No characters to save');
     }
   } catch (error) {
     console.error('Error fetching characters:', error);
