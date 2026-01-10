@@ -56,7 +56,15 @@ export const BattleNetConnect: React.FC = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
     const stateParam = urlParams.get('state');
-    const storedState = sessionStorage.getItem('battlenet_state');
+    // Use localStorage instead of sessionStorage for better persistence across redirects
+    const storedState = localStorage.getItem('battlenet_state');
+
+    console.log('OAuth callback check:', { 
+      hasCode: !!code, 
+      stateParam, 
+      storedState,
+      url: window.location.href 
+    });
 
     if (code && stateParam && storedState) {
       // Parse the state JSON to extract the actual state value
@@ -69,11 +77,13 @@ export const BattleNetConnect: React.FC = () => {
         stateMatches = stateParam === storedState;
       }
 
+      console.log('State match:', stateMatches);
+
       if (stateMatches) {
         handleOAuthCallback(code);
         // Clean up URL
         window.history.replaceState({}, document.title, window.location.pathname);
-        sessionStorage.removeItem('battlenet_state');
+        localStorage.removeItem('battlenet_state');
       }
     }
   }, []);
@@ -106,7 +116,8 @@ export const BattleNetConnect: React.FC = () => {
     try {
       // Generate a random state for CSRF protection
       const state = crypto.randomUUID();
-      sessionStorage.setItem('battlenet_state', state);
+      // Use localStorage for better persistence across external redirects
+      localStorage.setItem('battlenet_state', state);
 
       const redirectUri = `${window.location.origin}${window.location.pathname}`;
 
