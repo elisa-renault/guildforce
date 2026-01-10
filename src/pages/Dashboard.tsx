@@ -65,16 +65,32 @@ const Dashboard = () => {
   const fetchData = async () => {
     if (!user || !guildId) return;
     
+    // Fetch guild data
     const { data: guildData } = await supabase
       .from('guilds')
       .select('name, faction, invite_key, owner_id')
       .eq('id', guildId)
       .single();
     
+    // Check if user is owner
     if (!guildData || guildData.owner_id !== user.id) {
       navigate('/guilds');
       return;
     }
+    
+    // Double-check: user must also have 'gm' role in guild_members
+    const { data: membershipData } = await supabase
+      .from('guild_members')
+      .select('role')
+      .eq('guild_id', guildId)
+      .eq('user_id', user.id)
+      .single();
+    
+    if (!membershipData || membershipData.role !== 'gm') {
+      navigate('/guilds');
+      return;
+    }
+    
     setGuild(guildData);
 
     const { data: membersData } = await supabase
