@@ -175,7 +175,7 @@ const Dashboard = () => {
     );
   }
 
-  const factionVariant = guild?.faction === 'horde' ? 'horde' : guild?.faction === 'alliance' ? 'alliance' : 'default';
+  
 
   const renderWishCell = (wishes: MemberWish['wishes'], choiceIndex: number) => {
     const wish = wishes.find(w => w.choice_index === choiceIndex);
@@ -213,7 +213,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen relative">
-      <CosmicBackground variant={factionVariant} />
+      <CosmicBackground />
 
       <header className="sticky top-0 z-50 cosmic-header">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
