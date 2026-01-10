@@ -4,7 +4,7 @@ import { Loader2 } from 'lucide-react';
 
 interface CosmicButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
-  variant?: 'default' | 'horde' | 'alliance' | 'outline';
+  variant?: 'default' | 'outline';
   size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
   icon?: ReactNode;
@@ -24,8 +24,6 @@ export const CosmicButton = forwardRef<HTMLButtonElement, CosmicButtonProps>(({
   
   const variantStyles = {
     default: 'primary-button text-white',
-    horde: 'horde-button text-white',
-    alliance: 'alliance-button text-white',
     outline: 'glass-button text-foreground hover:-translate-y-0.5',
   };
 
