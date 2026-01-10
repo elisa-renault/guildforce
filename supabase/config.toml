@@ -1,1 +1,4 @@
 project_id = "nztgnodoxfxjgbgcysge"
+
+[functions.battlenet-auth]
+verify_jwt = false
