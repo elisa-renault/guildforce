@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { GlowCard } from './GlowCard';
 import { Badge } from '@/components/ui/badge';
-import { Crown, Users, Shield, Loader2 } from 'lucide-react';
+import { CosmicButton } from './CosmicButton';
+import { Crown, Users, Shield, Loader2, Plus } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface GuildMembership {
   id: string;
@@ -41,18 +44,43 @@ const BATTLENET_CLASS_MAP: Record<number, string> = {
 };
 
 export const GuildMemberships: React.FC = () => {
+  const navigate = useNavigate();
   const { profile, user } = useAuth();
   const { t } = useLanguage();
+  const { toast } = useToast();
   const [memberships, setMemberships] = useState<GuildMembership[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [creatingGuild, setCreatingGuild] = useState<string | null>(null);
+  const [existingGuilds, setExistingGuilds] = useState<Set<string>>(new Set());
 
   const isConnected = !!profile?.battlenet_id;
+
+  // Fetch existing guilds the user is already GM of in the app
+  useEffect(() => {
+    if (user?.id) {
+      fetchExistingGuilds();
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     if (isConnected && user?.id) {
       fetchMemberships();
     }
   }, [isConnected, user?.id]);
+
+  const fetchExistingGuilds = async () => {
+    if (!user?.id) return;
+    
+    const { data } = await supabase
+      .from('guilds')
+      .select('name, server')
+      .eq('owner_id', user.id);
+    
+    if (data) {
+      const keys = new Set(data.map(g => `${g.name.toLowerCase()}-${g.server.toLowerCase()}`));
+      setExistingGuilds(keys);
+    }
+  };
 
   const fetchMemberships = async () => {
     if (!user?.id) return;
@@ -83,6 +111,65 @@ export const GuildMemberships: React.FC = () => {
 
   const getClassName = (classId: number) => {
     return BATTLENET_CLASS_MAP[classId] || 'unknown';
+  };
+
+  const isGuildAlreadyCreated = (guildName: string, guildRealm: string) => {
+    return existingGuilds.has(`${guildName.toLowerCase()}-${guildRealm.toLowerCase()}`);
+  };
+
+  const handleCreateGuild = async (guild: { guild_name: string; guild_realm: string; guild_faction: string }) => {
+    if (!user?.id) return;
+    
+    const guildKey = `${guild.guild_name}-${guild.guild_realm}`;
+    setCreatingGuild(guildKey);
+
+    try {
+      // Determine faction - use lowercase for DB compatibility
+      const faction = guild.guild_faction === 'HORDE' ? 'horde' : 'alliance';
+
+      // Create the guild in the app
+      const { data: newGuild, error: guildError } = await supabase
+        .from('guilds')
+        .insert({
+          name: guild.guild_name,
+          server: guild.guild_realm,
+          faction: faction,
+          owner_id: user.id,
+        })
+        .select()
+        .single();
+
+      if (guildError) throw guildError;
+
+      // Add the user as GM member
+      const { error: memberError } = await supabase
+        .from('guild_members')
+        .insert({
+          guild_id: newGuild.id,
+          user_id: user.id,
+          role: 'gm',
+          status: 'confirmed',
+        });
+
+      if (memberError) throw memberError;
+
+      toast({ title: t.guild.guildCreated });
+      
+      // Update existing guilds set
+      setExistingGuilds(prev => new Set([...prev, `${guild.guild_name.toLowerCase()}-${guild.guild_realm.toLowerCase()}`]));
+      
+      // Navigate to the guild dashboard
+      navigate(`/guild/${newGuild.id}`);
+    } catch (error: any) {
+      console.error('Error creating guild:', error);
+      toast({ 
+        title: t.errors.generic, 
+        description: error.message, 
+        variant: 'destructive' 
+      });
+    } finally {
+      setCreatingGuild(null);
+    }
   };
 
   if (!isConnected) {
@@ -190,10 +277,27 @@ export const GuildMemberships: React.FC = () => {
 
               {/* Actions based on role */}
               {guild.is_gm && (
-                <div className="mt-4 pt-3 border-t border-border/50">
-                  <p className="text-xs text-amber-500/80">
-                    {t.guild.gmNote}
-                  </p>
+                <div className="mt-4 pt-3 border-t border-border/50 space-y-3">
+                  {isGuildAlreadyCreated(guild.guild_name, guild.guild_realm) ? (
+                    <p className="text-xs text-green-500/80">
+                      ✓ {t.guild.alreadyInApp}
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-xs text-amber-500/80">
+                        {t.guild.gmNote}
+                      </p>
+                      <CosmicButton
+                        size="sm"
+                        onClick={() => handleCreateGuild(guild)}
+                        loading={creatingGuild === `${guild.guild_name}-${guild.guild_realm}`}
+                        className="w-full"
+                      >
+                        <Plus className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                        {t.guild.createInApp}
+                      </CosmicButton>
+                    </>
+                  )}
                 </div>
               )}
             </div>
