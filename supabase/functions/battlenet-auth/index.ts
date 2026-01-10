@@ -14,6 +14,47 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const BATTLENET_OAUTH_URL = 'https://oauth.battle.net';
 const BATTLENET_API_URL = 'https://eu.api.blizzard.com';
 
+// ============================================================================
+// LOGGING UTILITIES
+// ============================================================================
+
+/**
+ * Log level for conditional logging in production
+ * Set to 'debug' for verbose logs, 'info' for standard, 'error' for errors only
+ */
+const LOG_LEVEL = Deno.env.get('LOG_LEVEL') || 'info';
+
+type LogLevel = 'debug' | 'info' | 'error';
+
+const LOG_PRIORITIES: Record<LogLevel, number> = {
+  debug: 0,
+  info: 1,
+  error: 2,
+};
+
+/**
+ * Conditional logger that respects LOG_LEVEL environment variable
+ */
+const log = {
+  debug: (message: string, ...args: any[]) => {
+    if (LOG_PRIORITIES[LOG_LEVEL as LogLevel] <= LOG_PRIORITIES.debug) {
+      console.log(`[DEBUG] ${message}`, ...args);
+    }
+  },
+  info: (message: string, ...args: any[]) => {
+    if (LOG_PRIORITIES[LOG_LEVEL as LogLevel] <= LOG_PRIORITIES.info) {
+      console.log(`[INFO] ${message}`, ...args);
+    }
+  },
+  error: (message: string, ...args: any[]) => {
+    console.error(`[ERROR] ${message}`, ...args);
+  },
+};
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
 interface TokenResponse {
   access_token: string;
   token_type: string;
@@ -21,7 +62,6 @@ interface TokenResponse {
   scope: string;
 }
 
-// Battle.net API character structure - characters are returned directly, not nested
 interface WoWCharacter {
   name: string;
   id: number;
@@ -66,7 +106,45 @@ interface UserInfo {
   battletag: string;
 }
 
-// Generate a secure random password
+interface CharacterData {
+  name: string;
+  realm: string;
+  realmSlug: string;
+  classId: number;
+  level: number;
+  guildName?: string;
+  guildRealm?: string;
+  guildRealmSlug?: string;
+  guildFaction?: string;
+}
+
+interface GuildMembershipData {
+  characterId: string;
+  guildName: string;
+  guildRealm: string;
+  guildRealmSlug: string;
+  guildFaction: string;
+  rankIndex: number;
+  rankName: string;
+}
+
+interface GuildInfo {
+  name: string;
+  server: string;
+  serverSlug: string;
+  faction: string;
+  isGM: boolean;
+}
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+/**
+ * Generates a cryptographically secure random password
+ * Used for creating Supabase accounts for Battle.net-first users
+ * @returns A 32-character secure password
+ */
 function generateSecurePassword(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
   let password = '';
@@ -77,6 +155,10 @@ function generateSecurePassword(): string {
   }
   return password;
 }
+
+// ============================================================================
+// MAIN REQUEST HANDLER
+// ============================================================================
 
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
@@ -97,10 +179,9 @@ Deno.serve(async (req) => {
       authUrl.searchParams.set('redirect_uri', redirectUri);
       authUrl.searchParams.set('response_type', 'code');
       authUrl.searchParams.set('scope', 'wow.profile openid');
-      // Include mode in state so we know if it's login or link
       authUrl.searchParams.set('state', JSON.stringify({ state, mode }));
 
-      console.log('Generated auth URL for redirect:', authUrl.toString());
+      log.debug('Generated auth URL for redirect');
 
       return new Response(JSON.stringify({ authUrl: authUrl.toString() }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -111,7 +192,7 @@ Deno.serve(async (req) => {
     if (path === 'login' && req.method === 'POST') {
       const { code, redirectUri } = await req.json();
 
-      console.log('Battle.net login - exchanging code for token...');
+      log.info('Battle.net login - exchanging code for token...');
 
       // Exchange code for token
       const tokenResponse = await fetch(`${BATTLENET_OAUTH_URL}/token`, {
@@ -129,7 +210,7 @@ Deno.serve(async (req) => {
 
       if (!tokenResponse.ok) {
         const errorText = await tokenResponse.text();
-        console.error('Token exchange failed:', errorText);
+        log.error('Token exchange failed:', errorText);
         return new Response(JSON.stringify({ error: 'Failed to exchange token', details: errorText }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -137,7 +218,7 @@ Deno.serve(async (req) => {
       }
 
       const tokenData: TokenResponse = await tokenResponse.json();
-      console.log('Token obtained successfully');
+      log.debug('Token obtained successfully');
 
       // Get user info (BattleTag)
       const userInfoResponse = await fetch(`${BATTLENET_OAUTH_URL}/userinfo`, {
@@ -147,7 +228,7 @@ Deno.serve(async (req) => {
       });
 
       if (!userInfoResponse.ok) {
-        console.error('Failed to get user info');
+        log.error('Failed to get user info');
         return new Response(JSON.stringify({ error: 'Failed to get user info' }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -155,7 +236,7 @@ Deno.serve(async (req) => {
       }
 
       const userInfo: UserInfo = await userInfoResponse.json();
-      console.log('Got BattleTag:', userInfo.battletag);
+      log.info(`Got BattleTag: ${userInfo.battletag}`);
 
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -174,24 +255,17 @@ Deno.serve(async (req) => {
       let isNewUser = false;
 
       if (existingProfile) {
-        // User exists with this battlenet_id, sign them in
         userId = existingProfile.id;
-        console.log('Existing user found by battlenet_id:', userId);
+        log.info(`Existing user found by battlenet_id: ${userId}`);
       } else {
-        // No profile has this battlenet_id yet.
-        // Check all auth users to find:
-        // 1. A user with bnet_xxx@battlenet.local email (created via BNet-first but profile not updated)
-        // 2. A user whose profile has battletag matching (linked via profile page but battlenet_id not set)
         const { data: existingUsers } = await supabase.auth.admin.listUsers();
         const existingBnetEmailUser = existingUsers?.users?.find((u) => u.email === bnetEmail);
 
         if (existingBnetEmailUser) {
-          // Auth user with bnet email exists - use this user
           userId = existingBnetEmailUser.id;
           isNewUser = false;
-          console.log('Existing auth user found by bnet email:', userId);
+          log.info(`Existing auth user found by bnet email: ${userId}`);
         } else {
-          // Check if there's a profile with matching battletag (user linked BNet while logged in via email)
           const { data: profileByBattletag } = await supabase
             .from('profiles')
             .select('id')
@@ -199,12 +273,10 @@ Deno.serve(async (req) => {
             .maybeSingle();
 
           if (profileByBattletag) {
-            // User linked their account before - now logging in via BNet
             userId = profileByBattletag.id;
             isNewUser = false;
-            console.log('Existing user found by battletag:', userId);
+            log.info(`Existing user found by battletag: ${userId}`);
           } else {
-            // Truly new user - create account
             isNewUser = true;
             const password = generateSecurePassword();
 
@@ -220,7 +292,7 @@ Deno.serve(async (req) => {
             });
 
             if (createError || !newUser.user) {
-              console.error('Failed to create user:', createError);
+              log.error('Failed to create user:', createError);
               return new Response(JSON.stringify({ error: 'Failed to create user' }), {
                 status: 500,
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -228,7 +300,7 @@ Deno.serve(async (req) => {
             }
 
             userId = newUser.user.id;
-            console.log('New user created:', userId);
+            log.info(`New user created: ${userId}`);
           }
         }
       }
@@ -237,129 +309,82 @@ Deno.serve(async (req) => {
       const expiresAt = new Date(Date.now() + tokenData.expires_in * 1000).toISOString();
       const battletagName = userInfo.battletag.split('#')[0];
 
-      // For new users, the trigger `handle_new_user` creates the profile row.
-      // There can be a race condition where our upsert runs before the trigger commits.
-      // We use retry logic to handle this gracefully.
+      // Retry logic for race condition with profile trigger
       const maxRetries = 3;
       let profileUpsertSuccess = false;
       let lastError: any = null;
 
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        // Wait a bit for the trigger to complete on new users (exponential backoff)
         if (isNewUser && attempt > 1) {
           await new Promise((resolve) => setTimeout(resolve, attempt * 100));
         }
 
-        // Read current profile state
-        const { data: profileById, error: profileByIdError } = await supabase
+        const { data: existingProfileRow } = await supabase
           .from('profiles')
           .select('id, username, preferred_language')
           .eq('id', userId)
           .maybeSingle();
 
-        if (profileByIdError) {
-          console.error(`Attempt ${attempt}: Failed to read profile by id:`, profileByIdError);
-        }
-
-        // ALWAYS include required fields to avoid not-null constraint violations.
-        // Use existing values if profile exists, otherwise use defaults.
-        const profileUpsert: any = {
+        const upsertPayload: any = {
           id: userId,
           battlenet_id: battlenetIdStr,
           battlenet_token: tokenData.access_token,
           battlenet_token_expires_at: expiresAt,
           battletag: userInfo.battletag,
-          // Required fields - use existing or default
-          username: profileById?.username || battletagName,
-          preferred_language: profileById?.preferred_language || 'fr',
+          username: existingProfileRow?.username || battletagName,
+          preferred_language: existingProfileRow?.preferred_language || 'fr',
         };
 
-        const { error: profileUpsertError } = await supabase
+        const { error: profileError } = await supabase
           .from('profiles')
-          .upsert(profileUpsert, { onConflict: 'id' });
+          .upsert(upsertPayload, { onConflict: 'id' });
 
-        if (!profileUpsertError) {
+        if (!profileError) {
           profileUpsertSuccess = true;
-          console.log(`Profile upsert succeeded on attempt ${attempt}`);
+          log.debug(`Profile upserted on attempt ${attempt}`);
           break;
+        } else {
+          lastError = profileError;
+          log.debug(`Profile upsert attempt ${attempt} failed:`, profileError);
         }
-
-        lastError = profileUpsertError;
-        console.warn(`Attempt ${attempt}: Profile upsert failed:`, profileUpsertError.message);
       }
 
       if (!profileUpsertSuccess) {
-        console.error('Failed to upsert profile after all retries:', lastError);
-        return new Response(
-          JSON.stringify({ error: 'Failed to upsert profile', details: lastError?.message }),
-          {
-            status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          }
-        );
+        log.error('Failed to upsert profile after retries:', lastError);
+        return new Response(JSON.stringify({ error: 'Failed to update profile' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
 
       // Fetch and store WoW characters
       await fetchAndStoreCharacters(supabase, tokenData.access_token, userId);
 
-      // Generate a session for the user
-      // NOTE: `generateLink` targets an email address.
-      // If the account was initially created via email/password and later linked to BNet,
-      // we MUST generate the link for the user's *real* email (not the bnet_... one),
-      // otherwise we can accidentally log them into a different auth user.
-      let loginEmail = bnetEmail;
-      if (!isNewUser) {
-        const { data: userById, error: getUserErr } = await supabase.auth.admin.getUserById(userId);
-        const existingEmail = userById?.user?.email;
-        if (!getUserErr && existingEmail) {
-          loginEmail = existingEmail;
-        }
-      }
-
-      const { data: sessionData, error: sessionError } = await supabase.auth.admin.generateLink({
+      // Generate magic link for session
+      const { data: magicLinkData, error: magicLinkError } = await supabase.auth.admin.generateLink({
         type: 'magiclink',
-        email: loginEmail,
+        email: bnetEmail,
       });
 
-      if (sessionError || !sessionData) {
-        console.error('Failed to generate session:', sessionError);
+      if (magicLinkError || !magicLinkData?.properties?.hashed_token) {
+        log.error('Failed to generate magic link:', magicLinkError);
         return new Response(JSON.stringify({ error: 'Failed to generate session' }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
-      // Supabase returns the token hash to verify as `hashed_token`.
-      // Fallback to parsing from action_link for compatibility.
-      const tokenHashFromProps = (sessionData.properties as any)?.hashed_token as string | undefined;
-      let tokenHashFromLink: string | null = null;
-      let tokenTypeFromLink: string | null = null;
-
-      try {
-        const magicLinkUrl = new URL(sessionData.properties.action_link);
-        tokenHashFromLink = magicLinkUrl.searchParams.get('token');
-        tokenTypeFromLink = magicLinkUrl.searchParams.get('type');
-      } catch (e) {
-        console.warn('Could not parse action_link URL');
-      }
-
-      const verifyToken = tokenHashFromProps || tokenHashFromLink;
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          isNewUser,
-          battletag: userInfo.battletag,
-          verifyToken,
-          tokenType: tokenTypeFromLink || 'magiclink',
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+      return new Response(JSON.stringify({
+        verifyToken: magicLinkData.properties.hashed_token,
+        tokenType: 'magiclink',
+        isNewUser,
+        battletag: userInfo.battletag,
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    // Link Battle.net to existing account (requires auth)
+    // Handle callback for linking Battle.net to existing Supabase user
     if (path === 'callback' && req.method === 'POST') {
       const authHeader = req.headers.get('Authorization');
       if (!authHeader) {
@@ -371,7 +396,7 @@ Deno.serve(async (req) => {
 
       const { code, redirectUri } = await req.json();
 
-      console.log('Linking Battle.net - exchanging code for token...');
+      log.info('Battle.net link callback - exchanging code for token...');
 
       // Exchange code for token
       const tokenResponse = await fetch(`${BATTLENET_OAUTH_URL}/token`, {
@@ -389,7 +414,7 @@ Deno.serve(async (req) => {
 
       if (!tokenResponse.ok) {
         const errorText = await tokenResponse.text();
-        console.error('Token exchange failed:', errorText);
+        log.error('Token exchange failed:', errorText);
         return new Response(JSON.stringify({ error: 'Failed to exchange token', details: errorText }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -397,7 +422,7 @@ Deno.serve(async (req) => {
       }
 
       const tokenData: TokenResponse = await tokenResponse.json();
-      console.log('Token obtained successfully');
+      log.debug('Token obtained successfully');
 
       // Get user info (BattleTag)
       const userInfoResponse = await fetch(`${BATTLENET_OAUTH_URL}/userinfo`, {
@@ -407,7 +432,7 @@ Deno.serve(async (req) => {
       });
 
       if (!userInfoResponse.ok) {
-        console.error('Failed to get user info');
+        log.error('Failed to get user info');
         return new Response(JSON.stringify({ error: 'Failed to get user info' }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -415,7 +440,7 @@ Deno.serve(async (req) => {
       }
 
       const userInfo: UserInfo = await userInfoResponse.json();
-      console.log('Got BattleTag:', userInfo.battletag);
+      log.info(`Got BattleTag: ${userInfo.battletag}`);
 
       // Get Supabase user from auth header
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -424,7 +449,7 @@ Deno.serve(async (req) => {
       const { data: { user }, error: userError } = await supabase.auth.getUser(token);
 
       if (userError || !user) {
-        console.error('Failed to get user:', userError);
+        log.error('Failed to get user:', userError);
         return new Response(JSON.stringify({ error: 'Unauthorized' }), {
           status: 401,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -446,28 +471,22 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Update (or create) profile with Battle.net info
+      // Update profile with Battle.net info
       const expiresAt = new Date(Date.now() + tokenData.expires_in * 1000).toISOString();
       const battletagName = userInfo.battletag.split('#')[0];
 
-      const { data: existingProfileRow, error: existingProfileErr } = await supabase
+      const { data: existingProfileRow } = await supabase
         .from('profiles')
         .select('id, username, preferred_language')
         .eq('id', user.id)
         .maybeSingle();
 
-      if (existingProfileErr) {
-        console.error('Failed to read profile before linking:', existingProfileErr);
-      }
-
-      // ALWAYS include required fields to avoid not-null constraint violations
       const upsertPayload: any = {
         id: user.id,
         battlenet_id: String(userInfo.id),
         battlenet_token: tokenData.access_token,
         battlenet_token_expires_at: expiresAt,
         battletag: userInfo.battletag,
-        // Required fields - use existing or default
         username: existingProfileRow?.username || battletagName,
         preferred_language: existingProfileRow?.preferred_language || 'fr',
       };
@@ -477,7 +496,7 @@ Deno.serve(async (req) => {
         .upsert(upsertPayload, { onConflict: 'id' });
 
       if (profileError) {
-        console.error('Failed to upsert profile:', profileError);
+        log.error('Failed to upsert profile:', profileError);
         return new Response(JSON.stringify({ error: 'Failed to update profile' }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -540,7 +559,7 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Error:', error);
+    log.error('Error:', error);
     return new Response(JSON.stringify({ error: 'Internal server error', details: String(error) }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -548,10 +567,21 @@ Deno.serve(async (req) => {
   }
 });
 
-// Helper function to fetch and store WoW characters and guild memberships
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * Fetches WoW characters from Battle.net API and stores them in the database.
+ * Also fetches guild memberships and triggers auto-join for app guilds.
+ * 
+ * @param supabase - Supabase client with service role key
+ * @param accessToken - Battle.net OAuth access token
+ * @param userId - Supabase user ID to associate characters with
+ */
 async function fetchAndStoreCharacters(supabase: any, accessToken: string, userId: string) {
   try {
-    console.log('Fetching WoW profile from Battle.net API...');
+    log.info('Fetching WoW profile from Battle.net API...');
     
     const wowProfileResponse = await fetch(
       `${BATTLENET_API_URL}/profile/user/wow?namespace=profile-eu&locale=en_GB`,
@@ -564,38 +594,25 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
 
     if (!wowProfileResponse.ok) {
       const errorText = await wowProfileResponse.text();
-      console.error('WoW profile fetch failed:', wowProfileResponse.status, errorText);
+      log.error('WoW profile fetch failed:', wowProfileResponse.status, errorText);
       return;
     }
 
     const wowProfile = await wowProfileResponse.json();
-    console.log('WoW Profile raw response keys:', Object.keys(wowProfile));
-
-    interface CharacterData {
-      name: string;
-      realm: string;
-      realmSlug: string;
-      classId: number;
-      level: number;
-      guildName?: string;
-      guildRealm?: string;
-      guildRealmSlug?: string;
-      guildFaction?: string;
-    }
+    log.debug('WoW Profile raw response keys:', Object.keys(wowProfile));
 
     const characters: CharacterData[] = [];
 
-    // Check if wow_accounts exists and has data
     if (!wowProfile.wow_accounts || wowProfile.wow_accounts.length === 0) {
-      console.log('No wow_accounts found in response');
+      log.info('No wow_accounts found in response');
       return;
     }
 
-    console.log(`Found ${wowProfile.wow_accounts.length} WoW account(s)`);
+    log.debug(`Found ${wowProfile.wow_accounts.length} WoW account(s)`);
 
     // Flatten all characters from all WoW accounts
     for (const account of wowProfile.wow_accounts) {
-      console.log(`Processing WoW account ID: ${account.id}, characters count: ${account.characters?.length || 0}`);
+      log.debug(`Processing WoW account ID: ${account.id}, characters count: ${account.characters?.length || 0}`);
       
       if (!account.characters || account.characters.length === 0) {
         continue;
@@ -622,14 +639,14 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
 
     // Sort by level descending
     characters.sort((a, b) => b.level - a.level);
-    console.log(`Total characters found: ${characters.length}`);
+    log.info(`Total characters found: ${characters.length}`);
 
     if (characters.length === 0) {
-      console.log('No characters to save');
+      log.info('No characters to save');
       return;
     }
 
-    // First delete existing characters and guild memberships for this user
+    // Delete existing characters and guild memberships
     await supabase.from('wow_guild_memberships').delete().eq('user_id', userId);
     await supabase.from('wow_characters').delete().eq('user_id', userId);
 
@@ -651,28 +668,17 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
       .select('id, name, realm_slug');
 
     if (charError) {
-      console.error('Failed to insert characters:', charError);
+      log.error('Failed to insert characters:', charError);
       return;
     }
 
-    console.log(`Successfully saved ${characters.length} characters to database`);
+    log.info(`Successfully saved ${characters.length} characters to database`);
 
-    // Now fetch detailed character info to get guild memberships
-    // Only check max level characters to save API calls
+    // Fetch detailed character info for guild memberships
     const maxLevelChars = characters.filter(c => c.level >= 70).slice(0, 20);
-    console.log(`Checking ${maxLevelChars.length} max-level characters for guild info...`);
+    log.debug(`Checking ${maxLevelChars.length} max-level characters for guild info...`);
 
-    const guildMemberships: Array<{
-      characterId: string;
-      guildName: string;
-      guildRealm: string;
-      guildRealmSlug: string;
-      guildFaction: string;
-      rankIndex: number;
-      rankName: string;
-    }> = [];
-
-    // Map to track unique guilds we need to fetch rosters for
+    const guildMemberships: GuildMembershipData[] = [];
     const guildsToCheck: Map<string, { name: string; realmSlug: string; faction: string; characterIds: string[] }> = new Map();
 
     // Fetch character details to get guild info
@@ -685,26 +691,24 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
         });
 
         if (!charDetailResponse.ok) {
-          console.log(`Failed to fetch details for ${char.name}: ${charDetailResponse.status}`);
+          log.debug(`Failed to fetch details for ${char.name}: ${charDetailResponse.status}`);
           continue;
         }
 
         const charDetail = await charDetailResponse.json();
         
         if (charDetail.guild) {
-          console.log(`Character ${char.name} is in guild: ${charDetail.guild.name}`);
+          log.debug(`Character ${char.name} is in guild: ${charDetail.guild.name}`);
           
           const guildKey = `${charDetail.guild.name}-${charDetail.guild.realm?.slug || char.realmSlug}`;
           const guildRealmSlug = charDetail.guild.realm?.slug || char.realmSlug;
           const guildFaction = charDetail.faction?.type || 'UNKNOWN';
           
-          // Find the inserted character ID
           const insertedChar = insertedChars?.find(
             (ic: any) => ic.name.toLowerCase() === char.name.toLowerCase() && ic.realm_slug === char.realmSlug
           );
           
           if (insertedChar) {
-            // Update the character with guild name
             await supabase
               .from('wow_characters')
               .update({ 
@@ -726,29 +730,27 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
           }
         }
       } catch (err) {
-        console.error(`Error fetching details for ${char.name}:`, err);
+        log.error(`Error fetching details for ${char.name}:`, err);
       }
     }
 
-    console.log(`Found ${guildsToCheck.size} unique guilds to check for ranks`);
+    log.debug(`Found ${guildsToCheck.size} unique guilds to check for ranks`);
 
-    // Now fetch roster for each guild to get member ranks
+    // Fetch roster for each guild to get member ranks
     for (const [guildKey, guildInfo] of guildsToCheck) {
       try {
-        // Guild name needs to be slugified (lowercase, spaces to hyphens)
         const guildSlug = guildInfo.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
         const rosterUrl = `${BATTLENET_API_URL}/data/wow/guild/${guildInfo.realmSlug}/${encodeURIComponent(guildSlug)}/roster?namespace=profile-eu&locale=en_GB`;
         
-        console.log(`Fetching roster for guild: ${guildInfo.name} (${rosterUrl})`);
+        log.debug(`Fetching roster for guild: ${guildInfo.name}`);
         
         const rosterResponse = await fetch(rosterUrl, {
           headers: { 'Authorization': `Bearer ${accessToken}` },
         });
 
         if (!rosterResponse.ok) {
-          console.log(`Failed to fetch roster for ${guildInfo.name}: ${rosterResponse.status}`);
+          log.debug(`Failed to fetch roster for ${guildInfo.name}: ${rosterResponse.status}`);
           
-          // Even without roster, save guild membership with unknown rank
           for (const charId of guildInfo.characterIds) {
             guildMemberships.push({
               characterId: charId,
@@ -756,7 +758,7 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
               guildRealm: guildInfo.realmSlug,
               guildRealmSlug: guildInfo.realmSlug,
               guildFaction: guildInfo.faction,
-              rankIndex: 99, // Unknown rank
+              rankIndex: 99,
               rankName: 'Unknown',
             });
           }
@@ -764,9 +766,8 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
         }
 
         const roster = await rosterResponse.json();
-        console.log(`Roster has ${roster.members?.length || 0} members`);
+        log.debug(`Roster has ${roster.members?.length || 0} members`);
 
-        // Find our characters in the roster
         for (const charId of guildInfo.characterIds) {
           const insertedChar = insertedChars?.find((ic: any) => ic.id === charId);
           if (!insertedChar) continue;
@@ -776,7 +777,7 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
           );
 
           if (rosterMember) {
-            console.log(`Found ${insertedChar.name} in roster with rank ${rosterMember.rank}`);
+            log.debug(`Found ${insertedChar.name} in roster with rank ${rosterMember.rank}`);
             guildMemberships.push({
               characterId: charId,
               guildName: guildInfo.name,
@@ -787,7 +788,6 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
               rankName: rosterMember.rank === 0 ? 'Guild Master' : `Rank ${rosterMember.rank}`,
             });
           } else {
-            // Character not found in roster, save with unknown rank
             guildMemberships.push({
               characterId: charId,
               guildName: guildInfo.name,
@@ -800,13 +800,13 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
           }
         }
       } catch (err) {
-        console.error(`Error fetching roster for ${guildInfo.name}:`, err);
+        log.error(`Error fetching roster for ${guildInfo.name}:`, err);
       }
     }
 
     // Insert guild memberships
     if (guildMemberships.length > 0) {
-      console.log(`Inserting ${guildMemberships.length} guild memberships`);
+      log.info(`Inserting ${guildMemberships.length} guild memberships`);
       
       const membershipData = guildMemberships.map(gm => ({
         user_id: userId,
@@ -824,48 +824,52 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
         .insert(membershipData);
 
       if (membershipError) {
-        console.error('Failed to insert guild memberships:', membershipError);
+        log.error('Failed to insert guild memberships:', membershipError);
       } else {
-        console.log(`Successfully saved ${guildMemberships.length} guild memberships`);
+        log.info(`Successfully saved ${guildMemberships.length} guild memberships`);
         
-        // Log GM status
         const gmMemberships = guildMemberships.filter(gm => gm.rankIndex === 0);
         if (gmMemberships.length > 0) {
-          console.log(`User is Guild Master of ${gmMemberships.length} guild(s)!`);
+          log.info(`User is Guild Master of ${gmMemberships.length} guild(s)!`);
         }
       }
 
-      // Auto-join/create app guilds based on WoW guild memberships
       await autoJoinGuilds(supabase, userId, guildMemberships);
     }
 
   } catch (error) {
-    console.error('Error fetching characters:', error);
+    log.error('Error fetching characters:', error);
   }
 }
 
-// Helper function to cleanup guild memberships for guilds the user left in WoW
+/**
+ * Cleans up guild memberships for guilds the user has left in WoW.
+ * If the user was the owner, the guild becomes orphaned (owner_id = null).
+ * 
+ * @param supabase - Supabase client
+ * @param userId - User ID to cleanup memberships for
+ * @param currentWoWGuilds - Set of guild keys the user is currently in (format: "guildname-realmslug")
+ */
 async function cleanupLeftGuilds(
   supabase: any,
   userId: string,
-  currentWoWGuilds: Set<string> // Set of "guildName.toLowerCase()-realmSlug" keys
+  currentWoWGuilds: Set<string>
 ) {
   try {
-    console.log('Cleaning up left guilds for user...');
+    log.debug('Cleaning up left guilds for user...');
 
-    // Get all current app guild memberships for this user
     const { data: appMemberships, error: lookupError } = await supabase
       .from('guild_members')
       .select('id, guild_id, role, guilds(id, name, server, owner_id)')
       .eq('user_id', userId);
 
     if (lookupError) {
-      console.error('Error looking up app guild memberships:', lookupError);
+      log.error('Error looking up app guild memberships:', lookupError);
       return;
     }
 
     if (!appMemberships || appMemberships.length === 0) {
-      console.log('No app guild memberships to cleanup');
+      log.debug('No app guild memberships to cleanup');
       return;
     }
 
@@ -873,76 +877,53 @@ async function cleanupLeftGuilds(
       const guild = membership.guilds;
       if (!guild) continue;
 
-      // Build the same key format used in WoW sync
-      // Note: server in app might be display name, we need to normalize for comparison
       const serverSlug = guild.server.toLowerCase().replace(/\s+/g, '-').replace(/'/g, '');
       const guildKey = `${guild.name.toLowerCase()}-${serverSlug}`;
 
       if (!currentWoWGuilds.has(guildKey)) {
-        console.log(`User no longer in WoW guild ${guild.name} (${guild.server}), removing from app...`);
+        log.info(`User no longer in WoW guild ${guild.name}, removing from app...`);
 
-        // If user was the owner, make guild orphan
         if (guild.owner_id === userId) {
-          console.log(`User was owner of guild ${guild.name}, making it orphan...`);
-          const { error: orphanError } = await supabase
+          log.info(`User was owner of guild ${guild.name}, making it orphan...`);
+          await supabase
             .from('guilds')
             .update({ owner_id: null })
             .eq('id', guild.id);
-
-          if (orphanError) {
-            console.error(`Failed to orphan guild ${guild.name}:`, orphanError);
-          }
         }
 
-        // Remove from guild_members
-        const { error: removeError } = await supabase
+        await supabase
           .from('guild_members')
           .delete()
           .eq('id', membership.id);
-
-        if (removeError) {
-          console.error(`Failed to remove user from guild ${guild.name}:`, removeError);
-        } else {
-          console.log(`Removed user from guild ${guild.name}`);
-        }
       }
     }
 
-    console.log('Cleanup of left guilds completed');
+    log.debug('Cleanup of left guilds completed');
   } catch (error) {
-    console.error('Error in cleanupLeftGuilds:', error);
+    log.error('Error in cleanupLeftGuilds:', error);
   }
 }
 
-// Helper function to auto-create/join guilds in the app based on WoW memberships
+/**
+ * Auto-creates or joins app guilds based on WoW guild memberships.
+ * Handles ownership based on GM status - Battle.net is the source of truth.
+ * 
+ * @param supabase - Supabase client
+ * @param userId - User ID to process guilds for
+ * @param guildMemberships - Array of guild membership data from WoW
+ */
 async function autoJoinGuilds(
   supabase: any,
   userId: string,
-  guildMemberships: Array<{
-    characterId: string;
-    guildName: string;
-    guildRealm: string;
-    guildRealmSlug: string;
-    guildFaction: string;
-    rankIndex: number;
-    rankName: string;
-  }>
+  guildMemberships: GuildMembershipData[]
 ) {
   try {
-    // Group memberships by unique guild (name + realm)
-    const uniqueGuilds = new Map<string, {
-      name: string;
-      server: string;
-      serverSlug: string;
-      faction: string;
-      isGM: boolean;
-    }>();
+    // Group memberships by unique guild
+    const uniqueGuilds = new Map<string, GuildInfo>();
 
     for (const membership of guildMemberships) {
       const guildKey = `${membership.guildName.toLowerCase()}-${membership.guildRealmSlug}`;
       const existing = uniqueGuilds.get(guildKey);
-      
-      // If user is GM on any character, mark as GM for this guild
       const isGM = membership.rankIndex === 0;
       
       if (!existing) {
@@ -954,22 +935,17 @@ async function autoJoinGuilds(
           isGM,
         });
       } else if (isGM && !existing.isGM) {
-        // Update to GM if this character is GM
         existing.isGM = true;
       }
     }
 
-    // Build set of current WoW guilds for cleanup
     const currentWoWGuilds = new Set<string>(uniqueGuilds.keys());
-
-    // Clean up guilds the user left in WoW
     await cleanupLeftGuilds(supabase, userId, currentWoWGuilds);
 
-    console.log(`Processing ${uniqueGuilds.size} unique guilds for auto-join...`);
+    log.debug(`Processing ${uniqueGuilds.size} unique guilds for auto-join...`);
 
     for (const [guildKey, guildInfo] of uniqueGuilds) {
       try {
-        // Check if guild already exists in app (by name + server)
         const { data: existingGuild, error: guildLookupError } = await supabase
           .from('guilds')
           .select('id, owner_id')
@@ -978,86 +954,53 @@ async function autoJoinGuilds(
           .maybeSingle();
 
         if (guildLookupError) {
-          console.error(`Error looking up guild ${guildInfo.name}:`, guildLookupError);
+          log.error(`Error looking up guild ${guildInfo.name}:`, guildLookupError);
           continue;
         }
 
         let guildId: string;
 
         if (existingGuild) {
-          // Guild exists, use its ID
           guildId = existingGuild.id;
-          console.log(`Guild ${guildInfo.name} already exists (id: ${guildId})`);
+          log.debug(`Guild ${guildInfo.name} already exists (id: ${guildId})`);
 
           // Handle ownership changes
           if (existingGuild.owner_id === userId && !guildInfo.isGM) {
-            // User WAS owner but is no longer GM in WoW - revoke ownership
-            console.log(`User lost GM status for guild ${guildInfo.name}, revoking ownership...`);
-            
-            const { error: revokeError } = await supabase
+            // User lost GM status - revoke ownership
+            log.info(`User lost GM status for guild ${guildInfo.name}, revoking ownership...`);
+            await supabase
               .from('guilds')
               .update({ owner_id: null })
               .eq('id', guildId);
-
-            if (revokeError) {
-              console.error(`Failed to revoke ownership of guild ${guildInfo.name}:`, revokeError);
-            } else {
-              console.log(`Revoked ownership of guild ${guildInfo.name}, now orphan`);
-            }
           } else if (existingGuild.owner_id === null && guildInfo.isGM) {
-            // Guild has no owner and user is GM in WoW - claim ownership
-            console.log(`Guild ${guildInfo.name} is orphan and user is GM, claiming ownership...`);
-            
-            const { error: claimError } = await supabase
+            // Guild is orphan and user is GM - claim ownership
+            log.info(`Guild ${guildInfo.name} is orphan and user is GM, claiming ownership...`);
+            await supabase
               .from('guilds')
               .update({ owner_id: userId })
               .eq('id', guildId);
-
-            if (claimError) {
-              console.error(`Failed to claim guild ${guildInfo.name}:`, claimError);
-            } else {
-              console.log(`User claimed ownership of guild ${guildInfo.name}`);
-              
-              // Sync existing members who have this guild in wow_guild_memberships
-              await syncExistingMembers(supabase, guildId, guildInfo.name, guildInfo.server);
-            }
+            await syncExistingMembers(supabase, guildId, guildInfo.name, guildInfo.server);
           } else if (existingGuild.owner_id !== null && existingGuild.owner_id !== userId && guildInfo.isGM) {
             // Battle.net is source of truth: new GM takes ownership immediately
-            console.log(`User is now GM in WoW for guild ${guildInfo.name}, transferring ownership from ${existingGuild.owner_id}...`);
+            log.info(`User is now GM in WoW for guild ${guildInfo.name}, transferring ownership...`);
             
             const previousOwnerId = existingGuild.owner_id;
             
-            // Transfer ownership to the new GM
-            const { error: transferError } = await supabase
+            await supabase
               .from('guilds')
               .update({ owner_id: userId })
               .eq('id', guildId);
 
-            if (transferError) {
-              console.error(`Failed to transfer ownership of guild ${guildInfo.name}:`, transferError);
-            } else {
-              console.log(`Ownership of guild ${guildInfo.name} transferred to user ${userId}`);
-              
-              // Downgrade previous owner's role to 'member' if they're still in guild_members
-              const { error: downgradeError } = await supabase
-                .from('guild_members')
-                .update({ role: 'member' })
-                .eq('guild_id', guildId)
-                .eq('user_id', previousOwnerId);
+            await supabase
+              .from('guild_members')
+              .update({ role: 'member' })
+              .eq('guild_id', guildId)
+              .eq('user_id', previousOwnerId);
 
-              if (downgradeError) {
-                console.error(`Failed to downgrade previous owner's role:`, downgradeError);
-              } else {
-                console.log(`Previous owner ${previousOwnerId} downgraded to member`);
-              }
-              
-              // Sync existing members for the newly claimed guild
-              await syncExistingMembers(supabase, guildId, guildInfo.name, guildInfo.server);
-            }
+            await syncExistingMembers(supabase, guildId, guildInfo.name, guildInfo.server);
           }
         } else {
-          // Guild doesn't exist, create it
-          // Create with owner_id if user is GM, otherwise create as orphan guild
+          // Create new guild
           const { data: newGuild, error: createGuildError } = await supabase
             .from('guilds')
             .insert({
@@ -1071,48 +1014,34 @@ async function autoJoinGuilds(
             .single();
 
           if (createGuildError || !newGuild) {
-            console.error(`Failed to create guild ${guildInfo.name}:`, createGuildError);
+            log.error(`Failed to create guild ${guildInfo.name}:`, createGuildError);
             continue;
           }
 
           guildId = newGuild.id;
-          console.log(`Created guild ${guildInfo.name} (id: ${guildId}) ${guildInfo.isGM ? 'with user as owner' : 'as orphan (no owner yet)'}`);
+          log.info(`Created guild ${guildInfo.name} (id: ${guildId}) ${guildInfo.isGM ? 'with user as owner' : 'as orphan'}`);
         }
 
-        // Check if user is already a member
-        const { data: existingMembership, error: membershipLookupError } = await supabase
+        // Check/update membership
+        const { data: existingMembership } = await supabase
           .from('guild_members')
           .select('id, role')
           .eq('guild_id', guildId)
           .eq('user_id', userId)
           .maybeSingle();
 
-        if (membershipLookupError) {
-          console.error(`Error looking up membership for guild ${guildInfo.name}:`, membershipLookupError);
-          continue;
-        }
-
         const role = guildInfo.isGM ? 'gm' : 'member';
 
         if (existingMembership) {
-          // User is already a member, update role if it changed (both upgrade AND downgrade)
           if (existingMembership.role !== role) {
-            const { error: updateError } = await supabase
+            await supabase
               .from('guild_members')
               .update({ role })
               .eq('id', existingMembership.id);
-
-            if (updateError) {
-              console.error(`Failed to update role for guild ${guildInfo.name}:`, updateError);
-            } else {
-              console.log(`Updated user role from ${existingMembership.role} to ${role} for guild ${guildInfo.name}`);
-            }
-          } else {
-            console.log(`User already member of guild ${guildInfo.name} with role ${existingMembership.role}`);
+            log.debug(`Updated user role from ${existingMembership.role} to ${role} for guild ${guildInfo.name}`);
           }
         } else {
-          // Add user as member
-          const { error: joinError } = await supabase
+          await supabase
             .from('guild_members')
             .insert({
               guild_id: guildId,
@@ -1120,25 +1049,28 @@ async function autoJoinGuilds(
               role,
               status: 'active',
             });
-
-          if (joinError) {
-            console.error(`Failed to join guild ${guildInfo.name}:`, joinError);
-          } else {
-            console.log(`User joined guild ${guildInfo.name} as ${role}`);
-          }
+          log.debug(`User joined guild ${guildInfo.name} as ${role}`);
         }
       } catch (err) {
-        console.error(`Error processing guild ${guildInfo.name}:`, err);
+        log.error(`Error processing guild ${guildInfo.name}:`, err);
       }
     }
 
-    console.log('Auto-join guilds completed');
+    log.info('Auto-join guilds completed');
   } catch (error) {
-    console.error('Error in autoJoinGuilds:', error);
+    log.error('Error in autoJoinGuilds:', error);
   }
 }
 
-// Helper function to sync existing users who have this guild in wow_guild_memberships
+/**
+ * Syncs existing users who have this guild in wow_guild_memberships to guild_members.
+ * Called when a GM claims an orphan guild to add all existing WoW guild members.
+ * 
+ * @param supabase - Supabase client
+ * @param guildId - App guild ID
+ * @param guildName - Guild name for lookup
+ * @param guildServer - Guild server for lookup
+ */
 async function syncExistingMembers(
   supabase: any,
   guildId: string,
@@ -1146,9 +1078,8 @@ async function syncExistingMembers(
   guildServer: string
 ) {
   try {
-    console.log(`Syncing existing members for guild ${guildName} (${guildServer})...`);
+    log.debug(`Syncing existing members for guild ${guildName}...`);
 
-    // Find all users who have this guild in wow_guild_memberships
     const { data: wowMemberships, error: lookupError } = await supabase
       .from('wow_guild_memberships')
       .select('user_id, rank_index')
@@ -1156,67 +1087,52 @@ async function syncExistingMembers(
       .ilike('guild_realm', guildServer);
 
     if (lookupError) {
-      console.error(`Error looking up wow_guild_memberships:`, lookupError);
+      log.error('Error looking up wow_guild_memberships:', lookupError);
       return;
     }
 
     if (!wowMemberships || wowMemberships.length === 0) {
-      console.log(`No existing members found in wow_guild_memberships`);
+      log.debug('No existing members found in wow_guild_memberships');
       return;
     }
 
-    console.log(`Found ${wowMemberships.length} potential members to sync`);
+    log.debug(`Found ${wowMemberships.length} potential members to sync`);
 
-    // Group by user and check if they're already in guild_members
     const userRoles = new Map<string, boolean>();
     for (const membership of wowMemberships) {
       const existing = userRoles.get(membership.user_id);
       const isGM = membership.rank_index === 0;
-      // If user is GM on any character, mark as GM
       if (!existing || isGM) {
         userRoles.set(membership.user_id, isGM);
       }
     }
 
-    for (const [userId, isGM] of userRoles) {
-      // Check if already a member
-      const { data: existingMember, error: memberCheckError } = await supabase
+    for (const [syncUserId, isGM] of userRoles) {
+      const { data: existingMember } = await supabase
         .from('guild_members')
         .select('id')
         .eq('guild_id', guildId)
-        .eq('user_id', userId)
+        .eq('user_id', syncUserId)
         .maybeSingle();
 
-      if (memberCheckError) {
-        console.error(`Error checking membership for user ${userId}:`, memberCheckError);
-        continue;
-      }
-
       if (existingMember) {
-        console.log(`User ${userId} already a member of guild`);
         continue;
       }
 
-      // Add to guild_members
       const role = isGM ? 'gm' : 'member';
-      const { error: insertError } = await supabase
+      await supabase
         .from('guild_members')
         .insert({
           guild_id: guildId,
-          user_id: userId,
+          user_id: syncUserId,
           role,
           status: 'active',
         });
-
-      if (insertError) {
-        console.error(`Failed to add user ${userId} to guild:`, insertError);
-      } else {
-        console.log(`Added user ${userId} to guild as ${role}`);
-      }
+      log.debug(`Added user ${syncUserId} to guild as ${role}`);
     }
 
-    console.log(`Sync completed for guild ${guildName}`);
+    log.info(`Sync completed for guild ${guildName}`);
   } catch (error) {
-    console.error('Error in syncExistingMembers:', error);
+    log.error('Error in syncExistingMembers:', error);
   }
 }
