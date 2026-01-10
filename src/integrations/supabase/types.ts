@@ -243,6 +243,59 @@ export type Database = {
         }
         Relationships: []
       }
+      wow_guild_memberships: {
+        Row: {
+          character_id: string | null
+          created_at: string
+          guild_faction: string
+          guild_name: string
+          guild_realm: string
+          guild_realm_slug: string
+          id: string
+          is_guild_master: boolean | null
+          rank_index: number
+          rank_name: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          character_id?: string | null
+          created_at?: string
+          guild_faction?: string
+          guild_name: string
+          guild_realm: string
+          guild_realm_slug: string
+          id?: string
+          is_guild_master?: boolean | null
+          rank_index?: number
+          rank_name?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          character_id?: string | null
+          created_at?: string
+          guild_faction?: string
+          guild_name?: string
+          guild_realm?: string
+          guild_realm_slug?: string
+          id?: string
+          is_guild_master?: boolean | null
+          rank_index?: number
+          rank_name?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wow_guild_memberships_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: true
+            referencedRelation: "wow_characters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
