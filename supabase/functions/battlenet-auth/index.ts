@@ -219,7 +219,7 @@ Deno.serve(async (req) => {
       await fetchAndStoreCharacters(supabase, tokenData.access_token, userId);
 
       // Generate a session for the user
-      // We use signInWithPassword workaround by generating a magic link token
+      // We use a magic link token and verify it from the client
       const { data: sessionData, error: sessionError } = await supabase.auth.admin.generateLink({
         type: 'magiclink',
         email: `bnet_${userInfo.id}@battlenet.local`,
@@ -233,21 +233,34 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Extract the token from the magic link
-      const magicLinkUrl = new URL(sessionData.properties.action_link);
-      const token = magicLinkUrl.searchParams.get('token');
-      const tokenType = magicLinkUrl.searchParams.get('type');
+      // Supabase returns the token hash to verify as `hashed_token`.
+      // Fallback to parsing from action_link for compatibility.
+      const tokenHashFromProps = (sessionData.properties as any)?.hashed_token as string | undefined;
+      let tokenHashFromLink: string | null = null;
+      let tokenTypeFromLink: string | null = null;
 
-      return new Response(JSON.stringify({
-        success: true,
-        isNewUser,
-        battletag: userInfo.battletag,
-        verifyToken: token,
-        tokenType,
-        email: `bnet_${userInfo.id}@battlenet.local`,
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      try {
+        const magicLinkUrl = new URL(sessionData.properties.action_link);
+        tokenHashFromLink = magicLinkUrl.searchParams.get('token');
+        tokenTypeFromLink = magicLinkUrl.searchParams.get('type');
+      } catch (e) {
+        console.warn('Could not parse action_link URL');
+      }
+
+      const verifyToken = tokenHashFromProps || tokenHashFromLink;
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          isNewUser,
+          battletag: userInfo.battletag,
+          verifyToken,
+          tokenType: tokenTypeFromLink || 'magiclink',
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     }
 
     // Link Battle.net to existing account (requires auth)
