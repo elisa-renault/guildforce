@@ -76,7 +76,7 @@ const Auth = () => {
           className="absolute left-4 top-4 text-muted-foreground hover:text-foreground hover:bg-white/5" 
           onClick={() => navigate('/')}
         >
-          <ArrowLeft className="h-4 w-4 mr-2" /> {t.common.back}
+          <ArrowLeft className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.common.back}
         </Button>
 
         <div className="text-center mb-4 pt-4">
