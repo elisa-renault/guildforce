@@ -28,7 +28,7 @@ export const GlowCard = ({
     <div
       className={cn(
         'glass-card p-6 transition-all duration-500',
-        hoverable && 'hover:border-primary/30 hover:shadow-[0_0_40px_hsl(var(--primary)/0.15)]',
+        hoverable && 'hover:border-primary/30',
         onClick && 'cursor-pointer',
         className
       )}
