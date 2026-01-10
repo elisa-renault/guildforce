@@ -28,5 +28,19 @@ export const GlowCard = ({
     e.currentTarget.style.setProperty('--mouse-x', `${x}px`);
     e.currentTarget.style.setProperty('--mouse-y', `${y}px`);
   };
-  return;
+  return (
+    <div
+      className={cn(
+        'glass-card p-6 transition-all duration-500',
+        hoverable && variantStyles[variant],
+        onClick && 'cursor-pointer',
+        className
+      )}
+      onClick={onClick}
+      onMouseMove={hoverable ? handleMouseMove : undefined}
+      style={style}
+    >
+      {children}
+    </div>
+  );
 };
