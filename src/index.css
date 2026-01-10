@@ -11,14 +11,14 @@
   :root {
     /* Very dark background - almost black */
     --background: 240 10% 4%;
-    --foreground: 0 0% 95%;
+    --foreground: 30 15% 92%;
 
     /* Card with subtle transparency */
     --card: 240 10% 7%;
-    --card-foreground: 0 0% 95%;
+    --card-foreground: 30 15% 92%;
 
     --popover: 240 10% 6%;
-    --popover-foreground: 0 0% 95%;
+    --popover-foreground: 30 15% 92%;
 
     /* Plum primary - #6d09ab */
     --primary: 277 90% 35%;
