@@ -115,9 +115,9 @@ const GuildList = () => {
                 style={{ animationDelay: `${index * 100}ms` } as React.CSSProperties}
                 onClick={() => navigate(guild.role === 'gm' ? `/guild/${guild.id}` : `/guild/${guild.id}/wishes`)}
               >
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-primary/20">
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-primary/30 to-accent/20 border border-primary/20">
                       <Shield className="h-5 w-5 text-primary" strokeWidth={1.5} />
                     </div>
                     <div>
@@ -128,11 +128,6 @@ const GuildList = () => {
                   {guild.role === 'gm' && (
                     <Crown className="h-5 w-5 text-amber-500" strokeWidth={1.5} />
                   )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="bg-muted text-muted-foreground">
-                    {guild.role.toUpperCase()}
-                  </Badge>
                 </div>
               </GlowCard>
             ))}
