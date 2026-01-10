@@ -1065,15 +1065,20 @@ async function autoJoinGuilds(
             log.debug(`Updated user role from ${existingMembership.role} to ${role} for guild ${guildInfo.name}`);
           }
         } else {
-          await supabase
+          const { error: insertError } = await supabase
             .from('guild_members')
             .insert({
               guild_id: guildId,
               user_id: userId,
               role,
-              status: 'active',
+              status: 'confirmed',
             });
-          log.debug(`User joined guild ${guildInfo.name} as ${role}`);
+          
+          if (insertError) {
+            log.error(`Failed to join guild ${guildInfo.name}:`, insertError);
+          } else {
+            log.info(`User joined guild ${guildInfo.name} as ${role}`);
+          }
         }
       } catch (err) {
         log.error(`Error processing guild ${guildInfo.name}:`, err);
