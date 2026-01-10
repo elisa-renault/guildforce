@@ -78,11 +78,13 @@ const Auth = () => {
         throw new Error(data.error || 'Battle.net login failed');
       }
 
-      if (data.verifyToken && data.email) {
+      if (data.verifyToken) {
+        const token_hash = data.verifyToken as string;
+        const type = (data.tokenType || 'magiclink') as any;
+
         const { error } = await supabase.auth.verifyOtp({
-          email: data.email,
-          token: data.verifyToken,
-          type: 'magiclink',
+          token_hash,
+          type,
         });
 
         if (error) {
