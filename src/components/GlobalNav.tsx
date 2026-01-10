@@ -56,15 +56,15 @@ export const GlobalNav = () => {
                 <ChevronDown className="h-3 w-3" strokeWidth={1.5} />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="min-w-[140px] bg-card border-border">
+            <DropdownMenuContent align="start" className="min-w-[140px]">
               {languages.map((lang) => (
                 <DropdownMenuItem
                   key={lang.code}
                   onClick={() => setLanguage(lang.code)}
-                  className={`flex items-center gap-2 cursor-pointer transition-colors ${
+                  className={`flex items-center gap-2 ${
                     language === lang.code 
-                      ? 'bg-primary text-primary-foreground font-medium !hover:bg-primary' 
-                      : 'hover:!bg-primary/30'
+                      ? 'bg-primary text-primary-foreground font-medium' 
+                      : ''
                   }`}
                 >
                   <span className="text-base">{lang.flag}</span>
