@@ -60,10 +60,10 @@ export const GlobalNav = () => {
                 <DropdownMenuItem
                   key={lang.code}
                   onClick={() => setLanguage(lang.code)}
-                  className={`flex items-center gap-2 cursor-pointer ${
+                  className={`flex items-center gap-2 cursor-pointer transition-colors ${
                     language === lang.code 
-                      ? 'bg-primary text-primary-foreground font-medium' 
-                      : ''
+                      ? 'bg-primary text-primary-foreground font-medium hover:bg-primary/80' 
+                      : 'hover:bg-white/10 hover:text-foreground'
                   }`}
                 >
                   <span className="text-base">{lang.flag}</span>
