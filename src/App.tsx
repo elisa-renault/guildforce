@@ -7,7 +7,6 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import CreateGuild from "./pages/CreateGuild";
 import JoinGuild from "./pages/JoinGuild";
 import GuildList from "./pages/GuildList";
 import Wishes from "./pages/Wishes";
@@ -31,7 +30,6 @@ const App = () => (
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/guilds" element={<GuildList />} />
                 <Route path="/profile" element={<Profile />} />
-                <Route path="/guild/create" element={<CreateGuild />} />
                 <Route path="/guild/join" element={<JoinGuild />} />
                 <Route path="/guild/:guildId" element={<Dashboard />} />
                 <Route path="/guild/:guildId/wishes" element={<Wishes />} />
