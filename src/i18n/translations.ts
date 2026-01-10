@@ -170,7 +170,7 @@ export const translations: Record<Language, Translations> = {
       confirmPassword: 'Confirm password',
     },
     home: {
-      title: 'WoW Class Wishes',
+      title: 'Guildforce',
       subtitle: 'Plan your raid roster for the next expansion',
       description: 'Collect class and specialization preferences from your guild members to build the perfect roster.',
       createGuild: 'Manage my Guild',
@@ -315,7 +315,7 @@ export const translations: Record<Language, Translations> = {
       confirmPassword: 'Confirmer le mot de passe',
     },
     home: {
-      title: 'WoW Class Wishes',
+      title: 'Guildforce',
       subtitle: 'Préparez votre roster pour la prochaine extension',
       description: 'Collectez les préférences de classes et spécialisations de vos membres pour construire le roster parfait.',
       createGuild: 'Gérer ma guilde',
