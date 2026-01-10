@@ -289,6 +289,30 @@
       0 4px 12px hsl(277 70% 25% / 0.3);
   }
 
+  /* Spotlight effect for buttons */
+  .primary-button .spotlight,
+  .horde-button .spotlight,
+  .alliance-button .spotlight {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+      circle 100px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+      hsl(0 0% 100% / 0.25) 0%,
+      transparent 100%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .primary-button:hover .spotlight,
+  .horde-button:hover .spotlight,
+  .alliance-button:hover .spotlight {
+    opacity: 1;
+  }
+
   /* Horde liquid glass button */
   .horde-button {
     position: relative;
