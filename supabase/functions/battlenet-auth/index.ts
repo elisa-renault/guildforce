@@ -172,34 +172,45 @@ Deno.serve(async (req) => {
       if (existingProfile) {
         // User exists, sign them in
         userId = existingProfile.id;
-        console.log('Existing user found:', userId);
+        console.log('Existing user found by battlenet_id:', userId);
       } else {
-        // Create new user
-        isNewUser = true;
+        // Check if there's already an auth user with this email (avoid duplicates)
         const email = `bnet_${userInfo.id}@battlenet.local`;
-        const password = generateSecurePassword();
+        const { data: existingUsers } = await supabase.auth.admin.listUsers();
+        const existingAuthUser = existingUsers?.users?.find(u => u.email === email);
 
-        const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
-          email,
-          password,
-          email_confirm: true,
-          user_metadata: {
-            discord_pseudo: userInfo.battletag.split('#')[0],
-            preferred_language: 'fr',
-            battlenet_id: String(userInfo.id),
-          },
-        });
+        if (existingAuthUser) {
+          // Auth user exists but profile doesn't have battlenet_id yet - use this user
+          userId = existingAuthUser.id;
+          isNewUser = false;
+          console.log('Existing auth user found by email:', userId);
+        } else {
+          // Create new user
+          isNewUser = true;
+          const password = generateSecurePassword();
 
-        if (createError || !newUser.user) {
-          console.error('Failed to create user:', createError);
-          return new Response(JSON.stringify({ error: 'Failed to create user' }), {
-            status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+            email,
+            password,
+            email_confirm: true,
+            user_metadata: {
+              discord_pseudo: userInfo.battletag.split('#')[0],
+              preferred_language: 'fr',
+              battlenet_id: String(userInfo.id),
+            },
           });
-        }
 
-        userId = newUser.user.id;
-        console.log('New user created:', userId);
+          if (createError || !newUser.user) {
+            console.error('Failed to create user:', createError);
+            return new Response(JSON.stringify({ error: 'Failed to create user' }), {
+              status: 500,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
+
+          userId = newUser.user.id;
+          console.log('New user created:', userId);
+        }
       }
 
       // Update profile with Battle.net info
