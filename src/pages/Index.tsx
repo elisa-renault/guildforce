@@ -49,10 +49,7 @@ const Index = () => {
       <main className="container mx-auto px-6 pt-32 pb-16 relative z-10">
         <div className="text-center max-w-4xl mx-auto mb-24">
           {/* Badge - like reference */}
-          <div className="inline-flex items-center gap-2 glass-badge mb-10 animate-fade-in">
-            <Zap className="h-3.5 w-3.5 text-primary" />
-            <span>Next expansion roster planning</span>
-          </div>
+          
 
           {/* Title with gradient - like reference */}
           <h1 className="font-display text-5xl md:text-7xl mb-8 animate-fade-in leading-tight" style={{
