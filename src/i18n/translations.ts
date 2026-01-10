@@ -126,6 +126,10 @@ export interface Translations {
     noWishes: string;
     saveWishes: string;
     wishesSaved: string;
+    clickToExpand: string;
+    clickToEdit: string;
+    editMyWishes: string;
+    specs: string;
   };
   // Dashboard
   dashboard: {
@@ -305,6 +309,10 @@ export const translations: Record<Language, Translations> = {
       noWishes: 'No wishes submitted yet',
       saveWishes: 'Save my wishes',
       wishesSaved: 'Your wishes have been saved!',
+      clickToExpand: 'Click to see details',
+      clickToEdit: 'Click to edit your wishes',
+      editMyWishes: 'Edit my wishes',
+      specs: 'Specializations',
     },
     dashboard: {
       title: 'Roster Dashboard',
@@ -479,6 +487,10 @@ export const translations: Record<Language, Translations> = {
       noWishes: 'Aucun vœu soumis pour l\'instant',
       saveWishes: 'Enregistrer mes vœux',
       wishesSaved: 'Vos vœux ont été enregistrés !',
+      clickToExpand: 'Cliquez pour voir les détails',
+      clickToEdit: 'Cliquez pour modifier vos vœux',
+      editMyWishes: 'Modifier mes vœux',
+      specs: 'Spécialisations',
     },
     dashboard: {
       title: 'Tableau de bord du roster',
