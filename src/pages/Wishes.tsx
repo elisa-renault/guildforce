@@ -109,13 +109,8 @@ const Wishes = () => {
         .eq('guild_id', guildId)
         .eq('user_id', user.id);
 
-      await supabase
-        .from('class_wishes')
-        .delete()
-        .eq('guild_id', guildId)
-        .eq('user_id', user.id);
-
-      const wishesToInsert = wishes
+      // Use upsert to avoid duplicate key errors
+      const wishesToUpsert = wishes
         .map((w, i) => ({
           guild_id: guildId,
           user_id: user.id,
@@ -126,8 +121,27 @@ const Wishes = () => {
         }))
         .filter(w => w.class_id);
 
-      if (wishesToInsert.length > 0) {
-        const { error } = await supabase.from('class_wishes').insert(wishesToInsert);
+      // Delete wishes that are now empty
+      const emptyChoiceIndexes = wishes
+        .map((w, i) => (!w.classId ? i + 1 : null))
+        .filter((idx): idx is number => idx !== null);
+
+      if (emptyChoiceIndexes.length > 0) {
+        await supabase
+          .from('class_wishes')
+          .delete()
+          .eq('guild_id', guildId)
+          .eq('user_id', user.id)
+          .in('choice_index', emptyChoiceIndexes);
+      }
+
+      if (wishesToUpsert.length > 0) {
+        const { error } = await supabase
+          .from('class_wishes')
+          .upsert(wishesToUpsert, { 
+            onConflict: 'guild_id,user_id,choice_index',
+            ignoreDuplicates: false 
+          });
         if (error) throw error;
       }
 
