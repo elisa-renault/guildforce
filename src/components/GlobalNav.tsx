@@ -62,7 +62,7 @@ export const GlobalNav = () => {
                   onClick={() => setLanguage(lang.code)}
                   className={`flex items-center gap-2 cursor-pointer ${
                     language === lang.code 
-                      ? 'text-primary font-medium bg-primary/20 border-l-2 border-primary' 
+                      ? 'bg-primary text-primary-foreground font-medium' 
                       : ''
                   }`}
                 >
