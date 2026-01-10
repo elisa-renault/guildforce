@@ -25,6 +25,19 @@ export interface Translations {
     password: string;
     confirmPassword: string;
   };
+  // Battle.net
+  battlenet: {
+    connect: string;
+    connected: string;
+    disconnect: string;
+    disconnected: string;
+    connectDescription: string;
+    yourCharacters: string;
+    noCharacters: string;
+    main: string;
+    mainSet: string;
+    refresh: string;
+  };
   // Home page
   home: {
     title: string;
@@ -171,6 +184,18 @@ export const translations: Record<Language, Translations> = {
       password: 'Password',
       confirmPassword: 'Confirm password',
     },
+    battlenet: {
+      connect: 'Link my Battle.net account',
+      connected: 'Connected to Battle.net',
+      disconnect: 'Unlink Battle.net',
+      disconnected: 'Disconnected from Battle.net',
+      connectDescription: 'Connect your Battle.net account to automatically import your WoW characters.',
+      yourCharacters: 'Your characters',
+      noCharacters: 'No characters found',
+      main: 'Main',
+      mainSet: 'Main character set',
+      refresh: 'Refresh',
+    },
     home: {
       title: 'Guildforce',
       subtitle: 'Plan your raid roster for the next expansion',
@@ -316,6 +341,18 @@ export const translations: Record<Language, Translations> = {
       email: 'Email',
       password: 'Mot de passe',
       confirmPassword: 'Confirmer le mot de passe',
+    },
+    battlenet: {
+      connect: 'Lier mon compte Battle.net',
+      connected: 'Connecté à Battle.net',
+      disconnect: 'Délier Battle.net',
+      disconnected: 'Déconnecté de Battle.net',
+      connectDescription: 'Connectez votre compte Battle.net pour importer automatiquement vos personnages WoW.',
+      yourCharacters: 'Vos personnages',
+      noCharacters: 'Aucun personnage trouvé',
+      main: 'Principal',
+      mainSet: 'Personnage principal défini',
+      refresh: 'Actualiser',
     },
     home: {
       title: 'Guildforce',
