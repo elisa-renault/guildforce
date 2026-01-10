@@ -36,11 +36,20 @@ const Index = () => {
               {language.toUpperCase()}
             </button>
             
-            {user ? <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground hover:text-foreground hover:bg-white/5">
-                {t.common.logout}
-              </Button> : <CosmicButton size="sm" onClick={() => navigate('/auth')}>
+            {user ? (
+              <>
+                <Button variant="ghost" size="sm" onClick={() => navigate('/guilds')} className="text-muted-foreground hover:text-foreground hover:bg-white/5">
+                  {t.common.myGuilds}
+                </Button>
+                <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground hover:text-foreground hover:bg-white/5">
+                  {t.common.logout}
+                </Button>
+              </>
+            ) : (
+              <CosmicButton size="sm" onClick={() => navigate('/auth')}>
                 {t.common.login}
-              </CosmicButton>}
+              </CosmicButton>
+            )}
           </div>
         </div>
       </header>

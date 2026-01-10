@@ -19,6 +19,7 @@ export interface Translations {
     export: string;
     logout: string;
     login: string;
+    myGuilds: string;
     signup: string;
     email: string;
     password: string;
@@ -164,6 +165,7 @@ export const translations: Record<Language, Translations> = {
       export: 'Export',
       logout: 'Logout',
       login: 'Login',
+      myGuilds: 'My Guilds',
       signup: 'Sign up',
       email: 'Email',
       password: 'Password',
@@ -309,6 +311,7 @@ export const translations: Record<Language, Translations> = {
       export: 'Exporter',
       logout: 'Déconnexion',
       login: 'Connexion',
+      myGuilds: 'Mes Guildes',
       signup: 'Inscription',
       email: 'Email',
       password: 'Mot de passe',
