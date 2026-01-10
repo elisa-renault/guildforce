@@ -215,15 +215,24 @@ Deno.serve(async (req) => {
 
       // Update profile with Battle.net info
       const expiresAt = new Date(Date.now() + tokenData.expires_in * 1000).toISOString();
+      const battletagName = userInfo.battletag.split('#')[0];
+      
+      // For new users, also set their display name (discord_pseudo) to the BattleTag
+      const updateData: any = {
+        battlenet_id: String(userInfo.id),
+        battlenet_token: tokenData.access_token,
+        battlenet_token_expires_at: expiresAt,
+        battletag: userInfo.battletag,
+      };
+      
+      // If new user, set the pseudo to their BattleTag name
+      if (isNewUser) {
+        updateData.discord_pseudo = battletagName;
+      }
       
       await supabase
         .from('profiles')
-        .update({
-          battlenet_id: String(userInfo.id),
-          battlenet_token: tokenData.access_token,
-          battlenet_token_expires_at: expiresAt,
-          battletag: userInfo.battletag,
-        })
+        .update(updateData)
         .eq('id', userId);
 
       // Fetch and store WoW characters
