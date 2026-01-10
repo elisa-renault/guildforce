@@ -588,6 +588,24 @@
     box-shadow: 0 0 0 2px hsl(20 50% 60% / 0.08);
   }
 
+  /* Autofill styles - prevent browser from breaking design */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px hsl(240 10% 10%) inset !important;
+    -webkit-text-fill-color: hsl(30 15% 92%) !important;
+    box-shadow: 0 0 0 1000px hsl(240 10% 10%) inset !important;
+    caret-color: hsl(30 15% 92%) !important;
+    border-color: hsl(var(--primary) / 0.5) !important;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  input:-webkit-autofill::first-line {
+    font-family: inherit;
+    font-size: inherit;
+  }
+
   /* Stat cards with role colors */
   .stat-card {
     @apply glass-card p-6 text-center;
