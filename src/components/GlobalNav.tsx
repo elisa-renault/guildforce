@@ -1,7 +1,11 @@
+import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import { Shield, User, LogOut, ChevronDown } from 'lucide-react';
+import { CosmicButton } from '@/components/CosmicButton';
+import { BattleNetIcon } from '@/components/BattleNetIcon';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,9 +18,46 @@ export const GlobalNav = () => {
   const location = useLocation();
   const { t, language, setLanguage } = useLanguage();
   const { user, signOut } = useAuth();
+  const { toast } = useToast();
+  const [bnetLoading, setBnetLoading] = useState(false);
 
   // Don't show nav on auth page
   if (location.pathname === '/auth') return null;
+
+  const handleBattleNetLogin = async () => {
+    setBnetLoading(true);
+    try {
+      const redirectUri = `${window.location.origin}/auth`;
+      const state = crypto.randomUUID();
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/battlenet-auth/auth-url`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ redirectUri, state, mode: 'login' }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.authUrl) {
+        window.location.href = data.authUrl;
+      } else {
+        throw new Error('Failed to get auth URL');
+      }
+    } catch (error: any) {
+      console.error('Battle.net auth error:', error);
+      toast({
+        title: t.auth.battlenetError,
+        description: error.message,
+        variant: 'destructive',
+      });
+      setBnetLoading(false);
+    }
+  };
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -116,12 +157,14 @@ export const GlobalNav = () => {
               <span className="hidden sm:inline">{t.common.logout}</span>
             </button>
           ) : (
-            <button 
-              onClick={() => navigate('/auth')} 
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded text-sm font-normal bg-primary text-primary-foreground hover:bg-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            <CosmicButton 
+              size="sm"
+              onClick={handleBattleNetLogin}
+              loading={bnetLoading}
+              icon={<BattleNetIcon className="h-5 w-5" />}
             >
-              <span>{t.common.login}</span>
-            </button>
+              {t.common.login}
+            </CosmicButton>
           )}
         </div>
       </div>
