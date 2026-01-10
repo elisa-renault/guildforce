@@ -175,7 +175,6 @@ export type Database = {
           created_by_user_id: string | null
           faction: string
           id: string
-          invite_key: string
           name: string
           owner_id: string | null
           server: string
@@ -186,7 +185,6 @@ export type Database = {
           created_by_user_id?: string | null
           faction: string
           id?: string
-          invite_key?: string
           name: string
           owner_id?: string | null
           server: string
@@ -197,7 +195,6 @@ export type Database = {
           created_by_user_id?: string | null
           faction?: string
           id?: string
-          invite_key?: string
           name?: string
           owner_id?: string | null
           server?: string
@@ -359,23 +356,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      can_view_guild_invite_key: {
-        Args: { _guild_id: string }
-        Returns: boolean
-      }
-      get_guild_with_invite_key: {
-        Args: { _guild_id: string }
-        Returns: {
-          created_at: string
-          faction: string
-          id: string
-          invite_key: string
-          name: string
-          owner_id: string
-          server: string
-          updated_at: string
-        }[]
-      }
       get_public_profile_info: {
         Args: { _user_id: string }
         Returns: {
