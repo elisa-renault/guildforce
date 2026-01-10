@@ -22,43 +22,40 @@ const Index = () => {
           {/* Logo */}
           <span className="font-semibold text-lg text-foreground">{t.home.title}</span>
 
-          {/* Center navigation - like reference */}
-          <nav className="hidden md:flex items-center">
-            <div className="glass-badge flex items-center gap-6 px-6">
-              <button 
-                onClick={() => navigate('/guilds')}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {t.guild.members}
-              </button>
-              <button 
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {language === 'fr' ? 'À propos' : 'About'}
-              </button>
-              <button 
-                onClick={() => setLanguage(language === 'fr' ? 'en' : 'fr')}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-              >
-                <Globe className="h-3.5 w-3.5" />
-                {language.toUpperCase()}
-              </button>
-            </div>
+          {/* Navigation links */}
+          <nav className="hidden md:flex items-center gap-8">
+            <button 
+              onClick={() => navigate('/guilds')}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {t.guild.members}
+            </button>
+            <button 
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {language === 'fr' ? 'À propos' : 'About'}
+            </button>
           </nav>
 
-          {/* Right side auth */}
-          <div className="flex items-center gap-3">
+          {/* Right side - language + auth */}
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setLanguage(language === 'fr' ? 'en' : 'fr')}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-white/5"
+            >
+              <Globe className="h-4 w-4" />
+              {language.toUpperCase()}
+            </button>
+            
             {user ? (
-              <>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={signOut} 
-                  className="text-muted-foreground hover:text-foreground hover:bg-white/5"
-                >
-                  {t.common.logout}
-                </Button>
-              </>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={signOut} 
+                className="text-muted-foreground hover:text-foreground hover:bg-white/5"
+              >
+                {t.common.logout}
+              </Button>
             ) : (
               <CosmicButton 
                 size="sm"
