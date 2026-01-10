@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
-import { Shield, Users, FileSpreadsheet, Globe, Zap, BarChart3 } from 'lucide-react';
+import { Shield, Users, FileSpreadsheet, Globe, Zap, BarChart3, Flag } from 'lucide-react';
 const Index = () => {
   const navigate = useNavigate();
   const {
@@ -50,8 +50,8 @@ const Index = () => {
         <div className="text-center max-w-4xl mx-auto px-6">
           {/* Title with gradient */}
           <h1 className="font-display text-5xl md:text-7xl mb-8 animate-fade-in leading-tight" style={{
-            animationDelay: '100ms'
-          }}>
+          animationDelay: '100ms'
+        }}>
             <span className="text-foreground">{t.home.subtitle.split(' ').slice(0, 2).join(' ')}</span>
             {' '}
             <span className="gradient-text">{t.home.subtitle.split(' ').slice(2).join(' ')}</span>
@@ -59,18 +59,18 @@ const Index = () => {
 
           {/* Subtitle */}
           <p className="text-lg text-muted-foreground mb-12 max-w-2xl mx-auto animate-fade-in leading-relaxed" style={{
-            animationDelay: '200ms'
-          }}>
+          animationDelay: '200ms'
+        }}>
             {t.home.description}
           </p>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in" style={{
-            animationDelay: '300ms'
-          }}>
-            <CosmicButton size="lg" onClick={() => navigate(user ? '/guild/create' : '/auth')} icon={<Shield className="h-5 w-5" />}>
+          animationDelay: '300ms'
+        }}>
+            <Flag size="lg" onClick={() => navigate(user ? '/guild/create' : '/auth')} icon={<Shield className="h-5 w-5" />}>
               {t.home.createGuild}
-            </CosmicButton>
+            </Flag>
             <CosmicButton size="lg" variant="outline" onClick={() => navigate(user ? '/guild/join' : '/auth')} icon={<Users className="h-5 w-5" />}>
               {t.home.joinGuild}
             </CosmicButton>
