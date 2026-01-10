@@ -834,9 +834,169 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
           console.log(`User is Guild Master of ${gmMemberships.length} guild(s)!`);
         }
       }
+
+      // Auto-join/create app guilds based on WoW guild memberships
+      await autoJoinGuilds(supabase, userId, guildMemberships);
     }
 
   } catch (error) {
     console.error('Error fetching characters:', error);
+  }
+}
+
+// Helper function to auto-create/join guilds in the app based on WoW memberships
+async function autoJoinGuilds(
+  supabase: any,
+  userId: string,
+  guildMemberships: Array<{
+    characterId: string;
+    guildName: string;
+    guildRealm: string;
+    guildRealmSlug: string;
+    guildFaction: string;
+    rankIndex: number;
+    rankName: string;
+  }>
+) {
+  try {
+    // Group memberships by unique guild (name + realm)
+    const uniqueGuilds = new Map<string, {
+      name: string;
+      server: string;
+      faction: string;
+      isGM: boolean;
+    }>();
+
+    for (const membership of guildMemberships) {
+      const guildKey = `${membership.guildName.toLowerCase()}-${membership.guildRealmSlug}`;
+      const existing = uniqueGuilds.get(guildKey);
+      
+      // If user is GM on any character, mark as GM for this guild
+      const isGM = membership.rankIndex === 0;
+      
+      if (!existing) {
+        uniqueGuilds.set(guildKey, {
+          name: membership.guildName,
+          server: membership.guildRealm,
+          faction: membership.guildFaction.toLowerCase() === 'horde' ? 'horde' : 'alliance',
+          isGM,
+        });
+      } else if (isGM && !existing.isGM) {
+        // Update to GM if this character is GM
+        existing.isGM = true;
+      }
+    }
+
+    console.log(`Processing ${uniqueGuilds.size} unique guilds for auto-join...`);
+
+    for (const [guildKey, guildInfo] of uniqueGuilds) {
+      try {
+        // Check if guild already exists in app (by name + server)
+        const { data: existingGuild, error: guildLookupError } = await supabase
+          .from('guilds')
+          .select('id, owner_id')
+          .eq('name', guildInfo.name)
+          .eq('server', guildInfo.server)
+          .maybeSingle();
+
+        if (guildLookupError) {
+          console.error(`Error looking up guild ${guildInfo.name}:`, guildLookupError);
+          continue;
+        }
+
+        let guildId: string;
+
+        if (existingGuild) {
+          // Guild exists, use its ID
+          guildId = existingGuild.id;
+          console.log(`Guild ${guildInfo.name} already exists (id: ${guildId})`);
+
+          // If user is GM in WoW but not owner in app, we don't change ownership
+          // This prevents issues if multiple GMs exist or ownership was transferred
+        } else {
+          // Guild doesn't exist, create it
+          // Only create if user is GM, otherwise skip (guild will be created when a GM syncs)
+          if (!guildInfo.isGM) {
+            console.log(`Guild ${guildInfo.name} doesn't exist and user is not GM, skipping creation`);
+            continue;
+          }
+
+          const { data: newGuild, error: createGuildError } = await supabase
+            .from('guilds')
+            .insert({
+              name: guildInfo.name,
+              server: guildInfo.server,
+              faction: guildInfo.faction,
+              owner_id: userId,
+            })
+            .select('id')
+            .single();
+
+          if (createGuildError || !newGuild) {
+            console.error(`Failed to create guild ${guildInfo.name}:`, createGuildError);
+            continue;
+          }
+
+          guildId = newGuild.id;
+          console.log(`Created guild ${guildInfo.name} (id: ${guildId}) with user as owner`);
+        }
+
+        // Check if user is already a member
+        const { data: existingMembership, error: membershipLookupError } = await supabase
+          .from('guild_members')
+          .select('id, role')
+          .eq('guild_id', guildId)
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (membershipLookupError) {
+          console.error(`Error looking up membership for guild ${guildInfo.name}:`, membershipLookupError);
+          continue;
+        }
+
+        const role = guildInfo.isGM ? 'gm' : 'member';
+
+        if (existingMembership) {
+          // User is already a member, update role if needed
+          if (existingMembership.role !== role && guildInfo.isGM) {
+            // Only upgrade to GM, never downgrade
+            const { error: updateError } = await supabase
+              .from('guild_members')
+              .update({ role: 'gm' })
+              .eq('id', existingMembership.id);
+
+            if (updateError) {
+              console.error(`Failed to update role for guild ${guildInfo.name}:`, updateError);
+            } else {
+              console.log(`Updated user role to GM for guild ${guildInfo.name}`);
+            }
+          } else {
+            console.log(`User already member of guild ${guildInfo.name} with role ${existingMembership.role}`);
+          }
+        } else {
+          // Add user as member
+          const { error: joinError } = await supabase
+            .from('guild_members')
+            .insert({
+              guild_id: guildId,
+              user_id: userId,
+              role,
+              status: 'active',
+            });
+
+          if (joinError) {
+            console.error(`Failed to join guild ${guildInfo.name}:`, joinError);
+          } else {
+            console.log(`User joined guild ${guildInfo.name} as ${role}`);
+          }
+        }
+      } catch (err) {
+        console.error(`Error processing guild ${guildInfo.name}:`, err);
+      }
+    }
+
+    console.log('Auto-join guilds completed');
+  } catch (error) {
+    console.error('Error in autoJoinGuilds:', error);
   }
 }
