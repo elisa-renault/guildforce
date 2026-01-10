@@ -8,6 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { CosmicButton } from '@/components/CosmicButton';
 
 export const GlobalNav = () => {
   const navigate = useNavigate();
@@ -116,12 +117,12 @@ export const GlobalNav = () => {
               <span className="hidden sm:inline">{t.common.logout}</span>
             </button>
           ) : (
-            <button 
+            <CosmicButton 
               onClick={() => navigate('/auth')} 
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded text-sm font-normal bg-primary text-primary-foreground hover:bg-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              size="sm"
             >
-              <span>{t.common.login}</span>
-            </button>
+              {t.common.login}
+            </CosmicButton>
           )}
         </div>
       </div>
