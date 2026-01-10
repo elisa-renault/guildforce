@@ -2,7 +2,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Shield, User, LogOut, LogIn, Globe } from 'lucide-react';
+import { Shield, User, LogOut, LogIn } from 'lucide-react';
 
 export const GlobalNav = () => {
   const navigate = useNavigate();
@@ -59,35 +59,36 @@ export const GlobalNav = () => {
         )}
 
         {/* Right side - fixed width container for language + auth */}
-        <div className="flex items-center gap-2">
-          {/* Language toggle - fixed width to prevent shifting */}
-          <button 
+        <div className="flex items-center gap-1">
+          {/* Language toggle - icon only for stability */}
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setLanguage(language === 'fr' ? 'en' : 'fr')} 
-            className="w-16 text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-white/5"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-white/5"
           >
-            <Globe className="h-4 w-4 flex-shrink-0" strokeWidth={1.5} />
-            <span className="w-6 text-center">{language.toUpperCase()}</span>
-          </button>
+            <span className="text-xs font-medium">{language.toUpperCase()}</span>
+          </Button>
           
           {user ? (
             <Button 
               variant="ghost" 
-              size="sm" 
+              size="icon"
               onClick={signOut} 
-              className="text-muted-foreground hover:text-foreground hover:bg-white/5"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-white/5"
+              title={t.common.logout}
             >
-              <LogOut className="h-4 w-4 mr-1.5" strokeWidth={1.5} />
-              {t.common.logout}
+              <LogOut className="h-4 w-4" strokeWidth={1.5} />
             </Button>
           ) : (
             <Button 
               variant="ghost" 
-              size="sm" 
+              size="icon"
               onClick={() => navigate('/auth')} 
-              className="text-primary hover:text-primary hover:bg-primary/10"
+              className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10"
+              title={t.common.login}
             >
-              <LogIn className="h-4 w-4 mr-1.5" strokeWidth={1.5} />
-              {t.common.login}
+              <LogIn className="h-4 w-4" strokeWidth={1.5} />
             </Button>
           )}
         </div>
