@@ -72,15 +72,15 @@ const GuildList = () => {
             onClick={() => navigate('/')}
             className="text-muted-foreground hover:text-foreground hover:bg-white/5"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" /> {t.common.back}
+            <ArrowLeft className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.common.back}
           </Button>
           <h1 className="text-xl font-bold text-foreground">{t.guild.members}</h1>
           <div className="flex gap-2">
             <CosmicButton size="sm" variant="outline" onClick={() => navigate('/guild/join')}>
-              <Users className="h-4 w-4 mr-2" /> {t.guild.join}
+              <Users className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.guild.join}
             </CosmicButton>
             <CosmicButton size="sm" onClick={() => navigate('/guild/create')}>
-              <Plus className="h-4 w-4 mr-2" /> {t.guild.create}
+              <Plus className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.guild.create}
             </CosmicButton>
           </div>
         </div>
@@ -93,7 +93,7 @@ const GuildList = () => {
           </div>
         ) : guilds.length === 0 ? (
           <GlowCard className="max-w-md mx-auto p-8 text-center animate-fade-in">
-            <Shield className="h-16 w-16 mx-auto mb-6 text-muted-foreground" />
+            <Shield className="h-16 w-16 mx-auto mb-6 text-muted-foreground" strokeWidth={1.5} />
             <p className="text-muted-foreground mb-6 text-lg">{t.guild.noMembers}</p>
             <div className="flex gap-3 justify-center">
               <CosmicButton onClick={() => navigate('/guild/create')}>
@@ -119,7 +119,7 @@ const GuildList = () => {
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                       guild.faction === 'horde' ? 'gradient-horde' : 'gradient-alliance'
                     }`}>
-                      <Shield className="h-5 w-5 text-white" />
+                      <Shield className="h-5 w-5 text-white" strokeWidth={1.5} />
                     </div>
                     <div>
                       <h3 className="font-semibold text-foreground">{guild.name}</h3>
@@ -127,7 +127,7 @@ const GuildList = () => {
                     </div>
                   </div>
                   {guild.role === 'gm' && (
-                    <Crown className="h-5 w-5 text-yellow-500" />
+                    <Crown className="h-5 w-5 text-yellow-500" strokeWidth={1.5} />
                   )}
                 </div>
                 <div className="flex items-center gap-2">

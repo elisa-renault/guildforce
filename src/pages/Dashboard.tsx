@@ -223,15 +223,15 @@ const Dashboard = () => {
             onClick={() => navigate('/guilds')}
             className="text-muted-foreground hover:text-foreground hover:bg-white/5"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" /> {t.common.back}
+            <ArrowLeft className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.common.back}
           </Button>
           <h1 className="text-xl font-bold text-foreground">{guild?.name} - {t.dashboard.title}</h1>
           <div className="flex gap-2">
             <CosmicButton size="sm" variant="outline" onClick={copyInviteLink}>
-              <Copy className="h-4 w-4 mr-2" /> {t.guild.copyInvite}
+              <Copy className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.guild.copyInvite}
             </CosmicButton>
             <CosmicButton size="sm" onClick={exportCSV}>
-              <Download className="h-4 w-4 mr-2" /> {t.dashboard.exportCSV}
+              <Download className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.dashboard.exportCSV}
             </CosmicButton>
           </div>
         </div>
@@ -241,27 +241,27 @@ const Dashboard = () => {
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           <div className="stat-card total animate-fade-in" style={{ animationDelay: '0ms' }}>
-            <Users className="h-8 w-8 mx-auto mb-3 text-primary" />
+            <Users className="h-8 w-8 mx-auto mb-3 text-primary" strokeWidth={1.5} />
             <div className="text-3xl font-bold text-foreground">{totalPlayers}</div>
             <div className="text-sm text-muted-foreground mt-1">{t.dashboard.totalPlayers}</div>
           </div>
           <div className="stat-card confirmed animate-fade-in" style={{ animationDelay: '50ms' }}>
-            <CheckCircle className="h-8 w-8 mx-auto mb-3 text-healer" />
+            <CheckCircle className="h-8 w-8 mx-auto mb-3 text-healer" strokeWidth={1.5} />
             <div className="text-3xl font-bold text-foreground">{confirmedPlayers}</div>
             <div className="text-sm text-muted-foreground mt-1">{t.dashboard.confirmedPlayers}</div>
           </div>
           <div className="stat-card tank animate-fade-in" style={{ animationDelay: '100ms' }}>
-            <Shield className="h-8 w-8 mx-auto mb-3 text-tank" />
+            <Shield className="h-8 w-8 mx-auto mb-3 text-tank" strokeWidth={1.5} />
             <div className="text-3xl font-bold text-foreground">{roleStats.tank}</div>
             <div className="text-sm text-muted-foreground mt-1">{t.dashboard.tank}</div>
           </div>
           <div className="stat-card healer animate-fade-in" style={{ animationDelay: '150ms' }}>
-            <Heart className="h-8 w-8 mx-auto mb-3 text-healer" />
+            <Heart className="h-8 w-8 mx-auto mb-3 text-healer" strokeWidth={1.5} />
             <div className="text-3xl font-bold text-foreground">{roleStats.healer}</div>
             <div className="text-sm text-muted-foreground mt-1">{t.dashboard.healer}</div>
           </div>
           <div className="stat-card dps animate-fade-in" style={{ animationDelay: '200ms' }}>
-            <Swords className="h-8 w-8 mx-auto mb-3 text-dps" />
+            <Swords className="h-8 w-8 mx-auto mb-3 text-dps" strokeWidth={1.5} />
             <div className="text-3xl font-bold text-foreground">{roleStats.dps}</div>
             <div className="text-sm text-muted-foreground mt-1">{t.dashboard.dps}</div>
           </div>
@@ -272,7 +272,7 @@ const Dashboard = () => {
           <h3 className="text-lg font-semibold text-foreground mb-4">{t.dashboard.filters}</h3>
           <div className="flex flex-wrap gap-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
               <Input
                 placeholder={t.common.search}
                 value={searchQuery}
@@ -338,9 +338,9 @@ const Dashboard = () => {
                           }
                         >
                           {member.status === 'confirmed' ? (
-                            <><CheckCircle className="h-3 w-3 mr-1" /> {t.wishes.confirmed}</>
+                            <><CheckCircle className="h-3 w-3 mr-1" strokeWidth={1.5} /> {t.wishes.confirmed}</>
                           ) : (
-                            <><HelpCircle className="h-3 w-3 mr-1" /> {t.wishes.potential}</>
+                            <><HelpCircle className="h-3 w-3 mr-1" strokeWidth={1.5} /> {t.wishes.potential}</>
                           )}
                         </Badge>
                       </TableCell>
