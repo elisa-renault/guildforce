@@ -68,10 +68,10 @@ const Index = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in" style={{
             animationDelay: '300ms'
           }}>
-            <CosmicButton size="lg" onClick={() => navigate(user ? '/guild/create' : '/auth')} icon={<Flag className="h-5 w-5" />}>
+            <CosmicButton size="lg" onClick={() => navigate(user ? '/guild/create' : '/auth')} icon={<Flag className="h-5 w-5" strokeWidth={1.5} />}>
               {t.home.createGuild}
             </CosmicButton>
-            <CosmicButton size="lg" variant="outline" onClick={() => navigate(user ? '/guild/join' : '/auth')} icon={<Users className="h-5 w-5" />}>
+            <CosmicButton size="lg" variant="outline" onClick={() => navigate(user ? '/guild/join' : '/auth')} icon={<Users className="h-5 w-5" strokeWidth={1.5} />}>
               {t.home.joinGuild}
             </CosmicButton>
           </div>
