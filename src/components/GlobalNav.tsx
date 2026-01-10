@@ -1,7 +1,13 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Shield, User, LogOut } from 'lucide-react';
+import { Shield, User, LogOut, ChevronDown } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export const GlobalNav = () => {
   const navigate = useNavigate();
@@ -18,17 +24,53 @@ export const GlobalNav = () => {
   const navButtonInactive = "text-muted-foreground hover:text-foreground hover:bg-white/5";
   const navButtonActive = "text-primary bg-primary/10";
 
+  const languages = [
+    { code: 'fr' as const, label: 'Français', flag: '🇫🇷' },
+    { code: 'en' as const, label: 'English', flag: '🇬🇧' },
+  ];
+
+  const currentLang = languages.find(l => l.code === language) || languages[0];
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 glass-header" role="banner">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-        {/* Logo */}
-        <button 
-          onClick={() => navigate('/')}
-          className="font-display text-lg text-foreground hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded px-1"
-          aria-label="Accueil Guildforce"
-        >
-          Guildforce
-        </button>
+        {/* Left side - Logo + Language */}
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => navigate('/')}
+            className="font-display text-lg text-foreground hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded px-1"
+            aria-label="Accueil Guildforce"
+          >
+            Guildforce
+          </button>
+
+          {/* Language dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button 
+                className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                aria-label="Changer de langue"
+              >
+                <span className="text-base">{currentLang.flag}</span>
+                <ChevronDown className="h-3 w-3" strokeWidth={1.5} />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="min-w-[140px] bg-card border-border">
+              {languages.map((lang) => (
+                <DropdownMenuItem
+                  key={lang.code}
+                  onClick={() => setLanguage(lang.code)}
+                  className={`flex items-center gap-2 cursor-pointer ${
+                    language === lang.code ? 'text-primary bg-primary/10' : ''
+                  }`}
+                >
+                  <span className="text-base">{lang.flag}</span>
+                  <span>{lang.label}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
 
         {/* Center navigation - only when logged in */}
         {user && (
@@ -60,17 +102,8 @@ export const GlobalNav = () => {
           </nav>
         )}
 
-        {/* Right side - language + auth */}
-        <div className="flex items-center gap-2" role="group" aria-label="Actions utilisateur">
-          {/* Language toggle - explicit text */}
-          <button
-            onClick={() => setLanguage(language === 'fr' ? 'en' : 'fr')} 
-            className={`${navButtonBase} ${navButtonInactive} min-w-[52px]`}
-            aria-label={language === 'fr' ? 'Switch to English' : 'Passer en Français'}
-          >
-            <span className="text-xs font-medium uppercase">{language === 'fr' ? 'EN' : 'FR'}</span>
-          </button>
-          
+        {/* Right side - auth only */}
+        <div className="flex items-center" role="group" aria-label="Authentification">
           {user ? (
             <button 
               onClick={signOut} 
