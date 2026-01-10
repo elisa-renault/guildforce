@@ -33,7 +33,7 @@ export const GlobalNav = () => {
               variant="ghost"
               size="sm"
               onClick={() => navigate('/guilds')}
-              className={`min-w-32 text-sm hover:bg-white/5 justify-center ${
+              className={`w-[120px] text-sm hover:bg-white/5 ${
                 isActive('/guilds') || location.pathname.startsWith('/guild/')
                   ? 'text-primary bg-primary/10'
                   : 'text-muted-foreground hover:text-foreground'
@@ -46,7 +46,7 @@ export const GlobalNav = () => {
               variant="ghost"
               size="sm"
               onClick={() => navigate('/profile')}
-              className={`min-w-32 text-sm hover:bg-white/5 justify-center ${
+              className={`w-[120px] text-sm hover:bg-white/5 ${
                 isActive('/profile')
                   ? 'text-primary bg-primary/10'
                   : 'text-muted-foreground hover:text-foreground'
