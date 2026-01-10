@@ -24,7 +24,7 @@ import { cn } from '@/lib/utils';
 
 interface MemberWish {
   id: string;
-  discord_pseudo: string;
+  username: string;
   status: string;
   wishes: {
     choice_index: number;
@@ -87,7 +87,7 @@ const Dashboard = () => {
       
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, discord_pseudo')
+        .select('id, username')
         .in('id', userIds);
 
       const { data: wishesData } = await supabase
@@ -100,7 +100,7 @@ const Dashboard = () => {
         const memberWishes = wishesData?.filter(w => w.user_id === m.user_id) || [];
         return {
           id: m.user_id,
-          discord_pseudo: profile?.discord_pseudo || 'Unknown',
+          username: profile?.username || 'Unknown',
           status: m.status,
           wishes: memberWishes.sort((a, b) => a.choice_index - b.choice_index),
         };
@@ -236,9 +236,9 @@ const Dashboard = () => {
   };
 
   const exportCSV = () => {
-    const headers = ['Discord', 'Status', 'Choice 1 Class', 'Choice 1 Specs', 'Choice 2 Class', 'Choice 2 Specs', 'Choice 3 Class', 'Choice 3 Specs', 'Comments'];
+    const headers = ['Username', 'Status', 'Choice 1 Class', 'Choice 1 Specs', 'Choice 2 Class', 'Choice 2 Specs', 'Choice 3 Class', 'Choice 3 Specs', 'Comments'];
     const rows = members.map(m => {
-      const row = [m.discord_pseudo, m.status];
+      const row = [m.username, m.status];
       for (let i = 1; i <= 3; i++) {
         const wish = m.wishes.find(w => w.choice_index === i);
         if (wish) {
@@ -264,7 +264,7 @@ const Dashboard = () => {
   };
 
   const filteredMembers = members.filter(m => {
-    if (searchQuery && !m.discord_pseudo.toLowerCase().includes(searchQuery.toLowerCase())) {
+    if (searchQuery && !m.username.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false;
     }
 
@@ -624,7 +624,7 @@ const Dashboard = () => {
                           </TableCell>
                           <TableCell className="font-medium text-foreground">
                             <div className="flex items-center gap-2">
-                              {member.discord_pseudo}
+                              {member.username}
                               {isOwnRow && (
                                 <Badge variant="outline" className="text-xs text-primary border-primary/30 bg-primary/10">
                                   {t.common.edit}
