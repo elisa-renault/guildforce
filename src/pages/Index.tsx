@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
 import { BattleNetIcon } from '@/components/BattleNetIcon';
@@ -10,6 +12,43 @@ const Index = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { user } = useAuth();
+  const { toast } = useToast();
+  const [bnetLoading, setBnetLoading] = useState(false);
+
+  const handleBattleNetLogin = async () => {
+    setBnetLoading(true);
+    try {
+      const redirectUri = `${window.location.origin}/auth`;
+      const state = crypto.randomUUID();
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/battlenet-auth/auth-url`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ redirectUri, state, mode: 'login' }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.authUrl) {
+        window.location.href = data.authUrl;
+      } else {
+        throw new Error('Failed to get auth URL');
+      }
+    } catch (error: any) {
+      console.error('Battle.net auth error:', error);
+      toast({
+        title: t.auth.battlenetError,
+        description: error.message,
+        variant: 'destructive',
+      });
+      setBnetLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen relative pt-16">
@@ -40,7 +79,8 @@ const Index = () => {
           }}>
             <CosmicButton 
               size="lg" 
-              onClick={() => navigate(user ? '/guilds' : '/auth')} 
+              onClick={() => user ? navigate('/guilds') : handleBattleNetLogin()}
+              loading={bnetLoading}
               icon={user ? <Shield className="h-5 w-5" strokeWidth={1.5} /> : <BattleNetIcon className="h-7 w-7" />}
             >
               {user ? t.common.myGuilds : t.auth.loginWithBattleNet}
