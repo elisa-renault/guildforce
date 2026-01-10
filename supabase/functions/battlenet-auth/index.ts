@@ -10,7 +10,7 @@ const BATTLENET_CLIENT_SECRET = Deno.env.get('BATTLENET_CLIENT_SECRET')!;
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-// Battle.net OAuth URLs (EU region - can be changed)
+// Battle.net OAuth URLs (EU region)
 const BATTLENET_OAUTH_URL = 'https://oauth.battle.net';
 const BATTLENET_API_URL = 'https://eu.api.blizzard.com';
 
@@ -47,6 +47,18 @@ interface UserInfo {
   battletag: string;
 }
 
+// Generate a secure random password
+function generateSecurePassword(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+  let password = '';
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  for (let i = 0; i < 32; i++) {
+    password += chars[array[i] % chars.length];
+  }
+  return password;
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -59,14 +71,15 @@ Deno.serve(async (req) => {
   try {
     // Generate OAuth URL for frontend to redirect to
     if (path === 'auth-url' && req.method === 'POST') {
-      const { redirectUri, state } = await req.json();
+      const { redirectUri, state, mode } = await req.json();
       
       const authUrl = new URL(`${BATTLENET_OAUTH_URL}/authorize`);
       authUrl.searchParams.set('client_id', BATTLENET_CLIENT_ID);
       authUrl.searchParams.set('redirect_uri', redirectUri);
       authUrl.searchParams.set('response_type', 'code');
       authUrl.searchParams.set('scope', 'wow.profile openid');
-      authUrl.searchParams.set('state', state);
+      // Include mode in state so we know if it's login or link
+      authUrl.searchParams.set('state', JSON.stringify({ state, mode }));
 
       console.log('Generated auth URL for redirect:', authUrl.toString());
 
@@ -75,19 +88,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Exchange authorization code for token and fetch characters
-    if (path === 'callback' && req.method === 'POST') {
-      const authHeader = req.headers.get('Authorization');
-      if (!authHeader) {
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
+    // Handle Battle.net login/signup (no existing Supabase session)
+    if (path === 'login' && req.method === 'POST') {
       const { code, redirectUri } = await req.json();
 
-      console.log('Exchanging code for token...');
+      console.log('Battle.net login - exchanging code for token...');
 
       // Exchange code for token
       const tokenResponse = await fetch(`${BATTLENET_OAUTH_URL}/token`, {
@@ -133,48 +138,156 @@ Deno.serve(async (req) => {
       const userInfo: UserInfo = await userInfoResponse.json();
       console.log('Got BattleTag:', userInfo.battletag);
 
-      // Get WoW profile with characters
-      const wowProfileResponse = await fetch(
-        `${BATTLENET_API_URL}/profile/user/wow?namespace=profile-eu&locale=en_GB`,
-        {
-          headers: {
-            'Authorization': `Bearer ${tokenData.access_token}`,
-          },
-        }
-      );
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-      let characters: Array<{
-        name: string;
-        realm: string;
-        realmSlug: string;
-        classId: number;
-        level: number;
-        guildName?: string;
-      }> = [];
+      // Check if a user with this Battle.net ID already exists
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('battlenet_id', String(userInfo.id))
+        .maybeSingle();
 
-      if (wowProfileResponse.ok) {
-        const wowProfile: WoWProfile = await wowProfileResponse.json();
-        console.log('Got WoW profile');
+      let userId: string;
+      let isNewUser = false;
 
-        // Flatten all characters from all WoW accounts
-        for (const account of wowProfile.wow_accounts || []) {
-          for (const char of account.characters || []) {
-            characters.push({
-              name: char.character.name,
-              realm: char.character.realm.name,
-              realmSlug: char.character.realm.slug,
-              classId: char.character.playable_class.id,
-              level: char.character.level,
-            });
-          }
-        }
-
-        // Sort by level descending
-        characters.sort((a, b) => b.level - a.level);
-        console.log(`Found ${characters.length} characters`);
+      if (existingProfile) {
+        // User exists, sign them in
+        userId = existingProfile.id;
+        console.log('Existing user found:', userId);
       } else {
-        console.log('No WoW profile found or error fetching');
+        // Create new user
+        isNewUser = true;
+        const email = `bnet_${userInfo.id}@battlenet.local`;
+        const password = generateSecurePassword();
+
+        const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true,
+          user_metadata: {
+            discord_pseudo: userInfo.battletag.split('#')[0],
+            preferred_language: 'fr',
+            battlenet_id: String(userInfo.id),
+          },
+        });
+
+        if (createError || !newUser.user) {
+          console.error('Failed to create user:', createError);
+          return new Response(JSON.stringify({ error: 'Failed to create user' }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        userId = newUser.user.id;
+        console.log('New user created:', userId);
       }
+
+      // Update profile with Battle.net info
+      const expiresAt = new Date(Date.now() + tokenData.expires_in * 1000).toISOString();
+      
+      await supabase
+        .from('profiles')
+        .update({
+          battlenet_id: String(userInfo.id),
+          battlenet_token: tokenData.access_token,
+          battlenet_token_expires_at: expiresAt,
+          battletag: userInfo.battletag,
+        })
+        .eq('id', userId);
+
+      // Fetch and store WoW characters
+      await fetchAndStoreCharacters(supabase, tokenData.access_token, userId);
+
+      // Generate a session for the user
+      // We use signInWithPassword workaround by generating a magic link token
+      const { data: sessionData, error: sessionError } = await supabase.auth.admin.generateLink({
+        type: 'magiclink',
+        email: `bnet_${userInfo.id}@battlenet.local`,
+      });
+
+      if (sessionError || !sessionData) {
+        console.error('Failed to generate session:', sessionError);
+        return new Response(JSON.stringify({ error: 'Failed to generate session' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Extract the token from the magic link
+      const magicLinkUrl = new URL(sessionData.properties.action_link);
+      const token = magicLinkUrl.searchParams.get('token');
+      const tokenType = magicLinkUrl.searchParams.get('type');
+
+      return new Response(JSON.stringify({
+        success: true,
+        isNewUser,
+        battletag: userInfo.battletag,
+        verifyToken: token,
+        tokenType,
+        email: `bnet_${userInfo.id}@battlenet.local`,
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Link Battle.net to existing account (requires auth)
+    if (path === 'callback' && req.method === 'POST') {
+      const authHeader = req.headers.get('Authorization');
+      if (!authHeader) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const { code, redirectUri } = await req.json();
+
+      console.log('Linking Battle.net - exchanging code for token...');
+
+      // Exchange code for token
+      const tokenResponse = await fetch(`${BATTLENET_OAUTH_URL}/token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': `Basic ${btoa(`${BATTLENET_CLIENT_ID}:${BATTLENET_CLIENT_SECRET}`)}`,
+        },
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          code,
+          redirect_uri: redirectUri,
+        }),
+      });
+
+      if (!tokenResponse.ok) {
+        const errorText = await tokenResponse.text();
+        console.error('Token exchange failed:', errorText);
+        return new Response(JSON.stringify({ error: 'Failed to exchange token', details: errorText }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const tokenData: TokenResponse = await tokenResponse.json();
+      console.log('Token obtained successfully');
+
+      // Get user info (BattleTag)
+      const userInfoResponse = await fetch(`${BATTLENET_OAUTH_URL}/userinfo`, {
+        headers: {
+          'Authorization': `Bearer ${tokenData.access_token}`,
+        },
+      });
+
+      if (!userInfoResponse.ok) {
+        console.error('Failed to get user info');
+        return new Response(JSON.stringify({ error: 'Failed to get user info' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const userInfo: UserInfo = await userInfoResponse.json();
+      console.log('Got BattleTag:', userInfo.battletag);
 
       // Get Supabase user from auth header
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -186,6 +299,21 @@ Deno.serve(async (req) => {
         console.error('Failed to get user:', userError);
         return new Response(JSON.stringify({ error: 'Unauthorized' }), {
           status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Check if this Battle.net account is already linked to another user
+      const { data: existingLink } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('battlenet_id', String(userInfo.id))
+        .neq('id', user.id)
+        .maybeSingle();
+
+      if (existingLink) {
+        return new Response(JSON.stringify({ error: 'This Battle.net account is already linked to another user' }), {
+          status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
@@ -211,36 +339,12 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Store characters in database
-      if (characters.length > 0) {
-        // First delete existing characters for this user
-        await supabase.from('wow_characters').delete().eq('user_id', user.id);
-
-        // Insert new characters
-        const { error: charError } = await supabase.from('wow_characters').insert(
-          characters.map((char, index) => ({
-            user_id: user.id,
-            name: char.name,
-            realm: char.realm,
-            realm_slug: char.realmSlug,
-            class_id: char.classId,
-            level: char.level,
-            guild_name: char.guildName || null,
-            is_main: index === 0, // First (highest level) character is main by default
-          }))
-        );
-
-        if (charError) {
-          console.error('Failed to insert characters:', charError);
-        } else {
-          console.log('Characters saved to database');
-        }
-      }
+      // Fetch and store WoW characters
+      await fetchAndStoreCharacters(supabase, tokenData.access_token, user.id);
 
       return new Response(JSON.stringify({
         success: true,
         battletag: userInfo.battletag,
-        characters,
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -292,9 +396,84 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Error:', error);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+    return new Response(JSON.stringify({ error: 'Internal server error', details: String(error) }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });
+
+// Helper function to fetch and store WoW characters
+async function fetchAndStoreCharacters(supabase: any, accessToken: string, userId: string) {
+  try {
+    const wowProfileResponse = await fetch(
+      `${BATTLENET_API_URL}/profile/user/wow?namespace=profile-eu&locale=en_GB`,
+      {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!wowProfileResponse.ok) {
+      console.log('No WoW profile found or error fetching');
+      return;
+    }
+
+    const wowProfile: WoWProfile = await wowProfileResponse.json();
+    console.log('Got WoW profile');
+
+    const characters: Array<{
+      name: string;
+      realm: string;
+      realmSlug: string;
+      classId: number;
+      level: number;
+      guildName?: string;
+    }> = [];
+
+    // Flatten all characters from all WoW accounts
+    for (const account of wowProfile.wow_accounts || []) {
+      for (const char of account.characters || []) {
+        characters.push({
+          name: char.character.name,
+          realm: char.character.realm.name,
+          realmSlug: char.character.realm.slug,
+          classId: char.character.playable_class.id,
+          level: char.character.level,
+        });
+      }
+    }
+
+    // Sort by level descending
+    characters.sort((a, b) => b.level - a.level);
+    console.log(`Found ${characters.length} characters`);
+
+    if (characters.length > 0) {
+      // First delete existing characters for this user
+      await supabase.from('wow_characters').delete().eq('user_id', userId);
+
+      // Insert new characters
+      const { error: charError } = await supabase.from('wow_characters').insert(
+        characters.map((char, index) => ({
+          user_id: userId,
+          name: char.name,
+          realm: char.realm,
+          realm_slug: char.realmSlug,
+          class_id: char.classId,
+          level: char.level,
+          guild_name: char.guildName || null,
+          is_main: index === 0,
+        }))
+      );
+
+      if (charError) {
+        console.error('Failed to insert characters:', charError);
+      } else {
+        console.log('Characters saved to database');
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching characters:', error);
+  }
+}
