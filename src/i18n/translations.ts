@@ -173,8 +173,8 @@ export const translations: Record<Language, Translations> = {
       title: 'WoW Class Wishes',
       subtitle: 'Plan your raid roster for the next expansion',
       description: 'Collect class and specialization preferences from your guild members to build the perfect roster.',
-      createGuild: 'Create a Guild',
-      joinGuild: 'Join a Guild',
+      createGuild: 'Manage my Guild',
+      joinGuild: 'Join my Guild',
       features: {
         collect: {
           title: 'Collect Wishes',
@@ -318,8 +318,8 @@ export const translations: Record<Language, Translations> = {
       title: 'WoW Class Wishes',
       subtitle: 'Préparez votre roster pour la prochaine extension',
       description: 'Collectez les préférences de classes et spécialisations de vos membres pour construire le roster parfait.',
-      createGuild: 'Créer une guilde',
-      joinGuild: 'Rejoindre une guilde',
+      createGuild: 'Gérer ma guilde',
+      joinGuild: 'Rejoindre ma guilde',
       features: {
         collect: {
           title: 'Collecte des vœux',
