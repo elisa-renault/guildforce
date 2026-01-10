@@ -36,6 +36,7 @@ export const GlowCard = ({
       onMouseMove={hoverable ? handleMouseMove : undefined}
       style={style}
     >
+      <span className="spotlight" />
       {children}
     </div>
   );
