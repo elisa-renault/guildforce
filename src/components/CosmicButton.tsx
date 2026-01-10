@@ -20,19 +20,19 @@ export const CosmicButton = forwardRef<HTMLButtonElement, CosmicButtonProps>(({
   disabled,
   ...props
 }, ref) => {
-  const baseStyles = 'relative overflow-hidden font-semibold rounded-lg transition-all duration-300 inline-flex items-center justify-center gap-2';
+  const baseStyles = 'relative overflow-hidden font-medium transition-all duration-300 inline-flex items-center justify-center gap-2';
   
   const variantStyles = {
-    default: 'bg-gradient-to-r from-[hsl(280_45%_32%)] to-[hsl(280_45%_44%)] text-white border border-white/5 hover:shadow-[0_8px_25px_hsl(var(--primary)/0.3)]',
-    horde: 'bg-gradient-to-r from-[hsl(5_60%_36%)] to-[hsl(5_60%_48%)] text-white border border-white/5 hover:shadow-[0_8px_25px_hsl(var(--horde)/0.4)]',
-    alliance: 'bg-gradient-to-r from-[hsl(215_55%_38%)] to-[hsl(215_55%_50%)] text-white border border-white/5 hover:shadow-[0_8px_25px_hsl(var(--alliance)/0.4)]',
-    outline: 'liquid-glass-button text-foreground',
+    default: 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_4px_20px_hsl(var(--primary)/0.3)] hover:shadow-[0_8px_30px_hsl(var(--primary)/0.4)] hover:-translate-y-0.5',
+    horde: 'bg-horde text-horde-foreground hover:bg-horde/90 shadow-[0_4px_20px_hsl(var(--horde)/0.3)] hover:shadow-[0_8px_30px_hsl(var(--horde)/0.4)] hover:-translate-y-0.5',
+    alliance: 'bg-alliance text-alliance-foreground hover:bg-alliance/90 shadow-[0_4px_20px_hsl(var(--alliance)/0.3)] hover:shadow-[0_8px_30px_hsl(var(--alliance)/0.4)] hover:-translate-y-0.5',
+    outline: 'glass-button text-foreground hover:-translate-y-0.5',
   };
 
   const sizeStyles = {
-    sm: 'px-4 py-2 text-sm',
-    md: 'px-6 py-3 text-base',
-    lg: 'px-8 py-4 text-lg',
+    sm: 'px-4 py-2 text-sm rounded-lg',
+    md: 'px-6 py-3 text-base rounded-xl',
+    lg: 'px-8 py-4 text-lg rounded-xl',
   };
 
   return (
@@ -43,24 +43,18 @@ export const CosmicButton = forwardRef<HTMLButtonElement, CosmicButtonProps>(({
         baseStyles,
         variantStyles[variant],
         sizeStyles[size],
-        !disabled && 'hover:-translate-y-0.5',
-        disabled && 'opacity-50 cursor-not-allowed',
+        disabled && 'opacity-50 cursor-not-allowed hover:transform-none hover:shadow-none',
         className
       )}
       {...props}
     >
-      {/* Shine effect */}
-      {!disabled && variant !== 'outline' && (
-        <span className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-all duration-500 group-hover:left-[100%]" />
-      )}
-      
       {loading ? (
         <Loader2 className="h-4 w-4 animate-spin" />
       ) : icon ? (
         <span className="flex-shrink-0">{icon}</span>
       ) : null}
       
-      <span className="relative z-10">{children}</span>
+      <span>{children}</span>
     </button>
   );
 });
