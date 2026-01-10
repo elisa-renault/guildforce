@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -15,10 +15,12 @@ import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { BattleNetConnect } from '@/components/BattleNetConnect';
 import { GuildMemberships } from '@/components/GuildMemberships';
-import { User, Save, Globe, Loader2 } from 'lucide-react';
+import { User, Save, Globe, Loader2, Sparkles } from 'lucide-react';
 
 const Profile = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isSetupMode = searchParams.get('setup') === 'true';
   const { t, language, setLanguage } = useLanguage();
   const { user, profile, refreshProfile, loading: authLoading } = useAuth();
   const { toast } = useToast();
@@ -26,7 +28,7 @@ const Profile = () => {
   const [saving, setSaving] = useState(false);
 
   const profileSchema = z.object({
-    username: z.string().min(1, 'Required'),
+    username: z.string().min(2, 'Le pseudo doit contenir au moins 2 caractères').max(30, 'Le pseudo ne peut pas dépasser 30 caractères'),
     mainCharacterName: z.string().optional(),
   });
 
@@ -68,8 +70,8 @@ const Profile = () => {
       const { error } = await supabase
         .from('profiles')
         .update({
-          username: values.username,
-          main_character_name: values.mainCharacterName || null,
+          username: values.username.trim(),
+          main_character_name: values.mainCharacterName?.trim() || null,
           preferred_language: language,
         })
         .eq('id', user.id);
@@ -77,7 +79,13 @@ const Profile = () => {
       if (error) throw error;
 
       await refreshProfile();
-      toast({ title: t.common.save, description: 'Profile updated successfully!' });
+      
+      if (isSetupMode) {
+        toast({ title: 'Bienvenue !', description: 'Ton profil a été configuré.' });
+        navigate('/guilds', { replace: true });
+      } else {
+        toast({ title: t.common.save, description: 'Profile updated successfully!' });
+      }
     } catch (error: any) {
       toast({
         title: t.errors.generic,
@@ -125,6 +133,82 @@ const Profile = () => {
     );
   }
 
+  // Setup mode - simplified focused view for new users
+  if (isSetupMode) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 relative">
+        <CosmicBackground />
+        
+        <GlowCard className="w-full max-w-md p-8 relative z-10 animate-scale-in" hoverable={false}>
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/25">
+              <Sparkles className="h-8 w-8 text-white" strokeWidth={1.5} />
+            </div>
+            <h1 className="font-display text-2xl gradient-text mb-2">
+              Bienvenue sur Guildforce !
+            </h1>
+            <p className="text-muted-foreground text-sm">
+              Choisis ton pseudo pour être identifié par ta guilde
+            </p>
+            {profile?.battletag && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Connecté en tant que {profile.battletag}
+              </p>
+            )}
+          </div>
+
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <FormField control={form.control} name="username" render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-foreground">{t.auth.pseudo}</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Ton pseudo sur le site"
+                      {...field} 
+                      className="cosmic-input h-12 text-center text-lg"
+                      autoFocus
+                    />
+                  </FormControl>
+                  <FormMessage />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    C'est le nom qui sera affiché dans ta guilde
+                  </p>
+                </FormItem>
+              )} />
+
+              <div>
+                <FormLabel className="text-foreground text-sm mb-2 block">
+                  <Globe className="h-4 w-4 inline mr-2" strokeWidth={1.5} />
+                  {t.profile.language}
+                </FormLabel>
+                <Select value={language} onValueChange={(val) => handleLanguageChange(val as Language)}>
+                  <SelectTrigger className="cosmic-input">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="cosmic-glass border-border/50">
+                    <SelectItem value="fr">🇫🇷 Français</SelectItem>
+                    <SelectItem value="en">🇬🇧 English</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <CosmicButton 
+                type="submit" 
+                className="w-full"
+                size="lg"
+                loading={saving}
+              >
+                C'est parti !
+              </CosmicButton>
+            </form>
+          </Form>
+        </GlowCard>
+      </div>
+    );
+  }
+
+  // Normal profile view
   return (
     <div className="min-h-screen relative pt-16">
       <CosmicBackground />
