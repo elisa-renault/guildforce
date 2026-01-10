@@ -113,8 +113,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    // Clear local state first to prevent stale data issues
+    setUser(null);
+    setSession(null);
     setProfile(null);
+    
+    try {
+      await supabase.auth.signOut();
+    } catch (error: any) {
+      // Ignore "User from sub claim in JWT does not exist" errors
+      // This happens when the user was deleted but still has a stale JWT
+      console.warn('Sign out error (ignored):', error?.message);
+    }
+    
+    // Clear any stored session data to ensure clean state
+    localStorage.removeItem('supabase.auth.token');
   };
 
   const refreshProfile = async () => {
