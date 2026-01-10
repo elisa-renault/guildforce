@@ -37,6 +37,7 @@ export interface Translations {
     main: string;
     mainSet: string;
     refresh: string;
+    connecting: string;
   };
   // Home page
   home: {
@@ -71,6 +72,8 @@ export interface Translations {
     loginWithBattleNet: string;
     signupWithBattleNet: string;
     battlenetError: string;
+    bnetRequired: string;
+    bnetNote: string;
   };
   // Guild
   guild: {
@@ -209,6 +212,7 @@ export const translations: Record<Language, Translations> = {
       main: 'Main',
       mainSet: 'Main character set',
       refresh: 'Refresh',
+      connecting: 'Connecting with Battle.net...',
     },
     home: {
       title: 'Guildforce',
@@ -250,6 +254,8 @@ export const translations: Record<Language, Translations> = {
       loginWithBattleNet: 'Login with Battle.net',
       signupWithBattleNet: 'Sign up with Battle.net',
       battlenetError: 'Battle.net authentication failed',
+      bnetRequired: 'A Battle.net account is required to use Guildforce',
+      bnetNote: 'Your characters and guilds will be automatically imported from Battle.net',
     },
     guild: {
       create: 'Create Guild',
@@ -380,6 +386,7 @@ export const translations: Record<Language, Translations> = {
       main: 'Principal',
       mainSet: 'Personnage principal défini',
       refresh: 'Actualiser',
+      connecting: 'Connexion avec Battle.net...',
     },
     home: {
       title: 'Guildforce',
@@ -421,6 +428,8 @@ export const translations: Record<Language, Translations> = {
       loginWithBattleNet: 'Se connecter avec Battle.net',
       signupWithBattleNet: 'S\'inscrire avec Battle.net',
       battlenetError: 'Échec de l\'authentification Battle.net',
+      bnetRequired: 'Un compte Battle.net est requis pour utiliser Guildforce',
+      bnetNote: 'Tes personnages et guildes seront automatiquement importés depuis Battle.net',
     },
     guild: {
       create: 'Créer une guilde',
