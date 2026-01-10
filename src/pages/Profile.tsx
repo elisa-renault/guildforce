@@ -41,20 +41,24 @@ const Profile = () => {
   useEffect(() => {
     // Wait for auth to finish loading before redirecting
     if (authLoading) return;
-    
+
     if (!user) {
       navigate('/auth');
       return;
     }
 
-    if (profile) {
-      form.reset({
-        discordPseudo: profile.discord_pseudo || '',
-        mainCharacterName: profile.main_character_name || '',
-      });
-      setLoading(false);
-    }
-  }, [user, profile, navigate, form, authLoading]);
+    // Don't block the whole page on profile loading; show fallback if needed.
+    setLoading(false);
+  }, [authLoading, user, navigate]);
+
+  useEffect(() => {
+    if (!profile) return;
+
+    form.reset({
+      discordPseudo: profile.discord_pseudo || '',
+      mainCharacterName: profile.main_character_name || '',
+    });
+  }, [profile, form]);
 
   const onSubmit = async (values: z.infer<typeof profileSchema>) => {
     if (!user) return;
@@ -100,6 +104,23 @@ const Profile = () => {
       <div className="min-h-screen flex items-center justify-center">
         <CosmicBackground />
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 relative">
+        <CosmicBackground />
+        <GlowCard className="w-full max-w-md p-8 relative z-10 text-center" hoverable={false}>
+          <p className="text-foreground mb-2">Profil introuvable.</p>
+          <p className="text-sm text-muted-foreground mb-6">
+            Déconnecte-toi puis reconnecte-toi via Battle.net pour finaliser la liaison.
+          </p>
+          <CosmicButton onClick={() => navigate('/auth')} className="w-full">
+            Revenir à la connexion
+          </CosmicButton>
+        </GlowCard>
       </div>
     );
   }
