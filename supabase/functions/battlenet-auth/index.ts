@@ -328,8 +328,6 @@ Deno.serve(async (req) => {
         const upsertPayload: any = {
           id: userId,
           battlenet_id: battlenetIdStr,
-          battlenet_token: tokenData.access_token,
-          battlenet_token_expires_at: expiresAt,
           battletag: userInfo.battletag,
           username: existingProfileRow?.username || battletagName,
           preferred_language: existingProfileRow?.preferred_language || 'fr',
@@ -355,6 +353,20 @@ Deno.serve(async (req) => {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
+      }
+
+      // Store Battle.net token in separate secure table
+      const { error: tokenError } = await supabase
+        .from('battlenet_tokens')
+        .upsert({
+          user_id: userId,
+          access_token: tokenData.access_token,
+          expires_at: expiresAt,
+        }, { onConflict: 'user_id' });
+
+      if (tokenError) {
+        log.error('Failed to store token:', tokenError);
+        // Continue anyway - profile was saved
       }
 
       // Fetch and store WoW characters
@@ -484,8 +496,6 @@ Deno.serve(async (req) => {
       const upsertPayload: any = {
         id: user.id,
         battlenet_id: String(userInfo.id),
-        battlenet_token: tokenData.access_token,
-        battlenet_token_expires_at: expiresAt,
         battletag: userInfo.battletag,
         username: existingProfileRow?.username || battletagName,
         preferred_language: existingProfileRow?.preferred_language || 'fr',
@@ -501,6 +511,20 @@ Deno.serve(async (req) => {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
+      }
+
+      // Store Battle.net token in separate secure table
+      const { error: tokenError } = await supabase
+        .from('battlenet_tokens')
+        .upsert({
+          user_id: user.id,
+          access_token: tokenData.access_token,
+          expires_at: expiresAt,
+        }, { onConflict: 'user_id' });
+
+      if (tokenError) {
+        log.error('Failed to store token:', tokenError);
+        // Continue anyway - profile was saved
       }
 
       // Fetch and store WoW characters
