@@ -13,7 +13,6 @@ import { SpecSelector } from '@/components/SpecSelector';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
-import { BattleNetConnect } from '@/components/BattleNetConnect';
 import { Loader2, ArrowLeft, Save, Sparkles } from 'lucide-react';
 
 interface WishData {
@@ -202,9 +201,6 @@ const Wishes = () => {
             />
           </div>
         </GlowCard>
-
-        {/* Battle.net Integration */}
-        <BattleNetConnect />
 
         {/* Wish cards */}
         <div className="space-y-6">
