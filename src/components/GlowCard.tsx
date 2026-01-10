@@ -24,10 +24,19 @@ export const GlowCard = ({
     alliance: 'hover:border-alliance/40 hover:shadow-[0_0_40px_hsl(var(--alliance)/0.25)]',
   };
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    e.currentTarget.style.setProperty('--mouse-x', `${x}px`);
+    e.currentTarget.style.setProperty('--mouse-y', `${y}px`);
+  };
+
   return (
     <div
       onClick={onClick}
       style={style}
+      onMouseMove={handleMouseMove}
       className={cn(
         'glass-card',
         hoverable && 'transition-all duration-300',
@@ -36,6 +45,7 @@ export const GlowCard = ({
         className
       )}
     >
+      <span className="spotlight" />
       <div className="relative z-10">
         {children}
       </div>

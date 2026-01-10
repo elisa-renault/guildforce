@@ -289,10 +289,11 @@
       0 4px 12px hsl(277 70% 25% / 0.3);
   }
 
-  /* Spotlight effect for buttons */
+  /* Spotlight effect for buttons and cards */
   .primary-button .spotlight,
   .horde-button .spotlight,
-  .alliance-button .spotlight {
+  .alliance-button .spotlight,
+  .glass-button .spotlight {
     position: absolute;
     inset: 0;
     border-radius: inherit;
@@ -307,9 +308,26 @@
     z-index: 1;
   }
 
+  .glass-card .spotlight {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+      circle 150px at var(--mouse-x, 50%) var(--mouse-y, 50%),
+      hsl(0 0% 100% / 0.12) 0%,
+      transparent 100%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 1;
+  }
+
   .primary-button:hover .spotlight,
   .horde-button:hover .spotlight,
-  .alliance-button:hover .spotlight {
+  .alliance-button:hover .spotlight,
+  .glass-button:hover .spotlight,
+  .glass-card:hover .spotlight {
     opacity: 1;
   }
 
