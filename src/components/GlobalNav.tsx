@@ -62,8 +62,8 @@ export const GlobalNav = () => {
                   onClick={() => setLanguage(lang.code)}
                   className={`flex items-center gap-2 cursor-pointer transition-colors ${
                     language === lang.code 
-                      ? 'bg-primary text-primary-foreground font-medium' 
-                      : 'hover:bg-white/5'
+                      ? 'bg-primary text-primary-foreground font-medium !hover:bg-primary' 
+                      : 'hover:!bg-primary/30'
                   }`}
                 >
                   <span className="text-base">{lang.flag}</span>
