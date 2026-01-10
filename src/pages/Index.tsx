@@ -3,7 +3,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
-import { Flag, Users } from 'lucide-react';
+import { Shield } from 'lucide-react';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -33,15 +33,16 @@ const Index = () => {
             {t.home.description}
           </p>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in" style={{
+          {/* Single CTA Button */}
+          <div className="flex justify-center animate-fade-in" style={{
             animationDelay: '300ms'
           }}>
-            <CosmicButton size="lg" onClick={() => navigate(user ? '/guild/create' : '/auth')} icon={<Flag className="h-5 w-5" strokeWidth={1.5} />}>
-              {t.home.createGuild}
-            </CosmicButton>
-            <CosmicButton size="lg" variant="outline" onClick={() => navigate(user ? '/guild/join' : '/auth')} icon={<Users className="h-5 w-5" strokeWidth={1.5} />}>
-              {t.home.joinGuild}
+            <CosmicButton 
+              size="lg" 
+              onClick={() => navigate(user ? '/guilds' : '/auth')} 
+              icon={<Shield className="h-5 w-5" strokeWidth={1.5} />}
+            >
+              {user ? t.common.myGuilds : t.auth.loginWithBattleNet}
             </CosmicButton>
           </div>
         </div>

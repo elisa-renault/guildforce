@@ -6,7 +6,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
-import { Shield, Crown, Loader2 } from 'lucide-react';
+import { GuildMemberships } from '@/components/GuildMemberships';
+import { Shield, Crown, Loader2, Link as LinkIcon } from 'lucide-react';
 
 interface GuildWithMembership {
   id: string;
@@ -20,9 +21,11 @@ interface GuildWithMembership {
 const GuildList = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [guilds, setGuilds] = useState<GuildWithMembership[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const isConnected = !!profile?.battlenet_id;
 
   useEffect(() => {
     if (!user) {
@@ -63,48 +66,57 @@ const GuildList = () => {
       <CosmicBackground />
 
       <main className="container mx-auto px-4 py-8 relative z-10">
+        <h1 className="font-display text-3xl gradient-text mb-8 text-center">{t.common.myGuilds}</h1>
+
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-        ) : guilds.length === 0 ? (
+        ) : !isConnected ? (
+          // Not connected to Battle.net
           <GlowCard className="max-w-md mx-auto p-8 text-center animate-fade-in">
-            <Shield className="h-16 w-16 mx-auto mb-6 text-muted-foreground" strokeWidth={1.5} />
-            <p className="text-muted-foreground mb-6 text-lg">{t.guild.noMembers}</p>
-            <div className="flex gap-3 justify-center">
-              <CosmicButton onClick={() => navigate('/guild/create')}>
-                {t.home.createGuild}
-              </CosmicButton>
-              <CosmicButton variant="outline" onClick={() => navigate('/guild/join')}>
-                {t.home.joinGuild}
-              </CosmicButton>
-            </div>
+            <LinkIcon className="h-16 w-16 mx-auto mb-6 text-muted-foreground" strokeWidth={1.5} />
+            <p className="text-muted-foreground mb-6 text-lg">{t.guild.noGuilds}</p>
+            <CosmicButton onClick={() => navigate('/profile')}>
+              {t.battlenet.connect}
+            </CosmicButton>
           </GlowCard>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {guilds.map((guild, index) => (
-              <GlowCard 
-                key={guild.id}
-                className="p-6 animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` } as React.CSSProperties}
-                onClick={() => navigate(guild.role === 'gm' ? `/guild/${guild.id}` : `/guild/${guild.id}/wishes`)}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-primary/30 to-accent/20 border border-primary/20">
-                      <Shield className="h-5 w-5 text-primary" strokeWidth={1.5} />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground">{guild.name}</h3>
-                      <p className="text-sm text-muted-foreground">{guild.server}</p>
-                    </div>
-                  </div>
-                  {guild.role === 'gm' && (
-                    <Crown className="h-5 w-5 text-amber-500" strokeWidth={1.5} />
-                  )}
+          <div className="space-y-8">
+            {/* WoW Guild Memberships from Battle.net */}
+            <GuildMemberships />
+
+            {/* App Guilds the user has joined */}
+            {guilds.length > 0 && (
+              <div>
+                <h2 className="text-xl font-semibold text-foreground mb-4">Guildes actives dans Guildforce</h2>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {guilds.map((guild, index) => (
+                    <GlowCard 
+                      key={guild.id}
+                      className="p-6 animate-fade-in cursor-pointer hover:border-primary/50 transition-colors"
+                      style={{ animationDelay: `${index * 100}ms` } as React.CSSProperties}
+                      onClick={() => navigate(guild.role === 'gm' ? `/guild/${guild.id}` : `/guild/${guild.id}/wishes`)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-primary/30 to-accent/20 border border-primary/20">
+                            <Shield className="h-5 w-5 text-primary" strokeWidth={1.5} />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-foreground">{guild.name}</h3>
+                            <p className="text-sm text-muted-foreground">{guild.server}</p>
+                          </div>
+                        </div>
+                        {guild.role === 'gm' && (
+                          <Crown className="h-5 w-5 text-amber-500" strokeWidth={1.5} />
+                        )}
+                      </div>
+                    </GlowCard>
+                  ))}
                 </div>
-              </GlowCard>
-            ))}
+              </div>
+            )}
           </div>
         )}
       </main>
