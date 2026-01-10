@@ -435,13 +435,20 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
     // Flatten all characters from all WoW accounts
     for (const account of wowProfile.wow_accounts || []) {
       for (const char of account.characters || []) {
-        characters.push({
-          name: char.character.name,
-          realm: char.character.realm.name,
-          realmSlug: char.character.realm.slug,
-          classId: char.character.playable_class.id,
-          level: char.character.level,
-        });
+        // Handle both nested and flat character structures from Battle.net API
+        const charData = char.character || char;
+        const realmData = charData.realm || {};
+        const classData = charData.playable_class || {};
+        
+        if (charData.name) {
+          characters.push({
+            name: charData.name,
+            realm: realmData.name || realmData.slug || 'Unknown',
+            realmSlug: realmData.slug || 'unknown',
+            classId: classData.id || 0,
+            level: charData.level || 0,
+          });
+        }
       }
     }
 
