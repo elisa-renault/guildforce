@@ -18,8 +18,9 @@ const Dashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [guild, setGuild] = useState<{ name: string; faction: string; invite_key: string } | null>(null);
+  const [guild, setGuild] = useState<{ name: string; faction: string; invite_key?: string } | null>(null);
   const [members, setMembers] = useState<MemberWish[]>([]);
+  const [isGM, setIsGM] = useState(false);
   const [filters, setFilters] = useState<RosterFiltersType>({
     roleFilter: 'all',
     classFilter: 'all',
@@ -38,37 +39,46 @@ const Dashboard = () => {
   const fetchData = async () => {
     if (!user || !guildId) return;
     
-    // Use secure RPC function that validates owner/GM access and returns invite_key
-    const { data: guildData, error: guildError } = await supabase
-      .rpc('get_guild_with_invite_key', { _guild_id: guildId })
-      .single();
-    
-    // If RPC fails (unauthorized or not found), redirect
-    if (guildError || !guildData) {
-      navigate('/guilds');
-      return;
-    }
-    
-    // Double-check: user must be the owner
-    if (guildData.owner_id !== user.id) {
-      navigate('/guilds');
-      return;
-    }
-    
-    // Double-check: user must also have 'gm' role in guild_members
-    const { data: membershipData } = await supabase
+    // Check if user is a member of this guild
+    const { data: membershipData, error: membershipError } = await supabase
       .from('guild_members')
       .select('role')
       .eq('guild_id', guildId)
       .eq('user_id', user.id)
       .single();
     
-    if (!membershipData || membershipData.role !== 'gm') {
+    if (membershipError || !membershipData) {
       navigate('/guilds');
       return;
     }
     
-    setGuild(guildData);
+    const userIsGM = membershipData.role === 'gm';
+    setIsGM(userIsGM);
+    
+    // Fetch guild data - use RPC for GMs to get invite_key, regular query for members
+    if (userIsGM) {
+      const { data: guildData, error: guildError } = await supabase
+        .rpc('get_guild_with_invite_key', { _guild_id: guildId })
+        .single();
+      
+      if (guildError || !guildData) {
+        navigate('/guilds');
+        return;
+      }
+      setGuild(guildData);
+    } else {
+      const { data: guildData, error: guildError } = await supabase
+        .from('guilds')
+        .select('name, faction')
+        .eq('id', guildId)
+        .single();
+      
+      if (guildError || !guildData) {
+        navigate('/guilds');
+        return;
+      }
+      setGuild(guildData);
+    }
 
     const { data: membersData } = await supabase
       .from('guild_members')
@@ -222,7 +232,7 @@ const Dashboard = () => {
   };
 
   const copyInviteLink = () => {
-    if (!guild) return;
+    if (!guild || !guild.invite_key) return;
     const link = `${window.location.origin}/guild/join?key=${guild.invite_key}`;
     navigator.clipboard.writeText(link);
     toast({ title: t.common.copied });
@@ -311,12 +321,16 @@ const Dashboard = () => {
             <CosmicButton size="sm" variant="outline" onClick={() => navigate(`/guild/${guildId}/wishes`)}>
               <Sparkles className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.wishes.title}
             </CosmicButton>
-            <CosmicButton size="sm" variant="outline" onClick={copyInviteLink}>
-              <Copy className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.guild.copyInvite}
-            </CosmicButton>
-            <CosmicButton size="sm" onClick={exportCSV}>
-              <Download className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.dashboard.exportCSV}
-            </CosmicButton>
+            {isGM && (
+              <>
+                <CosmicButton size="sm" variant="outline" onClick={copyInviteLink}>
+                  <Copy className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.guild.copyInvite}
+                </CosmicButton>
+                <CosmicButton size="sm" onClick={exportCSV}>
+                  <Download className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.dashboard.exportCSV}
+                </CosmicButton>
+              </>
+            )}
           </div>
         </div>
       </div>
