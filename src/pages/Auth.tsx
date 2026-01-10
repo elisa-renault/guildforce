@@ -25,12 +25,22 @@ const Auth = () => {
   const [discordPseudo, setDiscordPseudo] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Check for Battle.net callback
+  // Check for Battle.net callback - only process once
   useEffect(() => {
     const code = searchParams.get('code');
     const state = searchParams.get('state');
     
     if (code && state) {
+      // Check if we already processed this code (stored in sessionStorage)
+      const processedCode = sessionStorage.getItem('bnet_processed_code');
+      if (processedCode === code) {
+        // Already processed, clear URL params and skip
+        navigate('/auth', { replace: true });
+        return;
+      }
+      
+      // Mark this code as being processed
+      sessionStorage.setItem('bnet_processed_code', code);
       handleBattleNetCallback(code, state);
     }
   }, [searchParams]);
