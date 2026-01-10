@@ -6,8 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { GlowCard } from './GlowCard';
 import { Badge } from '@/components/ui/badge';
 import { CosmicButton } from './CosmicButton';
-import { Crown, Users, Shield, Loader2, Plus } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { Crown, Users, Shield, Loader2 } from 'lucide-react';
 
 interface GuildMembership {
   id: string;
@@ -23,6 +22,16 @@ interface GuildMembership {
     name: string;
     realm: string;
     class_id: number;
+  };
+}
+
+interface AppGuildMembership {
+  guild_id: string;
+  role: string;
+  guilds: {
+    id: string;
+    name: string;
+    server: string;
   };
 }
 
@@ -47,18 +56,16 @@ export const GuildMemberships: React.FC = () => {
   const navigate = useNavigate();
   const { profile, user } = useAuth();
   const { t } = useLanguage();
-  const { toast } = useToast();
   const [memberships, setMemberships] = useState<GuildMembership[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [creatingGuild, setCreatingGuild] = useState<string | null>(null);
-  const [existingGuilds, setExistingGuilds] = useState<Map<string, string>>(new Map());
+  const [appGuilds, setAppGuilds] = useState<Map<string, { id: string; role: string }>>(new Map());
 
   const isConnected = !!profile?.battlenet_id;
 
-  // Fetch existing guilds the user is already GM of in the app
+  // Fetch app guilds the user is a member of
   useEffect(() => {
     if (user?.id) {
-      fetchExistingGuilds();
+      fetchAppGuilds();
     }
   }, [user?.id]);
 
@@ -68,17 +75,22 @@ export const GuildMemberships: React.FC = () => {
     }
   }, [isConnected, user?.id]);
 
-  const fetchExistingGuilds = async () => {
+  const fetchAppGuilds = async () => {
     if (!user?.id) return;
     
     const { data } = await supabase
-      .from('guilds')
-      .select('id, name, server')
-      .eq('owner_id', user.id);
+      .from('guild_members')
+      .select('guild_id, role, guilds (id, name, server)')
+      .eq('user_id', user.id);
     
     if (data) {
-      const guildMap = new Map(data.map(g => [`${g.name.toLowerCase()}-${g.server.toLowerCase()}`, g.id]));
-      setExistingGuilds(guildMap);
+      const guildMap = new Map(
+        data.map(g => {
+          const guild = g.guilds as unknown as { id: string; name: string; server: string };
+          return [`${guild.name.toLowerCase()}-${guild.server.toLowerCase()}`, { id: guild.id, role: g.role }];
+        })
+      );
+      setAppGuilds(guildMap);
     }
   };
 
@@ -113,63 +125,8 @@ export const GuildMemberships: React.FC = () => {
     return BATTLENET_CLASS_MAP[classId] || 'unknown';
   };
 
-  const getExistingGuildId = (guildName: string, guildRealm: string): string | null => {
-    return existingGuilds.get(`${guildName.toLowerCase()}-${guildRealm.toLowerCase()}`) || null;
-  };
-
-  const handleCreateGuild = async (guild: { guild_name: string; guild_realm: string; guild_faction: string }) => {
-    if (!user?.id) return;
-    
-    const guildKey = `${guild.guild_name}-${guild.guild_realm}`;
-    setCreatingGuild(guildKey);
-
-    try {
-      // Determine faction - use lowercase for DB compatibility
-      const faction = guild.guild_faction === 'HORDE' ? 'horde' : 'alliance';
-
-      // Create the guild in the app
-      const { data: newGuild, error: guildError } = await supabase
-        .from('guilds')
-        .insert({
-          name: guild.guild_name,
-          server: guild.guild_realm,
-          faction: faction,
-          owner_id: user.id,
-        })
-        .select()
-        .single();
-
-      if (guildError) throw guildError;
-
-      // Add the user as GM member
-      const { error: memberError } = await supabase
-        .from('guild_members')
-        .insert({
-          guild_id: newGuild.id,
-          user_id: user.id,
-          role: 'gm',
-          status: 'confirmed',
-        });
-
-      if (memberError) throw memberError;
-
-      toast({ title: t.guild.guildCreated });
-      
-      // Update existing guilds map
-      setExistingGuilds(prev => new Map([...prev, [`${guild.guild_name.toLowerCase()}-${guild.guild_realm.toLowerCase()}`, newGuild.id]]));
-      
-      // Navigate to the guild dashboard
-      navigate(`/guild/${newGuild.id}`);
-    } catch (error: any) {
-      console.error('Error creating guild:', error);
-      toast({ 
-        title: t.errors.generic, 
-        description: error.message, 
-        variant: 'destructive' 
-      });
-    } finally {
-      setCreatingGuild(null);
-    }
+  const getAppGuildInfo = (guildName: string, guildRealm: string): { id: string; role: string } | null => {
+    return appGuilds.get(`${guildName.toLowerCase()}-${guildRealm.toLowerCase()}`) || null;
   };
 
   if (!isConnected) {
@@ -210,109 +167,103 @@ export const GuildMemberships: React.FC = () => {
         </div>
       ) : guilds.length > 0 ? (
         <div className="space-y-4">
-          {guilds.map((guild) => (
-            <div
-              key={`${guild.guild_name}-${guild.guild_realm}`}
-              className={`p-4 rounded-lg border transition-colors ${
-                guild.is_gm 
-                  ? 'border-amber-500/50 bg-amber-500/10' 
-                  : 'border-border/50 bg-background/30'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  {guild.is_gm ? (
-                    <Crown className="w-5 h-5 text-amber-500" />
-                  ) : (
-                    <Users className="w-5 h-5 text-muted-foreground" />
-                  )}
-                  <div>
-                    <h4 className="font-semibold text-foreground">{guild.guild_name}</h4>
-                    <p className="text-xs text-muted-foreground">{guild.guild_realm}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge 
-                    variant="outline" 
-                    className="text-muted-foreground border-border/50"
-                  >
-                    {guild.guild_faction === 'HORDE' ? 'Horde' : 'Alliance'}
-                  </Badge>
-                  {guild.is_gm && (
-                    <Badge variant="secondary" className="bg-amber-500/20 text-amber-500 border-amber-500/50">
-                    <Crown className="w-3 h-3 mr-1" />
-                    {t.guild.guildMaster}
-                    </Badge>
-                  )}
-                </div>
-              </div>
+          {guilds.map((guild) => {
+            const appGuildInfo = getAppGuildInfo(guild.guild_name, guild.guild_realm);
+            const isInApp = !!appGuildInfo;
+            const isAppGM = appGuildInfo?.role === 'gm';
 
-              {/* Characters in this guild */}
-              <div className="space-y-2">
-                <p className="text-xs text-muted-foreground mb-2">
-                  {t.guild.yourCharacters}:
-                </p>
-                {guild.members.map((member) => (
-                  <div
-                    key={member.id}
-                    className="flex items-center justify-between p-2 rounded bg-background/50"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className={`font-medium text-wow-${getClassName(member.wow_characters?.class_id || 0)}`}>
-                        {member.wow_characters?.name || 'Unknown'}
-                      </span>
+            return (
+              <div
+                key={`${guild.guild_name}-${guild.guild_realm}`}
+                className={`p-4 rounded-lg border transition-colors ${
+                  isInApp
+                    ? isAppGM
+                      ? 'border-amber-500/50 bg-amber-500/10'
+                      : 'border-primary/50 bg-primary/10'
+                    : 'border-border/50 bg-background/30'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    {guild.is_gm ? (
+                      <Crown className="w-5 h-5 text-amber-500" />
+                    ) : (
+                      <Users className="w-5 h-5 text-muted-foreground" />
+                    )}
+                    <div>
+                      <h4 className="font-semibold text-foreground">{guild.guild_name}</h4>
+                      <p className="text-xs text-muted-foreground">{guild.guild_realm}</p>
                     </div>
-                    <Badge variant="outline" className="text-xs">
-                      {member.is_guild_master ? (
-                        <span className="text-amber-500">{t.guild.rank0}</span>
-                      ) : (
-                        <span className="text-muted-foreground">
-                          {member.rank_name || `Rank ${member.rank_index}`}
-                        </span>
-                      )}
-                    </Badge>
                   </div>
-                ))}
-              </div>
-
-              {/* Actions based on role */}
-              {guild.is_gm && (
-                <div className="mt-4 pt-3 border-t border-border/50 space-y-3">
-                  {(() => {
-                    const existingGuildId = getExistingGuildId(guild.guild_name, guild.guild_realm);
-                    if (existingGuildId) {
-                      return (
-                        <CosmicButton
-                          size="sm"
-                          onClick={() => navigate(`/guild/${existingGuildId}`)}
-                          className="w-full"
-                        >
-                          <Shield className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                          {t.guild.accessGuild}
-                        </CosmicButton>
-                      );
-                    }
-                    return (
-                      <>
-                        <p className="text-xs text-amber-500/80">
-                          {t.guild.gmNote}
-                        </p>
-                        <CosmicButton
-                          size="sm"
-                          onClick={() => handleCreateGuild(guild)}
-                          loading={creatingGuild === `${guild.guild_name}-${guild.guild_realm}`}
-                          className="w-full"
-                        >
-                          <Plus className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                          {t.guild.createInApp}
-                        </CosmicButton>
-                      </>
-                    );
-                  })()}
+                  <div className="flex items-center gap-2">
+                    <Badge 
+                      variant="outline" 
+                      className="text-muted-foreground border-border/50"
+                    >
+                      {guild.guild_faction === 'HORDE' ? 'Horde' : 'Alliance'}
+                    </Badge>
+                    {guild.is_gm && (
+                      <Badge variant="secondary" className="bg-amber-500/20 text-amber-500 border-amber-500/50">
+                        <Crown className="w-3 h-3 mr-1" />
+                        {t.guild.guildMaster}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
-              )}
-            </div>
-          ))}
+
+                {/* Characters in this guild */}
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground mb-2">
+                    {t.guild.yourCharacters}:
+                  </p>
+                  {guild.members.map((member) => (
+                    <div
+                      key={member.id}
+                      className="flex items-center justify-between p-2 rounded bg-background/50"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className={`font-medium text-wow-${getClassName(member.wow_characters?.class_id || 0)}`}>
+                          {member.wow_characters?.name || 'Unknown'}
+                        </span>
+                      </div>
+                      <Badge variant="outline" className="text-xs">
+                        {member.is_guild_master ? (
+                          <span className="text-amber-500">{t.guild.rank0}</span>
+                        ) : (
+                          <span className="text-muted-foreground">
+                            {member.rank_name || `Rank ${member.rank_index}`}
+                          </span>
+                        )}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Actions - show access button if guild exists in app */}
+                {isInApp && (
+                  <div className="mt-4 pt-3 border-t border-border/50">
+                    <CosmicButton
+                      size="sm"
+                      onClick={() => navigate(isAppGM ? `/guild/${appGuildInfo.id}` : `/guild/${appGuildInfo.id}/wishes`)}
+                      className="w-full"
+                    >
+                      <Shield className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                      {t.guild.accessGuild}
+                    </CosmicButton>
+                  </div>
+                )}
+
+                {/* If not in app and is GM, show message that guild will be created on next sync */}
+                {!isInApp && guild.is_gm && (
+                  <div className="mt-4 pt-3 border-t border-border/50">
+                    <p className="text-xs text-muted-foreground text-center">
+                      {t.guild.pendingSync}
+                    </p>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       ) : (
         <p className="text-sm text-muted-foreground text-center py-4">
