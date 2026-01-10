@@ -1,19 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { wowClasses, getClassById, getSpecById, getRolesFromSpecs, Role } from '@/data/wowClasses';
 import { RoleBadge } from '@/components/RoleBadge';
+import { ClassGrid } from '@/components/ClassGrid';
+import { SpecButtons } from '@/components/SpecButtons';
+import { CommitmentToggle } from '@/components/CommitmentToggle';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
-import { Loader2, Copy, Download, Users, Shield, Heart, Swords, CheckCircle, HelpCircle, Search, Sparkles } from 'lucide-react';
+import { Loader2, Copy, Download, Users, Shield, Heart, Swords, CheckCircle, HelpCircle, Search, Sparkles, ChevronDown, ChevronRight, Pencil, Save, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface MemberWish {
@@ -28,6 +34,12 @@ interface MemberWish {
   }[];
 }
 
+interface WishData {
+  classId: string;
+  specIds: string[];
+  comment: string;
+}
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const { guildId } = useParams();
@@ -40,63 +52,181 @@ const Dashboard = () => {
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [classFilter, setClassFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [editWishes, setEditWishes] = useState<WishData[]>([
+    { classId: '', specIds: [], comment: '' },
+    { classId: '', specIds: [], comment: '' },
+    { classId: '', specIds: [], comment: '' },
+  ]);
+  const [editConfirmed, setEditConfirmed] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const fetchData = async () => {
+    if (!user || !guildId) return;
+    
+    const { data: guildData } = await supabase
+      .from('guilds')
+      .select('name, faction, invite_key, owner_id')
+      .eq('id', guildId)
+      .single();
+    
+    if (!guildData || guildData.owner_id !== user.id) {
+      navigate('/guilds');
+      return;
+    }
+    setGuild(guildData);
+
+    const { data: membersData } = await supabase
+      .from('guild_members')
+      .select('user_id, status')
+      .eq('guild_id', guildId);
+
+    if (membersData) {
+      const userIds = membersData.map(m => m.user_id);
+      
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, discord_pseudo')
+        .in('id', userIds);
+
+      const { data: wishesData } = await supabase
+        .from('class_wishes')
+        .select('user_id, choice_index, class_id, spec_ids, comment')
+        .eq('guild_id', guildId);
+
+      const mergedMembers: MemberWish[] = membersData.map(m => {
+        const profile = profiles?.find(p => p.id === m.user_id);
+        const memberWishes = wishesData?.filter(w => w.user_id === m.user_id) || [];
+        return {
+          id: m.user_id,
+          discord_pseudo: profile?.discord_pseudo || 'Unknown',
+          status: m.status,
+          wishes: memberWishes.sort((a, b) => a.choice_index - b.choice_index),
+        };
+      });
+
+      setMembers(mergedMembers);
+    }
+
+    setLoading(false);
+  };
 
   useEffect(() => {
     if (!user || !guildId) {
       navigate('/auth');
       return;
     }
-
-    const fetchData = async () => {
-      const { data: guildData } = await supabase
-        .from('guilds')
-        .select('name, faction, invite_key, owner_id')
-        .eq('id', guildId)
-        .single();
-      
-      if (!guildData || guildData.owner_id !== user.id) {
-        navigate('/guilds');
-        return;
-      }
-      setGuild(guildData);
-
-      const { data: membersData } = await supabase
-        .from('guild_members')
-        .select('user_id, status')
-        .eq('guild_id', guildId);
-
-      if (membersData) {
-        const userIds = membersData.map(m => m.user_id);
-        
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, discord_pseudo')
-          .in('id', userIds);
-
-        const { data: wishesData } = await supabase
-          .from('class_wishes')
-          .select('user_id, choice_index, class_id, spec_ids, comment')
-          .eq('guild_id', guildId);
-
-        const mergedMembers: MemberWish[] = membersData.map(m => {
-          const profile = profiles?.find(p => p.id === m.user_id);
-          const memberWishes = wishesData?.filter(w => w.user_id === m.user_id) || [];
-          return {
-            id: m.user_id,
-            discord_pseudo: profile?.discord_pseudo || 'Unknown',
-            status: m.status,
-            wishes: memberWishes.sort((a, b) => a.choice_index - b.choice_index),
-          };
-        });
-
-        setMembers(mergedMembers);
-      }
-
-      setLoading(false);
-    };
-
     fetchData();
   }, [user, guildId, navigate]);
+
+  const toggleRow = (memberId: string) => {
+    const newExpanded = new Set(expandedRows);
+    if (newExpanded.has(memberId)) {
+      newExpanded.delete(memberId);
+    } else {
+      newExpanded.add(memberId);
+    }
+    setExpandedRows(newExpanded);
+  };
+
+  const startEditing = (member: MemberWish) => {
+    if (member.id !== user?.id) return;
+    
+    const loadedWishes: WishData[] = [
+      { classId: '', specIds: [], comment: '' },
+      { classId: '', specIds: [], comment: '' },
+      { classId: '', specIds: [], comment: '' },
+    ];
+    
+    member.wishes.forEach(w => {
+      const idx = w.choice_index - 1;
+      if (idx >= 0 && idx < 3) {
+        loadedWishes[idx] = {
+          classId: w.class_id,
+          specIds: w.spec_ids || [],
+          comment: w.comment || '',
+        };
+      }
+    });
+    
+    setEditWishes(loadedWishes);
+    setEditConfirmed(member.status === 'confirmed');
+    setEditingUserId(member.id);
+    
+    // Expand the row if not already
+    const newExpanded = new Set(expandedRows);
+    newExpanded.add(member.id);
+    setExpandedRows(newExpanded);
+  };
+
+  const cancelEditing = () => {
+    setEditingUserId(null);
+  };
+
+  const updateEditWish = (index: number, field: keyof WishData, value: any) => {
+    const updated = [...editWishes];
+    updated[index] = { ...updated[index], [field]: value };
+    if (field === 'classId') {
+      updated[index].specIds = [];
+    }
+    setEditWishes(updated);
+  };
+
+  const saveEditing = async () => {
+    if (!user || !guildId || !editingUserId) return;
+    setSaving(true);
+
+    try {
+      await supabase
+        .from('guild_members')
+        .update({ status: editConfirmed ? 'confirmed' : 'potential' })
+        .eq('guild_id', guildId)
+        .eq('user_id', user.id);
+
+      const wishesToUpsert = editWishes
+        .map((w, i) => ({
+          guild_id: guildId,
+          user_id: user.id,
+          choice_index: i + 1,
+          class_id: w.classId,
+          spec_ids: w.specIds,
+          comment: w.comment,
+        }))
+        .filter(w => w.class_id);
+
+      const emptyChoiceIndexes = editWishes
+        .map((w, i) => (!w.classId ? i + 1 : null))
+        .filter((idx): idx is number => idx !== null);
+
+      if (emptyChoiceIndexes.length > 0) {
+        await supabase
+          .from('class_wishes')
+          .delete()
+          .eq('guild_id', guildId)
+          .eq('user_id', user.id)
+          .in('choice_index', emptyChoiceIndexes);
+      }
+
+      if (wishesToUpsert.length > 0) {
+        const { error } = await supabase
+          .from('class_wishes')
+          .upsert(wishesToUpsert, { 
+            onConflict: 'guild_id,user_id,choice_index',
+            ignoreDuplicates: false 
+          });
+        if (error) throw error;
+      }
+
+      toast({ title: t.wishes.wishesSaved });
+      setEditingUserId(null);
+      await fetchData();
+    } catch (error: any) {
+      toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const copyInviteLink = () => {
     if (!guild) return;
@@ -174,8 +304,6 @@ const Dashboard = () => {
     );
   }
 
-  
-
   const renderWishCell = (wishes: MemberWish['wishes'], choiceIndex: number) => {
     const wish = wishes.find(w => w.choice_index === choiceIndex);
     if (!wish) return <span className="text-muted-foreground">-</span>;
@@ -205,6 +333,160 @@ const Dashboard = () => {
           {roles.map(role => (
             <RoleBadge key={role} role={role} size="sm" />
           ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderExpandedContent = (member: MemberWish) => {
+    const isEditing = editingUserId === member.id;
+    const isOwnRow = member.id === user?.id;
+
+    if (isEditing) {
+      return (
+        <div className="p-6 bg-background/50 border-t border-border/20">
+          <div className="flex items-center justify-between mb-6">
+            <h4 className="text-lg font-semibold text-foreground">{t.wishes.editMyWishes}</h4>
+            <div className="flex gap-2">
+              <CosmicButton 
+                size="sm" 
+                variant="outline" 
+                onClick={cancelEditing}
+                icon={<X className="h-4 w-4" strokeWidth={1.5} />}
+              >
+                {t.common.cancel}
+              </CosmicButton>
+              <CosmicButton 
+                size="sm" 
+                onClick={saveEditing}
+                loading={saving}
+                icon={<Save className="h-4 w-4" strokeWidth={1.5} />}
+              >
+                {t.wishes.saveWishes}
+              </CosmicButton>
+            </div>
+          </div>
+
+          {/* Commitment toggle */}
+          <div className="mb-6 p-4 rounded bg-muted/20 border border-border/20">
+            <CommitmentToggle confirmed={editConfirmed} onChange={setEditConfirmed} />
+          </div>
+
+          {/* Wishes editing */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {editWishes.map((wish, index) => (
+              <GlowCard key={index} className="p-4" hoverable={false}>
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-6 h-6 rounded bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center border border-primary/20">
+                    <span className="text-xs font-bold text-primary">{index + 1}</span>
+                  </div>
+                  <span className="text-sm font-medium text-foreground">{t.wishes.choice} #{index + 1}</span>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-foreground mb-2 block text-sm">{t.wishes.selectClass}</Label>
+                    <ClassGrid
+                      value={wish.classId}
+                      onChange={(classId) => updateEditWish(index, 'classId', classId)}
+                    />
+                  </div>
+
+                  {wish.classId && (
+                    <div className="animate-fade-in">
+                      <Label className="text-foreground mb-2 block text-sm">{t.wishes.selectSpecs}</Label>
+                      <SpecButtons
+                        classId={wish.classId}
+                        selectedSpecs={wish.specIds}
+                        onChange={(specIds) => updateEditWish(index, 'specIds', specIds)}
+                      />
+                    </div>
+                  )}
+
+                  <div>
+                    <Label className="text-foreground mb-2 block text-sm">{t.wishes.comment}</Label>
+                    <Textarea
+                      placeholder={t.wishes.commentPlaceholder}
+                      value={wish.comment}
+                      onChange={(e) => updateEditWish(index, 'comment', e.target.value)}
+                      className="cosmic-input min-h-[60px] resize-none text-sm"
+                    />
+                  </div>
+                </div>
+              </GlowCard>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // Read-only expanded view
+    return (
+      <div className="p-6 bg-background/50 border-t border-border/20">
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            {t.dashboard.comments} & {t.wishes.specs}
+          </h4>
+          {isOwnRow && (
+            <CosmicButton 
+              size="sm" 
+              variant="outline" 
+              onClick={() => startEditing(member)}
+              icon={<Pencil className="h-4 w-4" strokeWidth={1.5} />}
+            >
+              {t.wishes.editMyWishes}
+            </CosmicButton>
+          )}
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[1, 2, 3].map(choiceIndex => {
+            const wish = member.wishes.find(w => w.choice_index === choiceIndex);
+            if (!wish) {
+              return (
+                <div key={choiceIndex} className="p-4 rounded bg-muted/10 border border-border/10">
+                  <div className="text-sm font-medium text-muted-foreground mb-2">
+                    {choiceIndex === 1 ? t.dashboard.firstChoice : choiceIndex === 2 ? t.dashboard.secondChoice : t.dashboard.thirdChoice}
+                  </div>
+                  <span className="text-muted-foreground text-sm">-</span>
+                </div>
+              );
+            }
+
+            const cls = getClassById(wish.class_id);
+            const specs = wish.spec_ids.map(sid => getSpecById(sid)).filter(Boolean);
+
+            return (
+              <div key={choiceIndex} className="p-4 rounded bg-muted/10 border border-border/10">
+                <div className="text-sm font-medium text-muted-foreground mb-2">
+                  {choiceIndex === 1 ? t.dashboard.firstChoice : choiceIndex === 2 ? t.dashboard.secondChoice : t.dashboard.thirdChoice}
+                </div>
+                {cls && (
+                  <Badge 
+                    variant="outline" 
+                    className="text-xs font-medium mb-2"
+                    style={{ 
+                      backgroundColor: `hsl(var(--class-${cls.id}) / 0.15)`,
+                      borderColor: `hsl(var(--class-${cls.id}) / 0.4)`,
+                      color: `hsl(var(--class-${cls.id}))`
+                    }}
+                  >
+                    {cls.name[language]}
+                  </Badge>
+                )}
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {specs.map(spec => spec && (
+                    <Badge key={spec.id} variant="outline" className="text-xs">
+                      {spec.name[language]}
+                    </Badge>
+                  ))}
+                </div>
+                {wish.comment && (
+                  <p className="text-sm text-muted-foreground mt-3 italic">"{wish.comment}"</p>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     );
@@ -309,6 +591,7 @@ const Dashboard = () => {
               <Table>
                 <TableHeader>
                   <TableRow className="border-border/30 hover:bg-transparent">
+                    <TableHead className="text-muted-foreground w-8"></TableHead>
                     <TableHead className="text-muted-foreground">{t.dashboard.player}</TableHead>
                     <TableHead className="text-muted-foreground">{t.wishes.status}</TableHead>
                     <TableHead className="text-muted-foreground">{t.dashboard.firstChoice}</TableHead>
@@ -317,33 +600,67 @@ const Dashboard = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredMembers.map((member, index) => (
-                    <TableRow 
-                      key={member.id} 
-                      className="border-border/20 hover:bg-white/[0.02] transition-colors"
-                      style={{ animationDelay: `${350 + index * 30}ms` }}
-                    >
-                      <TableCell className="font-medium text-foreground">{member.discord_pseudo}</TableCell>
-                      <TableCell>
-                        <Badge 
-                          variant={member.status === 'confirmed' ? 'default' : 'outline'}
-                          className={member.status === 'confirmed' 
-                            ? 'bg-healer/20 text-healer border-healer/30' 
-                            : 'border-border/50 text-muted-foreground'
-                          }
-                        >
-                          {member.status === 'confirmed' ? (
-                            <><CheckCircle className="h-3 w-3 mr-1" strokeWidth={1.5} /> {t.wishes.confirmed}</>
-                          ) : (
-                            <><HelpCircle className="h-3 w-3 mr-1" strokeWidth={1.5} /> {t.wishes.potential}</>
+                  {filteredMembers.map((member, index) => {
+                    const isExpanded = expandedRows.has(member.id);
+                    const isOwnRow = member.id === user?.id;
+                    
+                    return (
+                      <Fragment key={member.id}>
+                        <TableRow 
+                          className={cn(
+                            "border-border/20 transition-colors cursor-pointer",
+                            isOwnRow ? "hover:bg-primary/5 bg-primary/[0.02]" : "hover:bg-white/[0.02]",
+                            isExpanded && "bg-white/[0.03]"
                           )}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{renderWishCell(member.wishes, 1)}</TableCell>
-                      <TableCell>{renderWishCell(member.wishes, 2)}</TableCell>
-                      <TableCell>{renderWishCell(member.wishes, 3)}</TableCell>
-                    </TableRow>
-                  ))}
+                          style={{ animationDelay: `${350 + index * 30}ms` }}
+                          onClick={() => toggleRow(member.id)}
+                        >
+                          <TableCell className="w-8 pr-0">
+                            {isExpanded ? (
+                              <ChevronDown className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
+                            ) : (
+                              <ChevronRight className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
+                            )}
+                          </TableCell>
+                          <TableCell className="font-medium text-foreground">
+                            <div className="flex items-center gap-2">
+                              {member.discord_pseudo}
+                              {isOwnRow && (
+                                <Badge variant="outline" className="text-xs text-primary border-primary/30 bg-primary/10">
+                                  {t.common.edit}
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant={member.status === 'confirmed' ? 'default' : 'outline'}
+                              className={member.status === 'confirmed' 
+                                ? 'bg-healer/20 text-healer border-healer/30' 
+                                : 'border-border/50 text-muted-foreground'
+                              }
+                            >
+                              {member.status === 'confirmed' ? (
+                                <><CheckCircle className="h-3 w-3 mr-1" strokeWidth={1.5} /> {t.wishes.confirmed}</>
+                              ) : (
+                                <><HelpCircle className="h-3 w-3 mr-1" strokeWidth={1.5} /> {t.wishes.potential}</>
+                              )}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{renderWishCell(member.wishes, 1)}</TableCell>
+                          <TableCell>{renderWishCell(member.wishes, 2)}</TableCell>
+                          <TableCell>{renderWishCell(member.wishes, 3)}</TableCell>
+                        </TableRow>
+                        {isExpanded && (
+                          <TableRow className="hover:bg-transparent border-border/20">
+                            <TableCell colSpan={6} className="p-0">
+                              {renderExpandedContent(member)}
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </Fragment>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
