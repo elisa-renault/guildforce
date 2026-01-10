@@ -143,21 +143,24 @@ const Profile = () => {
             <GlowCard className="p-5 animate-fade-in" style={{ animationDelay: '100ms' }} hoverable={false}>
               <h3 className="text-base font-semibold text-foreground mb-3">Account</h3>
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between gap-2">
-                  <span className="text-muted-foreground shrink-0">Email</span>
-                  <span className="text-foreground truncate">{user?.email}</span>
-                </div>
+                {/* Only show email if it's not the technical bnet email */}
+                {user?.email && !user.email.endsWith('@battlenet.local') && (
+                  <div className="flex justify-between gap-2">
+                    <span className="text-muted-foreground shrink-0">Email</span>
+                    <span className="text-foreground truncate">{user.email}</span>
+                  </div>
+                )}
                 {profile?.battletag && (
                   <div className="flex justify-between gap-2">
                     <span className="text-muted-foreground shrink-0">BattleTag</span>
                     <span className="text-foreground">{profile.battletag}</span>
                   </div>
                 )}
-                {profile?.battlenet_id && (
-                  <div className="flex justify-between gap-2">
-                    <span className="text-muted-foreground shrink-0">Battle.net ID</span>
-                    <span className="text-foreground font-mono text-xs truncate">{profile.battlenet_id}</span>
-                  </div>
+                {/* Show hint that they can add an email if only bnet connected */}
+                {user?.email?.endsWith('@battlenet.local') && (
+                  <p className="text-xs text-muted-foreground italic">
+                    {t.profile.connectedViaBnet}
+                  </p>
                 )}
               </div>
             </GlowCard>
