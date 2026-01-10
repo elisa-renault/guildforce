@@ -88,18 +88,12 @@ export interface Translations {
     faction: string;
     horde: string;
     alliance: string;
-    inviteKey: string;
-    inviteKeyPlaceholder: string;
-    inviteLink: string;
-    copyInvite: string;
-    shareInvite: string;
     members: string;
     noMembers: string;
     leaveGuild: string;
     deleteGuild: string;
     guildCreated: string;
     guildJoined: string;
-    invalidKey: string;
     alreadyMember: string;
     // WoW Guild memberships
     myGuilds: string;
@@ -288,18 +282,12 @@ export const translations: Record<Language, Translations> = {
       faction: 'Faction',
       horde: 'Horde',
       alliance: 'Alliance',
-      inviteKey: 'Invite key',
-      inviteKeyPlaceholder: 'Paste the invite key here',
-      inviteLink: 'Invite link',
-      copyInvite: 'Copy invite link',
-      shareInvite: 'Share this link with your guild members',
       members: 'Members',
       noMembers: 'No members yet',
       leaveGuild: 'Leave guild',
       deleteGuild: 'Delete guild',
       guildCreated: 'Guild created successfully!',
       guildJoined: 'You joined the guild!',
-      invalidKey: 'Invalid invite key',
       alreadyMember: 'You are already a member of this guild',
       myGuilds: 'My WoW Guilds',
       guildMaster: 'Guild Master',
@@ -481,18 +469,12 @@ export const translations: Record<Language, Translations> = {
       faction: 'Faction',
       horde: 'Horde',
       alliance: 'Alliance',
-      inviteKey: 'Clé d\'invitation',
-      inviteKeyPlaceholder: 'Collez la clé d\'invitation ici',
-      inviteLink: 'Lien d\'invitation',
-      copyInvite: 'Copier le lien d\'invitation',
-      shareInvite: 'Partagez ce lien avec les membres de votre guilde',
       members: 'Membres',
       noMembers: 'Aucun membre pour l\'instant',
       leaveGuild: 'Quitter la guilde',
       deleteGuild: 'Supprimer la guilde',
       guildCreated: 'Guilde créée avec succès !',
       guildJoined: 'Vous avez rejoint la guilde !',
-      invalidKey: 'Clé d\'invitation invalide',
       alreadyMember: 'Vous êtes déjà membre de cette guilde',
       myGuilds: 'Mes Guildes WoW',
       guildMaster: 'Guild Master',

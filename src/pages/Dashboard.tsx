@@ -9,7 +9,7 @@ import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
 import { StatsCards, RosterFilters, RosterTable } from '@/components/dashboard';
 import { MemberWish, WishData, RoleStats, RosterFilters as RosterFiltersType } from '@/types/guild';
-import { Loader2, Copy, Download, Sparkles } from 'lucide-react';
+import { Loader2, Download, Sparkles } from 'lucide-react';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -18,7 +18,7 @@ const Dashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [guild, setGuild] = useState<{ name: string; faction: string; invite_key?: string } | null>(null);
+  const [guild, setGuild] = useState<{ name: string; faction: string } | null>(null);
   const [members, setMembers] = useState<MemberWish[]>([]);
   const [isGM, setIsGM] = useState(false);
   const [filters, setFilters] = useState<RosterFiltersType>({
@@ -55,30 +55,18 @@ const Dashboard = () => {
     const userIsGM = membershipData.role === 'gm';
     setIsGM(userIsGM);
     
-    // Fetch guild data - use RPC for GMs to get invite_key, regular query for members
-    if (userIsGM) {
-      const { data: guildData, error: guildError } = await supabase
-        .rpc('get_guild_with_invite_key', { _guild_id: guildId })
-        .single();
-      
-      if (guildError || !guildData) {
-        navigate('/guilds');
-        return;
-      }
-      setGuild(guildData);
-    } else {
-      const { data: guildData, error: guildError } = await supabase
-        .from('guilds')
-        .select('name, faction')
-        .eq('id', guildId)
-        .single();
-      
-      if (guildError || !guildData) {
-        navigate('/guilds');
-        return;
-      }
-      setGuild(guildData);
+    // Fetch guild data
+    const { data: guildData, error: guildError } = await supabase
+      .from('guilds')
+      .select('name, faction')
+      .eq('id', guildId)
+      .single();
+    
+    if (guildError || !guildData) {
+      navigate('/guilds');
+      return;
     }
+    setGuild(guildData);
 
     const { data: membersData } = await supabase
       .from('guild_members')
@@ -231,12 +219,6 @@ const Dashboard = () => {
     }
   };
 
-  const copyInviteLink = () => {
-    if (!guild || !guild.invite_key) return;
-    const link = `${window.location.origin}/guild/join?key=${guild.invite_key}`;
-    navigator.clipboard.writeText(link);
-    toast({ title: t.common.copied });
-  };
 
   const exportCSV = () => {
     const headers = ['Username', 'Status', 'Choice 1 Class', 'Choice 1 Specs', 'Choice 2 Class', 'Choice 2 Specs', 'Choice 3 Class', 'Choice 3 Specs', 'Comments'];
@@ -322,14 +304,9 @@ const Dashboard = () => {
               <Sparkles className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.wishes.title}
             </CosmicButton>
             {isGM && (
-              <>
-                <CosmicButton size="sm" variant="outline" onClick={copyInviteLink}>
-                  <Copy className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.guild.copyInvite}
-                </CosmicButton>
-                <CosmicButton size="sm" onClick={exportCSV}>
-                  <Download className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.dashboard.exportCSV}
-                </CosmicButton>
-              </>
+              <CosmicButton size="sm" onClick={exportCSV}>
+                <Download className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.dashboard.exportCSV}
+              </CosmicButton>
             )}
           </div>
         </div>
