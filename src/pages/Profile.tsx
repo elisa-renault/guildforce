@@ -15,6 +15,7 @@ import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { BattleNetConnect } from '@/components/BattleNetConnect';
+import { GuildMemberships } from '@/components/GuildMemberships';
 import { ArrowLeft, User, Save, Globe, Loader2 } from 'lucide-react';
 
 const Profile = () => {
@@ -150,6 +151,11 @@ const Profile = () => {
         {/* Battle.net Connection */}
         <div className="mb-8 animate-fade-in" style={{ animationDelay: '100ms' }}>
           <BattleNetConnect />
+        </div>
+
+        {/* WoW Guild Memberships */}
+        <div className="mb-8 animate-fade-in" style={{ animationDelay: '150ms' }}>
+          <GuildMemberships />
         </div>
 
         {/* Profile Form */}
