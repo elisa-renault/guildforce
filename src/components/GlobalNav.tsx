@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Shield, User, LogOut, LogIn, Globe } from 'lucide-react';
+import { Shield, User, LogOut } from 'lucide-react';
 
 export const GlobalNav = () => {
   const navigate = useNavigate();
@@ -18,12 +18,10 @@ export const GlobalNav = () => {
   const navButtonInactive = "text-muted-foreground hover:text-foreground hover:bg-white/5";
   const navButtonActive = "text-primary bg-primary/10";
 
-  const iconButtonBase = "inline-flex items-center justify-center h-9 w-9 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background";
-
   return (
     <header className="fixed top-0 left-0 right-0 z-50 glass-header" role="banner">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-        {/* Logo - always links to home */}
+        {/* Logo */}
         <button 
           onClick={() => navigate('/')}
           className="font-display text-lg text-foreground hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded px-1"
@@ -63,34 +61,31 @@ export const GlobalNav = () => {
         )}
 
         {/* Right side - language + auth */}
-        <div className="flex items-center gap-1" role="group" aria-label="Actions utilisateur">
-          {/* Language toggle */}
+        <div className="flex items-center gap-2" role="group" aria-label="Actions utilisateur">
+          {/* Language toggle - explicit text */}
           <button
             onClick={() => setLanguage(language === 'fr' ? 'en' : 'fr')} 
-            className={`${iconButtonBase} text-muted-foreground hover:text-foreground hover:bg-white/5`}
+            className={`${navButtonBase} ${navButtonInactive} min-w-[52px]`}
             aria-label={language === 'fr' ? 'Switch to English' : 'Passer en Français'}
-            title={language === 'fr' ? 'Switch to English' : 'Passer en Français'}
           >
-            <Globe className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+            <span className="text-xs font-medium uppercase">{language === 'fr' ? 'EN' : 'FR'}</span>
           </button>
           
           {user ? (
             <button 
               onClick={signOut} 
-              className={`${iconButtonBase} text-muted-foreground hover:text-foreground hover:bg-white/5`}
+              className={`${navButtonBase} ${navButtonInactive}`}
               aria-label={t.common.logout}
-              title={t.common.logout}
             >
               <LogOut className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+              <span className="hidden sm:inline">{t.common.logout}</span>
             </button>
           ) : (
             <button 
               onClick={() => navigate('/auth')} 
-              className={`${iconButtonBase} text-primary hover:text-primary hover:bg-primary/10`}
-              aria-label={t.common.login}
-              title={t.common.login}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded text-sm font-normal bg-primary text-primary-foreground hover:bg-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
-              <LogIn className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+              <span>{t.common.login}</span>
             </button>
           )}
         </div>
