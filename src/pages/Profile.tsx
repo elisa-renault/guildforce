@@ -129,11 +129,11 @@ const Profile = () => {
                   )}
                 </div>
                 <h2 className="text-xl font-bold text-foreground">
-                  {profile?.battletag || profile?.discord_pseudo || 'Player'}
+                  {profile?.discord_pseudo || 'Player'}
                 </h2>
                 {profile?.battletag && (
                   <p className="text-muted-foreground text-sm mt-1">
-                    {profile.discord_pseudo}
+                    {profile.battletag}
                   </p>
                 )}
               </div>
@@ -182,10 +182,10 @@ const Profile = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField control={form.control} name="discordPseudo" render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-foreground text-sm">{t.auth.discordPseudo}</FormLabel>
+                        <FormLabel className="text-foreground text-sm">{t.auth.pseudo}</FormLabel>
                         <FormControl>
                           <Input 
-                            placeholder={t.auth.discordPseudoPlaceholder}
+                            placeholder={t.auth.pseudoPlaceholder}
                             {...field} 
                             className="cosmic-input"
                           />

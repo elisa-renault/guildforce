@@ -60,8 +60,8 @@ export interface Translations {
     signupDescription: string;
     noAccount: string;
     hasAccount: string;
-    discordPseudo: string;
-    discordPseudoPlaceholder: string;
+    pseudo: string;
+    pseudoPlaceholder: string;
     forgotPassword: string;
     invalidEmail: string;
     passwordTooShort: string;
@@ -242,8 +242,8 @@ export const translations: Record<Language, Translations> = {
       signupDescription: 'Join to start collecting class wishes',
       noAccount: "Don't have an account?",
       hasAccount: 'Already have an account?',
-      discordPseudo: 'Discord username',
-      discordPseudoPlaceholder: 'YourName#1234',
+      pseudo: 'Username',
+      pseudoPlaceholder: 'Your username',
       forgotPassword: 'Forgot password?',
       invalidEmail: 'Please enter a valid email',
       passwordTooShort: 'Password must be at least 6 characters',
@@ -416,8 +416,8 @@ export const translations: Record<Language, Translations> = {
       signupDescription: 'Inscrivez-vous pour collecter les vœux de classes',
       noAccount: 'Pas encore de compte ?',
       hasAccount: 'Déjà un compte ?',
-      discordPseudo: 'Pseudo Discord',
-      discordPseudoPlaceholder: 'VotreNom#1234',
+      pseudo: 'Pseudo',
+      pseudoPlaceholder: 'Votre pseudo',
       forgotPassword: 'Mot de passe oublié ?',
       invalidEmail: 'Veuillez entrer un email valide',
       passwordTooShort: 'Le mot de passe doit contenir au moins 6 caractères',
