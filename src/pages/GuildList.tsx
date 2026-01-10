@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
-import { Shield, Users, Plus, ArrowLeft, Crown, Loader2 } from 'lucide-react';
+import { Shield, Users, Plus, ArrowLeft, Crown, Loader2, User } from 'lucide-react';
 
 interface GuildWithMembership {
   id: string;
@@ -74,8 +74,16 @@ const GuildList = () => {
           >
             <ArrowLeft className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.common.back}
           </Button>
-          <h1 className="text-xl font-bold text-foreground">{t.guild.members}</h1>
+          <h1 className="text-xl font-bold text-foreground">{t.common.myGuilds}</h1>
           <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/profile')}
+              className="text-muted-foreground hover:text-foreground hover:bg-white/5"
+            >
+              <User className="h-4 w-4" strokeWidth={1.5} />
+            </Button>
             <CosmicButton size="sm" variant="outline" onClick={() => navigate('/guild/join')}>
               <Users className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.guild.join}
             </CosmicButton>
