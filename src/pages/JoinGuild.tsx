@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -13,7 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
-import { ArrowLeft, Users, KeyRound } from 'lucide-react';
+import { Users, KeyRound } from 'lucide-react';
 
 const JoinGuild = () => {
   const navigate = useNavigate();
@@ -82,18 +81,10 @@ const JoinGuild = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative">
+    <div className="min-h-screen flex items-center justify-center p-4 relative pt-16">
       <CosmicBackground />
 
       <GlowCard className="w-full max-w-md p-8 relative z-10 animate-scale-in">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="absolute left-4 top-4 text-muted-foreground hover:text-foreground hover:bg-white/5" 
-          onClick={() => navigate('/')}
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.common.back}
-        </Button>
 
         <div className="text-center mb-8 pt-4">
           <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-secondary to-accent flex items-center justify-center shadow-lg shadow-secondary/25">

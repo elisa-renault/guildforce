@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -16,7 +15,7 @@ import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { BattleNetConnect } from '@/components/BattleNetConnect';
 import { GuildMemberships } from '@/components/GuildMemberships';
-import { ArrowLeft, User, Save, Globe, Loader2 } from 'lucide-react';
+import { User, Save, Globe, Loader2 } from 'lucide-react';
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -106,23 +105,8 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-screen relative pt-16">
       <CosmicBackground />
-
-      <header className="sticky top-0 z-50 cosmic-header">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => navigate('/guilds')}
-            className="text-muted-foreground hover:text-foreground hover:bg-white/5"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.common.back}
-          </Button>
-          <h1 className="text-xl font-bold text-foreground">{t.profile.title}</h1>
-          <div className="w-20" />
-        </div>
-      </header>
 
       <main className="container mx-auto px-4 py-8 max-w-2xl relative z-10">
         {/* Profile Header */}
