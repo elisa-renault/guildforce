@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { GlowCard } from './GlowCard';
 import { Badge } from '@/components/ui/badge';
 import { CosmicButton } from './CosmicButton';
-import { Crown, Users, Shield, Loader2 } from 'lucide-react';
+import { Crown, Users, Shield, Loader2, Clock } from 'lucide-react';
 
 interface GuildMembership {
   id: string;
@@ -25,14 +25,17 @@ interface GuildMembership {
   };
 }
 
+interface AppGuild {
+  id: string;
+  name: string;
+  server: string;
+  owner_id: string | null;
+}
+
 interface AppGuildMembership {
   guild_id: string;
   role: string;
-  guilds: {
-    id: string;
-    name: string;
-    server: string;
-  };
+  guilds: AppGuild;
 }
 
 // Map Battle.net class IDs to our class system
@@ -58,7 +61,7 @@ export const GuildMemberships: React.FC = () => {
   const { t } = useLanguage();
   const [memberships, setMemberships] = useState<GuildMembership[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [appGuilds, setAppGuilds] = useState<Map<string, { id: string; role: string }>>(new Map());
+  const [appGuilds, setAppGuilds] = useState<Map<string, { id: string; role: string; hasOwner: boolean }>>(new Map());
 
   const isConnected = !!profile?.battlenet_id;
 
@@ -80,14 +83,18 @@ export const GuildMemberships: React.FC = () => {
     
     const { data } = await supabase
       .from('guild_members')
-      .select('guild_id, role, guilds (id, name, server)')
+      .select('guild_id, role, guilds (id, name, server, owner_id)')
       .eq('user_id', user.id);
     
     if (data) {
       const guildMap = new Map(
         data.map(g => {
-          const guild = g.guilds as unknown as { id: string; name: string; server: string };
-          return [`${guild.name.toLowerCase()}-${guild.server.toLowerCase()}`, { id: guild.id, role: g.role }];
+          const guild = g.guilds as unknown as AppGuild;
+          return [`${guild.name.toLowerCase()}-${guild.server.toLowerCase()}`, { 
+            id: guild.id, 
+            role: g.role,
+            hasOwner: guild.owner_id !== null
+          }];
         })
       );
       setAppGuilds(guildMap);
@@ -125,7 +132,7 @@ export const GuildMemberships: React.FC = () => {
     return BATTLENET_CLASS_MAP[classId] || 'unknown';
   };
 
-  const getAppGuildInfo = (guildName: string, guildRealm: string): { id: string; role: string } | null => {
+  const getAppGuildInfo = (guildName: string, guildRealm: string): { id: string; role: string; hasOwner: boolean } | null => {
     return appGuilds.get(`${guildName.toLowerCase()}-${guildRealm.toLowerCase()}`) || null;
   };
 
@@ -171,6 +178,7 @@ export const GuildMemberships: React.FC = () => {
             const appGuildInfo = getAppGuildInfo(guild.guild_name, guild.guild_realm);
             const isInApp = !!appGuildInfo;
             const isAppGM = appGuildInfo?.role === 'gm';
+            const isOrphan = appGuildInfo && !appGuildInfo.hasOwner;
 
             return (
               <div
@@ -206,6 +214,12 @@ export const GuildMemberships: React.FC = () => {
                       <Badge variant="secondary" className="bg-amber-500/20 text-amber-500 border-amber-500/50">
                         <Crown className="w-3 h-3 mr-1" />
                         {t.guild.guildMaster}
+                      </Badge>
+                    )}
+                    {isOrphan && (
+                      <Badge variant="secondary" className="bg-orange-500/20 text-orange-400 border-orange-500/50">
+                        <Clock className="w-3 h-3 mr-1" />
+                        {t.guild.awaitingGM}
                       </Badge>
                     )}
                   </div>

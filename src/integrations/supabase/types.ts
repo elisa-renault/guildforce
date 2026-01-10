@@ -126,31 +126,34 @@ export type Database = {
       guilds: {
         Row: {
           created_at: string
+          created_by_user_id: string | null
           faction: string
           id: string
           invite_key: string
           name: string
-          owner_id: string
+          owner_id: string | null
           server: string
           updated_at: string
         }
         Insert: {
           created_at?: string
+          created_by_user_id?: string | null
           faction: string
           id?: string
           invite_key?: string
           name: string
-          owner_id: string
+          owner_id?: string | null
           server: string
           updated_at?: string
         }
         Update: {
           created_at?: string
+          created_by_user_id?: string | null
           faction?: string
           id?: string
           invite_key?: string
           name?: string
-          owner_id?: string
+          owner_id?: string | null
           server?: string
           updated_at?: string
         }
