@@ -285,6 +285,8 @@ Deno.serve(async (req) => {
               password,
               email_confirm: true,
               user_metadata: {
+                name: userInfo.battletag,
+                full_name: userInfo.battletag,
                 username: userInfo.battletag.split('#')[0],
                 preferred_language: 'fr',
                 battlenet_id: battlenetIdStr,
