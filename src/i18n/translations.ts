@@ -96,6 +96,13 @@ export interface Translations {
     guildJoined: string;
     invalidKey: string;
     alreadyMember: string;
+    // WoW Guild memberships
+    myGuilds: string;
+    guildMaster: string;
+    yourCharacters: string;
+    gmNote: string;
+    noGuilds: string;
+    rank0: string;
   };
   // Wishes
   wishes: {
@@ -264,6 +271,12 @@ export const translations: Record<Language, Translations> = {
       guildJoined: 'You joined the guild!',
       invalidKey: 'Invalid invite key',
       alreadyMember: 'You are already a member of this guild',
+      myGuilds: 'My WoW Guilds',
+      guildMaster: 'Guild Master',
+      yourCharacters: 'Your characters in this guild',
+      gmNote: 'You can manage this guild in the application',
+      noGuilds: 'No guilds found. Link your Battle.net account to import your guilds.',
+      rank0: 'GM',
     },
     wishes: {
       title: 'My Class Wishes',
@@ -426,6 +439,12 @@ export const translations: Record<Language, Translations> = {
       guildJoined: 'Vous avez rejoint la guilde !',
       invalidKey: 'Clé d\'invitation invalide',
       alreadyMember: 'Vous êtes déjà membre de cette guilde',
+      myGuilds: 'Mes Guildes WoW',
+      guildMaster: 'Guild Master',
+      yourCharacters: 'Tes personnages dans cette guilde',
+      gmNote: 'Tu peux gérer cette guilde dans l\'application',
+      noGuilds: 'Aucune guilde trouvée. Lie ton compte Battle.net pour importer tes guildes.',
+      rank0: 'GM',
     },
     wishes: {
       title: 'Mes vœux de classe',

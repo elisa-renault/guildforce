@@ -187,7 +187,8 @@ export const BattleNetConnect: React.FC = () => {
 
       if (error) throw error;
 
-      // Delete characters
+      // Delete guild memberships first (due to foreign key), then characters
+      await supabase.from('wow_guild_memberships').delete().eq('user_id', profile?.id);
       await supabase.from('wow_characters').delete().eq('user_id', profile?.id);
 
       toast.success(t.battlenet.disconnected);
