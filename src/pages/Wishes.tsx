@@ -59,7 +59,11 @@ const Wishes = () => {
         .order('choice_index');
 
       if (wishesData && wishesData.length > 0) {
-        const loadedWishes = [...wishes];
+        const loadedWishes: WishData[] = [
+          { classId: '', specIds: [], comment: '' },
+          { classId: '', specIds: [], comment: '' },
+          { classId: '', specIds: [], comment: '' },
+        ];
         wishesData.forEach(w => {
           const idx = w.choice_index - 1;
           if (idx >= 0 && idx < 3) {
@@ -212,9 +216,9 @@ const Wishes = () => {
                   <h3 className="font-semibold text-foreground">
                     {t.wishes.choice} #{index + 1}
                   </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {index === 0 ? 'Your preferred class' : index === 1 ? 'Second choice' : 'Third choice'}
-                  </p>
+                <p className="text-sm text-muted-foreground">
+                  {index === 0 ? t.wishes.preferredChoice : index === 1 ? t.wishes.secondChoice : t.wishes.thirdChoice}
+                </p>
                 </div>
               </div>
 

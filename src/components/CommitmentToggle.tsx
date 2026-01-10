@@ -8,23 +8,11 @@ interface CommitmentToggleProps {
 }
 
 export const CommitmentToggle = ({ confirmed, onChange }: CommitmentToggleProps) => {
-  const { language } = useLanguage();
-
-  const labels = {
-    title: language === 'fr' ? "Engagement pour le raid mythique" : "Mythic raid commitment",
-    confirmed: language === 'fr' ? "Je m'engage pour la saison" : "I commit for the season",
-    confirmedDesc: language === 'fr' 
-      ? "Je serai disponible régulièrement pour les raids mythiques" 
-      : "I will be regularly available for mythic raids",
-    potential: language === 'fr' ? "Pas encore sûr(e)" : "Not sure yet",
-    potentialDesc: language === 'fr' 
-      ? "Ma disponibilité ou mon choix de classe peut changer" 
-      : "My availability or class choice may change",
-  };
+  const { t } = useLanguage();
 
   return (
     <div className="space-y-3">
-      <p className="text-sm font-medium text-foreground">{labels.title}</p>
+      <p className="text-sm font-medium text-foreground">{t.wishes.commitment.title}</p>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <button
@@ -50,10 +38,10 @@ export const CommitmentToggle = ({ confirmed, onChange }: CommitmentToggleProps)
               "font-medium text-sm",
               confirmed ? "text-healer" : "text-foreground"
             )}>
-              {labels.confirmed}
+              {t.wishes.commitment.confirmed}
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {labels.confirmedDesc}
+              {t.wishes.commitment.confirmedDesc}
             </p>
           </div>
         </button>
@@ -81,10 +69,10 @@ export const CommitmentToggle = ({ confirmed, onChange }: CommitmentToggleProps)
               "font-medium text-sm",
               !confirmed ? "text-foreground" : "text-muted-foreground"
             )}>
-              {labels.potential}
+              {t.wishes.commitment.potential}
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {labels.potentialDesc}
+              {t.wishes.commitment.potentialDesc}
             </p>
           </div>
         </button>

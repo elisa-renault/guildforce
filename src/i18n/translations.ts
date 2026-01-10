@@ -74,6 +74,8 @@ export interface Translations {
     battlenetError: string;
     bnetRequired: string;
     bnetNote: string;
+    accountCreated: string;
+    welcomeBack: string;
   };
   // Guild
   guild: {
@@ -132,6 +134,16 @@ export interface Translations {
     clickToEdit: string;
     editMyWishes: string;
     specs: string;
+    preferredChoice: string;
+    secondChoice: string;
+    thirdChoice: string;
+    commitment: {
+      title: string;
+      confirmed: string;
+      confirmedDesc: string;
+      potential: string;
+      potentialDesc: string;
+    };
   };
   // Dashboard
   dashboard: {
@@ -263,6 +275,8 @@ export const translations: Record<Language, Translations> = {
       battlenetError: 'Battle.net authentication failed',
       bnetRequired: 'A Battle.net account is required to use Guildforce',
       bnetNote: 'Your characters and guilds will be automatically imported from Battle.net',
+      accountCreated: 'Account created!',
+      welcomeBack: 'Welcome back!',
     },
     guild: {
       create: 'Create Guild',
@@ -318,6 +332,16 @@ export const translations: Record<Language, Translations> = {
       clickToEdit: 'Click to edit your wishes',
       editMyWishes: 'Edit my wishes',
       specs: 'Specializations',
+      preferredChoice: 'Your preferred class',
+      secondChoice: 'Second choice',
+      thirdChoice: 'Third choice',
+      commitment: {
+        title: 'Mythic raid commitment',
+        confirmed: 'I commit for the season',
+        confirmedDesc: 'I will be regularly available for mythic raids',
+        potential: 'Not sure yet',
+        potentialDesc: 'My availability or class choice may change',
+      },
     },
     dashboard: {
       title: 'Roster Dashboard',
@@ -444,6 +468,8 @@ export const translations: Record<Language, Translations> = {
       battlenetError: 'Échec de l\'authentification Battle.net',
       bnetRequired: 'Un compte Battle.net est requis pour utiliser Guildforce',
       bnetNote: 'Tes personnages et guildes seront automatiquement importés depuis Battle.net',
+      accountCreated: 'Compte créé !',
+      welcomeBack: 'Bon retour !',
     },
     guild: {
       create: 'Créer une guilde',
@@ -499,6 +525,16 @@ export const translations: Record<Language, Translations> = {
       clickToEdit: 'Cliquez pour modifier vos vœux',
       editMyWishes: 'Modifier mes vœux',
       specs: 'Spécialisations',
+      preferredChoice: 'Ton choix préféré',
+      secondChoice: 'Deuxième choix',
+      thirdChoice: 'Troisième choix',
+      commitment: {
+        title: 'Engagement pour le raid mythique',
+        confirmed: 'Je m\'engage pour la saison',
+        confirmedDesc: 'Je serai disponible régulièrement pour les raids mythiques',
+        potential: 'Pas encore sûr(e)',
+        potentialDesc: 'Ma disponibilité ou mon choix de classe peut changer',
+      },
     },
     dashboard: {
       title: 'Tableau de bord du roster',

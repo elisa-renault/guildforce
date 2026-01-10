@@ -91,9 +91,12 @@ const Auth = () => {
           throw error;
         }
 
+        // Clear processed code from sessionStorage
+        sessionStorage.removeItem('bnet_processed_code');
+
         toast({
-          title: data.isNewUser ? 'Account created!' : 'Welcome back!',
-          description: `Connected as ${data.battletag}`,
+          title: data.isNewUser ? t.auth.accountCreated : t.auth.welcomeBack,
+          description: `${t.battlenet.connected} : ${data.battletag}`,
         });
 
         // Redirect new users to profile setup, existing users to guilds
