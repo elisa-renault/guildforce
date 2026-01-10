@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -14,9 +16,14 @@ const Auth = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { t } = useLanguage();
-  const { user } = useAuth();
+  const { user, signIn, signUp } = useAuth();
   const { toast } = useToast();
   const [bnetLoading, setBnetLoading] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [discordPseudo, setDiscordPseudo] = useState('');
+  const [loading, setLoading] = useState(false);
 
   // Check for Battle.net callback
   useEffect(() => {
@@ -35,7 +42,6 @@ const Auth = () => {
   const handleBattleNetCallback = async (code: string, stateParam: string) => {
     setBnetLoading(true);
     try {
-      // Parse state to get the mode
       let parsedState: { state: string; mode: string };
       try {
         parsedState = JSON.parse(stateParam);
@@ -45,7 +51,6 @@ const Auth = () => {
 
       const redirectUri = `${window.location.origin}/auth`;
 
-      // Call the login endpoint (no auth required)
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/battlenet-auth/login`,
         {
@@ -63,7 +68,6 @@ const Auth = () => {
         throw new Error(data.error || 'Battle.net login failed');
       }
 
-      // Use the magic link token to sign in
       if (data.verifyToken && data.email) {
         const { error } = await supabase.auth.verifyOtp({
           email: data.email,
@@ -80,7 +84,6 @@ const Auth = () => {
           description: `Connected as ${data.battletag}`,
         });
 
-        // Clear URL params and redirect
         navigate('/guilds', { replace: true });
       }
     } catch (error: any) {
@@ -90,7 +93,6 @@ const Auth = () => {
         description: error.message,
         variant: 'destructive',
       });
-      // Clear the URL params
       navigate('/auth', { replace: true });
     } finally {
       setBnetLoading(false);
@@ -132,7 +134,33 @@ const Auth = () => {
     }
   };
 
-  // Show loading if processing Battle.net callback
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      if (isLogin) {
+        const { error } = await signIn(email, password);
+        if (error) throw error;
+      } else {
+        const { error } = await signUp(email, password, discordPseudo, 'fr');
+        if (error) throw error;
+        toast({
+          title: 'Compte créé',
+          description: 'Vérifiez votre email',
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Erreur',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (bnetLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 relative">
@@ -159,13 +187,10 @@ const Auth = () => {
           <ArrowLeft className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.common.back}
         </Button>
 
-        <div className="text-center mb-8 pt-8">
+        <div className="text-center mb-6 pt-8">
           <h2 className="font-display text-2xl font-normal gradient-text mb-2">
-            {t.auth.loginTitle}
+            {isLogin ? t.auth.loginTitle : t.auth.signupTitle}
           </h2>
-          <p className="text-muted-foreground text-sm">
-            {t.auth.bnetRequired}
-          </p>
         </div>
 
         {/* Battle.net Login Button */}
@@ -188,8 +213,76 @@ const Auth = () => {
           {t.auth.loginWithBattleNet}
         </CosmicButton>
 
-        <p className="text-center text-xs mt-6 text-muted-foreground">
-          {t.auth.bnetNote}
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-border/50" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-card px-2 text-muted-foreground">ou</span>
+          </div>
+        </div>
+
+        {/* Email/Password Form */}
+        <form onSubmit={handleEmailAuth} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">{t.common.email}</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="password">{t.common.password}</Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+
+          {!isLogin && (
+            <div className="space-y-2">
+              <Label htmlFor="discord">{t.auth.discordPseudo}</Label>
+              <Input
+                id="discord"
+                type="text"
+                value={discordPseudo}
+                onChange={(e) => setDiscordPseudo(e.target.value)}
+                required
+              />
+            </div>
+          )}
+
+          <CosmicButton 
+            type="submit" 
+            className="w-full" 
+            disabled={loading}
+          >
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : isLogin ? (
+              t.common.login
+            ) : (
+              t.common.signup
+            )}
+          </CosmicButton>
+        </form>
+
+        <p className="text-center text-sm mt-4 text-muted-foreground">
+          {isLogin ? t.auth.noAccount : t.auth.hasAccount}{' '}
+          <button
+            type="button"
+            onClick={() => setIsLogin(!isLogin)}
+            className="text-primary hover:underline"
+          >
+            {isLogin ? t.common.signup : t.common.login}
+          </button>
         </p>
       </GlowCard>
     </div>
