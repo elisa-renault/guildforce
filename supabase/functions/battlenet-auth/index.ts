@@ -911,23 +911,35 @@ async function autoJoinGuilds(
           guildId = existingGuild.id;
           console.log(`Guild ${guildInfo.name} already exists (id: ${guildId})`);
 
-          // If user is GM in WoW but not owner in app, we don't change ownership
-          // This prevents issues if multiple GMs exist or ownership was transferred
+          // If guild has no owner and user is GM in WoW, claim ownership
+          if (existingGuild.owner_id === null && guildInfo.isGM) {
+            console.log(`Guild ${guildInfo.name} is orphan and user is GM, claiming ownership...`);
+            
+            const { error: claimError } = await supabase
+              .from('guilds')
+              .update({ owner_id: userId })
+              .eq('id', guildId);
+
+            if (claimError) {
+              console.error(`Failed to claim guild ${guildInfo.name}:`, claimError);
+            } else {
+              console.log(`User claimed ownership of guild ${guildInfo.name}`);
+              
+              // Sync existing members who have this guild in wow_guild_memberships
+              await syncExistingMembers(supabase, guildId, guildInfo.name, guildInfo.server);
+            }
+          }
         } else {
           // Guild doesn't exist, create it
-          // Only create if user is GM, otherwise skip (guild will be created when a GM syncs)
-          if (!guildInfo.isGM) {
-            console.log(`Guild ${guildInfo.name} doesn't exist and user is not GM, skipping creation`);
-            continue;
-          }
-
+          // Create with owner_id if user is GM, otherwise create as orphan guild
           const { data: newGuild, error: createGuildError } = await supabase
             .from('guilds')
             .insert({
               name: guildInfo.name,
               server: guildInfo.server,
               faction: guildInfo.faction,
-              owner_id: userId,
+              owner_id: guildInfo.isGM ? userId : null,
+              created_by_user_id: userId,
             })
             .select('id')
             .single();
@@ -938,7 +950,7 @@ async function autoJoinGuilds(
           }
 
           guildId = newGuild.id;
-          console.log(`Created guild ${guildInfo.name} (id: ${guildId}) with user as owner`);
+          console.log(`Created guild ${guildInfo.name} (id: ${guildId}) ${guildInfo.isGM ? 'with user as owner' : 'as orphan (no owner yet)'}`);
         }
 
         // Check if user is already a member
@@ -998,5 +1010,88 @@ async function autoJoinGuilds(
     console.log('Auto-join guilds completed');
   } catch (error) {
     console.error('Error in autoJoinGuilds:', error);
+  }
+}
+
+// Helper function to sync existing users who have this guild in wow_guild_memberships
+async function syncExistingMembers(
+  supabase: any,
+  guildId: string,
+  guildName: string,
+  guildServer: string
+) {
+  try {
+    console.log(`Syncing existing members for guild ${guildName} (${guildServer})...`);
+
+    // Find all users who have this guild in wow_guild_memberships
+    const { data: wowMemberships, error: lookupError } = await supabase
+      .from('wow_guild_memberships')
+      .select('user_id, rank_index')
+      .ilike('guild_name', guildName)
+      .ilike('guild_realm', guildServer);
+
+    if (lookupError) {
+      console.error(`Error looking up wow_guild_memberships:`, lookupError);
+      return;
+    }
+
+    if (!wowMemberships || wowMemberships.length === 0) {
+      console.log(`No existing members found in wow_guild_memberships`);
+      return;
+    }
+
+    console.log(`Found ${wowMemberships.length} potential members to sync`);
+
+    // Group by user and check if they're already in guild_members
+    const userRoles = new Map<string, boolean>();
+    for (const membership of wowMemberships) {
+      const existing = userRoles.get(membership.user_id);
+      const isGM = membership.rank_index === 0;
+      // If user is GM on any character, mark as GM
+      if (!existing || isGM) {
+        userRoles.set(membership.user_id, isGM);
+      }
+    }
+
+    for (const [userId, isGM] of userRoles) {
+      // Check if already a member
+      const { data: existingMember, error: memberCheckError } = await supabase
+        .from('guild_members')
+        .select('id')
+        .eq('guild_id', guildId)
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (memberCheckError) {
+        console.error(`Error checking membership for user ${userId}:`, memberCheckError);
+        continue;
+      }
+
+      if (existingMember) {
+        console.log(`User ${userId} already a member of guild`);
+        continue;
+      }
+
+      // Add to guild_members
+      const role = isGM ? 'gm' : 'member';
+      const { error: insertError } = await supabase
+        .from('guild_members')
+        .insert({
+          guild_id: guildId,
+          user_id: userId,
+          role,
+          status: 'active',
+        });
+
+      if (insertError) {
+        console.error(`Failed to add user ${userId} to guild:`, insertError);
+      } else {
+        console.log(`Added user ${userId} to guild as ${role}`);
+      }
+    }
+
+    console.log(`Sync completed for guild ${guildName}`);
+  } catch (error) {
+    console.error('Error in syncExistingMembers:', error);
   }
 }
