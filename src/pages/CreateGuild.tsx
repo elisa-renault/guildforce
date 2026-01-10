@@ -79,12 +79,9 @@ const CreateGuild = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative">
-      <CosmicBackground variant={isHorde ? 'horde' : 'alliance'} />
+      <CosmicBackground />
 
-      <GlowCard 
-        className="w-full max-w-md p-8 relative z-10 animate-scale-in" 
-        variant={isHorde ? 'horde' : 'alliance'}
-      >
+      <GlowCard className="w-full max-w-md p-8 relative z-10 animate-scale-in">
         <Button 
           variant="ghost" 
           size="sm" 
@@ -95,17 +92,7 @@ const CreateGuild = () => {
         </Button>
 
         <div className="text-center mb-8 pt-4">
-          <div 
-            className={`w-16 h-16 mx-auto mb-6 rounded-2xl flex items-center justify-center shadow-lg transition-all duration-500 ${
-              isHorde 
-                ? 'gradient-horde shadow-horde/30' 
-                : 'gradient-alliance shadow-alliance/30'
-            }`}
-          >
-            <Shield className="h-8 w-8 text-white" strokeWidth={1.5} />
-          </div>
-          <h2 className="text-2xl font-bold text-foreground mb-2">{t.guild.create}</h2>
-          <p className="text-muted-foreground">Create a new guild to collect class wishes</p>
+          <h2 className="font-display text-2xl font-normal gradient-text">{t.guild.create}</h2>
         </div>
 
         <Form {...form}>
