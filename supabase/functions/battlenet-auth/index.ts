@@ -161,57 +161,75 @@ Deno.serve(async (req) => {
 
       // Battle.net "technical" email used for accounts created via BNet-first flow
       const bnetEmail = `bnet_${userInfo.id}@battlenet.local`;
+      const battlenetIdStr = String(userInfo.id);
 
-      // Check if a user with this Battle.net ID already exists
+      // Check if a user with this Battle.net ID already exists in profiles
       const { data: existingProfile } = await supabase
         .from('profiles')
         .select('id')
-        .eq('battlenet_id', String(userInfo.id))
+        .eq('battlenet_id', battlenetIdStr)
         .maybeSingle();
 
       let userId: string;
       let isNewUser = false;
 
       if (existingProfile) {
-        // User exists, sign them in
+        // User exists with this battlenet_id, sign them in
         userId = existingProfile.id;
         console.log('Existing user found by battlenet_id:', userId);
       } else {
-        // Check if there's already an auth user with this email (avoid duplicates)
+        // No profile has this battlenet_id yet.
+        // Check all auth users to find:
+        // 1. A user with bnet_xxx@battlenet.local email (created via BNet-first but profile not updated)
+        // 2. A user whose profile has battletag matching (linked via profile page but battlenet_id not set)
         const { data: existingUsers } = await supabase.auth.admin.listUsers();
-        const existingAuthUser = existingUsers?.users?.find((u) => u.email === bnetEmail);
+        const existingBnetEmailUser = existingUsers?.users?.find((u) => u.email === bnetEmail);
 
-        if (existingAuthUser) {
-          // Auth user exists but profile doesn't have battlenet_id yet - use this user
-          userId = existingAuthUser.id;
+        if (existingBnetEmailUser) {
+          // Auth user with bnet email exists - use this user
+          userId = existingBnetEmailUser.id;
           isNewUser = false;
-          console.log('Existing auth user found by email:', userId);
+          console.log('Existing auth user found by bnet email:', userId);
         } else {
-          // Create new user
-          isNewUser = true;
-          const password = generateSecurePassword();
+          // Check if there's a profile with matching battletag (user linked BNet while logged in via email)
+          const { data: profileByBattletag } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('battletag', userInfo.battletag)
+            .maybeSingle();
 
-          const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
-            email: bnetEmail,
-            password,
-            email_confirm: true,
-            user_metadata: {
-              username: userInfo.battletag.split('#')[0],
-              preferred_language: 'fr',
-              battlenet_id: String(userInfo.id),
-            },
-          });
+          if (profileByBattletag) {
+            // User linked their account before - now logging in via BNet
+            userId = profileByBattletag.id;
+            isNewUser = false;
+            console.log('Existing user found by battletag:', userId);
+          } else {
+            // Truly new user - create account
+            isNewUser = true;
+            const password = generateSecurePassword();
 
-          if (createError || !newUser.user) {
-            console.error('Failed to create user:', createError);
-            return new Response(JSON.stringify({ error: 'Failed to create user' }), {
-              status: 500,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+              email: bnetEmail,
+              password,
+              email_confirm: true,
+              user_metadata: {
+                username: userInfo.battletag.split('#')[0],
+                preferred_language: 'fr',
+                battlenet_id: battlenetIdStr,
+              },
             });
-          }
 
-          userId = newUser.user.id;
-          console.log('New user created:', userId);
+            if (createError || !newUser.user) {
+              console.error('Failed to create user:', createError);
+              return new Response(JSON.stringify({ error: 'Failed to create user' }), {
+                status: 500,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              });
+            }
+
+            userId = newUser.user.id;
+            console.log('New user created:', userId);
+          }
         }
       }
 
