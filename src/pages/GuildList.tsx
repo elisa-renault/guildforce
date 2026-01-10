@@ -111,17 +111,14 @@ const GuildList = () => {
             {guilds.map((guild, index) => (
               <GlowCard 
                 key={guild.id}
-                variant={guild.faction}
                 className="p-6 animate-fade-in"
                 style={{ animationDelay: `${index * 100}ms` } as React.CSSProperties}
                 onClick={() => navigate(guild.role === 'gm' ? `/guild/${guild.id}` : `/guild/${guild.id}/wishes`)}
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      guild.faction === 'horde' ? 'gradient-horde' : 'gradient-alliance'
-                    }`}>
-                      <Shield className="h-5 w-5 text-white" strokeWidth={1.5} />
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-primary/20">
+                      <Shield className="h-5 w-5 text-primary" strokeWidth={1.5} />
                     </div>
                     <div>
                       <h3 className="font-semibold text-foreground">{guild.name}</h3>
@@ -129,19 +126,10 @@ const GuildList = () => {
                     </div>
                   </div>
                   {guild.role === 'gm' && (
-                    <Crown className="h-5 w-5 text-yellow-500" strokeWidth={1.5} />
+                    <Crown className="h-5 w-5 text-amber-500" strokeWidth={1.5} />
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge 
-                    variant="outline" 
-                    className={guild.faction === 'horde' 
-                      ? 'border-horde/50 text-horde bg-horde/10' 
-                      : 'border-alliance/50 text-alliance bg-alliance/10'
-                    }
-                  >
-                    {guild.faction === 'horde' ? t.guild.horde : t.guild.alliance}
-                  </Badge>
                   <Badge variant="secondary" className="bg-muted text-muted-foreground">
                     {guild.role.toUpperCase()}
                   </Badge>

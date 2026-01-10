@@ -234,7 +234,7 @@ export const GuildMemberships: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <Badge 
                     variant="outline" 
-                    className={guild.guild_faction === 'HORDE' ? 'text-red-500 border-red-500/50' : 'text-blue-500 border-blue-500/50'}
+                    className="text-muted-foreground border-border/50"
                   >
                     {guild.guild_faction === 'HORDE' ? 'Horde' : 'Alliance'}
                   </Badge>
