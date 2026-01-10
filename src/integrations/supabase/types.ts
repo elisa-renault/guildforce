@@ -36,7 +36,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "battlenet_tokens_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       characters: {
         Row: {
@@ -110,6 +118,13 @@ export type Database = {
             referencedRelation: "guilds"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "class_wishes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       guild_members: {
@@ -143,6 +158,13 @@ export type Database = {
             columns: ["guild_id"]
             isOneToOne: false
             referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -262,7 +284,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "wow_characters_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wow_guild_memberships: {
         Row: {
@@ -313,6 +343,13 @@ export type Database = {
             columns: ["character_id"]
             isOneToOne: true
             referencedRelation: "wow_characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wow_guild_memberships_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
