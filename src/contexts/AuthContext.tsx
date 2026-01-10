@@ -40,12 +40,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       .eq('id', userId)
       .maybeSingle();
     
-    if (!error && data) {
-      setProfile(data as Profile);
-    } else if (error) {
+    if (error) {
       console.error('Error fetching profile:', error);
       setProfile(null);
+      return;
     }
+
+    // When RLS blocks or the row doesn't exist, data will be null.
+    setProfile((data as Profile) ?? null);
   };
 
   useEffect(() => {
