@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      battlenet_tokens: {
+        Row: {
+          access_token: string | null
+          created_at: string
+          expires_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          created_at?: string
+          expires_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          created_at?: string
+          expires_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       characters: {
         Row: {
           class_id: string
@@ -163,8 +187,6 @@ export type Database = {
         Row: {
           avatar_url: string | null
           battlenet_id: string | null
-          battlenet_token: string | null
-          battlenet_token_expires_at: string | null
           battletag: string | null
           created_at: string
           id: string
@@ -176,8 +198,6 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           battlenet_id?: string | null
-          battlenet_token?: string | null
-          battlenet_token_expires_at?: string | null
           battletag?: string | null
           created_at?: string
           id: string
@@ -189,8 +209,6 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           battlenet_id?: string | null
-          battlenet_token?: string | null
-          battlenet_token_expires_at?: string | null
           battletag?: string | null
           created_at?: string
           id?: string
@@ -304,10 +322,38 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_view_guild_invite_key: {
+        Args: { _guild_id: string }
+        Returns: boolean
+      }
+      get_guild_with_invite_key: {
+        Args: { _guild_id: string }
+        Returns: {
+          created_at: string
+          faction: string
+          id: string
+          invite_key: string
+          name: string
+          owner_id: string
+          server: string
+          updated_at: string
+        }[]
+      }
+      get_public_profile_info: {
+        Args: { _user_id: string }
+        Returns: {
+          avatar_url: string
+          battletag: string
+          id: string
+          main_character_name: string
+          username: string
+        }[]
+      }
       is_guild_member: {
         Args: { _guild_id: string; _user_id: string }
         Returns: boolean
       }
+      is_guild_owner_or_gm: { Args: { _guild_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
