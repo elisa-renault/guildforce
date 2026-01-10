@@ -38,15 +38,19 @@ const Dashboard = () => {
   const fetchData = async () => {
     if (!user || !guildId) return;
     
-    // Fetch guild data
-    const { data: guildData } = await supabase
-      .from('guilds')
-      .select('name, faction, invite_key, owner_id')
-      .eq('id', guildId)
+    // Use secure RPC function that validates owner/GM access and returns invite_key
+    const { data: guildData, error: guildError } = await supabase
+      .rpc('get_guild_with_invite_key', { _guild_id: guildId })
       .single();
     
-    // Check if user is owner
-    if (!guildData || guildData.owner_id !== user.id) {
+    // If RPC fails (unauthorized or not found), redirect
+    if (guildError || !guildData) {
+      navigate('/guilds');
+      return;
+    }
+    
+    // Double-check: user must be the owner
+    if (guildData.owner_id !== user.id) {
       navigate('/guilds');
       return;
     }

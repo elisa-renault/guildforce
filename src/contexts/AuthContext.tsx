@@ -10,8 +10,6 @@ interface Profile {
   avatar_url: string | null;
   preferred_language: string;
   battlenet_id: string | null;
-  battlenet_token: string | null;
-  battlenet_token_expires_at: string | null;
 }
 
 interface AuthContextType {
