@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -13,7 +12,7 @@ import { CommitmentToggle } from '@/components/CommitmentToggle';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
-import { Loader2, ArrowLeft, Save, Sparkles } from 'lucide-react';
+import { Loader2, Save, Sparkles } from 'lucide-react';
 
 interface WishData {
   classId: string;
@@ -164,20 +163,13 @@ const Wishes = () => {
 
 
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-screen relative pt-16">
       <CosmicBackground />
 
-      <header className="sticky top-0 z-50 cosmic-header">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => navigate('/guilds')}
-            className="text-muted-foreground hover:text-foreground hover:bg-white/5"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.common.back}
-          </Button>
-          <h1 className="text-xl font-bold text-foreground">{guild?.name}</h1>
+      {/* Sticky save bar for guild name + save button */}
+      <div className="sticky top-14 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between max-w-3xl">
+          <h1 className="text-lg font-semibold text-foreground">{guild?.name}</h1>
           <CosmicButton 
             size="sm" 
             onClick={saveWishes} 
@@ -187,7 +179,7 @@ const Wishes = () => {
             {t.wishes.saveWishes}
           </CosmicButton>
         </div>
-      </header>
+      </div>
 
       <main className="container mx-auto px-4 py-8 max-w-3xl relative z-10">
         <div className="text-center mb-10 animate-fade-in">
