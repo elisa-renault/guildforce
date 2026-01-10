@@ -171,6 +171,7 @@ export interface Translations {
     characterClass: string;
     characterLevel: string;
     isMain: string;
+    connectedViaBnet: string;
   };
   // Errors
   errors: {
@@ -352,6 +353,7 @@ export const translations: Record<Language, Translations> = {
       characterClass: 'Class',
       characterLevel: 'Level',
       isMain: 'Main',
+      connectedViaBnet: 'Connected via Battle.net',
     },
     errors: {
       generic: 'Something went wrong. Please try again.',
@@ -530,6 +532,7 @@ export const translations: Record<Language, Translations> = {
       characterClass: 'Classe',
       characterLevel: 'Niveau',
       isMain: 'Principal',
+      connectedViaBnet: 'Connecté via Battle.net',
     },
     errors: {
       generic: 'Une erreur est survenue. Veuillez réessayer.',
