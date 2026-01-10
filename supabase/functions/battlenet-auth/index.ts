@@ -844,6 +844,76 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
   }
 }
 
+// Helper function to cleanup guild memberships for guilds the user left in WoW
+async function cleanupLeftGuilds(
+  supabase: any,
+  userId: string,
+  currentWoWGuilds: Set<string> // Set of "guildName.toLowerCase()-realmSlug" keys
+) {
+  try {
+    console.log('Cleaning up left guilds for user...');
+
+    // Get all current app guild memberships for this user
+    const { data: appMemberships, error: lookupError } = await supabase
+      .from('guild_members')
+      .select('id, guild_id, role, guilds(id, name, server, owner_id)')
+      .eq('user_id', userId);
+
+    if (lookupError) {
+      console.error('Error looking up app guild memberships:', lookupError);
+      return;
+    }
+
+    if (!appMemberships || appMemberships.length === 0) {
+      console.log('No app guild memberships to cleanup');
+      return;
+    }
+
+    for (const membership of appMemberships) {
+      const guild = membership.guilds;
+      if (!guild) continue;
+
+      // Build the same key format used in WoW sync
+      // Note: server in app might be display name, we need to normalize for comparison
+      const serverSlug = guild.server.toLowerCase().replace(/\s+/g, '-').replace(/'/g, '');
+      const guildKey = `${guild.name.toLowerCase()}-${serverSlug}`;
+
+      if (!currentWoWGuilds.has(guildKey)) {
+        console.log(`User no longer in WoW guild ${guild.name} (${guild.server}), removing from app...`);
+
+        // If user was the owner, make guild orphan
+        if (guild.owner_id === userId) {
+          console.log(`User was owner of guild ${guild.name}, making it orphan...`);
+          const { error: orphanError } = await supabase
+            .from('guilds')
+            .update({ owner_id: null })
+            .eq('id', guild.id);
+
+          if (orphanError) {
+            console.error(`Failed to orphan guild ${guild.name}:`, orphanError);
+          }
+        }
+
+        // Remove from guild_members
+        const { error: removeError } = await supabase
+          .from('guild_members')
+          .delete()
+          .eq('id', membership.id);
+
+        if (removeError) {
+          console.error(`Failed to remove user from guild ${guild.name}:`, removeError);
+        } else {
+          console.log(`Removed user from guild ${guild.name}`);
+        }
+      }
+    }
+
+    console.log('Cleanup of left guilds completed');
+  } catch (error) {
+    console.error('Error in cleanupLeftGuilds:', error);
+  }
+}
+
 // Helper function to auto-create/join guilds in the app based on WoW memberships
 async function autoJoinGuilds(
   supabase: any,
@@ -863,6 +933,7 @@ async function autoJoinGuilds(
     const uniqueGuilds = new Map<string, {
       name: string;
       server: string;
+      serverSlug: string;
       faction: string;
       isGM: boolean;
     }>();
@@ -878,6 +949,7 @@ async function autoJoinGuilds(
         uniqueGuilds.set(guildKey, {
           name: membership.guildName,
           server: membership.guildRealm,
+          serverSlug: membership.guildRealmSlug,
           faction: membership.guildFaction.toLowerCase() === 'horde' ? 'horde' : 'alliance',
           isGM,
         });
@@ -886,6 +958,12 @@ async function autoJoinGuilds(
         existing.isGM = true;
       }
     }
+
+    // Build set of current WoW guilds for cleanup
+    const currentWoWGuilds = new Set<string>(uniqueGuilds.keys());
+
+    // Clean up guilds the user left in WoW
+    await cleanupLeftGuilds(supabase, userId, currentWoWGuilds);
 
     console.log(`Processing ${uniqueGuilds.size} unique guilds for auto-join...`);
 
@@ -911,8 +989,23 @@ async function autoJoinGuilds(
           guildId = existingGuild.id;
           console.log(`Guild ${guildInfo.name} already exists (id: ${guildId})`);
 
-          // If guild has no owner and user is GM in WoW, claim ownership
-          if (existingGuild.owner_id === null && guildInfo.isGM) {
+          // Handle ownership changes
+          if (existingGuild.owner_id === userId && !guildInfo.isGM) {
+            // User WAS owner but is no longer GM in WoW - revoke ownership
+            console.log(`User lost GM status for guild ${guildInfo.name}, revoking ownership...`);
+            
+            const { error: revokeError } = await supabase
+              .from('guilds')
+              .update({ owner_id: null })
+              .eq('id', guildId);
+
+            if (revokeError) {
+              console.error(`Failed to revoke ownership of guild ${guildInfo.name}:`, revokeError);
+            } else {
+              console.log(`Revoked ownership of guild ${guildInfo.name}, now orphan`);
+            }
+          } else if (existingGuild.owner_id === null && guildInfo.isGM) {
+            // Guild has no owner and user is GM in WoW - claim ownership
             console.log(`Guild ${guildInfo.name} is orphan and user is GM, claiming ownership...`);
             
             const { error: claimError } = await supabase
@@ -928,6 +1021,11 @@ async function autoJoinGuilds(
               // Sync existing members who have this guild in wow_guild_memberships
               await syncExistingMembers(supabase, guildId, guildInfo.name, guildInfo.server);
             }
+          } else if (existingGuild.owner_id !== null && existingGuild.owner_id !== userId && guildInfo.isGM) {
+            // Guild has a different owner but current user is now GM
+            // This could happen if the old GM hasn't synced yet - we let it be for now
+            // The old GM will lose ownership when they sync
+            console.log(`Guild ${guildInfo.name} has owner ${existingGuild.owner_id} but user is now GM in WoW. Old owner will lose ownership on their next sync.`);
           }
         } else {
           // Guild doesn't exist, create it
@@ -969,18 +1067,17 @@ async function autoJoinGuilds(
         const role = guildInfo.isGM ? 'gm' : 'member';
 
         if (existingMembership) {
-          // User is already a member, update role if needed
-          if (existingMembership.role !== role && guildInfo.isGM) {
-            // Only upgrade to GM, never downgrade
+          // User is already a member, update role if it changed (both upgrade AND downgrade)
+          if (existingMembership.role !== role) {
             const { error: updateError } = await supabase
               .from('guild_members')
-              .update({ role: 'gm' })
+              .update({ role })
               .eq('id', existingMembership.id);
 
             if (updateError) {
               console.error(`Failed to update role for guild ${guildInfo.name}:`, updateError);
             } else {
-              console.log(`Updated user role to GM for guild ${guildInfo.name}`);
+              console.log(`Updated user role from ${existingMembership.role} to ${role} for guild ${guildInfo.name}`);
             }
           } else {
             console.log(`User already member of guild ${guildInfo.name} with role ${existingMembership.role}`);
