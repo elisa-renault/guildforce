@@ -20,7 +20,7 @@ const Index = () => {
       <header className="fixed top-0 left-0 right-0 z-50 glass-header">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           {/* Logo */}
-          <span className="font-semibold text-lg text-foreground">{t.home.title}</span>
+          <span className="font-display font-semibold text-lg text-foreground">{t.home.title}</span>
 
           {/* Navigation links */}
           <nav className="hidden md:flex items-center gap-8">
@@ -78,7 +78,7 @@ const Index = () => {
           </div>
 
           {/* Title with gradient - like reference */}
-          <h1 className="text-5xl md:text-7xl font-bold mb-8 animate-fade-in leading-tight" style={{ animationDelay: '100ms' }}>
+          <h1 className="font-display text-5xl md:text-7xl font-bold mb-8 animate-fade-in leading-tight" style={{ animationDelay: '100ms' }}>
             <span className="text-foreground">{t.home.subtitle.split(' ').slice(0, 2).join(' ')}</span>
             {' '}
             <span className="gradient-text">{t.home.subtitle.split(' ').slice(2).join(' ')}</span>
@@ -134,7 +134,7 @@ const Index = () => {
               <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-6">
                 <feature.icon className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold mb-3 text-foreground">{feature.title}</h3>
+              <h3 className="font-display text-lg font-semibold mb-3 text-foreground">{feature.title}</h3>
               <p className="text-muted-foreground text-sm leading-relaxed">{feature.description}</p>
             </GlowCard>
           ))}
@@ -146,17 +146,17 @@ const Index = () => {
             <div className="grid grid-cols-3 gap-8 divide-x divide-border">
               <div className="text-center">
                 <p className="text-sm text-muted-foreground mb-2">{language === 'fr' ? 'Guildes actives' : 'Active Guilds'}</p>
-                <p className="text-3xl font-bold gradient-text">100+</p>
+                <p className="font-display text-3xl font-bold gradient-text">100+</p>
                 <p className="text-xs text-muted-foreground mt-1">{language === 'fr' ? 'Et en croissance' : 'And growing'}</p>
               </div>
               <div className="text-center pl-8">
                 <p className="text-sm text-muted-foreground mb-2">{language === 'fr' ? 'Mise à jour' : 'Updates'}</p>
-                <p className="text-3xl font-bold gradient-text">{language === 'fr' ? 'Temps réel' : 'Real-time'}</p>
+                <p className="font-display text-3xl font-bold gradient-text">{language === 'fr' ? 'Temps réel' : 'Real-time'}</p>
                 <p className="text-xs text-muted-foreground mt-1">{language === 'fr' ? 'Synchronisation instantanée' : 'Instant sync'}</p>
               </div>
               <div className="text-center pl-8">
                 <p className="text-sm text-muted-foreground mb-2">{language === 'fr' ? 'Fiabilité' : 'Reliability'}</p>
-                <p className="text-3xl font-bold gradient-text">99%</p>
+                <p className="font-display text-3xl font-bold gradient-text">99%</p>
                 <p className="text-xs text-muted-foreground mt-1">{language === 'fr' ? 'Disponibilité' : 'Uptime'}</p>
               </div>
             </div>
