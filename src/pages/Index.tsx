@@ -3,6 +3,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
+import { BattleNetIcon } from '@/components/BattleNetIcon';
 import { Shield } from 'lucide-react';
 
 const Index = () => {
@@ -40,7 +41,7 @@ const Index = () => {
             <CosmicButton 
               size="lg" 
               onClick={() => navigate(user ? '/guilds' : '/auth')} 
-              icon={<Shield className="h-5 w-5" strokeWidth={1.5} />}
+              icon={user ? <Shield className="h-5 w-5" strokeWidth={1.5} /> : <BattleNetIcon className="h-5 w-5" />}
             >
               {user ? t.common.myGuilds : t.auth.loginWithBattleNet}
             </CosmicButton>
