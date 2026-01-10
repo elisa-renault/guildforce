@@ -12,6 +12,7 @@ import JoinGuild from "./pages/JoinGuild";
 import GuildList from "./pages/GuildList";
 import Wishes from "./pages/Wishes";
 import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/guilds" element={<GuildList />} />
+                <Route path="/profile" element={<Profile />} />
                 <Route path="/guild/create" element={<CreateGuild />} />
                 <Route path="/guild/join" element={<JoinGuild />} />
                 <Route path="/guild/:guildId" element={<Dashboard />} />
