@@ -219,6 +219,18 @@ Deno.serve(async (req) => {
       const expiresAt = new Date(Date.now() + tokenData.expires_in * 1000).toISOString();
       const battletagName = userInfo.battletag.split('#')[0];
 
+      // If an auth user exists but their profile row was never created (or got deleted),
+      // we must provide required fields on insert (discord_pseudo, preferred_language).
+      const { data: profileById, error: profileByIdError } = await supabase
+        .from('profiles')
+        .select('id, discord_pseudo, preferred_language')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (profileByIdError) {
+        console.error('Failed to read profile by id:', profileByIdError);
+      }
+
       const profileUpsert: any = {
         id: userId,
         battlenet_id: String(userInfo.id),
@@ -227,14 +239,26 @@ Deno.serve(async (req) => {
         battletag: userInfo.battletag,
       };
 
-      // If new user, set the pseudo to their BattleTag name
-      if (isNewUser) {
+      // Only set defaults when inserting a missing profile, to avoid overriding user-edited values.
+      if (!profileById) {
         profileUpsert.discord_pseudo = battletagName;
+        profileUpsert.preferred_language = 'fr';
       }
 
-      await supabase
+      const { error: profileUpsertError } = await supabase
         .from('profiles')
         .upsert(profileUpsert, { onConflict: 'id' });
+
+      if (profileUpsertError) {
+        console.error('Failed to upsert profile:', profileUpsertError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to upsert profile', details: profileUpsertError.message }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
 
       // Fetch and store WoW characters
       await fetchAndStoreCharacters(supabase, tokenData.access_token, userId);
@@ -383,21 +407,40 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Update profile with Battle.net info
+      // Update (or create) profile with Battle.net info
       const expiresAt = new Date(Date.now() + tokenData.expires_in * 1000).toISOString();
-      
+      const battletagName = userInfo.battletag.split('#')[0];
+
+      const { data: existingProfileRow, error: existingProfileErr } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (existingProfileErr) {
+        console.error('Failed to read profile before linking:', existingProfileErr);
+      }
+
+      const upsertPayload: any = {
+        id: user.id,
+        battlenet_id: String(userInfo.id),
+        battlenet_token: tokenData.access_token,
+        battlenet_token_expires_at: expiresAt,
+        battletag: userInfo.battletag,
+      };
+
+      // Required fields if profile row is missing
+      if (!existingProfileRow) {
+        upsertPayload.discord_pseudo = battletagName;
+        upsertPayload.preferred_language = 'fr';
+      }
+
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({
-          battlenet_id: String(userInfo.id),
-          battlenet_token: tokenData.access_token,
-          battlenet_token_expires_at: expiresAt,
-          battletag: userInfo.battletag,
-        })
-        .eq('id', user.id);
+        .upsert(upsertPayload, { onConflict: 'id' });
 
       if (profileError) {
-        console.error('Failed to update profile:', profileError);
+        console.error('Failed to upsert profile:', profileError);
         return new Response(JSON.stringify({ error: 'Failed to update profile' }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
