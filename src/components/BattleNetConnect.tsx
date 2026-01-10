@@ -7,6 +7,7 @@ import { GlowCard } from './GlowCard';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Gamepad2, Loader2, RefreshCw, Unlink } from 'lucide-react';
 import { toast } from 'sonner';
+import { getClassNameFromBattleNet } from '@/data/battlenetClasses';
 
 interface WoWCharacter {
   id: string;
@@ -18,23 +19,6 @@ interface WoWCharacter {
   guild_name: string | null;
   is_main: boolean;
 }
-
-// Map Battle.net class IDs to our class system
-const BATTLENET_CLASS_MAP: Record<number, string> = {
-  1: 'warrior',
-  2: 'paladin',
-  3: 'hunter',
-  4: 'rogue',
-  5: 'priest',
-  6: 'death-knight',
-  7: 'shaman',
-  8: 'mage',
-  9: 'warlock',
-  10: 'monk',
-  11: 'druid',
-  12: 'demon-hunter',
-  13: 'evoker',
-};
 
 export const BattleNetConnect: React.FC = () => {
   const { profile, session, refreshProfile } = useAuth();
@@ -59,13 +43,6 @@ export const BattleNetConnect: React.FC = () => {
     // Use localStorage instead of sessionStorage for better persistence across redirects
     const storedState = localStorage.getItem('battlenet_state');
 
-    console.log('OAuth callback check:', { 
-      hasCode: !!code, 
-      stateParam, 
-      storedState,
-      url: window.location.href 
-    });
-
     if (code && stateParam) {
       // Parse the state JSON to extract the actual state value
       let stateMatches = false;
@@ -76,8 +53,6 @@ export const BattleNetConnect: React.FC = () => {
         // If not JSON, try direct comparison (fallback)
         stateMatches = storedState ? stateParam === storedState : true;
       }
-
-      console.log('State match:', stateMatches);
 
       // Process callback if code exists (state validation is best-effort due to cross-domain issues)
       if (stateMatches || !storedState) {
@@ -239,7 +214,7 @@ export const BattleNetConnect: React.FC = () => {
   };
 
   const getClassName = (classId: number) => {
-    return BATTLENET_CLASS_MAP[classId] || 'unknown';
+    return getClassNameFromBattleNet(classId);
   };
 
   return (
