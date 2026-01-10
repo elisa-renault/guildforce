@@ -7,6 +7,7 @@ import { GlowCard } from './GlowCard';
 import { Badge } from '@/components/ui/badge';
 import { CosmicButton } from './CosmicButton';
 import { Crown, Users, Shield, Loader2, Clock } from 'lucide-react';
+import { getClassNameFromBattleNet } from '@/data/battlenetClasses';
 
 interface GuildMembership {
   id: string;
@@ -37,23 +38,6 @@ interface AppGuildMembership {
   role: string;
   guilds: AppGuild;
 }
-
-// Map Battle.net class IDs to our class system
-const BATTLENET_CLASS_MAP: Record<number, string> = {
-  1: 'warrior',
-  2: 'paladin',
-  3: 'hunter',
-  4: 'rogue',
-  5: 'priest',
-  6: 'death-knight',
-  7: 'shaman',
-  8: 'mage',
-  9: 'warlock',
-  10: 'monk',
-  11: 'druid',
-  12: 'demon-hunter',
-  13: 'evoker',
-};
 
 export const GuildMemberships: React.FC = () => {
   const navigate = useNavigate();
@@ -129,7 +113,7 @@ export const GuildMemberships: React.FC = () => {
   };
 
   const getClassName = (classId: number) => {
-    return BATTLENET_CLASS_MAP[classId] || 'unknown';
+    return getClassNameFromBattleNet(classId);
   };
 
   const getAppGuildInfo = (guildName: string, guildRealm: string): { id: string; role: string; hasOwner: boolean } | null => {
