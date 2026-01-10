@@ -80,15 +80,9 @@ const Auth = () => {
         </Button>
 
         <div className="text-center mb-8 pt-4">
-          <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/25">
-            <Sparkles className="h-8 w-8 text-white" />
-          </div>
-          <h2 className="text-2xl font-bold cosmic-text mb-2">
+          <h2 className="font-display text-2xl font-normal gradient-text">
             {isLogin ? t.auth.loginTitle : t.auth.signupTitle}
           </h2>
-          <p className="text-muted-foreground">
-            {isLogin ? t.auth.loginDescription : t.auth.signupDescription}
-          </p>
         </div>
 
         <Form {...form}>
