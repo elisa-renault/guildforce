@@ -41,7 +41,7 @@ const Index = () => {
             <CosmicButton 
               size="lg" 
               onClick={() => navigate(user ? '/guilds' : '/auth')} 
-              icon={user ? <Shield className="h-5 w-5" strokeWidth={1.5} /> : <BattleNetIcon className="h-5 w-5" />}
+              icon={user ? <Shield className="h-5 w-5" strokeWidth={1.5} /> : <BattleNetIcon className="h-6 w-6" />}
             >
               {user ? t.common.myGuilds : t.auth.loginWithBattleNet}
             </CosmicButton>
