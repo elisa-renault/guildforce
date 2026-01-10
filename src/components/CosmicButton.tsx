@@ -20,7 +20,7 @@ export const CosmicButton = forwardRef<HTMLButtonElement, CosmicButtonProps>(({
   disabled,
   ...props
 }, ref) => {
-  const baseStyles = 'relative overflow-hidden font-normal transition-all duration-300 inline-flex items-center justify-center gap-2';
+  const baseStyles = 'relative overflow-hidden font-normal transition-all duration-300 inline-flex items-center justify-center gap-3';
   
   const variantStyles = {
     default: 'primary-button text-white',
