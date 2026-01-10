@@ -196,7 +196,7 @@ Deno.serve(async (req) => {
             password,
             email_confirm: true,
             user_metadata: {
-              discord_pseudo: userInfo.battletag.split('#')[0],
+              username: userInfo.battletag.split('#')[0],
               preferred_language: 'fr',
               battlenet_id: String(userInfo.id),
             },
@@ -220,10 +220,10 @@ Deno.serve(async (req) => {
       const battletagName = userInfo.battletag.split('#')[0];
 
       // If an auth user exists but their profile row was never created (or got deleted),
-      // we must provide required fields on insert (discord_pseudo, preferred_language).
+      // we must provide required fields on insert (username, preferred_language).
       const { data: profileById, error: profileByIdError } = await supabase
         .from('profiles')
-        .select('id, discord_pseudo, preferred_language')
+        .select('id, username, preferred_language')
         .eq('id', userId)
         .maybeSingle();
 
@@ -240,7 +240,7 @@ Deno.serve(async (req) => {
         battlenet_token_expires_at: expiresAt,
         battletag: userInfo.battletag,
         // Required fields - use existing or default
-        discord_pseudo: profileById?.discord_pseudo || battletagName,
+        username: profileById?.username || battletagName,
         preferred_language: profileById?.preferred_language || 'fr',
       };
 
@@ -412,7 +412,7 @@ Deno.serve(async (req) => {
 
       const { data: existingProfileRow, error: existingProfileErr } = await supabase
         .from('profiles')
-        .select('id, discord_pseudo, preferred_language')
+        .select('id, username, preferred_language')
         .eq('id', user.id)
         .maybeSingle();
 
@@ -428,7 +428,7 @@ Deno.serve(async (req) => {
         battlenet_token_expires_at: expiresAt,
         battletag: userInfo.battletag,
         // Required fields - use existing or default
-        discord_pseudo: existingProfileRow?.discord_pseudo || battletagName,
+        username: existingProfileRow?.username || battletagName,
         preferred_language: existingProfileRow?.preferred_language || 'fr',
       };
 

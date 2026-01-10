@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface Profile {
   id: string;
-  discord_pseudo: string;
+  username: string;
   battletag: string | null;
   main_character_name: string | null;
   avatar_url: string | null;
@@ -94,7 +94,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       options: {
         emailRedirectTo: redirectUrl,
         data: {
-          discord_pseudo: discordPseudo,
+          username: discordPseudo,
           preferred_language: language,
         },
       },
