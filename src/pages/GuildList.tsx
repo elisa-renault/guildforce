@@ -6,7 +6,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
-import { GuildMemberships } from '@/components/GuildMemberships';
 import { Shield, Crown, Loader2, Link as LinkIcon } from 'lucide-react';
 
 interface GuildWithMembership {
@@ -73,7 +72,6 @@ const GuildList = () => {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : !isConnected ? (
-          // Not connected to Battle.net
           <GlowCard className="max-w-md mx-auto p-8 text-center animate-fade-in">
             <LinkIcon className="h-16 w-16 mx-auto mb-6 text-muted-foreground" strokeWidth={1.5} />
             <p className="text-muted-foreground mb-6 text-lg">{t.guild.noGuilds}</p>
@@ -82,40 +80,36 @@ const GuildList = () => {
             </CosmicButton>
           </GlowCard>
         ) : (
-          <div className="space-y-8">
-            {/* WoW Guild Memberships from Battle.net */}
-            <GuildMemberships />
-
-            {/* App Guilds the user has joined */}
-            {guilds.length > 0 && (
-              <div>
-                <h2 className="text-xl font-semibold text-foreground mb-4">Guildes actives dans Guildforce</h2>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {guilds.map((guild, index) => (
-                    <GlowCard 
-                      key={guild.id}
-                      className="p-6 animate-fade-in cursor-pointer hover:border-primary/50 transition-colors"
-                      style={{ animationDelay: `${index * 100}ms` } as React.CSSProperties}
-                      onClick={() => navigate(guild.role === 'gm' ? `/guild/${guild.id}` : `/guild/${guild.id}/wishes`)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-primary/30 to-accent/20 border border-primary/20">
-                            <Shield className="h-5 w-5 text-primary" strokeWidth={1.5} />
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-foreground">{guild.name}</h3>
-                            <p className="text-sm text-muted-foreground">{guild.server}</p>
-                          </div>
-                        </div>
-                        {guild.role === 'gm' && (
-                          <Crown className="h-5 w-5 text-amber-500" strokeWidth={1.5} />
-                        )}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {guilds.length > 0 ? (
+              guilds.map((guild, index) => (
+                <GlowCard 
+                  key={guild.id}
+                  className="p-6 animate-fade-in cursor-pointer hover:border-primary/50 transition-colors"
+                  style={{ animationDelay: `${index * 100}ms` } as React.CSSProperties}
+                  onClick={() => navigate(guild.role === 'gm' ? `/guild/${guild.id}` : `/guild/${guild.id}/wishes`)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-primary/30 to-accent/20 border border-primary/20">
+                        <Shield className="h-5 w-5 text-primary" strokeWidth={1.5} />
                       </div>
-                    </GlowCard>
-                  ))}
-                </div>
-              </div>
+                      <div>
+                        <h3 className="font-semibold text-foreground">{guild.name}</h3>
+                        <p className="text-sm text-muted-foreground">{guild.server}</p>
+                      </div>
+                    </div>
+                    {guild.role === 'gm' && (
+                      <Crown className="h-5 w-5 text-amber-500" strokeWidth={1.5} />
+                    )}
+                  </div>
+                </GlowCard>
+              ))
+            ) : (
+              <GlowCard className="col-span-full p-8 text-center animate-fade-in">
+                <Shield className="h-16 w-16 mx-auto mb-6 text-muted-foreground" strokeWidth={1.5} />
+                <p className="text-muted-foreground text-lg">{t.guild.noGuilds}</p>
+              </GlowCard>
             )}
           </div>
         )}
