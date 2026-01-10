@@ -1022,10 +1022,38 @@ async function autoJoinGuilds(
               await syncExistingMembers(supabase, guildId, guildInfo.name, guildInfo.server);
             }
           } else if (existingGuild.owner_id !== null && existingGuild.owner_id !== userId && guildInfo.isGM) {
-            // Guild has a different owner but current user is now GM
-            // This could happen if the old GM hasn't synced yet - we let it be for now
-            // The old GM will lose ownership when they sync
-            console.log(`Guild ${guildInfo.name} has owner ${existingGuild.owner_id} but user is now GM in WoW. Old owner will lose ownership on their next sync.`);
+            // Battle.net is source of truth: new GM takes ownership immediately
+            console.log(`User is now GM in WoW for guild ${guildInfo.name}, transferring ownership from ${existingGuild.owner_id}...`);
+            
+            const previousOwnerId = existingGuild.owner_id;
+            
+            // Transfer ownership to the new GM
+            const { error: transferError } = await supabase
+              .from('guilds')
+              .update({ owner_id: userId })
+              .eq('id', guildId);
+
+            if (transferError) {
+              console.error(`Failed to transfer ownership of guild ${guildInfo.name}:`, transferError);
+            } else {
+              console.log(`Ownership of guild ${guildInfo.name} transferred to user ${userId}`);
+              
+              // Downgrade previous owner's role to 'member' if they're still in guild_members
+              const { error: downgradeError } = await supabase
+                .from('guild_members')
+                .update({ role: 'member' })
+                .eq('guild_id', guildId)
+                .eq('user_id', previousOwnerId);
+
+              if (downgradeError) {
+                console.error(`Failed to downgrade previous owner's role:`, downgradeError);
+              } else {
+                console.log(`Previous owner ${previousOwnerId} downgraded to member`);
+              }
+              
+              // Sync existing members for the newly claimed guild
+              await syncExistingMembers(supabase, guildId, guildInfo.name, guildInfo.server);
+            }
           }
         } else {
           // Guild doesn't exist, create it
