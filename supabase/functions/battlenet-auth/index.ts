@@ -159,6 +159,9 @@ Deno.serve(async (req) => {
 
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+      // Battle.net "technical" email used for accounts created via BNet-first flow
+      const bnetEmail = `bnet_${userInfo.id}@battlenet.local`;
+
       // Check if a user with this Battle.net ID already exists
       const { data: existingProfile } = await supabase
         .from('profiles')
@@ -175,9 +178,8 @@ Deno.serve(async (req) => {
         console.log('Existing user found by battlenet_id:', userId);
       } else {
         // Check if there's already an auth user with this email (avoid duplicates)
-        const email = `bnet_${userInfo.id}@battlenet.local`;
         const { data: existingUsers } = await supabase.auth.admin.listUsers();
-        const existingAuthUser = existingUsers?.users?.find(u => u.email === email);
+        const existingAuthUser = existingUsers?.users?.find((u) => u.email === bnetEmail);
 
         if (existingAuthUser) {
           // Auth user exists but profile doesn't have battlenet_id yet - use this user
@@ -190,7 +192,7 @@ Deno.serve(async (req) => {
           const password = generateSecurePassword();
 
           const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
-            email,
+            email: bnetEmail,
             password,
             email_confirm: true,
             user_metadata: {
@@ -213,36 +215,47 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Update profile with Battle.net info
+      // Ensure the profile exists and is updated with Battle.net info
       const expiresAt = new Date(Date.now() + tokenData.expires_in * 1000).toISOString();
       const battletagName = userInfo.battletag.split('#')[0];
-      
-      // For new users, also set their display name (discord_pseudo) to the BattleTag
-      const updateData: any = {
+
+      const profileUpsert: any = {
+        id: userId,
         battlenet_id: String(userInfo.id),
         battlenet_token: tokenData.access_token,
         battlenet_token_expires_at: expiresAt,
         battletag: userInfo.battletag,
       };
-      
+
       // If new user, set the pseudo to their BattleTag name
       if (isNewUser) {
-        updateData.discord_pseudo = battletagName;
+        profileUpsert.discord_pseudo = battletagName;
       }
-      
+
       await supabase
         .from('profiles')
-        .update(updateData)
-        .eq('id', userId);
+        .upsert(profileUpsert, { onConflict: 'id' });
 
       // Fetch and store WoW characters
       await fetchAndStoreCharacters(supabase, tokenData.access_token, userId);
 
       // Generate a session for the user
-      // We use a magic link token and verify it from the client
+      // NOTE: `generateLink` targets an email address.
+      // If the account was initially created via email/password and later linked to BNet,
+      // we MUST generate the link for the user's *real* email (not the bnet_... one),
+      // otherwise we can accidentally log them into a different auth user.
+      let loginEmail = bnetEmail;
+      if (!isNewUser) {
+        const { data: userById, error: getUserErr } = await supabase.auth.admin.getUserById(userId);
+        const existingEmail = userById?.user?.email;
+        if (!getUserErr && existingEmail) {
+          loginEmail = existingEmail;
+        }
+      }
+
       const { data: sessionData, error: sessionError } = await supabase.auth.admin.generateLink({
         type: 'magiclink',
-        email: `bnet_${userInfo.id}@battlenet.local`,
+        email: loginEmail,
       });
 
       if (sessionError || !sessionData) {
