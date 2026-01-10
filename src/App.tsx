@@ -8,7 +8,6 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { GlobalNav } from "@/components/GlobalNav";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import JoinGuild from "./pages/JoinGuild";
 import GuildList from "./pages/GuildList";
 import Wishes from "./pages/Wishes";
 import Dashboard from "./pages/Dashboard";
@@ -32,7 +31,6 @@ const App = () => (
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/guilds" element={<GuildList />} />
                 <Route path="/profile" element={<Profile />} />
-                <Route path="/guild/join" element={<JoinGuild />} />
                 <Route path="/guild/:guildId" element={<Dashboard />} />
                 <Route path="/guild/:guildId/wishes" element={<Wishes />} />
                 <Route path="*" element={<NotFound />} />
