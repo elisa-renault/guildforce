@@ -67,6 +67,10 @@ export interface Translations {
     passwordsDontMatch: string;
     userAlreadyExists: string;
     invalidCredentials: string;
+    orContinueWith: string;
+    loginWithBattleNet: string;
+    signupWithBattleNet: string;
+    battlenetError: string;
   };
   // Guild
   guild: {
@@ -232,6 +236,10 @@ export const translations: Record<Language, Translations> = {
       passwordsDontMatch: 'Passwords do not match',
       userAlreadyExists: 'An account with this email already exists',
       invalidCredentials: 'Invalid email or password',
+      orContinueWith: 'Or continue with',
+      loginWithBattleNet: 'Login with Battle.net',
+      signupWithBattleNet: 'Sign up with Battle.net',
+      battlenetError: 'Battle.net authentication failed',
     },
     guild: {
       create: 'Create Guild',
@@ -390,6 +398,10 @@ export const translations: Record<Language, Translations> = {
       passwordsDontMatch: 'Les mots de passe ne correspondent pas',
       userAlreadyExists: 'Un compte avec cet email existe déjà',
       invalidCredentials: 'Email ou mot de passe invalide',
+      orContinueWith: 'Ou continuer avec',
+      loginWithBattleNet: 'Se connecter avec Battle.net',
+      signupWithBattleNet: 'S\'inscrire avec Battle.net',
+      battlenetError: 'Échec de l\'authentification Battle.net',
     },
     guild: {
       create: 'Créer une guilde',
