@@ -164,11 +164,11 @@ export type Database = {
           battlenet_token_expires_at: string | null
           battletag: string | null
           created_at: string
-          discord_pseudo: string
           id: string
           main_character_name: string | null
           preferred_language: string
           updated_at: string
+          username: string
         }
         Insert: {
           avatar_url?: string | null
@@ -177,11 +177,11 @@ export type Database = {
           battlenet_token_expires_at?: string | null
           battletag?: string | null
           created_at?: string
-          discord_pseudo: string
           id: string
           main_character_name?: string | null
           preferred_language?: string
           updated_at?: string
+          username: string
         }
         Update: {
           avatar_url?: string | null
@@ -190,11 +190,11 @@ export type Database = {
           battlenet_token_expires_at?: string | null
           battletag?: string | null
           created_at?: string
-          discord_pseudo?: string
           id?: string
           main_character_name?: string | null
           preferred_language?: string
           updated_at?: string
+          username?: string
         }
         Relationships: []
       }
