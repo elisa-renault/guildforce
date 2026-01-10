@@ -84,12 +84,6 @@ const GuildList = () => {
             >
               <User className="h-4 w-4" strokeWidth={1.5} />
             </Button>
-            <CosmicButton size="sm" variant="outline" onClick={() => navigate('/guild/join')}>
-              <Users className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.guild.join}
-            </CosmicButton>
-            <CosmicButton size="sm" onClick={() => navigate('/guild/create')}>
-              <Plus className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.guild.create}
-            </CosmicButton>
           </div>
         </div>
       </header>
