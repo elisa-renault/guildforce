@@ -20,7 +20,7 @@ import { ArrowLeft, User, Save, Globe, Loader2 } from 'lucide-react';
 const Profile = () => {
   const navigate = useNavigate();
   const { t, language, setLanguage } = useLanguage();
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -39,6 +39,9 @@ const Profile = () => {
   });
 
   useEffect(() => {
+    // Wait for auth to finish loading before redirecting
+    if (authLoading) return;
+    
     if (!user) {
       navigate('/auth');
       return;
@@ -51,7 +54,7 @@ const Profile = () => {
       });
       setLoading(false);
     }
-  }, [user, profile, navigate, form]);
+  }, [user, profile, navigate, form, authLoading]);
 
   const onSubmit = async (values: z.infer<typeof profileSchema>) => {
     if (!user) return;
