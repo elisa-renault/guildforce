@@ -110,6 +110,7 @@ export interface Translations {
     alreadyInApp: string;
     accessGuild: string;
     pendingSync: string;
+    awaitingGM: string;
   };
   // Wishes
   wishes: {
@@ -296,6 +297,7 @@ export const translations: Record<Language, Translations> = {
       alreadyInApp: 'Already created in Guildforce',
       accessGuild: 'Manage Guild',
       pendingSync: 'Guild will be created automatically on your next Battle.net sync',
+      awaitingGM: 'Awaiting GM',
     },
     wishes: {
       title: 'My Class Wishes',
@@ -476,6 +478,7 @@ export const translations: Record<Language, Translations> = {
       alreadyInApp: 'Déjà créée dans Guildforce',
       accessGuild: 'Gérer la guilde',
       pendingSync: 'La guilde sera créée automatiquement lors de ta prochaine synchro Battle.net',
+      awaitingGM: 'En attente du GM',
     },
     wishes: {
       title: 'Mes vœux de classe',
