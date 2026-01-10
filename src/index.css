@@ -292,6 +292,116 @@
       0 12px 32px hsl(277 90% 20% / 0.4);
   }
 
+  /* Horde liquid glass button */
+  .horde-button {
+    position: relative;
+    background: linear-gradient(
+      180deg,
+      hsl(5 70% 50%) 0%,
+      hsl(var(--horde)) 40%,
+      hsl(0 70% 30%) 100%
+    );
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid hsl(5 70% 55% / 0.5);
+    border-top-color: hsl(10 65% 60% / 0.6);
+    border-bottom-color: hsl(0 80% 25% / 0.5);
+    box-shadow: 
+      inset 0 1px 2px hsl(0 0% 100% / 0.25),
+      inset 0 -2px 4px hsl(0 80% 20% / 0.3),
+      0 4px 12px hsl(var(--horde) / 0.4),
+      0 8px 24px hsl(0 70% 25% / 0.3);
+    transition: all 0.3s ease;
+  }
+
+  .horde-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(180deg, hsl(0 0% 100% / 0.15) 0%, transparent 100%);
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+  .horde-button::after {
+    content: '';
+    position: absolute;
+    top: 1px;
+    left: 15%;
+    right: 15%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, hsl(0 0% 100% / 0.5) 50%, transparent 100%);
+    pointer-events: none;
+  }
+
+  .horde-button:hover {
+    background: linear-gradient(180deg, hsl(5 70% 55%) 0%, hsl(0 70% 48%) 40%, hsl(0 70% 32%) 100%);
+    border-color: hsl(5 70% 60% / 0.6);
+    transform: translateY(-2px);
+    box-shadow: 
+      inset 0 1px 2px hsl(0 0% 100% / 0.3),
+      0 6px 16px hsl(var(--horde) / 0.5),
+      0 12px 32px hsl(0 70% 25% / 0.4);
+  }
+
+  /* Alliance liquid glass button */
+  .alliance-button {
+    position: relative;
+    background: linear-gradient(
+      180deg,
+      hsl(215 70% 55%) 0%,
+      hsl(var(--alliance)) 40%,
+      hsl(215 70% 35%) 100%
+    );
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid hsl(215 70% 55% / 0.5);
+    border-top-color: hsl(210 65% 65% / 0.6);
+    border-bottom-color: hsl(220 80% 30% / 0.5);
+    box-shadow: 
+      inset 0 1px 2px hsl(0 0% 100% / 0.25),
+      inset 0 -2px 4px hsl(220 80% 25% / 0.3),
+      0 4px 12px hsl(var(--alliance) / 0.4),
+      0 8px 24px hsl(215 70% 30% / 0.3);
+    transition: all 0.3s ease;
+  }
+
+  .alliance-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(180deg, hsl(0 0% 100% / 0.15) 0%, transparent 100%);
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+  .alliance-button::after {
+    content: '';
+    position: absolute;
+    top: 1px;
+    left: 15%;
+    right: 15%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, hsl(0 0% 100% / 0.5) 50%, transparent 100%);
+    pointer-events: none;
+  }
+
+  .alliance-button:hover {
+    background: linear-gradient(180deg, hsl(215 70% 60%) 0%, hsl(215 70% 52%) 40%, hsl(215 70% 38%) 100%);
+    border-color: hsl(215 70% 65% / 0.6);
+    transform: translateY(-2px);
+    box-shadow: 
+      inset 0 1px 2px hsl(0 0% 100% / 0.3),
+      0 6px 16px hsl(var(--alliance) / 0.5),
+      0 12px 32px hsl(215 70% 30% / 0.4);
+  }
+
   /* Badge/pill style from reference */
   .glass-badge {
     background: hsl(0 0% 100% / 0.05);
