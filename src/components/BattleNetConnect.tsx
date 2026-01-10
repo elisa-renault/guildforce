@@ -55,14 +55,26 @@ export const BattleNetConnect: React.FC = () => {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
-    const state = urlParams.get('state');
+    const stateParam = urlParams.get('state');
     const storedState = sessionStorage.getItem('battlenet_state');
 
-    if (code && state && state === storedState) {
-      handleOAuthCallback(code);
-      // Clean up URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-      sessionStorage.removeItem('battlenet_state');
+    if (code && stateParam && storedState) {
+      // Parse the state JSON to extract the actual state value
+      let stateMatches = false;
+      try {
+        const parsedState = JSON.parse(stateParam);
+        stateMatches = parsedState.state === storedState;
+      } catch {
+        // If not JSON, try direct comparison (fallback)
+        stateMatches = stateParam === storedState;
+      }
+
+      if (stateMatches) {
+        handleOAuthCallback(code);
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+        sessionStorage.removeItem('battlenet_state');
+      }
     }
   }, []);
 
