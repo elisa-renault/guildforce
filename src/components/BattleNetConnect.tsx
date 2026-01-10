@@ -5,9 +5,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { CosmicButton } from './CosmicButton';
 import { GlowCard } from './GlowCard';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Gamepad2, Loader2, RefreshCw, Unlink } from 'lucide-react';
+import { CheckCircle, Loader2, RefreshCw, Unlink } from 'lucide-react';
 import { toast } from 'sonner';
 import { getClassNameFromBattleNet } from '@/data/battlenetClasses';
+import { BattleNetIcon } from './BattleNetIcon';
 
 interface WoWCharacter {
   id: string;
@@ -220,7 +221,7 @@ export const BattleNetConnect: React.FC = () => {
   return (
     <GlowCard className="p-6">
       <div className="flex items-center gap-3 mb-4">
-        <Gamepad2 className="w-6 h-6 text-primary" />
+        <BattleNetIcon className="w-6 h-6 text-primary" />
         <h3 className="text-lg font-semibold text-foreground">Battle.net</h3>
         {isConnected && (
           <Badge variant="secondary" className="ml-auto">
@@ -247,7 +248,7 @@ export const BattleNetConnect: React.FC = () => {
               </>
             ) : (
               <>
-                <Gamepad2 className="w-4 h-4 mr-2" />
+                <BattleNetIcon className="w-4 h-4 mr-2" />
                 {t.battlenet.connect}
               </>
             )}
