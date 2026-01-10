@@ -37,7 +37,6 @@ export interface GuildWithMembership {
   name: string;
   server: string;
   faction: string;
-  invite_key: string;
   owner_id: string | null;
   role?: string;
 }
