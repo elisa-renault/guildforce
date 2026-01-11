@@ -59,6 +59,7 @@ export const WishValidationBadge = ({
         className="relative flex items-center gap-1"
         onMouseEnter={() => setShowActions(true)}
         onMouseLeave={() => setShowActions(false)}
+        onClick={(e) => e.stopPropagation()}
       >
         {showActions ? (
           <div className="flex items-center gap-0.5">
