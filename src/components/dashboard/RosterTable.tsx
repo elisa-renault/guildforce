@@ -229,8 +229,8 @@ export const RosterTable = ({
               const extraWishes = getExtraWishesCount(member.wishes);
               
               const handleRowClick = () => {
-                // Only navigate to member wishes page for other members (not own row, not editing)
-                if (!isOwnRow && !isEditing && regionSlug && serverSlug && guildSlug) {
+                // Navigate to member wishes page (read-only view) for all members
+                if (!isEditing && regionSlug && serverSlug && guildSlug) {
                   navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/member/${member.id}`);
                 }
               };
@@ -242,7 +242,7 @@ export const RosterTable = ({
                       "border-border/20",
                       isOwnRow ? "bg-primary/[0.02]" : "",
                       isEditing && "bg-primary/[0.05]",
-                      !isOwnRow && !isEditing && "cursor-pointer hover:bg-primary/[0.05]"
+                      !isEditing && "cursor-pointer hover:bg-primary/[0.05]"
                     )}
                     onClick={handleRowClick}
                   >
