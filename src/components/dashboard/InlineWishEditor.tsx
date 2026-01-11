@@ -73,8 +73,8 @@ export const InlineWishEditor = ({ wish, choiceIndex, onChange }: InlineWishEdit
             <ChevronDown className="h-3 w-3 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-56 p-2 bg-card border-border z-50" align="start">
-          <div className="grid grid-cols-2 gap-1 max-h-[300px] overflow-y-auto">
+        <PopoverContent className="w-44 p-2 bg-card border-border z-50" align="start">
+          <div className="flex flex-col gap-0.5 max-h-[300px] overflow-y-auto">
             {wowClasses.map((cls) => {
               const isSelected = wish.classId === cls.id;
               return (
@@ -82,15 +82,15 @@ export const InlineWishEditor = ({ wish, choiceIndex, onChange }: InlineWishEdit
                   key={cls.id}
                   onClick={() => handleClassSelect(cls.id)}
                   className={cn(
-                    "relative flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-colors text-left",
+                    "relative flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-colors text-left whitespace-nowrap",
                     isSelected 
                       ? "bg-primary/20" 
                       : "hover:bg-primary/10"
                   )}
                   style={{ color: `hsl(var(--class-${cls.id}))` }}
                 >
-                  {isSelected && <Check className="h-3 w-3 absolute right-1" />}
-                  <span className="truncate pr-4">{cls.name[language]}</span>
+                  {isSelected && <Check className="h-3 w-3 flex-shrink-0" />}
+                  <span>{cls.name[language]}</span>
                 </button>
               );
             })}
