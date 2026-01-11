@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLanguage, Language } from '@/contexts/LanguageContext';
@@ -15,7 +16,7 @@ import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { BattleNetConnect } from '@/components/BattleNetConnect';
 
-import { User, Save, Globe, Loader2, Sparkles, Camera, Trash2 } from 'lucide-react';
+import { User, Save, Globe, Loader2, Sparkles, Upload, Trash2 } from 'lucide-react';
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -40,7 +41,6 @@ const Profile = () => {
   });
 
   useEffect(() => {
-    // Wait for auth to finish loading before redirecting
     if (authLoading) return;
 
     if (!user) {
@@ -48,7 +48,6 @@ const Profile = () => {
       return;
     }
 
-    // Auth is done, we can show the page
     setLoading(false);
   }, [authLoading, user, navigate]);
 
@@ -108,7 +107,6 @@ const Profile = () => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       toast({
         title: t.errors.generic,
@@ -118,7 +116,6 @@ const Profile = () => {
       return;
     }
 
-    // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       toast({
         title: t.errors.generic,
@@ -131,23 +128,19 @@ const Profile = () => {
     setUploadingAvatar(true);
 
     try {
-      // Create file path: userId/avatar.ext
       const fileExt = file.name.split('.').pop();
       const filePath = `${user.id}/avatar.${fileExt}`;
 
-      // Upload to storage (will overwrite existing)
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
       const { data: urlData } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
 
-      // Update profile with new avatar URL (add cache buster)
       const avatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
       const { error: updateError } = await supabase
         .from('profiles')
@@ -175,7 +168,6 @@ const Profile = () => {
     setUploadingAvatar(true);
 
     try {
-      // List files in user's folder to delete all avatar variants
       const { data: files } = await supabase.storage
         .from('avatars')
         .list(user.id);
@@ -185,7 +177,6 @@ const Profile = () => {
         await supabase.storage.from('avatars').remove(filePaths);
       }
 
-      // Clear avatar_url in profile
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: null })
@@ -206,7 +197,6 @@ const Profile = () => {
     }
   };
 
-  // Show loading while auth is initializing - prevents flash
   if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -286,7 +276,7 @@ const Profile = () => {
                   <SelectTrigger className="cosmic-input">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="cosmic-glass border-border/50">
+                  <SelectContent className="bg-card border-border">
                     <SelectItem value="fr">🇫🇷 Français</SelectItem>
                     <SelectItem value="en">🇬🇧 English</SelectItem>
                   </SelectContent>
@@ -308,88 +298,97 @@ const Profile = () => {
     );
   }
 
-  // Normal profile view
+  // Normal profile view - redesigned with clear sections
   return (
     <div className="min-h-screen relative pt-16">
       <CosmicBackground />
 
-      <main className="container mx-auto px-4 py-6 max-w-4xl relative z-10">
-        {/* Compact header with avatar, name, and account info inline */}
-        <GlowCard className="p-4 mb-4" hoverable={false}>
-          <div className="flex items-center gap-4">
-            {/* Avatar with upload overlay */}
-            <label className="relative w-14 h-14 shrink-0 cursor-pointer group">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleAvatarUpload}
-                className="hidden"
-                disabled={uploadingAvatar}
-              />
-              <div className="w-full h-full rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/25 overflow-hidden">
+      <main className="container mx-auto px-4 py-8 max-w-2xl relative z-10">
+        <GlowCard className="p-6 md:p-8" hoverable={false}>
+          {/* Page Title */}
+          <h1 className="font-display text-xl md:text-2xl gradient-text mb-8 text-center">
+            {t.profile.title}
+          </h1>
+
+          {/* Avatar Section */}
+          <div className="mb-8">
+            <h2 className="text-sm font-medium text-foreground mb-4">{t.profile.avatar}</h2>
+            <div className="flex items-center gap-6">
+              {/* Avatar Display */}
+              <div className="w-20 h-20 md:w-24 md:h-24 shrink-0 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/25 overflow-hidden">
                 {uploadingAvatar ? (
-                  <Loader2 className="h-6 w-6 text-white animate-spin" />
+                  <Loader2 className="h-8 w-8 text-white animate-spin" />
                 ) : profile?.avatar_url ? (
                   <img 
                     src={profile.avatar_url} 
                     alt="Avatar" 
-                    className="w-full h-full rounded-full object-cover"
+                    className="w-full h-full object-cover"
                   />
                 ) : (
-                  <User className="h-7 w-7 text-white" strokeWidth={1.5} />
+                  <User className="h-10 w-10 text-white" strokeWidth={1.5} />
                 )}
               </div>
-              {/* Hover overlay */}
-              <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <Camera className="h-5 w-5 text-white" strokeWidth={1.5} />
-              </div>
-            </label>
-            <div className="flex-1 min-w-0">
-              <h2 className="text-lg font-bold text-foreground truncate">
-                {profile?.username || 'Player'}
-              </h2>
-              {user?.email && !user.email.endsWith('@battlenet.local') ? (
-                <p className="text-sm text-muted-foreground truncate">{user.email}</p>
-              ) : (
-                <p className="text-xs text-muted-foreground italic">
-                  {t.profile.connectedViaBnet}
-                </p>
-              )}
-            </div>
-            {/* Delete avatar button */}
-            {profile?.avatar_url && (
-              <button
-                type="button"
-                onClick={handleDeleteAvatar}
-                disabled={uploadingAvatar}
-                className="p-2 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
-                title={language === 'fr' ? 'Supprimer l\'avatar' : 'Remove avatar'}
-              >
-                <Trash2 className="h-4 w-4" strokeWidth={1.5} />
-              </button>
-            )}
-          </div>
-        </GlowCard>
 
-        {/* Desktop: 2 columns / Mobile: 1 column */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Profile Form */}
-          <GlowCard className="p-4" hoverable={false}>
-            <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+              {/* Avatar Actions */}
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="relative"
+                    disabled={uploadingAvatar}
+                  >
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarUpload}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      disabled={uploadingAvatar}
+                    />
+                    <Upload className="h-4 w-4 mr-2" strokeWidth={1.5} />
+                    {t.profile.uploadAvatar}
+                  </Button>
+                  
+                  {profile?.avatar_url && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDeleteAvatar}
+                      disabled={uploadingAvatar}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" strokeWidth={1.5} />
+                      {t.profile.removeAvatar}
+                    </Button>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">{t.profile.avatarHint}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-border/50 my-6" />
+
+          {/* Profile Information Section */}
+          <div className="mb-8">
+            <h2 className="text-sm font-medium text-foreground mb-4 flex items-center gap-2">
               <User className="h-4 w-4 text-primary" strokeWidth={1.5} />
-              {t.profile.editProfile}
-            </h3>
+              {t.profile.profileInfo}
+            </h2>
 
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField control={form.control} name="username" render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-foreground text-xs">{t.auth.pseudo}</FormLabel>
+                    <FormLabel className="text-foreground text-sm">{t.auth.pseudo}</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder={t.auth.pseudoPlaceholder}
                         {...field} 
-                        className="cosmic-input h-9"
+                        className="cosmic-input"
                       />
                     </FormControl>
                     <FormMessage />
@@ -397,12 +396,12 @@ const Profile = () => {
                 )} />
 
                 <div>
-                  <FormLabel className="text-foreground text-xs mb-1.5 block">
-                    <Globe className="h-3.5 w-3.5 inline mr-1.5" strokeWidth={1.5} />
+                  <FormLabel className="text-foreground text-sm mb-2 block">
+                    <Globe className="h-4 w-4 inline mr-2" strokeWidth={1.5} />
                     {t.profile.language}
                   </FormLabel>
                   <Select value={language} onValueChange={(val) => handleLanguageChange(val as Language)}>
-                    <SelectTrigger className="cosmic-input h-9">
+                    <SelectTrigger className="cosmic-input">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-card border-border">
@@ -415,7 +414,6 @@ const Profile = () => {
                 <CosmicButton 
                   type="submit" 
                   className="w-full"
-                  size="sm"
                   loading={saving}
                   icon={<Save className="h-4 w-4" strokeWidth={1.5} />}
                 >
@@ -423,11 +421,17 @@ const Profile = () => {
                 </CosmicButton>
               </form>
             </Form>
-          </GlowCard>
+          </div>
 
-          {/* Battle.net Connection */}
-          <BattleNetConnect />
-        </div>
+          {/* Divider */}
+          <div className="border-t border-border/50 my-6" />
+
+          {/* Account Connection Section */}
+          <div>
+            <h2 className="text-sm font-medium text-foreground mb-4">{t.profile.accountConnection}</h2>
+            <BattleNetConnect />
+          </div>
+        </GlowCard>
       </main>
     </div>
   );
