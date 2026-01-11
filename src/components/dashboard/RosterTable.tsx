@@ -6,7 +6,7 @@ import { CosmicButton } from '@/components/CosmicButton';
 import { RoleBadge } from '@/components/RoleBadge';
 import { CheckCircle, HelpCircle, XCircle, Pencil, X, Save } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { getClassById, getRolesFromSpecs } from '@/data/wowClasses';
+import { getClassById, getSpecById } from '@/data/wowClasses';
 import { MemberWish, WishData, WishChoice } from '@/types/guild';
 import { InlineWishEditor } from './InlineWishEditor';
 import { CommitmentToggle, CommitmentStatus } from '@/components/CommitmentToggle';
@@ -50,13 +50,15 @@ export const RosterTable = ({
     const cls = getClassById(wish.class_id);
     if (!cls) return <span className="text-muted-foreground text-xs">-</span>;
 
-    const roles = getRolesFromSpecs(wish.spec_ids);
+    // Get specs with their details
+    const specs = wish.spec_ids.map(id => getSpecById(id)).filter(Boolean);
+    const firstSpec = specs[0];
 
     return (
-      <div className="flex items-center gap-1.5">
+      <div className="flex flex-col gap-0.5">
         <Badge 
           variant="outline" 
-          className="text-[10px] md:text-xs font-medium px-1.5 py-0"
+          className="text-[10px] md:text-xs font-medium px-1.5 py-0 w-fit"
           style={{ 
             backgroundColor: `hsl(var(--class-${cls.id}) / 0.15)`,
             borderColor: `hsl(var(--class-${cls.id}) / 0.4)`,
@@ -66,11 +68,12 @@ export const RosterTable = ({
           <span className="hidden md:inline">{cls.name[language]}</span>
           <span className="md:hidden">{cls.name[language].slice(0, 3)}</span>
         </Badge>
-        <div className="flex gap-0.5">
-          {roles.map(role => (
-            <RoleBadge key={role} role={role} size="sm" />
-          ))}
-        </div>
+        {firstSpec && (
+          <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+            {firstSpec.name[language]}
+            {specs.length > 1 && <span className="opacity-60">+{specs.length - 1}</span>}
+          </span>
+        )}
       </div>
     );
   };
