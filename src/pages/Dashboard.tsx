@@ -306,22 +306,22 @@ const Dashboard = () => {
 
       {/* Sticky toolbar */}
       <div className="sticky top-14 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <h1 className="text-lg font-semibold text-foreground">{guild?.name}</h1>
-          <div className="flex gap-2">
-            <CosmicButton size="sm" variant="outline" onClick={() => guild && navigate(getGuildWishesPath(guild.region, guild.server, guild.name))} icon={<Sparkles className="h-4 w-4" strokeWidth={1.5} />}>
-              {t.wishes.title}
+        <div className="container mx-auto px-3 md:px-4 py-2 flex items-center justify-between">
+          <h1 className="text-sm md:text-lg font-semibold text-foreground truncate">{guild?.name}</h1>
+          <div className="flex gap-1.5 md:gap-2">
+            <CosmicButton size="sm" variant="outline" onClick={() => guild && navigate(getGuildWishesPath(guild.region, guild.server, guild.name))} icon={<Sparkles className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 md:h-8 px-2 md:px-3">
+              <span className="hidden md:inline">{t.wishes.title}</span>
             </CosmicButton>
             {isGM && (
-              <CosmicButton size="sm" onClick={exportCSV} icon={<Download className="h-4 w-4" strokeWidth={1.5} />}>
-                {t.dashboard.exportCSV}
+              <CosmicButton size="sm" onClick={exportCSV} icon={<Download className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 md:h-8 px-2 md:px-3">
+                <span className="hidden md:inline">{t.dashboard.exportCSV}</span>
               </CosmicButton>
             )}
           </div>
         </div>
       </div>
 
-      <main className="container mx-auto px-4 py-8 relative z-10">
+      <main className="container mx-auto px-3 md:px-4 py-4 md:py-6 relative z-10">
         <StatsCards 
           totalPlayers={totalPlayers} 
           confirmedPlayers={confirmedPlayers} 

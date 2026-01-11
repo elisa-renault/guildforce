@@ -643,6 +643,31 @@
     border-color: hsl(var(--dps) / 0.4);
   }
 
+  /* Compact stat cards for dashboard */
+  .stat-card-compact {
+    @apply glass-card py-2 px-3 md:py-3 md:px-4 text-center flex flex-col items-center justify-center gap-0.5;
+    transition: all 0.3s ease;
+  }
+
+  .stat-card-compact:hover {
+    transform: translateY(-2px);
+  }
+
+  .stat-card-compact.tank:hover {
+    box-shadow: 0 0 30px hsl(var(--tank) / 0.25);
+    border-color: hsl(var(--tank) / 0.35);
+  }
+
+  .stat-card-compact.healer:hover {
+    box-shadow: 0 0 30px hsl(var(--healer) / 0.25);
+    border-color: hsl(var(--healer) / 0.35);
+  }
+
+  .stat-card-compact.dps:hover {
+    box-shadow: 0 0 30px hsl(var(--dps) / 0.25);
+    border-color: hsl(var(--dps) / 0.35);
+  }
+
   /* Legacy compatibility */
   .cosmic-glass {
     @apply glass-card;

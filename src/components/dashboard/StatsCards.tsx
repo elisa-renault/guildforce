@@ -12,31 +12,31 @@ export const StatsCards = ({ totalPlayers, confirmedPlayers, roleStats }: StatsC
   const { t } = useLanguage();
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-      <div className="stat-card total">
-        <Users className="h-8 w-8 mx-auto mb-3 text-primary" strokeWidth={1.5} />
-        <div className="text-3xl font-bold text-foreground">{totalPlayers}</div>
-        <div className="text-sm text-muted-foreground mt-1">{t.dashboard.totalPlayers}</div>
+    <div className="grid grid-cols-5 gap-2 md:gap-3 mb-4">
+      <div className="stat-card-compact total">
+        <Users className="h-4 md:h-5 text-primary" strokeWidth={1.5} />
+        <div className="text-lg md:text-xl font-bold text-foreground">{totalPlayers}</div>
+        <div className="text-[10px] md:text-xs text-muted-foreground hidden sm:block">{t.dashboard.totalPlayers}</div>
       </div>
-      <div className="stat-card confirmed">
-        <CheckCircle className="h-8 w-8 mx-auto mb-3 text-healer" strokeWidth={1.5} />
-        <div className="text-3xl font-bold text-foreground">{confirmedPlayers}</div>
-        <div className="text-sm text-muted-foreground mt-1">{t.dashboard.confirmedPlayers}</div>
+      <div className="stat-card-compact confirmed">
+        <CheckCircle className="h-4 md:h-5 text-healer" strokeWidth={1.5} />
+        <div className="text-lg md:text-xl font-bold text-foreground">{confirmedPlayers}</div>
+        <div className="text-[10px] md:text-xs text-muted-foreground hidden sm:block">{t.dashboard.confirmedPlayers}</div>
       </div>
-      <div className="stat-card tank">
-        <Shield className="h-8 w-8 mx-auto mb-3 text-tank" strokeWidth={1.5} />
-        <div className="text-3xl font-bold text-foreground">{roleStats.tank}</div>
-        <div className="text-sm text-muted-foreground mt-1">{t.dashboard.tank}</div>
+      <div className="stat-card-compact tank">
+        <Shield className="h-4 md:h-5 text-tank" strokeWidth={1.5} />
+        <div className="text-lg md:text-xl font-bold text-foreground">{roleStats.tank}</div>
+        <div className="text-[10px] md:text-xs text-muted-foreground hidden sm:block">{t.dashboard.tank}</div>
       </div>
-      <div className="stat-card healer">
-        <Heart className="h-8 w-8 mx-auto mb-3 text-healer" strokeWidth={1.5} />
-        <div className="text-3xl font-bold text-foreground">{roleStats.healer}</div>
-        <div className="text-sm text-muted-foreground mt-1">{t.dashboard.healer}</div>
+      <div className="stat-card-compact healer">
+        <Heart className="h-4 md:h-5 text-healer" strokeWidth={1.5} />
+        <div className="text-lg md:text-xl font-bold text-foreground">{roleStats.healer}</div>
+        <div className="text-[10px] md:text-xs text-muted-foreground hidden sm:block">{t.dashboard.healer}</div>
       </div>
-      <div className="stat-card dps">
-        <Swords className="h-8 w-8 mx-auto mb-3 text-dps" strokeWidth={1.5} />
-        <div className="text-3xl font-bold text-foreground">{roleStats.dps}</div>
-        <div className="text-sm text-muted-foreground mt-1">{t.dashboard.dps}</div>
+      <div className="stat-card-compact dps">
+        <Swords className="h-4 md:h-5 text-dps" strokeWidth={1.5} />
+        <div className="text-lg md:text-xl font-bold text-foreground">{roleStats.dps}</div>
+        <div className="text-[10px] md:text-xs text-muted-foreground hidden sm:block">{t.dashboard.dps}</div>
       </div>
     </div>
   );
