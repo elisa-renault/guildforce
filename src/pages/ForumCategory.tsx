@@ -2,14 +2,11 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useForumCategories, useForumTopics, useForumActions } from '@/hooks/useForum';
+import { useForumCategories, useForumTopics } from '@/hooks/useForum';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
-import { ForumTopicList, MarkdownEditor } from '@/components/forum';
-import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { ForumTopicList } from '@/components/forum';
 import { Loader2, Plus, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
-import { toast } from 'sonner';
 
 const ForumCategory = () => {
   const { categorySlug } = useParams<{ categorySlug: string }>();
@@ -18,34 +15,11 @@ const ForumCategory = () => {
   const { user } = useAuth();
   const { categories, loading: categoriesLoading } = useForumCategories();
   const [page, setPage] = useState(1);
-  const [showNewTopicDialog, setShowNewTopicDialog] = useState(false);
-  const [newTopicTitle, setNewTopicTitle] = useState('');
-  const [newTopicContent, setNewTopicContent] = useState('');
-  const [creating, setCreating] = useState(false);
 
   const category = categories.find(c => c.slug === categorySlug);
-  const { topics, totalCount, loading: topicsLoading, refetch } = useForumTopics(category?.id || null, page);
-  const { createTopic } = useForumActions();
+  const { topics, totalCount, loading: topicsLoading } = useForumTopics(category?.id || null, page);
 
   const totalPages = Math.ceil(totalCount / 20);
-
-  const handleCreateTopic = async () => {
-    if (!category || !newTopicTitle.trim() || !newTopicContent.trim()) return;
-
-    setCreating(true);
-    try {
-      const topic = await createTopic(category.id, newTopicTitle.trim(), newTopicContent.trim());
-      toast.success(language === 'fr' ? 'Sujet créé !' : 'Topic created!');
-      setShowNewTopicDialog(false);
-      setNewTopicTitle('');
-      setNewTopicContent('');
-      navigate(`/forum/topic/${topic.id}`);
-    } catch (error) {
-      toast.error(language === 'fr' ? 'Erreur lors de la création' : 'Error creating topic');
-    } finally {
-      setCreating(false);
-    }
-  };
 
   if (categoriesLoading) {
     return (
@@ -94,7 +68,10 @@ const ForumCategory = () => {
             </p>
           </div>
           {user && (
-            <CosmicButton onClick={() => setShowNewTopicDialog(true)} icon={<Plus className="h-4 w-4" />}>
+            <CosmicButton 
+              onClick={() => navigate(`/forum/category/${categorySlug}/new`)} 
+              icon={<Plus className="h-4 w-4" />}
+            >
               {language === 'fr' ? 'Nouveau sujet' : 'New topic'}
             </CosmicButton>
           )}
@@ -138,48 +115,6 @@ const ForumCategory = () => {
           </>
         )}
       </main>
-
-      {/* New Topic Dialog */}
-      <Dialog open={showNewTopicDialog} onOpenChange={setShowNewTopicDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {language === 'fr' ? 'Nouveau sujet' : 'New topic'}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Input
-                placeholder={language === 'fr' ? 'Titre du sujet' : 'Topic title'}
-                value={newTopicTitle}
-                onChange={(e) => setNewTopicTitle(e.target.value)}
-                className="text-lg"
-              />
-            </div>
-            <MarkdownEditor
-              value={newTopicContent}
-              onChange={setNewTopicContent}
-              placeholder={language === 'fr' ? 'Contenu de votre message...' : 'Your message content...'}
-              minHeight="200px"
-            />
-          </div>
-          <DialogFooter>
-            <CosmicButton
-              variant="outline"
-              onClick={() => setShowNewTopicDialog(false)}
-            >
-              {language === 'fr' ? 'Annuler' : 'Cancel'}
-            </CosmicButton>
-            <CosmicButton
-              onClick={handleCreateTopic}
-              disabled={!newTopicTitle.trim() || !newTopicContent.trim() || creating}
-              loading={creating}
-            >
-              {language === 'fr' ? 'Créer le sujet' : 'Create topic'}
-            </CosmicButton>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
