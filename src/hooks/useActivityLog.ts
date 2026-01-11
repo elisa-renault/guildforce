@@ -3,6 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 
 export type ActionType = 
   | 'wish_validation'
+  | 'wish_created'
+  | 'wish_updated'
+  | 'wish_deleted'
   | 'member_joined'
   | 'roster_created'
   | 'roster_updated'
