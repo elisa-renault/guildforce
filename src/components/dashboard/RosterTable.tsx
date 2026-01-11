@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { CheckCircle, HelpCircle, XCircle, Pencil, X, Save, Shield, Heart, Swords, MessageSquare, Plus, Trash2, MoreHorizontal } from 'lucide-react';
+import { CheckCircle, HelpCircle, XCircle, Pencil, X, Save, Shield, Heart, Swords, Crosshair, MessageSquare, Plus, Trash2, MoreHorizontal } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getClassById, getSpecById } from '@/data/wowClasses';
 import { MemberWish, WishData, WishChoice } from '@/types/guild';
@@ -110,22 +110,24 @@ export const RosterTable = ({
           <span className="truncate">{cls.name[language]}</span>
         </div>
         
-        {/* Spec row - same height as editor spec row */}
-        <div className="h-6 w-full flex items-center gap-1 text-[10px]">
-          {firstSpec ? (
-            <>
-              {(() => {
-                const config = roleConfig[firstSpec.role];
-                const Icon = config?.icon;
-                return Icon ? <Icon className={cn("h-3 w-3 flex-shrink-0", config.color)} /> : null;
-              })()}
-              <span className="truncate text-muted-foreground flex-1">{firstSpec.name[language]}</span>
-              {specs.length > 1 && (
-                <span className="text-muted-foreground/60 flex-shrink-0">+{specs.length - 1}</span>
-              )}
-            </>
+        {/* Spec row - display all selected specs */}
+        <div className="min-h-6 w-full flex items-center gap-2 text-[10px] flex-wrap">
+          {specs.length > 0 ? (
+            specs.map((spec, specIndex) => {
+              const config = roleConfig[spec.role];
+              // Use dynamic icon for DPS based on range
+              const Icon = spec.role === 'dps' 
+                ? (spec.range === 'ranged' ? Crosshair : Swords)
+                : config?.icon;
+              return (
+                <div key={spec.id} className="flex items-center gap-0.5">
+                  {Icon && <Icon className={cn("h-3 w-3 flex-shrink-0", config?.color)} />}
+                  <span className="text-muted-foreground">{spec.name[language]}</span>
+                </div>
+              );
+            })
           ) : (
-            <span className="text-muted-foreground/50 flex-1">—</span>
+            <span className="text-muted-foreground/50">—</span>
           )}
           
           {/* Comment icon with tooltip */}
