@@ -267,7 +267,7 @@ export const BattleNetConnect: React.FC = () => {
                 </button>
               </div>
               <div className="max-h-64 overflow-y-auto space-y-2 pr-2">
-                {characters.slice(0, 20).map((char) => (
+                {[...characters].sort((a, b) => (b.is_main ? 1 : 0) - (a.is_main ? 1 : 0)).slice(0, 20).map((char) => (
                   <div
                     key={char.id}
                     className={`flex items-center justify-between p-3 rounded-lg border transition-colors cursor-pointer ${
