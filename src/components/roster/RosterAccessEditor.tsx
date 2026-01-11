@@ -118,28 +118,33 @@ const RankSlider = ({ maxValue, maxRank, ranks, onChange }: RankSliderProps) => 
     onChange(index);
   };
 
+  // Calculate positions for track to align with first and last tick centers
+  const trackLeftOffset = 10; // half of tick width (20px)
+  const trackRightOffset = 10;
+
   return (
     <div className="py-4 select-none">
       {/* Track container */}
       <div className="relative h-8 flex items-center">
-        {/* Background track */}
+        {/* Background track - starts and ends at tick centers */}
         <div 
-          ref={containerRef}
-          className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1 bg-border rounded-full cursor-pointer"
-          onMouseDown={handleMouseDown}
-          onTouchStart={handleTouchStart}
+          className="absolute top-1/2 -translate-y-1/2 h-1 bg-border rounded-full"
+          style={{ 
+            left: `${trackLeftOffset}px`,
+            right: `${trackRightOffset}px`
+          }}
         />
         
         {/* Filled track */}
         <div 
           className="absolute top-1/2 -translate-y-1/2 h-1 bg-primary rounded-full pointer-events-none"
           style={{ 
-            left: 0,
-            width: `${(maxValue / maxRank) * 100}%`
+            left: `${trackLeftOffset}px`,
+            width: maxRank > 0 ? `calc((100% - ${trackLeftOffset + trackRightOffset}px) * ${maxValue / maxRank})` : '0px'
           }}
         />
         
-        {/* Tick marks container - positioned absolutely */}
+        {/* Tick marks container */}
         <div 
           ref={containerRef}
           className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between cursor-pointer"
@@ -156,7 +161,7 @@ const RankSlider = ({ maxValue, maxRank, ranks, onChange }: RankSliderProps) => 
                 className="relative flex items-center justify-center"
                 style={{ width: '20px' }}
               >
-                {/* Tick mark - fixed size container */}
+                {/* Tick mark */}
                 <div
                   onClick={(e) => { e.stopPropagation(); handleTickClick(index); }}
                   className={`transition-colors z-10 ${
@@ -167,18 +172,13 @@ const RankSlider = ({ maxValue, maxRank, ranks, onChange }: RankSliderProps) => 
                         : 'w-2.5 h-2.5 rounded-full bg-muted-foreground/40 cursor-pointer hover:bg-muted-foreground/60'
                   }`}
                 />
-                
-                {/* GM Crown - positioned above */}
-                {index === 0 && (
-                  <Crown className="absolute -top-5 h-3.5 w-3.5 text-primary" />
-                )}
               </div>
             );
           })}
         </div>
       </div>
       
-      {/* Labels row - separate fixed grid */}
+      {/* Labels row */}
       <div className="flex justify-between mt-2">
         {allRankIndices.map((index) => {
           const isSelected = index <= maxValue;
@@ -294,27 +294,20 @@ export const RosterAccessEditor = ({ accessRules, members, ranks, onChange }: Ro
               </div>
             )}
 
-            <button
-              onClick={() => removeRule(index)}
-              className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center hover:bg-destructive/20 transition-colors flex-shrink-0 mt-1"
-            >
-              <Trash2 className="h-4 w-4 text-destructive" />
-            </button>
+            {/* Only show delete button for user rules, not rank rules */}
+            {rule.access_type === 'user' && (
+              <button
+                onClick={() => removeRule(index)}
+                className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center hover:bg-destructive/20 transition-colors flex-shrink-0 mt-1"
+              >
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </button>
+            )}
           </div>
         ))}
       </div>
 
       <div className="flex gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={addRankRule}
-          className="text-xs"
-        >
-          <Plus className="h-3 w-3 mr-1" />
-          {t.rosters?.addRankRule || 'Add Rank Rule'}
-        </Button>
         <Button
           type="button"
           variant="outline"
