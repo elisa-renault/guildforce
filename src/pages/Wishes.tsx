@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Label } from '@/components/ui/label';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -10,14 +9,93 @@ import { CommitmentToggle, CommitmentStatus } from '@/components/CommitmentToggl
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
-import { Loader2, Save, Sparkles } from 'lucide-react';
+import { Loader2, Save, Sparkles, GripVertical } from 'lucide-react';
 import { toSlug } from '@/lib/guildSlug';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface WishData {
+  id: string;
   classId: string;
   specIds: string[];
   comment: string;
 }
+
+interface SortableWishCardProps {
+  wish: WishData;
+  index: number;
+  onChange: (field: keyof Omit<WishData, 'id'>, value: any) => void;
+  choiceLabels: string[];
+}
+
+const SortableWishCard = ({ wish, index, onChange, choiceLabels }: SortableWishCardProps) => {
+  const { t } = useLanguage();
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: wish.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <GlowCard 
+        className="p-6"
+        hoverable={false}
+      >
+        <div className="flex items-center gap-3 mb-6">
+          <button
+            {...attributes}
+            {...listeners}
+            className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center cursor-grab active:cursor-grabbing hover:bg-muted transition-colors"
+            title="Drag to reorder"
+          >
+            <GripVertical className="h-4 w-4 text-muted-foreground" />
+          </button>
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center border border-primary/20">
+            <span className="text-sm font-bold text-primary">{index + 1}</span>
+          </div>
+          <div>
+            <h3 className="font-semibold text-foreground">
+              {t.wishes.choice} #{index + 1}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {choiceLabels[index] || choiceLabels[2]}
+            </p>
+          </div>
+        </div>
+
+        <WishCardEditor
+          wish={wish}
+          onChange={onChange}
+        />
+      </GlowCard>
+    </div>
+  );
+};
 
 const Wishes = () => {
   const navigate = useNavigate();
@@ -31,10 +109,23 @@ const Wishes = () => {
   const [guild, setGuild] = useState<{ name: string; server: string; region: string; faction: string } | null>(null);
   const [confirmed, setConfirmed] = useState<CommitmentStatus>('undecided');
   const [wishes, setWishes] = useState<WishData[]>([
-    { classId: '', specIds: [], comment: '' },
-    { classId: '', specIds: [], comment: '' },
-    { classId: '', specIds: [], comment: '' },
+    { id: 'wish-1', classId: '', specIds: [], comment: '' },
+    { id: 'wish-2', classId: '', specIds: [], comment: '' },
+    { id: 'wish-3', classId: '', specIds: [], comment: '' },
   ]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const choiceLabels = [
+    t.wishes.preferredChoice,
+    t.wishes.secondChoice,
+    t.wishes.thirdChoice,
+  ];
 
   useEffect(() => {
     if (!user || !regionSlug || !serverSlug || !guildSlug) {
@@ -72,14 +163,15 @@ const Wishes = () => {
 
       if (wishesData && wishesData.length > 0) {
         const loadedWishes: WishData[] = [
-          { classId: '', specIds: [], comment: '' },
-          { classId: '', specIds: [], comment: '' },
-          { classId: '', specIds: [], comment: '' },
+          { id: 'wish-1', classId: '', specIds: [], comment: '' },
+          { id: 'wish-2', classId: '', specIds: [], comment: '' },
+          { id: 'wish-3', classId: '', specIds: [], comment: '' },
         ];
         wishesData.forEach(w => {
           const idx = w.choice_index - 1;
           if (idx >= 0 && idx < 3) {
             loadedWishes[idx] = {
+              id: `wish-${idx + 1}`,
               classId: w.class_id,
               specIds: w.spec_ids || [],
               comment: w.comment || '',
@@ -112,13 +204,25 @@ const Wishes = () => {
     fetchData();
   }, [user, regionSlug, serverSlug, guildSlug, navigate]);
 
-  const updateWish = (index: number, field: keyof WishData, value: any) => {
+  const updateWish = (index: number, field: keyof Omit<WishData, 'id'>, value: any) => {
     const updated = [...wishes];
     updated[index] = { ...updated[index], [field]: value };
     if (field === 'classId') {
       updated[index].specIds = [];
     }
     setWishes(updated);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (over && active.id !== over.id) {
+      setWishes((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
   };
 
   const saveWishes = async () => {
@@ -134,8 +238,15 @@ const Wishes = () => {
         .eq('guild_id', guildId)
         .eq('user_id', user.id);
 
-      // Use upsert to avoid duplicate key errors
-      const wishesToUpsert = wishes
+      // Delete all existing wishes first
+      await supabase
+        .from('class_wishes')
+        .delete()
+        .eq('guild_id', guildId)
+        .eq('user_id', user.id);
+
+      // Insert wishes with new order
+      const wishesToInsert = wishes
         .map((w, i) => ({
           guild_id: guildId,
           user_id: user.id,
@@ -146,27 +257,10 @@ const Wishes = () => {
         }))
         .filter(w => w.class_id);
 
-      // Delete wishes that are now empty
-      const emptyChoiceIndexes = wishes
-        .map((w, i) => (!w.classId ? i + 1 : null))
-        .filter((idx): idx is number => idx !== null);
-
-      if (emptyChoiceIndexes.length > 0) {
-        await supabase
-          .from('class_wishes')
-          .delete()
-          .eq('guild_id', guildId)
-          .eq('user_id', user.id)
-          .in('choice_index', emptyChoiceIndexes);
-      }
-
-      if (wishesToUpsert.length > 0) {
+      if (wishesToInsert.length > 0) {
         const { error } = await supabase
           .from('class_wishes')
-          .upsert(wishesToUpsert, { 
-            onConflict: 'guild_id,user_id,choice_index',
-            ignoreDuplicates: false 
-          });
+          .insert(wishesToInsert);
         if (error) throw error;
       }
 
@@ -187,14 +281,13 @@ const Wishes = () => {
     );
   }
 
-
   return (
     <div className="min-h-screen relative pt-16">
       <CosmicBackground />
 
       {/* Sticky save bar for guild name + save button */}
       <div className="sticky top-14 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between max-w-3xl">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between max-w-5xl">
           <h1 className="text-lg font-semibold text-foreground">{guild?.name}</h1>
           <CosmicButton 
             size="sm" 
@@ -207,7 +300,7 @@ const Wishes = () => {
         </div>
       </div>
 
-      <main className="container mx-auto px-4 py-8 max-w-3xl relative z-10">
+      <main className="container mx-auto px-4 py-8 max-w-5xl relative z-10">
         <div className="text-center mb-10">
           <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/25">
             <Sparkles className="h-7 w-7 text-white" strokeWidth={1.5} />
@@ -221,35 +314,29 @@ const Wishes = () => {
           <CommitmentToggle status={confirmed} onChange={setConfirmed} />
         </GlowCard>
 
-        {/* Wish cards */}
-        <div className="space-y-6">
-          {wishes.map((wish, index) => (
-            <GlowCard 
-              key={index} 
-              className="p-6"
-              hoverable={false}
-            >
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center border border-primary/20">
-                  <span className="text-sm font-bold text-primary">{index + 1}</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">
-                    {t.wishes.choice} #{index + 1}
-                  </h3>
-                <p className="text-sm text-muted-foreground">
-                  {index === 0 ? t.wishes.preferredChoice : index === 1 ? t.wishes.secondChoice : t.wishes.thirdChoice}
-                </p>
-                </div>
-              </div>
-
-              <WishCardEditor
-                wish={wish}
-                onChange={(field, value) => updateWish(index, field, value)}
-              />
-            </GlowCard>
-          ))}
-        </div>
+        {/* Wish cards with drag and drop */}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={wishes.map(w => w.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-6">
+              {wishes.map((wish, index) => (
+                <SortableWishCard
+                  key={wish.id}
+                  wish={wish}
+                  index={index}
+                  onChange={(field, value) => updateWish(index, field, value)}
+                  choiceLabels={choiceLabels}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
 
         <div className="mt-10 text-center">
           <CosmicButton 
