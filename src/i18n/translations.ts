@@ -279,18 +279,14 @@ export interface Translations {
     topicsCount: string;
     by: string;
     categoryNames: {
-      announcements: string;
       feedback: string;
       support: string;
       general: string;
-      guilds: string;
     };
     categoryDescriptions: {
-      announcements: string;
       feedback: string;
       support: string;
       general: string;
-      guilds: string;
     };
   };
   // Errors
@@ -578,18 +574,14 @@ export const translations: Record<Language, Translations> = {
       topicsCount: 'topics',
       by: 'by',
       categoryNames: {
-        announcements: 'Announcements',
         feedback: 'Feedback & Ideas',
         support: 'Help & Support',
         general: 'General Discussion',
-        guilds: 'Guild Recruitment',
       },
       categoryDescriptions: {
-        announcements: 'Official announcements and Guildforce updates',
         feedback: 'Suggestions and feedback to improve Guildforce',
         support: 'Help and technical support',
         general: 'General discussions about Guildforce and the game',
-        guilds: 'Present your guild and recruit members',
       },
     },
     errors: {
@@ -874,18 +866,14 @@ export const translations: Record<Language, Translations> = {
       topicsCount: 'sujets',
       by: 'par',
       categoryNames: {
-        announcements: 'Annonces',
         feedback: 'Suggestions & Idées',
         support: 'Aide & Support',
         general: 'Discussion Générale',
-        guilds: 'Recrutement de Guildes',
       },
       categoryDescriptions: {
-        announcements: 'Annonces officielles et mises à jour de Guildforce',
         feedback: 'Suggestions et retours pour améliorer Guildforce',
         support: 'Aide et support technique',
         general: 'Discussions générales sur Guildforce et le jeu',
-        guilds: 'Présentez votre guilde et recrutez des membres',
       },
     },
     errors: {
