@@ -279,18 +279,18 @@ export interface Translations {
     topicsCount: string;
     by: string;
     categoryNames: {
+      announcements: string;
+      feedback: string;
+      support: string;
       general: string;
-      recruitment: string;
-      guides: string;
-      trading: string;
-      'off-topic': string;
+      guilds: string;
     };
     categoryDescriptions: {
+      announcements: string;
+      feedback: string;
+      support: string;
       general: string;
-      recruitment: string;
-      guides: string;
-      trading: string;
-      'off-topic': string;
+      guilds: string;
     };
   };
   // Errors
@@ -578,18 +578,18 @@ export const translations: Record<Language, Translations> = {
       topicsCount: 'topics',
       by: 'by',
       categoryNames: {
-        general: 'General',
-        recruitment: 'Recruitment',
-        guides: 'Guides & Tutorials',
-        trading: 'Trading',
-        'off-topic': 'Off-Topic',
+        announcements: 'Announcements',
+        feedback: 'Feedback & Ideas',
+        support: 'Help & Support',
+        general: 'General Discussion',
+        guilds: 'Guild Recruitment',
       },
       categoryDescriptions: {
-        general: 'General discussions and news',
-        recruitment: 'Recruitment ads and applications',
-        guides: 'Guides, tutorials and strategies',
-        trading: 'Trades and commerce',
-        'off-topic': 'Off-topic discussions',
+        announcements: 'Official announcements and Guildforce updates',
+        feedback: 'Suggestions and feedback to improve Guildforce',
+        support: 'Help and technical support',
+        general: 'General discussions about Guildforce and the game',
+        guilds: 'Present your guild and recruit members',
       },
     },
     errors: {
@@ -874,18 +874,18 @@ export const translations: Record<Language, Translations> = {
       topicsCount: 'sujets',
       by: 'par',
       categoryNames: {
-        general: 'Général',
-        recruitment: 'Recrutement',
-        guides: 'Guides & Tutoriels',
-        trading: 'Échanges',
-        'off-topic': 'Hors-sujet',
+        announcements: 'Annonces',
+        feedback: 'Suggestions & Idées',
+        support: 'Aide & Support',
+        general: 'Discussion Générale',
+        guilds: 'Recrutement de Guildes',
       },
       categoryDescriptions: {
-        general: 'Discussions générales et actualités',
-        recruitment: 'Annonces de recrutement et candidatures',
-        guides: 'Guides, tutoriels et stratégies',
-        trading: 'Échanges et commerce',
-        'off-topic': 'Discussions hors-sujet',
+        announcements: 'Annonces officielles et mises à jour de Guildforce',
+        feedback: 'Suggestions et retours pour améliorer Guildforce',
+        support: 'Aide et support technique',
+        general: 'Discussions générales sur Guildforce et le jeu',
+        guilds: 'Présentez votre guilde et recrutez des membres',
       },
     },
     errors: {
