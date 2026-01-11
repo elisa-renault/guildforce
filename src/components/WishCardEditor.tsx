@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { wowClasses, getClassById, Role } from '@/data/wowClasses';
+import { wowClasses, getClassById, Role, RangeType, Specialization } from '@/data/wowClasses';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { Check, ChevronDown, Shield, Heart, Swords } from 'lucide-react';
+import { Check, ChevronDown, Shield, Heart, Swords, Crosshair } from 'lucide-react';
 
 interface WishData {
   classId: string;
@@ -20,10 +20,18 @@ interface WishCardEditorProps {
   usedClassIds?: string[];
 }
 
-const roleConfig: Record<Role, { icon: typeof Shield; color: string; bgSelected: string }> = {
-  tank: { icon: Shield, color: 'text-tank', bgSelected: 'bg-tank/20 border-tank/50' },
-  healer: { icon: Heart, color: 'text-healer', bgSelected: 'bg-healer/20 border-healer/50' },
-  dps: { icon: Swords, color: 'text-dps', bgSelected: 'bg-dps/20 border-dps/50' },
+const roleConfig: Record<Role, { color: string; bgSelected: string }> = {
+  tank: { color: 'text-tank', bgSelected: 'bg-tank/20 border-tank/50' },
+  healer: { color: 'text-healer', bgSelected: 'bg-healer/20 border-healer/50' },
+  dps: { color: 'text-dps', bgSelected: 'bg-dps/20 border-dps/50' },
+};
+
+// Get the appropriate icon for a spec based on role and range
+const getSpecIcon = (spec: Specialization) => {
+  if (spec.role === 'tank') return Shield;
+  if (spec.role === 'healer') return Heart;
+  // DPS: differentiate melee vs ranged
+  return spec.range === 'ranged' ? Crosshair : Swords;
 };
 
 export const WishCardEditor = ({ wish, onChange, usedClassIds = [] }: WishCardEditorProps) => {
@@ -130,7 +138,7 @@ export const WishCardEditor = ({ wish, onChange, usedClassIds = [] }: WishCardEd
                   <span className="flex items-center gap-1.5 truncate">
                     {selectedSpecs.map((spec, idx) => {
                       const config = roleConfig[spec.role];
-                      const Icon = config.icon;
+                      const Icon = getSpecIcon(spec);
                       return (
                         <span key={spec.id} className="flex items-center gap-1">
                           {idx > 0 && <span className="text-muted-foreground/50">•</span>}
@@ -156,7 +164,7 @@ export const WishCardEditor = ({ wish, onChange, usedClassIds = [] }: WishCardEd
                 {selectedClass.specs.map((spec) => {
                   const isSelected = wish.specIds.includes(spec.id);
                   const config = roleConfig[spec.role];
-                  const Icon = config.icon;
+                  const Icon = getSpecIcon(spec);
                   
                   return (
                     <button
