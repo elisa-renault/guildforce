@@ -4,7 +4,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { getClassById, getSpecById, getRolesFromSpecs, Role } from '@/data/wowClasses';
+import { getClassById, getSpecById, getRolesFromSpecs, Role, wowClasses } from '@/data/wowClasses';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
 import { StatsCards, RosterFilters, RosterTable } from '@/components/dashboard';
@@ -12,6 +12,9 @@ import { MemberWish, WishData, RoleStats, RosterFilters as RosterFiltersType } f
 import { Loader2, Download, Sparkles } from 'lucide-react';
 import { toSlug, getGuildWishesPath } from '@/lib/guildSlug';
 import { CommitmentStatus } from '@/components/CommitmentToggle';
+
+// Max wishes = number of WoW classes
+const MAX_WISHES = wowClasses.length;
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -134,15 +137,17 @@ const Dashboard = () => {
   const startEditing = (member: MemberWish) => {
     if (member.id !== user?.id) return;
     
-    const loadedWishes: WishData[] = [
-      { classId: '', specIds: [], comment: '' },
-      { classId: '', specIds: [], comment: '' },
-      { classId: '', specIds: [], comment: '' },
-    ];
+    // Load all wishes from member, ensuring at least 3 slots
+    const wishCount = Math.max(3, member.wishes.length);
+    const loadedWishes: WishData[] = Array.from({ length: wishCount }, () => ({
+      classId: '',
+      specIds: [],
+      comment: '',
+    }));
     
     member.wishes.forEach(w => {
       const idx = w.choice_index - 1;
-      if (idx >= 0 && idx < 3) {
+      if (idx >= 0 && idx < loadedWishes.length) {
         loadedWishes[idx] = {
           classId: w.class_id,
           specIds: w.spec_ids || [],
@@ -165,6 +170,17 @@ const Dashboard = () => {
     const newExpanded = new Set(expandedRows);
     newExpanded.add(member.id);
     setExpandedRows(newExpanded);
+  };
+
+  const addWish = () => {
+    if (editWishes.length >= MAX_WISHES) return;
+    setEditWishes([...editWishes, { classId: '', specIds: [], comment: '' }]);
+  };
+
+  const removeWish = (index: number) => {
+    if (editWishes.length <= 1) return;
+    const updated = editWishes.filter((_, i) => i !== index);
+    setEditWishes(updated);
   };
 
   const cancelEditing = () => {
@@ -193,7 +209,15 @@ const Dashboard = () => {
         .eq('guild_id', guildId)
         .eq('user_id', user.id);
 
-      const wishesToUpsert = editWishes
+      // Delete all existing wishes for this user/guild first
+      await supabase
+        .from('class_wishes')
+        .delete()
+        .eq('guild_id', guildId)
+        .eq('user_id', user.id);
+
+      // Insert all non-empty wishes
+      const wishesToInsert = editWishes
         .map((w, i) => ({
           guild_id: guildId,
           user_id: user.id,
@@ -204,26 +228,10 @@ const Dashboard = () => {
         }))
         .filter(w => w.class_id);
 
-      const emptyChoiceIndexes = editWishes
-        .map((w, i) => (!w.classId ? i + 1 : null))
-        .filter((idx): idx is number => idx !== null);
-
-      if (emptyChoiceIndexes.length > 0) {
-        await supabase
-          .from('class_wishes')
-          .delete()
-          .eq('guild_id', guildId)
-          .eq('user_id', user.id)
-          .in('choice_index', emptyChoiceIndexes);
-      }
-
-      if (wishesToUpsert.length > 0) {
+      if (wishesToInsert.length > 0) {
         const { error } = await supabase
           .from('class_wishes')
-          .upsert(wishesToUpsert, { 
-            onConflict: 'guild_id,user_id,choice_index',
-            ignoreDuplicates: false 
-          });
+          .insert(wishesToInsert);
         if (error) throw error;
       }
 
@@ -350,12 +358,15 @@ const Dashboard = () => {
           editWishes={editWishes}
           editStatus={editStatus}
           saving={saving}
+          maxWishes={MAX_WISHES}
           onToggleRow={toggleRow}
           onStartEditing={startEditing}
           onCancelEditing={cancelEditing}
           onUpdateEditWish={updateEditWish}
           onEditStatusChange={setEditStatus}
           onSaveEditing={saveEditing}
+          onAddWish={addWish}
+          onRemoveWish={removeWish}
         />
       </main>
     </div>
