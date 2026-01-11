@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -29,18 +29,21 @@ interface RosterAccessEditorProps {
 }
 
 interface RankSliderProps {
-  minValue: number;
   maxValue: number;
-  minRank: number;
   maxRank: number;
   ranks: GuildRank[];
-  onChange: (min: number, max: number) => void;
+  onChange: (max: number) => void;
 }
 
-const RankSlider = ({ minValue, maxValue, minRank, maxRank, ranks, onChange }: RankSliderProps) => {
+const RankSlider = ({ maxValue, maxRank, ranks, onChange }: RankSliderProps) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const sortedRanks = [...ranks].sort((a, b) => a.rank_index - b.rank_index);
   
-  // Generate all rank indices from minRank to maxRank
+  // Always start from 0 (GM)
+  const minRank = 0;
+  
+  // Generate all rank indices from 0 to maxRank
   const allRankIndices: number[] = [];
   for (let i = minRank; i <= maxRank; i++) {
     allRankIndices.push(i);
@@ -48,67 +51,118 @@ const RankSlider = ({ minValue, maxValue, minRank, maxRank, ranks, onChange }: R
 
   const getRankName = (index: number) => {
     const rank = sortedRanks.find(r => r.rank_index === index);
-    return rank?.rank_name || `${index}`;
+    return rank?.rank_name || `Rank ${index}`;
   };
 
-  const handleClick = (index: number) => {
-    // If clicking on an already selected endpoint, deselect logic
-    if (index < minValue) {
-      onChange(index, maxValue);
-    } else if (index > maxValue) {
-      onChange(minValue, index);
-    } else if (index === minValue && index === maxValue) {
-      // Single selection, do nothing
-    } else if (index === minValue) {
-      onChange(index + 1, maxValue);
-    } else if (index === maxValue) {
-      onChange(minValue, index - 1);
-    } else {
-      // Clicking in the middle - extend/shrink based on proximity
-      const distToMin = index - minValue;
-      const distToMax = maxValue - index;
-      if (distToMin <= distToMax) {
-        onChange(index, maxValue);
-      } else {
-        onChange(minValue, index);
-      }
+  const getIndexFromPosition = useCallback((clientX: number): number => {
+    if (!containerRef.current) return maxValue;
+    
+    const rect = containerRef.current.getBoundingClientRect();
+    const relativeX = clientX - rect.left;
+    const percentage = Math.max(0, Math.min(1, relativeX / rect.width));
+    const index = Math.round(percentage * maxRank);
+    
+    // Minimum is 0 (GM always selected)
+    return Math.max(0, Math.min(maxRank, index));
+  }, [maxRank, maxValue]);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+    const newIndex = getIndexFromPosition(e.clientX);
+    onChange(newIndex);
+  };
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDragging) return;
+    const newIndex = getIndexFromPosition(e.clientX);
+    onChange(newIndex);
+  }, [isDragging, getIndexFromPosition, onChange]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsDragging(true);
+    const touch = e.touches[0];
+    const newIndex = getIndexFromPosition(touch.clientX);
+    onChange(newIndex);
+  };
+
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (!isDragging) return;
+    const touch = e.touches[0];
+    const newIndex = getIndexFromPosition(touch.clientX);
+    onChange(newIndex);
+  }, [isDragging, getIndexFromPosition, onChange]);
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('touchmove', handleTouchMove);
+      window.addEventListener('touchend', handleMouseUp);
     }
+    
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleMouseUp);
+    };
+  }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove]);
+
+  const handleTickClick = (index: number) => {
+    // Clicking on a tick sets the max to that index (min is always 0)
+    onChange(index);
   };
 
   return (
-    <div className="py-2">
-      <div className="flex items-center justify-between">
+    <div className="py-2 select-none">
+      <div 
+        ref={containerRef}
+        className="flex items-center justify-between cursor-pointer"
+        onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
+      >
         {allRankIndices.map((index, i) => {
-          const isSelected = index >= minValue && index <= maxValue;
+          const isSelected = index <= maxValue;
           const isFirst = i === 0;
-          const isLast = i === allRankIndices.length - 1;
-          const prevSelected = i > 0 && allRankIndices[i - 1] >= minValue && allRankIndices[i - 1] <= maxValue;
+          const isEndpoint = index === maxValue;
+          const prevSelected = i > 0 && allRankIndices[i - 1] <= maxValue;
           
           return (
             <div key={index} className="flex-1 flex flex-col items-center relative">
               {/* Connector line */}
               {!isFirst && (
                 <div 
-                  className={`absolute top-[9px] right-1/2 w-full h-0.5 -z-10 ${
+                  className={`absolute top-[9px] right-1/2 w-full h-0.5 -z-10 transition-colors ${
                     isSelected && prevSelected ? 'bg-primary' : 'bg-border'
                   }`}
                 />
               )}
               
-              {/* Tick mark / button */}
-              <button
-                type="button"
-                onClick={() => handleClick(index)}
-                className={`w-[18px] h-[18px] rounded-full border-2 transition-all z-10 ${
-                  isSelected
-                    ? 'bg-primary border-primary hover:bg-primary/80'
-                    : 'bg-card border-muted-foreground/50 hover:border-primary/50'
+              {/* Tick mark */}
+              <div
+                onClick={(e) => { e.stopPropagation(); handleTickClick(index); }}
+                className={`relative transition-all z-10 ${
+                  isEndpoint 
+                    ? 'w-5 h-5 rounded-full border-2 bg-primary border-primary cursor-grab active:cursor-grabbing shadow-lg shadow-primary/30' 
+                    : isSelected
+                      ? 'w-3 h-3 rounded-full bg-primary cursor-pointer hover:scale-125'
+                      : 'w-3 h-3 rounded-full bg-muted-foreground/30 cursor-pointer hover:bg-muted-foreground/50'
                 }`}
-              />
+              >
+                {/* GM lock indicator */}
+                {index === 0 && (
+                  <Crown className="absolute -top-4 left-1/2 -translate-x-1/2 h-3 w-3 text-primary" />
+                )}
+              </div>
               
               {/* Label */}
               <span 
-                className={`text-[10px] mt-1 whitespace-nowrap ${
+                className={`text-[10px] mt-1.5 whitespace-nowrap transition-colors ${
                   isSelected ? 'text-foreground font-medium' : 'text-muted-foreground'
                 }`}
                 title={getRankName(index)}
@@ -120,11 +174,14 @@ const RankSlider = ({ minValue, maxValue, minRank, maxRank, ranks, onChange }: R
         })}
       </div>
       
-      {/* Show selected range labels */}
-      <div className="flex justify-between text-xs text-muted-foreground mt-2 px-1">
-        <span className="text-primary font-medium">{getRankName(minValue)}</span>
-        {minValue !== maxValue && (
-          <span className="text-primary font-medium">{getRankName(maxValue)}</span>
+      {/* Show selected range description */}
+      <div className="text-xs text-muted-foreground mt-3 text-center">
+        <span className="text-primary font-medium">{getRankName(0)}</span>
+        {maxValue > 0 && (
+          <>
+            <span className="mx-1">→</span>
+            <span className="text-primary font-medium">{getRankName(maxValue)}</span>
+          </>
         )}
       </div>
     </div>
@@ -136,11 +193,11 @@ export const RosterAccessEditor = ({ accessRules, members, ranks, onChange }: Ro
   
   // Sort ranks by index
   const sortedRanks = [...ranks].sort((a, b) => a.rank_index - b.rank_index);
-  const minRankIndex = sortedRanks.length > 0 ? Math.min(...sortedRanks.map(r => r.rank_index)) : 0;
   const maxRankIndex = sortedRanks.length > 0 ? Math.max(...sortedRanks.map(r => r.rank_index)) : 9;
 
   const addRankRule = () => {
-    onChange([...accessRules, { access_type: 'rank', min_rank_index: minRankIndex, max_rank_index: maxRankIndex }]);
+    // Start with just GM selected
+    onChange([...accessRules, { access_type: 'rank', min_rank_index: 0, max_rank_index: 0 }]);
   };
 
   const addUserRule = () => {
@@ -179,12 +236,10 @@ export const RosterAccessEditor = ({ accessRules, members, ranks, onChange }: Ro
                   <span>{t.rosters?.byRank || 'By Rank'}</span>
                 </div>
                 <RankSlider
-                  minValue={rule.min_rank_index ?? minRankIndex}
-                  maxValue={rule.max_rank_index ?? maxRankIndex}
-                  minRank={minRankIndex}
+                  maxValue={rule.max_rank_index ?? 0}
                   maxRank={maxRankIndex}
                   ranks={sortedRanks}
-                  onChange={(min, max) => updateRule(index, { min_rank_index: min, max_rank_index: max })}
+                  onChange={(max) => updateRule(index, { min_rank_index: 0, max_rank_index: max })}
                 />
               </div>
             ) : (
