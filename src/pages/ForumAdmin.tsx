@@ -42,6 +42,7 @@ import {
   MessageSquare, Settings, Users, ChevronUp, ChevronDown
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { DynamicIcon } from '@/components/forum';
 
 interface Category {
   id: string;
@@ -374,7 +375,7 @@ const ForumAdmin = () => {
                             <ChevronDown className="h-3 w-3" />
                           </Button>
                         </div>
-                        <span className="text-xl">{cat.icon || '📁'}</span>
+                        <DynamicIcon name={cat.icon || ''} fallback="📁" className="h-5 w-5 text-primary" />
                         <div>
                           <p className="font-medium text-foreground">{cat.name}</p>
                           <p className="text-sm text-muted-foreground">{cat.slug}</p>
