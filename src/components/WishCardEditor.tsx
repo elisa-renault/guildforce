@@ -81,8 +81,8 @@ export const WishCardEditor = ({ wish, onChange }: WishCardEditorProps) => {
               <ChevronDown className="h-4 w-4 opacity-50 flex-shrink-0" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[380px] p-2 bg-card border-border z-50" align="start">
-            <div className="grid grid-cols-2 gap-1.5 max-h-[360px] overflow-y-auto">
+          <PopoverContent className="w-[380px] p-1.5 bg-card border-border z-50" align="start">
+            <div className="grid grid-cols-2 gap-0.5 max-h-[320px] overflow-y-auto">
               {wowClasses.map((cls) => {
                 const isSelected = wish.classId === cls.id;
                 return (
@@ -90,16 +90,12 @@ export const WishCardEditor = ({ wish, onChange }: WishCardEditorProps) => {
                     key={cls.id}
                     onClick={() => handleClassSelect(cls.id)}
                     className={cn(
-                      "flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors text-left",
+                      "flex items-center gap-2 px-3 py-2 rounded text-sm transition-colors text-left",
                       isSelected 
-                        ? "ring-1 ring-inset" 
-                        : "hover:bg-muted/50"
+                        ? "bg-primary/20" 
+                        : "hover:bg-primary/10"
                     )}
-                    style={{ 
-                      color: `hsl(var(--class-${cls.id}))`,
-                      backgroundColor: isSelected ? `hsl(var(--class-${cls.id}) / 0.15)` : undefined,
-                      borderColor: isSelected ? `hsl(var(--class-${cls.id}) / 0.4)` : undefined
-                    }}
+                    style={{ color: `hsl(var(--class-${cls.id}))` }}
                   >
                     {isSelected && <Check className="h-4 w-4 flex-shrink-0" />}
                     <span className="truncate">{cls.name[language]}</span>
@@ -151,8 +147,8 @@ export const WishCardEditor = ({ wish, onChange }: WishCardEditorProps) => {
                 <ChevronDown className="h-4 w-4 opacity-50 flex-shrink-0" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[280px] p-2 bg-card border-border z-50" align="start">
-              <div className="space-y-1">
+            <PopoverContent className="w-[280px] p-1.5 bg-card border-border z-50" align="start">
+              <div className="flex flex-col gap-0.5">
                 {selectedClass.specs.map((spec) => {
                   const isSelected = wish.specIds.includes(spec.id);
                   const config = roleConfig[spec.role];
@@ -163,13 +159,13 @@ export const WishCardEditor = ({ wish, onChange }: WishCardEditorProps) => {
                       key={spec.id}
                       onClick={() => handleSpecToggle(spec.id)}
                       className={cn(
-                        "w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors text-left border",
+                        "w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-colors text-left",
                         isSelected 
-                          ? config.bgSelected
-                          : "border-transparent hover:bg-muted/50"
+                          ? "bg-primary/20" 
+                          : "hover:bg-primary/10"
                       )}
                     >
-                      <Icon className={cn("h-5 w-5", config.color)} />
+                      <Icon className={cn("h-4 w-4", config.color)} />
                       <span className={cn("flex-1", isSelected ? config.color : "text-foreground")}>
                         {spec.name[language]}
                       </span>
