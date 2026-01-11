@@ -1,0 +1,158 @@
+import { useState } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { ForumPost as ForumPostType } from '@/types/forum';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { MarkdownEditor } from './MarkdownEditor';
+import { Heart, Quote, Edit3, Trash2, User, Clock, Check, X } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { fr, enUS } from 'date-fns/locale';
+import ReactMarkdown from 'react-markdown';
+
+interface ForumPostProps {
+  post: ForumPostType;
+  onQuote?: (post: ForumPostType) => void;
+  onEdit?: (postId: string, content: string) => void;
+  onDelete?: (postId: string) => void;
+  onReaction?: (postId: string) => void;
+  isTopicLocked?: boolean;
+}
+
+export const ForumPost = ({
+  post,
+  onQuote,
+  onEdit,
+  onDelete,
+  onReaction,
+  isTopicLocked = false,
+}: ForumPostProps) => {
+  const { user } = useAuth();
+  const { language } = useLanguage();
+  const locale = language === 'fr' ? fr : enUS;
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(post.content);
+
+  const isAuthor = user?.id === post.author_id;
+
+  const handleSaveEdit = () => {
+    if (editContent.trim() && onEdit) {
+      onEdit(post.id, editContent);
+      setIsEditing(false);
+    }
+  };
+
+  return (
+    <div className="flex gap-4 p-4 rounded-lg bg-card/50 border border-border/50">
+      {/* Author info */}
+      <div className="flex flex-col items-center gap-2 min-w-[80px]">
+        <Avatar className="h-12 w-12">
+          {post.author?.avatar_url ? (
+            <AvatarImage src={post.author.avatar_url} alt={post.author.username} />
+          ) : (
+            <AvatarFallback className="bg-primary/20 text-primary">
+              <User className="h-6 w-6" />
+            </AvatarFallback>
+          )}
+        </Avatar>
+        <span className="text-sm font-medium text-foreground text-center">
+          {post.author?.username || 'Inconnu'}
+        </span>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Clock className="h-3 w-3" />
+            <span>{formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale })}</span>
+            {post.is_edited && (
+              <span className="italic">(modifié)</span>
+            )}
+          </div>
+          <div className="flex items-center gap-1">
+            {!isTopicLocked && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onReaction?.(post.id)}
+                  className={`h-7 px-2 ${post.user_has_reacted ? 'text-red-500' : ''}`}
+                >
+                  <Heart className={`h-4 w-4 mr-1 ${post.user_has_reacted ? 'fill-current' : ''}`} />
+                  {post.reaction_count || 0}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onQuote?.(post)}
+                  className="h-7 px-2"
+                >
+                  <Quote className="h-4 w-4" />
+                </Button>
+              </>
+            )}
+            {isAuthor && !isTopicLocked && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsEditing(true)}
+                  className="h-7 px-2"
+                >
+                  <Edit3 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onDelete?.(post.id)}
+                  className="h-7 px-2 text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Quoted post */}
+        {post.quoted_post && (
+          <div className="mb-3 p-3 rounded-lg bg-muted/30 border-l-2 border-primary/50">
+            <p className="text-xs text-muted-foreground mb-1">
+              Citation de {post.quoted_post.author?.username || 'Inconnu'}:
+            </p>
+            <p className="text-sm text-muted-foreground line-clamp-3">
+              {post.quoted_post.content}
+            </p>
+          </div>
+        )}
+
+        {/* Content or editor */}
+        {isEditing ? (
+          <div className="space-y-2">
+            <MarkdownEditor
+              value={editContent}
+              onChange={setEditContent}
+              minHeight="100px"
+            />
+            <div className="flex gap-2">
+              <Button size="sm" onClick={handleSaveEdit}>
+                <Check className="h-4 w-4 mr-1" />
+                Enregistrer
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setIsEditing(false)}>
+                <X className="h-4 w-4 mr-1" />
+                Annuler
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="prose prose-invert prose-sm max-w-none">
+            <ReactMarkdown>{post.content}</ReactMarkdown>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
