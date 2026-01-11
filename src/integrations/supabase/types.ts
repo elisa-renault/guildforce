@@ -489,6 +489,45 @@ export type Database = {
           },
         ]
       }
+      forum_topic_subscriptions: {
+        Row: {
+          created_at: string
+          id: string
+          notify_replies: boolean
+          topic_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notify_replies?: boolean
+          topic_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notify_replies?: boolean
+          topic_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_topic_subscriptions_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "forum_topics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "forum_topic_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forum_topics: {
         Row: {
           author_id: string
