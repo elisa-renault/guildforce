@@ -64,7 +64,7 @@ export const RosterTable = ({
       return (
         <div className="flex flex-col gap-1.5">
           <div className="h-7 w-full rounded-md border border-dashed border-muted-foreground/20 bg-transparent" />
-          <div className="h-6 w-full flex items-center" />
+          <div className="h-6 w-full rounded-md border border-dashed border-muted-foreground/20 bg-transparent" />
         </div>
       );
     }
@@ -74,7 +74,7 @@ export const RosterTable = ({
       return (
         <div className="flex flex-col gap-1.5">
           <div className="h-7 w-full rounded-md border border-dashed border-muted-foreground/20 bg-transparent" />
-          <div className="h-6 w-full flex items-center" />
+          <div className="h-6 w-full rounded-md border border-dashed border-muted-foreground/20 bg-transparent" />
         </div>
       );
     }
