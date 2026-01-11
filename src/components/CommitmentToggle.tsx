@@ -11,6 +11,7 @@ interface CommitmentToggleProps {
   status: CommitmentStatus;
   onChange: (value: CommitmentStatus) => void;
   compact?: boolean;
+  asBadge?: boolean;
 }
 
 const statusConfig = {
@@ -31,7 +32,7 @@ const statusConfig = {
   },
 };
 
-export const CommitmentToggle = ({ status, onChange, compact = false }: CommitmentToggleProps) => {
+export const CommitmentToggle = ({ status, onChange, compact = false, asBadge = false }: CommitmentToggleProps) => {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
 
@@ -49,6 +50,47 @@ export const CommitmentToggle = ({ status, onChange, compact = false }: Commitme
     undecided: t.wishes.commitment.undecidedDesc,
     withdrawn: t.wishes.commitment.withdrawnDesc,
   };
+
+  // Badge-style dropdown (looks like read-mode badge but clickable)
+  if (asBadge) {
+    return (
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button
+            className={cn(
+              "inline-flex items-center gap-1 text-[10px] md:text-xs px-1.5 py-0.5 rounded-md border cursor-pointer transition-colors hover:opacity-80",
+              config.colorClass
+            )}
+          >
+            <Icon className="h-3 w-3" strokeWidth={1.5} />
+            <span className="hidden md:inline">{labels[status]}</span>
+            <ChevronDown className="h-2.5 w-2.5 opacity-50" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-44 p-1.5 bg-card border-border z-50" align="start">
+          <div className="space-y-0.5">
+            {(['confirmed', 'undecided', 'withdrawn'] as CommitmentStatus[]).map((s) => {
+              const ItemIcon = statusConfig[s].icon;
+              const isActive = status === s;
+              return (
+                <button
+                  key={s}
+                  onClick={() => { onChange(s); setOpen(false); }}
+                  className={cn(
+                    "w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-xs transition-colors text-left",
+                    isActive ? statusConfig[s].activeClass : "hover:bg-primary/10"
+                  )}
+                >
+                  <ItemIcon className="h-3.5 w-3.5" />
+                  <span>{labels[s]}</span>
+                </button>
+              );
+            })}
+          </div>
+        </PopoverContent>
+      </Popover>
+    );
+  }
 
   // Compact dropdown version
   if (compact) {
