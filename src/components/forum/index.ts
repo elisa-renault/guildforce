@@ -9,3 +9,4 @@ export { UserRoleBadge } from './UserRoleBadge';
 export { ReportDialog } from './ReportDialog';
 export { ReportsManager } from './ReportsManager';
 export { NotificationBell } from './NotificationBell';
+export { TopicSubscriptionButton } from './TopicSubscriptionButton';
