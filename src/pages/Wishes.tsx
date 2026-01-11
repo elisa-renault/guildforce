@@ -287,7 +287,7 @@ const Wishes = () => {
 
       {/* Sticky save bar for guild name + save button */}
       <div className="sticky top-14 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between max-w-5xl">
+        <div className="container mx-auto px-3 md:px-4 py-3 flex items-center justify-between">
           <h1 className="text-lg font-semibold text-foreground">{guild?.name}</h1>
           <CosmicButton 
             size="sm" 
@@ -300,7 +300,7 @@ const Wishes = () => {
         </div>
       </div>
 
-      <main className="container mx-auto px-4 py-8 max-w-5xl relative z-10">
+      <main className="container mx-auto px-3 md:px-4 py-4 md:py-6 relative z-10">
         <div className="text-center mb-10">
           <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/25">
             <Sparkles className="h-7 w-7 text-white" strokeWidth={1.5} />
