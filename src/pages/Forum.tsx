@@ -3,16 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useForumCategories } from '@/hooks/useForum';
+import { useIsAdmin } from '@/hooks/useAdmin';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
 import { ForumCategoryList } from '@/components/forum';
-import { Loader2, Plus, MessageSquare } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Loader2, Plus, MessageSquare, Settings } from 'lucide-react';
 
 const Forum = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
   const { user } = useAuth();
   const { categories, loading, error } = useForumCategories();
+  const { isAdmin } = useIsAdmin();
 
   if (loading) {
     return (
@@ -41,6 +44,16 @@ const Forum = () => {
                 : 'Community discussions and exchanges'}
             </p>
           </div>
+          {isAdmin && (
+            <Button
+              variant="outline"
+              onClick={() => navigate('/forum/admin')}
+              className="border-border hover:bg-muted"
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Admin
+            </Button>
+          )}
         </div>
 
         {error && (
