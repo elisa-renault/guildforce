@@ -282,11 +282,13 @@ export interface Translations {
       feedback: string;
       support: string;
       general: string;
+      bugs: string;
     };
     categoryDescriptions: {
       feedback: string;
       support: string;
       general: string;
+      bugs: string;
     };
   };
   // Errors
@@ -577,11 +579,13 @@ export const translations: Record<Language, Translations> = {
         feedback: 'Feedback & Ideas',
         support: 'Help & Support',
         general: 'General Discussion',
+        bugs: 'Bugs & Issues',
       },
       categoryDescriptions: {
         feedback: 'Suggestions and feedback to improve Guildforce',
         support: 'Help and technical support',
         general: 'General discussions about Guildforce and the game',
+        bugs: 'Report bugs and technical issues',
       },
     },
     errors: {
@@ -869,11 +873,13 @@ export const translations: Record<Language, Translations> = {
         feedback: 'Suggestions & Idées',
         support: 'Aide & Support',
         general: 'Discussion Générale',
+        bugs: 'Bugs & Problèmes',
       },
       categoryDescriptions: {
         feedback: 'Suggestions et retours pour améliorer Guildforce',
         support: 'Aide et support technique',
         general: 'Discussions générales sur Guildforce et le jeu',
+        bugs: 'Signaler des bugs et problèmes techniques',
       },
     },
     errors: {
