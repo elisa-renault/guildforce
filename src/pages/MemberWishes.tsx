@@ -10,13 +10,19 @@ import { Loader2, ArrowLeft, Shield, Heart, Swords, Crosshair, CheckCircle, Help
 import { CosmicButton } from '@/components/CosmicButton';
 import { toSlug, getGuildPath } from '@/lib/guildSlug';
 import { getClassById, getSpecById, Specialization } from '@/data/wowClasses';
+import { WishValidationBadge } from '@/components/dashboard/WishValidationBadge';
+import { ValidationStatus } from '@/types/guild';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface WishChoice {
   choice_index: number;
   class_id: string;
   spec_ids: string[];
   comment: string | null;
+  validation_status: ValidationStatus;
+  validated_by: string | null;
+  validated_at: string | null;
 }
 
 // Get the appropriate icon for a spec based on role and range
@@ -38,9 +44,11 @@ const MemberWishes = () => {
   const { t, language } = useLanguage();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [guild, setGuild] = useState<{ name: string; server: string; region: string } | null>(null);
+  const [guild, setGuild] = useState<{ id: string; name: string; server: string; region: string } | null>(null);
   const [member, setMember] = useState<{ username: string; battletag: string | null; status: string } | null>(null);
   const [wishes, setWishes] = useState<WishChoice[]>([]);
+  const [isGM, setIsGM] = useState(false);
+  const [validatingWish, setValidatingWish] = useState<number | null>(null);
 
   useEffect(() => {
     if (!user || !regionSlug || !serverSlug || !guildSlug || !memberId) {
@@ -65,9 +73,19 @@ const MemberWishes = () => {
         return;
       }
       
-      setGuild({ name: matchedGuild.name, server: matchedGuild.server, region: matchedGuild.region || 'eu' });
+      setGuild({ id: matchedGuild.id, name: matchedGuild.name, server: matchedGuild.server, region: matchedGuild.region || 'eu' });
 
-      // Get member info
+      // Check if current user is GM
+      if (user) {
+        const { data: memberRole } = await supabase
+          .from('guild_members')
+          .select('role')
+          .eq('guild_id', matchedGuild.id)
+          .eq('user_id', user.id)
+          .single();
+        
+        setIsGM(memberRole?.role === 'gm');
+      }
       const { data: memberData } = await supabase
         .from('guild_members')
         .select('status, user_id')
@@ -95,16 +113,19 @@ const MemberWishes = () => {
         });
       }
 
-      // Get wishes
+      // Get wishes with validation info
       const { data: wishesData } = await supabase
         .from('class_wishes')
-        .select('choice_index, class_id, spec_ids, comment')
+        .select('choice_index, class_id, spec_ids, comment, validation_status, validated_by, validated_at')
         .eq('guild_id', matchedGuild.id)
         .eq('user_id', memberId)
         .order('choice_index');
 
       if (wishesData) {
-        setWishes(wishesData);
+        setWishes(wishesData.map(w => ({
+          ...w,
+          validation_status: (w.validation_status as ValidationStatus) || 'pending',
+        })));
       }
 
       setLoading(false);
@@ -112,6 +133,57 @@ const MemberWishes = () => {
 
     fetchData();
   }, [user, regionSlug, serverSlug, guildSlug, memberId, navigate]);
+
+  // Handle validation
+  const handleValidation = async (choiceIndex: number, status: ValidationStatus) => {
+    if (!guild || !memberId || !user) return;
+    
+    setValidatingWish(choiceIndex);
+    
+    // Optimistic update
+    setWishes(prev => prev.map(w => 
+      w.choice_index === choiceIndex 
+        ? { ...w, validation_status: status, validated_by: user.id, validated_at: new Date().toISOString() }
+        : w
+    ));
+
+    const { error } = await supabase
+      .from('class_wishes')
+      .update({
+        validation_status: status,
+        validated_by: user.id,
+        validated_at: new Date().toISOString(),
+      })
+      .eq('guild_id', guild.id)
+      .eq('user_id', memberId)
+      .eq('choice_index', choiceIndex);
+
+    if (error) {
+      toast.error(language === 'fr' ? 'Erreur lors de la validation' : 'Validation error');
+      // Revert on error
+      const { data } = await supabase
+        .from('class_wishes')
+        .select('choice_index, class_id, spec_ids, comment, validation_status, validated_by, validated_at')
+        .eq('guild_id', guild.id)
+        .eq('user_id', memberId)
+        .order('choice_index');
+      if (data) {
+        setWishes(data.map(w => ({
+          ...w,
+          validation_status: (w.validation_status as ValidationStatus) || 'pending',
+        })));
+      }
+    } else {
+      const statusLabel = status === 'approved' 
+        ? (language === 'fr' ? 'Approuvé' : 'Approved')
+        : status === 'rejected'
+        ? (language === 'fr' ? 'Refusé' : 'Rejected')
+        : (language === 'fr' ? 'En attente' : 'Pending');
+      toast.success(`${language === 'fr' ? 'Vœu' : 'Wish'} ${statusLabel.toLowerCase()}`);
+    }
+    
+    setValidatingWish(null);
+  };
 
   const choiceLabels = [
     t.wishes.preferredChoice,
@@ -214,7 +286,7 @@ const MemberWishes = () => {
 
               return (
                 <GlowCard key={wish.choice_index} className="p-3 md:p-4" hoverable={false}>
-                  <div className="grid grid-cols-1 lg:grid-cols-[40px_200px_1fr_1fr] gap-3 lg:gap-4 items-center">
+                  <div className="grid grid-cols-1 lg:grid-cols-[40px_200px_1fr_1fr_auto] gap-3 lg:gap-4 items-center">
                     {/* Choice number */}
                     <div className="hidden lg:flex w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 items-center justify-center border border-primary/20">
                       <span className="text-sm font-bold text-primary">{index + 1}</span>
@@ -271,6 +343,18 @@ const MemberWishes = () => {
                         <span className="text-xs text-muted-foreground/50">—</span>
                       </div>
                     )}
+
+                    {/* Validation badge */}
+                    <div className="flex justify-end lg:justify-center">
+                      <WishValidationBadge
+                        status={wish.validation_status}
+                        validatedBy={wish.validated_by}
+                        validatedAt={wish.validated_at}
+                        isGM={isGM}
+                        onValidate={isGM ? (status) => handleValidation(wish.choice_index, status) : undefined}
+                        loading={validatingWish === wish.choice_index}
+                      />
+                    </div>
                   </div>
                 </GlowCard>
               );
