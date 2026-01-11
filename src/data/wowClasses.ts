@@ -3,6 +3,8 @@
 
 export type Role = 'tank' | 'healer' | 'dps';
 
+export type RangeType = 'melee' | 'ranged';
+
 export interface Specialization {
   id: string;
   name: {
@@ -10,6 +12,7 @@ export interface Specialization {
     fr: string;
   };
   role: Role;
+  range: RangeType;
 }
 
 export interface WoWClass {
@@ -28,9 +31,9 @@ export const wowClasses: WoWClass[] = [
     name: { en: 'Warrior', fr: 'Guerrier' },
     color: 'class-warrior',
     specs: [
-      { id: 'warrior-arms', name: { en: 'Arms', fr: 'Armes' }, role: 'dps' },
-      { id: 'warrior-fury', name: { en: 'Fury', fr: 'Fureur' }, role: 'dps' },
-      { id: 'warrior-protection', name: { en: 'Protection', fr: 'Protection' }, role: 'tank' },
+      { id: 'warrior-arms', name: { en: 'Arms', fr: 'Armes' }, role: 'dps', range: 'melee' },
+      { id: 'warrior-fury', name: { en: 'Fury', fr: 'Fureur' }, role: 'dps', range: 'melee' },
+      { id: 'warrior-protection', name: { en: 'Protection', fr: 'Protection' }, role: 'tank', range: 'melee' },
     ],
   },
   {
@@ -38,9 +41,9 @@ export const wowClasses: WoWClass[] = [
     name: { en: 'Paladin', fr: 'Paladin' },
     color: 'class-paladin',
     specs: [
-      { id: 'paladin-holy', name: { en: 'Holy', fr: 'Sacré' }, role: 'healer' },
-      { id: 'paladin-protection', name: { en: 'Protection', fr: 'Protection' }, role: 'tank' },
-      { id: 'paladin-retribution', name: { en: 'Retribution', fr: 'Vindicte' }, role: 'dps' },
+      { id: 'paladin-holy', name: { en: 'Holy', fr: 'Sacré' }, role: 'healer', range: 'ranged' },
+      { id: 'paladin-protection', name: { en: 'Protection', fr: 'Protection' }, role: 'tank', range: 'melee' },
+      { id: 'paladin-retribution', name: { en: 'Retribution', fr: 'Vindicte' }, role: 'dps', range: 'melee' },
     ],
   },
   {
@@ -48,9 +51,9 @@ export const wowClasses: WoWClass[] = [
     name: { en: 'Hunter', fr: 'Chasseur' },
     color: 'class-hunter',
     specs: [
-      { id: 'hunter-beast-mastery', name: { en: 'Beast Mastery', fr: 'Maîtrise des bêtes' }, role: 'dps' },
-      { id: 'hunter-marksmanship', name: { en: 'Marksmanship', fr: 'Précision' }, role: 'dps' },
-      { id: 'hunter-survival', name: { en: 'Survival', fr: 'Survie' }, role: 'dps' },
+      { id: 'hunter-beast-mastery', name: { en: 'Beast Mastery', fr: 'Maîtrise des bêtes' }, role: 'dps', range: 'ranged' },
+      { id: 'hunter-marksmanship', name: { en: 'Marksmanship', fr: 'Précision' }, role: 'dps', range: 'ranged' },
+      { id: 'hunter-survival', name: { en: 'Survival', fr: 'Survie' }, role: 'dps', range: 'melee' },
     ],
   },
   {
@@ -58,9 +61,9 @@ export const wowClasses: WoWClass[] = [
     name: { en: 'Rogue', fr: 'Voleur' },
     color: 'class-rogue',
     specs: [
-      { id: 'rogue-assassination', name: { en: 'Assassination', fr: 'Assassinat' }, role: 'dps' },
-      { id: 'rogue-outlaw', name: { en: 'Outlaw', fr: 'Hors-la-loi' }, role: 'dps' },
-      { id: 'rogue-subtlety', name: { en: 'Subtlety', fr: 'Finesse' }, role: 'dps' },
+      { id: 'rogue-assassination', name: { en: 'Assassination', fr: 'Assassinat' }, role: 'dps', range: 'melee' },
+      { id: 'rogue-outlaw', name: { en: 'Outlaw', fr: 'Hors-la-loi' }, role: 'dps', range: 'melee' },
+      { id: 'rogue-subtlety', name: { en: 'Subtlety', fr: 'Finesse' }, role: 'dps', range: 'melee' },
     ],
   },
   {
@@ -68,9 +71,9 @@ export const wowClasses: WoWClass[] = [
     name: { en: 'Priest', fr: 'Prêtre' },
     color: 'class-priest',
     specs: [
-      { id: 'priest-discipline', name: { en: 'Discipline', fr: 'Discipline' }, role: 'healer' },
-      { id: 'priest-holy', name: { en: 'Holy', fr: 'Sacré' }, role: 'healer' },
-      { id: 'priest-shadow', name: { en: 'Shadow', fr: 'Ombre' }, role: 'dps' },
+      { id: 'priest-discipline', name: { en: 'Discipline', fr: 'Discipline' }, role: 'healer', range: 'ranged' },
+      { id: 'priest-holy', name: { en: 'Holy', fr: 'Sacré' }, role: 'healer', range: 'ranged' },
+      { id: 'priest-shadow', name: { en: 'Shadow', fr: 'Ombre' }, role: 'dps', range: 'ranged' },
     ],
   },
   {
@@ -78,9 +81,9 @@ export const wowClasses: WoWClass[] = [
     name: { en: 'Death Knight', fr: 'Chevalier de la mort' },
     color: 'class-death-knight',
     specs: [
-      { id: 'dk-blood', name: { en: 'Blood', fr: 'Sang' }, role: 'tank' },
-      { id: 'dk-frost', name: { en: 'Frost', fr: 'Givre' }, role: 'dps' },
-      { id: 'dk-unholy', name: { en: 'Unholy', fr: 'Impie' }, role: 'dps' },
+      { id: 'dk-blood', name: { en: 'Blood', fr: 'Sang' }, role: 'tank', range: 'melee' },
+      { id: 'dk-frost', name: { en: 'Frost', fr: 'Givre' }, role: 'dps', range: 'melee' },
+      { id: 'dk-unholy', name: { en: 'Unholy', fr: 'Impie' }, role: 'dps', range: 'melee' },
     ],
   },
   {
@@ -88,9 +91,9 @@ export const wowClasses: WoWClass[] = [
     name: { en: 'Shaman', fr: 'Chaman' },
     color: 'class-shaman',
     specs: [
-      { id: 'shaman-elemental', name: { en: 'Elemental', fr: 'Élémentaire' }, role: 'dps' },
-      { id: 'shaman-enhancement', name: { en: 'Enhancement', fr: 'Amélioration' }, role: 'dps' },
-      { id: 'shaman-restoration', name: { en: 'Restoration', fr: 'Restauration' }, role: 'healer' },
+      { id: 'shaman-elemental', name: { en: 'Elemental', fr: 'Élémentaire' }, role: 'dps', range: 'ranged' },
+      { id: 'shaman-enhancement', name: { en: 'Enhancement', fr: 'Amélioration' }, role: 'dps', range: 'melee' },
+      { id: 'shaman-restoration', name: { en: 'Restoration', fr: 'Restauration' }, role: 'healer', range: 'ranged' },
     ],
   },
   {
@@ -98,9 +101,9 @@ export const wowClasses: WoWClass[] = [
     name: { en: 'Mage', fr: 'Mage' },
     color: 'class-mage',
     specs: [
-      { id: 'mage-arcane', name: { en: 'Arcane', fr: 'Arcanes' }, role: 'dps' },
-      { id: 'mage-fire', name: { en: 'Fire', fr: 'Feu' }, role: 'dps' },
-      { id: 'mage-frost', name: { en: 'Frost', fr: 'Givre' }, role: 'dps' },
+      { id: 'mage-arcane', name: { en: 'Arcane', fr: 'Arcanes' }, role: 'dps', range: 'ranged' },
+      { id: 'mage-fire', name: { en: 'Fire', fr: 'Feu' }, role: 'dps', range: 'ranged' },
+      { id: 'mage-frost', name: { en: 'Frost', fr: 'Givre' }, role: 'dps', range: 'ranged' },
     ],
   },
   {
@@ -108,9 +111,9 @@ export const wowClasses: WoWClass[] = [
     name: { en: 'Warlock', fr: 'Démoniste' },
     color: 'class-warlock',
     specs: [
-      { id: 'warlock-affliction', name: { en: 'Affliction', fr: 'Affliction' }, role: 'dps' },
-      { id: 'warlock-demonology', name: { en: 'Demonology', fr: 'Démonologie' }, role: 'dps' },
-      { id: 'warlock-destruction', name: { en: 'Destruction', fr: 'Destruction' }, role: 'dps' },
+      { id: 'warlock-affliction', name: { en: 'Affliction', fr: 'Affliction' }, role: 'dps', range: 'ranged' },
+      { id: 'warlock-demonology', name: { en: 'Demonology', fr: 'Démonologie' }, role: 'dps', range: 'ranged' },
+      { id: 'warlock-destruction', name: { en: 'Destruction', fr: 'Destruction' }, role: 'dps', range: 'ranged' },
     ],
   },
   {
@@ -118,9 +121,9 @@ export const wowClasses: WoWClass[] = [
     name: { en: 'Monk', fr: 'Moine' },
     color: 'class-monk',
     specs: [
-      { id: 'monk-brewmaster', name: { en: 'Brewmaster', fr: 'Maître brasseur' }, role: 'tank' },
-      { id: 'monk-mistweaver', name: { en: 'Mistweaver', fr: 'Tisse-brume' }, role: 'healer' },
-      { id: 'monk-windwalker', name: { en: 'Windwalker', fr: 'Marche-vent' }, role: 'dps' },
+      { id: 'monk-brewmaster', name: { en: 'Brewmaster', fr: 'Maître brasseur' }, role: 'tank', range: 'melee' },
+      { id: 'monk-mistweaver', name: { en: 'Mistweaver', fr: 'Tisse-brume' }, role: 'healer', range: 'ranged' },
+      { id: 'monk-windwalker', name: { en: 'Windwalker', fr: 'Marche-vent' }, role: 'dps', range: 'melee' },
     ],
   },
   {
@@ -128,10 +131,10 @@ export const wowClasses: WoWClass[] = [
     name: { en: 'Druid', fr: 'Druide' },
     color: 'class-druid',
     specs: [
-      { id: 'druid-balance', name: { en: 'Balance', fr: 'Équilibre' }, role: 'dps' },
-      { id: 'druid-feral', name: { en: 'Feral', fr: 'Féral' }, role: 'dps' },
-      { id: 'druid-guardian', name: { en: 'Guardian', fr: 'Gardien' }, role: 'tank' },
-      { id: 'druid-restoration', name: { en: 'Restoration', fr: 'Restauration' }, role: 'healer' },
+      { id: 'druid-balance', name: { en: 'Balance', fr: 'Équilibre' }, role: 'dps', range: 'ranged' },
+      { id: 'druid-feral', name: { en: 'Feral', fr: 'Féral' }, role: 'dps', range: 'melee' },
+      { id: 'druid-guardian', name: { en: 'Guardian', fr: 'Gardien' }, role: 'tank', range: 'melee' },
+      { id: 'druid-restoration', name: { en: 'Restoration', fr: 'Restauration' }, role: 'healer', range: 'ranged' },
     ],
   },
   {
@@ -139,9 +142,9 @@ export const wowClasses: WoWClass[] = [
     name: { en: 'Demon Hunter', fr: 'Chasseur de démons' },
     color: 'class-demon-hunter',
     specs: [
-      { id: 'dh-havoc', name: { en: 'Havoc', fr: 'Dévastation' }, role: 'dps' },
-      { id: 'dh-vengeance', name: { en: 'Vengeance', fr: 'Vengeance' }, role: 'tank' },
-      { id: 'dh-devourer', name: { en: 'Devourer', fr: 'Dévoreur' }, role: 'dps' },
+      { id: 'dh-havoc', name: { en: 'Havoc', fr: 'Dévastation' }, role: 'dps', range: 'melee' },
+      { id: 'dh-vengeance', name: { en: 'Vengeance', fr: 'Vengeance' }, role: 'tank', range: 'melee' },
+      { id: 'dh-devourer', name: { en: 'Devourer', fr: 'Dévoreur' }, role: 'dps', range: 'melee' },
     ],
   },
   {
@@ -149,9 +152,9 @@ export const wowClasses: WoWClass[] = [
     name: { en: 'Evoker', fr: 'Évocateur' },
     color: 'class-evoker',
     specs: [
-      { id: 'evoker-devastation', name: { en: 'Devastation', fr: 'Dévastation' }, role: 'dps' },
-      { id: 'evoker-preservation', name: { en: 'Preservation', fr: 'Préservation' }, role: 'healer' },
-      { id: 'evoker-augmentation', name: { en: 'Augmentation', fr: 'Augmentation' }, role: 'dps' },
+      { id: 'evoker-devastation', name: { en: 'Devastation', fr: 'Dévastation' }, role: 'dps', range: 'ranged' },
+      { id: 'evoker-preservation', name: { en: 'Preservation', fr: 'Préservation' }, role: 'healer', range: 'ranged' },
+      { id: 'evoker-augmentation', name: { en: 'Augmentation', fr: 'Augmentation' }, role: 'dps', range: 'ranged' },
     ],
   },
 ];
@@ -180,4 +183,15 @@ export const getRolesFromSpecs = (specIds: string[]): Role[] => {
     if (spec) roles.add(spec.role);
   }
   return Array.from(roles);
+};
+
+export const getRangeStatsFromSpecs = (specIds: string[]): { melee: number; ranged: number } => {
+  const stats = { melee: 0, ranged: 0 };
+  for (const specId of specIds) {
+    const spec = getSpecById(specId);
+    if (spec) {
+      stats[spec.range]++;
+    }
+  }
+  return stats;
 };

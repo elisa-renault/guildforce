@@ -4,11 +4,11 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { getClassById, getSpecById, getRolesFromSpecs, Role, wowClasses } from '@/data/wowClasses';
+import { getClassById, getSpecById, getRolesFromSpecs, getRangeStatsFromSpecs, Role, wowClasses } from '@/data/wowClasses';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
 import { StatsCards, RosterFilters, RosterTable } from '@/components/dashboard';
-import { MemberWish, WishData, RoleStats, RosterFilters as RosterFiltersType } from '@/types/guild';
+import { MemberWish, WishData, RoleStats, RangeStats, RosterFilters as RosterFiltersType } from '@/types/guild';
 import { Loader2, Download, Sparkles } from 'lucide-react';
 import { toSlug, getGuildWishesPath } from '@/lib/guildSlug';
 import { CommitmentStatus } from '@/components/CommitmentToggle';
@@ -300,11 +300,15 @@ const Dashboard = () => {
   const totalPlayers = members.length;
   const confirmedPlayers = members.filter(m => m.status === 'confirmed').length;
   const roleStats: RoleStats = { tank: 0, healer: 0, dps: 0 };
+  const rangeStats: RangeStats = { melee: 0, ranged: 0 };
   members.forEach(m => {
     const wish = m.wishes.find(w => w.choice_index === 1);
     if (wish) {
       const roles = getRolesFromSpecs(wish.spec_ids);
       roles.forEach(r => roleStats[r]++);
+      const ranges = getRangeStatsFromSpecs(wish.spec_ids);
+      rangeStats.melee += ranges.melee;
+      rangeStats.ranged += ranges.ranged;
     }
   });
 
@@ -342,7 +346,8 @@ const Dashboard = () => {
         <StatsCards 
           totalPlayers={totalPlayers} 
           confirmedPlayers={confirmedPlayers} 
-          roleStats={roleStats} 
+          roleStats={roleStats}
+          rangeStats={rangeStats}
         />
 
         <RosterFilters 
