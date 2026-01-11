@@ -435,6 +435,31 @@ const ForumAdmin = () => {
                 <CardTitle className="text-lg">
                   {language === 'fr' ? 'Gestion des rôles' : 'Role Management'}
                 </CardTitle>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge variant="destructive" className="text-xs">Admin</Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {language === 'fr' 
+                        ? 'Accès total : gestion des catégories, modérateurs, et tous les rôles utilisateurs'
+                        : 'Full access: manage categories, moderators, and all user roles'}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-primary/10 border border-primary/30">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge variant="secondary" className="text-xs bg-primary/20">
+                        <Shield className="h-3 w-3 mr-1" />
+                        Modérateur
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {language === 'fr' 
+                        ? 'Modération du forum : épingler, verrouiller et supprimer les sujets/messages'
+                        : 'Forum moderation: pin, lock, and delete topics/posts'}
+                    </p>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -451,17 +476,31 @@ const ForumAdmin = () => {
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium text-foreground">{u.username}</p>
-                          <div className="flex gap-1">
-                            {u.roles.map((role) => (
-                              <Badge
-                                key={role}
-                                variant={role === 'admin' ? 'destructive' : 'secondary'}
-                                className="text-xs"
-                              >
-                                {role}
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-foreground">{u.username}</p>
+                            {u.id === user?.id && (
+                              <Badge variant="outline" className="text-xs">
+                                {language === 'fr' ? 'Vous' : 'You'}
                               </Badge>
-                            ))}
+                            )}
+                          </div>
+                          <div className="flex gap-1 mt-0.5">
+                            {u.roles.includes('admin') && (
+                              <Badge variant="destructive" className="text-xs">
+                                Admin
+                              </Badge>
+                            )}
+                            {u.roles.includes('moderator') && (
+                              <Badge variant="secondary" className="text-xs bg-primary/20">
+                                <Shield className="h-3 w-3 mr-1" />
+                                Mod
+                              </Badge>
+                            )}
+                            {u.roles.length === 0 && (
+                              <span className="text-xs text-muted-foreground">
+                                {language === 'fr' ? 'Utilisateur' : 'User'}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -471,6 +510,7 @@ const ForumAdmin = () => {
                           size="sm"
                           onClick={() => handleToggleRole(u.id, 'moderator', u.roles.includes('moderator'))}
                           disabled={u.id === user?.id}
+                          className={u.roles.includes('moderator') ? 'bg-primary/20 hover:bg-primary/30' : 'border-border'}
                         >
                           <Shield className="h-3 w-3 mr-1" />
                           Mod
@@ -480,6 +520,7 @@ const ForumAdmin = () => {
                           size="sm"
                           onClick={() => handleToggleRole(u.id, 'admin', u.roles.includes('admin'))}
                           disabled={u.id === user?.id}
+                          className={!u.roles.includes('admin') ? 'border-border' : ''}
                         >
                           Admin
                         </Button>
