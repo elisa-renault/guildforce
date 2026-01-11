@@ -31,7 +31,7 @@ import {
 const ForumTopicPage = () => {
   const { topicId } = useParams<{ topicId: string }>();
   const navigate = useNavigate();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const { user } = useAuth();
   const locale = language === 'fr' ? fr : enUS;
 
@@ -188,7 +188,9 @@ const ForumTopicPage = () => {
               </h1>
             </div>
             <p className="text-sm text-muted-foreground">
-              {topic.category?.name}
+              {topic.category?.slug 
+                ? (t.forum.categoryNames[topic.category.slug as keyof typeof t.forum.categoryNames] || topic.category.name)
+                : topic.category?.name}
             </p>
           </div>
           {isAuthor && (
@@ -248,10 +250,6 @@ const ForumTopicPage = () => {
                   </span>
                 </div>
               </div>
-              <div className="prose prose-invert prose-sm max-w-none">
-                <ReactMarkdown>{topic.content}</ReactMarkdown>
-              </div>
-              {/* Topic reactions */}
               <div className="prose prose-invert prose-sm max-w-none">
                 <ReactMarkdown>{topic.content}</ReactMarkdown>
               </div>
