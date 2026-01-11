@@ -1,15 +1,18 @@
+import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Shield, User, LogOut, MessageSquare } from 'lucide-react';
+import { Shield, User, LogOut, MessageSquare, Menu, X } from 'lucide-react';
 import { CosmicButton } from '@/components/CosmicButton';
 import { NotificationBell } from '@/components/forum/NotificationBell';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 export const GlobalNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
   const { user, signOut } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Don't show nav on auth page
   if (location.pathname === '/auth') return null;
@@ -20,6 +23,52 @@ export const GlobalNav = () => {
   const navButtonBase = "inline-flex items-center justify-center gap-2 px-3 py-2 rounded text-sm font-normal transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background";
   const navButtonInactive = "text-muted-foreground hover:text-foreground hover:bg-white/5";
   const navButtonActive = "text-foreground bg-primary/20 ring-1 ring-primary/50";
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    setMobileMenuOpen(false);
+  };
+
+  const NavLinks = ({ mobile = false }: { mobile?: boolean }) => (
+    <>
+      <button
+        onClick={() => handleNavigation('/guilds')}
+        className={`${navButtonBase} ${mobile ? 'w-full justify-start' : ''} ${
+          isActive('/guilds') || startsWithPath('/guild/')
+            ? navButtonActive
+            : navButtonInactive
+        }`}
+        aria-current={isActive('/guilds') || startsWithPath('/guild/') ? 'page' : undefined}
+      >
+        <Shield className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+        <span>{t.common.myGuilds}</span>
+      </button>
+      <button
+        onClick={() => handleNavigation('/forum')}
+        className={`${navButtonBase} ${mobile ? 'w-full justify-start' : ''} ${
+          startsWithPath('/forum')
+            ? navButtonActive
+            : navButtonInactive
+        }`}
+        aria-current={startsWithPath('/forum') ? 'page' : undefined}
+      >
+        <MessageSquare className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+        <span>{t.forum.title}</span>
+      </button>
+      <button
+        onClick={() => handleNavigation('/profile')}
+        className={`${navButtonBase} ${mobile ? 'w-full justify-start' : ''} ${
+          isActive('/profile')
+            ? navButtonActive
+            : navButtonInactive
+        }`}
+        aria-current={isActive('/profile') ? 'page' : undefined}
+      >
+        <User className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+        <span>{t.profile.title}</span>
+      </button>
+    </>
+  );
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 glass-header" role="banner">
@@ -33,60 +82,61 @@ export const GlobalNav = () => {
           Guildforce
         </button>
 
-        {/* Center navigation - only when logged in */}
+        {/* Center navigation - Desktop only */}
         {user && (
-          <nav className="flex items-center gap-1" role="navigation" aria-label="Navigation principale">
-            <button
-              onClick={() => navigate('/guilds')}
-              className={`${navButtonBase} ${
-                isActive('/guilds') || startsWithPath('/guild/')
-                  ? navButtonActive
-                  : navButtonInactive
-              }`}
-              aria-current={isActive('/guilds') || startsWithPath('/guild/') ? 'page' : undefined}
-            >
-              <Shield className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
-              <span>{t.common.myGuilds}</span>
-            </button>
-            <button
-              onClick={() => navigate('/forum')}
-              className={`${navButtonBase} ${
-                startsWithPath('/forum')
-                  ? navButtonActive
-                  : navButtonInactive
-              }`}
-              aria-current={startsWithPath('/forum') ? 'page' : undefined}
-            >
-              <MessageSquare className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
-              <span>{t.forum.title}</span>
-            </button>
-            <button
-              onClick={() => navigate('/profile')}
-              className={`${navButtonBase} ${
-                isActive('/profile')
-                  ? navButtonActive
-                  : navButtonInactive
-              }`}
-              aria-current={isActive('/profile') ? 'page' : undefined}
-            >
-              <User className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
-              <span>{t.profile.title}</span>
-            </button>
+          <nav className="hidden md:flex items-center gap-1" role="navigation" aria-label="Navigation principale">
+            <NavLinks />
           </nav>
         )}
 
-        {/* Right side - notifications and auth */}
+        {/* Right side - notifications, auth, and mobile menu */}
         <div className="flex items-center gap-1" role="group" aria-label="Authentification">
           {user && <NotificationBell />}
           {user ? (
-            <button 
-              onClick={signOut} 
-              className={`${navButtonBase} ${navButtonInactive}`}
-              aria-label={t.common.logout}
-            >
-              <LogOut className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
-              <span className="hidden sm:inline">{t.common.logout}</span>
-            </button>
+            <>
+              <button 
+                onClick={signOut} 
+                className={`hidden sm:flex ${navButtonBase} ${navButtonInactive}`}
+                aria-label={t.common.logout}
+              >
+                <LogOut className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+                <span className="hidden sm:inline">{t.common.logout}</span>
+              </button>
+              
+              {/* Mobile menu */}
+              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <button 
+                    className={`md:hidden ${navButtonBase} ${navButtonInactive} p-2`}
+                    aria-label="Menu"
+                  >
+                    <Menu className="h-5 w-5" strokeWidth={1.5} />
+                  </button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[280px] bg-background border-border/50 p-0">
+                  <div className="flex flex-col h-full">
+                    <div className="p-4 border-b border-border/30">
+                      <span className="font-display text-lg text-foreground">Menu</span>
+                    </div>
+                    <nav className="flex flex-col gap-1 p-4">
+                      <NavLinks mobile />
+                    </nav>
+                    <div className="mt-auto p-4 border-t border-border/30">
+                      <button 
+                        onClick={() => {
+                          signOut();
+                          setMobileMenuOpen(false);
+                        }} 
+                        className={`w-full ${navButtonBase} ${navButtonInactive} justify-start`}
+                      >
+                        <LogOut className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+                        <span>{t.common.logout}</span>
+                      </button>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </>
           ) : (
             <CosmicButton 
               onClick={() => navigate('/auth')} 
