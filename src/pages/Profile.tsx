@@ -14,7 +14,7 @@ import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { BattleNetConnect } from '@/components/BattleNetConnect';
-import { GuildMemberships } from '@/components/GuildMemberships';
+
 import { User, Save, Globe, Loader2, Sparkles } from 'lucide-react';
 
 const Profile = () => {
@@ -337,10 +337,6 @@ const Profile = () => {
               </Form>
             </GlowCard>
 
-            {/* WoW Guild Memberships */}
-            <div>
-              <GuildMemberships />
-            </div>
           </div>
         </div>
       </main>
