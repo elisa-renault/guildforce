@@ -297,7 +297,7 @@ const GuildList = () => {
             </CosmicButton>
           </GlowCard>
         ) : (
-          <div className="flex flex-col gap-2 max-w-2xl mx-auto">
+          <div className="flex flex-col gap-2">
             {guilds.length > 0 ? (
               guilds.map((guild) => (
                 <div 
