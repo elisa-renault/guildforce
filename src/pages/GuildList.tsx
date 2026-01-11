@@ -305,7 +305,7 @@ const GuildList = () => {
               guilds.map((guild) => (
                 <div 
                   key={guild.id}
-                  className={`grid grid-cols-[auto_1fr_auto] md:grid-cols-[auto_1fr_auto_auto_auto] items-center gap-3 md:gap-6 px-4 py-3 rounded-lg border cursor-pointer transition-colors ${
+                  className={`grid grid-cols-[auto_1fr_auto] md:grid-cols-[auto_1fr_auto_auto] items-center gap-3 md:gap-6 px-4 py-3 rounded-lg border cursor-pointer transition-colors ${
                     guild.hasMain 
                       ? 'bg-primary/10 border-primary/30 hover:border-primary/50' 
                       : 'bg-card/50 border-border/50 hover:border-border hover:bg-card/80'
@@ -350,14 +350,6 @@ const GuildList = () => {
                     </div>
                   </div>
 
-                  {/* Faction - hidden on mobile */}
-                  <div className="hidden md:flex items-center gap-2">
-                    <span className={`text-sm font-medium ${
-                      guild.faction === 'horde' ? 'text-red-400' : 'text-blue-400'
-                    }`}>
-                      {guild.faction === 'horde' ? t.guild.horde : t.guild.alliance}
-                    </span>
-                  </div>
 
                   {/* Members - hidden on mobile */}
                   <div className="hidden md:flex items-center gap-1.5 text-sm text-muted-foreground min-w-[60px]">
