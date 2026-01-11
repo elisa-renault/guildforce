@@ -29,7 +29,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
         />
       </div>
       <Select value={filters.roleFilter} onValueChange={(v) => updateFilter('roleFilter', v)}>
-        <SelectTrigger className="h-8 w-full sm:w-[120px] text-sm cosmic-input">
+        <SelectTrigger className="h-8 w-full sm:w-[160px] text-sm cosmic-input">
           <SelectValue placeholder={t.dashboard.allRoles} />
         </SelectTrigger>
         <SelectContent className="cosmic-glass border-border/50">
@@ -40,7 +40,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
         </SelectContent>
       </Select>
       <Select value={filters.classFilter} onValueChange={(v) => updateFilter('classFilter', v)}>
-        <SelectTrigger className="h-8 w-full sm:w-[140px] text-sm cosmic-input">
+        <SelectTrigger className="h-8 w-full sm:w-[180px] text-sm cosmic-input">
           <SelectValue placeholder={t.dashboard.allClasses} />
         </SelectTrigger>
         <SelectContent className="cosmic-glass border-border/50">
