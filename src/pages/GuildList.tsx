@@ -20,13 +20,16 @@ interface GuildWithMembership {
 const GuildList = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const { user, profile } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const [guilds, setGuilds] = useState<GuildWithMembership[]>([]);
   const [loading, setLoading] = useState(true);
 
   const isConnected = !!profile?.battlenet_id;
 
   useEffect(() => {
+    // Wait for auth to finish loading before doing anything
+    if (authLoading) return;
+    
     if (!user) {
       navigate('/auth');
       return;
@@ -58,7 +61,17 @@ const GuildList = () => {
     };
 
     fetchGuilds();
-  }, [user, navigate]);
+  }, [authLoading, user, navigate]);
+
+  // Show loading while auth is initializing
+  if (authLoading || (loading && !user)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <CosmicBackground />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen relative pt-16">
