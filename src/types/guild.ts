@@ -67,6 +67,7 @@ export interface RangeStats {
 export interface RosterFilters {
   roleFilters: string[];
   classFilters: string[];
+  validationFilters: ValidationStatus[];
   searchQuery: string;
   filterMode: 'and' | 'or';
 }

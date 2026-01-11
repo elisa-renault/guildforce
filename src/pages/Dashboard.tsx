@@ -39,6 +39,7 @@ const Dashboard = () => {
   const [filters, setFilters] = useState<RosterFiltersType>({
     roleFilters: [],
     classFilters: [],
+    validationFilters: [],
     searchQuery: '',
     filterMode: 'or',
   });
@@ -428,6 +429,23 @@ const Dashboard = () => {
         // OR: at least one class must match
         const hasClass = m.wishes.some(w => filters.classFilters.includes(w.class_id));
         if (!hasClass) return false;
+      }
+    }
+
+    // Filter by validation status
+    if (filters.validationFilters.length > 0) {
+      if (isAndMode) {
+        // AND: all selected validation statuses must be present
+        const allStatusesPresent = filters.validationFilters.every(vs => 
+          m.wishes.some(w => (w.validation_status || 'pending') === vs)
+        );
+        if (!allStatusesPresent) return false;
+      } else {
+        // OR: at least one validation status must match
+        const hasStatus = m.wishes.some(w => 
+          filters.validationFilters.includes((w.validation_status || 'pending') as ValidationStatus)
+        );
+        if (!hasStatus) return false;
       }
     }
 
