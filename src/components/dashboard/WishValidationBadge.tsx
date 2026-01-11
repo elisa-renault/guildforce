@@ -122,7 +122,7 @@ export const WishValidationBadge = ({
                   config.color
                 )}>
                   <Icon className="h-3 w-3" />
-                  {!compact && <span>{config.label}</span>}
+                  {(!compact || status !== 'pending') && <span>{config.label}</span>}
                 </div>
               </TooltipTrigger>
               <TooltipContent side="top" className="text-xs">
@@ -146,7 +146,7 @@ export const WishValidationBadge = ({
             config.color
           )}>
             <Icon className="h-3 w-3" />
-            {!compact && <span>{config.label}</span>}
+            {(!compact || status !== 'pending') && <span>{config.label}</span>}
           </div>
         </TooltipTrigger>
         {validatedBy && (

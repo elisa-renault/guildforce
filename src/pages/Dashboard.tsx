@@ -339,7 +339,27 @@ const Dashboard = () => {
   // Validate a wish (GM only)
   const validateWish = async (userId: string, choiceIndex: number, status: ValidationStatus) => {
     if (!user || !guildId || !selectedRosterId || !isGM) return;
-    
+
+    // Optimistic UI update so the badge changes instantly
+    setMembers((prev) =>
+      prev.map((m) => {
+        if (m.id !== userId) return m;
+        return {
+          ...m,
+          wishes: m.wishes.map((w) =>
+            w.choice_index === choiceIndex
+              ? {
+                  ...w,
+                  validation_status: status,
+                  validated_by: status === 'pending' ? null : user.id,
+                  validated_at: status === 'pending' ? null : new Date().toISOString(),
+                }
+              : w
+          ),
+        };
+      })
+    );
+
     try {
       const { error } = await supabase
         .from('class_wishes')
@@ -352,10 +372,19 @@ const Dashboard = () => {
         .eq('roster_id', selectedRosterId)
         .eq('user_id', userId)
         .eq('choice_index', choiceIndex);
-      
+
       if (error) throw error;
-      
-      // Refresh wishes
+
+      toast({
+        title:
+          status === 'approved'
+            ? t.wishes.validation.approved
+            : status === 'rejected'
+              ? t.wishes.validation.rejected
+              : t.wishes.validation.pending,
+      });
+
+      // Refresh wishes to sync validated_by_username, timestamps, etc.
       await fetchWishes();
     } catch (error: any) {
       toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
