@@ -3,11 +3,17 @@ import { Role } from '@/data/wowClasses';
 /**
  * Represents a member's wish for a single choice
  */
+export type ValidationStatus = 'pending' | 'approved' | 'rejected';
+
 export interface WishChoice {
   choice_index: number;
   class_id: string;
   spec_ids: string[];
   comment: string | null;
+  validation_status?: ValidationStatus;
+  validated_by?: string | null;
+  validated_at?: string | null;
+  validated_by_username?: string | null;
 }
 
 /**
