@@ -14,13 +14,13 @@ import { toSlug, getGuildWishesPath } from '@/lib/guildSlug';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { serverSlug, guildSlug } = useParams();
+  const { regionSlug, serverSlug, guildSlug } = useParams();
   const { t, language } = useLanguage();
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [guildId, setGuildId] = useState<string | null>(null);
-  const [guild, setGuild] = useState<{ name: string; server: string; faction: string } | null>(null);
+  const [guild, setGuild] = useState<{ name: string; server: string; region: string; faction: string } | null>(null);
   const [members, setMembers] = useState<MemberWish[]>([]);
   const [isGM, setIsGM] = useState(false);
   const [filters, setFilters] = useState<RosterFiltersType>({
@@ -39,15 +39,17 @@ const Dashboard = () => {
   const [saving, setSaving] = useState(false);
 
   const fetchData = async () => {
-    if (!user || !serverSlug || !guildSlug) return;
+    if (!user || !regionSlug || !serverSlug || !guildSlug) return;
     
-    // First, find the guild by matching slugified server and name
+    // First, find the guild by matching slugified region, server and name
     const { data: allGuilds } = await supabase
       .from('guilds')
-      .select('id, name, server, faction');
+      .select('id, name, server, region, faction');
     
     const matchedGuild = allGuilds?.find(g => 
-      toSlug(g.server) === serverSlug && toSlug(g.name) === guildSlug
+      toSlug(g.region || 'eu') === regionSlug && 
+      toSlug(g.server) === serverSlug && 
+      toSlug(g.name) === guildSlug
     );
     
     if (!matchedGuild) {
@@ -57,7 +59,7 @@ const Dashboard = () => {
     
     const foundGuildId = matchedGuild.id;
     setGuildId(foundGuildId);
-    setGuild({ name: matchedGuild.name, server: matchedGuild.server, faction: matchedGuild.faction });
+    setGuild({ name: matchedGuild.name, server: matchedGuild.server, region: matchedGuild.region || 'eu', faction: matchedGuild.faction });
     
     // Check if user is a member of this guild
     const { data: membershipData, error: membershipError } = await supabase
@@ -111,12 +113,12 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    if (!user || !serverSlug || !guildSlug) {
+    if (!user || !regionSlug || !serverSlug || !guildSlug) {
       navigate('/auth');
       return;
     }
     fetchData();
-  }, [user, serverSlug, guildSlug, navigate]);
+  }, [user, regionSlug, serverSlug, guildSlug, navigate]);
 
   const toggleRow = (memberId: string) => {
     const newExpanded = new Set(expandedRows);
@@ -307,7 +309,7 @@ const Dashboard = () => {
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <h1 className="text-lg font-semibold text-foreground">{guild?.name}</h1>
           <div className="flex gap-2">
-            <CosmicButton size="sm" variant="outline" onClick={() => guild && navigate(getGuildWishesPath(guild.server, guild.name))} icon={<Sparkles className="h-4 w-4" strokeWidth={1.5} />}>
+            <CosmicButton size="sm" variant="outline" onClick={() => guild && navigate(getGuildWishesPath(guild.region, guild.server, guild.name))} icon={<Sparkles className="h-4 w-4" strokeWidth={1.5} />}>
               {t.wishes.title}
             </CosmicButton>
             {isGM && (
