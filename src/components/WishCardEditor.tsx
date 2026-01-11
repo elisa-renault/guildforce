@@ -78,7 +78,7 @@ export const WishCardEditor = ({ wish, onChange, usedClassIds = [] }: WishCardEd
           <Button
             variant="outline"
             className={cn(
-              "w-full lg:w-[180px] justify-between h-9 text-sm font-medium flex-shrink-0",
+              "w-full lg:w-[250px] justify-between h-9 text-sm font-medium flex-shrink-0",
               selectedClass 
                 ? "border-transparent" 
                 : "border-dashed border-muted-foreground/40 text-muted-foreground bg-card/50 hover:bg-card/80"
