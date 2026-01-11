@@ -31,8 +31,8 @@ const App = () => (
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/guilds" element={<GuildList />} />
                 <Route path="/profile" element={<Profile />} />
-                <Route path="/guild/:guildId" element={<Dashboard />} />
-                <Route path="/guild/:guildId/wishes" element={<Wishes />} />
+                <Route path="/guild/:serverSlug/:guildSlug" element={<Dashboard />} />
+                <Route path="/guild/:serverSlug/:guildSlug/wishes" element={<Wishes />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
