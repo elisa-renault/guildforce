@@ -435,7 +435,7 @@ const Dashboard = () => {
             )}
             {isGM && guild && (
               <CosmicButton size="sm" variant="outline" onClick={() => navigate(getGuildSettingsPath(guild.region, guild.server, guild.name))} icon={<Shield className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 md:h-8 px-2 md:px-3">
-                <span className="hidden md:inline">{t.guild.name}</span>
+                <span className="hidden md:inline">{language === 'fr' ? 'Guilde' : 'Guild'}</span>
               </CosmicButton>
             )}
           </div>
