@@ -56,7 +56,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
             variant="outline"
             size="sm"
             className={cn(
-              "h-8 w-full sm:w-[160px] justify-between gap-2 text-sm",
+              "h-8 w-full sm:w-[140px] justify-between gap-2 text-sm",
               selectedRole 
                 ? "border-border/60" 
                 : "border-border/40 text-muted-foreground"
@@ -68,12 +68,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
                 <span>{selectedRole.label[language]}</span>
               </span>
             ) : (
-              <span className="flex items-center gap-2">
-                <Shield className="h-4 w-4 opacity-50" />
-                <Heart className="h-4 w-4 opacity-50" />
-                <Swords className="h-4 w-4 opacity-50" />
-                <span className="ml-1">{t.dashboard.allRoles}</span>
-              </span>
+              <span>{t.dashboard.allRoles}</span>
             )}
             <ChevronDown className="h-3.5 w-3.5 opacity-50 flex-shrink-0" />
           </Button>
@@ -121,7 +116,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
             variant="outline"
             size="sm"
             className={cn(
-              "h-8 w-full sm:w-[220px] justify-between gap-2 text-sm",
+              "h-8 w-full sm:w-[180px] justify-between gap-2 text-sm",
               selectedClass 
                 ? "border-transparent" 
                 : "border-border/40 text-muted-foreground"
