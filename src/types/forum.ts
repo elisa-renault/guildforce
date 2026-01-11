@@ -79,6 +79,31 @@ export interface ForumReaction {
   created_at: string;
 }
 
+export interface ForumReport {
+  id: string;
+  reporter_id: string;
+  post_id: string | null;
+  topic_id: string | null;
+  reason: string;
+  details: string | null;
+  status: 'pending' | 'resolved' | 'dismissed';
+  created_at: string;
+  resolved_at: string | null;
+  resolved_by: string | null;
+  resolution_note: string | null;
+  reporter?: {
+    id: string;
+    username: string;
+    avatar_url: string | null;
+  };
+  post?: ForumPost | null;
+  topic?: ForumTopic | null;
+  resolver?: {
+    id: string;
+    username: string;
+  } | null;
+}
+
 // Available reaction types with their emojis
 export const REACTION_TYPES = {
   like: '👍',
@@ -97,3 +122,14 @@ export interface ReactionSummary {
   userReactions: ReactionType[];
   total: number;
 }
+
+// Report reasons
+export const REPORT_REASONS = {
+  spam: { fr: 'Spam', en: 'Spam' },
+  harassment: { fr: 'Harcèlement', en: 'Harassment' },
+  inappropriate: { fr: 'Contenu inapproprié', en: 'Inappropriate content' },
+  misinformation: { fr: 'Désinformation', en: 'Misinformation' },
+  other: { fr: 'Autre', en: 'Other' },
+} as const;
+
+export type ReportReason = keyof typeof REPORT_REASONS;
