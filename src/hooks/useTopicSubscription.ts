@@ -43,7 +43,7 @@ export function useTopicSubscription(topicId: string | null) {
     fetchSubscription();
   }, [fetchSubscription]);
 
-  const subscribe = useCallback(async (notifyReplies: boolean = true) => {
+  const subscribe = useCallback(async () => {
     if (!user || !topicId) return;
 
     try {
@@ -52,7 +52,7 @@ export function useTopicSubscription(topicId: string | null) {
         .upsert({
           user_id: user.id,
           topic_id: topicId,
-          notify_replies: notifyReplies,
+          notify_replies: true,
         }, {
           onConflict: 'user_id,topic_id',
         })
@@ -86,37 +86,12 @@ export function useTopicSubscription(topicId: string | null) {
     }
   }, [user, topicId, subscription]);
 
-  const toggleNotifications = useCallback(async () => {
-    if (!user || !topicId) return;
-
-    if (subscription) {
-      // Toggle notify_replies
-      const newValue = !subscription.notify_replies;
-      const { data, error } = await supabase
-        .from('forum_topic_subscriptions')
-        .update({ notify_replies: newValue })
-        .eq('user_id', user.id)
-        .eq('topic_id', topicId)
-        .select()
-        .single();
-
-      if (error) throw error;
-      setSubscription(data);
-      return data;
-    } else {
-      // Create subscription with notifications enabled
-      return subscribe(true);
-    }
-  }, [user, topicId, subscription, subscribe]);
-
   return {
     subscription,
     isSubscribed: !!subscription,
-    notificationsEnabled: subscription?.notify_replies ?? false,
     loading,
     subscribe,
     unsubscribe,
-    toggleNotifications,
     refetch: fetchSubscription,
   };
 }
