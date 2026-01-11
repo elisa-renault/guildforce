@@ -272,6 +272,26 @@ export interface Translations {
     topicDeleted: string;
     backToForum: string;
     backToCategory: string;
+    globalForum: string;
+    guildForum: string;
+    noCategory: string;
+    noTopicYet: string;
+    topicsCount: string;
+    by: string;
+    categoryNames: {
+      general: string;
+      recruitment: string;
+      guides: string;
+      trading: string;
+      'off-topic': string;
+    };
+    categoryDescriptions: {
+      general: string;
+      recruitment: string;
+      guides: string;
+      trading: string;
+      'off-topic': string;
+    };
   };
   // Errors
   errors: {
@@ -551,6 +571,26 @@ export const translations: Record<Language, Translations> = {
       topicDeleted: 'Topic deleted!',
       backToForum: 'Back to forum',
       backToCategory: 'Back to category',
+      globalForum: 'General Forum',
+      guildForum: 'Guild Forum',
+      noCategory: 'No category available',
+      noTopicYet: 'No topic',
+      topicsCount: 'topics',
+      by: 'by',
+      categoryNames: {
+        general: 'General',
+        recruitment: 'Recruitment',
+        guides: 'Guides & Tutorials',
+        trading: 'Trading',
+        'off-topic': 'Off-Topic',
+      },
+      categoryDescriptions: {
+        general: 'General discussions and news',
+        recruitment: 'Recruitment ads and applications',
+        guides: 'Guides, tutorials and strategies',
+        trading: 'Trades and commerce',
+        'off-topic': 'Off-topic discussions',
+      },
     },
     errors: {
       generic: 'Something went wrong. Please try again.',
@@ -827,6 +867,26 @@ export const translations: Record<Language, Translations> = {
       topicDeleted: 'Sujet supprimé !',
       backToForum: 'Retour au forum',
       backToCategory: 'Retour à la catégorie',
+      globalForum: 'Forum Général',
+      guildForum: 'Forum de Guilde',
+      noCategory: 'Aucune catégorie disponible',
+      noTopicYet: 'Aucun sujet',
+      topicsCount: 'sujets',
+      by: 'par',
+      categoryNames: {
+        general: 'Général',
+        recruitment: 'Recrutement',
+        guides: 'Guides & Tutoriels',
+        trading: 'Échanges',
+        'off-topic': 'Hors-sujet',
+      },
+      categoryDescriptions: {
+        general: 'Discussions générales et actualités',
+        recruitment: 'Annonces de recrutement et candidatures',
+        guides: 'Guides, tutoriels et stratégies',
+        trading: 'Échanges et commerce',
+        'off-topic': 'Discussions hors-sujet',
+      },
     },
     errors: {
       generic: 'Une erreur est survenue. Veuillez réessayer.',
