@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 const ForumCategory = () => {
   const { categorySlug } = useParams<{ categorySlug: string }>();
   const navigate = useNavigate();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const { user } = useAuth();
   const { categories, loading: categoriesLoading } = useForumCategories();
   const [page, setPage] = useState(1);
@@ -86,10 +86,12 @@ const ForumCategory = () => {
             <ArrowLeft className="h-4 w-4 text-muted-foreground" />
           </button>
           <div className="flex-1">
-            <h1 className="font-display text-2xl text-foreground">{category.name}</h1>
-            {category.description && (
-              <p className="text-sm text-muted-foreground">{category.description}</p>
-            )}
+            <h1 className="font-display text-2xl text-foreground">
+              {t.forum.categoryNames[category.slug as keyof typeof t.forum.categoryNames] || category.name}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {t.forum.categoryDescriptions[category.slug as keyof typeof t.forum.categoryDescriptions] || category.description}
+            </p>
           </div>
           {user && (
             <CosmicButton onClick={() => setShowNewTopicDialog(true)} icon={<Plus className="h-4 w-4" />}>
