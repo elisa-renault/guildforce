@@ -24,6 +24,8 @@ import {
   Trash2,
   History,
   RefreshCw,
+  PlusCircle,
+  Edit3,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
@@ -34,6 +36,9 @@ interface ActivityLogProps {
 
 const ACTION_ICONS: Record<ActionType, React.ReactNode> = {
   wish_validation: <CheckCircle2 className="h-4 w-4" />,
+  wish_created: <PlusCircle className="h-4 w-4" />,
+  wish_updated: <Edit3 className="h-4 w-4" />,
+  wish_deleted: <Trash2 className="h-4 w-4" />,
   member_joined: <UserPlus className="h-4 w-4" />,
   roster_created: <FileText className="h-4 w-4" />,
   roster_updated: <Pencil className="h-4 w-4" />,
@@ -42,7 +47,10 @@ const ACTION_ICONS: Record<ActionType, React.ReactNode> = {
 
 const ACTION_COLORS: Record<ActionType, string> = {
   wish_validation: 'bg-primary/20 text-primary',
-  member_joined: 'bg-emerald-500/20 text-emerald-400',
+  wish_created: 'bg-emerald-500/20 text-emerald-400',
+  wish_updated: 'bg-amber-500/20 text-amber-400',
+  wish_deleted: 'bg-red-500/20 text-red-400',
+  member_joined: 'bg-cyan-500/20 text-cyan-400',
   roster_created: 'bg-blue-500/20 text-blue-400',
   roster_updated: 'bg-amber-500/20 text-amber-400',
   roster_deleted: 'bg-red-500/20 text-red-400',
@@ -58,6 +66,9 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
   const getActionLabel = (actionType: ActionType): string => {
     const labels: Record<ActionType, { en: string; fr: string }> = {
       wish_validation: { en: 'Validation', fr: 'Validation' },
+      wish_created: { en: 'Wish Created', fr: 'Vœu créé' },
+      wish_updated: { en: 'Wish Updated', fr: 'Vœu modifié' },
+      wish_deleted: { en: 'Wish Deleted', fr: 'Vœu supprimé' },
       member_joined: { en: 'Member Joined', fr: 'Nouveau membre' },
       roster_created: { en: 'Roster Created', fr: 'Roster créé' },
       roster_updated: { en: 'Roster Updated', fr: 'Roster modifié' },
@@ -120,6 +131,113 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
               <span className={newStatus === 'approved' ? 'text-emerald-400' : newStatus === 'rejected' ? 'text-red-400' : 'text-amber-400'}>
                 {getValidationStatusLabel(newStatus)}
               </span>
+            </div>
+          </div>
+        );
+      }
+
+      case 'wish_created': {
+        const classData = getClassById(details.class_id as string);
+        const specIds = (details.spec_ids as string[]) || [];
+        const specs = specIds.map(id => getSpecById(id)).filter(Boolean);
+
+        return (
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <span className="font-medium">{log.target_user_profile?.username || 'Unknown'}</span>
+              <span className="text-muted-foreground text-sm">
+                {language === 'fr' ? 'a ajouté un vœu' : 'added a wish'}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              {classData && (
+                <Badge variant="outline" className={`bg-${classData.color}/20`}>
+                  {classData.name[language]}
+                </Badge>
+              )}
+              {specs.length > 0 && (
+                <span className="text-muted-foreground">
+                  ({specs.map(s => s?.name[language]).join(', ')})
+                </span>
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      case 'wish_updated': {
+        const oldClassData = getClassById(details.old_class_id as string);
+        const newClassData = getClassById(details.new_class_id as string);
+        const oldSpecIds = (details.old_spec_ids as string[]) || [];
+        const newSpecIds = (details.new_spec_ids as string[]) || [];
+        const oldSpecs = oldSpecIds.map(id => getSpecById(id)).filter(Boolean);
+        const newSpecs = newSpecIds.map(id => getSpecById(id)).filter(Boolean);
+        const classChanged = details.old_class_id !== details.new_class_id;
+
+        return (
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <span className="font-medium">{log.target_user_profile?.username || 'Unknown'}</span>
+              <span className="text-muted-foreground text-sm">
+                {language === 'fr' ? 'a modifié un vœu' : 'updated a wish'}
+              </span>
+            </div>
+            {classChanged ? (
+              <div className="flex items-center gap-2 text-sm">
+                {oldClassData && (
+                  <Badge variant="outline" className={`bg-${oldClassData.color}/20 opacity-50`}>
+                    {oldClassData.name[language]}
+                  </Badge>
+                )}
+                <span className="text-muted-foreground">→</span>
+                {newClassData && (
+                  <Badge variant="outline" className={`bg-${newClassData.color}/20`}>
+                    {newClassData.name[language]}
+                  </Badge>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-sm">
+                {newClassData && (
+                  <Badge variant="outline" className={`bg-${newClassData.color}/20`}>
+                    {newClassData.name[language]}
+                  </Badge>
+                )}
+                {newSpecs.length > 0 && (
+                  <span className="text-muted-foreground">
+                    ({newSpecs.map(s => s?.name[language]).join(', ')})
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      case 'wish_deleted': {
+        const classData = getClassById(details.class_id as string);
+        const specIds = (details.spec_ids as string[]) || [];
+        const specs = specIds.map(id => getSpecById(id)).filter(Boolean);
+
+        return (
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <span className="font-medium">{log.target_user_profile?.username || 'Unknown'}</span>
+              <span className="text-muted-foreground text-sm">
+                {language === 'fr' ? 'a supprimé un vœu' : 'deleted a wish'}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              {classData && (
+                <Badge variant="outline" className={`bg-${classData.color}/20 opacity-50`}>
+                  {classData.name[language]}
+                </Badge>
+              )}
+              {specs.length > 0 && (
+                <span className="text-muted-foreground opacity-50">
+                  ({specs.map(s => s?.name[language]).join(', ')})
+                </span>
+              )}
             </div>
           </div>
         );
@@ -203,6 +321,15 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
             <SelectContent className="bg-card border-border">
               <SelectItem value="all">
                 {language === 'fr' ? 'Tout' : 'All'}
+              </SelectItem>
+              <SelectItem value="wish_created">
+                {language === 'fr' ? 'Vœux créés' : 'Wishes Created'}
+              </SelectItem>
+              <SelectItem value="wish_updated">
+                {language === 'fr' ? 'Vœux modifiés' : 'Wishes Updated'}
+              </SelectItem>
+              <SelectItem value="wish_deleted">
+                {language === 'fr' ? 'Vœux supprimés' : 'Wishes Deleted'}
               </SelectItem>
               <SelectItem value="wish_validation">
                 {language === 'fr' ? 'Validations' : 'Validations'}
