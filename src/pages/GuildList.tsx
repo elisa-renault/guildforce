@@ -99,7 +99,7 @@ const GuildList = () => {
                 <GlowCard 
                   key={guild.id}
                   className="p-6 cursor-pointer hover:border-primary/50"
-                  onClick={() => navigate(guild.role === 'gm' ? `/guild/${guild.id}` : `/guild/${guild.id}/wishes`)}
+                  onClick={() => navigate(`/guild/${guild.id}`)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
