@@ -169,7 +169,7 @@ export const InlineWishEditor = ({ wish, choiceIndex, onChange }: InlineWishEdit
             </PopoverContent>
           </Popover>
         ) : (
-          <div className="flex-1" />
+          <div className="h-6 flex-1 rounded-md border border-dashed border-muted-foreground/20 bg-transparent" />
         )}
 
         {/* Comment Button */}
