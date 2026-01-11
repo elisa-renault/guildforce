@@ -67,16 +67,16 @@ export const WishCardEditor = ({ wish, onChange, usedClassIds = [] }: WishCardEd
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[250px_1fr_1fr] gap-4 lg:gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-[200px_1fr_1fr] gap-3 lg:gap-4">
       {/* Class Selector */}
       <div>
-        <Label className="text-foreground mb-2 block text-sm">{t.wishes.selectClass}</Label>
+        <Label className="text-muted-foreground mb-1.5 block text-xs">{t.wishes.selectClass}</Label>
         <Popover open={classOpen} onOpenChange={setClassOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
               className={cn(
-                "w-full justify-between h-10 text-sm font-medium",
+                "w-full justify-between h-9 text-sm font-medium",
                 selectedClass 
                   ? "border-transparent" 
                   : "border-dashed border-muted-foreground/40 text-muted-foreground bg-card/50 hover:bg-card/80"
@@ -121,14 +121,14 @@ export const WishCardEditor = ({ wish, onChange, usedClassIds = [] }: WishCardEd
 
       {/* Spec Selector */}
       <div>
-        <Label className="text-foreground mb-2 block text-sm">{t.wishes.selectSpecs}</Label>
+        <Label className="text-muted-foreground mb-1.5 block text-xs">{t.wishes.selectSpecs}</Label>
         {selectedClass ? (
           <Popover open={specOpen} onOpenChange={setSpecOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
                 className={cn(
-                  "w-full justify-between h-10 text-sm bg-card/50 hover:bg-card/80",
+                  "w-full justify-between h-9 text-sm bg-card/50 hover:bg-card/80",
                   selectedSpecs.length > 0
                     ? "border-border"
                     : "border-dashed border-muted-foreground/40 text-muted-foreground"
@@ -189,7 +189,7 @@ export const WishCardEditor = ({ wish, onChange, usedClassIds = [] }: WishCardEd
             </PopoverContent>
           </Popover>
         ) : (
-          <div className="h-10 w-full rounded-md border border-dashed border-muted-foreground/20 bg-card/30 flex items-center justify-center gap-2">
+          <div className="h-9 w-full rounded-md border border-dashed border-muted-foreground/20 bg-card/30 flex items-center justify-center gap-2">
             <Shield className="h-4 w-4 text-muted-foreground/30" />
             <Heart className="h-4 w-4 text-muted-foreground/30" />
             <Swords className="h-4 w-4 text-muted-foreground/30" />
@@ -199,12 +199,12 @@ export const WishCardEditor = ({ wish, onChange, usedClassIds = [] }: WishCardEd
 
       {/* Comment */}
       <div>
-        <Label className="text-foreground mb-2 block text-sm">{t.wishes.comment}</Label>
+        <Label className="text-muted-foreground mb-1.5 block text-xs">{t.wishes.comment}</Label>
         <Textarea
           placeholder={t.wishes.commentPlaceholder}
           value={wish.comment}
           onChange={(e) => onChange('comment', e.target.value)}
-          className="cosmic-input h-10 min-h-[40px] resize-none py-2"
+          className="cosmic-input h-9 min-h-[36px] resize-none py-2"
         />
       </div>
     </div>
