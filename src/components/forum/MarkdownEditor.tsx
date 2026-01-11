@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -6,9 +6,10 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Bold, Italic, Link, List, ListOrdered, Quote, Code, 
   Eye, Edit3, Heading1, Heading2, Heading3, Strikethrough,
-  Image, Table, Minus, CheckSquare
+  Image, Table, Minus, CheckSquare, AtSign
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import { MentionAutocomplete, renderMentions } from './MentionAutocomplete';
 
 interface MarkdownEditorProps {
   value: string;
@@ -20,7 +21,13 @@ interface MarkdownEditorProps {
 export const MarkdownEditor = ({ value, onChange, placeholder, minHeight = '150px' }: MarkdownEditorProps) => {
   const [activeTab, setActiveTab] = useState<'write' | 'preview'>('write');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const editorContainerRef = useRef<HTMLDivElement>(null);
   const { language } = useLanguage();
+  
+  // Mention autocomplete state
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  const [mentionPosition, setMentionPosition] = useState({ top: 0, left: 0 });
+  const [mentionStartPos, setMentionStartPos] = useState<number>(0);
 
   const insertMarkdown = (before: string, after: string = '', newLine: boolean = false) => {
     const textarea = textareaRef.current;
@@ -85,12 +92,72 @@ export const MarkdownEditor = ({ value, onChange, placeholder, minHeight = '150p
         { icon: Link, action: () => insertMarkdown('[', '](https://)'), title: language === 'fr' ? 'Lien' : 'Link' },
         { icon: Image, action: () => insertMarkdown('![alt](', ')'), title: language === 'fr' ? 'Image' : 'Image' },
         { icon: Table, action: insertTable, title: language === 'fr' ? 'Tableau' : 'Table' },
+        { icon: AtSign, action: () => insertMarkdown('@'), title: language === 'fr' ? 'Mention' : 'Mention' },
       ]
     },
   ];
 
+  // Handle mention detection
+  const handleTextChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value;
+    onChange(newValue);
+    
+    const textarea = e.target;
+    const cursorPos = textarea.selectionStart;
+    const textBeforeCursor = newValue.substring(0, cursorPos);
+    
+    // Check if we're typing a mention
+    const mentionMatch = textBeforeCursor.match(/@(\w*)$/);
+    
+    if (mentionMatch) {
+      const query = mentionMatch[1];
+      setMentionQuery(query);
+      setMentionStartPos(cursorPos - query.length - 1); // -1 for @
+      
+      // Calculate position for dropdown
+      if (editorContainerRef.current && textarea) {
+        // Approximate position based on cursor
+        const lineHeight = 20;
+        const lines = textBeforeCursor.split('\n');
+        const currentLineNumber = lines.length;
+        const currentLineLength = lines[lines.length - 1].length;
+        
+        setMentionPosition({
+          top: currentLineNumber * lineHeight + 40, // offset for toolbar
+          left: Math.min(currentLineLength * 8, 200), // approximate char width
+        });
+      }
+    } else {
+      setMentionQuery(null);
+    }
+  }, [onChange]);
+
+  const handleMentionSelect = useCallback((username: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    
+    // Replace the @query with @username
+    const before = value.substring(0, mentionStartPos);
+    const after = value.substring(textarea.selectionStart);
+    const newValue = before + '@' + username + ' ' + after;
+    
+    onChange(newValue);
+    setMentionQuery(null);
+    
+    // Move cursor after the mention
+    setTimeout(() => {
+      const newPos = mentionStartPos + username.length + 2; // +2 for @ and space
+      textarea.focus();
+      textarea.setSelectionRange(newPos, newPos);
+    }, 0);
+  }, [value, mentionStartPos, onChange]);
+
+  const handleCloseMention = useCallback(() => {
+    setMentionQuery(null);
+  }, []);
+
   return (
-    <div className="border border-border rounded-lg overflow-hidden bg-card">
+    <div ref={editorContainerRef} className="relative border border-border rounded-lg overflow-hidden bg-card">
       <div className="flex items-center justify-between border-b border-border px-2 py-1.5 bg-muted/30 flex-wrap gap-1">
         <div className="flex items-center gap-0.5 flex-wrap">
           {toolbarGroups.map((group, groupIndex) => (
@@ -129,14 +196,24 @@ export const MarkdownEditor = ({ value, onChange, placeholder, minHeight = '150p
       </div>
 
       {activeTab === 'write' ? (
-        <Textarea
-          ref={textareaRef}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className="border-0 rounded-none focus-visible:ring-0 resize-none font-mono text-sm"
-          style={{ minHeight }}
-        />
+        <div className="relative">
+          <Textarea
+            ref={textareaRef}
+            value={value}
+            onChange={handleTextChange}
+            placeholder={placeholder}
+            className="border-0 rounded-none focus-visible:ring-0 resize-none font-mono text-sm"
+            style={{ minHeight }}
+          />
+          {mentionQuery !== null && (
+            <MentionAutocomplete
+              query={mentionQuery}
+              position={mentionPosition}
+              onSelect={handleMentionSelect}
+              onClose={handleCloseMention}
+            />
+          )}
+        </div>
       ) : (
         <div 
           className="prose prose-invert prose-sm max-w-none p-4 overflow-auto"
@@ -174,11 +251,22 @@ export const MarkdownEditor = ({ value, onChange, placeholder, minHeight = '150p
                     {children}
                   </pre>
                 ),
-                a: ({ href, children }) => (
-                  <a href={href} className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
-                    {children}
-                  </a>
-                ),
+                a: ({ href, children }) => {
+                  // Check if this is a mention (rendered from @username)
+                  const childText = String(children);
+                  if (childText.startsWith('@')) {
+                    return (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-primary/20 text-primary font-medium text-sm">
+                        {children}
+                      </span>
+                    );
+                  }
+                  return (
+                    <a href={href} className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
+                      {children}
+                    </a>
+                  );
+                },
                 hr: () => <hr className="border-border my-4" />,
                 table: ({ children }) => (
                   <div className="overflow-x-auto my-2">

@@ -3,6 +3,7 @@ export { DynamicIcon } from './DynamicIcon';
 export { ForumPost } from './ForumPost';
 export { ForumTopicList } from './ForumTopicList';
 export { MarkdownEditor } from './MarkdownEditor';
+export { MentionAutocomplete, renderMentions } from './MentionAutocomplete';
 export { ReactionPicker } from './ReactionPicker';
 export { UserRoleBadge } from './UserRoleBadge';
 export { ReportDialog } from './ReportDialog';
