@@ -37,9 +37,9 @@ const ForumTopicPage = () => {
   const { user } = useAuth();
   const locale = language === 'fr' ? fr : enUS;
 
-  const { topic, loading: topicLoading, refetch: refetchTopic } = useForumTopic(topicId || null);
+  const { topic, loading: topicLoading, refetch: refetchTopic, refreshReactions: refreshTopicReactions } = useForumTopic(topicId || null);
   const [page, setPage] = useState(1);
-  const { posts, totalCount, loading: postsLoading, refetch: refetchPosts } = useForumPosts(topicId || null, page);
+  const { posts, totalCount, loading: postsLoading, refetch: refetchPosts, refreshPostReactions } = useForumPosts(topicId || null, page);
   const { createPost, updatePost, deletePost, deleteTopic, updateTopic, toggleReaction } = useForumActions();
 
   const [replyContent, setReplyContent] = useState('');
@@ -147,7 +147,7 @@ const ForumTopicPage = () => {
     }
   };
 
-  // Subscribe to realtime reaction updates
+  // Subscribe to realtime reaction updates (without triggering full reloads)
   useEffect(() => {
     if (!topicId) return;
 
@@ -161,9 +161,19 @@ const ForumTopicPage = () => {
           table: 'forum_reactions',
         },
         (payload) => {
-          // Refetch data when reactions change
-          refetchTopic();
-          refetchPosts();
+          const next = payload.new as { topic_id?: string | null; post_id?: string | null } | null;
+          const prev = payload.old as { topic_id?: string | null; post_id?: string | null } | null;
+
+          const changedTopicId = (next?.topic_id ?? prev?.topic_id) || null;
+          const changedPostId = (next?.post_id ?? prev?.post_id) || null;
+
+          if (changedTopicId && changedTopicId === topicId) {
+            refreshTopicReactions();
+          }
+
+          if (changedPostId) {
+            refreshPostReactions(changedPostId);
+          }
         }
       )
       .subscribe();
@@ -171,7 +181,7 @@ const ForumTopicPage = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [topicId, refetchTopic, refetchPosts]);
+  }, [topicId, refreshTopicReactions, refreshPostReactions]);
 
   if (topicLoading) {
     return (
