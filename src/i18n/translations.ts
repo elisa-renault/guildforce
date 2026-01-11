@@ -301,6 +301,21 @@ export interface Translations {
       bugs: string;
     };
   };
+  // Activity Log
+  activityLog: {
+    title: string;
+    all: string;
+    validations: string;
+    members: string;
+    rostersCreated: string;
+    rostersUpdated: string;
+    rostersDeleted: string;
+    noActivity: string;
+    joinedGuild: string;
+    newRoster: string;
+    updated: string;
+    deleted: string;
+  };
   // Errors
   errors: {
     generic: string;
@@ -608,6 +623,20 @@ export const translations: Record<Language, Translations> = {
         bugs: 'Report bugs and technical issues',
       },
     },
+    activityLog: {
+      title: 'Activity Log',
+      all: 'All',
+      validations: 'Validations',
+      members: 'Members',
+      rostersCreated: 'Rosters Created',
+      rostersUpdated: 'Rosters Updated',
+      rostersDeleted: 'Rosters Deleted',
+      noActivity: 'No activity yet',
+      joinedGuild: 'joined the guild',
+      newRoster: 'New roster:',
+      updated: 'updated',
+      deleted: 'deleted',
+    },
     errors: {
       generic: 'Something went wrong. Please try again.',
       network: 'Network error. Please check your connection.',
@@ -911,6 +940,20 @@ export const translations: Record<Language, Translations> = {
         general: 'Discussions générales sur Guildforce et le jeu',
         bugs: 'Signaler des bugs et problèmes techniques',
       },
+    },
+    activityLog: {
+      title: 'Journal d\'activité',
+      all: 'Tout',
+      validations: 'Validations',
+      members: 'Membres',
+      rostersCreated: 'Rosters créés',
+      rostersUpdated: 'Rosters modifiés',
+      rostersDeleted: 'Rosters supprimés',
+      noActivity: 'Aucune activité',
+      joinedGuild: 'a rejoint la guilde',
+      newRoster: 'Nouveau roster :',
+      updated: 'modifié',
+      deleted: 'supprimé',
     },
     errors: {
       generic: 'Une erreur est survenue. Veuillez réessayer.',
