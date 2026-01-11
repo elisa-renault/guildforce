@@ -300,8 +300,8 @@ const Dashboard = () => {
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <h1 className="text-lg font-semibold text-foreground">{guild?.name}</h1>
           <div className="flex gap-2">
-            <CosmicButton size="sm" variant="outline" onClick={() => navigate(`/guild/${guildId}/wishes`)}>
-              <Sparkles className="h-4 w-4 mr-2" strokeWidth={1.5} /> {t.wishes.title}
+            <CosmicButton size="sm" variant="outline" onClick={() => navigate(`/guild/${guildId}/wishes`)} className="whitespace-nowrap">
+              <Sparkles className="h-4 w-4 mr-2 shrink-0" strokeWidth={1.5} /> {t.wishes.title}
             </CosmicButton>
             {isGM && (
               <CosmicButton size="sm" onClick={exportCSV}>
