@@ -100,12 +100,12 @@ export const RosterTable = ({
         <Table>
           <TableHeader>
             <TableRow className="border-border/30 hover:bg-transparent">
-              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3">{t.dashboard.player}</TableHead>
-              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3">{t.wishes.status}</TableHead>
+              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3 w-[100px] md:w-[120px]">{t.dashboard.player}</TableHead>
+              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3 w-[80px] md:w-[100px]">{t.wishes.status}</TableHead>
               <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3"><span className="hidden md:inline">{t.dashboard.firstChoice}</span><span className="md:hidden">#1</span></TableHead>
               <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3"><span className="hidden md:inline">{t.dashboard.secondChoice}</span><span className="md:hidden">#2</span></TableHead>
               <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3"><span className="hidden md:inline">{t.dashboard.thirdChoice}</span><span className="md:hidden">#3</span></TableHead>
-              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3 w-[80px] md:w-[100px]"></TableHead>
+              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3 w-[70px] md:w-[90px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
