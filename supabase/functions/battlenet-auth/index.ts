@@ -10,9 +10,42 @@ const BATTLENET_CLIENT_SECRET = Deno.env.get('BATTLENET_CLIENT_SECRET')!;
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-// Battle.net OAuth URLs (EU region)
+// Battle.net OAuth URL (same for all regions)
 const BATTLENET_OAUTH_URL = 'https://oauth.battle.net';
-const BATTLENET_API_URL = 'https://eu.api.blizzard.com';
+
+// Battle.net API URLs per region
+type BattleNetRegion = 'eu' | 'us' | 'kr' | 'tw';
+
+const BATTLENET_API_URLS: Record<BattleNetRegion, string> = {
+  eu: 'https://eu.api.blizzard.com',
+  us: 'https://us.api.blizzard.com',
+  kr: 'https://kr.api.blizzard.com',
+  tw: 'https://tw.api.blizzard.com',
+};
+
+const BATTLENET_NAMESPACES: Record<BattleNetRegion, string> = {
+  eu: 'profile-eu',
+  us: 'profile-us',
+  kr: 'profile-kr',
+  tw: 'profile-tw',
+};
+
+const BATTLENET_LOCALES: Record<BattleNetRegion, string> = {
+  eu: 'en_GB',
+  us: 'en_US',
+  kr: 'ko_KR',
+  tw: 'zh_TW',
+};
+
+/**
+ * Validate and return a valid region, defaulting to 'eu'
+ */
+function getValidRegion(region: string | undefined): BattleNetRegion {
+  if (region && ['eu', 'us', 'kr', 'tw'].includes(region.toLowerCase())) {
+    return region.toLowerCase() as BattleNetRegion;
+  }
+  return 'eu';
+}
 
 // ============================================================================
 // LOGGING UTILITIES
@@ -133,6 +166,7 @@ interface GuildInfo {
   server: string;
   serverSlug: string;
   faction: string;
+  region: BattleNetRegion;
   isGM: boolean;
 }
 
@@ -172,16 +206,17 @@ Deno.serve(async (req) => {
   try {
     // Generate OAuth URL for frontend to redirect to
     if (path === 'auth-url' && req.method === 'POST') {
-      const { redirectUri, state, mode } = await req.json();
+      const { redirectUri, state, mode, region: requestedRegion } = await req.json();
+      const region = getValidRegion(requestedRegion);
       
       const authUrl = new URL(`${BATTLENET_OAUTH_URL}/authorize`);
       authUrl.searchParams.set('client_id', BATTLENET_CLIENT_ID);
       authUrl.searchParams.set('redirect_uri', redirectUri);
       authUrl.searchParams.set('response_type', 'code');
       authUrl.searchParams.set('scope', 'wow.profile openid');
-      authUrl.searchParams.set('state', JSON.stringify({ state, mode }));
+      authUrl.searchParams.set('state', JSON.stringify({ state, mode, region }));
 
-      log.debug('Generated auth URL for redirect');
+      log.debug(`Generated auth URL for redirect (region: ${region})`);
 
       return new Response(JSON.stringify({ authUrl: authUrl.toString() }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -190,9 +225,10 @@ Deno.serve(async (req) => {
 
     // Handle Battle.net login/signup (no existing Supabase session)
     if (path === 'login' && req.method === 'POST') {
-      const { code, redirectUri } = await req.json();
+      const { code, redirectUri, region: requestedRegion } = await req.json();
+      const region = getValidRegion(requestedRegion);
 
-      log.info('Battle.net login - exchanging code for token...');
+      log.info(`Battle.net login (${region.toUpperCase()}) - exchanging code for token...`);
 
       // Exchange code for token
       const tokenResponse = await fetch(`${BATTLENET_OAUTH_URL}/token`, {
@@ -372,7 +408,7 @@ Deno.serve(async (req) => {
       }
 
       // Fetch and store WoW characters
-      await fetchAndStoreCharacters(supabase, tokenData.access_token, userId);
+      await fetchAndStoreCharacters(supabase, tokenData.access_token, userId, region);
 
       // Generate magic link for session
       const { data: magicLinkData, error: magicLinkError } = await supabase.auth.admin.generateLink({
@@ -393,6 +429,7 @@ Deno.serve(async (req) => {
         tokenType: 'magiclink',
         isNewUser,
         battletag: userInfo.battletag,
+        region,
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -408,9 +445,10 @@ Deno.serve(async (req) => {
         });
       }
 
-      const { code, redirectUri } = await req.json();
+      const { code, redirectUri, region: requestedRegion } = await req.json();
+      const region = getValidRegion(requestedRegion);
 
-      log.info('Battle.net link callback - exchanging code for token...');
+      log.info(`Battle.net link callback (${region.toUpperCase()}) - exchanging code for token...`);
 
       // Exchange code for token
       const tokenResponse = await fetch(`${BATTLENET_OAUTH_URL}/token`, {
@@ -530,7 +568,7 @@ Deno.serve(async (req) => {
       }
 
       // Fetch and store WoW characters
-      await fetchAndStoreCharacters(supabase, tokenData.access_token, user.id);
+      await fetchAndStoreCharacters(supabase, tokenData.access_token, user.id, region);
 
       return new Response(JSON.stringify({
         success: true,
@@ -604,13 +642,18 @@ Deno.serve(async (req) => {
  * @param supabase - Supabase client with service role key
  * @param accessToken - Battle.net OAuth access token
  * @param userId - Supabase user ID to associate characters with
+ * @param region - Battle.net region (eu, us, kr, tw)
  */
-async function fetchAndStoreCharacters(supabase: any, accessToken: string, userId: string) {
+async function fetchAndStoreCharacters(supabase: any, accessToken: string, userId: string, region: BattleNetRegion = 'eu') {
   try {
-    log.info('Fetching WoW profile from Battle.net API...');
+    const apiUrl = BATTLENET_API_URLS[region];
+    const namespace = BATTLENET_NAMESPACES[region];
+    const locale = BATTLENET_LOCALES[region];
+    
+    log.info(`Fetching WoW profile from Battle.net API (${region.toUpperCase()})...`);
     
     const wowProfileResponse = await fetch(
-      `${BATTLENET_API_URL}/profile/user/wow?namespace=profile-eu&locale=en_GB`,
+      `${apiUrl}/profile/user/wow?namespace=${namespace}&locale=${locale}`,
       {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -710,7 +753,7 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
     // Fetch character details to get guild info
     for (const char of maxLevelChars) {
       try {
-        const charDetailUrl = `${BATTLENET_API_URL}/profile/wow/character/${char.realmSlug.toLowerCase()}/${char.name.toLowerCase()}?namespace=profile-eu&locale=en_GB`;
+        const charDetailUrl = `${apiUrl}/profile/wow/character/${char.realmSlug.toLowerCase()}/${char.name.toLowerCase()}?namespace=${namespace}&locale=${locale}`;
         
         const charDetailResponse = await fetch(charDetailUrl, {
           headers: { 'Authorization': `Bearer ${accessToken}` },
@@ -766,7 +809,7 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
     for (const [guildKey, guildInfo] of guildsToCheck) {
       try {
         const guildSlug = guildInfo.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-        const rosterUrl = `${BATTLENET_API_URL}/data/wow/guild/${guildInfo.realmSlug}/${encodeURIComponent(guildSlug)}/roster?namespace=profile-eu&locale=en_GB`;
+        const rosterUrl = `${apiUrl}/data/wow/guild/${guildInfo.realmSlug}/${encodeURIComponent(guildSlug)}/roster?namespace=${namespace}&locale=${locale}`;
         
         log.debug(`Fetching roster for guild: ${guildInfo.name}`);
         
@@ -841,7 +884,7 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
         guild_realm: gm.guildRealm,
         guild_realm_slug: gm.guildRealmSlug,
         guild_faction: gm.guildFaction,
-        guild_region: 'eu', // EU region for Battle.net EU OAuth
+        guild_region: region,
         rank_index: gm.rankIndex,
         rank_name: gm.rankName,
       }));
@@ -861,7 +904,7 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
         }
       }
 
-      await autoJoinGuilds(supabase, userId, guildMemberships);
+      await autoJoinGuilds(supabase, userId, guildMemberships, region);
     }
 
   } catch (error) {
@@ -938,11 +981,13 @@ async function cleanupLeftGuilds(
  * @param supabase - Supabase client
  * @param userId - User ID to process guilds for
  * @param guildMemberships - Array of guild membership data from WoW
+ * @param region - Battle.net region
  */
 async function autoJoinGuilds(
   supabase: any,
   userId: string,
-  guildMemberships: GuildMembershipData[]
+  guildMemberships: GuildMembershipData[],
+  region: BattleNetRegion = 'eu'
 ) {
   try {
     // Group memberships by unique guild
@@ -959,6 +1004,7 @@ async function autoJoinGuilds(
           server: membership.guildRealm,
           serverSlug: membership.guildRealmSlug,
           faction: membership.guildFaction.toLowerCase() === 'horde' ? 'horde' : 'alliance',
+          region,
           isGM,
         });
       } else if (isGM && !existing.isGM) {
@@ -1033,7 +1079,7 @@ async function autoJoinGuilds(
             .insert({
               name: guildInfo.name,
               server: guildInfo.server,
-              region: 'eu', // EU region for Battle.net EU OAuth
+              region: guildInfo.region,
               faction: guildInfo.faction,
               owner_id: guildInfo.isGM ? userId : null,
               created_by_user_id: userId,
