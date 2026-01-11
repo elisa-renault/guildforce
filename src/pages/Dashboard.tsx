@@ -183,6 +183,12 @@ const Dashboard = () => {
     setEditWishes(updated);
   };
 
+  const clearWish = (index: number) => {
+    const updated = [...editWishes];
+    updated[index] = { classId: '', specIds: [], comment: '' };
+    setEditWishes(updated);
+  };
+
   const cancelEditing = () => {
     setEditingUserId(null);
   };
@@ -382,6 +388,7 @@ const Dashboard = () => {
           onSaveEditing={saveEditing}
           onAddWish={addWish}
           onRemoveWish={removeWish}
+          onClearWish={clearWish}
         />
       </main>
     </div>
