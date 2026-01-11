@@ -23,14 +23,14 @@ interface WishData {
 
 const Wishes = () => {
   const navigate = useNavigate();
-  const { serverSlug, guildSlug } = useParams();
+  const { regionSlug, serverSlug, guildSlug } = useParams();
   const { t } = useLanguage();
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [guildId, setGuildId] = useState<string | null>(null);
-  const [guild, setGuild] = useState<{ name: string; server: string; faction: string } | null>(null);
+  const [guild, setGuild] = useState<{ name: string; server: string; region: string; faction: string } | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   const [wishes, setWishes] = useState<WishData[]>([
     { classId: '', specIds: [], comment: '' },
@@ -39,19 +39,21 @@ const Wishes = () => {
   ]);
 
   useEffect(() => {
-    if (!user || !serverSlug || !guildSlug) {
+    if (!user || !regionSlug || !serverSlug || !guildSlug) {
       navigate('/auth');
       return;
     }
 
     const fetchData = async () => {
-      // Find guild by slugified server and name
+      // Find guild by slugified region, server and name
       const { data: allGuilds } = await supabase
         .from('guilds')
-        .select('id, name, server, faction');
+        .select('id, name, server, region, faction');
       
       const matchedGuild = allGuilds?.find(g => 
-        toSlug(g.server) === serverSlug && toSlug(g.name) === guildSlug
+        toSlug(g.region || 'eu') === regionSlug &&
+        toSlug(g.server) === serverSlug && 
+        toSlug(g.name) === guildSlug
       );
       
       if (!matchedGuild) {
@@ -61,7 +63,7 @@ const Wishes = () => {
       
       const foundGuildId = matchedGuild.id;
       setGuildId(foundGuildId);
-      setGuild({ name: matchedGuild.name, server: matchedGuild.server, faction: matchedGuild.faction });
+      setGuild({ name: matchedGuild.name, server: matchedGuild.server, region: matchedGuild.region || 'eu', faction: matchedGuild.faction });
 
       const { data: wishesData } = await supabase
         .from('class_wishes')
@@ -102,7 +104,7 @@ const Wishes = () => {
     };
 
     fetchData();
-  }, [user, serverSlug, guildSlug, navigate]);
+  }, [user, regionSlug, serverSlug, guildSlug, navigate]);
 
   const updateWish = (index: number, field: keyof WishData, value: any) => {
     const updated = [...wishes];
