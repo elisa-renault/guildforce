@@ -37,7 +37,7 @@ const App = () => (
                 <Route path="/guilds" element={<GuildList />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/forum" element={<Forum />} />
-                <Route path="/forum/:categorySlug" element={<ForumCategory />} />
+                <Route path="/forum/category/:categorySlug" element={<ForumCategory />} />
                 <Route path="/forum/topic/:topicId" element={<ForumTopic />} />
                 <Route path="/guild/:regionSlug/:serverSlug/:guildSlug" element={<Dashboard />} />
                 <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/wishes" element={<Wishes />} />
