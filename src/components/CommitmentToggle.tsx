@@ -58,7 +58,7 @@ export const CommitmentToggle = ({ status, onChange, compact = false, asBadge = 
         <PopoverTrigger asChild>
           <button
             className={cn(
-              "inline-flex items-center gap-1 text-[10px] md:text-xs px-1.5 py-0.5 rounded-md border cursor-pointer transition-colors hover:opacity-80",
+              "inline-flex items-center gap-1 text-[10px] md:text-xs px-1.5 py-0.5 rounded-md border cursor-pointer transition-colors hover:opacity-80 focus:outline-none focus:ring-0",
               config.colorClass
             )}
           >
@@ -77,7 +77,7 @@ export const CommitmentToggle = ({ status, onChange, compact = false, asBadge = 
                   key={s}
                   onClick={() => { onChange(s); setOpen(false); }}
                   className={cn(
-                    "w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-xs transition-colors text-left",
+                    "w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-xs transition-colors text-left focus:outline-none focus:ring-0",
                     isActive ? statusConfig[s].activeClass : "hover:bg-primary/10"
                   )}
                 >
@@ -117,7 +117,7 @@ export const CommitmentToggle = ({ status, onChange, compact = false, asBadge = 
                   key={s}
                   onClick={() => { onChange(s); setOpen(false); }}
                   className={cn(
-                    "w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-sm transition-colors text-left",
+                    "w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-sm transition-colors text-left focus:outline-none focus:ring-0",
                     isActive ? statusConfig[s].activeClass : "hover:bg-primary/10"
                   )}
                 >
@@ -148,7 +148,7 @@ export const CommitmentToggle = ({ status, onChange, compact = false, asBadge = 
               onClick={() => onChange(s)}
               className={cn(
                 "flex flex-col items-start gap-2 p-4 rounded-lg border transition-all duration-200 text-left",
-                "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                "focus:outline-none focus:ring-0",
                 isActive 
                   ? statusConfig[s].colorClass
                   : "bg-card/50 border-border/50 hover:border-border"
