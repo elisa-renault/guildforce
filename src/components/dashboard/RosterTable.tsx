@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { RoleBadge } from '@/components/RoleBadge';
-import { CheckCircle, HelpCircle, Pencil, X, Save } from 'lucide-react';
+import { CheckCircle, HelpCircle, XCircle, Pencil, X, Save } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getClassById, getRolesFromSpecs } from '@/data/wowClasses';
 import { MemberWish, WishData, WishChoice } from '@/types/guild';
@@ -146,13 +146,17 @@ export const RosterTable = ({
                           "text-[10px] md:text-xs px-1.5 py-0",
                           member.status === 'confirmed' 
                             ? 'bg-healer/20 text-healer border-healer/30' 
-                            : 'border-border/50 text-muted-foreground'
+                            : member.status === 'withdrawn'
+                            ? 'bg-destructive/20 text-destructive border-destructive/30'
+                            : 'bg-amber-500/20 text-amber-500 border-amber-500/30'
                         )}
                       >
                         {member.status === 'confirmed' ? (
-                          <><CheckCircle className="h-3 w-3" strokeWidth={1.5} /><span className="hidden md:inline ml-1">{t.wishes.confirmed}</span></>
+                          <><CheckCircle className="h-3 w-3" strokeWidth={1.5} /><span className="hidden md:inline ml-1">{t.wishes.commitment.confirmed}</span></>
+                        ) : member.status === 'withdrawn' ? (
+                          <><XCircle className="h-3 w-3" strokeWidth={1.5} /><span className="hidden md:inline ml-1">{t.wishes.commitment.withdrawn}</span></>
                         ) : (
-                          <><HelpCircle className="h-3 w-3" strokeWidth={1.5} /><span className="hidden md:inline ml-1">{t.wishes.potential}</span></>
+                          <><HelpCircle className="h-3 w-3" strokeWidth={1.5} /><span className="hidden md:inline ml-1">{t.wishes.commitment.undecided}</span></>
                         )}
                       </Badge>
                     )}
