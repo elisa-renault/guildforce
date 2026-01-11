@@ -106,7 +106,7 @@ export const InlineWishEditor = ({ wish, choiceIndex, onChange }: InlineWishEdit
                 variant="outline"
                 size="sm"
                 className={cn(
-                  "h-6 flex-1 justify-between gap-1 text-[10px] bg-background/50",
+                  "h-6 flex-1 justify-between gap-1 text-[10px] bg-background/50 hover:bg-muted/50",
                   selectedSpecs.length > 0
                     ? "border-border/60"
                     : "border-dashed border-muted-foreground/30 text-muted-foreground"
