@@ -7,7 +7,20 @@ import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { Shield, Crown, Loader2, Link as LinkIcon } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { BattleNetIcon } from '@/components/BattleNetIcon';
 import { getGuildPath } from '@/lib/guildSlug';
+import { toast } from 'sonner';
+
+type BattleNetRegion = 'eu' | 'us' | 'kr' | 'tw';
+
+const REGION_LABELS: Record<BattleNetRegion, string> = {
+  eu: 'Europe',
+  us: 'Americas',
+  kr: 'Korea',
+  tw: 'Taiwan',
+};
 
 interface GuildWithMembership {
   id: string;
@@ -22,14 +35,92 @@ interface GuildWithMembership {
 const GuildList = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile, session, loading: authLoading, refreshProfile } = useAuth();
   const [guilds, setGuilds] = useState<GuildWithMembership[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [selectedRegion, setSelectedRegion] = useState<BattleNetRegion>('eu');
 
   const isConnected = !!profile?.battlenet_id;
 
+  // Handle OAuth callback
   useEffect(() => {
-    // Wait for auth to finish loading before doing anything
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const stateParam = urlParams.get('state');
+    const storedState = localStorage.getItem('battlenet_state');
+    const storedRegion = localStorage.getItem('battlenet_region') as BattleNetRegion || 'eu';
+
+    if (code && stateParam) {
+      let stateMatches = false;
+      try {
+        const parsedState = JSON.parse(stateParam);
+        stateMatches = storedState ? parsedState.state === storedState : true;
+      } catch {
+        stateMatches = storedState ? stateParam === storedState : true;
+      }
+
+      if (stateMatches || !storedState) {
+        handleOAuthCallback(code, storedRegion);
+        window.history.replaceState({}, document.title, window.location.pathname);
+        localStorage.removeItem('battlenet_state');
+        localStorage.removeItem('battlenet_region');
+      }
+    }
+  }, []);
+
+  const handleOAuthCallback = async (code: string, region: BattleNetRegion = 'eu') => {
+    if (!session?.access_token) return;
+
+    setIsConnecting(true);
+    try {
+      const redirectUri = `${window.location.origin}${window.location.pathname}`;
+
+      const { data, error } = await supabase.functions.invoke('battlenet-auth/callback', {
+        body: { code, redirectUri, region },
+      });
+
+      if (error) throw error;
+
+      toast.success(`${t.battlenet.connected} : ${data.battletag}`);
+      await refreshProfile();
+    } catch (error) {
+      console.error('Error completing Battle.net connection:', error);
+      toast.error(t.errors.generic);
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const handleConnect = async () => {
+    if (!session?.access_token) {
+      toast.error(t.errors.unauthorized);
+      return;
+    }
+
+    setIsConnecting(true);
+    try {
+      const state = crypto.randomUUID();
+      localStorage.setItem('battlenet_state', state);
+      localStorage.setItem('battlenet_region', selectedRegion);
+
+      const redirectUri = `${window.location.origin}${window.location.pathname}`;
+
+      const { data, error } = await supabase.functions.invoke('battlenet-auth/auth-url', {
+        body: { redirectUri, state, region: selectedRegion },
+      });
+
+      if (error) throw error;
+
+      window.location.href = data.authUrl;
+    } catch (error) {
+      console.error('Error initiating Battle.net connection:', error);
+      toast.error(t.errors.generic);
+      setIsConnecting(false);
+    }
+  };
+
+  useEffect(() => {
     if (authLoading) return;
     
     if (!user) {
@@ -64,9 +155,8 @@ const GuildList = () => {
     };
 
     fetchGuilds();
-  }, [authLoading, user, navigate]);
+  }, [authLoading, user, navigate, profile?.battlenet_id]);
 
-  // Show loading while auth is initializing
   if (authLoading || (loading && !user)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -83,7 +173,7 @@ const GuildList = () => {
       <main className="container mx-auto px-4 py-8 relative z-10">
         <h1 className="font-display text-3xl gradient-text mb-8 text-center">{t.common.myGuilds}</h1>
 
-        {loading ? (
+        {loading || isConnecting ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
@@ -91,8 +181,32 @@ const GuildList = () => {
           <GlowCard className="max-w-md mx-auto p-8 text-center">
             <LinkIcon className="h-16 w-16 mx-auto mb-6 text-muted-foreground" strokeWidth={1.5} />
             <p className="text-muted-foreground mb-6 text-lg">{t.guild.noGuilds}</p>
-            <CosmicButton onClick={() => navigate('/profile')}>
-              {t.battlenet.connect}
+            
+            {/* Region selector */}
+            <div className="mb-4 text-left">
+              <Label className="text-sm text-muted-foreground mb-2 block">{t.battlenet.selectRegion}</Label>
+              <Select value={selectedRegion} onValueChange={(v) => setSelectedRegion(v as BattleNetRegion)}>
+                <SelectTrigger className="w-full cosmic-input">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="cosmic-glass border-border/50">
+                  {(Object.keys(REGION_LABELS) as BattleNetRegion[]).map((region) => (
+                    <SelectItem key={region} value={region}>
+                      {REGION_LABELS[region]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <CosmicButton
+              onClick={handleConnect}
+              disabled={isConnecting}
+              loading={isConnecting}
+              className="w-full gap-3"
+              icon={<BattleNetIcon className="h-7 w-7" />}
+            >
+              <span className="whitespace-nowrap">{t.battlenet.connect}</span>
             </CosmicButton>
           </GlowCard>
         ) : (
