@@ -42,21 +42,16 @@ const Profile = () => {
 
   useEffect(() => {
     if (authLoading) return;
-
     if (!user) {
       navigate('/auth');
       return;
     }
-
     setLoading(false);
   }, [authLoading, user, navigate]);
 
   useEffect(() => {
     if (!profile) return;
-
-    form.reset({
-      username: profile.username || '',
-    });
+    form.reset({ username: profile.username || '' });
   }, [profile, form]);
 
   const onSubmit = async (values: z.infer<typeof profileSchema>) => {
@@ -83,11 +78,7 @@ const Profile = () => {
         toast({ title: t.common.save, description: 'Profile updated successfully!' });
       }
     } catch (error: any) {
-      toast({
-        title: t.errors.generic,
-        description: error.message,
-        variant: 'destructive',
-      });
+      toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -96,10 +87,7 @@ const Profile = () => {
   const handleLanguageChange = async (newLang: Language) => {
     setLanguage(newLang);
     if (user) {
-      await supabase
-        .from('profiles')
-        .update({ preferred_language: newLang })
-        .eq('id', user.id);
+      await supabase.from('profiles').update({ preferred_language: newLang }).eq('id', user.id);
     }
   };
 
@@ -108,20 +96,12 @@ const Profile = () => {
     if (!file || !user) return;
 
     if (!file.type.startsWith('image/')) {
-      toast({
-        title: t.errors.generic,
-        description: 'Please select an image file',
-        variant: 'destructive',
-      });
+      toast({ title: t.errors.generic, description: 'Please select an image file', variant: 'destructive' });
       return;
     }
 
     if (file.size > 2 * 1024 * 1024) {
-      toast({
-        title: t.errors.generic,
-        description: 'Image must be less than 2MB',
-        variant: 'destructive',
-      });
+      toast({ title: t.errors.generic, description: 'Image must be less than 2MB', variant: 'destructive' });
       return;
     }
 
@@ -137,11 +117,9 @@ const Profile = () => {
 
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-
+      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
       const avatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+      
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ avatar_url: avatarUrl })
@@ -152,11 +130,7 @@ const Profile = () => {
       await refreshProfile();
       toast({ title: language === 'fr' ? 'Avatar mis à jour !' : 'Avatar updated!' });
     } catch (error: any) {
-      toast({
-        title: t.errors.generic,
-        description: error.message,
-        variant: 'destructive',
-      });
+      toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
     } finally {
       setUploadingAvatar(false);
     }
@@ -164,13 +138,10 @@ const Profile = () => {
 
   const handleDeleteAvatar = async () => {
     if (!user || !profile?.avatar_url) return;
-
     setUploadingAvatar(true);
 
     try {
-      const { data: files } = await supabase.storage
-        .from('avatars')
-        .list(user.id);
+      const { data: files } = await supabase.storage.from('avatars').list(user.id);
 
       if (files && files.length > 0) {
         const filePaths = files.map(f => `${user.id}/${f.name}`);
@@ -187,11 +158,7 @@ const Profile = () => {
       await refreshProfile();
       toast({ title: language === 'fr' ? 'Avatar supprimé' : 'Avatar removed' });
     } catch (error: any) {
-      toast({
-        title: t.errors.generic,
-        description: error.message,
-        variant: 'destructive',
-      });
+      toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
     } finally {
       setUploadingAvatar(false);
     }
@@ -223,27 +190,20 @@ const Profile = () => {
     );
   }
 
-  // Setup mode - simplified focused view for new users
+  // Setup mode
   if (isSetupMode) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 relative">
         <CosmicBackground />
-        
         <GlowCard className="w-full max-w-md p-8 relative z-10" hoverable={false}>
           <div className="text-center mb-8">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/25">
               <Sparkles className="h-8 w-8 text-white" strokeWidth={1.5} />
             </div>
-            <h1 className="font-display text-2xl gradient-text mb-2">
-              Bienvenue sur Guildforce !
-            </h1>
-            <p className="text-muted-foreground text-sm">
-              Choisis ton pseudo pour être identifié par ta guilde
-            </p>
+            <h1 className="font-display text-2xl gradient-text mb-2">Bienvenue sur Guildforce !</h1>
+            <p className="text-muted-foreground text-sm">Choisis ton pseudo pour être identifié par ta guilde</p>
             {profile?.battletag && (
-              <p className="text-xs text-muted-foreground mt-2">
-                Connecté en tant que {profile.battletag}
-              </p>
+              <p className="text-xs text-muted-foreground mt-2">Connecté en tant que {profile.battletag}</p>
             )}
           </div>
 
@@ -253,17 +213,10 @@ const Profile = () => {
                 <FormItem>
                   <FormLabel className="text-foreground">{t.auth.pseudo}</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="Ton pseudo sur le site"
-                      {...field} 
-                      className="cosmic-input h-12 text-center text-lg"
-                      autoFocus
-                    />
+                    <Input placeholder="Ton pseudo sur le site" {...field} className="cosmic-input h-12 text-center text-lg" autoFocus />
                   </FormControl>
                   <FormMessage />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    C'est le nom qui sera affiché dans ta guilde
-                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">C'est le nom qui sera affiché dans ta guilde</p>
                 </FormItem>
               )} />
 
@@ -273,9 +226,7 @@ const Profile = () => {
                   {t.profile.language}
                 </FormLabel>
                 <Select value={language} onValueChange={(val) => handleLanguageChange(val as Language)}>
-                  <SelectTrigger className="cosmic-input">
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger className="cosmic-input"><SelectValue /></SelectTrigger>
                   <SelectContent className="bg-card border-border">
                     <SelectItem value="fr">🇫🇷 Français</SelectItem>
                     <SelectItem value="en">🇬🇧 English</SelectItem>
@@ -283,14 +234,7 @@ const Profile = () => {
                 </Select>
               </div>
 
-              <CosmicButton 
-                type="submit" 
-                className="w-full"
-                size="lg"
-                loading={saving}
-              >
-                C'est parti !
-              </CosmicButton>
+              <CosmicButton type="submit" className="w-full" size="lg" loading={saving}>C'est parti !</CosmicButton>
             </form>
           </Form>
         </GlowCard>
@@ -298,82 +242,64 @@ const Profile = () => {
     );
   }
 
-  // Normal profile view - redesigned with clear sections
+  // Normal profile view - modular grid layout
   return (
     <div className="min-h-screen relative pt-16">
       <CosmicBackground />
 
-      <main className="container mx-auto px-4 py-8 max-w-2xl relative z-10">
-        <GlowCard className="p-6 md:p-8" hoverable={false}>
-          {/* Page Title */}
-          <h1 className="font-display text-xl md:text-2xl gradient-text mb-8 text-center">
-            {t.profile.title}
-          </h1>
+      <main className="container mx-auto px-4 py-6 relative z-10">
+        <h1 className="font-display text-2xl gradient-text mb-6">{t.profile.title}</h1>
 
-          {/* Avatar Section */}
-          <div className="mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Left column: Avatar */}
+          <GlowCard className="p-5" hoverable={false}>
             <h2 className="text-sm font-medium text-foreground mb-4">{t.profile.avatar}</h2>
-            <div className="flex items-center gap-6">
-              {/* Avatar Display */}
-              <div className="w-20 h-20 md:w-24 md:h-24 shrink-0 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/25 overflow-hidden">
+            
+            <div className="flex flex-col items-center">
+              <div className="w-28 h-28 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/25 overflow-hidden mb-4">
                 {uploadingAvatar ? (
-                  <Loader2 className="h-8 w-8 text-white animate-spin" />
+                  <Loader2 className="h-10 w-10 text-white animate-spin" />
                 ) : profile?.avatar_url ? (
-                  <img 
-                    src={profile.avatar_url} 
-                    alt="Avatar" 
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
-                  <User className="h-10 w-10 text-white" strokeWidth={1.5} />
+                  <User className="h-12 w-12 text-white" strokeWidth={1.5} />
                 )}
               </div>
 
-              {/* Avatar Actions */}
-              <div className="flex flex-col gap-2">
-                <div className="flex gap-2">
+              <div className="flex flex-col gap-2 w-full">
+                <Button type="button" variant="outline" size="sm" className="relative w-full" disabled={uploadingAvatar}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    disabled={uploadingAvatar}
+                  />
+                  <Upload className="h-4 w-4 mr-2" strokeWidth={1.5} />
+                  {t.profile.uploadAvatar}
+                </Button>
+                
+                {profile?.avatar_url && (
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="relative"
+                    onClick={handleDeleteAvatar}
                     disabled={uploadingAvatar}
+                    className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
                   >
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleAvatarUpload}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      disabled={uploadingAvatar}
-                    />
-                    <Upload className="h-4 w-4 mr-2" strokeWidth={1.5} />
-                    {t.profile.uploadAvatar}
+                    <Trash2 className="h-4 w-4 mr-2" strokeWidth={1.5} />
+                    {t.profile.removeAvatar}
                   </Button>
-                  
-                  {profile?.avatar_url && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleDeleteAvatar}
-                      disabled={uploadingAvatar}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" strokeWidth={1.5} />
-                      {t.profile.removeAvatar}
-                    </Button>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground">{t.profile.avatarHint}</p>
+                )}
               </div>
+              
+              <p className="text-xs text-muted-foreground mt-3 text-center">{t.profile.avatarHint}</p>
             </div>
-          </div>
+          </GlowCard>
 
-          {/* Divider */}
-          <div className="border-t border-border/50 my-6" />
-
-          {/* Profile Information Section */}
-          <div className="mb-8">
+          {/* Middle column: Profile form */}
+          <GlowCard className="p-5" hoverable={false}>
             <h2 className="text-sm font-medium text-foreground mb-4 flex items-center gap-2">
               <User className="h-4 w-4 text-primary" strokeWidth={1.5} />
               {t.profile.profileInfo}
@@ -385,11 +311,7 @@ const Profile = () => {
                   <FormItem>
                     <FormLabel className="text-foreground text-sm">{t.auth.pseudo}</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder={t.auth.pseudoPlaceholder}
-                        {...field} 
-                        className="cosmic-input"
-                      />
+                      <Input placeholder={t.auth.pseudoPlaceholder} {...field} className="cosmic-input" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -401,9 +323,7 @@ const Profile = () => {
                     {t.profile.language}
                   </FormLabel>
                   <Select value={language} onValueChange={(val) => handleLanguageChange(val as Language)}>
-                    <SelectTrigger className="cosmic-input">
-                      <SelectValue />
-                    </SelectTrigger>
+                    <SelectTrigger className="cosmic-input"><SelectValue /></SelectTrigger>
                     <SelectContent className="bg-card border-border">
                       <SelectItem value="fr">🇫🇷 Français</SelectItem>
                       <SelectItem value="en">🇬🇧 English</SelectItem>
@@ -411,27 +331,19 @@ const Profile = () => {
                   </Select>
                 </div>
 
-                <CosmicButton 
-                  type="submit" 
-                  className="w-full"
-                  loading={saving}
-                  icon={<Save className="h-4 w-4" strokeWidth={1.5} />}
-                >
+                <CosmicButton type="submit" className="w-full" loading={saving} icon={<Save className="h-4 w-4" strokeWidth={1.5} />}>
                   {t.common.save}
                 </CosmicButton>
               </form>
             </Form>
-          </div>
+          </GlowCard>
 
-          {/* Divider */}
-          <div className="border-t border-border/50 my-6" />
-
-          {/* Account Connection Section */}
-          <div>
+          {/* Right column: Battle.net connection */}
+          <GlowCard className="p-5" hoverable={false}>
             <h2 className="text-sm font-medium text-foreground mb-4">{t.profile.accountConnection}</h2>
             <BattleNetConnect />
-          </div>
-        </GlowCard>
+          </GlowCard>
+        </div>
       </main>
     </div>
   );
