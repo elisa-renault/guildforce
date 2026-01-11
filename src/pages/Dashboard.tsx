@@ -9,7 +9,7 @@ import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
 import { StatsCards, RosterFilters, RosterTable } from '@/components/dashboard';
 import { RosterSelector, RosterEditDialog } from '@/components/roster';
-import { MemberWish, WishData, RoleStats, RangeStats, RosterFilters as RosterFiltersType } from '@/types/guild';
+import { MemberWish, WishData, RoleStats, RangeStats, RosterFilters as RosterFiltersType, ValidationStatus } from '@/types/guild';
 import { Loader2, Sparkles, ArrowLeft, Settings, Shield } from 'lucide-react';
 import { toSlug, getGuildWishesPath, getGuildSettingsPath } from '@/lib/guildSlug';
 import { CommitmentStatus } from '@/components/CommitmentToggle';
@@ -152,13 +152,28 @@ const Dashboard = () => {
       // Filter wishes by selected roster
       const { data: wishesData } = await supabase
         .from('class_wishes')
-        .select('user_id, choice_index, class_id, spec_ids, comment')
+        .select('user_id, choice_index, class_id, spec_ids, comment, validation_status, validated_by, validated_at')
         .eq('guild_id', guildId)
         .eq('roster_id', selectedRosterId);
 
+      // Fetch validator profiles if there are any
+      const validatorIds = [...new Set(wishesData?.filter(w => w.validated_by).map(w => w.validated_by) || [])];
+      const { data: validatorProfiles } = validatorIds.length > 0 
+        ? await supabase.from('profiles').select('id, username').in('id', validatorIds)
+        : { data: [] };
+
       const mergedMembers: MemberWish[] = membersData.map(m => {
         const profile = profiles?.find(p => p.id === m.user_id);
-        const memberWishes = wishesData?.filter(w => w.user_id === m.user_id) || [];
+        const memberWishes = wishesData?.filter(w => w.user_id === m.user_id).map(w => ({
+          choice_index: w.choice_index,
+          class_id: w.class_id,
+          spec_ids: w.spec_ids,
+          comment: w.comment,
+          validation_status: (w.validation_status || 'pending') as ValidationStatus,
+          validated_by: w.validated_by,
+          validated_at: w.validated_at,
+          validated_by_username: validatorProfiles?.find(p => p.id === w.validated_by)?.username || null,
+        })) || [];
         return {
           id: m.user_id,
           username: profile?.username || 'Unknown',
@@ -321,7 +336,31 @@ const Dashboard = () => {
     }
   };
 
-
+  // Validate a wish (GM only)
+  const validateWish = async (userId: string, choiceIndex: number, status: ValidationStatus) => {
+    if (!user || !guildId || !selectedRosterId || !isGM) return;
+    
+    try {
+      const { error } = await supabase
+        .from('class_wishes')
+        .update({
+          validation_status: status,
+          validated_by: status === 'pending' ? null : user.id,
+          validated_at: status === 'pending' ? null : new Date().toISOString(),
+        })
+        .eq('guild_id', guildId)
+        .eq('roster_id', selectedRosterId)
+        .eq('user_id', userId)
+        .eq('choice_index', choiceIndex);
+      
+      if (error) throw error;
+      
+      // Refresh wishes
+      await fetchWishes();
+    } catch (error: any) {
+      toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
+    }
+  };
 
   // Filter members
   const filteredMembers = members.filter(m => {
@@ -471,6 +510,7 @@ const Dashboard = () => {
           editStatus={editStatus}
           saving={saving}
           maxWishes={MAX_WISHES}
+          isGM={isGM}
           onToggleRow={toggleRow}
           onStartEditing={startEditing}
           onCancelEditing={cancelEditing}
@@ -480,6 +520,7 @@ const Dashboard = () => {
           onAddWish={addWish}
           onRemoveWish={removeWish}
           onClearWish={clearWish}
+          onValidateWish={validateWish}
         />
       </main>
 

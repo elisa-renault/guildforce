@@ -1,15 +1,16 @@
-import { Fragment } from 'react';
+import { Fragment, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { CheckCircle, HelpCircle, XCircle, Pencil, X, Save, Shield, Heart, Swords, Crosshair, MessageSquare, Plus, Trash2, MoreHorizontal } from 'lucide-react';
+import { CheckCircle, HelpCircle, XCircle, Pencil, X, Save, Shield, Heart, Swords, Crosshair, MessageSquare, Plus, Trash2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getClassById, getSpecById } from '@/data/wowClasses';
-import { MemberWish, WishData, WishChoice } from '@/types/guild';
+import { MemberWish, WishData, WishChoice, ValidationStatus } from '@/types/guild';
 import { InlineWishEditor } from './InlineWishEditor';
+import { WishValidationBadge } from './WishValidationBadge';
 import { CommitmentToggle, CommitmentStatus } from '@/components/CommitmentToggle';
 import { cn } from '@/lib/utils';
 
@@ -22,6 +23,7 @@ interface RosterTableProps {
   editStatus: CommitmentStatus;
   saving: boolean;
   maxWishes: number;
+  isGM?: boolean;
   onToggleRow: (memberId: string) => void;
   onStartEditing: (member: MemberWish) => void;
   onCancelEditing: () => void;
@@ -31,6 +33,7 @@ interface RosterTableProps {
   onAddWish: () => void;
   onRemoveWish: (index: number) => void;
   onClearWish: (index: number) => void;
+  onValidateWish?: (userId: string, choiceIndex: number, status: ValidationStatus) => void;
 }
 
 // Role config for icons
@@ -48,6 +51,7 @@ export const RosterTable = ({
   editStatus,
   saving,
   maxWishes,
+  isGM = false,
   onStartEditing,
   onCancelEditing,
   onUpdateEditWish,
@@ -56,12 +60,21 @@ export const RosterTable = ({
   onAddWish,
   onRemoveWish,
   onClearWish,
+  onValidateWish,
 }: RosterTableProps) => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const { regionSlug, serverSlug, guildSlug } = useParams();
+  const [validatingWish, setValidatingWish] = useState<string | null>(null);
 
-  const renderWishCell = (wishes: WishChoice[], choiceIndex: number) => {
+  const handleValidation = async (memberId: string, choiceIndex: number, status: ValidationStatus) => {
+    if (!onValidateWish) return;
+    setValidatingWish(`${memberId}-${choiceIndex}`);
+    await onValidateWish(memberId, choiceIndex, status);
+    setValidatingWish(null);
+  };
+
+  const renderWishCell = (memberId: string, wishes: WishChoice[], choiceIndex: number) => {
     const wish = wishes.find(w => w.choice_index === choiceIndex);
     
     // Empty state matching editor structure
@@ -98,25 +111,39 @@ export const RosterTable = ({
 
     // Get specs with their details
     const specs = wish.spec_ids.map(id => getSpecById(id)).filter(Boolean);
-    const firstSpec = specs[0];
+    const validationStatus = wish.validation_status || 'pending';
+    const isValidating = validatingWish === `${memberId}-${choiceIndex}`;
 
     return (
       <div className="flex flex-col gap-1.5">
-        {/* Class - same height as editor button */}
-        <div 
-          className="h-7 w-full rounded-md flex items-center px-2 text-xs font-medium"
-          style={{ 
-            backgroundColor: `hsl(var(--class-${cls.id}) / 0.2)`,
-            color: `hsl(var(--class-${cls.id}))`
-          }}
-        >
-          <span className="truncate">{cls.name[language]}</span>
+        {/* Class with validation badge */}
+        <div className="flex items-center gap-1.5">
+          <div 
+            className="h-7 flex-1 rounded-md flex items-center px-2 text-xs font-medium"
+            style={{ 
+              backgroundColor: `hsl(var(--class-${cls.id}) / 0.2)`,
+              color: `hsl(var(--class-${cls.id}))`
+            }}
+          >
+            <span className="truncate">{cls.name[language]}</span>
+          </div>
+          
+          {/* Validation badge */}
+          <WishValidationBadge
+            status={validationStatus}
+            validatedBy={wish.validated_by_username}
+            validatedAt={wish.validated_at}
+            isGM={isGM}
+            onValidate={(status) => handleValidation(memberId, choiceIndex, status)}
+            loading={isValidating}
+            compact
+          />
         </div>
         
         {/* Spec row - display all selected specs */}
         <div className="min-h-6 w-full flex items-center gap-2 text-[10px] flex-wrap">
           {specs.length > 0 ? (
-            specs.map((spec, specIndex) => {
+            specs.map((spec) => {
               const config = roleConfig[spec.role];
               // Use dynamic icon for DPS based on range
               const Icon = spec.role === 'dps' 
@@ -296,13 +323,13 @@ export const RosterTable = ({
                       )}
                     </TableCell>
                     <TableCell className="py-2 px-2 md:px-3">
-                      {isEditing ? renderEditWishCell(0, editWishes.length > 1) : renderWishCell(member.wishes, 1)}
+                      {isEditing ? renderEditWishCell(0, editWishes.length > 1) : renderWishCell(member.id, member.wishes, 1)}
                     </TableCell>
                     <TableCell className="py-2 px-2 md:px-3">
-                      {isEditing ? renderEditWishCell(1, editWishes.length > 1) : renderWishCell(member.wishes, 2)}
+                      {isEditing ? renderEditWishCell(1, editWishes.length > 1) : renderWishCell(member.id, member.wishes, 2)}
                     </TableCell>
                     <TableCell className="py-2 px-2 md:px-3">
-                      {isEditing ? renderEditWishCell(2, editWishes.length > 1) : renderWishCell(member.wishes, 3)}
+                      {isEditing ? renderEditWishCell(2, editWishes.length > 1) : renderWishCell(member.id, member.wishes, 3)}
                     </TableCell>
                     <TableCell className="py-2 px-2 md:px-3">
                       {isOwnRow && (
