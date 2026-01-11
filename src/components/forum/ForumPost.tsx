@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { ForumPost as ForumPostType, ReactionType } from '@/types/forum';
+import { useUserRoles } from '@/hooks/useUserRoles';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { MarkdownEditor } from './MarkdownEditor';
 import { ReactionPicker } from './ReactionPicker';
+import { UserRoleBadge } from './UserRoleBadge';
 import { Quote, Edit3, Trash2, User, Clock, Check, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
@@ -34,6 +36,10 @@ export const ForumPost = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
 
+  const authorIds = useMemo(() => post.author_id ? [post.author_id] : [], [post.author_id]);
+  const { roles } = useUserRoles(authorIds);
+  const authorRoles = roles.get(post.author_id) || [];
+
   const isAuthor = user?.id === post.author_id;
 
   const handleSaveEdit = () => {
@@ -56,9 +62,12 @@ export const ForumPost = ({
             </AvatarFallback>
           )}
         </Avatar>
-        <span className="text-sm font-medium text-foreground text-center">
-          {post.author?.username || 'Inconnu'}
-        </span>
+        <div className="flex flex-col items-center gap-1">
+          <span className="text-sm font-medium text-foreground text-center">
+            {post.author?.username || 'Inconnu'}
+          </span>
+          <UserRoleBadge roles={authorRoles} size="sm" />
+        </div>
       </div>
 
       {/* Content */}
