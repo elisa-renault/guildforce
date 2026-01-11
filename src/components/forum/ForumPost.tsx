@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { ForumPost as ForumPostType } from '@/types/forum';
+import { ForumPost as ForumPostType, ReactionType } from '@/types/forum';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { MarkdownEditor } from './MarkdownEditor';
-import { Heart, Quote, Edit3, Trash2, User, Clock, Check, X } from 'lucide-react';
+import { ReactionPicker } from './ReactionPicker';
+import { Quote, Edit3, Trash2, User, Clock, Check, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import ReactMarkdown from 'react-markdown';
@@ -15,7 +16,7 @@ interface ForumPostProps {
   onQuote?: (post: ForumPostType) => void;
   onEdit?: (postId: string, content: string) => void;
   onDelete?: (postId: string) => void;
-  onReaction?: (postId: string) => void;
+  onReaction?: (postId: string, reactionType: ReactionType) => void;
   isTopicLocked?: boolean;
 }
 
@@ -28,7 +29,7 @@ export const ForumPost = ({
   isTopicLocked = false,
 }: ForumPostProps) => {
   const { user } = useAuth();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const locale = language === 'fr' ? fr : enUS;
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
@@ -68,30 +69,19 @@ export const ForumPost = ({
             <Clock className="h-3 w-3" />
             <span>{formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale })}</span>
             {post.is_edited && (
-              <span className="italic">(modifié)</span>
+              <span className="italic">({language === 'fr' ? 'modifié' : 'edited'})</span>
             )}
           </div>
           <div className="flex items-center gap-1">
             {!isTopicLocked && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onReaction?.(post.id)}
-                  className={`h-7 px-2 ${post.user_has_reacted ? 'text-red-500' : ''}`}
-                >
-                  <Heart className={`h-4 w-4 mr-1 ${post.user_has_reacted ? 'fill-current' : ''}`} />
-                  {post.reaction_count || 0}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onQuote?.(post)}
-                  className="h-7 px-2"
-                >
-                  <Quote className="h-4 w-4" />
-                </Button>
-              </>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onQuote?.(post)}
+                className="h-7 px-2"
+              >
+                <Quote className="h-4 w-4" />
+              </Button>
             )}
             {isAuthor && !isTopicLocked && (
               <>
@@ -120,7 +110,7 @@ export const ForumPost = ({
         {post.quoted_post && (
           <div className="mb-3 p-3 rounded-lg bg-muted/30 border-l-2 border-primary/50">
             <p className="text-xs text-muted-foreground mb-1">
-              Citation de {post.quoted_post.author?.username || 'Inconnu'}:
+              {language === 'fr' ? 'Citation de' : 'Quote from'} {post.quoted_post.author?.username || 'Inconnu'}:
             </p>
             <p className="text-sm text-muted-foreground line-clamp-3">
               {post.quoted_post.content}
@@ -139,17 +129,28 @@ export const ForumPost = ({
             <div className="flex gap-2">
               <Button size="sm" onClick={handleSaveEdit}>
                 <Check className="h-4 w-4 mr-1" />
-                Enregistrer
+                {t.common.save}
               </Button>
               <Button size="sm" variant="outline" onClick={() => setIsEditing(false)}>
                 <X className="h-4 w-4 mr-1" />
-                Annuler
+                {t.common.cancel}
               </Button>
             </div>
           </div>
         ) : (
           <div className="prose prose-invert prose-sm max-w-none">
             <ReactMarkdown>{post.content}</ReactMarkdown>
+          </div>
+        )}
+
+        {/* Reactions */}
+        {!isEditing && (
+          <div className="mt-3 pt-3 border-t border-border/30">
+            <ReactionPicker
+              reactions={post.reactions}
+              onReaction={(reactionType) => onReaction?.(post.id, reactionType)}
+              disabled={isTopicLocked || !user}
+            />
           </div>
         )}
       </div>
