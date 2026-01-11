@@ -26,10 +26,10 @@ export const RosterSelector = ({ rosters, selectedRosterId, onSelect, showAccess
   const selectedRoster = rosters.find(r => r.id === selectedRosterId);
 
   return (
-    <div className="flex items-center gap-2 min-w-0">
-      <Layers className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+    <div className="flex items-center gap-1.5 md:gap-2 min-w-0">
+      <Layers className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
       <Select value={selectedRosterId || ''} onValueChange={onSelect}>
-        <SelectTrigger className="h-8 w-[300px] max-w-[45vw] bg-card border-border">
+        <SelectTrigger className="h-7 md:h-8 w-[140px] md:w-[300px] max-w-[35vw] md:max-w-[45vw] bg-card border-border text-xs md:text-sm">
           <SelectValue className="truncate" placeholder={t.rosters?.selectRoster || 'Select roster'} />
         </SelectTrigger>
         <SelectContent className="bg-card border-border z-50">

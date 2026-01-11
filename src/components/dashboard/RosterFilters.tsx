@@ -69,17 +69,20 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
   const hasAnyFilters = hasRoleFilters || hasClassFilters || hasValidationFilters;
 
   return (
-    <div className="flex flex-col sm:flex-row gap-2 mb-4 items-center flex-wrap">
-      {/* Search */}
-      <div className="relative flex-1 sm:max-w-[200px]">
+    <div className="flex flex-col gap-2 mb-4">
+      {/* Search - full width on mobile */}
+      <div className="relative w-full md:max-w-[200px]">
         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
         <Input
           placeholder={t.common.search}
           value={filters.searchQuery}
           onChange={(e) => updateFilter('searchQuery', e.target.value)}
-          className="h-8 pl-8 text-sm cosmic-input"
+          className="h-9 md:h-8 pl-8 text-sm cosmic-input"
         />
       </div>
+      
+      {/* Filters row - horizontal scroll on mobile */}
+      <div className="flex gap-2 items-center overflow-x-auto pb-1 -mx-3 px-3 md:mx-0 md:px-0 md:overflow-visible md:flex-wrap">
 
       {/* Role Filter */}
       <Popover open={roleOpen} onOpenChange={setRoleOpen}>
@@ -88,7 +91,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
             variant="outline"
             size="sm"
             className={cn(
-              "h-8 w-full sm:w-auto sm:min-w-[140px] justify-between gap-2 text-sm",
+              "h-9 md:h-8 min-w-[120px] md:min-w-[140px] justify-between gap-2 text-sm flex-shrink-0 whitespace-nowrap",
               hasRoleFilters 
                 ? "border-border/60" 
                 : "border-border/40 text-muted-foreground"
@@ -103,7 +106,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
                   return (
                     <span key={role} className="flex items-center gap-1">
                       <Icon className={cn("h-4 w-4", config.color)} />
-                      <span>{config.label[language]}</span>
+                      <span className="hidden md:inline">{config.label[language]}</span>
                     </span>
                   );
                 })}
@@ -156,19 +159,20 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
             variant="outline"
             size="sm"
             className={cn(
-              "h-8 w-full sm:w-auto sm:min-w-[200px] justify-between gap-2 text-sm",
+              "h-9 md:h-8 min-w-[130px] md:min-w-[200px] justify-between gap-2 text-sm flex-shrink-0 whitespace-nowrap",
               hasClassFilters 
                 ? "border-border/60" 
                 : "border-border/40 text-muted-foreground"
             )}
           >
             {hasClassFilters ? (
-              <span className="flex items-center gap-1.5 flex-wrap">
-                {selectedClasses.length <= 3 ? (
+              <span className="flex items-center gap-1.5">
+                {selectedClasses.length <= 2 ? (
                   selectedClasses.map((cls) => (
                     <span 
                       key={cls.id} 
                       style={{ color: `hsl(var(--class-${cls.id}))` }}
+                      className="truncate max-w-[60px] md:max-w-none"
                     >
                       {cls.name[language]}
                     </span>
@@ -225,7 +229,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
             variant="outline"
             size="sm"
             className={cn(
-              "h-8 w-full sm:w-auto sm:min-w-[140px] justify-between gap-2 text-sm",
+              "h-9 md:h-8 min-w-[110px] md:min-w-[140px] justify-between gap-2 text-sm flex-shrink-0 whitespace-nowrap",
               hasValidationFilters 
                 ? "border-border/60" 
                 : "border-border/40 text-muted-foreground"
@@ -239,7 +243,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
                   return (
                     <span key={status} className="flex items-center gap-1">
                       <Icon className={cn("h-4 w-4", config.color)} />
-                      <span className={config.color}>{config.label[language]}</span>
+                      <span className={cn("hidden md:inline", config.color)}>{config.label[language]}</span>
                     </span>
                   );
                 })}
@@ -291,11 +295,12 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
           variant="ghost"
           size="sm"
           onClick={() => updateFilter('filterMode', filters.filterMode === 'and' ? 'or' : 'and')}
-          className="h-8 px-2 text-xs font-mono text-muted-foreground hover:text-foreground"
+          className="h-9 md:h-8 px-2 text-xs font-mono text-muted-foreground hover:text-foreground flex-shrink-0"
         >
           {filters.filterMode === 'and' ? 'ET' : 'OU'}
         </Button>
       )}
+      </div>
     </div>
   );
 };
