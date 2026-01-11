@@ -32,7 +32,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
         <SelectTrigger className="h-8 w-full sm:w-[160px] text-sm cosmic-input">
           <SelectValue placeholder={t.dashboard.allRoles} />
         </SelectTrigger>
-        <SelectContent className="cosmic-glass border-border/50">
+        <SelectContent className="bg-card border-border z-50">
           <SelectItem value="all">{t.dashboard.allRoles}</SelectItem>
           <SelectItem value="tank">{t.dashboard.tank}</SelectItem>
           <SelectItem value="healer">{t.dashboard.healer}</SelectItem>
@@ -43,7 +43,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
         <SelectTrigger className="h-8 w-full sm:w-[220px] text-sm cosmic-input">
           <SelectValue placeholder={t.dashboard.allClasses} />
         </SelectTrigger>
-        <SelectContent className="cosmic-glass border-border/50">
+        <SelectContent className="bg-card border-border z-50">
           <SelectItem value="all">{t.dashboard.allClasses}</SelectItem>
           {wowClasses.map(c => (
             <SelectItem key={c.id} value={c.id}>{c.name[language]}</SelectItem>
