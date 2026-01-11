@@ -337,7 +337,7 @@ const GuildSettings = () => {
         <div className="container mx-auto px-3 md:px-4 py-2 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button
-              onClick={() => navigate(getGuildPath(guild.region, guild.server, guild.name))}
+              onClick={() => navigate(-1)}
               className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
               title={t.common.back}
             >
