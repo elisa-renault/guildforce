@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ForumCategory, ForumTopic, ForumPost, ReactionSummary, ReactionType, REACTION_TYPES } from '@/types/forum';
 import { useAuth } from '@/contexts/AuthContext';
@@ -229,59 +229,92 @@ export function useForumTopic(topicId: string | null) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchTopic = useCallback(async () => {
-    if (!topicId) return;
+  const hasLoadedRef = useRef(false);
+  const viewIncrementedRef = useRef(false);
+
+  // Reset when switching topic
+  useEffect(() => {
+    hasLoadedRef.current = false;
+    viewIncrementedRef.current = false;
+    setTopic(null);
     setLoading(true);
-    try {
-      const { data, error: fetchError } = await supabase
-        .from('forum_topics')
-        .select('*')
-        .eq('id', topicId)
-        .single();
+  }, [topicId]);
 
-      if (fetchError) throw fetchError;
+  const fetchTopic = useCallback(
+    async (options?: { showLoading?: boolean; incrementView?: boolean }) => {
+      if (!topicId) return;
 
-      // Increment view count
-      await supabase
-        .from('forum_topics')
-        .update({ view_count: (data.view_count || 0) + 1 })
-        .eq('id', topicId);
+      const showLoading = options?.showLoading ?? !hasLoadedRef.current;
+      const incrementView = options?.incrementView ?? !viewIncrementedRef.current;
 
-      // Get author
-      const { data: author } = await supabase
-        .from('profiles')
-        .select('id, username, avatar_url')
-        .eq('id', data.author_id)
-        .single();
+      if (showLoading) setLoading(true);
+      try {
+        const { data, error: fetchError } = await supabase
+          .from('forum_topics')
+          .select('*')
+          .eq('id', topicId)
+          .single();
 
-      // Get category
-      const { data: category } = await supabase
-        .from('forum_categories')
-        .select('*')
-        .eq('id', data.category_id)
-        .single();
+        if (fetchError) throw fetchError;
 
-      // Get reactions summary
-      const reactions = await getReactionsSummary('topic', topicId, user?.id);
+        // Increment view count only once per page view
+        if (incrementView) {
+          await supabase
+            .from('forum_topics')
+            .update({ view_count: (data.view_count || 0) + 1 })
+            .eq('id', topicId);
+          viewIncrementedRef.current = true;
+        }
 
-      setTopic({
-        ...data,
-        author,
-        category,
-        reactions,
-      } as ForumTopic);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch topic');
-    } finally {
-      setLoading(false);
-    }
-  }, [topicId, user]);
+        // Get author
+        const { data: author } = await supabase
+          .from('profiles')
+          .select('id, username, avatar_url')
+          .eq('id', data.author_id)
+          .single();
+
+        // Get category
+        const { data: category } = await supabase
+          .from('forum_categories')
+          .select('*')
+          .eq('id', data.category_id)
+          .single();
+
+        // Get reactions summary
+        const reactions = await getReactionsSummary('topic', topicId, user?.id);
+
+        setTopic({
+          ...data,
+          author,
+          category,
+          reactions,
+        } as ForumTopic);
+
+        hasLoadedRef.current = true;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch topic');
+      } finally {
+        if (showLoading) setLoading(false);
+      }
+    },
+    [topicId, user]
+  );
 
   useEffect(() => {
-    fetchTopic();
+    fetchTopic({ showLoading: true, incrementView: true });
   }, [fetchTopic]);
 
-  return { topic, loading, error, refetch: fetchTopic };
+  const refetch = useCallback(() => {
+    return fetchTopic({ showLoading: false, incrementView: false });
+  }, [fetchTopic]);
+
+  const refreshReactions = useCallback(async () => {
+    if (!topicId) return;
+    const reactions = await getReactionsSummary('topic', topicId, user?.id);
+    setTopic((prev) => (prev ? ({ ...prev, reactions } as ForumTopic) : prev));
+  }, [topicId, user]);
+
+  return { topic, loading, error, refetch, refreshReactions };
 }
 
 export function useForumPosts(topicId: string | null, page: number = 1, limit: number = 20) {
@@ -363,6 +396,17 @@ export function useForumPosts(topicId: string | null, page: number = 1, limit: n
     fetchPosts();
   }, [fetchPosts]);
 
+  const refreshPostReactions = useCallback(
+    async (postId: string) => {
+      if (!postId) return;
+      const reactions = await getReactionsSummary('post', postId, user?.id);
+      setPosts((prev) =>
+        prev.map((p) => (p.id === postId ? ({ ...p, reactions } as ForumPost) : p))
+      );
+    },
+    [user]
+  );
+
   // Real-time subscription
   useEffect(() => {
     if (!topicId) return;
@@ -388,7 +432,7 @@ export function useForumPosts(topicId: string | null, page: number = 1, limit: n
     };
   }, [topicId, fetchPosts]);
 
-  return { posts, totalCount, loading, error, refetch: fetchPosts };
+  return { posts, totalCount, loading, error, refetch: fetchPosts, refreshPostReactions };
 }
 
 export function useForumActions() {
