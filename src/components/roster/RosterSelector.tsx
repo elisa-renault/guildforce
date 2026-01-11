@@ -26,13 +26,13 @@ export const RosterSelector = ({ rosters, selectedRosterId, onSelect, showAccess
   const selectedRoster = rosters.find(r => r.id === selectedRosterId);
 
   return (
-    <div className="flex items-center gap-2">
-      <Layers className="h-4 w-4 text-muted-foreground" />
+    <div className="flex items-center gap-2 min-w-0">
+      <Layers className="h-4 w-4 text-muted-foreground flex-shrink-0" />
       <Select value={selectedRosterId || ''} onValueChange={onSelect}>
-        <SelectTrigger className="w-[180px] h-8 bg-card border-border">
-          <SelectValue placeholder={t.rosters?.selectRoster || 'Select roster'} />
+        <SelectTrigger className="h-8 w-[240px] max-w-[45vw] bg-card border-border">
+          <SelectValue className="truncate" placeholder={t.rosters?.selectRoster || 'Select roster'} />
         </SelectTrigger>
-        <SelectContent className="bg-card border-border">
+        <SelectContent className="bg-card border-border z-50">
           {rosters.map((roster) => (
             <SelectItem 
               key={roster.id} 
@@ -40,13 +40,13 @@ export const RosterSelector = ({ rosters, selectedRosterId, onSelect, showAccess
               className="hover:bg-primary/20"
               disabled={showAccessIndicator && !roster.hasAccess}
             >
-              <span className="flex items-center gap-2">
-                {roster.name}
+              <span className="flex items-center gap-2 min-w-0">
+                <span className="truncate">{roster.name}</span>
                 {roster.is_default && (
-                  <span className="text-xs text-muted-foreground">({t.rosters?.default || 'Default'})</span>
+                  <span className="text-xs text-muted-foreground flex-shrink-0">({t.rosters?.default || 'Default'})</span>
                 )}
                 {showAccessIndicator && !roster.hasAccess && (
-                  <span className="text-xs text-destructive">🔒</span>
+                  <span className="text-xs text-destructive flex-shrink-0">🔒</span>
                 )}
               </span>
             </SelectItem>
