@@ -9,7 +9,7 @@ import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
 import { StatsCards, RosterFilters, RosterTable } from '@/components/dashboard';
 import { MemberWish, WishData, RoleStats, RangeStats, RosterFilters as RosterFiltersType } from '@/types/guild';
-import { Loader2, Download, Sparkles } from 'lucide-react';
+import { Loader2, Download, Sparkles, ArrowLeft } from 'lucide-react';
 import { toSlug, getGuildWishesPath } from '@/lib/guildSlug';
 import { CommitmentStatus } from '@/components/CommitmentToggle';
 
@@ -329,7 +329,16 @@ const Dashboard = () => {
       {/* Sticky toolbar */}
       <div className="sticky top-14 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50">
         <div className="container mx-auto px-3 md:px-4 py-2 flex items-center justify-between">
-          <h1 className="text-sm md:text-lg font-semibold text-foreground truncate">{guild?.name}</h1>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate('/guilds')}
+              className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
+              title={t.common.back}
+            >
+              <ArrowLeft className="h-4 w-4 text-muted-foreground" />
+            </button>
+            <h1 className="text-sm md:text-lg font-semibold text-foreground truncate">{guild?.name}</h1>
+          </div>
           <div className="flex gap-1.5 md:gap-2">
             <CosmicButton size="sm" variant="outline" onClick={() => guild && navigate(getGuildWishesPath(guild.region, guild.server, guild.name))} icon={<Sparkles className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 md:h-8 px-2 md:px-3">
               <span className="hidden md:inline">{t.wishes.title}</span>
