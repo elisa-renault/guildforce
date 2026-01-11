@@ -144,11 +144,11 @@ export const WishValidationBadge = ({
 
         {/* Status badge */}
         <div className={cn(
-          "absolute inset-0 flex items-center justify-center gap-1 rounded-md border transition-opacity duration-150 cursor-pointer",
+          "absolute inset-0 flex items-center justify-center gap-1 rounded-md border transition-opacity duration-150",
           config.bgColor,
           config.borderColor,
           config.color,
-          isHovered ? "opacity-0" : "opacity-100"
+          isHovered ? "opacity-0 pointer-events-none" : "opacity-100 cursor-pointer"
         )}>
           <Icon className="h-3.5 w-3.5" strokeWidth={2} />
           <span className="text-[10px] font-medium">{config.label}</span>
