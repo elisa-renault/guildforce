@@ -55,10 +55,12 @@ export const RosterManager = ({ guildId, rosters, members, ranks, onRosterChange
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
 
+  const maxRankIndex = ranks.length > 0 ? Math.max(...ranks.map(r => r.rank_index)) : 9;
+
   const openCreateDialog = () => {
     setFormName('');
     setFormDescription('');
-    setFormAccessRules([{ access_type: 'rank', min_rank_index: 0, max_rank_index: 99 }]);
+    setFormAccessRules([{ access_type: 'rank', min_rank_index: 0, max_rank_index: maxRankIndex }]);
     setIsCreating(true);
   };
 
