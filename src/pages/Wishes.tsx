@@ -73,13 +73,12 @@ const SortableWishCard = ({ wish, index, totalWishes, onChange, onRemove, onClea
   return (
     <div ref={setNodeRef} style={style}>
       <GlowCard 
-        className="p-4"
+        className="p-3"
         hoverable={false}
       >
-        {/* Header with controls */}
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2">
           {/* Reorder controls */}
-          <div className="flex flex-col gap-0.5">
+          <div className="hidden lg:flex flex-col gap-0.5">
             <button
               onClick={onMoveUp}
               disabled={!canMoveUp}
@@ -100,44 +99,43 @@ const SortableWishCard = ({ wish, index, totalWishes, onChange, onRemove, onClea
           <button
             {...attributes}
             {...listeners}
-            className="w-7 h-7 rounded-lg bg-muted/50 flex items-center justify-center cursor-grab active:cursor-grabbing hover:bg-muted transition-colors"
+            className="hidden lg:flex w-7 h-7 rounded-lg bg-muted/50 items-center justify-center cursor-grab active:cursor-grabbing hover:bg-muted transition-colors flex-shrink-0"
             title="Drag to reorder"
           >
             <GripVertical className="h-4 w-4 text-muted-foreground" />
           </button>
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center border border-primary/20">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center border border-primary/20 flex-shrink-0">
             <span className="text-sm font-bold text-primary">{index + 1}</span>
           </div>
-          <div className="flex-1">
-            <h3 className="font-medium text-sm text-foreground">
-              {t.wishes.choice} #{index + 1}
-            </h3>
-          </div>
+
+          {/* Wish editor inline */}
+          <WishCardEditor
+            wish={wish}
+            onChange={onChange}
+            usedClassIds={usedClassIds}
+          />
+
+          {/* Delete button */}
           {canRemove ? (
             <button
               onClick={onRemove}
-              className="w-7 h-7 rounded-lg bg-destructive/10 flex items-center justify-center hover:bg-destructive/20 transition-colors"
+              className="w-7 h-7 rounded-lg bg-destructive/10 flex items-center justify-center hover:bg-destructive/20 transition-colors flex-shrink-0"
               title={t.common.delete}
             >
               <Trash2 className="h-4 w-4 text-destructive" />
             </button>
-          ) : wish.classId && (
+          ) : wish.classId ? (
             <button
               onClick={onClear}
-              className="w-7 h-7 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
+              className="w-7 h-7 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors flex-shrink-0"
               title={t.common.delete}
             >
               <Trash2 className="h-4 w-4 text-muted-foreground" />
             </button>
+          ) : (
+            <div className="w-7 h-7 flex-shrink-0" />
           )}
         </div>
-
-        {/* Wish editor */}
-        <WishCardEditor
-          wish={wish}
-          onChange={onChange}
-          usedClassIds={usedClassIds}
-        />
       </GlowCard>
     </div>
   );
