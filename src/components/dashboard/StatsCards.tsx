@@ -13,41 +13,42 @@ export const StatsCards = ({ totalPlayers, confirmedPlayers, roleStats, rangeSta
   const { t } = useLanguage();
 
   return (
-    <div className="grid grid-cols-7 gap-2 md:gap-3 mb-4">
+    <div className="grid grid-cols-4 md:grid-cols-7 gap-1.5 md:gap-3 mb-4">
       <div className="stat-card-compact total">
         <Users className="h-4 md:h-5 text-primary" strokeWidth={1.5} />
-        <div className="text-lg md:text-xl font-bold text-foreground">{totalPlayers}</div>
-        <div className="text-[10px] md:text-xs text-muted-foreground hidden sm:block">{t.dashboard.totalPlayers}</div>
+        <div className="text-base md:text-xl font-bold text-foreground">{totalPlayers}</div>
+        <div className="text-[9px] md:text-xs text-muted-foreground hidden sm:block">{t.dashboard.totalPlayers}</div>
       </div>
       <div className="stat-card-compact confirmed">
         <CheckCircle className="h-4 md:h-5 text-healer" strokeWidth={1.5} />
-        <div className="text-lg md:text-xl font-bold text-foreground">{confirmedPlayers}</div>
-        <div className="text-[10px] md:text-xs text-muted-foreground hidden sm:block">{t.dashboard.confirmedPlayers}</div>
+        <div className="text-base md:text-xl font-bold text-foreground">{confirmedPlayers}</div>
+        <div className="text-[9px] md:text-xs text-muted-foreground hidden sm:block">{t.dashboard.confirmedPlayers}</div>
       </div>
       <div className="stat-card-compact tank">
         <Shield className="h-4 md:h-5 text-tank" strokeWidth={1.5} />
-        <div className="text-lg md:text-xl font-bold text-foreground">{roleStats.tank}</div>
-        <div className="text-[10px] md:text-xs text-muted-foreground hidden sm:block">{t.dashboard.tank}</div>
+        <div className="text-base md:text-xl font-bold text-foreground">{roleStats.tank}</div>
+        <div className="text-[9px] md:text-xs text-muted-foreground hidden sm:block">{t.dashboard.tank}</div>
       </div>
       <div className="stat-card-compact healer">
         <Heart className="h-4 md:h-5 text-healer" strokeWidth={1.5} />
-        <div className="text-lg md:text-xl font-bold text-foreground">{roleStats.healer}</div>
-        <div className="text-[10px] md:text-xs text-muted-foreground hidden sm:block">{t.dashboard.healer}</div>
+        <div className="text-base md:text-xl font-bold text-foreground">{roleStats.healer}</div>
+        <div className="text-[9px] md:text-xs text-muted-foreground hidden sm:block">{t.dashboard.healer}</div>
       </div>
-      <div className="stat-card-compact dps">
+      {/* Hide range stats on very small screens */}
+      <div className="stat-card-compact dps hidden md:flex">
         <Swords className="h-4 md:h-5 text-dps" strokeWidth={1.5} />
-        <div className="text-lg md:text-xl font-bold text-foreground">{roleStats.dps}</div>
-        <div className="text-[10px] md:text-xs text-muted-foreground hidden sm:block">{t.dashboard.dps}</div>
+        <div className="text-base md:text-xl font-bold text-foreground">{roleStats.dps}</div>
+        <div className="text-[9px] md:text-xs text-muted-foreground hidden sm:block">{t.dashboard.dps}</div>
       </div>
-      <div className="stat-card-compact melee">
+      <div className="stat-card-compact melee hidden md:flex">
         <Target className="h-4 md:h-5 text-orange-400" strokeWidth={1.5} />
-        <div className="text-lg md:text-xl font-bold text-foreground">{rangeStats.melee}</div>
-        <div className="text-[10px] md:text-xs text-muted-foreground hidden sm:block">{t.dashboard.melee}</div>
+        <div className="text-base md:text-xl font-bold text-foreground">{rangeStats.melee}</div>
+        <div className="text-[9px] md:text-xs text-muted-foreground hidden sm:block">{t.dashboard.melee}</div>
       </div>
-      <div className="stat-card-compact ranged">
+      <div className="stat-card-compact ranged hidden md:flex">
         <Crosshair className="h-4 md:h-5 text-cyan-400" strokeWidth={1.5} />
-        <div className="text-lg md:text-xl font-bold text-foreground">{rangeStats.ranged}</div>
-        <div className="text-[10px] md:text-xs text-muted-foreground hidden sm:block">{t.dashboard.ranged}</div>
+        <div className="text-base md:text-xl font-bold text-foreground">{rangeStats.ranged}</div>
+        <div className="text-[9px] md:text-xs text-muted-foreground hidden sm:block">{t.dashboard.ranged}</div>
       </div>
     </div>
   );
