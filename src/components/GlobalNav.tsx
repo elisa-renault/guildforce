@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Shield, User, LogOut } from 'lucide-react';
+import { Shield, User, LogOut, MessageSquare } from 'lucide-react';
 import { CosmicButton } from '@/components/CosmicButton';
 
 export const GlobalNav = () => {
@@ -14,6 +14,7 @@ export const GlobalNav = () => {
   if (location.pathname === '/auth') return null;
 
   const isActive = (path: string) => location.pathname === path;
+  const startsWithPath = (path: string) => location.pathname.startsWith(path);
 
   const navButtonBase = "inline-flex items-center justify-center gap-2 px-3 py-2 rounded text-sm font-normal transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background";
   const navButtonInactive = "text-muted-foreground hover:text-foreground hover:bg-white/5";
@@ -37,14 +38,26 @@ export const GlobalNav = () => {
             <button
               onClick={() => navigate('/guilds')}
               className={`${navButtonBase} ${
-                isActive('/guilds') || location.pathname.startsWith('/guild/')
+                isActive('/guilds') || startsWithPath('/guild/')
                   ? navButtonActive
                   : navButtonInactive
               }`}
-              aria-current={isActive('/guilds') || location.pathname.startsWith('/guild/') ? 'page' : undefined}
+              aria-current={isActive('/guilds') || startsWithPath('/guild/') ? 'page' : undefined}
             >
               <Shield className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
               <span>{t.common.myGuilds}</span>
+            </button>
+            <button
+              onClick={() => navigate('/forum')}
+              className={`${navButtonBase} ${
+                startsWithPath('/forum')
+                  ? navButtonActive
+                  : navButtonInactive
+              }`}
+              aria-current={startsWithPath('/forum') ? 'page' : undefined}
+            >
+              <MessageSquare className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+              <span>{t.forum.title}</span>
             </button>
             <button
               onClick={() => navigate('/profile')}
