@@ -12,6 +12,7 @@ interface InlineWishEditorProps {
   wish: WishData;
   choiceIndex: number;
   onChange: (field: keyof WishData, value: any) => void;
+  usedClassIds?: string[];
 }
 
 const roleConfig: Record<Role, { icon: typeof Shield; color: string }> = {
@@ -20,7 +21,7 @@ const roleConfig: Record<Role, { icon: typeof Shield; color: string }> = {
   dps: { icon: Swords, color: 'text-dps' },
 };
 
-export const InlineWishEditor = ({ wish, choiceIndex, onChange }: InlineWishEditorProps) => {
+export const InlineWishEditor = ({ wish, choiceIndex, onChange, usedClassIds = [] }: InlineWishEditorProps) => {
   const { language, t } = useLanguage();
   const [classOpen, setClassOpen] = useState(false);
   const [specOpen, setSpecOpen] = useState(false);
@@ -75,6 +76,10 @@ export const InlineWishEditor = ({ wish, choiceIndex, onChange }: InlineWishEdit
           <div className="flex flex-col gap-0.5 max-h-[280px] overflow-y-auto">
             {wowClasses.map((cls) => {
               const isSelected = wish.classId === cls.id;
+              const isUsed = usedClassIds.includes(cls.id);
+              
+              if (isUsed && !isSelected) return null;
+              
               return (
                 <button
                   key={cls.id}
