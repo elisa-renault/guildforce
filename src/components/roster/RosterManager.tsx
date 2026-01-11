@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -42,9 +42,10 @@ interface RosterManagerProps {
   members: GuildMember[];
   ranks: GuildRank[];
   onRosterChange: () => void;
+  initialRosterId?: string | null;
 }
 
-export const RosterManager = ({ guildId, rosters, members, ranks, onRosterChange }: RosterManagerProps) => {
+export const RosterManager = ({ guildId, rosters, members, ranks, onRosterChange, initialRosterId }: RosterManagerProps) => {
   const { t } = useLanguage();
   const { toast } = useToast();
   const [isCreating, setIsCreating] = useState(false);
@@ -54,8 +55,20 @@ export const RosterManager = ({ guildId, rosters, members, ranks, onRosterChange
   const [formAccessRules, setFormAccessRules] = useState<Omit<AccessRule, 'id'>[]>([]);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [hasOpenedInitial, setHasOpenedInitial] = useState(false);
 
   const maxRankIndex = ranks.length > 0 ? Math.max(...ranks.map(r => r.rank_index)) : 9;
+
+  // Auto-open roster dialog if initialRosterId is provided
+  useEffect(() => {
+    if (initialRosterId && rosters.length > 0 && !hasOpenedInitial) {
+      const roster = rosters.find(r => r.id === initialRosterId);
+      if (roster) {
+        openEditDialog(roster);
+        setHasOpenedInitial(true);
+      }
+    }
+  }, [initialRosterId, rosters, hasOpenedInitial]);
 
   const openCreateDialog = () => {
     setFormName('');
