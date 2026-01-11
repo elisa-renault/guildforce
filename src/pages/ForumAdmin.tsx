@@ -377,7 +377,9 @@ const ForumAdmin = () => {
                         </div>
                         <DynamicIcon name={cat.icon || ''} fallback="📁" className="h-5 w-5 text-primary" />
                         <div>
-                          <p className="font-medium text-foreground">{cat.name}</p>
+                          <p className="font-medium text-foreground capitalize">
+                            {t.forum.categoryNames[cat.slug as keyof typeof t.forum.categoryNames] || cat.name}
+                          </p>
                           <p className="text-sm text-muted-foreground">{cat.slug}</p>
                         </div>
                         {cat.is_global && (
