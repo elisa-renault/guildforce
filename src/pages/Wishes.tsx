@@ -9,7 +9,7 @@ import { CommitmentToggle, CommitmentStatus } from '@/components/CommitmentToggl
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
-import { Loader2, Save, Sparkles, GripVertical, Plus, Trash2 } from 'lucide-react';
+import { Loader2, Save, Sparkles, GripVertical, Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 import { toSlug } from '@/lib/guildSlug';
 import {
   DndContext,
@@ -39,14 +39,17 @@ interface WishData {
 interface SortableWishCardProps {
   wish: WishData;
   index: number;
+  totalWishes: number;
   onChange: (field: keyof Omit<WishData, 'id'>, value: any) => void;
   onRemove: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
   canRemove: boolean;
   choiceLabels: string[];
   usedClassIds: string[];
 }
 
-const SortableWishCard = ({ wish, index, onChange, onRemove, canRemove, choiceLabels, usedClassIds }: SortableWishCardProps) => {
+const SortableWishCard = ({ wish, index, totalWishes, onChange, onRemove, onMoveUp, onMoveDown, canRemove, choiceLabels, usedClassIds }: SortableWishCardProps) => {
   const { t } = useLanguage();
   const {
     attributes,
@@ -63,13 +66,35 @@ const SortableWishCard = ({ wish, index, onChange, onRemove, canRemove, choiceLa
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const canMoveUp = index > 0;
+  const canMoveDown = index < totalWishes - 1;
+
   return (
     <div ref={setNodeRef} style={style}>
       <GlowCard 
         className="p-6"
         hoverable={false}
       >
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-2 mb-6">
+          {/* Reorder controls */}
+          <div className="flex flex-col gap-0.5">
+            <button
+              onClick={onMoveUp}
+              disabled={!canMoveUp}
+              className="w-6 h-6 rounded bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              title="Move up"
+            >
+              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+            </button>
+            <button
+              onClick={onMoveDown}
+              disabled={!canMoveDown}
+              className="w-6 h-6 rounded bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              title="Move down"
+            >
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            </button>
+          </div>
           <button
             {...attributes}
             {...listeners}
@@ -227,6 +252,12 @@ const Wishes = () => {
     setWishes(wishes.filter((_, i) => i !== index));
   };
 
+  const moveWish = (index: number, direction: 'up' | 'down') => {
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= wishes.length) return;
+    setWishes(arrayMove(wishes, index, newIndex));
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     
@@ -351,8 +382,11 @@ const Wishes = () => {
                     key={wish.id}
                     wish={wish}
                     index={index}
+                    totalWishes={wishes.length}
                     onChange={(field, value) => updateWish(index, field, value)}
                     onRemove={() => removeWish(index)}
+                    onMoveUp={() => moveWish(index, 'up')}
+                    onMoveDown={() => moveWish(index, 'down')}
                     canRemove={wishes.length > 1}
                     choiceLabels={choiceLabels}
                     usedClassIds={usedClassIds}
