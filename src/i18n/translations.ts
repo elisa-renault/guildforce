@@ -39,6 +39,8 @@ export interface Translations {
     mainSet: string;
     refresh: string;
     connecting: string;
+    region: string;
+    selectRegion: string;
   };
   // Home page
   home: {
@@ -228,6 +230,8 @@ export const translations: Record<Language, Translations> = {
       mainSet: 'Main character set',
       refresh: 'Refresh',
       connecting: 'Connecting with Battle.net...',
+      region: 'Region',
+      selectRegion: 'Select your region',
     },
     home: {
       title: 'Guildforce',
@@ -416,6 +420,8 @@ export const translations: Record<Language, Translations> = {
       mainSet: 'Personnage principal défini',
       refresh: 'Actualiser',
       connecting: 'Connexion avec Battle.net...',
+      region: 'Région',
+      selectRegion: 'Sélectionnez votre région',
     },
     home: {
       title: 'Guildforce',
