@@ -6,11 +6,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
-import { Shield, Crown, Loader2, Link as LinkIcon, Users, MapPin } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Shield, Crown, Loader2, Link as LinkIcon, Users, MapPin, Settings } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { BattleNetIcon } from '@/components/BattleNetIcon';
-import { getGuildPath } from '@/lib/guildSlug';
+import { getGuildPath, getGuildSettingsPath } from '@/lib/guildSlug';
 import { toast } from 'sonner';
 
 type BattleNetRegion = 'eu' | 'us' | 'kr' | 'tw';
@@ -32,6 +33,7 @@ interface GuildWithMembership {
   owner_id: string;
   memberCount?: number;
   hasMain?: boolean;
+  avatar_url?: string | null;
 }
 
 const GuildList = () => {
@@ -67,7 +69,7 @@ const GuildList = () => {
       const [guildResult, memberCountsResult, mainCharResult] = await Promise.all([
         supabase
           .from('guilds')
-          .select('id, name, server, region, faction, owner_id')
+          .select('id, name, server, region, faction, owner_id, avatar_url')
           .in('id', guildIds),
         supabase
           .from('guild_members')
@@ -121,6 +123,7 @@ const GuildList = () => {
             role: memberships.find(m => m.guild_id === g.id)?.role || 'member',
             memberCount: memberCounts[g.id] || 0,
             hasMain,
+            avatar_url: g.avatar_url,
           };
         });
         
@@ -309,14 +312,24 @@ const GuildList = () => {
                   }`}
                   onClick={() => navigate(getGuildPath(guild.region, guild.server, guild.name))}
                 >
-                  {/* Faction icon */}
-                  <div className={`w-8 h-8 rounded flex items-center justify-center flex-shrink-0 ${
-                    guild.faction === 'horde' 
-                      ? 'bg-red-500/20 text-red-400' 
-                      : 'bg-blue-500/20 text-blue-400'
+                  {/* Guild avatar or faction icon */}
+                  <Avatar className={`h-8 w-8 flex-shrink-0 ${
+                    !guild.avatar_url ? (guild.faction === 'horde' 
+                      ? 'bg-red-500/20' 
+                      : 'bg-blue-500/20') : ''
                   }`}>
-                    <Shield className="h-4 w-4" strokeWidth={1.5} />
-                  </div>
+                    {guild.avatar_url ? (
+                      <AvatarImage src={guild.avatar_url} alt={guild.name} />
+                    ) : (
+                      <AvatarFallback className={`${
+                        guild.faction === 'horde' 
+                          ? 'bg-red-500/20 text-red-400' 
+                          : 'bg-blue-500/20 text-blue-400'
+                      }`}>
+                        <Shield className="h-4 w-4" strokeWidth={1.5} />
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
                   
                   {/* Guild info */}
                   <div className="flex-1 min-w-0">
@@ -341,10 +354,24 @@ const GuildList = () => {
                     </div>
                   </div>
                   
-                  {/* Role badge */}
-                  {guild.role === 'gm' && (
-                    <Crown className="h-4 w-4 text-amber-500 flex-shrink-0" strokeWidth={1.5} />
-                  )}
+                  {/* Role badge and settings */}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {guild.role === 'gm' && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(getGuildSettingsPath(guild.region, guild.server, guild.name));
+                          }}
+                          className="w-7 h-7 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
+                          title={t.guildSettings.title}
+                        >
+                          <Settings className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
+                        </button>
+                        <Crown className="h-4 w-4 text-amber-500" strokeWidth={1.5} />
+                      </>
+                    )}
+                  </div>
                 </div>
               ))
             ) : (

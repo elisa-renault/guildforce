@@ -171,6 +171,7 @@ export type Database = {
       }
       guilds: {
         Row: {
+          avatar_url: string | null
           created_at: string
           created_by_user_id: string | null
           faction: string
@@ -182,6 +183,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string
           created_by_user_id?: string | null
           faction: string
@@ -193,6 +195,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string
           created_by_user_id?: string | null
           faction?: string
