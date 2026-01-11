@@ -1049,7 +1049,7 @@ async function autoJoinGuilds(
       try {
         const { data: existingGuild, error: guildLookupError } = await supabase
           .from('guilds')
-          .select('id, owner_id')
+          .select('id, owner_id, faction')
           .eq('name', guildInfo.name)
           .eq('server', guildInfo.server)
           .maybeSingle();
@@ -1065,6 +1065,14 @@ async function autoJoinGuilds(
           guildId = existingGuild.id;
           log.debug(`Guild ${sanitizePII(guildInfo.name, 'name')} already exists (id: ${sanitizePII(guildId, 'id')})`);
 
+          // Update faction if it changed in Battle.net (source of truth)
+          if (existingGuild.faction !== guildInfo.faction) {
+            log.info(`Updating faction for guild ${sanitizePII(guildInfo.name, 'name')} from ${existingGuild.faction} to ${guildInfo.faction}`);
+            await supabase
+              .from('guilds')
+              .update({ faction: guildInfo.faction })
+              .eq('id', guildId);
+          }
           // Handle ownership changes
           if (existingGuild.owner_id === userId && !guildInfo.isGM) {
             // User lost GM status - revoke ownership
