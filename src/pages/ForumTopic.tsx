@@ -398,7 +398,7 @@ const ForumTopicPage = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>
+            <AlertDialogCancel className="border-border hover:bg-muted">
               {language === 'fr' ? 'Annuler' : 'Cancel'}
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive hover:bg-destructive/90">
