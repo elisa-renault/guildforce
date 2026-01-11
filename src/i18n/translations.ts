@@ -189,6 +189,12 @@ export interface Translations {
     characterLevel: string;
     isMain: string;
     connectedViaBnet: string;
+    avatar: string;
+    uploadAvatar: string;
+    removeAvatar: string;
+    avatarHint: string;
+    profileInfo: string;
+    accountConnection: string;
   };
   // Errors
   errors: {
@@ -388,6 +394,12 @@ export const translations: Record<Language, Translations> = {
       characterLevel: 'Level',
       isMain: 'Main',
       connectedViaBnet: 'Connected via Battle.net',
+      avatar: 'Profile Picture',
+      uploadAvatar: 'Upload',
+      removeAvatar: 'Remove',
+      avatarHint: 'JPG, PNG or GIF. Max 2MB.',
+      profileInfo: 'Profile Information',
+      accountConnection: 'Account Connection',
     },
     errors: {
       generic: 'Something went wrong. Please try again.',
@@ -584,6 +596,12 @@ export const translations: Record<Language, Translations> = {
       characterLevel: 'Niveau',
       isMain: 'Principal',
       connectedViaBnet: 'Connecté via Battle.net',
+      avatar: 'Photo de profil',
+      uploadAvatar: 'Modifier',
+      removeAvatar: 'Supprimer',
+      avatarHint: 'JPG, PNG ou GIF. Max 2Mo.',
+      profileInfo: 'Informations du profil',
+      accountConnection: 'Connexion du compte',
     },
     errors: {
       generic: 'Une erreur est survenue. Veuillez réessayer.',
