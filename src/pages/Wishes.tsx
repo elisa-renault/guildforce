@@ -186,7 +186,7 @@ const Wishes = () => {
       </div>
 
       <main className="container mx-auto px-4 py-8 max-w-3xl relative z-10">
-        <div className="text-center mb-10 animate-fade-in">
+        <div className="text-center mb-10">
           <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/25">
             <Sparkles className="h-7 w-7 text-white" strokeWidth={1.5} />
           </div>
@@ -195,7 +195,7 @@ const Wishes = () => {
         </div>
 
         {/* Commitment toggle */}
-        <GlowCard className="p-6 mb-8 animate-fade-in" style={{ animationDelay: '100ms' } as React.CSSProperties}>
+        <GlowCard className="p-6 mb-8">
           <CommitmentToggle confirmed={confirmed} onChange={setConfirmed} />
         </GlowCard>
 
@@ -204,8 +204,7 @@ const Wishes = () => {
           {wishes.map((wish, index) => (
             <GlowCard 
               key={index} 
-              className="p-6 animate-fade-in" 
-              style={{ animationDelay: `${200 + index * 100}ms` } as React.CSSProperties}
+              className="p-6"
               hoverable={false}
             >
               <div className="flex items-center gap-3 mb-6">
@@ -232,7 +231,7 @@ const Wishes = () => {
                 </div>
 
                 {wish.classId && (
-                  <div className="animate-fade-in">
+                  <div>
                     <Label className="text-foreground mb-3 block">{t.wishes.selectSpecs}</Label>
                     <SpecButtons
                       classId={wish.classId}
@@ -256,7 +255,7 @@ const Wishes = () => {
           ))}
         </div>
 
-        <div className="mt-10 text-center animate-fade-in" style={{ animationDelay: '500ms' } as React.CSSProperties}>
+        <div className="mt-10 text-center">
           <CosmicButton 
             size="lg" 
             onClick={saveWishes} 
