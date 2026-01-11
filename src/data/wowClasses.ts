@@ -141,6 +141,7 @@ export const wowClasses: WoWClass[] = [
     specs: [
       { id: 'dh-havoc', name: { en: 'Havoc', fr: 'Dévastation' }, role: 'dps' },
       { id: 'dh-vengeance', name: { en: 'Vengeance', fr: 'Vengeance' }, role: 'tank' },
+      { id: 'dh-devourer', name: { en: 'Devourer', fr: 'Dévoreur' }, role: 'dps' },
     ],
   },
   {
