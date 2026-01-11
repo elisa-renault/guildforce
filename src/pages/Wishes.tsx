@@ -347,7 +347,7 @@ const Wishes = () => {
 
       <main className="container mx-auto px-3 md:px-4 py-4 md:py-6 relative z-10">
         <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold cosmic-text">{t.wishes.title}</h2>
+          <h2 className="text-3xl font-display cosmic-text">{t.wishes.title}</h2>
         </div>
 
         {/* Commitment toggle */}
