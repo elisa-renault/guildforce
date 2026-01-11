@@ -40,7 +40,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
         </SelectContent>
       </Select>
       <Select value={filters.classFilter} onValueChange={(v) => updateFilter('classFilter', v)}>
-        <SelectTrigger className="h-8 w-full sm:w-[180px] text-sm cosmic-input">
+        <SelectTrigger className="h-8 w-full sm:w-[220px] text-sm cosmic-input">
           <SelectValue placeholder={t.dashboard.allClasses} />
         </SelectTrigger>
         <SelectContent className="cosmic-glass border-border/50">
