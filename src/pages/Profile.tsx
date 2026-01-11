@@ -250,93 +250,96 @@ const Profile = () => {
       <main className="container mx-auto px-4 py-6 relative z-10">
         <h1 className="font-display text-2xl gradient-text mb-6">{t.profile.title}</h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Left column: Avatar */}
-          <GlowCard className="p-5" hoverable={false}>
-            <h2 className="text-sm font-medium text-foreground mb-4">{t.profile.avatar}</h2>
-            
-            <div className="flex flex-col items-center">
-              <div className="w-28 h-28 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/25 overflow-hidden mb-4">
-                {uploadingAvatar ? (
-                  <Loader2 className="h-10 w-10 text-white animate-spin" />
-                ) : profile?.avatar_url ? (
-                  <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-                ) : (
-                  <User className="h-12 w-12 text-white" strokeWidth={1.5} />
-                )}
-              </div>
-
-              <div className="flex flex-col gap-2 w-full">
-                <Button type="button" variant="outline" size="sm" className="relative w-full" disabled={uploadingAvatar}>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarUpload}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    disabled={uploadingAvatar}
-                  />
-                  <Upload className="h-4 w-4 mr-2" strokeWidth={1.5} />
-                  {t.profile.uploadAvatar}
-                </Button>
-                
-                {profile?.avatar_url && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleDeleteAvatar}
-                    disabled={uploadingAvatar}
-                    className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" strokeWidth={1.5} />
-                    {t.profile.removeAvatar}
-                  </Button>
-                )}
-              </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-4xl">
+          {/* Left column: Avatar + Profile stacked */}
+          <div className="space-y-4">
+            {/* Avatar */}
+            <GlowCard className="p-5" hoverable={false}>
+              <h2 className="text-sm font-medium text-foreground mb-4">{t.profile.avatar}</h2>
               
-              <p className="text-xs text-muted-foreground mt-3 text-center">{t.profile.avatarHint}</p>
-            </div>
-          </GlowCard>
-
-          {/* Middle column: Profile form */}
-          <GlowCard className="p-5" hoverable={false}>
-            <h2 className="text-sm font-medium text-foreground mb-4 flex items-center gap-2">
-              <User className="h-4 w-4 text-primary" strokeWidth={1.5} />
-              {t.profile.profileInfo}
-            </h2>
-
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField control={form.control} name="username" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-foreground text-sm">{t.auth.pseudo}</FormLabel>
-                    <FormControl>
-                      <Input placeholder={t.auth.pseudoPlaceholder} {...field} className="cosmic-input" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-
-                <div>
-                  <FormLabel className="text-foreground text-sm mb-2 block">
-                    <Globe className="h-4 w-4 inline mr-2" strokeWidth={1.5} />
-                    {t.profile.language}
-                  </FormLabel>
-                  <Select value={language} onValueChange={(val) => handleLanguageChange(val as Language)}>
-                    <SelectTrigger className="cosmic-input"><SelectValue /></SelectTrigger>
-                    <SelectContent className="bg-card border-border">
-                      <SelectItem value="fr">🇫🇷 Français</SelectItem>
-                      <SelectItem value="en">🇬🇧 English</SelectItem>
-                    </SelectContent>
-                  </Select>
+              <div className="flex flex-col items-center">
+                <div className="w-28 h-28 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/25 overflow-hidden mb-4">
+                  {uploadingAvatar ? (
+                    <Loader2 className="h-10 w-10 text-white animate-spin" />
+                  ) : profile?.avatar_url ? (
+                    <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="h-12 w-12 text-white" strokeWidth={1.5} />
+                  )}
                 </div>
 
-                <CosmicButton type="submit" className="w-full" loading={saving} icon={<Save className="h-4 w-4" strokeWidth={1.5} />}>
-                  {t.common.save}
-                </CosmicButton>
-              </form>
-            </Form>
-          </GlowCard>
+                <div className="flex flex-col gap-2 w-full">
+                  <Button type="button" variant="outline" size="sm" className="relative w-full" disabled={uploadingAvatar}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarUpload}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      disabled={uploadingAvatar}
+                    />
+                    <Upload className="h-4 w-4 mr-2" strokeWidth={1.5} />
+                    {t.profile.uploadAvatar}
+                  </Button>
+                  
+                  {profile?.avatar_url && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDeleteAvatar}
+                      disabled={uploadingAvatar}
+                      className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" strokeWidth={1.5} />
+                      {t.profile.removeAvatar}
+                    </Button>
+                  )}
+                </div>
+                
+                <p className="text-xs text-muted-foreground mt-3 text-center">{t.profile.avatarHint}</p>
+              </div>
+            </GlowCard>
+
+            {/* Profile form */}
+            <GlowCard className="p-5" hoverable={false}>
+              <h2 className="text-sm font-medium text-foreground mb-4 flex items-center gap-2">
+                <User className="h-4 w-4 text-primary" strokeWidth={1.5} />
+                {t.profile.profileInfo}
+              </h2>
+
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <FormField control={form.control} name="username" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-foreground text-sm">{t.auth.pseudo}</FormLabel>
+                      <FormControl>
+                        <Input placeholder={t.auth.pseudoPlaceholder} {...field} className="cosmic-input" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+
+                  <div>
+                    <FormLabel className="text-foreground text-sm mb-2 block">
+                      <Globe className="h-4 w-4 inline mr-2" strokeWidth={1.5} />
+                      {t.profile.language}
+                    </FormLabel>
+                    <Select value={language} onValueChange={(val) => handleLanguageChange(val as Language)}>
+                      <SelectTrigger className="cosmic-input"><SelectValue /></SelectTrigger>
+                      <SelectContent className="bg-card border-border">
+                        <SelectItem value="fr">🇫🇷 Français</SelectItem>
+                        <SelectItem value="en">🇬🇧 English</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <CosmicButton type="submit" className="w-full" loading={saving} icon={<Save className="h-4 w-4" strokeWidth={1.5} />}>
+                    {t.common.save}
+                  </CosmicButton>
+                </form>
+              </Form>
+            </GlowCard>
+          </div>
 
           {/* Right column: Battle.net connection */}
           <GlowCard className="p-5" hoverable={false}>
