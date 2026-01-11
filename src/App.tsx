@@ -12,6 +12,7 @@ import GuildList from "./pages/GuildList";
 import Wishes from "./pages/Wishes";
 import MemberWishes from "./pages/MemberWishes";
 import Dashboard from "./pages/Dashboard";
+import GuildSettings from "./pages/GuildSettings";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
@@ -34,6 +35,7 @@ const App = () => (
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/guild/:regionSlug/:serverSlug/:guildSlug" element={<Dashboard />} />
                 <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/wishes" element={<Wishes />} />
+                <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/settings" element={<GuildSettings />} />
                 <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/member/:memberId" element={<MemberWishes />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
