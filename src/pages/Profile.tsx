@@ -140,7 +140,7 @@ const Profile = () => {
       <div className="min-h-screen flex items-center justify-center p-4 relative">
         <CosmicBackground />
         
-        <GlowCard className="w-full max-w-md p-8 relative z-10 animate-scale-in" hoverable={false}>
+        <GlowCard className="w-full max-w-md p-8 relative z-10" hoverable={false}>
           <div className="text-center mb-8">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/25">
               <Sparkles className="h-8 w-8 text-white" strokeWidth={1.5} />
@@ -221,7 +221,7 @@ const Profile = () => {
           {/* Left Column - Profile Header & Account Info */}
           <div className="lg:col-span-1 space-y-6">
             {/* Profile Header */}
-            <GlowCard className="p-6 animate-fade-in" hoverable={false}>
+            <GlowCard className="p-6" hoverable={false}>
               <div className="text-center">
                 <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/25">
                   {profile?.avatar_url ? (
@@ -246,7 +246,7 @@ const Profile = () => {
             </GlowCard>
 
             {/* Account Info */}
-            <GlowCard className="p-5 animate-fade-in" style={{ animationDelay: '100ms' }} hoverable={false}>
+            <GlowCard className="p-5" hoverable={false}>
               <h3 className="text-base font-semibold text-foreground mb-3">Account</h3>
               <div className="space-y-2 text-sm">
                 {/* Only show email if it's not the technical bnet email */}
@@ -272,7 +272,7 @@ const Profile = () => {
             </GlowCard>
 
             {/* Battle.net Connection */}
-            <div className="animate-fade-in" style={{ animationDelay: '150ms' }}>
+            <div>
               <BattleNetConnect />
             </div>
           </div>
@@ -280,7 +280,7 @@ const Profile = () => {
           {/* Right Column - Form & Guilds */}
           <div className="lg:col-span-2 space-y-6">
             {/* Profile Form */}
-            <GlowCard className="p-6 animate-fade-in" style={{ animationDelay: '200ms' }} hoverable={false}>
+            <GlowCard className="p-6" hoverable={false}>
               <h3 className="text-base font-semibold text-foreground mb-5 flex items-center gap-2">
                 <User className="h-5 w-5 text-primary" strokeWidth={1.5} />
                 {t.profile.editProfile}
@@ -349,7 +349,7 @@ const Profile = () => {
             </GlowCard>
 
             {/* WoW Guild Memberships */}
-            <div className="animate-fade-in" style={{ animationDelay: '250ms' }}>
+            <div>
               <GuildMemberships />
             </div>
           </div>

@@ -19,7 +19,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
   };
 
   return (
-    <GlowCard className="p-6 mb-6 animate-fade-in" style={{ animationDelay: '250ms' }} hoverable={false}>
+    <GlowCard className="p-6 mb-6" hoverable={false}>
       <h3 className="text-lg font-semibold text-foreground mb-4">{t.dashboard.filters}</h3>
       <div className="flex flex-wrap gap-4">
         <div className="relative">

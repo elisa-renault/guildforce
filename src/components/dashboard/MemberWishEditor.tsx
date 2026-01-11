@@ -80,7 +80,7 @@ export const MemberWishEditor = ({
               </div>
 
               {wish.classId && (
-                <div className="animate-fade-in">
+                <div>
                   <Label className="text-foreground mb-2 block text-sm">{t.wishes.selectSpecs}</Label>
                   <SpecButtons
                     classId={wish.classId}
