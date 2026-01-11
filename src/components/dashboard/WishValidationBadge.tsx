@@ -68,7 +68,11 @@ export const WishValidationBadge = ({
                 variant="ghost"
                 size="sm"
                 className="h-6 w-6 p-0 hover:bg-healer/20 hover:text-healer"
-                onClick={() => onValidate('approved')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onValidate('approved');
+                  setShowActions(false);
+                }}
                 disabled={loading}
                 title={t.wishes.validation.approve}
               >
@@ -80,7 +84,11 @@ export const WishValidationBadge = ({
                 variant="ghost"
                 size="sm"
                 className="h-6 w-6 p-0 hover:bg-destructive/20 hover:text-destructive"
-                onClick={() => onValidate('rejected')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onValidate('rejected');
+                  setShowActions(false);
+                }}
                 disabled={loading}
                 title={t.wishes.validation.reject}
               >
@@ -92,7 +100,11 @@ export const WishValidationBadge = ({
                 variant="ghost"
                 size="sm"
                 className="h-6 w-6 p-0 hover:bg-muted hover:text-muted-foreground"
-                onClick={() => onValidate('pending')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onValidate('pending');
+                  setShowActions(false);
+                }}
                 disabled={loading}
                 title={t.wishes.validation.reset}
               >
