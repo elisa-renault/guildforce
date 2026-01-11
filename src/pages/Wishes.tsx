@@ -10,7 +10,7 @@ import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { Loader2, Save, GripVertical, Plus, Trash2, ChevronUp, ChevronDown, ArrowLeft } from 'lucide-react';
-import { toSlug } from '@/lib/guildSlug';
+import { toSlug, getGuildPath } from '@/lib/guildSlug';
 import {
   DndContext,
   closestCenter,
@@ -335,7 +335,7 @@ const Wishes = () => {
         <div className="container mx-auto px-3 md:px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button
-              onClick={() => navigate('/guilds')}
+              onClick={() => guild && navigate(getGuildPath(guild.region, guild.server, guild.name))}
               className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
               title={t.common.back}
             >
