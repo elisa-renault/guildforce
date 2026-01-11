@@ -15,7 +15,7 @@ import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { BattleNetConnect } from '@/components/BattleNetConnect';
 
-import { User, Save, Globe, Loader2, Sparkles } from 'lucide-react';
+import { User, Save, Globe, Loader2, Sparkles, Camera } from 'lucide-react';
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -26,6 +26,7 @@ const Profile = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const profileSchema = z.object({
     username: z.string().min(2, 'Le pseudo doit contenir au moins 2 caractères').max(30, 'Le pseudo ne peut pas dépasser 30 caractères'),
@@ -100,6 +101,71 @@ const Profile = () => {
         .from('profiles')
         .update({ preferred_language: newLang })
         .eq('id', user.id);
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: t.errors.generic,
+        description: 'Please select an image file',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: t.errors.generic,
+        description: 'Image must be less than 2MB',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setUploadingAvatar(true);
+
+    try {
+      // Create file path: userId/avatar.ext
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${user.id}/avatar.${fileExt}`;
+
+      // Upload to storage (will overwrite existing)
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      // Update profile with new avatar URL (add cache buster)
+      const avatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: avatarUrl })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      await refreshProfile();
+      toast({ title: language === 'fr' ? 'Avatar mis à jour !' : 'Avatar updated!' });
+    } catch (error: any) {
+      toast({
+        title: t.errors.generic,
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
@@ -214,17 +280,33 @@ const Profile = () => {
         {/* Compact header with avatar, name, and account info inline */}
         <GlowCard className="p-4 mb-4" hoverable={false}>
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 shrink-0 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/25">
-              {profile?.avatar_url ? (
-                <img 
-                  src={profile.avatar_url} 
-                  alt="Avatar" 
-                  className="w-full h-full rounded-full object-cover"
-                />
-              ) : (
-                <User className="h-7 w-7 text-white" strokeWidth={1.5} />
-              )}
-            </div>
+            {/* Avatar with upload overlay */}
+            <label className="relative w-14 h-14 shrink-0 cursor-pointer group">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarUpload}
+                className="hidden"
+                disabled={uploadingAvatar}
+              />
+              <div className="w-full h-full rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/25 overflow-hidden">
+                {uploadingAvatar ? (
+                  <Loader2 className="h-6 w-6 text-white animate-spin" />
+                ) : profile?.avatar_url ? (
+                  <img 
+                    src={profile.avatar_url} 
+                    alt="Avatar" 
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  <User className="h-7 w-7 text-white" strokeWidth={1.5} />
+                )}
+              </div>
+              {/* Hover overlay */}
+              <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <Camera className="h-5 w-5 text-white" strokeWidth={1.5} />
+              </div>
+            </label>
             <div className="flex-1 min-w-0">
               <h2 className="text-lg font-bold text-foreground truncate">
                 {profile?.username || 'Player'}
