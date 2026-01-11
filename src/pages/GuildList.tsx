@@ -7,6 +7,7 @@ import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { Shield, Crown, Loader2, Link as LinkIcon } from 'lucide-react';
+import { getGuildPath } from '@/lib/guildSlug';
 
 interface GuildWithMembership {
   id: string;
@@ -99,7 +100,7 @@ const GuildList = () => {
                 <GlowCard 
                   key={guild.id}
                   className="p-6 cursor-pointer hover:border-primary/50"
-                  onClick={() => navigate(`/guild/${guild.id}`)}
+                  onClick={() => navigate(getGuildPath(guild.server, guild.name))}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
