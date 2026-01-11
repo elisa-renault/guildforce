@@ -10,7 +10,7 @@ import { CosmicButton } from '@/components/CosmicButton';
 import { StatsCards, RosterFilters, RosterTable } from '@/components/dashboard';
 import { RosterSelector, RosterEditDialog } from '@/components/roster';
 import { MemberWish, WishData, RoleStats, RangeStats, RosterFilters as RosterFiltersType } from '@/types/guild';
-import { Loader2, Sparkles, ArrowLeft, Settings } from 'lucide-react';
+import { Loader2, Sparkles, ArrowLeft, Settings, Shield } from 'lucide-react';
 import { toSlug, getGuildWishesPath, getGuildSettingsPath } from '@/lib/guildSlug';
 import { CommitmentStatus } from '@/components/CommitmentToggle';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -431,6 +431,11 @@ const Dashboard = () => {
             {isGM && selectedRosterId && (
               <CosmicButton size="sm" variant="outline" onClick={() => setRosterSettingsOpen(true)} icon={<Settings className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 md:h-8 px-2 md:px-3">
                 <span className="hidden md:inline">{t.common.settings}</span>
+              </CosmicButton>
+            )}
+            {isGM && guild && (
+              <CosmicButton size="sm" variant="outline" onClick={() => navigate(getGuildSettingsPath(guild.region, guild.server, guild.name))} icon={<Shield className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 md:h-8 px-2 md:px-3">
+                <span className="hidden md:inline">{t.guildSettings.title}</span>
               </CosmicButton>
             )}
           </div>
