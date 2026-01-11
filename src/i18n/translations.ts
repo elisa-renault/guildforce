@@ -196,6 +196,21 @@ export interface Translations {
     profileInfo: string;
     accountConnection: string;
   };
+  // Guild Settings
+  guildSettings: {
+    title: string;
+    avatar: string;
+    uploadAvatar: string;
+    removeAvatar: string;
+    avatarHint: string;
+    avatarUpdated: string;
+    avatarRemoved: string;
+    uploadError: string;
+    guildInfo: string;
+    syncedFromBnet: string;
+    comingSoon: string;
+    gmOnly: string;
+  };
   // Errors
   errors: {
     generic: string;
@@ -401,6 +416,20 @@ export const translations: Record<Language, Translations> = {
       profileInfo: 'Profile Information',
       accountConnection: 'Account Connection',
     },
+    guildSettings: {
+      title: 'Guild Settings',
+      avatar: 'Guild Avatar',
+      uploadAvatar: 'Upload',
+      removeAvatar: 'Remove',
+      avatarHint: 'JPG, PNG or GIF. Max 2MB.',
+      avatarUpdated: 'Avatar updated',
+      avatarRemoved: 'Avatar removed',
+      uploadError: 'Upload failed',
+      guildInfo: 'Guild Information',
+      syncedFromBnet: 'This information is synced from Battle.net',
+      comingSoon: 'Coming Soon',
+      gmOnly: 'Only Guild Masters can access this page',
+    },
     errors: {
       generic: 'Something went wrong. Please try again.',
       network: 'Network error. Please check your connection.',
@@ -602,6 +631,20 @@ export const translations: Record<Language, Translations> = {
       avatarHint: 'JPG, PNG ou GIF. Max 2Mo.',
       profileInfo: 'Informations du profil',
       accountConnection: 'Connexion du compte',
+    },
+    guildSettings: {
+      title: 'Paramètres de guilde',
+      avatar: 'Avatar de guilde',
+      uploadAvatar: 'Modifier',
+      removeAvatar: 'Supprimer',
+      avatarHint: 'JPG, PNG ou GIF. Max 2Mo.',
+      avatarUpdated: 'Avatar mis à jour',
+      avatarRemoved: 'Avatar supprimé',
+      uploadError: 'Échec de l\'upload',
+      guildInfo: 'Informations de la guilde',
+      syncedFromBnet: 'Ces informations sont synchronisées depuis Battle.net',
+      comingSoon: 'À venir',
+      gmOnly: 'Seuls les Guild Masters peuvent accéder à cette page',
     },
     errors: {
       generic: 'Une erreur est survenue. Veuillez réessayer.',
