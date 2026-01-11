@@ -9,7 +9,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { getClassById, getRolesFromSpecs } from '@/data/wowClasses';
 import { MemberWish, WishData, WishChoice } from '@/types/guild';
 import { InlineWishEditor } from './InlineWishEditor';
-import { CommitmentToggle } from '@/components/CommitmentToggle';
+import { CommitmentToggle, CommitmentStatus } from '@/components/CommitmentToggle';
 import { cn } from '@/lib/utils';
 
 interface RosterTableProps {
@@ -18,13 +18,13 @@ interface RosterTableProps {
   expandedRows: Set<string>;
   editingUserId: string | null;
   editWishes: WishData[];
-  editConfirmed: boolean;
+  editStatus: CommitmentStatus;
   saving: boolean;
   onToggleRow: (memberId: string) => void;
   onStartEditing: (member: MemberWish) => void;
   onCancelEditing: () => void;
   onUpdateEditWish: (index: number, field: keyof WishData, value: any) => void;
-  onEditConfirmedChange: (confirmed: boolean) => void;
+  onEditStatusChange: (status: CommitmentStatus) => void;
   onSaveEditing: () => void;
 }
 
@@ -33,12 +33,12 @@ export const RosterTable = ({
   currentUserId,
   editingUserId,
   editWishes,
-  editConfirmed,
+  editStatus,
   saving,
   onStartEditing,
   onCancelEditing,
   onUpdateEditWish,
-  onEditConfirmedChange,
+  onEditStatusChange,
   onSaveEditing,
 }: RosterTableProps) => {
   const { t, language } = useLanguage();
@@ -135,8 +135,8 @@ export const RosterTable = ({
                   <TableCell className="py-2 px-2 md:px-3">
                     {isEditing ? (
                       <CommitmentToggle 
-                        confirmed={editConfirmed} 
-                        onChange={onEditConfirmedChange}
+                        status={editStatus} 
+                        onChange={onEditStatusChange}
                         compact
                       />
                     ) : (
