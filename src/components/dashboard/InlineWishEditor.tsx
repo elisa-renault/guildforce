@@ -121,7 +121,13 @@ export const InlineWishEditor = ({ wish, choiceIndex, onChange }: InlineWishEdit
                     })}
                   </span>
                 ) : (
-                  <span className="truncate">{t.wishes.specs}</span>
+                  <span className="flex items-center gap-1 text-muted-foreground">
+                    {selectedClass.specs.slice(0, 3).map(spec => {
+                      const config = roleConfig[spec.role];
+                      const Icon = config.icon;
+                      return <Icon key={spec.id} className="h-3 w-3 opacity-40" />;
+                    })}
+                  </span>
                 )}
                 <ChevronDown className="h-2.5 w-2.5 opacity-50 flex-shrink-0" />
               </Button>
