@@ -133,9 +133,11 @@ export default {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "fade-in": "fade-in 0.5s ease-out forwards",
-        "scale-in": "scale-in 0.3s ease-out forwards",
-        "slide-in": "slide-in 0.3s ease-out",
+        // Use `both` to apply the 0% keyframe styles before the first paint,
+        // preventing a brief flash of the final state before the animation kicks in.
+        "fade-in": "fade-in 0.5s ease-out both",
+        "scale-in": "scale-in 0.3s ease-out both",
+        "slide-in": "slide-in 0.3s ease-out both",
         "float": "float 8s ease-in-out infinite",
         "float-delayed": "float 10s ease-in-out infinite -3s",
         "float-slow": "float 12s ease-in-out infinite -5s",
