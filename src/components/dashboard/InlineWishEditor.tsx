@@ -1,11 +1,11 @@
 import { useLanguage } from '@/contexts/LanguageContext';
-import { wowClasses, getClassById, getSpecById, Role } from '@/data/wowClasses';
+import { wowClasses, getClassById, getSpecById, Role, Specialization } from '@/data/wowClasses';
 import { WishData } from '@/types/guild';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { Check, ChevronDown, Shield, Heart, Swords, MessageSquare } from 'lucide-react';
+import { Check, ChevronDown, Shield, Heart, Swords, Crosshair, MessageSquare } from 'lucide-react';
 import { useState } from 'react';
 
 interface InlineWishEditorProps {
@@ -15,10 +15,18 @@ interface InlineWishEditorProps {
   usedClassIds?: string[];
 }
 
-const roleConfig: Record<Role, { icon: typeof Shield; color: string }> = {
-  tank: { icon: Shield, color: 'text-tank' },
-  healer: { icon: Heart, color: 'text-healer' },
-  dps: { icon: Swords, color: 'text-dps' },
+const roleConfig: Record<Role, { color: string }> = {
+  tank: { color: 'text-tank' },
+  healer: { color: 'text-healer' },
+  dps: { color: 'text-dps' },
+};
+
+// Get the appropriate icon for a spec based on role and range
+const getSpecIcon = (spec: Specialization) => {
+  if (spec.role === 'tank') return Shield;
+  if (spec.role === 'healer') return Heart;
+  // DPS: differentiate melee vs ranged
+  return spec.range === 'ranged' ? Crosshair : Swords;
 };
 
 export const InlineWishEditor = ({ wish, choiceIndex, onChange, usedClassIds = [] }: InlineWishEditorProps) => {
@@ -122,7 +130,7 @@ export const InlineWishEditor = ({ wish, choiceIndex, onChange, usedClassIds = [
                     {(() => {
                       const firstSpec = selectedSpecs[0]!;
                       const config = roleConfig[firstSpec.role];
-                      const Icon = config.icon;
+                      const Icon = getSpecIcon(firstSpec);
                       return (
                         <>
                           <Icon className={cn("h-3 w-3 flex-shrink-0", config.color)} />
@@ -137,8 +145,7 @@ export const InlineWishEditor = ({ wish, choiceIndex, onChange, usedClassIds = [
                 ) : (
                   <span className="flex items-center gap-1 text-muted-foreground">
                     {selectedClass.specs.slice(0, 3).map(spec => {
-                      const config = roleConfig[spec.role];
-                      const Icon = config.icon;
+                      const Icon = getSpecIcon(spec);
                       return <Icon key={spec.id} className="h-3 w-3 opacity-40" />;
                     })}
                   </span>
@@ -151,7 +158,7 @@ export const InlineWishEditor = ({ wish, choiceIndex, onChange, usedClassIds = [
                 {selectedClass.specs.map((spec) => {
                   const isSelected = wish.specIds.includes(spec.id);
                   const config = roleConfig[spec.role];
-                  const Icon = config.icon;
+                  const Icon = getSpecIcon(spec);
                   
                   return (
                     <button
