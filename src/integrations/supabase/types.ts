@@ -177,6 +177,7 @@ export type Database = {
           id: string
           name: string
           owner_id: string | null
+          region: string
           server: string
           updated_at: string
         }
@@ -187,6 +188,7 @@ export type Database = {
           id?: string
           name: string
           owner_id?: string | null
+          region?: string
           server: string
           updated_at?: string
         }
@@ -197,6 +199,7 @@ export type Database = {
           id?: string
           name?: string
           owner_id?: string | null
+          region?: string
           server?: string
           updated_at?: string
         }
@@ -299,6 +302,7 @@ export type Database = {
           guild_name: string
           guild_realm: string
           guild_realm_slug: string
+          guild_region: string
           id: string
           is_guild_master: boolean | null
           rank_index: number
@@ -313,6 +317,7 @@ export type Database = {
           guild_name: string
           guild_realm: string
           guild_realm_slug: string
+          guild_region?: string
           id?: string
           is_guild_master?: boolean | null
           rank_index?: number
@@ -327,6 +332,7 @@ export type Database = {
           guild_name?: string
           guild_realm?: string
           guild_realm_slug?: string
+          guild_region?: string
           id?: string
           is_guild_master?: boolean | null
           rank_index?: number
