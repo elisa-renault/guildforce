@@ -134,6 +134,8 @@ export interface Translations {
     preferredChoice: string;
     secondChoice: string;
     thirdChoice: string;
+    addWish: string;
+    removeWish: string;
     commitment: {
       title: string;
       confirmed: string;
@@ -333,6 +335,8 @@ export const translations: Record<Language, Translations> = {
       preferredChoice: 'Your preferred class',
       secondChoice: 'Second choice',
       thirdChoice: 'Third choice',
+      addWish: 'Add a wish',
+      removeWish: 'Remove',
       commitment: {
         title: 'Mythic raid commitment',
         confirmed: 'Confirmed',
@@ -527,6 +531,8 @@ export const translations: Record<Language, Translations> = {
       preferredChoice: 'Ton choix préféré',
       secondChoice: 'Deuxième choix',
       thirdChoice: 'Troisième choix',
+      addWish: 'Ajouter un vœu',
+      removeWish: 'Supprimer',
       commitment: {
         title: 'Engagement pour le raid mythique',
         confirmed: 'Confirmé',
