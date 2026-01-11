@@ -237,11 +237,6 @@ const Profile = () => {
                 <h2 className="text-xl font-bold text-foreground">
                   {profile?.username || 'Player'}
                 </h2>
-                {profile?.battletag && (
-                  <p className="text-muted-foreground text-sm mt-1">
-                    {profile.battletag}
-                  </p>
-                )}
               </div>
             </GlowCard>
 
@@ -254,12 +249,6 @@ const Profile = () => {
                   <div className="flex justify-between gap-2">
                     <span className="text-muted-foreground shrink-0">Email</span>
                     <span className="text-foreground truncate">{user.email}</span>
-                  </div>
-                )}
-                {profile?.battletag && (
-                  <div className="flex justify-between gap-2">
-                    <span className="text-muted-foreground shrink-0">BattleTag</span>
-                    <span className="text-foreground">{profile.battletag}</span>
                   </div>
                 )}
                 {/* Show hint that they can add an email if only bnet connected */}
