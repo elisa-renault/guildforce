@@ -331,7 +331,7 @@ const GuildList = () => {
                     <div className="flex items-center gap-3 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <MapPin className="h-3 w-3" />
-                        {guild.server}
+                        {guild.server.charAt(0).toUpperCase() + guild.server.slice(1)}
                       </span>
                       <span className="uppercase">{guild.region}</span>
                       <span className="flex items-center gap-1">
