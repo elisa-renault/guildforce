@@ -73,72 +73,77 @@ const SortableWishCard = ({ wish, index, totalWishes, onChange, onRemove, onClea
   return (
     <div ref={setNodeRef} style={style}>
       <GlowCard 
-        className="p-6"
+        className="p-3 md:p-4"
         hoverable={false}
       >
-        <div className="flex items-center gap-2 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[auto_auto_40px_200px_1fr_1fr_auto] gap-3 lg:gap-4 items-center">
           {/* Reorder controls */}
-          <div className="flex flex-col gap-0.5">
+          <div className="hidden lg:flex flex-col gap-0.5">
             <button
               onClick={onMoveUp}
               disabled={!canMoveUp}
-              className="w-6 h-6 rounded bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              className="w-5 h-5 rounded bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
               title="Move up"
             >
-              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+              <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
             </button>
             <button
               onClick={onMoveDown}
               disabled={!canMoveDown}
-              className="w-6 h-6 rounded bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              className="w-5 h-5 rounded bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
               title="Move down"
             >
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
             </button>
           </div>
           <button
             {...attributes}
             {...listeners}
-            className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center cursor-grab active:cursor-grabbing hover:bg-muted transition-colors"
+            className="hidden lg:flex w-7 h-7 rounded-lg bg-muted/50 items-center justify-center cursor-grab active:cursor-grabbing hover:bg-muted transition-colors"
             title="Drag to reorder"
           >
             <GripVertical className="h-4 w-4 text-muted-foreground" />
           </button>
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center border border-primary/20">
+          <div className="hidden lg:flex w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 items-center justify-center border border-primary/20">
             <span className="text-sm font-bold text-primary">{index + 1}</span>
           </div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-foreground">
-              {t.wishes.choice} #{index + 1}
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              {choiceLabels[index] || choiceLabels[2]}
-            </p>
-          </div>
-          {canRemove ? (
-            <button
-              onClick={onRemove}
-              className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center hover:bg-destructive/20 transition-colors"
-              title={t.common.delete}
-            >
-              <Trash2 className="h-4 w-4 text-destructive" />
-            </button>
-          ) : wish.classId && (
-            <button
-              onClick={onClear}
-              className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
-              title={t.common.delete}
-            >
-              <Trash2 className="h-4 w-4 text-muted-foreground" />
-            </button>
-          )}
-        </div>
 
-        <WishCardEditor
-          wish={wish}
-          onChange={onChange}
-          usedClassIds={usedClassIds}
-        />
+          {/* Mobile header */}
+          <div className="flex lg:hidden items-center gap-2 mb-2">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center border border-primary/20">
+              <span className="text-sm font-bold text-primary">{index + 1}</span>
+            </div>
+            <span className="text-sm font-medium text-foreground">{t.wishes.choice} #{index + 1}</span>
+          </div>
+
+          {/* WishCardEditor inline */}
+          <WishCardEditor
+            wish={wish}
+            onChange={onChange}
+            usedClassIds={usedClassIds}
+          />
+
+          {/* Delete button */}
+          <div className="hidden lg:flex">
+            {canRemove ? (
+              <button
+                onClick={onRemove}
+                className="w-7 h-7 rounded-lg bg-destructive/10 flex items-center justify-center hover:bg-destructive/20 transition-colors"
+                title={t.common.delete}
+              >
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </button>
+            ) : wish.classId && (
+              <button
+                onClick={onClear}
+                className="w-7 h-7 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
+                title={t.common.delete}
+              >
+                <Trash2 className="h-4 w-4 text-muted-foreground" />
+              </button>
+            )}
+          </div>
+        </div>
       </GlowCard>
     </div>
   );
@@ -369,13 +374,13 @@ const Wishes = () => {
         </div>
       </div>
 
-      <main className="container mx-auto px-3 md:px-4 py-4 md:py-6 relative z-10">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl font-display cosmic-text">{t.wishes.title}</h2>
+      <main className="container mx-auto px-3 md:px-4 py-4 relative z-10">
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-display cosmic-text">{t.wishes.title}</h2>
         </div>
 
         {/* Commitment toggle */}
-        <GlowCard className="p-6 mb-8">
+        <GlowCard className="p-4 mb-4">
           <CommitmentToggle status={confirmed} onChange={setConfirmed} />
         </GlowCard>
 
@@ -389,7 +394,7 @@ const Wishes = () => {
             items={wishes.map(w => w.id)}
             strategy={verticalListSortingStrategy}
           >
-            <div className="space-y-4">
+            <div className="space-y-2">
               {wishes.map((wish, index) => {
                 // Get all used class IDs except the current wish's class
                 const usedClassIds = wishes
@@ -420,10 +425,10 @@ const Wishes = () => {
 
         {/* Add wish button */}
         {wishes.length < 13 && (
-          <div className="mt-6 text-center">
+          <div className="mt-4 text-center">
             <button
               onClick={addWish}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-dashed border-primary/50 text-primary hover:bg-primary/10 transition-colors"
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-dashed border-primary/50 text-sm text-primary hover:bg-primary/10 transition-colors"
             >
               <Plus className="h-4 w-4" />
               {t.wishes.addWish}
@@ -431,12 +436,12 @@ const Wishes = () => {
           </div>
         )}
 
-        <div className="mt-10 text-center">
+        <div className="mt-6 text-center">
           <CosmicButton 
-            size="lg" 
+            size="md" 
             onClick={saveWishes} 
             loading={saving}
-            icon={<Save className="h-5 w-5" strokeWidth={1.5} />}
+            icon={<Save className="h-4 w-4" strokeWidth={1.5} />}
           >
             {t.wishes.saveWishes}
           </CosmicButton>
