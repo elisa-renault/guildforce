@@ -29,14 +29,12 @@ const Profile = () => {
 
   const profileSchema = z.object({
     username: z.string().min(2, 'Le pseudo doit contenir au moins 2 caractères').max(30, 'Le pseudo ne peut pas dépasser 30 caractères'),
-    mainCharacterName: z.string().optional(),
   });
 
   const form = useForm({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       username: '',
-      mainCharacterName: '',
     },
   });
 
@@ -58,7 +56,6 @@ const Profile = () => {
 
     form.reset({
       username: profile.username || '',
-      mainCharacterName: profile.main_character_name || '',
     });
   }, [profile, form]);
 
@@ -71,7 +68,6 @@ const Profile = () => {
         .from('profiles')
         .update({
           username: values.username.trim(),
-          main_character_name: values.mainCharacterName?.trim() || null,
           preferred_language: language,
         })
         .eq('id', user.id);
@@ -277,35 +273,19 @@ const Profile = () => {
 
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FormField control={form.control} name="username" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-foreground text-sm">{t.auth.pseudo}</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder={t.auth.pseudoPlaceholder}
-                            {...field} 
-                            className="cosmic-input"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-
-                    <FormField control={form.control} name="mainCharacterName" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-foreground text-sm">{t.profile.mainCharacter}</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder={t.profile.mainCharacterPlaceholder}
-                            {...field} 
-                            className="cosmic-input"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                  </div>
+                  <FormField control={form.control} name="username" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-foreground text-sm">{t.auth.pseudo}</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder={t.auth.pseudoPlaceholder}
+                          {...field} 
+                          className="cosmic-input"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
                     <div>
