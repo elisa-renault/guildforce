@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Trash2, Users, Crown } from 'lucide-react';
 
 interface AccessRule {
@@ -30,15 +28,119 @@ interface RosterAccessEditorProps {
   onChange: (rules: AccessRule[]) => void;
 }
 
+interface RankSliderProps {
+  minValue: number;
+  maxValue: number;
+  minRank: number;
+  maxRank: number;
+  ranks: GuildRank[];
+  onChange: (min: number, max: number) => void;
+}
+
+const RankSlider = ({ minValue, maxValue, minRank, maxRank, ranks, onChange }: RankSliderProps) => {
+  const sortedRanks = [...ranks].sort((a, b) => a.rank_index - b.rank_index);
+  
+  // Generate all rank indices from minRank to maxRank
+  const allRankIndices: number[] = [];
+  for (let i = minRank; i <= maxRank; i++) {
+    allRankIndices.push(i);
+  }
+
+  const getRankName = (index: number) => {
+    const rank = sortedRanks.find(r => r.rank_index === index);
+    return rank?.rank_name || `${index}`;
+  };
+
+  const handleClick = (index: number) => {
+    // If clicking on an already selected endpoint, deselect logic
+    if (index < minValue) {
+      onChange(index, maxValue);
+    } else if (index > maxValue) {
+      onChange(minValue, index);
+    } else if (index === minValue && index === maxValue) {
+      // Single selection, do nothing
+    } else if (index === minValue) {
+      onChange(index + 1, maxValue);
+    } else if (index === maxValue) {
+      onChange(minValue, index - 1);
+    } else {
+      // Clicking in the middle - extend/shrink based on proximity
+      const distToMin = index - minValue;
+      const distToMax = maxValue - index;
+      if (distToMin <= distToMax) {
+        onChange(index, maxValue);
+      } else {
+        onChange(minValue, index);
+      }
+    }
+  };
+
+  return (
+    <div className="py-2">
+      <div className="flex items-center justify-between">
+        {allRankIndices.map((index, i) => {
+          const isSelected = index >= minValue && index <= maxValue;
+          const isFirst = i === 0;
+          const isLast = i === allRankIndices.length - 1;
+          const prevSelected = i > 0 && allRankIndices[i - 1] >= minValue && allRankIndices[i - 1] <= maxValue;
+          
+          return (
+            <div key={index} className="flex-1 flex flex-col items-center relative">
+              {/* Connector line */}
+              {!isFirst && (
+                <div 
+                  className={`absolute top-[9px] right-1/2 w-full h-0.5 -z-10 ${
+                    isSelected && prevSelected ? 'bg-primary' : 'bg-border'
+                  }`}
+                />
+              )}
+              
+              {/* Tick mark / button */}
+              <button
+                type="button"
+                onClick={() => handleClick(index)}
+                className={`w-[18px] h-[18px] rounded-full border-2 transition-all z-10 ${
+                  isSelected
+                    ? 'bg-primary border-primary hover:bg-primary/80'
+                    : 'bg-card border-muted-foreground/50 hover:border-primary/50'
+                }`}
+              />
+              
+              {/* Label */}
+              <span 
+                className={`text-[10px] mt-1 whitespace-nowrap ${
+                  isSelected ? 'text-foreground font-medium' : 'text-muted-foreground'
+                }`}
+                title={getRankName(index)}
+              >
+                {index}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      
+      {/* Show selected range labels */}
+      <div className="flex justify-between text-xs text-muted-foreground mt-2 px-1">
+        <span className="text-primary font-medium">{getRankName(minValue)}</span>
+        {minValue !== maxValue && (
+          <span className="text-primary font-medium">{getRankName(maxValue)}</span>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export const RosterAccessEditor = ({ accessRules, members, ranks, onChange }: RosterAccessEditorProps) => {
   const { t } = useLanguage();
   
   // Sort ranks by index
   const sortedRanks = [...ranks].sort((a, b) => a.rank_index - b.rank_index);
+  const minRankIndex = sortedRanks.length > 0 ? Math.min(...sortedRanks.map(r => r.rank_index)) : 0;
   const maxRankIndex = sortedRanks.length > 0 ? Math.max(...sortedRanks.map(r => r.rank_index)) : 9;
 
   const addRankRule = () => {
-    onChange([...accessRules, { access_type: 'rank', min_rank_index: 0, max_rank_index: maxRankIndex }]);
+    onChange([...accessRules, { access_type: 'rank', min_rank_index: minRankIndex, max_rank_index: maxRankIndex }]);
   };
 
   const addUserRule = () => {
@@ -55,11 +157,6 @@ export const RosterAccessEditor = ({ accessRules, members, ranks, onChange }: Ro
     onChange(updated);
   };
 
-  const getRankLabel = (index: number) => {
-    const rank = sortedRanks.find(r => r.rank_index === index);
-    return rank?.rank_name || `Rank ${index}`;
-  };
-
   const selectedUserIds = accessRules
     .filter(r => r.access_type === 'user')
     .map(r => r.user_id)
@@ -74,27 +171,21 @@ export const RosterAccessEditor = ({ accessRules, members, ranks, onChange }: Ro
 
       <div className="space-y-3">
         {accessRules.map((rule, index) => (
-          <div key={index} className="flex items-center gap-2 p-3 rounded-lg border border-border/50 bg-muted/20">
+          <div key={index} className="flex items-start gap-2 p-3 rounded-lg border border-border/50 bg-muted/20">
             {rule.access_type === 'rank' ? (
               <div className="flex-1 space-y-2">
                 <div className="flex items-center gap-2 text-sm">
                   <Crown className="h-4 w-4 text-primary" />
                   <span>{t.rosters?.byRank || 'By Rank'}</span>
                 </div>
-                <div className="px-2">
-                  <Slider
-                    value={[rule.min_rank_index || 0, rule.max_rank_index || maxRankIndex]}
-                    min={0}
-                    max={maxRankIndex}
-                    step={1}
-                    onValueChange={([min, max]) => updateRule(index, { min_rank_index: min, max_rank_index: max })}
-                    className="w-full"
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                    <span>{getRankLabel(rule.min_rank_index || 0)}</span>
-                    <span>{getRankLabel(rule.max_rank_index || maxRankIndex)}</span>
-                  </div>
-                </div>
+                <RankSlider
+                  minValue={rule.min_rank_index ?? minRankIndex}
+                  maxValue={rule.max_rank_index ?? maxRankIndex}
+                  minRank={minRankIndex}
+                  maxRank={maxRankIndex}
+                  ranks={sortedRanks}
+                  onChange={(min, max) => updateRule(index, { min_rank_index: min, max_rank_index: max })}
+                />
               </div>
             ) : (
               <div className="flex-1">
@@ -124,7 +215,7 @@ export const RosterAccessEditor = ({ accessRules, members, ranks, onChange }: Ro
 
             <button
               onClick={() => removeRule(index)}
-              className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center hover:bg-destructive/20 transition-colors flex-shrink-0"
+              className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center hover:bg-destructive/20 transition-colors flex-shrink-0 mt-1"
             >
               <Trash2 className="h-4 w-4 text-destructive" />
             </button>
