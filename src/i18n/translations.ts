@@ -310,6 +310,15 @@ export interface Translations {
     mention: string;
     topicReply: string;
     postReply: string;
+    subscribe: string;
+    subscribed: string;
+    subscribedNoNotif: string;
+    unsubscribe: string;
+    subscribeWithNotif: string;
+    subscribeNoNotif: string;
+    clickToSubscribe: string;
+    clickToMute: string;
+    clickToUnsubscribe: string;
   };
   // Activity Log
   activityLog: {
@@ -641,6 +650,15 @@ export const translations: Record<Language, Translations> = {
       mention: 'mentioned you',
       topicReply: 'replied to your topic',
       postReply: 'replied in a topic you follow',
+      subscribe: 'Subscribe',
+      subscribed: 'Subscribed',
+      subscribedNoNotif: 'Following (muted)',
+      unsubscribe: 'Unsubscribe',
+      subscribeWithNotif: 'Subscribe with notifications',
+      subscribeNoNotif: 'Follow without notifications',
+      clickToSubscribe: 'Click to subscribe',
+      clickToMute: 'Click to mute notifications',
+      clickToUnsubscribe: 'Click to unsubscribe',
     },
     activityLog: {
       title: 'Activity Log',
@@ -968,6 +986,15 @@ export const translations: Record<Language, Translations> = {
       mention: 'vous a mentionné',
       topicReply: 'a répondu à votre sujet',
       postReply: 'a répondu dans un sujet que vous suivez',
+      subscribe: 'S\'abonner',
+      subscribed: 'Abonné',
+      subscribedNoNotif: 'Suivi (muet)',
+      unsubscribe: 'Se désabonner',
+      subscribeWithNotif: 'S\'abonner avec notifications',
+      subscribeNoNotif: 'Suivre sans notifications',
+      clickToSubscribe: 'Cliquer pour s\'abonner',
+      clickToMute: 'Cliquer pour désactiver les notifications',
+      clickToUnsubscribe: 'Cliquer pour se désabonner',
     },
     activityLog: {
       title: 'Journal d\'activité',

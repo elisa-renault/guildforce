@@ -6,7 +6,7 @@ import { useForumTopic, useForumPosts, useForumActions } from '@/hooks/useForum'
 import { useUserRoles } from '@/hooks/useUserRoles';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
-import { ForumPost, MarkdownEditor, ReactionPicker, UserRoleBadge } from '@/components/forum';
+import { ForumPost, MarkdownEditor, ReactionPicker, UserRoleBadge, TopicSubscriptionButton } from '@/components/forum';
 import { ForumPost as ForumPostType, ReactionType } from '@/types/forum';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -235,27 +235,32 @@ const ForumTopicPage = () => {
                 : topic.category?.name}
             </p>
           </div>
-          {isAuthor && (
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={handleTogglePin}>
-                <Pin className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleToggleLock}>
-                <Lock className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="text-destructive hover:text-destructive"
-                onClick={() => {
-                  setDeleteTarget({ type: 'topic', id: topic.id });
-                  setDeleteDialogOpen(true);
-                }}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {user && topicId && (
+              <TopicSubscriptionButton topicId={topicId} variant="button" />
+            )}
+            {isAuthor && (
+              <>
+                <Button variant="outline" size="sm" onClick={handleTogglePin}>
+                  <Pin className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleToggleLock}>
+                  <Lock className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => {
+                    setDeleteTarget({ type: 'topic', id: topic.id });
+                    setDeleteDialogOpen(true);
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Original post */}
