@@ -15,6 +15,7 @@ import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { BattleNetConnect } from '@/components/BattleNetConnect';
+import { AvatarCropDialog } from '@/components/AvatarCropDialog';
 
 import { User, Save, Globe, Loader2, Sparkles, Upload, Trash2 } from 'lucide-react';
 
@@ -28,6 +29,8 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [cropDialogOpen, setCropDialogOpen] = useState(false);
+  const [selectedImageSrc, setSelectedImageSrc] = useState<string | null>(null);
 
   const profileSchema = z.object({
     username: z.string().min(2, 'Le pseudo doit contenir au moins 2 caractères').max(30, 'Le pseudo ne peut pas dépasser 30 caractères'),
@@ -91,7 +94,7 @@ const Profile = () => {
     }
   };
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
@@ -100,20 +103,36 @@ const Profile = () => {
       return;
     }
 
-    if (file.size > 2 * 1024 * 1024) {
-      toast({ title: t.errors.generic, description: 'Image must be less than 2MB', variant: 'destructive' });
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: t.errors.generic, description: 'Image must be less than 5MB', variant: 'destructive' });
       return;
     }
 
+    // Create object URL for cropping
+    const reader = new FileReader();
+    reader.onload = () => {
+      setSelectedImageSrc(reader.result as string);
+      setCropDialogOpen(true);
+    };
+    reader.readAsDataURL(file);
+    
+    // Reset input so same file can be selected again
+    e.target.value = '';
+  };
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    if (!user) return;
     setUploadingAvatar(true);
 
     try {
-      const fileExt = file.name.split('.').pop();
-      const filePath = `${user.id}/avatar.${fileExt}`;
+      const filePath = `${user.id}/avatar.jpg`;
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, croppedBlob, { 
+          upsert: true,
+          contentType: 'image/jpeg'
+        });
 
       if (uploadError) throw uploadError;
 
@@ -128,6 +147,8 @@ const Profile = () => {
       if (updateError) throw updateError;
 
       await refreshProfile();
+      setCropDialogOpen(false);
+      setSelectedImageSrc(null);
       toast({ title: language === 'fr' ? 'Avatar mis à jour !' : 'Avatar updated!' });
     } catch (error: any) {
       toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
@@ -273,7 +294,7 @@ const Profile = () => {
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={handleAvatarUpload}
+                      onChange={handleFileSelect}
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                       disabled={uploadingAvatar}
                     />
@@ -347,6 +368,20 @@ const Profile = () => {
             <BattleNetConnect />
           </GlowCard>
         </div>
+
+        {/* Avatar Crop Dialog */}
+        {selectedImageSrc && (
+          <AvatarCropDialog
+            open={cropDialogOpen}
+            onOpenChange={(open) => {
+              setCropDialogOpen(open);
+              if (!open) setSelectedImageSrc(null);
+            }}
+            imageSrc={selectedImageSrc}
+            onCropComplete={handleCropComplete}
+            loading={uploadingAvatar}
+          />
+        )}
       </main>
     </div>
   );
