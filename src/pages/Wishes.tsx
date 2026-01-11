@@ -42,6 +42,7 @@ interface SortableWishCardProps {
   totalWishes: number;
   onChange: (field: keyof Omit<WishData, 'id'>, value: any) => void;
   onRemove: () => void;
+  onClear: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
   canRemove: boolean;
@@ -49,7 +50,7 @@ interface SortableWishCardProps {
   usedClassIds: string[];
 }
 
-const SortableWishCard = ({ wish, index, totalWishes, onChange, onRemove, onMoveUp, onMoveDown, canRemove, choiceLabels, usedClassIds }: SortableWishCardProps) => {
+const SortableWishCard = ({ wish, index, totalWishes, onChange, onRemove, onClear, onMoveUp, onMoveDown, canRemove, choiceLabels, usedClassIds }: SortableWishCardProps) => {
   const { t } = useLanguage();
   const {
     attributes,
@@ -114,13 +115,21 @@ const SortableWishCard = ({ wish, index, totalWishes, onChange, onRemove, onMove
               {choiceLabels[index] || choiceLabels[2]}
             </p>
           </div>
-          {canRemove && (
+          {canRemove ? (
             <button
               onClick={onRemove}
               className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center hover:bg-destructive/20 transition-colors"
               title={t.common.delete}
             >
               <Trash2 className="h-4 w-4 text-destructive" />
+            </button>
+          ) : wish.classId && (
+            <button
+              onClick={onClear}
+              className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
+              title={t.common.delete}
+            >
+              <Trash2 className="h-4 w-4 text-muted-foreground" />
             </button>
           )}
         </div>
@@ -250,6 +259,12 @@ const Wishes = () => {
   const removeWish = (index: number) => {
     if (wishes.length <= 1) return;
     setWishes(wishes.filter((_, i) => i !== index));
+  };
+
+  const clearWish = (index: number) => {
+    const updated = [...wishes];
+    updated[index] = { ...updated[index], classId: '', specIds: [], comment: '' };
+    setWishes(updated);
   };
 
   const moveWish = (index: number, direction: 'up' | 'down') => {
@@ -390,6 +405,7 @@ const Wishes = () => {
                     totalWishes={wishes.length}
                     onChange={(field, value) => updateWish(index, field, value)}
                     onRemove={() => removeWish(index)}
+                    onClear={() => clearWish(index)}
                     onMoveUp={() => moveWish(index, 'up')}
                     onMoveDown={() => moveWish(index, 'down')}
                     canRemove={wishes.length > 1}
