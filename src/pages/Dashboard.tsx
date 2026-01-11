@@ -9,9 +9,10 @@ import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
 import { StatsCards, RosterFilters, RosterTable } from '@/components/dashboard';
 import { MemberWish, WishData, RoleStats, RangeStats, RosterFilters as RosterFiltersType } from '@/types/guild';
-import { Loader2, Download, Sparkles, ArrowLeft } from 'lucide-react';
-import { toSlug, getGuildWishesPath } from '@/lib/guildSlug';
+import { Loader2, Download, Sparkles, ArrowLeft, Settings } from 'lucide-react';
+import { toSlug, getGuildWishesPath, getGuildSettingsPath } from '@/lib/guildSlug';
 import { CommitmentStatus } from '@/components/CommitmentToggle';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 // Max wishes = number of WoW classes
 const MAX_WISHES = wowClasses.length;
@@ -24,7 +25,7 @@ const Dashboard = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [guildId, setGuildId] = useState<string | null>(null);
-  const [guild, setGuild] = useState<{ name: string; server: string; region: string; faction: string } | null>(null);
+  const [guild, setGuild] = useState<{ name: string; server: string; region: string; faction: string; avatar_url: string | null } | null>(null);
   const [members, setMembers] = useState<MemberWish[]>([]);
   const [isGM, setIsGM] = useState(false);
   const [filters, setFilters] = useState<RosterFiltersType>({
@@ -49,7 +50,7 @@ const Dashboard = () => {
     // First, find the guild by matching slugified region, server and name
     const { data: allGuilds } = await supabase
       .from('guilds')
-      .select('id, name, server, region, faction');
+      .select('id, name, server, region, faction, avatar_url');
     
     const matchedGuild = allGuilds?.find(g => 
       toSlug(g.region || 'eu') === regionSlug && 
@@ -64,7 +65,7 @@ const Dashboard = () => {
     
     const foundGuildId = matchedGuild.id;
     setGuildId(foundGuildId);
-    setGuild({ name: matchedGuild.name, server: matchedGuild.server, region: matchedGuild.region || 'eu', faction: matchedGuild.faction });
+    setGuild({ name: matchedGuild.name, server: matchedGuild.server, region: matchedGuild.region || 'eu', faction: matchedGuild.faction, avatar_url: matchedGuild.avatar_url });
     
     // Check if user is a member of this guild
     const { data: membershipData, error: membershipError } = await supabase
@@ -365,6 +366,11 @@ const Dashboard = () => {
             >
               <ArrowLeft className="h-4 w-4 text-muted-foreground" />
             </button>
+            {guild?.avatar_url && (
+              <Avatar className="h-7 w-7 border border-border/50">
+                <AvatarImage src={guild.avatar_url} alt={guild.name} />
+              </Avatar>
+            )}
             <h1 className="text-sm md:text-lg font-semibold text-foreground truncate">{guild?.name}</h1>
           </div>
           <div className="flex gap-1.5 md:gap-2">
@@ -372,9 +378,14 @@ const Dashboard = () => {
               <span className="hidden md:inline">{t.wishes.title}</span>
             </CosmicButton>
             {isGM && (
-              <CosmicButton size="sm" onClick={exportCSV} icon={<Download className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 md:h-8 px-2 md:px-3">
-                <span className="hidden md:inline">{t.dashboard.exportCSV}</span>
-              </CosmicButton>
+              <>
+                <CosmicButton size="sm" variant="outline" onClick={() => guild && navigate(getGuildSettingsPath(guild.region, guild.server, guild.name))} icon={<Settings className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 md:h-8 px-2 md:px-3">
+                  <span className="hidden md:inline">{t.guildSettings.title}</span>
+                </CosmicButton>
+                <CosmicButton size="sm" onClick={exportCSV} icon={<Download className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 md:h-8 px-2 md:px-3">
+                  <span className="hidden md:inline">{t.dashboard.exportCSV}</span>
+                </CosmicButton>
+              </>
             )}
           </div>
         </div>
