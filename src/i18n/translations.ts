@@ -298,7 +298,7 @@ export const translations: Record<Language, Translations> = {
       createInApp: 'Create in Guildforce',
       alreadyInApp: 'Already created in Guildforce',
       accessGuild: 'Manage Guild',
-      pendingSync: 'Guild will be created automatically on your next Battle.net sync',
+      pendingSync: 'Link your Battle.net account to access this guild instantly',
       awaitingGM: 'Awaiting GM',
     },
     wishes: {
@@ -485,7 +485,7 @@ export const translations: Record<Language, Translations> = {
       createInApp: 'Créer dans Guildforce',
       alreadyInApp: 'Déjà créée dans Guildforce',
       accessGuild: 'Gérer la guilde',
-      pendingSync: 'La guilde sera créée automatiquement lors de ta prochaine synchro Battle.net',
+      pendingSync: 'Lie ton compte Battle.net pour accéder à cette guilde instantanément',
       awaitingGM: 'En attente du GM',
     },
     wishes: {
