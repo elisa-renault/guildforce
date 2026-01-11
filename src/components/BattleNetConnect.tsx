@@ -5,10 +5,21 @@ import { supabase } from '@/integrations/supabase/client';
 import { CosmicButton } from './CosmicButton';
 import { GlowCard } from './GlowCard';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { CheckCircle, Loader2, RefreshCw, Unlink } from 'lucide-react';
 import { toast } from 'sonner';
 import { getClassNameFromBattleNet } from '@/data/battlenetClasses';
 import { BattleNetIcon } from './BattleNetIcon';
+
+type BattleNetRegion = 'eu' | 'us' | 'kr' | 'tw';
+
+const REGION_LABELS: Record<BattleNetRegion, string> = {
+  eu: 'Europe',
+  us: 'Americas',
+  kr: 'Korea',
+  tw: 'Taiwan',
+};
 
 interface WoWCharacter {
   id: string;
@@ -27,6 +38,7 @@ export const BattleNetConnect: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [characters, setCharacters] = useState<WoWCharacter[]>([]);
   const [isLoadingCharacters, setIsLoadingCharacters] = useState(false);
+  const [selectedRegion, setSelectedRegion] = useState<BattleNetRegion>('eu');
 
   const isConnected = !!profile?.battlenet_id;
 
@@ -43,6 +55,7 @@ export const BattleNetConnect: React.FC = () => {
     const stateParam = urlParams.get('state');
     // Use localStorage instead of sessionStorage for better persistence across redirects
     const storedState = localStorage.getItem('battlenet_state');
+    const storedRegion = localStorage.getItem('battlenet_region') as BattleNetRegion || 'eu';
 
     if (code && stateParam) {
       // Parse the state JSON to extract the actual state value
@@ -57,10 +70,11 @@ export const BattleNetConnect: React.FC = () => {
 
       // Process callback if code exists (state validation is best-effort due to cross-domain issues)
       if (stateMatches || !storedState) {
-        handleOAuthCallback(code);
+        handleOAuthCallback(code, storedRegion);
         // Clean up URL
         window.history.replaceState({}, document.title, window.location.pathname);
         localStorage.removeItem('battlenet_state');
+        localStorage.removeItem('battlenet_region');
       }
     }
   }, []);
@@ -95,11 +109,12 @@ export const BattleNetConnect: React.FC = () => {
       const state = crypto.randomUUID();
       // Use localStorage for better persistence across external redirects
       localStorage.setItem('battlenet_state', state);
+      localStorage.setItem('battlenet_region', selectedRegion);
 
       const redirectUri = `${window.location.origin}${window.location.pathname}`;
 
       const { data, error } = await supabase.functions.invoke('battlenet-auth/auth-url', {
-        body: { redirectUri, state },
+        body: { redirectUri, state, region: selectedRegion },
       });
 
       if (error) throw error;
@@ -113,7 +128,7 @@ export const BattleNetConnect: React.FC = () => {
     }
   };
 
-  const handleOAuthCallback = async (code: string) => {
+  const handleOAuthCallback = async (code: string, region: BattleNetRegion = 'eu') => {
     if (!session?.access_token) return;
 
     setIsLoading(true);
@@ -121,7 +136,7 @@ export const BattleNetConnect: React.FC = () => {
       const redirectUri = `${window.location.origin}${window.location.pathname}`;
 
       const { data, error } = await supabase.functions.invoke('battlenet-auth/callback', {
-        body: { code, redirectUri },
+        body: { code, redirectUri, region },
       });
 
       if (error) throw error;
@@ -236,6 +251,24 @@ export const BattleNetConnect: React.FC = () => {
           <p className="text-muted-foreground text-sm">
             {t.battlenet.connectDescription}
           </p>
+          
+          {/* Region selector */}
+          <div>
+            <Label className="text-sm text-muted-foreground mb-2 block">{t.battlenet.selectRegion}</Label>
+            <Select value={selectedRegion} onValueChange={(v) => setSelectedRegion(v as BattleNetRegion)}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(Object.keys(REGION_LABELS) as BattleNetRegion[]).map((region) => (
+                  <SelectItem key={region} value={region}>
+                    {REGION_LABELS[region]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
           <CosmicButton
             onClick={handleConnect}
             disabled={isLoading}

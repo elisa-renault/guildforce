@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -12,6 +13,15 @@ import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { BattleNetIcon } from '@/components/BattleNetIcon';
 import { ArrowLeft, Loader2 } from 'lucide-react';
+
+type BattleNetRegion = 'eu' | 'us' | 'kr' | 'tw';
+
+const REGION_LABELS: Record<BattleNetRegion, string> = {
+  eu: 'Europe',
+  us: 'Americas',
+  kr: 'Korea',
+  tw: 'Taiwan',
+};
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -25,6 +35,7 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [discordPseudo, setDiscordPseudo] = useState('');
   const [loading, setLoading] = useState(false);
+  const [selectedRegion, setSelectedRegion] = useState<BattleNetRegion>('eu');
 
   // Check for Battle.net callback - only process once
   useEffect(() => {
@@ -53,13 +64,14 @@ const Auth = () => {
   const handleBattleNetCallback = async (code: string, stateParam: string) => {
     setBnetLoading(true);
     try {
-      let parsedState: { state: string; mode: string };
+      let parsedState: { state: string; mode: string; region?: string };
       try {
         parsedState = JSON.parse(stateParam);
       } catch {
         parsedState = { state: stateParam, mode: 'login' };
       }
 
+      const region = parsedState.region || 'eu';
       const redirectUri = `${window.location.origin}/auth`;
 
       const response = await fetch(
@@ -69,7 +81,7 @@ const Auth = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ code, redirectUri }),
+          body: JSON.stringify({ code, redirectUri, region }),
         }
       );
 
@@ -133,7 +145,7 @@ const Auth = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ redirectUri, state, mode: 'login' }),
+          body: JSON.stringify({ redirectUri, state, mode: 'login', region: selectedRegion }),
         }
       );
 
@@ -213,6 +225,23 @@ const Auth = () => {
             {t.auth.loginTitle}
           </h2>
           <p className="text-sm text-muted-foreground">{t.auth.bnetNote}</p>
+        </div>
+
+        {/* Region selector */}
+        <div className="mb-4">
+          <Label className="text-sm text-muted-foreground mb-2 block">{t.battlenet.selectRegion}</Label>
+          <Select value={selectedRegion} onValueChange={(v) => setSelectedRegion(v as BattleNetRegion)}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {(Object.keys(REGION_LABELS) as BattleNetRegion[]).map((region) => (
+                <SelectItem key={region} value={region}>
+                  {REGION_LABELS[region]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Battle.net Login Button */}
