@@ -81,8 +81,8 @@ export const WishCardEditor = ({ wish, onChange }: WishCardEditorProps) => {
               <ChevronDown className="h-4 w-4 opacity-50 flex-shrink-0" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[300px] p-2 bg-card border-border z-50" align="start">
-            <div className="grid grid-cols-2 gap-1.5 max-h-[320px] overflow-y-auto">
+          <PopoverContent className="w-[380px] p-2 bg-card border-border z-50" align="start">
+            <div className="grid grid-cols-2 gap-1.5 max-h-[360px] overflow-y-auto">
               {wowClasses.map((cls) => {
                 const isSelected = wish.classId === cls.id;
                 return (
