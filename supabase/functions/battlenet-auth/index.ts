@@ -317,10 +317,18 @@ Deno.serve(async (req) => {
 
       let userId: string;
       let isNewUser = false;
+      let userEmail: string = bnetEmail; // Email to use for magic link
 
       if (existingProfile) {
         userId = existingProfile.id;
         log.info(`Existing user found by battlenet_id: ${sanitizePII(userId, 'id')}`);
+        
+        // Get the actual auth user to find their real email
+        const { data: authUser } = await supabase.auth.admin.getUserById(userId);
+        if (authUser?.user?.email) {
+          userEmail = authUser.user.email;
+          log.info(`Using existing user email for magic link`);
+        }
       } else {
         const { data: existingUsers } = await supabase.auth.admin.listUsers();
         const existingBnetEmailUser = existingUsers?.users?.find((u) => u.email === bnetEmail);
@@ -328,6 +336,7 @@ Deno.serve(async (req) => {
         if (existingBnetEmailUser) {
           userId = existingBnetEmailUser.id;
           isNewUser = false;
+          userEmail = bnetEmail;
           log.info(`Existing auth user found by bnet email: ${sanitizePII(userId, 'id')}`);
         } else {
           const { data: profileByBattletag } = await supabase
@@ -340,6 +349,13 @@ Deno.serve(async (req) => {
             userId = profileByBattletag.id;
             isNewUser = false;
             log.info(`Existing user found by battletag: ${sanitizePII(userId, 'id')}`);
+            
+            // Get the actual auth user to find their real email
+            const { data: authUser } = await supabase.auth.admin.getUserById(userId);
+            if (authUser?.user?.email) {
+              userEmail = authUser.user.email;
+              log.info(`Using existing user email for magic link`);
+            }
           } else {
             isNewUser = true;
             const password = generateSecurePassword();
@@ -366,6 +382,7 @@ Deno.serve(async (req) => {
             }
 
             userId = newUser.user.id;
+            userEmail = bnetEmail;
             log.info(`New user created: ${sanitizePII(userId, 'id')}`);
           }
         }
@@ -438,10 +455,10 @@ Deno.serve(async (req) => {
       // Fetch and store WoW characters
       await fetchAndStoreCharacters(supabase, tokenData.access_token, userId, region);
 
-      // Generate magic link for session
+      // Generate magic link for session using the correct email
       const { data: magicLinkData, error: magicLinkError } = await supabase.auth.admin.generateLink({
         type: 'magiclink',
-        email: bnetEmail,
+        email: userEmail,
       });
 
       if (magicLinkError || !magicLinkData?.properties?.hashed_token) {
