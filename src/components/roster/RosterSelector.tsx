@@ -29,7 +29,7 @@ export const RosterSelector = ({ rosters, selectedRosterId, onSelect, showAccess
     <div className="flex items-center gap-2 min-w-0">
       <Layers className="h-4 w-4 text-muted-foreground flex-shrink-0" />
       <Select value={selectedRosterId || ''} onValueChange={onSelect}>
-        <SelectTrigger className="h-8 w-[240px] max-w-[45vw] bg-card border-border">
+        <SelectTrigger className="h-8 w-[300px] max-w-[45vw] bg-card border-border">
           <SelectValue className="truncate" placeholder={t.rosters?.selectRoster || 'Select roster'} />
         </SelectTrigger>
         <SelectContent className="bg-card border-border z-50">
