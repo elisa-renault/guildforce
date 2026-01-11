@@ -9,7 +9,7 @@ import { CommitmentToggle, CommitmentStatus } from '@/components/CommitmentToggl
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
-import { Loader2, Save, Sparkles, GripVertical } from 'lucide-react';
+import { Loader2, Save, Sparkles, GripVertical, Plus, Trash2 } from 'lucide-react';
 import { toSlug } from '@/lib/guildSlug';
 import {
   DndContext,
@@ -40,10 +40,12 @@ interface SortableWishCardProps {
   wish: WishData;
   index: number;
   onChange: (field: keyof Omit<WishData, 'id'>, value: any) => void;
+  onRemove: () => void;
+  canRemove: boolean;
   choiceLabels: string[];
 }
 
-const SortableWishCard = ({ wish, index, onChange, choiceLabels }: SortableWishCardProps) => {
+const SortableWishCard = ({ wish, index, onChange, onRemove, canRemove, choiceLabels }: SortableWishCardProps) => {
   const { t } = useLanguage();
   const {
     attributes,
@@ -78,7 +80,7 @@ const SortableWishCard = ({ wish, index, onChange, choiceLabels }: SortableWishC
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center border border-primary/20">
             <span className="text-sm font-bold text-primary">{index + 1}</span>
           </div>
-          <div>
+          <div className="flex-1">
             <h3 className="font-semibold text-foreground">
               {t.wishes.choice} #{index + 1}
             </h3>
@@ -86,6 +88,15 @@ const SortableWishCard = ({ wish, index, onChange, choiceLabels }: SortableWishC
               {choiceLabels[index] || choiceLabels[2]}
             </p>
           </div>
+          {canRemove && (
+            <button
+              onClick={onRemove}
+              className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center hover:bg-destructive/20 transition-colors"
+              title={t.common.delete}
+            >
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </button>
+          )}
         </div>
 
         <WishCardEditor
@@ -162,22 +173,12 @@ const Wishes = () => {
         .order('choice_index');
 
       if (wishesData && wishesData.length > 0) {
-        const loadedWishes: WishData[] = [
-          { id: 'wish-1', classId: '', specIds: [], comment: '' },
-          { id: 'wish-2', classId: '', specIds: [], comment: '' },
-          { id: 'wish-3', classId: '', specIds: [], comment: '' },
-        ];
-        wishesData.forEach(w => {
-          const idx = w.choice_index - 1;
-          if (idx >= 0 && idx < 3) {
-            loadedWishes[idx] = {
-              id: `wish-${idx + 1}`,
-              classId: w.class_id,
-              specIds: w.spec_ids || [],
-              comment: w.comment || '',
-            };
-          }
-        });
+        const loadedWishes: WishData[] = wishesData.map((w, index) => ({
+          id: `wish-${index + 1}`,
+          classId: w.class_id,
+          specIds: w.spec_ids || [],
+          comment: w.comment || '',
+        }));
         setWishes(loadedWishes);
       }
 
@@ -211,6 +212,17 @@ const Wishes = () => {
       updated[index].specIds = [];
     }
     setWishes(updated);
+  };
+
+  const addWish = () => {
+    if (wishes.length >= 13) return; // Max 13 wishes (one per class)
+    const newId = `wish-${Date.now()}`;
+    setWishes([...wishes, { id: newId, classId: '', specIds: [], comment: '' }]);
+  };
+
+  const removeWish = (index: number) => {
+    if (wishes.length <= 1) return;
+    setWishes(wishes.filter((_, i) => i !== index));
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -331,12 +343,27 @@ const Wishes = () => {
                   wish={wish}
                   index={index}
                   onChange={(field, value) => updateWish(index, field, value)}
+                  onRemove={() => removeWish(index)}
+                  canRemove={wishes.length > 1}
                   choiceLabels={choiceLabels}
                 />
               ))}
             </div>
           </SortableContext>
         </DndContext>
+
+        {/* Add wish button */}
+        {wishes.length < 13 && (
+          <div className="mt-6 text-center">
+            <button
+              onClick={addWish}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-dashed border-primary/50 text-primary hover:bg-primary/10 transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              {t.wishes.addWish}
+            </button>
+          </div>
+        )}
 
         <div className="mt-10 text-center">
           <CosmicButton 
