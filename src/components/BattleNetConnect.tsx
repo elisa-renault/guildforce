@@ -239,19 +239,11 @@ export const BattleNetConnect: React.FC = () => {
           <CosmicButton
             onClick={handleConnect}
             disabled={isLoading}
+            loading={isLoading}
             className="w-full"
+            icon={<BattleNetIcon className="h-7 w-7" />}
           >
-            {isLoading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                {t.common.loading}
-              </>
-            ) : (
-              <>
-                <BattleNetIcon className="w-4 h-4 mr-2" />
-                {t.battlenet.connect}
-              </>
-            )}
+            {t.battlenet.connect}
           </CosmicButton>
         </div>
       ) : (
