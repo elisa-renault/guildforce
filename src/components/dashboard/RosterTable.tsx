@@ -29,6 +29,7 @@ interface RosterTableProps {
   onSaveEditing: () => void;
   onAddWish: () => void;
   onRemoveWish: (index: number) => void;
+  onClearWish: (index: number) => void;
 }
 
 // Role config for icons
@@ -53,6 +54,7 @@ export const RosterTable = ({
   onSaveEditing,
   onAddWish,
   onRemoveWish,
+  onClearWish,
 }: RosterTableProps) => {
   const { t, language } = useLanguage();
 
@@ -148,6 +150,14 @@ export const RosterTable = ({
     const wish = editWishes[wishIndex];
     if (!wish) return null;
     
+    // Get all used class IDs except the current wish's class
+    const usedClassIds = editWishes
+      .filter((_, i) => i !== wishIndex)
+      .map(w => w.classId)
+      .filter(Boolean);
+    
+    const hasContent = wish.classId || wish.specIds.length > 0 || wish.comment;
+    
     return (
       <div className="flex items-start gap-1">
         <div className="flex-1">
@@ -155,12 +165,21 @@ export const RosterTable = ({
             wish={wish}
             choiceIndex={wishIndex}
             onChange={(field, value) => onUpdateEditWish(wishIndex, field, value)}
+            usedClassIds={usedClassIds}
           />
         </div>
-        {canRemove && (
+        {canRemove ? (
           <button
             onClick={() => onRemoveWish(wishIndex)}
             className="h-7 w-7 flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors rounded"
+            title={t.common.delete}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        ) : hasContent && (
+          <button
+            onClick={() => onClearWish(wishIndex)}
+            className="h-7 w-7 flex items-center justify-center text-muted-foreground/50 hover:text-muted-foreground transition-colors rounded"
             title={t.common.delete}
           >
             <Trash2 className="h-3.5 w-3.5" />
