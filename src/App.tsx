@@ -18,6 +18,7 @@ import Forum from "./pages/Forum";
 import ForumCategory from "./pages/ForumCategory";
 import ForumNewTopic from "./pages/ForumNewTopic";
 import ForumTopic from "./pages/ForumTopic";
+import ForumAdmin from "./pages/ForumAdmin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
                 <Route path="/guilds" element={<GuildList />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/forum" element={<Forum />} />
+                <Route path="/forum/admin" element={<ForumAdmin />} />
                 <Route path="/forum/category/:categorySlug" element={<ForumCategory />} />
                 <Route path="/forum/category/:categorySlug/new" element={<ForumNewTopic />} />
                 <Route path="/forum/topic/:topicId" element={<ForumTopic />} />
