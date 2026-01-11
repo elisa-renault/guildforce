@@ -28,6 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { supabase } from '@/integrations/supabase/client';
 
 const ForumTopicPage = () => {
   const { topicId } = useParams<{ topicId: string }>();
@@ -140,12 +141,37 @@ const ForumTopicPage = () => {
   const handleReaction = async (type: 'topic' | 'post', id: string, reactionType: ReactionType = 'like') => {
     try {
       await toggleReaction(type, id, reactionType);
-      if (type === 'topic') refetchTopic();
-      else refetchPosts();
+      // No need to refetch - realtime will handle it
     } catch (error) {
       toast.error(language === 'fr' ? 'Erreur' : 'Error');
     }
   };
+
+  // Subscribe to realtime reaction updates
+  useEffect(() => {
+    if (!topicId) return;
+
+    const channel = supabase
+      .channel(`reactions-${topicId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'forum_reactions',
+        },
+        (payload) => {
+          // Refetch data when reactions change
+          refetchTopic();
+          refetchPosts();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [topicId, refetchTopic, refetchPosts]);
 
   if (topicLoading) {
     return (
