@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { MarkdownEditor } from './MarkdownEditor';
 import { ReactionPicker } from './ReactionPicker';
 import { UserRoleBadge } from './UserRoleBadge';
-import { Quote, Edit3, Trash2, User, Clock, Check, X } from 'lucide-react';
+import { ReportDialog } from './ReportDialog';
+import { Quote, Edit3, Trash2, User, Clock, Check, X, Flag } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import ReactMarkdown from 'react-markdown';
@@ -35,6 +36,7 @@ export const ForumPost = ({
   const locale = language === 'fr' ? fr : enUS;
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
 
   const authorIds = useMemo(() => post.author_id ? [post.author_id] : [], [post.author_id]);
   const { roles } = useUserRoles(authorIds);
@@ -88,6 +90,7 @@ export const ForumPost = ({
                 size="sm"
                 onClick={() => onQuote?.(post)}
                 className="h-7 px-2"
+                title={language === 'fr' ? 'Citer' : 'Quote'}
               >
                 <Quote className="h-4 w-4" />
               </Button>
@@ -99,6 +102,7 @@ export const ForumPost = ({
                   size="sm"
                   onClick={() => setIsEditing(true)}
                   className="h-7 px-2"
+                  title={language === 'fr' ? 'Modifier' : 'Edit'}
                 >
                   <Edit3 className="h-4 w-4" />
                 </Button>
@@ -107,10 +111,23 @@ export const ForumPost = ({
                   size="sm"
                   onClick={() => onDelete?.(post.id)}
                   className="h-7 px-2 text-destructive hover:text-destructive"
+                  title={language === 'fr' ? 'Supprimer' : 'Delete'}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </>
+            )}
+            {/* Report button - only for other users' posts */}
+            {user && !isAuthor && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setReportDialogOpen(true)}
+                className="h-7 px-2 text-muted-foreground hover:text-destructive"
+                title={language === 'fr' ? 'Signaler' : 'Report'}
+              >
+                <Flag className="h-4 w-4" />
+              </Button>
             )}
           </div>
         </div>
@@ -163,6 +180,14 @@ export const ForumPost = ({
           </div>
         )}
       </div>
+
+      {/* Report dialog */}
+      <ReportDialog
+        open={reportDialogOpen}
+        onOpenChange={setReportDialogOpen}
+        targetType="post"
+        targetId={post.id}
+      />
     </div>
   );
 };

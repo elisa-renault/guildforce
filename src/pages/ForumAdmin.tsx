@@ -39,10 +39,10 @@ import {
 } from '@/components/ui/alert-dialog';
 import {
   Loader2, ArrowLeft, Plus, Trash2, Edit3, User, Shield, 
-  MessageSquare, Settings, Users, ChevronUp, ChevronDown
+  MessageSquare, Settings, Users, ChevronUp, ChevronDown, Flag
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { DynamicIcon } from '@/components/forum';
+import { DynamicIcon, ReportsManager } from '@/components/forum';
 
 interface Category {
   id: string;
@@ -318,8 +318,12 @@ const ForumAdmin = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="categories" className="space-y-6">
+        <Tabs defaultValue="reports" className="space-y-6">
           <TabsList className="bg-card border border-border">
+            <TabsTrigger value="reports" className="data-[state=active]:bg-primary/20">
+              <Flag className="h-4 w-4 mr-2" />
+              {language === 'fr' ? 'Signalements' : 'Reports'}
+            </TabsTrigger>
             <TabsTrigger value="categories" className="data-[state=active]:bg-primary/20">
               <MessageSquare className="h-4 w-4 mr-2" />
               {language === 'fr' ? 'Catégories' : 'Categories'}
@@ -333,6 +337,11 @@ const ForumAdmin = () => {
               {language === 'fr' ? 'Utilisateurs' : 'Users'}
             </TabsTrigger>
           </TabsList>
+
+          {/* Reports Tab */}
+          <TabsContent value="reports">
+            <ReportsManager />
+          </TabsContent>
 
           {/* Categories Tab */}
           <TabsContent value="categories">
