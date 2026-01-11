@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Search, ChevronDown, Check, Shield, Heart, Swords, X } from 'lucide-react';
+import { Search, ChevronDown, Check, Shield, Heart, Swords, X, Clock, CheckCircle2, XCircle } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { wowClasses, Role } from '@/data/wowClasses';
-import { RosterFilters as RosterFiltersType } from '@/types/guild';
+import { RosterFilters as RosterFiltersType, ValidationStatus } from '@/types/guild';
 import { cn } from '@/lib/utils';
 
 interface RosterFiltersProps {
@@ -19,10 +19,17 @@ const roleConfig: Record<Role, { icon: typeof Shield; color: string; label: { en
   dps: { icon: Swords, color: 'text-dps', label: { en: 'DPS', fr: 'DPS' } },
 };
 
+const validationConfig: Record<ValidationStatus, { icon: typeof Clock; color: string; bgColor: string; label: { en: string; fr: string } }> = {
+  pending: { icon: Clock, color: 'text-amber-400', bgColor: 'bg-amber-400/10', label: { en: 'Pending', fr: 'En attente' } },
+  approved: { icon: CheckCircle2, color: 'text-healer', bgColor: 'bg-healer/10', label: { en: 'Approved', fr: 'Approuvé' } },
+  rejected: { icon: XCircle, color: 'text-destructive', bgColor: 'bg-destructive/10', label: { en: 'Rejected', fr: 'Refusé' } },
+};
+
 export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) => {
   const { t, language } = useLanguage();
   const [roleOpen, setRoleOpen] = useState(false);
   const [classOpen, setClassOpen] = useState(false);
+  const [validationOpen, setValidationOpen] = useState(false);
 
   const updateFilter = <K extends keyof RosterFiltersType>(key: K, value: RosterFiltersType[K]) => {
     onFiltersChange({ ...filters, [key]: value });
@@ -46,13 +53,23 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
     }
   };
 
+  const toggleValidation = (status: ValidationStatus) => {
+    const current = filters.validationFilters;
+    if (current.includes(status)) {
+      updateFilter('validationFilters', current.filter(s => s !== status));
+    } else {
+      updateFilter('validationFilters', [...current, status]);
+    }
+  };
+
   const selectedClasses = wowClasses.filter(c => filters.classFilters.includes(c.id));
   const hasRoleFilters = filters.roleFilters.length > 0;
   const hasClassFilters = filters.classFilters.length > 0;
-  const hasAnyFilters = hasRoleFilters || hasClassFilters;
+  const hasValidationFilters = filters.validationFilters.length > 0;
+  const hasAnyFilters = hasRoleFilters || hasClassFilters || hasValidationFilters;
 
   return (
-    <div className="flex flex-col sm:flex-row gap-2 mb-4 items-center">
+    <div className="flex flex-col sm:flex-row gap-2 mb-4 items-center flex-wrap">
       {/* Search */}
       <div className="relative flex-1 sm:max-w-[200px]">
         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
@@ -194,6 +211,73 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
                 >
                   {isSelected && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
                   <span>{cls.name[language]}</span>
+                </button>
+              );
+            })}
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      {/* Validation Filter */}
+      <Popover open={validationOpen} onOpenChange={setValidationOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className={cn(
+              "h-8 w-full sm:w-auto sm:min-w-[140px] justify-between gap-2 text-sm",
+              hasValidationFilters 
+                ? "border-border/60" 
+                : "border-border/40 text-muted-foreground"
+            )}
+          >
+            {hasValidationFilters ? (
+              <span className="flex items-center gap-1.5">
+                {filters.validationFilters.map((status) => {
+                  const config = validationConfig[status];
+                  const Icon = config.icon;
+                  return (
+                    <span key={status} className="flex items-center gap-1">
+                      <Icon className={cn("h-4 w-4", config.color)} />
+                      <span className={config.color}>{config.label[language]}</span>
+                    </span>
+                  );
+                })}
+              </span>
+            ) : (
+              <span>{language === 'fr' ? 'Validation' : 'Validation'}</span>
+            )}
+            <ChevronDown className="h-3.5 w-3.5 opacity-50 flex-shrink-0" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-48 p-1.5 bg-card border-border z-50" align="start">
+          <div className="flex flex-col gap-0.5">
+            {hasValidationFilters && (
+              <button
+                onClick={() => updateFilter('validationFilters', [])}
+                className="flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left hover:bg-primary/10 text-muted-foreground"
+              >
+                <X className="h-3.5 w-3.5 flex-shrink-0" />
+                <span>{language === 'fr' ? 'Effacer' : 'Clear'}</span>
+              </button>
+            )}
+            {(Object.keys(validationConfig) as ValidationStatus[]).map((status) => {
+              const config = validationConfig[status];
+              const Icon = config.icon;
+              const isSelected = filters.validationFilters.includes(status);
+              
+              return (
+                <button
+                  key={status}
+                  onClick={() => toggleValidation(status)}
+                  className={cn(
+                    "flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left",
+                    isSelected ? "bg-primary/20" : "hover:bg-primary/10"
+                  )}
+                >
+                  {isSelected && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
+                  <Icon className={cn("h-4 w-4", config.color)} />
+                  <span className={config.color}>{config.label[language]}</span>
                 </button>
               );
             })}
