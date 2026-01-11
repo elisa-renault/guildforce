@@ -68,101 +68,91 @@ export const WishValidationBadge = ({
     );
   }
 
-  // For GM: show validation actions on hover
+  // For GM: show validation actions on hover - fixed width container
   if (isGM && onValidate) {
     return (
       <div 
-        className="relative"
+        className="relative w-[72px] h-7"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         onClick={(e) => e.stopPropagation()}
       >
-        {isHovered ? (
-          <div className="flex items-center gap-0.5 p-0.5 rounded-md bg-card/80 border border-border/50 backdrop-blur-sm">
-            {/* Approve button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(
-                "h-6 w-6 p-0 rounded transition-all",
-                status === 'approved' 
-                  ? "bg-healer/20 text-healer cursor-default" 
-                  : "hover:bg-healer/20 hover:text-healer text-muted-foreground"
-              )}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (status !== 'approved') {
-                  onValidate('approved');
-                  setIsHovered(false);
-                }
-              }}
-              disabled={status === 'approved'}
-              title={t.wishes.validation.approve}
-            >
-              <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
-            </Button>
-            
-            {/* Reject button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(
-                "h-6 w-6 p-0 rounded transition-all",
-                status === 'rejected' 
-                  ? "bg-destructive/20 text-destructive cursor-default" 
-                  : "hover:bg-destructive/20 hover:text-destructive text-muted-foreground"
-              )}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (status !== 'rejected') {
-                  onValidate('rejected');
-                  setIsHovered(false);
-                }
-              }}
-              disabled={status === 'rejected'}
-              title={t.wishes.validation.reject}
-            >
-              <X className="h-3.5 w-3.5" strokeWidth={2.5} />
-            </Button>
-            
-            {/* Reset button - only show if not pending */}
-            {status !== 'pending' && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 w-6 p-0 rounded hover:bg-amber-400/20 hover:text-amber-400 text-muted-foreground transition-all"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onValidate('pending');
-                  setIsHovered(false);
-                }}
-                title={t.wishes.validation.reset}
-              >
-                <RotateCcw className="h-3 w-3" strokeWidth={2} />
-              </Button>
+        {/* Actions overlay */}
+        <div className={cn(
+          "absolute inset-0 flex items-center justify-center gap-0.5 rounded-md border transition-opacity duration-150",
+          "bg-card/95 border-border/50",
+          isHovered ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn(
+              "h-5 w-5 p-0 rounded transition-colors",
+              status === 'approved' 
+                ? "bg-healer/30 text-healer" 
+                : "hover:bg-healer/20 hover:text-healer text-muted-foreground"
             )}
-          </div>
-        ) : (
-          <TooltipProvider delayDuration={200}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className={cn(
-                  "flex items-center gap-1.5 px-2 py-1 rounded-md border cursor-pointer transition-all",
-                  "hover:scale-105 hover:shadow-sm",
-                  config.bgColor,
-                  config.borderColor,
-                  config.color
-                )}>
-                  <Icon className="h-3.5 w-3.5" strokeWidth={2} />
-                  {!compact && <span className="text-[10px] font-semibold uppercase tracking-wide">{config.label}</span>}
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="text-xs bg-card border-border">
-                {language === 'fr' ? 'Survolez pour valider' : 'Hover to validate'}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (status !== 'approved') {
+                onValidate('approved');
+                setIsHovered(false);
+              }
+            }}
+            title={t.wishes.validation.approve}
+          >
+            <Check className="h-3 w-3" strokeWidth={2.5} />
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn(
+              "h-5 w-5 p-0 rounded transition-colors",
+              status === 'rejected' 
+                ? "bg-destructive/30 text-destructive" 
+                : "hover:bg-destructive/20 hover:text-destructive text-muted-foreground"
+            )}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (status !== 'rejected') {
+                onValidate('rejected');
+                setIsHovered(false);
+              }
+            }}
+            title={t.wishes.validation.reject}
+          >
+            <X className="h-3 w-3" strokeWidth={2.5} />
+          </Button>
+          
+          {status !== 'pending' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-5 w-5 p-0 rounded hover:bg-amber-400/20 hover:text-amber-400 text-muted-foreground transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                onValidate('pending');
+                setIsHovered(false);
+              }}
+              title={t.wishes.validation.reset}
+            >
+              <RotateCcw className="h-2.5 w-2.5" strokeWidth={2} />
+            </Button>
+          )}
+        </div>
+
+        {/* Status badge */}
+        <div className={cn(
+          "absolute inset-0 flex items-center justify-center gap-1 rounded-md border transition-opacity duration-150 cursor-pointer",
+          config.bgColor,
+          config.borderColor,
+          config.color,
+          isHovered ? "opacity-0" : "opacity-100"
+        )}>
+          <Icon className="h-3.5 w-3.5" strokeWidth={2} />
+          <span className="text-[10px] font-medium">{config.label}</span>
+        </div>
       </div>
     );
   }
