@@ -1,13 +1,14 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Shield, User, LogOut, ChevronDown } from 'lucide-react';
+import { Shield, User, LogOut } from 'lucide-react';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { CosmicButton } from '@/components/CosmicButton';
 
 export const GlobalNav = () => {
@@ -26,11 +27,9 @@ export const GlobalNav = () => {
   const navButtonActive = "text-primary bg-primary/10";
 
   const languages = [
-    { code: 'fr' as const, label: 'Français', flag: '🇫🇷' },
-    { code: 'en' as const, label: 'English', flag: '🇬🇧' },
+    { code: 'fr' as const, label: 'Français' },
+    { code: 'en' as const, label: 'English' },
   ];
-
-  const currentLang = languages.find(l => l.code === language) || languages[0];
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 glass-header" role="banner">
@@ -45,34 +44,19 @@ export const GlobalNav = () => {
             Guildforce
           </button>
 
-          {/* Language dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button 
-                className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                aria-label="Changer de langue"
-              >
-                <span className="text-base">{currentLang.flag}</span>
-                <ChevronDown className="h-3 w-3" strokeWidth={1.5} />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="min-w-[140px]">
+          {/* Language select */}
+          <Select value={language} onValueChange={(value: 'fr' | 'en') => setLanguage(value)}>
+            <SelectTrigger className="w-[120px] h-9 bg-card border-border text-foreground">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
               {languages.map((lang) => (
-                <DropdownMenuItem
-                  key={lang.code}
-                  onClick={() => setLanguage(lang.code)}
-                  className={`flex items-center gap-2 ${
-                    language === lang.code 
-                      ? 'bg-primary text-primary-foreground font-medium' 
-                      : ''
-                  }`}
-                >
-                  <span className="text-base">{lang.flag}</span>
-                  <span>{lang.label}</span>
-                </DropdownMenuItem>
+                <SelectItem key={lang.code} value={lang.code}>
+                  {lang.label}
+                </SelectItem>
               ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Center navigation - only when logged in */}
