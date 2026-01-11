@@ -121,15 +121,15 @@ export const WishCardEditor = ({ wish, onChange }: WishCardEditorProps) => {
                 )}
               >
                 {selectedSpecs.length > 0 ? (
-                  <span className="flex items-center gap-2 truncate">
+                  <span className="flex items-center gap-1.5 truncate">
                     {selectedSpecs.map((spec, idx) => {
                       const config = roleConfig[spec.role];
                       const Icon = config.icon;
                       return (
                         <span key={spec.id} className="flex items-center gap-1">
+                          {idx > 0 && <span className="text-muted-foreground/50">•</span>}
                           <Icon className={cn("h-4 w-4", config.color)} />
                           <span className="text-foreground">{spec.name[language]}</span>
-                          {idx < selectedSpecs.length - 1 && <span className="text-muted-foreground mx-1">•</span>}
                         </span>
                       );
                     })}
