@@ -43,8 +43,12 @@ const GuildList = () => {
 
   const isConnected = !!profile?.battlenet_id;
 
-  // Handle OAuth callback
+  // Handle OAuth callback - must wait for session to be available
   useEffect(() => {
+    // Wait for auth to finish loading
+    if (authLoading) return;
+    if (!session?.access_token) return;
+
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
     const stateParam = urlParams.get('state');
@@ -67,7 +71,7 @@ const GuildList = () => {
         localStorage.removeItem('battlenet_region');
       }
     }
-  }, []);
+  }, [authLoading, session?.access_token]);
 
   const handleOAuthCallback = async (code: string, region: BattleNetRegion = 'eu') => {
     if (!session?.access_token) return;
