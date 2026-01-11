@@ -13,6 +13,7 @@ interface GuildWithMembership {
   id: string;
   name: string;
   server: string;
+  region: string;
   faction: 'horde' | 'alliance';
   role: string;
   owner_id: string;
@@ -46,12 +47,13 @@ const GuildList = () => {
         const guildIds = memberships.map(m => m.guild_id);
         const { data: guildData } = await supabase
           .from('guilds')
-          .select('id, name, server, faction, owner_id')
+          .select('id, name, server, region, faction, owner_id')
           .in('id', guildIds);
 
         if (guildData) {
           const merged = guildData.map(g => ({
             ...g,
+            region: g.region || 'eu',
             faction: g.faction as 'horde' | 'alliance',
             role: memberships.find(m => m.guild_id === g.id)?.role || 'member',
           }));
@@ -100,7 +102,7 @@ const GuildList = () => {
                 <GlowCard 
                   key={guild.id}
                   className="p-6 cursor-pointer hover:border-primary/50"
-                  onClick={() => navigate(getGuildPath(guild.server, guild.name))}
+                  onClick={() => navigate(getGuildPath(guild.region, guild.server, guild.name))}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
