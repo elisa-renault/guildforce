@@ -9,7 +9,7 @@ import { CommitmentToggle, CommitmentStatus } from '@/components/CommitmentToggl
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
-import { Loader2, Save, Sparkles, GripVertical, Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
+import { Loader2, Save, GripVertical, Plus, Trash2, ChevronUp, ChevronDown, ArrowLeft } from 'lucide-react';
 import { toSlug } from '@/lib/guildSlug';
 import {
   DndContext,
@@ -333,7 +333,16 @@ const Wishes = () => {
       {/* Sticky save bar for guild name + save button */}
       <div className="sticky top-14 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50">
         <div className="container mx-auto px-3 md:px-4 py-3 flex items-center justify-between">
-          <h1 className="text-lg font-semibold text-foreground">{guild?.name}</h1>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate('/guilds')}
+              className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
+              title={t.common.back}
+            >
+              <ArrowLeft className="h-4 w-4 text-muted-foreground" />
+            </button>
+            <h1 className="text-lg font-semibold text-foreground">{guild?.name}</h1>
+          </div>
           <CosmicButton 
             size="sm" 
             onClick={saveWishes} 
