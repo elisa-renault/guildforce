@@ -10,7 +10,7 @@ import { CosmicButton } from '@/components/CosmicButton';
 import { StatsCards, RosterFilters, RosterTable } from '@/components/dashboard';
 import { RosterSelector } from '@/components/roster';
 import { MemberWish, WishData, RoleStats, RangeStats, RosterFilters as RosterFiltersType } from '@/types/guild';
-import { Loader2, Download, Sparkles, ArrowLeft, Settings } from 'lucide-react';
+import { Loader2, Sparkles, ArrowLeft, Settings } from 'lucide-react';
 import { toSlug, getGuildWishesPath, getGuildSettingsPath } from '@/lib/guildSlug';
 import { CommitmentStatus } from '@/components/CommitmentToggle';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -321,33 +321,6 @@ const Dashboard = () => {
   };
 
 
-  const exportCSV = () => {
-    const headers = ['Username', 'Status', 'Choice 1 Class', 'Choice 1 Specs', 'Choice 2 Class', 'Choice 2 Specs', 'Choice 3 Class', 'Choice 3 Specs', 'Comments'];
-    const rows = members.map(m => {
-      const row = [m.username, m.status];
-      for (let i = 1; i <= 3; i++) {
-        const wish = m.wishes.find(w => w.choice_index === i);
-        if (wish) {
-          const cls = getClassById(wish.class_id);
-          row.push(cls?.name[language] || '');
-          row.push(wish.spec_ids.map(sid => getSpecById(sid)?.name[language] || '').join(', '));
-        } else {
-          row.push('', '');
-        }
-      }
-      const comments = m.wishes.map(w => w.comment).filter(Boolean).join(' | ');
-      row.push(comments);
-      return row;
-    });
-
-    const csv = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${guild?.name || 'guild'}-roster.csv`;
-    a.click();
-  };
 
   // Filter members
   const filteredMembers = members.filter(m => {
@@ -455,14 +428,9 @@ const Dashboard = () => {
               <span className="hidden md:inline">{t.wishes.title}</span>
             </CosmicButton>
             {isGM && (
-              <>
-                <CosmicButton size="sm" variant="outline" onClick={() => guild && navigate(getGuildSettingsPath(guild.region, guild.server, guild.name))} icon={<Settings className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 md:h-8 px-2 md:px-3">
-                  <span className="hidden md:inline">{t.guildSettings.title}</span>
-                </CosmicButton>
-                <CosmicButton size="sm" onClick={exportCSV} icon={<Download className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 md:h-8 px-2 md:px-3">
-                  <span className="hidden md:inline">{t.dashboard.exportCSV}</span>
-                </CosmicButton>
-              </>
+              <CosmicButton size="sm" variant="outline" onClick={() => guild && navigate(getGuildSettingsPath(guild.region, guild.server, guild.name))} icon={<Settings className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 md:h-8 px-2 md:px-3">
+                <span className="hidden md:inline">{t.guildSettings.title}</span>
+              </CosmicButton>
             )}
           </div>
         </div>
