@@ -3,7 +3,8 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
-import { CheckCircle, HelpCircle, XCircle, Pencil, X, Save, Shield, Heart, Swords } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { CheckCircle, HelpCircle, XCircle, Pencil, X, Save, Shield, Heart, Swords, MessageSquare } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getClassById, getSpecById } from '@/data/wowClasses';
 import { MemberWish, WishData, WishChoice } from '@/types/guild';
@@ -26,6 +27,13 @@ interface RosterTableProps {
   onEditStatusChange: (status: CommitmentStatus) => void;
   onSaveEditing: () => void;
 }
+
+// Role config for icons
+const roleConfig: Record<string, { icon: typeof Shield; color: string }> = {
+  tank: { icon: Shield, color: 'text-tank' },
+  healer: { icon: Heart, color: 'text-healer' },
+  dps: { icon: Swords, color: 'text-dps' },
+};
 
 export const RosterTable = ({
   members,
@@ -50,7 +58,7 @@ export const RosterTable = ({
       return (
         <div className="flex flex-col gap-1.5">
           <div className="h-7 w-full rounded-md border border-dashed border-muted-foreground/20 bg-transparent" />
-          <div className="h-6 w-full" />
+          <div className="h-6 w-full flex items-center" />
         </div>
       );
     }
@@ -60,7 +68,7 @@ export const RosterTable = ({
       return (
         <div className="flex flex-col gap-1.5">
           <div className="h-7 w-full rounded-md border border-dashed border-muted-foreground/20 bg-transparent" />
-          <div className="h-6 w-full" />
+          <div className="h-6 w-full flex items-center" />
         </div>
       );
     }
@@ -68,13 +76,6 @@ export const RosterTable = ({
     // Get specs with their details
     const specs = wish.spec_ids.map(id => getSpecById(id)).filter(Boolean);
     const firstSpec = specs[0];
-
-    // Role config for icons
-    const roleConfig: Record<string, { icon: typeof import('lucide-react').Shield; color: string }> = {
-      tank: { icon: Shield, color: 'text-tank' },
-      healer: { icon: Heart, color: 'text-healer' },
-      dps: { icon: Swords, color: 'text-dps' },
-    };
 
     return (
       <div className="flex flex-col gap-1.5">
@@ -89,8 +90,8 @@ export const RosterTable = ({
           <span className="truncate">{cls.name[language]}</span>
         </div>
         
-        {/* Spec - same height as editor spec row */}
-        <div className="h-6 w-full flex items-center gap-1 px-1 text-[10px]">
+        {/* Spec row - same height as editor spec row */}
+        <div className="h-6 w-full flex items-center gap-1 text-[10px]">
           {firstSpec ? (
             <>
               {(() => {
@@ -98,13 +99,27 @@ export const RosterTable = ({
                 const Icon = config?.icon;
                 return Icon ? <Icon className={cn("h-3 w-3 flex-shrink-0", config.color)} /> : null;
               })()}
-              <span className="truncate text-muted-foreground">{firstSpec.name[language]}</span>
+              <span className="truncate text-muted-foreground flex-1">{firstSpec.name[language]}</span>
               {specs.length > 1 && (
                 <span className="text-muted-foreground/60 flex-shrink-0">+{specs.length - 1}</span>
               )}
             </>
           ) : (
-            <span className="text-muted-foreground/50">—</span>
+            <span className="text-muted-foreground/50 flex-1">—</span>
+          )}
+          
+          {/* Comment icon with tooltip */}
+          {wish.comment && (
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <MessageSquare className="h-3 w-3 text-primary flex-shrink-0 cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-[200px] text-xs">
+                  {wish.comment}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
         </div>
       </div>
@@ -133,15 +148,15 @@ export const RosterTable = ({
   return (
     <GlowCard className="overflow-hidden" hoverable={false}>
       <div className="overflow-x-auto">
-        <Table>
+        <Table className="table-fixed">
           <TableHeader>
             <TableRow className="border-border/30 hover:bg-transparent">
-              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3 w-[100px] md:w-[120px]">{t.dashboard.player}</TableHead>
-              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3 w-[80px] md:w-[100px]">{t.wishes.status}</TableHead>
-              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3 w-[20%]"><span className="hidden md:inline">{t.dashboard.firstChoice}</span><span className="md:hidden">#1</span></TableHead>
-              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3 w-[20%]"><span className="hidden md:inline">{t.dashboard.secondChoice}</span><span className="md:hidden">#2</span></TableHead>
-              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3 w-[20%]"><span className="hidden md:inline">{t.dashboard.thirdChoice}</span><span className="md:hidden">#3</span></TableHead>
-              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3 w-[70px] md:w-[90px]"></TableHead>
+              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3 w-[120px] md:w-[140px]">{t.dashboard.player}</TableHead>
+              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3 w-[100px] md:w-[120px]">{t.wishes.status}</TableHead>
+              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3"><span className="hidden md:inline">{t.dashboard.firstChoice}</span><span className="md:hidden">#1</span></TableHead>
+              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3"><span className="hidden md:inline">{t.dashboard.secondChoice}</span><span className="md:hidden">#2</span></TableHead>
+              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3"><span className="hidden md:inline">{t.dashboard.thirdChoice}</span><span className="md:hidden">#3</span></TableHead>
+              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3 w-[100px] md:w-[120px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -160,9 +175,9 @@ export const RosterTable = ({
                 >
                   <TableCell className="font-medium text-foreground text-sm py-2 px-2 md:px-3">
                     <div className="flex items-center gap-1.5">
-                      <span className="truncate max-w-[80px] md:max-w-none">{member.username}</span>
-                      {isOwnRow && !isEditing && (
-                        <Badge variant="outline" className="text-[10px] px-1 py-0 text-primary border-primary/30 bg-primary/10">
+                      <span className="truncate">{member.username}</span>
+                      {isOwnRow && (
+                        <Badge variant="outline" className="text-[10px] px-1 py-0 text-primary border-primary/30 bg-primary/10 flex-shrink-0">
                           {t.common.you}
                         </Badge>
                       )}
@@ -179,7 +194,7 @@ export const RosterTable = ({
                       <Badge 
                         variant={member.status === 'confirmed' ? 'default' : 'outline'}
                         className={cn(
-                          "text-[10px] md:text-xs px-1.5 py-0",
+                          "text-[10px] md:text-xs px-1.5 py-0.5",
                           member.status === 'confirmed' 
                             ? 'bg-healer/20 text-healer border-healer/30' 
                             : member.status === 'withdrawn'
@@ -208,39 +223,41 @@ export const RosterTable = ({
                   </TableCell>
                   <TableCell className="py-2 px-2 md:px-3">
                     {isOwnRow && (
-                      isEditing ? (
-                        <div className="flex gap-1">
+                      <div className="flex gap-1.5 justify-end">
+                        {isEditing ? (
+                          <>
+                            <CosmicButton 
+                              size="sm" 
+                              variant="outline" 
+                              onClick={onCancelEditing}
+                              className="h-8 px-2"
+                            >
+                              <X className="h-4 w-4" strokeWidth={1.5} />
+                            </CosmicButton>
+                            <CosmicButton 
+                              size="sm" 
+                              onClick={onSaveEditing}
+                              loading={saving}
+                              className="h-8 px-3"
+                            >
+                              <Save className="h-4 w-4" strokeWidth={1.5} />
+                            </CosmicButton>
+                          </>
+                        ) : (
                           <CosmicButton 
                             size="sm" 
                             variant="outline" 
-                            onClick={onCancelEditing}
-                            className="h-7 px-1.5"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onStartEditing(member);
+                            }}
+                            icon={<Pencil className="h-3.5 w-3.5" strokeWidth={1.5} />}
+                            className="h-8 px-3"
                           >
-                            <X className="h-3.5 w-3.5" strokeWidth={1.5} />
+                            <span className="hidden md:inline">{t.common.edit}</span>
                           </CosmicButton>
-                          <CosmicButton 
-                            size="sm" 
-                            onClick={onSaveEditing}
-                            loading={saving}
-                            className="h-7 px-1.5"
-                          >
-                            <Save className="h-3.5 w-3.5" strokeWidth={1.5} />
-                          </CosmicButton>
-                        </div>
-                      ) : (
-                        <CosmicButton 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onStartEditing(member);
-                          }}
-                          icon={<Pencil className="h-3 w-3" strokeWidth={1.5} />}
-                          className="h-7 px-2"
-                        >
-                          <span className="hidden md:inline">{t.common.edit}</span>
-                        </CosmicButton>
-                      )
+                        )}
+                      </div>
                     )}
                   </TableCell>
                 </TableRow>
