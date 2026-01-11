@@ -17,6 +17,7 @@ interface WishData {
 interface WishCardEditorProps {
   wish: WishData;
   onChange: (field: keyof WishData, value: any) => void;
+  usedClassIds?: string[];
 }
 
 const roleConfig: Record<Role, { icon: typeof Shield; color: string; bgSelected: string }> = {
@@ -25,7 +26,7 @@ const roleConfig: Record<Role, { icon: typeof Shield; color: string; bgSelected:
   dps: { icon: Swords, color: 'text-dps', bgSelected: 'bg-dps/20 border-dps/50' },
 };
 
-export const WishCardEditor = ({ wish, onChange }: WishCardEditorProps) => {
+export const WishCardEditor = ({ wish, onChange, usedClassIds = [] }: WishCardEditorProps) => {
   const { language, t } = useLanguage();
   const [classOpen, setClassOpen] = useState(false);
   const [specOpen, setSpecOpen] = useState(false);
@@ -34,6 +35,11 @@ export const WishCardEditor = ({ wish, onChange }: WishCardEditorProps) => {
   const selectedSpecs = selectedClass 
     ? selectedClass.specs.filter(s => wish.specIds.includes(s.id))
     : [];
+  
+  // Filter out already used classes (except the current one)
+  const availableClasses = wowClasses.filter(
+    cls => cls.id === wish.classId || !usedClassIds.includes(cls.id)
+  );
 
   const handleClassSelect = (classId: string) => {
     if (wish.classId === classId) {
@@ -81,7 +87,7 @@ export const WishCardEditor = ({ wish, onChange }: WishCardEditorProps) => {
           </PopoverTrigger>
           <PopoverContent className="w-[380px] p-1.5 bg-card border-border z-50" align="start">
             <div className="grid grid-cols-2 gap-0.5 max-h-[320px] overflow-y-auto">
-              {wowClasses.map((cls) => {
+              {availableClasses.map((cls) => {
                 const isSelected = wish.classId === cls.id;
                 return (
                   <button

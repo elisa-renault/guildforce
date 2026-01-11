@@ -43,9 +43,10 @@ interface SortableWishCardProps {
   onRemove: () => void;
   canRemove: boolean;
   choiceLabels: string[];
+  usedClassIds: string[];
 }
 
-const SortableWishCard = ({ wish, index, onChange, onRemove, canRemove, choiceLabels }: SortableWishCardProps) => {
+const SortableWishCard = ({ wish, index, onChange, onRemove, canRemove, choiceLabels, usedClassIds }: SortableWishCardProps) => {
   const { t } = useLanguage();
   const {
     attributes,
@@ -102,6 +103,7 @@ const SortableWishCard = ({ wish, index, onChange, onRemove, canRemove, choiceLa
         <WishCardEditor
           wish={wish}
           onChange={onChange}
+          usedClassIds={usedClassIds}
         />
       </GlowCard>
     </div>
@@ -337,17 +339,26 @@ const Wishes = () => {
             strategy={verticalListSortingStrategy}
           >
             <div className="space-y-4">
-              {wishes.map((wish, index) => (
-                <SortableWishCard
-                  key={wish.id}
-                  wish={wish}
-                  index={index}
-                  onChange={(field, value) => updateWish(index, field, value)}
-                  onRemove={() => removeWish(index)}
-                  canRemove={wishes.length > 1}
-                  choiceLabels={choiceLabels}
-                />
-              ))}
+              {wishes.map((wish, index) => {
+                // Get all used class IDs except the current wish's class
+                const usedClassIds = wishes
+                  .filter((_, i) => i !== index)
+                  .map(w => w.classId)
+                  .filter(Boolean);
+                
+                return (
+                  <SortableWishCard
+                    key={wish.id}
+                    wish={wish}
+                    index={index}
+                    onChange={(field, value) => updateWish(index, field, value)}
+                    onRemove={() => removeWish(index)}
+                    canRemove={wishes.length > 1}
+                    choiceLabels={choiceLabels}
+                    usedClassIds={usedClassIds}
+                  />
+                );
+              })}
             </div>
           </SortableContext>
         </DndContext>
