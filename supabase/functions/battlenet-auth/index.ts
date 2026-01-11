@@ -66,7 +66,35 @@ const LOG_PRIORITIES: Record<LogLevel, number> = {
 };
 
 /**
- * Conditional logger that respects LOG_LEVEL environment variable
+ * Sanitizes potentially sensitive data for production logging.
+ * Shows full data only in debug mode, otherwise returns masked version.
+ */
+function sanitizePII(value: string | undefined, type: 'battletag' | 'name' | 'id' = 'name'): string {
+  if (!value) return '[empty]';
+  
+  // In debug mode, show full values
+  if (LOG_LEVEL === 'debug') {
+    return value;
+  }
+  
+  // In production, mask sensitive parts
+  switch (type) {
+    case 'battletag':
+      // Show first few chars + mask: "Play****#1234" → "Play****"
+      return value.length > 4 ? `${value.substring(0, 4)}****` : '****';
+    case 'id':
+      // Show only last 4 chars of IDs
+      return value.length > 8 ? `***${value.substring(value.length - 4)}` : '****';
+    case 'name':
+    default:
+      // Show first char + asterisks: "Arthas" → "A*****"
+      return value.length > 1 ? `${value.charAt(0)}${'*'.repeat(Math.min(value.length - 1, 5))}` : '*';
+  }
+}
+
+/**
+ * Conditional logger that respects LOG_LEVEL environment variable.
+ * PII is automatically sanitized in non-debug modes.
  */
 const log = {
   debug: (message: string, ...args: any[]) => {
@@ -272,7 +300,7 @@ Deno.serve(async (req) => {
       }
 
       const userInfo: UserInfo = await userInfoResponse.json();
-      log.info(`Got BattleTag: ${userInfo.battletag}`);
+      log.info(`Got BattleTag: ${sanitizePII(userInfo.battletag, 'battletag')}`);
 
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -292,7 +320,7 @@ Deno.serve(async (req) => {
 
       if (existingProfile) {
         userId = existingProfile.id;
-        log.info(`Existing user found by battlenet_id: ${userId}`);
+        log.info(`Existing user found by battlenet_id: ${sanitizePII(userId, 'id')}`);
       } else {
         const { data: existingUsers } = await supabase.auth.admin.listUsers();
         const existingBnetEmailUser = existingUsers?.users?.find((u) => u.email === bnetEmail);
@@ -300,7 +328,7 @@ Deno.serve(async (req) => {
         if (existingBnetEmailUser) {
           userId = existingBnetEmailUser.id;
           isNewUser = false;
-          log.info(`Existing auth user found by bnet email: ${userId}`);
+          log.info(`Existing auth user found by bnet email: ${sanitizePII(userId, 'id')}`);
         } else {
           const { data: profileByBattletag } = await supabase
             .from('profiles')
@@ -311,7 +339,7 @@ Deno.serve(async (req) => {
           if (profileByBattletag) {
             userId = profileByBattletag.id;
             isNewUser = false;
-            log.info(`Existing user found by battletag: ${userId}`);
+            log.info(`Existing user found by battletag: ${sanitizePII(userId, 'id')}`);
           } else {
             isNewUser = true;
             const password = generateSecurePassword();
@@ -338,7 +366,7 @@ Deno.serve(async (req) => {
             }
 
             userId = newUser.user.id;
-            log.info(`New user created: ${userId}`);
+            log.info(`New user created: ${sanitizePII(userId, 'id')}`);
           }
         }
       }
@@ -492,7 +520,7 @@ Deno.serve(async (req) => {
       }
 
       const userInfo: UserInfo = await userInfoResponse.json();
-      log.info(`Got BattleTag: ${userInfo.battletag}`);
+      log.info(`Got BattleTag: ${sanitizePII(userInfo.battletag, 'battletag')}`);
 
       // Get Supabase user from auth header
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -767,7 +795,7 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
         const charDetail = await charDetailResponse.json();
         
         if (charDetail.guild) {
-          log.debug(`Character ${char.name} is in guild: ${charDetail.guild.name}`);
+          log.debug(`Character ${sanitizePII(char.name, 'name')} is in guild: ${sanitizePII(charDetail.guild.name, 'name')}`);
           
           const guildKey = `${charDetail.guild.name}-${charDetail.guild.realm?.slug || char.realmSlug}`;
           const guildRealmSlug = charDetail.guild.realm?.slug || char.realmSlug;
@@ -811,7 +839,7 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
         const guildSlug = guildInfo.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
         const rosterUrl = `${apiUrl}/data/wow/guild/${guildInfo.realmSlug}/${encodeURIComponent(guildSlug)}/roster?namespace=${namespace}&locale=${locale}`;
         
-        log.debug(`Fetching roster for guild: ${guildInfo.name}`);
+        log.debug(`Fetching roster for guild: ${sanitizePII(guildInfo.name, 'name')}`);
         
         const rosterResponse = await fetch(rosterUrl, {
           headers: { 'Authorization': `Bearer ${accessToken}` },
@@ -846,7 +874,7 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
           );
 
           if (rosterMember) {
-            log.debug(`Found ${insertedChar.name} in roster with rank ${rosterMember.rank}`);
+            log.debug(`Found ${sanitizePII(insertedChar.name, 'name')} in roster with rank ${rosterMember.rank}`);
             guildMemberships.push({
               characterId: charId,
               guildName: guildInfo.name,
@@ -951,10 +979,10 @@ async function cleanupLeftGuilds(
       const guildKey = `${guild.name.toLowerCase()}-${serverSlug}`;
 
       if (!currentWoWGuilds.has(guildKey)) {
-        log.info(`User no longer in WoW guild ${guild.name}, removing from app...`);
+        log.info(`User no longer in WoW guild ${sanitizePII(guild.name, 'name')}, removing from app...`);
 
         if (guild.owner_id === userId) {
-          log.info(`User was owner of guild ${guild.name}, making it orphan...`);
+          log.info(`User was owner of guild ${sanitizePII(guild.name, 'name')}, making it orphan...`);
           await supabase
             .from('guilds')
             .update({ owner_id: null })
@@ -1027,7 +1055,7 @@ async function autoJoinGuilds(
           .maybeSingle();
 
         if (guildLookupError) {
-          log.error(`Error looking up guild ${guildInfo.name}:`, guildLookupError);
+          log.error(`Error looking up guild ${sanitizePII(guildInfo.name, 'name')}:`, guildLookupError);
           continue;
         }
 
@@ -1035,19 +1063,19 @@ async function autoJoinGuilds(
 
         if (existingGuild) {
           guildId = existingGuild.id;
-          log.debug(`Guild ${guildInfo.name} already exists (id: ${guildId})`);
+          log.debug(`Guild ${sanitizePII(guildInfo.name, 'name')} already exists (id: ${sanitizePII(guildId, 'id')})`);
 
           // Handle ownership changes
           if (existingGuild.owner_id === userId && !guildInfo.isGM) {
             // User lost GM status - revoke ownership
-            log.info(`User lost GM status for guild ${guildInfo.name}, revoking ownership...`);
+            log.info(`User lost GM status for guild ${sanitizePII(guildInfo.name, 'name')}, revoking ownership...`);
             await supabase
               .from('guilds')
               .update({ owner_id: null })
               .eq('id', guildId);
           } else if (existingGuild.owner_id === null && guildInfo.isGM) {
             // Guild is orphan and user is GM - claim ownership
-            log.info(`Guild ${guildInfo.name} is orphan and user is GM, claiming ownership...`);
+            log.info(`Guild ${sanitizePII(guildInfo.name, 'name')} is orphan and user is GM, claiming ownership...`);
             await supabase
               .from('guilds')
               .update({ owner_id: userId })
@@ -1055,7 +1083,7 @@ async function autoJoinGuilds(
             await syncExistingMembers(supabase, guildId, guildInfo.name, guildInfo.server);
           } else if (existingGuild.owner_id !== null && existingGuild.owner_id !== userId && guildInfo.isGM) {
             // Battle.net is source of truth: new GM takes ownership immediately
-            log.info(`User is now GM in WoW for guild ${guildInfo.name}, transferring ownership...`);
+            log.info(`User is now GM in WoW for guild ${sanitizePII(guildInfo.name, 'name')}, transferring ownership...`);
             
             const previousOwnerId = existingGuild.owner_id;
             
@@ -1088,12 +1116,12 @@ async function autoJoinGuilds(
             .single();
 
           if (createGuildError || !newGuild) {
-            log.error(`Failed to create guild ${guildInfo.name}:`, createGuildError);
+            log.error(`Failed to create guild ${sanitizePII(guildInfo.name, 'name')}:`, createGuildError);
             continue;
           }
 
           guildId = newGuild.id;
-          log.info(`Created guild ${guildInfo.name} (id: ${guildId}) ${guildInfo.isGM ? 'with user as owner' : 'as orphan'}`);
+          log.info(`Created guild ${sanitizePII(guildInfo.name, 'name')} (id: ${sanitizePII(guildId, 'id')}) ${guildInfo.isGM ? 'with user as owner' : 'as orphan'}`);
         }
 
         // Check/update membership
@@ -1112,7 +1140,7 @@ async function autoJoinGuilds(
               .from('guild_members')
               .update({ role })
               .eq('id', existingMembership.id);
-            log.debug(`Updated user role from ${existingMembership.role} to ${role} for guild ${guildInfo.name}`);
+            log.debug(`Updated user role from ${existingMembership.role} to ${role} for guild ${sanitizePII(guildInfo.name, 'name')}`);
           }
         } else {
           const { error: insertError } = await supabase
@@ -1125,13 +1153,13 @@ async function autoJoinGuilds(
             });
           
           if (insertError) {
-            log.error(`Failed to join guild ${guildInfo.name}:`, insertError);
+            log.error(`Failed to join guild ${sanitizePII(guildInfo.name, 'name')}:`, insertError);
           } else {
-            log.info(`User joined guild ${guildInfo.name} as ${role}`);
+            log.info(`User joined guild ${sanitizePII(guildInfo.name, 'name')} as ${role}`);
           }
         }
       } catch (err) {
-        log.error(`Error processing guild ${guildInfo.name}:`, err);
+        log.error(`Error processing guild ${sanitizePII(guildInfo.name, 'name')}:`, err);
       }
     }
 
@@ -1157,7 +1185,7 @@ async function syncExistingMembers(
   guildServer: string
 ) {
   try {
-    log.debug(`Syncing existing members for guild ${guildName}...`);
+    log.debug(`Syncing existing members for guild ${sanitizePII(guildName, 'name')}...`);
 
     const { data: wowMemberships, error: lookupError } = await supabase
       .from('wow_guild_memberships')
@@ -1207,10 +1235,10 @@ async function syncExistingMembers(
           role,
           status: 'active',
         });
-      log.debug(`Added user ${syncUserId} to guild as ${role}`);
+      log.debug(`Added user ${sanitizePII(syncUserId, 'id')} to guild as ${role}`);
     }
 
-    log.info(`Sync completed for guild ${guildName}`);
+    log.info(`Sync completed for guild ${sanitizePII(guildName, 'name')}`);
   } catch (error) {
     log.error('Error in syncExistingMembers:', error);
   }
