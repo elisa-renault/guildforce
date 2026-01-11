@@ -205,6 +205,20 @@ export function useAdminActions() {
     if (error) throw error;
   }, []);
 
+  const reorderCategories = useCallback(async (categoryIds: string[]) => {
+    // Update display_order for each category based on position in array
+    const updates = categoryIds.map((id, index) => 
+      supabase
+        .from('forum_categories')
+        .update({ display_order: index })
+        .eq('id', id)
+    );
+
+    const results = await Promise.all(updates);
+    const error = results.find(r => r.error)?.error;
+    if (error) throw error;
+  }, []);
+
   const fetchModerators = useCallback(async () => {
     const { data, error } = await supabase
       .from('forum_moderators')
@@ -251,6 +265,7 @@ export function useAdminActions() {
     createCategory,
     updateCategory,
     deleteCategory,
+    reorderCategories,
     fetchModerators,
     addModerator,
     removeModerator,
