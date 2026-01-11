@@ -15,7 +15,7 @@ import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { BattleNetConnect } from '@/components/BattleNetConnect';
 
-import { User, Save, Globe, Loader2, Sparkles, Camera } from 'lucide-react';
+import { User, Save, Globe, Loader2, Sparkles, Camera, Trash2 } from 'lucide-react';
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -158,6 +158,43 @@ const Profile = () => {
 
       await refreshProfile();
       toast({ title: language === 'fr' ? 'Avatar mis à jour !' : 'Avatar updated!' });
+    } catch (error: any) {
+      toast({
+        title: t.errors.generic,
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleDeleteAvatar = async () => {
+    if (!user || !profile?.avatar_url) return;
+
+    setUploadingAvatar(true);
+
+    try {
+      // List files in user's folder to delete all avatar variants
+      const { data: files } = await supabase.storage
+        .from('avatars')
+        .list(user.id);
+
+      if (files && files.length > 0) {
+        const filePaths = files.map(f => `${user.id}/${f.name}`);
+        await supabase.storage.from('avatars').remove(filePaths);
+      }
+
+      // Clear avatar_url in profile
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: null })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      await refreshProfile();
+      toast({ title: language === 'fr' ? 'Avatar supprimé' : 'Avatar removed' });
     } catch (error: any) {
       toast({
         title: t.errors.generic,
@@ -319,6 +356,18 @@ const Profile = () => {
                 </p>
               )}
             </div>
+            {/* Delete avatar button */}
+            {profile?.avatar_url && (
+              <button
+                type="button"
+                onClick={handleDeleteAvatar}
+                disabled={uploadingAvatar}
+                className="p-2 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
+                title={language === 'fr' ? 'Supprimer l\'avatar' : 'Remove avatar'}
+              >
+                <Trash2 className="h-4 w-4" strokeWidth={1.5} />
+              </button>
+            )}
           </div>
         </GlowCard>
 
