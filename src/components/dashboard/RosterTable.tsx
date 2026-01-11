@@ -1,4 +1,5 @@
 import { Fragment } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { GlowCard } from '@/components/GlowCard';
@@ -57,6 +58,8 @@ export const RosterTable = ({
   onClearWish,
 }: RosterTableProps) => {
   const { t, language } = useLanguage();
+  const navigate = useNavigate();
+  const { regionSlug, serverSlug, guildSlug } = useParams();
 
   const renderWishCell = (wishes: WishChoice[], choiceIndex: number) => {
     const wish = wishes.find(w => w.choice_index === choiceIndex);
@@ -225,14 +228,23 @@ export const RosterTable = ({
               const isEditing = editingUserId === member.id;
               const extraWishes = getExtraWishesCount(member.wishes);
               
+              const handleRowClick = () => {
+                // Only navigate to member wishes page for other members (not own row, not editing)
+                if (!isOwnRow && !isEditing && regionSlug && serverSlug && guildSlug) {
+                  navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/member/${member.id}`);
+                }
+              };
+              
               return (
                 <Fragment key={member.id}>
                   <TableRow 
                     className={cn(
                       "border-border/20",
                       isOwnRow ? "bg-primary/[0.02]" : "",
-                      isEditing && "bg-primary/[0.05]"
+                      isEditing && "bg-primary/[0.05]",
+                      !isOwnRow && !isEditing && "cursor-pointer hover:bg-primary/[0.05]"
                     )}
+                    onClick={handleRowClick}
                   >
                     <TableCell className="font-medium text-foreground text-sm py-2 px-2 md:px-3">
                       <div className="flex items-center gap-1.5">
