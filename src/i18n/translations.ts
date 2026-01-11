@@ -25,6 +25,7 @@ export interface Translations {
     password: string;
     confirmPassword: string;
     you: string;
+    settings: string;
   };
   // Battle.net
   battlenet: {
@@ -270,6 +271,7 @@ export const translations: Record<Language, Translations> = {
       password: 'Password',
       confirmPassword: 'Confirm password',
       you: 'You',
+      settings: 'Settings',
     },
     battlenet: {
       connect: 'Link my Battle.net account',
@@ -511,6 +513,7 @@ export const translations: Record<Language, Translations> = {
       password: 'Mot de passe',
       confirmPassword: 'Confirmer le mot de passe',
       you: 'Vous',
+      settings: 'Paramètres',
     },
     battlenet: {
       connect: 'Lier mon compte Battle.net',
