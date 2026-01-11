@@ -113,12 +113,21 @@ export const InlineWishEditor = ({ wish, choiceIndex, onChange }: InlineWishEdit
                 )}
               >
                 {selectedSpecs.length > 0 ? (
-                  <span className="flex items-center gap-0.5">
-                    {selectedSpecs.map(spec => {
-                      const config = roleConfig[spec!.role];
+                  <span className="flex items-center gap-1 truncate">
+                    {(() => {
+                      const firstSpec = selectedSpecs[0]!;
+                      const config = roleConfig[firstSpec.role];
                       const Icon = config.icon;
-                      return <Icon key={spec!.id} className={cn("h-3 w-3", config.color)} />;
-                    })}
+                      return (
+                        <>
+                          <Icon className={cn("h-3 w-3 flex-shrink-0", config.color)} />
+                          <span className="truncate">{firstSpec.name[language]}</span>
+                        </>
+                      );
+                    })()}
+                    {selectedSpecs.length > 1 && (
+                      <span className="text-muted-foreground flex-shrink-0">+{selectedSpecs.length - 1}</span>
+                    )}
                   </span>
                 ) : (
                   <span className="flex items-center gap-1 text-muted-foreground">
