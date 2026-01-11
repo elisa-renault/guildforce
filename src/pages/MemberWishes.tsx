@@ -190,110 +190,87 @@ const MemberWishes = () => {
         </div>
       </div>
 
-      <main className="container mx-auto px-3 md:px-4 py-4 md:py-6 relative z-10">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl font-display cosmic-text">
+      <main className="container mx-auto px-3 md:px-4 py-4 relative z-10">
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-display cosmic-text">
             {language === 'fr' ? 'Vœux de classe' : 'Class Wishes'}
           </h2>
-          <p className="text-muted-foreground mt-2">
+          <p className="text-sm text-muted-foreground mt-1">
             {language === 'fr' ? 'Visualisation en lecture seule' : 'Read-only view'}
           </p>
         </div>
 
         {wishes.length === 0 ? (
-          <GlowCard className="p-8 text-center" hoverable={false}>
+          <GlowCard className="p-6 text-center" hoverable={false}>
             <p className="text-muted-foreground">
               {language === 'fr' ? 'Aucun vœu enregistré' : 'No wishes registered'}
             </p>
           </GlowCard>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-2">
             {wishes.map((wish, index) => {
               const cls = getClassById(wish.class_id);
               const specs = wish.spec_ids.map(id => getSpecById(id)).filter(Boolean) as Specialization[];
 
               return (
-                <GlowCard key={wish.choice_index} className="p-6" hoverable={false}>
-                  <div className="flex items-center gap-2 mb-6">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center border border-primary/20">
+                <GlowCard key={wish.choice_index} className="p-3 md:p-4" hoverable={false}>
+                  <div className="grid grid-cols-1 lg:grid-cols-[40px_200px_1fr_1fr] gap-3 lg:gap-4 items-center">
+                    {/* Choice number */}
+                    <div className="hidden lg:flex w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 items-center justify-center border border-primary/20">
                       <span className="text-sm font-bold text-primary">{index + 1}</span>
                     </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-foreground">
-                        {t.wishes.choice} #{index + 1}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {choiceLabels[index] || choiceLabels[2]}
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-[250px_1fr_1fr] gap-4 lg:gap-6">
                     {/* Class */}
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        {t.wishes.selectClass}
-                      </p>
-                      {cls ? (
-                        <div 
-                          className="h-10 w-full rounded-md flex items-center px-3 text-sm font-medium"
-                          style={{ 
-                            backgroundColor: `hsl(var(--class-${cls.id}) / 0.15)`,
-                            color: `hsl(var(--class-${cls.id}))`
-                          }}
-                        >
-                          {cls.name[language]}
-                        </div>
-                      ) : (
-                        <div className="h-10 w-full rounded-md border border-dashed border-muted-foreground/20 flex items-center justify-center">
-                          <span className="text-xs text-muted-foreground/50">—</span>
-                        </div>
-                      )}
-                    </div>
+                    {cls ? (
+                      <div 
+                        className="h-9 w-full rounded-md flex items-center px-3 text-sm font-medium"
+                        style={{ 
+                          backgroundColor: `hsl(var(--class-${cls.id}) / 0.15)`,
+                          color: `hsl(var(--class-${cls.id}))`
+                        }}
+                      >
+                        <span className="lg:hidden mr-2 text-xs text-muted-foreground">#{index + 1}</span>
+                        {cls.name[language]}
+                      </div>
+                    ) : (
+                      <div className="h-9 w-full rounded-md border border-dashed border-muted-foreground/20 flex items-center justify-center">
+                        <span className="text-xs text-muted-foreground/50">—</span>
+                      </div>
+                    )}
 
                     {/* Specs */}
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        {t.wishes.selectSpecs}
-                      </p>
-                      {specs.length > 0 ? (
-                        <div className="h-10 w-full rounded-md border border-border bg-card/50 flex items-center px-3 gap-3">
-                          {specs.map((spec, idx) => {
-                            const config = roleConfig[spec.role];
-                            const Icon = getSpecIcon(spec);
-                            return (
-                              <span key={spec.id} className="flex items-center gap-1.5 text-sm">
-                                {idx > 0 && <span className="text-muted-foreground/50 mr-1">•</span>}
-                                <Icon className={cn("h-4 w-4", config.color)} />
-                                <span className="text-foreground">{spec.name[language]}</span>
-                              </span>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div className="h-10 w-full rounded-md border border-dashed border-muted-foreground/20 flex items-center justify-center gap-2">
-                          <Shield className="h-4 w-4 text-muted-foreground/30" />
-                          <Heart className="h-4 w-4 text-muted-foreground/30" />
-                          <Swords className="h-4 w-4 text-muted-foreground/30" />
-                        </div>
-                      )}
-                    </div>
+                    {specs.length > 0 ? (
+                      <div className="h-9 w-full rounded-md border border-border bg-card/50 flex items-center px-3 gap-3 overflow-x-auto">
+                        {specs.map((spec, idx) => {
+                          const config = roleConfig[spec.role];
+                          const Icon = getSpecIcon(spec);
+                          return (
+                            <span key={spec.id} className="flex items-center gap-1.5 text-sm whitespace-nowrap">
+                              {idx > 0 && <span className="text-muted-foreground/50 mr-1">•</span>}
+                              <Icon className={cn("h-4 w-4 flex-shrink-0", config.color)} />
+                              <span className="text-foreground">{spec.name[language]}</span>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="h-9 w-full rounded-md border border-dashed border-muted-foreground/20 flex items-center justify-center gap-2">
+                        <Shield className="h-4 w-4 text-muted-foreground/30" />
+                        <Heart className="h-4 w-4 text-muted-foreground/30" />
+                        <Swords className="h-4 w-4 text-muted-foreground/30" />
+                      </div>
+                    )}
 
                     {/* Comment */}
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        {t.wishes.comment}
-                      </p>
-                      {wish.comment ? (
-                        <div className="h-10 w-full rounded-md border border-border bg-card/50 flex items-center px-3">
-                          <span className="text-sm text-foreground truncate">{wish.comment}</span>
-                        </div>
-                      ) : (
-                        <div className="h-10 w-full rounded-md border border-dashed border-muted-foreground/20 flex items-center justify-center">
-                          <span className="text-xs text-muted-foreground/50">—</span>
-                        </div>
-                      )}
-                    </div>
+                    {wish.comment ? (
+                      <div className="h-9 w-full rounded-md border border-border bg-card/50 flex items-center px-3">
+                        <span className="text-sm text-foreground truncate">{wish.comment}</span>
+                      </div>
+                    ) : (
+                      <div className="h-9 w-full rounded-md border border-dashed border-muted-foreground/20 flex items-center justify-center">
+                        <span className="text-xs text-muted-foreground/50">—</span>
+                      </div>
+                    )}
                   </div>
                 </GlowCard>
               );
