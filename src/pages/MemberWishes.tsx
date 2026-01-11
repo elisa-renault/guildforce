@@ -1,0 +1,293 @@
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { CosmicBackground } from '@/components/CosmicBackground';
+import { GlowCard } from '@/components/GlowCard';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, ArrowLeft, Shield, Heart, Swords, Crosshair, CheckCircle, HelpCircle, XCircle } from 'lucide-react';
+import { toSlug, getGuildPath } from '@/lib/guildSlug';
+import { getClassById, getSpecById, Specialization } from '@/data/wowClasses';
+import { cn } from '@/lib/utils';
+
+interface WishChoice {
+  choice_index: number;
+  class_id: string;
+  spec_ids: string[];
+  comment: string | null;
+}
+
+// Get the appropriate icon for a spec based on role and range
+const getSpecIcon = (spec: Specialization) => {
+  if (spec.role === 'tank') return Shield;
+  if (spec.role === 'healer') return Heart;
+  return spec.range === 'ranged' ? Crosshair : Swords;
+};
+
+const roleConfig: Record<string, { color: string }> = {
+  tank: { color: 'text-tank' },
+  healer: { color: 'text-healer' },
+  dps: { color: 'text-dps' },
+};
+
+const MemberWishes = () => {
+  const navigate = useNavigate();
+  const { regionSlug, serverSlug, guildSlug, memberId } = useParams();
+  const { t, language } = useLanguage();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [guild, setGuild] = useState<{ name: string; server: string; region: string } | null>(null);
+  const [member, setMember] = useState<{ username: string; battletag: string | null; status: string } | null>(null);
+  const [wishes, setWishes] = useState<WishChoice[]>([]);
+
+  useEffect(() => {
+    if (!user || !regionSlug || !serverSlug || !guildSlug || !memberId) {
+      navigate('/auth');
+      return;
+    }
+
+    const fetchData = async () => {
+      // Find guild by slugified region, server and name
+      const { data: allGuilds } = await supabase
+        .from('guilds')
+        .select('id, name, server, region, faction');
+      
+      const matchedGuild = allGuilds?.find(g => 
+        toSlug(g.region || 'eu') === regionSlug &&
+        toSlug(g.server) === serverSlug && 
+        toSlug(g.name) === guildSlug
+      );
+      
+      if (!matchedGuild) {
+        navigate('/guilds');
+        return;
+      }
+      
+      setGuild({ name: matchedGuild.name, server: matchedGuild.server, region: matchedGuild.region || 'eu' });
+
+      // Get member info
+      const { data: memberData } = await supabase
+        .from('guild_members')
+        .select('status, user_id')
+        .eq('guild_id', matchedGuild.id)
+        .eq('user_id', memberId)
+        .single();
+
+      if (!memberData) {
+        navigate(getGuildPath(matchedGuild.region || 'eu', matchedGuild.server, matchedGuild.name));
+        return;
+      }
+
+      // Get profile info
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('username, battletag')
+        .eq('id', memberId)
+        .single();
+
+      if (profileData) {
+        setMember({
+          username: profileData.username,
+          battletag: profileData.battletag,
+          status: memberData.status,
+        });
+      }
+
+      // Get wishes
+      const { data: wishesData } = await supabase
+        .from('class_wishes')
+        .select('choice_index, class_id, spec_ids, comment')
+        .eq('guild_id', matchedGuild.id)
+        .eq('user_id', memberId)
+        .order('choice_index');
+
+      if (wishesData) {
+        setWishes(wishesData);
+      }
+
+      setLoading(false);
+    };
+
+    fetchData();
+  }, [user, regionSlug, serverSlug, guildSlug, memberId, navigate]);
+
+  const choiceLabels = [
+    t.wishes.preferredChoice,
+    t.wishes.secondChoice,
+    t.wishes.thirdChoice,
+  ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <CosmicBackground />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen relative pt-16">
+      <CosmicBackground />
+
+      {/* Header bar */}
+      <div className="sticky top-14 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50">
+        <div className="container mx-auto px-3 md:px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => guild && navigate(getGuildPath(guild.region, guild.server, guild.name))}
+              className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
+              title={t.common.back}
+            >
+              <ArrowLeft className="h-4 w-4 text-muted-foreground" />
+            </button>
+            <div>
+              <h1 className="text-lg font-semibold text-foreground">{member?.username}</h1>
+              {member?.battletag && (
+                <p className="text-xs text-muted-foreground">{member.battletag}</p>
+              )}
+            </div>
+          </div>
+          
+          {/* Status badge */}
+          {member && (
+            <Badge 
+              variant={member.status === 'confirmed' ? 'default' : 'outline'}
+              className={cn(
+                "text-xs px-2 py-1",
+                member.status === 'confirmed' 
+                  ? 'bg-healer/20 text-healer border-healer/30' 
+                  : member.status === 'withdrawn'
+                  ? 'bg-destructive/20 text-destructive border-destructive/30'
+                  : 'bg-amber-500/20 text-amber-500 border-amber-500/30'
+              )}
+            >
+              {member.status === 'confirmed' ? (
+                <><CheckCircle className="h-3.5 w-3.5 mr-1" strokeWidth={1.5} />{t.wishes.commitment.confirmed}</>
+              ) : member.status === 'withdrawn' ? (
+                <><XCircle className="h-3.5 w-3.5 mr-1" strokeWidth={1.5} />{t.wishes.commitment.withdrawn}</>
+              ) : (
+                <><HelpCircle className="h-3.5 w-3.5 mr-1" strokeWidth={1.5} />{t.wishes.commitment.undecided}</>
+              )}
+            </Badge>
+          )}
+        </div>
+      </div>
+
+      <main className="container mx-auto px-3 md:px-4 py-4 md:py-6 relative z-10">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-display cosmic-text">
+            {language === 'fr' ? 'Vœux de classe' : 'Class Wishes'}
+          </h2>
+          <p className="text-muted-foreground mt-2">
+            {language === 'fr' ? 'Visualisation en lecture seule' : 'Read-only view'}
+          </p>
+        </div>
+
+        {wishes.length === 0 ? (
+          <GlowCard className="p-8 text-center" hoverable={false}>
+            <p className="text-muted-foreground">
+              {language === 'fr' ? 'Aucun vœu enregistré' : 'No wishes registered'}
+            </p>
+          </GlowCard>
+        ) : (
+          <div className="space-y-4">
+            {wishes.map((wish, index) => {
+              const cls = getClassById(wish.class_id);
+              const specs = wish.spec_ids.map(id => getSpecById(id)).filter(Boolean) as Specialization[];
+
+              return (
+                <GlowCard key={wish.choice_index} className="p-6" hoverable={false}>
+                  <div className="flex items-center gap-2 mb-6">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center border border-primary/20">
+                      <span className="text-sm font-bold text-primary">{index + 1}</span>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-foreground">
+                        {t.wishes.choice} #{index + 1}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {choiceLabels[index] || choiceLabels[2]}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-[250px_1fr_1fr] gap-4 lg:gap-6">
+                    {/* Class */}
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        {t.wishes.selectClass}
+                      </p>
+                      {cls ? (
+                        <div 
+                          className="h-10 w-full rounded-md flex items-center px-3 text-sm font-medium"
+                          style={{ 
+                            backgroundColor: `hsl(var(--class-${cls.id}) / 0.15)`,
+                            color: `hsl(var(--class-${cls.id}))`
+                          }}
+                        >
+                          {cls.name[language]}
+                        </div>
+                      ) : (
+                        <div className="h-10 w-full rounded-md border border-dashed border-muted-foreground/20 flex items-center justify-center">
+                          <span className="text-xs text-muted-foreground/50">—</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Specs */}
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        {t.wishes.selectSpecs}
+                      </p>
+                      {specs.length > 0 ? (
+                        <div className="h-10 w-full rounded-md border border-border bg-card/50 flex items-center px-3 gap-3">
+                          {specs.map((spec, idx) => {
+                            const config = roleConfig[spec.role];
+                            const Icon = getSpecIcon(spec);
+                            return (
+                              <span key={spec.id} className="flex items-center gap-1.5 text-sm">
+                                {idx > 0 && <span className="text-muted-foreground/50 mr-1">•</span>}
+                                <Icon className={cn("h-4 w-4", config.color)} />
+                                <span className="text-foreground">{spec.name[language]}</span>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="h-10 w-full rounded-md border border-dashed border-muted-foreground/20 flex items-center justify-center gap-2">
+                          <Shield className="h-4 w-4 text-muted-foreground/30" />
+                          <Heart className="h-4 w-4 text-muted-foreground/30" />
+                          <Swords className="h-4 w-4 text-muted-foreground/30" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Comment */}
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        {t.wishes.comment}
+                      </p>
+                      {wish.comment ? (
+                        <div className="h-10 w-full rounded-md border border-border bg-card/50 flex items-center px-3">
+                          <span className="text-sm text-foreground truncate">{wish.comment}</span>
+                        </div>
+                      ) : (
+                        <div className="h-10 w-full rounded-md border border-dashed border-muted-foreground/20 flex items-center justify-center">
+                          <span className="text-xs text-muted-foreground/50">—</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </GlowCard>
+              );
+            })}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+};
+
+export default MemberWishes;
