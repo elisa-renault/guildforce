@@ -2,19 +2,12 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Shield, User, LogOut } from 'lucide-react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { CosmicButton } from '@/components/CosmicButton';
 
 export const GlobalNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t, language, setLanguage } = useLanguage();
+  const { t } = useLanguage();
   const { user, signOut } = useAuth();
 
   // Don't show nav on auth page
@@ -26,38 +19,17 @@ export const GlobalNav = () => {
   const navButtonInactive = "text-muted-foreground hover:text-foreground hover:bg-white/5";
   const navButtonActive = "text-primary bg-primary/10";
 
-  const languages = [
-    { code: 'fr' as const, label: 'Français' },
-    { code: 'en' as const, label: 'English' },
-  ];
-
   return (
     <header className="fixed top-0 left-0 right-0 z-50 glass-header" role="banner">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-        {/* Left side - Logo + Language */}
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => navigate('/')}
-            className="font-display text-lg text-foreground hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded px-1"
-            aria-label="Accueil Guildforce"
-          >
-            Guildforce
-          </button>
-
-          {/* Language select */}
-          <Select value={language} onValueChange={(value: 'fr' | 'en') => setLanguage(value)}>
-            <SelectTrigger className="w-[120px] h-9 bg-card border-border text-foreground">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {languages.map((lang) => (
-                <SelectItem key={lang.code} value={lang.code}>
-                  {lang.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Left side - Logo */}
+        <button 
+          onClick={() => navigate('/')}
+          className="font-display text-lg text-foreground hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded px-1"
+          aria-label="Accueil Guildforce"
+        >
+          Guildforce
+        </button>
 
         {/* Center navigation - only when logged in */}
         {user && (
