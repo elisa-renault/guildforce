@@ -210,114 +210,92 @@ const Profile = () => {
     <div className="min-h-screen relative pt-16">
       <CosmicBackground />
 
-      <main className="container mx-auto px-4 py-8 max-w-5xl relative z-10">
-        {/* Desktop: 2 columns / Mobile: 1 column */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* Left Column - Profile Header & Account Info */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Profile Header */}
-            <GlowCard className="p-6" hoverable={false}>
-              <div className="text-center">
-                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/25">
-                  {profile?.avatar_url ? (
-                    <img 
-                      src={profile.avatar_url} 
-                      alt="Avatar" 
-                      className="w-full h-full rounded-full object-cover"
-                    />
-                  ) : (
-                    <User className="h-10 w-10 text-white" strokeWidth={1.5} />
-                  )}
-                </div>
-                <h2 className="text-xl font-bold text-foreground">
-                  {profile?.username || 'Player'}
-                </h2>
-              </div>
-            </GlowCard>
-
-            {/* Account Info */}
-            <GlowCard className="p-5" hoverable={false}>
-              <h3 className="text-base font-semibold text-foreground mb-3">Account</h3>
-              <div className="space-y-2 text-sm">
-                {/* Only show email if it's not the technical bnet email */}
-                {user?.email && !user.email.endsWith('@battlenet.local') && (
-                  <div className="flex justify-between gap-2">
-                    <span className="text-muted-foreground shrink-0">Email</span>
-                    <span className="text-foreground truncate">{user.email}</span>
-                  </div>
-                )}
-                {/* Show hint that they can add an email if only bnet connected */}
-                {user?.email?.endsWith('@battlenet.local') && (
-                  <p className="text-xs text-muted-foreground italic">
-                    {t.profile.connectedViaBnet}
-                  </p>
-                )}
-              </div>
-            </GlowCard>
-
-            {/* Battle.net Connection */}
-            <div>
-              <BattleNetConnect />
+      <main className="container mx-auto px-4 py-6 max-w-4xl relative z-10">
+        {/* Compact header with avatar, name, and account info inline */}
+        <GlowCard className="p-4 mb-4" hoverable={false}>
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 shrink-0 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/25">
+              {profile?.avatar_url ? (
+                <img 
+                  src={profile.avatar_url} 
+                  alt="Avatar" 
+                  className="w-full h-full rounded-full object-cover"
+                />
+              ) : (
+                <User className="h-7 w-7 text-white" strokeWidth={1.5} />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg font-bold text-foreground truncate">
+                {profile?.username || 'Player'}
+              </h2>
+              {user?.email && !user.email.endsWith('@battlenet.local') ? (
+                <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground italic">
+                  {t.profile.connectedViaBnet}
+                </p>
+              )}
             </div>
           </div>
+        </GlowCard>
 
-          {/* Right Column - Form & Guilds */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Profile Form */}
-            <GlowCard className="p-6" hoverable={false}>
-              <h3 className="text-base font-semibold text-foreground mb-5 flex items-center gap-2">
-                <User className="h-5 w-5 text-primary" strokeWidth={1.5} />
-                {t.profile.editProfile}
-              </h3>
+        {/* Desktop: 2 columns / Mobile: 1 column */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Profile Form */}
+          <GlowCard className="p-4" hoverable={false}>
+            <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+              <User className="h-4 w-4 text-primary" strokeWidth={1.5} />
+              {t.profile.editProfile}
+            </h3>
 
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <FormField control={form.control} name="username" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-foreground text-sm">{t.auth.pseudo}</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder={t.auth.pseudoPlaceholder}
-                          {...field} 
-                          className="cosmic-input"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+                <FormField control={form.control} name="username" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-foreground text-xs">{t.auth.pseudo}</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder={t.auth.pseudoPlaceholder}
+                        {...field} 
+                        className="cosmic-input h-9"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
-                    <div>
-                      <FormLabel className="text-foreground text-sm mb-2 block">
-                        <Globe className="h-4 w-4 inline mr-2" strokeWidth={1.5} />
-                        {t.profile.language}
-                      </FormLabel>
-                      <Select value={language} onValueChange={(val) => handleLanguageChange(val as Language)}>
-                        <SelectTrigger className="cosmic-input">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="cosmic-glass border-border/50">
-                          <SelectItem value="fr">🇫🇷 Français</SelectItem>
-                          <SelectItem value="en">🇬🇧 English</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                <div>
+                  <FormLabel className="text-foreground text-xs mb-1.5 block">
+                    <Globe className="h-3.5 w-3.5 inline mr-1.5" strokeWidth={1.5} />
+                    {t.profile.language}
+                  </FormLabel>
+                  <Select value={language} onValueChange={(val) => handleLanguageChange(val as Language)}>
+                    <SelectTrigger className="cosmic-input h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border">
+                      <SelectItem value="fr">🇫🇷 Français</SelectItem>
+                      <SelectItem value="en">🇬🇧 English</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                    <CosmicButton 
-                      type="submit" 
-                      className="w-full"
-                      loading={saving}
-                      icon={<Save className="h-4 w-4" strokeWidth={1.5} />}
-                    >
-                      {t.common.save}
-                    </CosmicButton>
-                  </div>
-                </form>
-              </Form>
-            </GlowCard>
+                <CosmicButton 
+                  type="submit" 
+                  className="w-full"
+                  size="sm"
+                  loading={saving}
+                  icon={<Save className="h-4 w-4" strokeWidth={1.5} />}
+                >
+                  {t.common.save}
+                </CosmicButton>
+              </form>
+            </Form>
+          </GlowCard>
 
-          </div>
+          {/* Battle.net Connection */}
+          <BattleNetConnect />
         </div>
       </main>
     </div>
