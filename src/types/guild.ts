@@ -62,4 +62,5 @@ export interface RosterFilters {
   roleFilters: string[];
   classFilters: string[];
   searchQuery: string;
+  filterMode: 'and' | 'or';
 }
