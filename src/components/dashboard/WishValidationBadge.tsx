@@ -55,11 +55,11 @@ export const WishValidationBadge = ({
   const config = statusConfig[status];
   const Icon = config.icon;
 
-  // Loading state
+  // Loading state - same size as normal badge
   if (loading) {
     return (
       <div className={cn(
-        "flex items-center justify-center gap-1 px-2 py-1 rounded-md border",
+        "flex items-center justify-center w-[72px] h-7 rounded-md border",
         config.bgColor,
         config.borderColor
       )}>
