@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
-import { Shield, Crown, Loader2, Link as LinkIcon } from 'lucide-react';
+import { Shield, Crown, Loader2, Link as LinkIcon, Users, MapPin } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { BattleNetIcon } from '@/components/BattleNetIcon';
@@ -30,6 +30,8 @@ interface GuildWithMembership {
   faction: 'horde' | 'alliance';
   role: string;
   owner_id: string;
+  memberCount?: number;
+  hasMain?: boolean;
 }
 
 const GuildList = () => {
@@ -60,25 +62,75 @@ const GuildList = () => {
 
     if (memberships && memberships.length > 0) {
       const guildIds = memberships.map(m => m.guild_id);
-      const { data: guildData, error: guildError } = await supabase
-        .from('guilds')
-        .select('id, name, server, region, faction, owner_id')
-        .in('id', guildIds);
+      
+      // Fetch guilds, member counts, and user's main character info
+      const [guildResult, memberCountsResult, mainCharResult] = await Promise.all([
+        supabase
+          .from('guilds')
+          .select('id, name, server, region, faction, owner_id')
+          .in('id', guildIds),
+        supabase
+          .from('guild_members')
+          .select('guild_id')
+          .in('guild_id', guildIds),
+        supabase
+          .from('wow_characters')
+          .select('id, is_main, name')
+          .eq('user_id', userId)
+          .eq('is_main', true)
+          .limit(1)
+      ]);
 
-      if (guildError) {
-        console.error('Error fetching guilds:', guildError);
+      if (guildResult.error) {
+        console.error('Error fetching guilds:', guildResult.error);
         setGuilds([]);
         setLoading(false);
         return;
       }
 
-      if (guildData) {
-        const merged = guildData.map(g => ({
-          ...g,
-          region: g.region || 'eu',
-          faction: g.faction as 'horde' | 'alliance',
-          role: memberships.find(m => m.guild_id === g.id)?.role || 'member',
-        }));
+      // Count members per guild
+      const memberCounts: Record<string, number> = {};
+      memberCountsResult.data?.forEach(m => {
+        memberCounts[m.guild_id] = (memberCounts[m.guild_id] || 0) + 1;
+      });
+
+      // Check if main character is in any guild
+      let mainGuildMembership: { guild_name: string; guild_realm: string } | null = null;
+      if (mainCharResult.data?.[0]) {
+        const mainCharId = mainCharResult.data[0].id;
+        const { data: mainMembership } = await supabase
+          .from('wow_guild_memberships')
+          .select('guild_name, guild_realm')
+          .eq('character_id', mainCharId)
+          .limit(1);
+        mainGuildMembership = mainMembership?.[0] || null;
+      }
+
+      if (guildResult.data) {
+        const merged: GuildWithMembership[] = guildResult.data.map(g => {
+          // Check if this guild matches the main's guild
+          const hasMain = mainGuildMembership 
+            ? mainGuildMembership.guild_name.toLowerCase() === g.name.toLowerCase() &&
+              mainGuildMembership.guild_realm.toLowerCase() === g.server.toLowerCase().replace(/\s+/g, '-')
+            : false;
+          
+          return {
+            ...g,
+            region: g.region || 'eu',
+            faction: g.faction as 'horde' | 'alliance',
+            role: memberships.find(m => m.guild_id === g.id)?.role || 'member',
+            memberCount: memberCounts[g.id] || 0,
+            hasMain,
+          };
+        });
+        
+        // Sort: main's guild first, then by name
+        merged.sort((a, b) => {
+          if (a.hasMain && !b.hasMain) return -1;
+          if (!a.hasMain && b.hasMain) return 1;
+          return a.name.localeCompare(b.name);
+        });
+        
         setGuilds(merged);
       }
     } else {
@@ -245,35 +297,61 @@ const GuildList = () => {
             </CosmicButton>
           </GlowCard>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="flex flex-col gap-2 max-w-2xl mx-auto">
             {guilds.length > 0 ? (
               guilds.map((guild) => (
-                <GlowCard 
+                <div 
                   key={guild.id}
-                  className="p-6 cursor-pointer hover:border-primary/50"
+                  className={`flex items-center gap-4 px-4 py-3 rounded-lg border cursor-pointer transition-colors ${
+                    guild.hasMain 
+                      ? 'bg-primary/10 border-primary/30 hover:border-primary/50' 
+                      : 'bg-card/50 border-border/50 hover:border-border hover:bg-card/80'
+                  }`}
                   onClick={() => navigate(getGuildPath(guild.region, guild.server, guild.name))}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-primary/30 to-accent/20 border border-primary/20">
-                        <Shield className="h-5 w-5 text-primary" strokeWidth={1.5} />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-foreground">{guild.name}</h3>
-                        <p className="text-sm text-muted-foreground">{guild.server}</p>
-                      </div>
-                    </div>
-                    {guild.role === 'gm' && (
-                      <Crown className="h-5 w-5 text-amber-500" strokeWidth={1.5} />
-                    )}
+                  {/* Faction icon */}
+                  <div className={`w-8 h-8 rounded flex items-center justify-center flex-shrink-0 ${
+                    guild.faction === 'horde' 
+                      ? 'bg-red-500/20 text-red-400' 
+                      : 'bg-blue-500/20 text-blue-400'
+                  }`}>
+                    <Shield className="h-4 w-4" strokeWidth={1.5} />
                   </div>
-                </GlowCard>
+                  
+                  {/* Guild info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-foreground truncate">{guild.name}</h3>
+                      {guild.hasMain && (
+                        <span className="text-[10px] uppercase tracking-wider text-primary font-medium px-1.5 py-0.5 rounded bg-primary/20">
+                          Main
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        {guild.server}
+                      </span>
+                      <span className="uppercase">{guild.region}</span>
+                      <span className="flex items-center gap-1">
+                        <Users className="h-3 w-3" />
+                        {guild.memberCount}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {/* Role badge */}
+                  {guild.role === 'gm' && (
+                    <Crown className="h-4 w-4 text-amber-500 flex-shrink-0" strokeWidth={1.5} />
+                  )}
+                </div>
               ))
             ) : (
-              <GlowCard className="col-span-full p-8 text-center">
-                <Shield className="h-16 w-16 mx-auto mb-6 text-muted-foreground" strokeWidth={1.5} />
-                <p className="text-muted-foreground text-lg">{t.guild.noGuilds}</p>
-              </GlowCard>
+              <div className="p-8 text-center rounded-lg border border-dashed border-border/50">
+                <Shield className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" strokeWidth={1.5} />
+                <p className="text-muted-foreground">{t.guild.noGuilds}</p>
+              </div>
             )}
           </div>
         )}
