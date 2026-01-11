@@ -49,9 +49,10 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
   const selectedClasses = wowClasses.filter(c => filters.classFilters.includes(c.id));
   const hasRoleFilters = filters.roleFilters.length > 0;
   const hasClassFilters = filters.classFilters.length > 0;
+  const hasAnyFilters = hasRoleFilters || hasClassFilters;
 
   return (
-    <div className="flex flex-col sm:flex-row gap-2 mb-4">
+    <div className="flex flex-col sm:flex-row gap-2 mb-4 items-center">
       {/* Search */}
       <div className="relative flex-1 sm:max-w-[200px]">
         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
@@ -199,6 +200,18 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
           </div>
         </PopoverContent>
       </Popover>
+
+      {/* AND/OR Toggle - only show when multiple filters are selected */}
+      {hasAnyFilters && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => updateFilter('filterMode', filters.filterMode === 'and' ? 'or' : 'and')}
+          className="h-8 px-2 text-xs font-mono text-muted-foreground hover:text-foreground"
+        >
+          {filters.filterMode === 'and' ? 'ET' : 'OU'}
+        </Button>
+      )}
     </div>
   );
 };

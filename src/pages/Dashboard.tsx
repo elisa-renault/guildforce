@@ -31,6 +31,7 @@ const Dashboard = () => {
     roleFilters: [],
     classFilters: [],
     searchQuery: '',
+    filterMode: 'or',
   });
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
@@ -286,17 +287,38 @@ const Dashboard = () => {
       return false;
     }
 
+    const isAndMode = filters.filterMode === 'and';
+
     if (filters.roleFilters.length > 0) {
-      const hasRole = m.wishes.some(w => {
+      const matchingWishes = m.wishes.filter(w => {
         const roles = getRolesFromSpecs(w.spec_ids);
         return filters.roleFilters.some(rf => roles.includes(rf as Role));
       });
-      if (!hasRole) return false;
+      
+      if (isAndMode) {
+        // AND: all selected roles must be present across wishes
+        const allRolesPresent = filters.roleFilters.every(rf => 
+          m.wishes.some(w => getRolesFromSpecs(w.spec_ids).includes(rf as Role))
+        );
+        if (!allRolesPresent) return false;
+      } else {
+        // OR: at least one role must match
+        if (matchingWishes.length === 0) return false;
+      }
     }
 
     if (filters.classFilters.length > 0) {
-      const hasClass = m.wishes.some(w => filters.classFilters.includes(w.class_id));
-      if (!hasClass) return false;
+      if (isAndMode) {
+        // AND: all selected classes must be present
+        const allClassesPresent = filters.classFilters.every(cf => 
+          m.wishes.some(w => w.class_id === cf)
+        );
+        if (!allClassesPresent) return false;
+      } else {
+        // OR: at least one class must match
+        const hasClass = m.wishes.some(w => filters.classFilters.includes(w.class_id));
+        if (!hasClass) return false;
+      }
     }
 
     return true;
