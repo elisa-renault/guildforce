@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useForumTopic, useForumPosts, useForumActions } from '@/hooks/useForum';
+import { useUserRoles } from '@/hooks/useUserRoles';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
-import { ForumPost, MarkdownEditor, ReactionPicker } from '@/components/forum';
+import { ForumPost, MarkdownEditor, ReactionPicker, UserRoleBadge } from '@/components/forum';
 import { ForumPost as ForumPostType, ReactionType } from '@/types/forum';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -48,6 +49,11 @@ const ForumTopicPage = () => {
 
   const totalPages = Math.ceil(totalCount / 20);
   const isAuthor = user?.id === topic?.author_id;
+
+  // Get author roles for badge display
+  const authorIds = useMemo(() => topic?.author_id ? [topic.author_id] : [], [topic?.author_id]);
+  const { roles: authorRolesMap } = useUserRoles(authorIds);
+  const topicAuthorRoles = topic?.author_id ? (authorRolesMap.get(topic.author_id) || []) : [];
 
   const handleSubmitReply = async () => {
     if (!replyContent.trim() || !topicId) return;
@@ -229,9 +235,12 @@ const ForumTopicPage = () => {
                   </AvatarFallback>
                 )}
               </Avatar>
-              <span className="text-sm font-medium text-foreground text-center">
-                {topic.author?.username || 'Inconnu'}
-              </span>
+              <div className="flex flex-col items-center gap-1">
+                <span className="text-sm font-medium text-foreground text-center">
+                  {topic.author?.username || 'Inconnu'}
+                </span>
+                <UserRoleBadge roles={topicAuthorRoles} size="sm" />
+              </div>
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-3">
