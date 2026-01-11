@@ -300,12 +300,12 @@ const GuildList = () => {
             </CosmicButton>
           </GlowCard>
         ) : (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 max-w-4xl mx-auto">
             {guilds.length > 0 ? (
               guilds.map((guild) => (
                 <div 
                   key={guild.id}
-                  className={`flex items-center gap-4 px-4 py-3 rounded-lg border cursor-pointer transition-colors ${
+                  className={`grid grid-cols-[auto_1fr_auto] md:grid-cols-[auto_1fr_auto_auto_auto] items-center gap-3 md:gap-6 px-4 py-3 rounded-lg border cursor-pointer transition-colors ${
                     guild.hasMain 
                       ? 'bg-primary/10 border-primary/30 hover:border-primary/50' 
                       : 'bg-card/50 border-border/50 hover:border-border hover:bg-card/80'
@@ -313,7 +313,7 @@ const GuildList = () => {
                   onClick={() => navigate(getGuildPath(guild.region, guild.server, guild.name))}
                 >
                   {/* Guild avatar or faction icon */}
-                  <Avatar className={`h-8 w-8 flex-shrink-0 ${
+                  <Avatar className={`h-10 w-10 flex-shrink-0 ${
                     !guild.avatar_url ? (guild.faction === 'horde' 
                       ? 'bg-red-500/20' 
                       : 'bg-blue-500/20') : ''
@@ -326,36 +326,52 @@ const GuildList = () => {
                           ? 'bg-red-500/20 text-red-400' 
                           : 'bg-blue-500/20 text-blue-400'
                       }`}>
-                        <Shield className="h-4 w-4" strokeWidth={1.5} />
+                        <Shield className="h-5 w-5" strokeWidth={1.5} />
                       </AvatarFallback>
                     )}
                   </Avatar>
                   
-                  {/* Guild info */}
-                  <div className="flex-1 min-w-0">
+                  {/* Guild name and server */}
+                  <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold text-foreground truncate">{guild.name}</h3>
                       {guild.hasMain && (
-                        <span className="text-[10px] uppercase tracking-wider text-primary font-medium px-1.5 py-0.5 rounded bg-primary/20">
+                        <span className="text-[10px] uppercase tracking-wider text-primary font-medium px-1.5 py-0.5 rounded bg-primary/20 flex-shrink-0">
                           Main
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <MapPin className="h-3 w-3" />
                         {guild.server.charAt(0).toUpperCase() + guild.server.slice(1)}
                       </span>
                       <span className="uppercase">{guild.region}</span>
-                      <span className="flex items-center gap-1">
-                        <Users className="h-3 w-3" />
-                        {guild.memberCount}
-                      </span>
                     </div>
+                  </div>
+
+                  {/* Faction - hidden on mobile */}
+                  <div className="hidden md:flex items-center gap-2">
+                    <span className={`text-sm font-medium ${
+                      guild.faction === 'horde' ? 'text-red-400' : 'text-blue-400'
+                    }`}>
+                      {guild.faction === 'horde' ? t.guild.horde : t.guild.alliance}
+                    </span>
+                  </div>
+
+                  {/* Members - hidden on mobile */}
+                  <div className="hidden md:flex items-center gap-1.5 text-sm text-muted-foreground min-w-[60px]">
+                    <Users className="h-4 w-4" />
+                    <span>{guild.memberCount} {guild.memberCount === 1 ? 'membre' : 'membres'}</span>
                   </div>
                   
                   {/* Role badge and settings */}
                   <div className="flex items-center gap-2 flex-shrink-0">
+                    {/* Mobile: show member count */}
+                    <span className="md:hidden flex items-center gap-1 text-xs text-muted-foreground">
+                      <Users className="h-3 w-3" />
+                      {guild.memberCount}
+                    </span>
                     {guild.role === 'gm' && (
                       <>
                         <button
