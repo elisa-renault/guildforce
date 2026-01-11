@@ -49,9 +49,19 @@ const Profile = () => {
       return;
     }
 
-    // Don't block the whole page on profile loading; show fallback if needed.
+    // Auth is done, we can show the page
     setLoading(false);
   }, [authLoading, user, navigate]);
+
+  // Show loading while auth is initializing - prevents flash
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <CosmicBackground />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   useEffect(() => {
     if (!profile) return;
