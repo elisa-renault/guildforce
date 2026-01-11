@@ -90,12 +90,12 @@ export const CommitmentToggle = ({ status, onChange, compact = false }: Commitme
     );
   }
 
-  // Full version
+  // Full version - simple buttons like compact
   return (
     <div className="space-y-3">
       <p className="text-sm font-medium text-foreground">{t.wishes.commitment.title}</p>
       
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="flex flex-wrap gap-2">
         {(['confirmed', 'undecided', 'withdrawn'] as CommitmentStatus[]).map((s) => {
           const ItemIcon = statusConfig[s].icon;
           const isActive = status === s;
@@ -105,31 +105,26 @@ export const CommitmentToggle = ({ status, onChange, compact = false }: Commitme
               type="button"
               onClick={() => onChange(s)}
               className={cn(
-                "flex items-start gap-3 p-4 rounded-lg border-2 transition-all duration-200 text-left",
-                "hover:scale-[1.01] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                "flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                 isActive 
-                  ? statusConfig[s].colorClass + " shadow-md"
+                  ? statusConfig[s].colorClass
                   : "bg-card/50 border-border/50 hover:border-border"
               )}
             >
               <ItemIcon 
                 className={cn(
-                  "h-5 w-5 mt-0.5 flex-shrink-0",
+                  "h-4 w-4",
                   isActive ? "" : "text-muted-foreground"
                 )} 
                 strokeWidth={1.5} 
               />
-              <div>
-                <p className={cn(
-                  "font-medium text-sm",
-                  isActive ? "" : "text-foreground"
-                )}>
-                  {labels[s]}
-                </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {descriptions[s]}
-                </p>
-              </div>
+              <span className={cn(
+                "font-medium text-sm",
+                isActive ? "" : "text-foreground"
+              )}>
+                {labels[s]}
+              </span>
             </button>
           );
         })}
