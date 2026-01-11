@@ -1,6 +1,6 @@
 /**
  * Utility functions for guild URL slugs
- * Format: /guild/server-slug/guild-name-slug
+ * Format: /guild/region/server-slug/guild-name-slug
  */
 
 /**
@@ -17,15 +17,15 @@ export const toSlug = (str: string): string => {
 };
 
 /**
- * Generate guild URL path from server and name
+ * Generate guild URL path from region, server and name
  */
-export const getGuildPath = (server: string, name: string): string => {
-  return `/guild/${toSlug(server)}/${toSlug(name)}`;
+export const getGuildPath = (region: string, server: string, name: string): string => {
+  return `/guild/${toSlug(region)}/${toSlug(server)}/${toSlug(name)}`;
 };
 
 /**
- * Generate guild wishes URL path from server and name
+ * Generate guild wishes URL path from region, server and name
  */
-export const getGuildWishesPath = (server: string, name: string): string => {
-  return `/guild/${toSlug(server)}/${toSlug(name)}/wishes`;
+export const getGuildWishesPath = (region: string, server: string, name: string): string => {
+  return `/guild/${toSlug(region)}/${toSlug(server)}/${toSlug(name)}/wishes`;
 };

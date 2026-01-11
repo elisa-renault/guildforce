@@ -841,6 +841,7 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
         guild_realm: gm.guildRealm,
         guild_realm_slug: gm.guildRealmSlug,
         guild_faction: gm.guildFaction,
+        guild_region: 'eu', // EU region for Battle.net EU OAuth
         rank_index: gm.rankIndex,
         rank_name: gm.rankName,
       }));
@@ -1032,6 +1033,7 @@ async function autoJoinGuilds(
             .insert({
               name: guildInfo.name,
               server: guildInfo.server,
+              region: 'eu', // EU region for Battle.net EU OAuth
               faction: guildInfo.faction,
               owner_id: guildInfo.isGM ? userId : null,
               created_by_user_id: userId,
