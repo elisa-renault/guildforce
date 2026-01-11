@@ -52,18 +52,19 @@ export const AvatarCropDialog = ({
   const [scale, setScale] = useState(1);
   const [rotate, setRotate] = useState(0);
   const imgRef = useRef<HTMLImageElement>(null);
+  const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
 
   const onImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
     const { width, height } = e.currentTarget;
+    setImageDimensions({ width, height });
     setCrop(centerAspectCrop(width, height, 1));
   }, []);
 
   const handleReset = () => {
     setScale(1);
     setRotate(0);
-    if (imgRef.current) {
-      const { width, height } = imgRef.current;
-      setCrop(centerAspectCrop(width, height, 1));
+    if (imageDimensions.width > 0 && imageDimensions.height > 0) {
+      setCrop(centerAspectCrop(imageDimensions.width, imageDimensions.height, 1));
     }
   };
 
@@ -172,7 +173,7 @@ export const AvatarCropDialog = ({
               <Slider
                 value={[scale]}
                 onValueChange={([val]) => setScale(val)}
-                min={0.5}
+                min={1}
                 max={3}
                 step={0.1}
                 className="flex-1"
