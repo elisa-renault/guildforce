@@ -238,6 +238,41 @@ export interface Translations {
     noAccessWarning: string;
     noAccessMessage: string;
   };
+  // Forum
+  forum: {
+    title: string;
+    categories: string;
+    topics: string;
+    posts: string;
+    newTopic: string;
+    reply: string;
+    quote: string;
+    edit: string;
+    delete: string;
+    pin: string;
+    unpin: string;
+    lock: string;
+    unlock: string;
+    pinned: string;
+    locked: string;
+    views: string;
+    replies: string;
+    lastReply: string;
+    noTopics: string;
+    noPosts: string;
+    writeReply: string;
+    preview: string;
+    postReply: string;
+    editPost: string;
+    deleteConfirm: string;
+    topicCreated: string;
+    postCreated: string;
+    postUpdated: string;
+    postDeleted: string;
+    topicDeleted: string;
+    backToForum: string;
+    backToCategory: string;
+  };
   // Errors
   errors: {
     generic: string;
@@ -483,6 +518,40 @@ export const translations: Record<Language, Translations> = {
       addUserRule: 'Add User',
       noAccessWarning: 'No access rules defined. Only GMs will be able to submit wishes.',
     },
+    forum: {
+      title: 'Forum',
+      categories: 'Categories',
+      topics: 'Topics',
+      posts: 'Posts',
+      newTopic: 'New topic',
+      reply: 'Reply',
+      quote: 'Quote',
+      edit: 'Edit',
+      delete: 'Delete',
+      pin: 'Pin',
+      unpin: 'Unpin',
+      lock: 'Lock',
+      unlock: 'Unlock',
+      pinned: 'Pinned',
+      locked: 'Locked',
+      views: 'views',
+      replies: 'replies',
+      lastReply: 'Last reply',
+      noTopics: 'No topics yet',
+      noPosts: 'No posts yet',
+      writeReply: 'Write a reply...',
+      preview: 'Preview',
+      postReply: 'Post reply',
+      editPost: 'Edit post',
+      deleteConfirm: 'Are you sure you want to delete this?',
+      topicCreated: 'Topic created!',
+      postCreated: 'Reply posted!',
+      postUpdated: 'Post updated!',
+      postDeleted: 'Post deleted!',
+      topicDeleted: 'Topic deleted!',
+      backToForum: 'Back to forum',
+      backToCategory: 'Back to category',
+    },
     errors: {
       generic: 'Something went wrong. Please try again.',
       network: 'Network error. Please check your connection.',
@@ -724,6 +793,40 @@ export const translations: Record<Language, Translations> = {
       addRankRule: 'Ajouter une règle de rang',
       addUserRule: 'Ajouter un utilisateur',
       noAccessWarning: 'Aucune règle d\'accès définie. Seuls les GM pourront renseigner des vœux.',
+    },
+    forum: {
+      title: 'Forum',
+      categories: 'Catégories',
+      topics: 'Sujets',
+      posts: 'Messages',
+      newTopic: 'Nouveau sujet',
+      reply: 'Répondre',
+      quote: 'Citer',
+      edit: 'Modifier',
+      delete: 'Supprimer',
+      pin: 'Épingler',
+      unpin: 'Désépingler',
+      lock: 'Verrouiller',
+      unlock: 'Déverrouiller',
+      pinned: 'Épinglé',
+      locked: 'Verrouillé',
+      views: 'vues',
+      replies: 'réponses',
+      lastReply: 'Dernière réponse',
+      noTopics: 'Aucun sujet pour l\'instant',
+      noPosts: 'Aucun message pour l\'instant',
+      writeReply: 'Écrire une réponse...',
+      preview: 'Aperçu',
+      postReply: 'Publier la réponse',
+      editPost: 'Modifier le message',
+      deleteConfirm: 'Êtes-vous sûr de vouloir supprimer ceci ?',
+      topicCreated: 'Sujet créé !',
+      postCreated: 'Réponse publiée !',
+      postUpdated: 'Message modifié !',
+      postDeleted: 'Message supprimé !',
+      topicDeleted: 'Sujet supprimé !',
+      backToForum: 'Retour au forum',
+      backToCategory: 'Retour à la catégorie',
     },
     errors: {
       generic: 'Une erreur est survenue. Veuillez réessayer.',

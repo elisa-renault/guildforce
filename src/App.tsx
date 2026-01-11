@@ -14,6 +14,9 @@ import MemberWishes from "./pages/MemberWishes";
 import Dashboard from "./pages/Dashboard";
 import GuildSettings from "./pages/GuildSettings";
 import Profile from "./pages/Profile";
+import Forum from "./pages/Forum";
+import ForumCategory from "./pages/ForumCategory";
+import ForumTopic from "./pages/ForumTopic";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +36,9 @@ const App = () => (
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/guilds" element={<GuildList />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/forum" element={<Forum />} />
+                <Route path="/forum/:categorySlug" element={<ForumCategory />} />
+                <Route path="/forum/topic/:topicId" element={<ForumTopic />} />
                 <Route path="/guild/:regionSlug/:serverSlug/:guildSlug" element={<Dashboard />} />
                 <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/wishes" element={<Wishes />} />
                 <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/settings" element={<GuildSettings />} />
