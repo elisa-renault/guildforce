@@ -198,7 +198,7 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center p-4 relative">
       <CosmicBackground />
 
-      <GlowCard className="w-full max-w-md p-8 relative z-10 animate-scale-in">
+      <GlowCard className="w-full max-w-md p-8 relative z-10">
         <Button 
           variant="ghost" 
           size="sm" 
