@@ -3,6 +3,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Shield, User, LogOut, MessageSquare } from 'lucide-react';
 import { CosmicButton } from '@/components/CosmicButton';
+import { NotificationBell } from '@/components/forum/NotificationBell';
 
 export const GlobalNav = () => {
   const navigate = useNavigate();
@@ -74,8 +75,9 @@ export const GlobalNav = () => {
           </nav>
         )}
 
-        {/* Right side - auth only */}
-        <div className="flex items-center" role="group" aria-label="Authentification">
+        {/* Right side - notifications and auth */}
+        <div className="flex items-center gap-1" role="group" aria-label="Authentification">
+          {user && <NotificationBell />}
           {user ? (
             <button 
               onClick={signOut} 
