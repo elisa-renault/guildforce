@@ -5,3 +5,4 @@ export { MemberWishEditor } from './MemberWishEditor';
 export { InlineWishEditor } from './InlineWishEditor';
 export { WishValidationBadge } from './WishValidationBadge';
 export { ActivityLog } from './ActivityLog';
+export { MobileRosterCard } from './MobileRosterCard';

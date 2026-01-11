@@ -12,6 +12,8 @@ import { MemberWish, WishData, WishChoice, ValidationStatus } from '@/types/guil
 import { InlineWishEditor } from './InlineWishEditor';
 import { WishValidationBadge } from './WishValidationBadge';
 import { CommitmentToggle, CommitmentStatus } from '@/components/CommitmentToggle';
+import { MobileRosterCard } from './MobileRosterCard';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 
 interface RosterTableProps {
@@ -65,6 +67,7 @@ export const RosterTable = ({
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const { regionSlug, serverSlug, guildSlug } = useParams();
+  const isMobile = useIsMobile();
   const [validatingWish, setValidatingWish] = useState<string | null>(null);
 
   const handleValidation = async (memberId: string, choiceIndex: number, status: ValidationStatus) => {
@@ -235,6 +238,36 @@ export const RosterTable = ({
     );
   }
 
+  // Mobile view - card layout
+  if (isMobile) {
+    return (
+      <div className="space-y-2">
+        {members.map((member) => {
+          const isOwnRow = member.id === currentUserId;
+          
+          const handleCardClick = () => {
+            if (regionSlug && serverSlug && guildSlug) {
+              navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/member/${member.id}`);
+            }
+          };
+
+          return (
+            <MobileRosterCard
+              key={member.id}
+              member={member}
+              isOwnRow={isOwnRow}
+              isGM={isGM}
+              onStartEditing={onStartEditing}
+              onValidateWish={onValidateWish}
+              onClick={handleCardClick}
+            />
+          );
+        })}
+      </div>
+    );
+  }
+
+  // Desktop view - table layout
   return (
     <GlowCard className="overflow-hidden" hoverable={false}>
       <div className="overflow-x-auto">
