@@ -212,7 +212,9 @@ export const RosterManager = ({ guildId, rosters, members, ranks, onRosterChange
                       roster.access_rules.map((rule, i) => (
                         <span key={i}>
                           {rule.access_type === 'rank' 
-                            ? `${t.rosters?.ranks || 'Ranks'} ${rule.min_rank_index}-${rule.max_rank_index}`
+                            ? (rule.max_rank_index !== undefined && rule.max_rank_index >= maxRankIndex
+                                ? (t.rosters?.everyone || 'Everyone')
+                                : `${t.rosters?.ranks || 'Ranks'} 0-${rule.max_rank_index}`)
                             : members.find(m => m.user_id === rule.user_id)?.username || 'User'}
                           {i < roster.access_rules.length - 1 && ', '}
                         </span>

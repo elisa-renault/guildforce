@@ -226,6 +226,7 @@ export interface Translations {
     selectRoster: string;
     default: string;
     ranks: string;
+    everyone: string;
     noAccess: string;
     accessRules: string;
     byRank: string;
@@ -469,6 +470,7 @@ export const translations: Record<Language, Translations> = {
       selectRoster: 'Select roster',
       default: 'Default',
       ranks: 'Ranks',
+      everyone: 'Everyone',
       noAccess: "You don't have access to this roster",
       noAccessMessage: "You can view this roster but cannot edit your wishes.",
       accessRules: 'Who can submit wishes',
@@ -709,6 +711,7 @@ export const translations: Record<Language, Translations> = {
       selectRoster: 'Sélectionner un roster',
       default: 'Principal',
       ranks: 'Rangs',
+      everyone: 'Tout le monde',
       noAccess: "Vous n'avez pas accès à ce roster",
       noAccessMessage: "Vous pouvez voir ce roster mais ne pouvez pas modifier vos vœux.",
       accessRules: 'Qui peut renseigner ses vœux',
