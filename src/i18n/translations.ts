@@ -24,6 +24,7 @@ export interface Translations {
     email: string;
     password: string;
     confirmPassword: string;
+    you: string;
   };
   // Battle.net
   battlenet: {
@@ -213,6 +214,7 @@ export const translations: Record<Language, Translations> = {
       email: 'Email',
       password: 'Password',
       confirmPassword: 'Confirm password',
+      you: 'You',
     },
     battlenet: {
       connect: 'Link my Battle.net account',
@@ -400,6 +402,7 @@ export const translations: Record<Language, Translations> = {
       email: 'Email',
       password: 'Mot de passe',
       confirmPassword: 'Confirmer le mot de passe',
+      you: 'Vous',
     },
     battlenet: {
       connect: 'Lier mon compte Battle.net',
