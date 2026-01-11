@@ -4,11 +4,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { RoleBadge } from '@/components/RoleBadge';
-import { ChevronDown, ChevronRight, CheckCircle, HelpCircle, Pencil } from 'lucide-react';
+import { CheckCircle, HelpCircle, Pencil, X, Save } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { getClassById, getSpecById, getRolesFromSpecs } from '@/data/wowClasses';
+import { getClassById, getRolesFromSpecs } from '@/data/wowClasses';
 import { MemberWish, WishData, WishChoice } from '@/types/guild';
-import { MemberWishEditor } from './MemberWishEditor';
+import { InlineWishEditor } from './InlineWishEditor';
+import { CommitmentToggle } from '@/components/CommitmentToggle';
 import { cn } from '@/lib/utils';
 
 interface RosterTableProps {
@@ -30,12 +31,10 @@ interface RosterTableProps {
 export const RosterTable = ({
   members,
   currentUserId,
-  expandedRows,
   editingUserId,
   editWishes,
   editConfirmed,
   saving,
-  onToggleRow,
   onStartEditing,
   onCancelEditing,
   onUpdateEditWish,
@@ -78,93 +77,14 @@ export const RosterTable = ({
     );
   };
 
-  const renderExpandedContent = (member: MemberWish) => {
-    const isEditing = editingUserId === member.id;
-    const isOwnRow = member.id === currentUserId;
-
-    if (isEditing) {
-      return (
-        <MemberWishEditor
-          wishes={editWishes}
-          confirmed={editConfirmed}
-          saving={saving}
-          onWishChange={onUpdateEditWish}
-          onConfirmedChange={onEditConfirmedChange}
-          onSave={onSaveEditing}
-          onCancel={onCancelEditing}
-        />
-      );
-    }
-
-    // Read-only expanded view
+  const renderEditWishCell = (wishIndex: number) => {
+    const wish = editWishes[wishIndex];
     return (
-      <div className="p-6 bg-background/50 border-t border-border/20">
-        <div className="flex items-center justify-between mb-4">
-          <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-            {t.dashboard.comments} & {t.wishes.specs}
-          </h4>
-          {isOwnRow && (
-            <CosmicButton 
-              size="sm" 
-              variant="outline" 
-              onClick={() => onStartEditing(member)}
-              icon={<Pencil className="h-4 w-4" strokeWidth={1.5} />}
-            >
-              {t.wishes.editMyWishes}
-            </CosmicButton>
-          )}
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[1, 2, 3].map(choiceIndex => {
-            const wish = member.wishes.find(w => w.choice_index === choiceIndex);
-            if (!wish) {
-              return (
-                <div key={choiceIndex} className="p-4 rounded bg-muted/10 border border-border/10">
-                  <div className="text-sm font-medium text-muted-foreground mb-2">
-                    {choiceIndex === 1 ? t.dashboard.firstChoice : choiceIndex === 2 ? t.dashboard.secondChoice : t.dashboard.thirdChoice}
-                  </div>
-                  <span className="text-muted-foreground text-sm">-</span>
-                </div>
-              );
-            }
-
-            const cls = getClassById(wish.class_id);
-            const specs = wish.spec_ids.map(sid => getSpecById(sid)).filter(Boolean);
-
-            return (
-              <div key={choiceIndex} className="p-4 rounded bg-muted/10 border border-border/10">
-                <div className="text-sm font-medium text-muted-foreground mb-2">
-                  {choiceIndex === 1 ? t.dashboard.firstChoice : choiceIndex === 2 ? t.dashboard.secondChoice : t.dashboard.thirdChoice}
-                </div>
-                {cls && (
-                  <Badge 
-                    variant="outline" 
-                    className="text-xs font-medium mb-2"
-                    style={{ 
-                      backgroundColor: `hsl(var(--class-${cls.id}) / 0.15)`,
-                      borderColor: `hsl(var(--class-${cls.id}) / 0.4)`,
-                      color: `hsl(var(--class-${cls.id}))`
-                    }}
-                  >
-                    {cls.name[language]}
-                  </Badge>
-                )}
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {specs.map(spec => spec && (
-                    <Badge key={spec.id} variant="outline" className="text-xs">
-                      {spec.name[language]}
-                    </Badge>
-                  ))}
-                </div>
-                {wish.comment && (
-                  <p className="text-sm text-muted-foreground mt-3 italic">"{wish.comment}"</p>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      <InlineWishEditor
+        wish={wish}
+        choiceIndex={wishIndex}
+        onChange={(field, value) => onUpdateEditWish(wishIndex, field, value)}
+      />
     );
   };
 
@@ -182,47 +102,46 @@ export const RosterTable = ({
         <Table>
           <TableHeader>
             <TableRow className="border-border/30 hover:bg-transparent">
-              <TableHead className="text-muted-foreground w-8"></TableHead>
               <TableHead className="text-muted-foreground">{t.dashboard.player}</TableHead>
               <TableHead className="text-muted-foreground">{t.wishes.status}</TableHead>
               <TableHead className="text-muted-foreground">{t.dashboard.firstChoice}</TableHead>
               <TableHead className="text-muted-foreground">{t.dashboard.secondChoice}</TableHead>
               <TableHead className="text-muted-foreground">{t.dashboard.thirdChoice}</TableHead>
+              <TableHead className="text-muted-foreground w-[120px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {members.map((member) => {
-              const isExpanded = expandedRows.has(member.id);
               const isOwnRow = member.id === currentUserId;
+              const isEditing = editingUserId === member.id;
               
               return (
-                <Fragment key={member.id}>
-                  <TableRow 
-                    className={cn(
-                      "border-border/20 cursor-pointer",
-                      isOwnRow ? "hover:bg-primary/5 bg-primary/[0.02]" : "hover:bg-white/[0.02]",
-                      isExpanded && "bg-white/[0.03]"
-                    )}
-                    onClick={() => onToggleRow(member.id)}
-                  >
-                    <TableCell className="w-8 pr-0">
-                      {isExpanded ? (
-                        <ChevronDown className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
-                      ) : (
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
+                <TableRow 
+                  key={member.id}
+                  className={cn(
+                    "border-border/20",
+                    isOwnRow ? "bg-primary/[0.02]" : "",
+                    isEditing && "bg-primary/[0.05]"
+                  )}
+                >
+                  <TableCell className="font-medium text-foreground">
+                    <div className="flex items-center gap-2">
+                      {member.username}
+                      {isOwnRow && !isEditing && (
+                        <Badge variant="outline" className="text-xs text-primary border-primary/30 bg-primary/10">
+                          {t.common.you}
+                        </Badge>
                       )}
-                    </TableCell>
-                    <TableCell className="font-medium text-foreground">
-                      <div className="flex items-center gap-2">
-                        {member.username}
-                        {isOwnRow && (
-                          <Badge variant="outline" className="text-xs text-primary border-primary/30 bg-primary/10">
-                            {t.common.edit}
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {isEditing ? (
+                      <CommitmentToggle 
+                        confirmed={editConfirmed} 
+                        onChange={onEditConfirmedChange}
+                        compact
+                      />
+                    ) : (
                       <Badge 
                         variant={member.status === 'confirmed' ? 'default' : 'outline'}
                         className={member.status === 'confirmed' 
@@ -236,19 +155,55 @@ export const RosterTable = ({
                           <><HelpCircle className="h-3 w-3 mr-1" strokeWidth={1.5} /> {t.wishes.potential}</>
                         )}
                       </Badge>
-                    </TableCell>
-                    <TableCell>{renderWishCell(member.wishes, 1)}</TableCell>
-                    <TableCell>{renderWishCell(member.wishes, 2)}</TableCell>
-                    <TableCell>{renderWishCell(member.wishes, 3)}</TableCell>
-                  </TableRow>
-                  {isExpanded && (
-                    <TableRow className="hover:bg-transparent border-border/20">
-                      <TableCell colSpan={6} className="p-0">
-                        {renderExpandedContent(member)}
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </Fragment>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {isEditing ? renderEditWishCell(0) : renderWishCell(member.wishes, 1)}
+                  </TableCell>
+                  <TableCell>
+                    {isEditing ? renderEditWishCell(1) : renderWishCell(member.wishes, 2)}
+                  </TableCell>
+                  <TableCell>
+                    {isEditing ? renderEditWishCell(2) : renderWishCell(member.wishes, 3)}
+                  </TableCell>
+                  <TableCell>
+                    {isOwnRow && (
+                      isEditing ? (
+                        <div className="flex gap-1">
+                          <CosmicButton 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={onCancelEditing}
+                            className="h-8 px-2"
+                          >
+                            <X className="h-4 w-4" strokeWidth={1.5} />
+                          </CosmicButton>
+                          <CosmicButton 
+                            size="sm" 
+                            onClick={onSaveEditing}
+                            loading={saving}
+                            className="h-8 px-2"
+                          >
+                            <Save className="h-4 w-4" strokeWidth={1.5} />
+                          </CosmicButton>
+                        </div>
+                      ) : (
+                        <CosmicButton 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onStartEditing(member);
+                          }}
+                          icon={<Pencil className="h-3.5 w-3.5" strokeWidth={1.5} />}
+                          className="h-8"
+                        >
+                          <span className="hidden sm:inline">{t.common.edit}</span>
+                        </CosmicButton>
+                      )
+                    )}
+                  </TableCell>
+                </TableRow>
               );
             })}
           </TableBody>
