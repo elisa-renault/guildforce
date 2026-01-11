@@ -30,7 +30,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [initialLoadDone, setInitialLoadDone] = useState(false);
 
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
@@ -38,64 +37,71 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       .select('*')
       .eq('id', userId)
       .maybeSingle();
-    
+
     if (error) {
       console.error('Error fetching profile:', error);
       setProfile(null);
-      return;
+      return null;
     }
 
     // When RLS blocks or the row doesn't exist, data will be null.
-    setProfile((data as Profile) ?? null);
+    const nextProfile = (data as Profile) ?? null;
+    setProfile(nextProfile);
+    return nextProfile;
   };
 
   useEffect(() => {
-    // Get initial session first
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    let cancelled = false;
+
+    const init = async () => {
+      // Fetch initial session and profile once; this avoids UI "flicker" where pages
+      // render with user!=null but profile==null for a moment.
+      const { data: { session } } = await supabase.auth.getSession();
+      if (cancelled) return;
+
       setSession(session);
       setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      }
-      
-      setLoading(false);
-      setInitialLoadDone(true);
-    });
 
-    // Set up auth state listener for subsequent changes
+      if (session?.user) {
+        await fetchProfile(session.user.id);
+      } else {
+        setProfile(null);
+      }
+
+      if (!cancelled) setLoading(false);
+    };
+
+    init();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, newSession) => {
+      (_event, newSession) => {
         // Only update state if there's an actual change
-        setSession(prev => {
+        setSession((prev) => {
           if (prev?.access_token === newSession?.access_token) return prev;
           return newSession;
         });
-        
-        setUser(prev => {
+
+        setUser((prev) => {
           if (prev?.id === newSession?.user?.id) return prev;
           return newSession?.user ?? null;
         });
-        
-        // Defer profile fetch with setTimeout to prevent deadlock
+
+        // Defer profile fetch to avoid edge-case deadlocks
         if (newSession?.user) {
           setTimeout(() => {
-            fetchProfile(newSession.user.id);
+            fetchProfile(newSession.user!.id);
           }, 0);
         } else {
           setProfile(null);
         }
-        
-        // Don't set loading on auth state changes after initial load
-        if (!initialLoadDone) {
-          setLoading(false);
-          setInitialLoadDone(true);
-        }
       }
     );
 
-    return () => subscription.unsubscribe();
-  }, [initialLoadDone]);
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const signUp = async (email: string, password: string, discordPseudo: string, language: string) => {
     const redirectUrl = `${window.location.origin}/`;
