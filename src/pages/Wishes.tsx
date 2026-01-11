@@ -13,6 +13,7 @@ import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { Loader2, Save, Sparkles } from 'lucide-react';
+import { toSlug } from '@/lib/guildSlug';
 
 interface WishData {
   classId: string;
@@ -22,13 +23,14 @@ interface WishData {
 
 const Wishes = () => {
   const navigate = useNavigate();
-  const { guildId } = useParams();
+  const { serverSlug, guildSlug } = useParams();
   const { t } = useLanguage();
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [guild, setGuild] = useState<{ name: string; faction: string } | null>(null);
+  const [guildId, setGuildId] = useState<string | null>(null);
+  const [guild, setGuild] = useState<{ name: string; server: string; faction: string } | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   const [wishes, setWishes] = useState<WishData[]>([
     { classId: '', specIds: [], comment: '' },
@@ -37,24 +39,34 @@ const Wishes = () => {
   ]);
 
   useEffect(() => {
-    if (!user || !guildId) {
+    if (!user || !serverSlug || !guildSlug) {
       navigate('/auth');
       return;
     }
 
     const fetchData = async () => {
-      const { data: guildData } = await supabase
+      // Find guild by slugified server and name
+      const { data: allGuilds } = await supabase
         .from('guilds')
-        .select('name, faction')
-        .eq('id', guildId)
-        .single();
+        .select('id, name, server, faction');
       
-      if (guildData) setGuild(guildData);
+      const matchedGuild = allGuilds?.find(g => 
+        toSlug(g.server) === serverSlug && toSlug(g.name) === guildSlug
+      );
+      
+      if (!matchedGuild) {
+        navigate('/guilds');
+        return;
+      }
+      
+      const foundGuildId = matchedGuild.id;
+      setGuildId(foundGuildId);
+      setGuild({ name: matchedGuild.name, server: matchedGuild.server, faction: matchedGuild.faction });
 
       const { data: wishesData } = await supabase
         .from('class_wishes')
         .select('*')
-        .eq('guild_id', guildId)
+        .eq('guild_id', foundGuildId)
         .eq('user_id', user.id)
         .order('choice_index');
 
@@ -80,7 +92,7 @@ const Wishes = () => {
       const { data: memberData } = await supabase
         .from('guild_members')
         .select('status')
-        .eq('guild_id', guildId)
+        .eq('guild_id', foundGuildId)
         .eq('user_id', user.id)
         .single();
 
@@ -90,7 +102,7 @@ const Wishes = () => {
     };
 
     fetchData();
-  }, [user, guildId, navigate]);
+  }, [user, serverSlug, guildSlug, navigate]);
 
   const updateWish = (index: number, field: keyof WishData, value: any) => {
     const updated = [...wishes];

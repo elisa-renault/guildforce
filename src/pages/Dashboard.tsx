@@ -10,15 +10,17 @@ import { CosmicButton } from '@/components/CosmicButton';
 import { StatsCards, RosterFilters, RosterTable } from '@/components/dashboard';
 import { MemberWish, WishData, RoleStats, RosterFilters as RosterFiltersType } from '@/types/guild';
 import { Loader2, Download, Sparkles } from 'lucide-react';
+import { toSlug, getGuildWishesPath } from '@/lib/guildSlug';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { guildId } = useParams();
+  const { serverSlug, guildSlug } = useParams();
   const { t, language } = useLanguage();
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [guild, setGuild] = useState<{ name: string; faction: string } | null>(null);
+  const [guildId, setGuildId] = useState<string | null>(null);
+  const [guild, setGuild] = useState<{ name: string; server: string; faction: string } | null>(null);
   const [members, setMembers] = useState<MemberWish[]>([]);
   const [isGM, setIsGM] = useState(false);
   const [filters, setFilters] = useState<RosterFiltersType>({
@@ -37,13 +39,31 @@ const Dashboard = () => {
   const [saving, setSaving] = useState(false);
 
   const fetchData = async () => {
-    if (!user || !guildId) return;
+    if (!user || !serverSlug || !guildSlug) return;
+    
+    // First, find the guild by matching slugified server and name
+    const { data: allGuilds } = await supabase
+      .from('guilds')
+      .select('id, name, server, faction');
+    
+    const matchedGuild = allGuilds?.find(g => 
+      toSlug(g.server) === serverSlug && toSlug(g.name) === guildSlug
+    );
+    
+    if (!matchedGuild) {
+      navigate('/guilds');
+      return;
+    }
+    
+    const foundGuildId = matchedGuild.id;
+    setGuildId(foundGuildId);
+    setGuild({ name: matchedGuild.name, server: matchedGuild.server, faction: matchedGuild.faction });
     
     // Check if user is a member of this guild
     const { data: membershipData, error: membershipError } = await supabase
       .from('guild_members')
       .select('role')
-      .eq('guild_id', guildId)
+      .eq('guild_id', foundGuildId)
       .eq('user_id', user.id)
       .single();
     
@@ -54,24 +74,11 @@ const Dashboard = () => {
     
     const userIsGM = membershipData.role === 'gm';
     setIsGM(userIsGM);
-    
-    // Fetch guild data
-    const { data: guildData, error: guildError } = await supabase
-      .from('guilds')
-      .select('name, faction')
-      .eq('id', guildId)
-      .single();
-    
-    if (guildError || !guildData) {
-      navigate('/guilds');
-      return;
-    }
-    setGuild(guildData);
 
     const { data: membersData } = await supabase
       .from('guild_members')
       .select('user_id, status')
-      .eq('guild_id', guildId);
+      .eq('guild_id', foundGuildId);
 
     if (membersData) {
       const userIds = membersData.map(m => m.user_id);
@@ -84,7 +91,7 @@ const Dashboard = () => {
       const { data: wishesData } = await supabase
         .from('class_wishes')
         .select('user_id, choice_index, class_id, spec_ids, comment')
-        .eq('guild_id', guildId);
+        .eq('guild_id', foundGuildId);
 
       const mergedMembers: MemberWish[] = membersData.map(m => {
         const profile = profiles?.find(p => p.id === m.user_id);
@@ -104,12 +111,12 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    if (!user || !guildId) {
+    if (!user || !serverSlug || !guildSlug) {
       navigate('/auth');
       return;
     }
     fetchData();
-  }, [user, guildId, navigate]);
+  }, [user, serverSlug, guildSlug, navigate]);
 
   const toggleRow = (memberId: string) => {
     const newExpanded = new Set(expandedRows);
@@ -300,7 +307,7 @@ const Dashboard = () => {
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <h1 className="text-lg font-semibold text-foreground">{guild?.name}</h1>
           <div className="flex gap-2">
-            <CosmicButton size="sm" variant="outline" onClick={() => navigate(`/guild/${guildId}/wishes`)} icon={<Sparkles className="h-4 w-4" strokeWidth={1.5} />}>
+            <CosmicButton size="sm" variant="outline" onClick={() => guild && navigate(getGuildWishesPath(guild.server, guild.name))} icon={<Sparkles className="h-4 w-4" strokeWidth={1.5} />}>
               {t.wishes.title}
             </CosmicButton>
             {isGM && (
