@@ -347,11 +347,7 @@ const Wishes = () => {
 
       <main className="container mx-auto px-3 md:px-4 py-4 md:py-6 relative z-10">
         <div className="text-center mb-10">
-          <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/25">
-            <Sparkles className="h-7 w-7 text-white" strokeWidth={1.5} />
-          </div>
-          <h2 className="text-3xl font-bold cosmic-text mb-2">{t.wishes.title}</h2>
-          <p className="text-muted-foreground text-lg">{t.wishes.subtitle}</p>
+          <h2 className="text-3xl font-bold cosmic-text">{t.wishes.title}</h2>
         </div>
 
         {/* Commitment toggle */}
