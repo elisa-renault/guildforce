@@ -63,8 +63,14 @@ export const RosterTable = ({
     if (!wish) {
       return (
         <div className="flex flex-col gap-1.5">
-          <div className="h-7 w-full rounded-md border border-dashed border-muted-foreground/20 bg-transparent" />
-          <div className="h-6 w-full rounded-md border border-dashed border-muted-foreground/20 bg-transparent" />
+          <div className="h-7 w-full rounded-md border border-dashed border-muted-foreground/20 bg-transparent flex items-center justify-center">
+            <span className="text-[10px] text-muted-foreground/30">{language === 'fr' ? 'Classe' : 'Class'}</span>
+          </div>
+          <div className="h-6 w-full rounded-md border border-dashed border-muted-foreground/20 bg-transparent flex items-center justify-center gap-1">
+            <Shield className="h-3 w-3 text-muted-foreground/20" />
+            <Heart className="h-3 w-3 text-muted-foreground/20" />
+            <Swords className="h-3 w-3 text-muted-foreground/20" />
+          </div>
         </div>
       );
     }
@@ -73,8 +79,14 @@ export const RosterTable = ({
     if (!cls) {
       return (
         <div className="flex flex-col gap-1.5">
-          <div className="h-7 w-full rounded-md border border-dashed border-muted-foreground/20 bg-transparent" />
-          <div className="h-6 w-full rounded-md border border-dashed border-muted-foreground/20 bg-transparent" />
+          <div className="h-7 w-full rounded-md border border-dashed border-muted-foreground/20 bg-transparent flex items-center justify-center">
+            <span className="text-[10px] text-muted-foreground/30">{language === 'fr' ? 'Classe' : 'Class'}</span>
+          </div>
+          <div className="h-6 w-full rounded-md border border-dashed border-muted-foreground/20 bg-transparent flex items-center justify-center gap-1">
+            <Shield className="h-3 w-3 text-muted-foreground/20" />
+            <Heart className="h-3 w-3 text-muted-foreground/20" />
+            <Swords className="h-3 w-3 text-muted-foreground/20" />
+          </div>
         </div>
       );
     }
