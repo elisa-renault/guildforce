@@ -4,7 +4,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { getClassById, getSpecById, getRolesFromSpecs, getRangesFromSpecs, Role, RangeType, wowClasses } from '@/data/wowClasses';
+import { getClassById, getSpecById, getRolesFromSpecs, Role, wowClasses } from '@/data/wowClasses';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
 import { StatsCards, RosterFilters, RosterTable } from '@/components/dashboard';
@@ -303,11 +303,13 @@ const Dashboard = () => {
   const rangeStats: RangeStats = { melee: 0, ranged: 0 };
   members.forEach(m => {
     const wish = m.wishes.find(w => w.choice_index === 1);
-    if (wish) {
-      const roles = getRolesFromSpecs(wish.spec_ids);
-      roles.forEach(r => roleStats[r]++);
-      const ranges = getRangesFromSpecs(wish.spec_ids);
-      ranges.forEach(r => rangeStats[r]++);
+    if (wish && wish.spec_ids.length > 0) {
+      // Only count the first spec of the first wish
+      const firstSpec = getSpecById(wish.spec_ids[0]);
+      if (firstSpec) {
+        roleStats[firstSpec.role]++;
+        rangeStats[firstSpec.range]++;
+      }
     }
   });
 
