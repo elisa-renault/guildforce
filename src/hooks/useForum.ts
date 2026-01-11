@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ForumCategory, ForumTopic, ForumPost, ReactionSummary, ReactionType, REACTION_TYPES } from '@/types/forum';
 import { useAuth } from '@/contexts/AuthContext';
-
+import { createMentionNotifications } from '@/hooks/useNotifications';
 // Helper function to get reactions summary for a topic or post
 async function getReactionsSummary(
   type: 'topic' | 'post',
@@ -453,6 +453,13 @@ export function useForumActions() {
       .single();
 
     if (error) throw error;
+
+    // Create mention notifications for any @mentions in the content
+    // For topics, we pass the topic id and create a "fake" post id (null or the topic id itself)
+    if (data) {
+      createMentionNotifications(content, data.id, data.id, user.id);
+    }
+
     return data;
   };
 
@@ -471,6 +478,12 @@ export function useForumActions() {
       .single();
 
     if (error) throw error;
+
+    // Create mention notifications for any @mentions in the content
+    if (data) {
+      createMentionNotifications(content, topicId, data.id, user.id);
+    }
+
     return data;
   };
 

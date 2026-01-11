@@ -288,6 +288,7 @@ export interface Translations {
     noTopicYet: string;
     topicsCount: string;
     by: string;
+    unknownUser: string;
     categoryNames: {
       feedback: string;
       support: string;
@@ -300,6 +301,15 @@ export interface Translations {
       general: string;
       bugs: string;
     };
+  };
+  // Notifications
+  notifications: {
+    title: string;
+    empty: string;
+    markAllRead: string;
+    mention: string;
+    topicReply: string;
+    postReply: string;
   };
   // Activity Log
   activityLog: {
@@ -610,6 +620,7 @@ export const translations: Record<Language, Translations> = {
       noTopicYet: 'No topic',
       topicsCount: 'topics',
       by: 'by',
+      unknownUser: 'Unknown user',
       categoryNames: {
         feedback: 'Feedback & Ideas',
         support: 'Help & Support',
@@ -622,6 +633,14 @@ export const translations: Record<Language, Translations> = {
         general: 'General discussions about Guildforce and the game',
         bugs: 'Report bugs and technical issues',
       },
+    },
+    notifications: {
+      title: 'Notifications',
+      empty: 'No notifications',
+      markAllRead: 'Mark all read',
+      mention: 'mentioned you',
+      topicReply: 'replied to your topic',
+      postReply: 'replied in a topic you follow',
     },
     activityLog: {
       title: 'Activity Log',
@@ -928,6 +947,7 @@ export const translations: Record<Language, Translations> = {
       noTopicYet: 'Aucun sujet',
       topicsCount: 'sujets',
       by: 'par',
+      unknownUser: 'Utilisateur inconnu',
       categoryNames: {
         feedback: 'Suggestions & Idées',
         support: 'Aide & Support',
@@ -940,6 +960,14 @@ export const translations: Record<Language, Translations> = {
         general: 'Discussions générales sur Guildforce et le jeu',
         bugs: 'Signaler des bugs et problèmes techniques',
       },
+    },
+    notifications: {
+      title: 'Notifications',
+      empty: 'Aucune notification',
+      markAllRead: 'Tout marquer comme lu',
+      mention: 'vous a mentionné',
+      topicReply: 'a répondu à votre sujet',
+      postReply: 'a répondu dans un sujet que vous suivez',
     },
     activityLog: {
       title: 'Journal d\'activité',
