@@ -88,6 +88,9 @@ export type Database = {
           spec_ids: string[]
           updated_at: string
           user_id: string
+          validated_at: string | null
+          validated_by: string | null
+          validation_status: string
         }
         Insert: {
           choice_index: number
@@ -100,6 +103,9 @@ export type Database = {
           spec_ids?: string[]
           updated_at?: string
           user_id: string
+          validated_at?: string | null
+          validated_by?: string | null
+          validation_status?: string
         }
         Update: {
           choice_index?: number
@@ -112,6 +118,9 @@ export type Database = {
           spec_ids?: string[]
           updated_at?: string
           user_id?: string
+          validated_at?: string | null
+          validated_by?: string | null
+          validation_status?: string
         }
         Relationships: [
           {
@@ -131,6 +140,13 @@ export type Database = {
           {
             foreignKeyName: "class_wishes_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_wishes_validated_by_fkey"
+            columns: ["validated_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
