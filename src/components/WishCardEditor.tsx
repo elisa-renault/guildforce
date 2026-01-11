@@ -38,10 +38,8 @@ export const WishCardEditor = ({ wish, onChange }: WishCardEditorProps) => {
   const handleClassSelect = (classId: string) => {
     if (wish.classId === classId) {
       onChange('classId', '');
-      onChange('specIds', []);
     } else {
       onChange('classId', classId);
-      onChange('specIds', []);
     }
     setClassOpen(false);
   };
