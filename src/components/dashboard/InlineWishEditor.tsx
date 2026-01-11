@@ -31,12 +31,11 @@ export const InlineWishEditor = ({ wish, choiceIndex, onChange }: InlineWishEdit
   const selectedSpecs = wish.specIds.map(id => getSpecById(id)).filter(Boolean);
 
   const handleClassSelect = (classId: string) => {
+    // Toggle off if same class selected
     if (wish.classId === classId) {
       onChange('classId', '');
-      onChange('specIds', []);
     } else {
       onChange('classId', classId);
-      onChange('specIds', []);
     }
     setClassOpen(false);
   };
