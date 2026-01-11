@@ -39,7 +39,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import {
   Loader2, ArrowLeft, Plus, Trash2, Edit3, User, Shield, 
-  MessageSquare, Settings, Users
+  MessageSquare, Settings, Users, ChevronUp, ChevronDown
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -84,6 +84,7 @@ const ForumAdmin = () => {
     createCategory,
     updateCategory,
     deleteCategory,
+    reorderCategories,
     fetchModerators,
     addModerator,
     removeModerator,
@@ -227,6 +228,27 @@ const ForumAdmin = () => {
     }
   };
 
+  const handleMoveCategory = async (index: number, direction: 'up' | 'down') => {
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= categories.length) return;
+
+    const newCategories = [...categories];
+    const [moved] = newCategories.splice(index, 1);
+    newCategories.splice(newIndex, 0, moved);
+
+    // Optimistic update
+    setCategories(newCategories);
+
+    try {
+      await reorderCategories(newCategories.map(c => c.id));
+      toast.success(language === 'fr' ? 'Ordre mis à jour' : 'Order updated');
+    } catch (error) {
+      console.error('Error reordering categories:', error);
+      toast.error(language === 'fr' ? 'Erreur' : 'Error');
+      loadData(); // Revert on error
+    }
+  };
+
   const handleAddModerator = async () => {
     if (!selectedUserId) return;
     try {
@@ -325,12 +347,33 @@ const ForumAdmin = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {categories.map((cat) => (
+                  {categories.map((cat, index) => (
                     <div
                       key={cat.id}
                       className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
                     >
                       <div className="flex items-center gap-3">
+                        {/* Reorder buttons */}
+                        <div className="flex flex-col">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-5 w-5"
+                            onClick={() => handleMoveCategory(index, 'up')}
+                            disabled={index === 0}
+                          >
+                            <ChevronUp className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-5 w-5"
+                            onClick={() => handleMoveCategory(index, 'down')}
+                            disabled={index === categories.length - 1}
+                          >
+                            <ChevronDown className="h-3 w-3" />
+                          </Button>
+                        </div>
                         <span className="text-xl">{cat.icon || '📁'}</span>
                         <div>
                           <p className="font-medium text-foreground">{cat.name}</p>
