@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -52,6 +52,8 @@ interface GuildRank {
 const GuildSettings = () => {
   const navigate = useNavigate();
   const { regionSlug, serverSlug, guildSlug } = useParams();
+  const [searchParams] = useSearchParams();
+  const initialRosterId = searchParams.get('roster');
   const { t, language } = useLanguage();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -447,6 +449,7 @@ const GuildSettings = () => {
               members={members}
               ranks={ranks}
               onRosterChange={() => loadRostersAndMembers(guild.id)}
+              initialRosterId={initialRosterId}
             />
           </div>
         </div>
