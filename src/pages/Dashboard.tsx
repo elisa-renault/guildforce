@@ -28,8 +28,8 @@ const Dashboard = () => {
   const [members, setMembers] = useState<MemberWish[]>([]);
   const [isGM, setIsGM] = useState(false);
   const [filters, setFilters] = useState<RosterFiltersType>({
-    roleFilter: 'all',
-    classFilter: 'all',
+    roleFilters: [],
+    classFilters: [],
     searchQuery: '',
   });
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -286,16 +286,16 @@ const Dashboard = () => {
       return false;
     }
 
-    if (filters.roleFilter !== 'all') {
+    if (filters.roleFilters.length > 0) {
       const hasRole = m.wishes.some(w => {
         const roles = getRolesFromSpecs(w.spec_ids);
-        return roles.includes(filters.roleFilter as Role);
+        return filters.roleFilters.some(rf => roles.includes(rf as Role));
       });
       if (!hasRole) return false;
     }
 
-    if (filters.classFilter !== 'all') {
-      const hasClass = m.wishes.some(w => w.class_id === filters.classFilter);
+    if (filters.classFilters.length > 0) {
+      const hasClass = m.wishes.some(w => filters.classFilters.includes(w.class_id));
       if (!hasClass) return false;
     }
 
