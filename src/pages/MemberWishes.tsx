@@ -6,7 +6,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, ArrowLeft, Shield, Heart, Swords, Crosshair, CheckCircle, HelpCircle, XCircle } from 'lucide-react';
+import { Loader2, ArrowLeft, Shield, Heart, Swords, Crosshair, CheckCircle, HelpCircle, XCircle, Pencil } from 'lucide-react';
+import { CosmicButton } from '@/components/CosmicButton';
 import { toSlug, getGuildPath } from '@/lib/guildSlug';
 import { getClassById, getSpecById, Specialization } from '@/data/wowClasses';
 import { cn } from '@/lib/utils';
@@ -150,28 +151,42 @@ const MemberWishes = () => {
             </div>
           </div>
           
-          {/* Status badge */}
-          {member && (
-            <Badge 
-              variant={member.status === 'confirmed' ? 'default' : 'outline'}
-              className={cn(
-                "text-xs px-2 py-1",
-                member.status === 'confirmed' 
-                  ? 'bg-healer/20 text-healer border-healer/30' 
-                  : member.status === 'withdrawn'
-                  ? 'bg-destructive/20 text-destructive border-destructive/30'
-                  : 'bg-amber-500/20 text-amber-500 border-amber-500/30'
-              )}
-            >
-              {member.status === 'confirmed' ? (
-                <><CheckCircle className="h-3.5 w-3.5 mr-1" strokeWidth={1.5} />{t.wishes.commitment.confirmed}</>
-              ) : member.status === 'withdrawn' ? (
-                <><XCircle className="h-3.5 w-3.5 mr-1" strokeWidth={1.5} />{t.wishes.commitment.withdrawn}</>
-              ) : (
-                <><HelpCircle className="h-3.5 w-3.5 mr-1" strokeWidth={1.5} />{t.wishes.commitment.undecided}</>
-              )}
-            </Badge>
-          )}
+          <div className="flex items-center gap-3">
+            {/* Status badge */}
+            {member && (
+              <Badge 
+                variant={member.status === 'confirmed' ? 'default' : 'outline'}
+                className={cn(
+                  "text-xs px-2 py-1",
+                  member.status === 'confirmed' 
+                    ? 'bg-healer/20 text-healer border-healer/30' 
+                    : member.status === 'withdrawn'
+                    ? 'bg-destructive/20 text-destructive border-destructive/30'
+                    : 'bg-amber-500/20 text-amber-500 border-amber-500/30'
+                )}
+              >
+                {member.status === 'confirmed' ? (
+                  <><CheckCircle className="h-3.5 w-3.5 mr-1" strokeWidth={1.5} />{t.wishes.commitment.confirmed}</>
+                ) : member.status === 'withdrawn' ? (
+                  <><XCircle className="h-3.5 w-3.5 mr-1" strokeWidth={1.5} />{t.wishes.commitment.withdrawn}</>
+                ) : (
+                  <><HelpCircle className="h-3.5 w-3.5 mr-1" strokeWidth={1.5} />{t.wishes.commitment.undecided}</>
+                )}
+              </Badge>
+            )}
+            
+            {/* Edit button for own wishes */}
+            {user?.id === memberId && guild && (
+              <CosmicButton
+                size="sm"
+                variant="outline"
+                icon={<Pencil className="h-3.5 w-3.5" strokeWidth={1.5} />}
+                onClick={() => navigate(`${getGuildPath(guild.region, guild.server, guild.name)}/wishes`)}
+              >
+                {t.common.edit}
+              </CosmicButton>
+            )}
+          </div>
         </div>
       </div>
 
