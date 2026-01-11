@@ -296,7 +296,27 @@ const ForumTopicPage = () => {
                 </div>
               </div>
               <div className="prose prose-invert prose-sm max-w-none">
-                <ReactMarkdown>{topic.content}</ReactMarkdown>
+                <ReactMarkdown
+                  components={{
+                    a: ({ href, children }) => {
+                      const childText = String(children);
+                      if (childText.startsWith('@')) {
+                        return (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-primary/20 text-primary font-medium text-sm">
+                            {children}
+                          </span>
+                        );
+                      }
+                      return (
+                        <a href={href} className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
+                          {children}
+                        </a>
+                      );
+                    },
+                  }}
+                >
+                  {topic.content}
+                </ReactMarkdown>
               </div>
               {/* Topic reactions */}
               <div className="mt-3 pt-3 border-t border-border/30">
