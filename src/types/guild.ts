@@ -59,7 +59,7 @@ export interface RangeStats {
  * Filter state for roster view
  */
 export interface RosterFilters {
-  roleFilter: string;
-  classFilter: string;
+  roleFilters: string[];
+  classFilters: string[];
   searchQuery: string;
 }

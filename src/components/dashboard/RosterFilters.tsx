@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Search, ChevronDown, Check, Shield, Heart, Swords } from 'lucide-react';
+import { Search, ChevronDown, Check, Shield, Heart, Swords, X } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { wowClasses, Role } from '@/data/wowClasses';
 import { RosterFilters as RosterFiltersType } from '@/types/guild';
@@ -28,13 +28,27 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
     onFiltersChange({ ...filters, [key]: value });
   };
 
-  const selectedClass = filters.classFilter !== 'all' 
-    ? wowClasses.find(c => c.id === filters.classFilter) 
-    : null;
+  const toggleRole = (role: string) => {
+    const current = filters.roleFilters;
+    if (current.includes(role)) {
+      updateFilter('roleFilters', current.filter(r => r !== role));
+    } else {
+      updateFilter('roleFilters', [...current, role]);
+    }
+  };
 
-  const selectedRole = filters.roleFilter !== 'all' 
-    ? roleConfig[filters.roleFilter as Role] 
-    : null;
+  const toggleClass = (classId: string) => {
+    const current = filters.classFilters;
+    if (current.includes(classId)) {
+      updateFilter('classFilters', current.filter(c => c !== classId));
+    } else {
+      updateFilter('classFilters', [...current, classId]);
+    }
+  };
+
+  const selectedClasses = wowClasses.filter(c => filters.classFilters.includes(c.id));
+  const hasRoleFilters = filters.roleFilters.length > 0;
+  const hasClassFilters = filters.classFilters.length > 0;
 
   return (
     <div className="flex flex-col sm:flex-row gap-2 mb-4">
@@ -56,16 +70,25 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
             variant="outline"
             size="sm"
             className={cn(
-              "h-8 w-full sm:w-[140px] justify-between gap-2 text-sm",
-              selectedRole 
+              "h-8 w-full sm:w-auto sm:min-w-[140px] justify-between gap-2 text-sm",
+              hasRoleFilters 
                 ? "border-border/60" 
                 : "border-border/40 text-muted-foreground"
             )}
           >
-            {selectedRole ? (
-              <span className="flex items-center gap-2">
-                <selectedRole.icon className={cn("h-4 w-4", selectedRole.color)} />
-                <span>{selectedRole.label[language]}</span>
+            {hasRoleFilters ? (
+              <span className="flex items-center gap-1.5">
+                {filters.roleFilters.map((role) => {
+                  const config = roleConfig[role as Role];
+                  if (!config) return null;
+                  const Icon = config.icon;
+                  return (
+                    <span key={role} className="flex items-center gap-1">
+                      <Icon className={cn("h-4 w-4", config.color)} />
+                      <span>{config.label[language]}</span>
+                    </span>
+                  );
+                })}
               </span>
             ) : (
               <span>{t.dashboard.allRoles}</span>
@@ -75,25 +98,24 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
         </PopoverTrigger>
         <PopoverContent className="w-44 p-1.5 bg-card border-border z-50" align="start">
           <div className="flex flex-col gap-0.5">
-            <button
-              onClick={() => { updateFilter('roleFilter', 'all'); setRoleOpen(false); }}
-              className={cn(
-                "flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left",
-                filters.roleFilter === 'all' ? "bg-primary/20" : "hover:bg-primary/10"
-              )}
-            >
-              {filters.roleFilter === 'all' && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
-              <span>{t.dashboard.allRoles}</span>
-            </button>
+            {hasRoleFilters && (
+              <button
+                onClick={() => updateFilter('roleFilters', [])}
+                className="flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left hover:bg-primary/10 text-muted-foreground"
+              >
+                <X className="h-3.5 w-3.5 flex-shrink-0" />
+                <span>{language === 'fr' ? 'Effacer' : 'Clear'}</span>
+              </button>
+            )}
             {(Object.keys(roleConfig) as Role[]).map((role) => {
               const config = roleConfig[role];
               const Icon = config.icon;
-              const isSelected = filters.roleFilter === role;
+              const isSelected = filters.roleFilters.includes(role);
               
               return (
                 <button
                   key={role}
-                  onClick={() => { updateFilter('roleFilter', role); setRoleOpen(false); }}
+                  onClick={() => toggleRole(role)}
                   className={cn(
                     "flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left",
                     isSelected ? "bg-primary/20" : "hover:bg-primary/10"
@@ -116,41 +138,53 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
             variant="outline"
             size="sm"
             className={cn(
-              "h-8 w-full sm:w-[180px] justify-between gap-2 text-sm",
-              selectedClass 
-                ? "border-transparent" 
+              "h-8 w-full sm:w-auto sm:min-w-[200px] justify-between gap-2 text-sm",
+              hasClassFilters 
+                ? "border-border/60" 
                 : "border-border/40 text-muted-foreground"
             )}
-            style={selectedClass ? {
-              backgroundColor: `hsl(var(--class-${selectedClass.id}) / 0.2)`,
-              color: `hsl(var(--class-${selectedClass.id}))`
-            } : undefined}
           >
-            <span className="truncate">
-              {selectedClass ? selectedClass.name[language] : t.dashboard.allClasses}
-            </span>
+            {hasClassFilters ? (
+              <span className="flex items-center gap-1.5 flex-wrap">
+                {selectedClasses.length <= 3 ? (
+                  selectedClasses.map((cls) => (
+                    <span 
+                      key={cls.id} 
+                      style={{ color: `hsl(var(--class-${cls.id}))` }}
+                    >
+                      {cls.name[language]}
+                    </span>
+                  ))
+                ) : (
+                  <span>
+                    {selectedClasses.length} {language === 'fr' ? 'classes' : 'classes'}
+                  </span>
+                )}
+              </span>
+            ) : (
+              <span>{t.dashboard.allClasses}</span>
+            )}
             <ChevronDown className="h-3.5 w-3.5 opacity-50 flex-shrink-0" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-52 p-1.5 bg-card border-border z-50" align="start">
+        <PopoverContent className="w-56 p-1.5 bg-card border-border z-50" align="start">
           <div className="flex flex-col gap-0.5 max-h-[320px] overflow-y-auto">
-            <button
-              onClick={() => { updateFilter('classFilter', 'all'); setClassOpen(false); }}
-              className={cn(
-                "flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left",
-                filters.classFilter === 'all' ? "bg-primary/20" : "hover:bg-primary/10"
-              )}
-            >
-              {filters.classFilter === 'all' && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
-              <span>{t.dashboard.allClasses}</span>
-            </button>
+            {hasClassFilters && (
+              <button
+                onClick={() => updateFilter('classFilters', [])}
+                className="flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left hover:bg-primary/10 text-muted-foreground"
+              >
+                <X className="h-3.5 w-3.5 flex-shrink-0" />
+                <span>{language === 'fr' ? 'Effacer' : 'Clear'}</span>
+              </button>
+            )}
             {wowClasses.map((cls) => {
-              const isSelected = filters.classFilter === cls.id;
+              const isSelected = filters.classFilters.includes(cls.id);
               
               return (
                 <button
                   key={cls.id}
-                  onClick={() => { updateFilter('classFilter', cls.id); setClassOpen(false); }}
+                  onClick={() => toggleClass(cls.id)}
                   className={cn(
                     "flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left",
                     isSelected ? "bg-primary/20" : "hover:bg-primary/10"
@@ -158,7 +192,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
                   style={{ color: `hsl(var(--class-${cls.id}))` }}
                 >
                   {isSelected && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
-                  <span className="truncate">{cls.name[language]}</span>
+                  <span>{cls.name[language]}</span>
                 </button>
               );
             })}
