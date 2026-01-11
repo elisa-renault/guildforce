@@ -11,6 +11,7 @@ import { StatsCards, RosterFilters, RosterTable } from '@/components/dashboard';
 import { MemberWish, WishData, RoleStats, RosterFilters as RosterFiltersType } from '@/types/guild';
 import { Loader2, Download, Sparkles } from 'lucide-react';
 import { toSlug, getGuildWishesPath } from '@/lib/guildSlug';
+import { CommitmentStatus } from '@/components/CommitmentToggle';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -35,7 +36,7 @@ const Dashboard = () => {
     { classId: '', specIds: [], comment: '' },
     { classId: '', specIds: [], comment: '' },
   ]);
-  const [editConfirmed, setEditConfirmed] = useState(false);
+  const [editStatus, setEditStatus] = useState<CommitmentStatus>('undecided');
   const [saving, setSaving] = useState(false);
 
   const fetchData = async () => {
@@ -151,7 +152,13 @@ const Dashboard = () => {
     });
     
     setEditWishes(loadedWishes);
-    setEditConfirmed(member.status === 'confirmed');
+    // Map DB status to CommitmentStatus
+    const statusMap: Record<string, CommitmentStatus> = {
+      'confirmed': 'confirmed',
+      'potential': 'undecided',
+      'withdrawn': 'withdrawn',
+    };
+    setEditStatus(statusMap[member.status] || 'undecided');
     setEditingUserId(member.id);
     
     // Expand the row if not already
@@ -178,9 +185,11 @@ const Dashboard = () => {
     setSaving(true);
 
     try {
+      // Map CommitmentStatus to DB status
+      const dbStatus = editStatus === 'withdrawn' ? 'withdrawn' : (editStatus === 'confirmed' ? 'confirmed' : 'potential');
       await supabase
         .from('guild_members')
-        .update({ status: editConfirmed ? 'confirmed' : 'potential' })
+        .update({ status: dbStatus })
         .eq('guild_id', guildId)
         .eq('user_id', user.id);
 
@@ -339,13 +348,13 @@ const Dashboard = () => {
           expandedRows={expandedRows}
           editingUserId={editingUserId}
           editWishes={editWishes}
-          editConfirmed={editConfirmed}
+          editStatus={editStatus}
           saving={saving}
           onToggleRow={toggleRow}
           onStartEditing={startEditing}
           onCancelEditing={cancelEditing}
           onUpdateEditWish={updateEditWish}
-          onEditConfirmedChange={setEditConfirmed}
+          onEditStatusChange={setEditStatus}
           onSaveEditing={saveEditing}
         />
       </main>

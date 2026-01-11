@@ -1,5 +1,5 @@
 import { useLanguage } from '@/contexts/LanguageContext';
-import { CommitmentToggle } from '@/components/CommitmentToggle';
+import { CommitmentToggle, CommitmentStatus } from '@/components/CommitmentToggle';
 import { CosmicButton } from '@/components/CosmicButton';
 import { InlineWishEditor } from './InlineWishEditor';
 import { X, Save } from 'lucide-react';
@@ -7,20 +7,20 @@ import { WishData } from '@/types/guild';
 
 interface MemberWishEditorProps {
   wishes: WishData[];
-  confirmed: boolean;
+  status: CommitmentStatus;
   saving: boolean;
   onWishChange: (index: number, field: keyof WishData, value: any) => void;
-  onConfirmedChange: (confirmed: boolean) => void;
+  onStatusChange: (status: CommitmentStatus) => void;
   onSave: () => void;
   onCancel: () => void;
 }
 
 export const MemberWishEditor = ({
   wishes,
-  confirmed,
+  status,
   saving,
   onWishChange,
-  onConfirmedChange,
+  onStatusChange,
   onSave,
   onCancel,
 }: MemberWishEditorProps) => {
@@ -54,7 +54,7 @@ export const MemberWishEditor = ({
 
         {/* Commitment toggle - compact */}
         <div className="flex-shrink-0">
-          <CommitmentToggle confirmed={confirmed} onChange={onConfirmedChange} compact />
+          <CommitmentToggle status={status} onChange={onStatusChange} compact />
         </div>
 
         {/* Inline wish editors */}

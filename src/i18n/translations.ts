@@ -138,8 +138,10 @@ export interface Translations {
       title: string;
       confirmed: string;
       confirmedDesc: string;
-      potential: string;
-      potentialDesc: string;
+      undecided: string;
+      undecidedDesc: string;
+      withdrawn: string;
+      withdrawnDesc: string;
     };
   };
   // Dashboard
@@ -331,10 +333,12 @@ export const translations: Record<Language, Translations> = {
       thirdChoice: 'Third choice',
       commitment: {
         title: 'Mythic raid commitment',
-        confirmed: 'I commit for the season',
+        confirmed: 'Confirmed',
         confirmedDesc: 'I will be regularly available for mythic raids',
-        potential: 'Not sure yet',
-        potentialDesc: 'My availability or class choice may change',
+        undecided: 'Undecided',
+        undecidedDesc: 'My availability or class choice may change',
+        withdrawn: 'Withdrawn',
+        withdrawnDesc: 'I will not participate this season',
       },
     },
     dashboard: {
@@ -521,10 +525,12 @@ export const translations: Record<Language, Translations> = {
       thirdChoice: 'Troisième choix',
       commitment: {
         title: 'Engagement pour le raid mythique',
-        confirmed: 'Je m\'engage pour la saison',
+        confirmed: 'Confirmé',
         confirmedDesc: 'Je serai disponible régulièrement pour les raids mythiques',
-        potential: 'Pas encore sûr(e)',
-        potentialDesc: 'Ma disponibilité ou mon choix de classe peut changer',
+        undecided: 'Indécis',
+        undecidedDesc: 'Ma disponibilité ou mon choix de classe peut changer',
+        withdrawn: 'Retrait',
+        withdrawnDesc: 'Je ne participerai pas cette saison',
       },
     },
     dashboard: {
