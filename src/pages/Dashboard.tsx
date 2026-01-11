@@ -4,7 +4,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { getClassById, getSpecById, getRolesFromSpecs, getRangeStatsFromSpecs, Role, wowClasses } from '@/data/wowClasses';
+import { getClassById, getSpecById, getRolesFromSpecs, getRangesFromSpecs, Role, RangeType, wowClasses } from '@/data/wowClasses';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
 import { StatsCards, RosterFilters, RosterTable } from '@/components/dashboard';
@@ -306,9 +306,8 @@ const Dashboard = () => {
     if (wish) {
       const roles = getRolesFromSpecs(wish.spec_ids);
       roles.forEach(r => roleStats[r]++);
-      const ranges = getRangeStatsFromSpecs(wish.spec_ids);
-      rangeStats.melee += ranges.melee;
-      rangeStats.ranged += ranges.ranged;
+      const ranges = getRangesFromSpecs(wish.spec_ids);
+      ranges.forEach(r => rangeStats[r]++);
     }
   });
 

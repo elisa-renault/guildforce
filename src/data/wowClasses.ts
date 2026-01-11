@@ -185,13 +185,13 @@ export const getRolesFromSpecs = (specIds: string[]): Role[] => {
   return Array.from(roles);
 };
 
-export const getRangeStatsFromSpecs = (specIds: string[]): { melee: number; ranged: number } => {
-  const stats = { melee: 0, ranged: 0 };
+export const getRangesFromSpecs = (specIds: string[]): RangeType[] => {
+  const ranges = new Set<RangeType>();
   for (const specId of specIds) {
     const spec = getSpecById(specId);
     if (spec) {
-      stats[spec.range]++;
+      ranges.add(spec.range);
     }
   }
-  return stats;
+  return Array.from(ranges);
 };
