@@ -8,7 +8,7 @@ import { getClassById, getSpecById, getRolesFromSpecs, Role, wowClasses } from '
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
 import { StatsCards, RosterFilters, RosterTable } from '@/components/dashboard';
-import { RosterSelector } from '@/components/roster';
+import { RosterSelector, RosterEditDialog } from '@/components/roster';
 import { MemberWish, WishData, RoleStats, RangeStats, RosterFilters as RosterFiltersType } from '@/types/guild';
 import { Loader2, Sparkles, ArrowLeft, Settings } from 'lucide-react';
 import { toSlug, getGuildWishesPath, getGuildSettingsPath } from '@/lib/guildSlug';
@@ -55,6 +55,7 @@ const Dashboard = () => {
   // Roster state
   const [rosters, setRosters] = useState<RosterData[]>([]);
   const [selectedRosterId, setSelectedRosterId] = useState<string | null>(null);
+  const [rosterSettingsOpen, setRosterSettingsOpen] = useState(false);
 
   const fetchData = async () => {
     if (!user || !regionSlug || !serverSlug || !guildSlug) return;
@@ -427,9 +428,9 @@ const Dashboard = () => {
             <CosmicButton size="sm" variant="outline" onClick={() => guild && navigate(getGuildWishesPath(guild.region, guild.server, guild.name))} icon={<Sparkles className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 md:h-8 px-2 md:px-3">
               <span className="hidden md:inline">{t.wishes.title}</span>
             </CosmicButton>
-            {isGM && (
-              <CosmicButton size="sm" variant="outline" onClick={() => guild && navigate(`${getGuildSettingsPath(guild.region, guild.server, guild.name)}${selectedRosterId ? `?roster=${selectedRosterId}` : ''}`)} icon={<Settings className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 md:h-8 px-2 md:px-3">
-                <span className="hidden md:inline">{t.guildSettings.title}</span>
+            {isGM && selectedRosterId && (
+              <CosmicButton size="sm" variant="outline" onClick={() => setRosterSettingsOpen(true)} icon={<Settings className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 md:h-8 px-2 md:px-3">
+                <span className="hidden md:inline">{t.rosters?.editRoster || 'Settings'}</span>
               </CosmicButton>
             )}
           </div>
@@ -476,6 +477,17 @@ const Dashboard = () => {
           onClearWish={clearWish}
         />
       </main>
+
+      {/* Roster Settings Dialog */}
+      {guildId && selectedRosterId && (
+        <RosterEditDialog
+          open={rosterSettingsOpen}
+          onOpenChange={setRosterSettingsOpen}
+          rosterId={selectedRosterId}
+          guildId={guildId}
+          onSaved={fetchData}
+        />
+      )}
     </div>
   );
 };
