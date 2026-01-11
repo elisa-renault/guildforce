@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ForumCategory } from '@/types/forum';
 import { GlowCard } from '@/components/GlowCard';
-import { MessageSquare, Clock, ChevronRight, FolderOpen, MessageCircle, Lightbulb, HelpCircle } from 'lucide-react';
+import { MessageSquare, Clock, ChevronRight, FolderOpen, MessageCircle, Lightbulb, HelpCircle, Bug } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 
@@ -16,6 +16,7 @@ const categoryIcons: Record<string, React.ElementType> = {
   feedback: Lightbulb,
   support: HelpCircle,
   general: MessageCircle,
+  bugs: Bug,
 };
 
 export const ForumCategoryList = ({ categories, basePath = '/forum' }: ForumCategoryListProps) => {
