@@ -57,20 +57,20 @@
     --healer: 145 60% 45%;
     --dps: 0 70% 50%;
 
-    /* WoW Class colors */
-    --class-warrior: 33 100% 50%;
-    --class-paladin: 330 60% 60%;
-    --class-hunter: 85 55% 45%;
-    --class-rogue: 48 100% 50%;
-    --class-priest: 0 0% 85%;
-    --class-death-knight: 0 65% 45%;
-    --class-shaman: 200 70% 50%;
-    --class-mage: 195 85% 60%;
-    --class-warlock: 270 55% 55%;
-    --class-monk: 155 50% 50%;
-    --class-druid: 30 70% 50%;
-    --class-demon-hunter: 280 70% 50%;
-    --class-evoker: 165 65% 50%;
+    /* WoW Class colors - Official Blizzard hex values converted to HSL */
+    --class-warrior: 27 45% 61%;        /* #C79C6E - Tan */
+    --class-paladin: 334 85% 75%;       /* #F58CBA - Pink */
+    --class-hunter: 82 50% 64%;         /* #ABD473 - Green */
+    --class-rogue: 56 100% 71%;         /* #FFF569 - Light yellow */
+    --class-priest: 0 0% 100%;          /* #FFFFFF - White */
+    --class-death-knight: 349 73% 44%;  /* #C41F3B - Red */
+    --class-shaman: 210 100% 44%;       /* #0070DE - Blue */
+    --class-mage: 196 81% 68%;          /* #69CCF0 - Light blue */
+    --class-warlock: 255 35% 65%;       /* #9482C9 - Purple */
+    --class-monk: 155 100% 50%;         /* #00FF96 - Jade green */
+    --class-druid: 28 100% 52%;         /* #FF7D0A - Orange */
+    --class-demon-hunter: 284 63% 49%;  /* #A330C9 - Strong Magenta */
+    --class-evoker: 165 65% 50%;        /* Evoker - keep existing */
 
     --sidebar-background: 240 10% 5%;
     --sidebar-foreground: 0 0% 90%;
