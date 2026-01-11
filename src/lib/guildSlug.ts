@@ -29,3 +29,10 @@ export const getGuildPath = (region: string, server: string, name: string): stri
 export const getGuildWishesPath = (region: string, server: string, name: string): string => {
   return `/guild/${toSlug(region)}/${toSlug(server)}/${toSlug(name)}/wishes`;
 };
+
+/**
+ * Generate guild settings URL path from region, server and name
+ */
+export const getGuildSettingsPath = (region: string, server: string, name: string): string => {
+  return `/guild/${toSlug(region)}/${toSlug(server)}/${toSlug(name)}/settings`;
+};
