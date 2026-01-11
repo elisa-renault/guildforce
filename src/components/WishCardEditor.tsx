@@ -127,7 +127,7 @@ export const WishCardEditor = ({ wish, onChange, usedClassIds = [] }: WishCardEd
             <Button
               variant="outline"
               className={cn(
-                "w-full lg:flex-1 justify-between h-9 text-sm bg-card/50 hover:bg-card/80",
+                "w-full lg:w-[200px] justify-between h-9 text-sm bg-card/50 hover:bg-card/80 flex-shrink-0",
                 selectedSpecs.length > 0
                   ? "border-border"
                   : "border-dashed border-muted-foreground/40 text-muted-foreground"
@@ -187,7 +187,7 @@ export const WishCardEditor = ({ wish, onChange, usedClassIds = [] }: WishCardEd
           </PopoverContent>
         </Popover>
       ) : (
-        <div className="h-9 w-full lg:flex-1 rounded-md border border-dashed border-muted-foreground/20 bg-card/30 flex items-center justify-center gap-2">
+        <div className="h-9 w-full lg:w-[200px] flex-shrink-0 rounded-md border border-dashed border-muted-foreground/20 bg-card/30 flex items-center justify-center gap-2">
           <Shield className="h-4 w-4 text-muted-foreground/30" />
           <Heart className="h-4 w-4 text-muted-foreground/30" />
           <Swords className="h-4 w-4 text-muted-foreground/30" />
@@ -200,7 +200,7 @@ export const WishCardEditor = ({ wish, onChange, usedClassIds = [] }: WishCardEd
         placeholder={commentPlaceholder}
         value={wish.comment}
         onChange={(e) => onChange('comment', e.target.value)}
-        className="h-9 w-full lg:w-[140px] flex-shrink-0 rounded-md border border-border bg-card/50 px-3 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50"
+        className="h-9 w-full lg:flex-1 rounded-md border border-border bg-card/50 px-3 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50"
       />
     </div>
   );
