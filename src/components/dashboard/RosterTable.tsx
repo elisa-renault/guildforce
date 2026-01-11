@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { CheckCircle, HelpCircle, XCircle, Pencil, X, Save, Shield, Heart, Swords, MessageSquare } from 'lucide-react';
+import { CheckCircle, HelpCircle, XCircle, Pencil, X, Save, Shield, Heart, Swords, MessageSquare, Plus, Trash2, MoreHorizontal } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getClassById, getSpecById } from '@/data/wowClasses';
 import { MemberWish, WishData, WishChoice } from '@/types/guild';
@@ -20,12 +20,15 @@ interface RosterTableProps {
   editWishes: WishData[];
   editStatus: CommitmentStatus;
   saving: boolean;
+  maxWishes: number;
   onToggleRow: (memberId: string) => void;
   onStartEditing: (member: MemberWish) => void;
   onCancelEditing: () => void;
   onUpdateEditWish: (index: number, field: keyof WishData, value: any) => void;
   onEditStatusChange: (status: CommitmentStatus) => void;
   onSaveEditing: () => void;
+  onAddWish: () => void;
+  onRemoveWish: (index: number) => void;
 }
 
 // Role config for icons
@@ -42,11 +45,14 @@ export const RosterTable = ({
   editWishes,
   editStatus,
   saving,
+  maxWishes,
   onStartEditing,
   onCancelEditing,
   onUpdateEditWish,
   onEditStatusChange,
   onSaveEditing,
+  onAddWish,
+  onRemoveWish,
 }: RosterTableProps) => {
   const { t, language } = useLanguage();
 
@@ -126,15 +132,36 @@ export const RosterTable = ({
     );
   };
 
-  const renderEditWishCell = (wishIndex: number) => {
+  const renderEditWishCell = (wishIndex: number, canRemove: boolean) => {
     const wish = editWishes[wishIndex];
+    if (!wish) return null;
+    
     return (
-      <InlineWishEditor
-        wish={wish}
-        choiceIndex={wishIndex}
-        onChange={(field, value) => onUpdateEditWish(wishIndex, field, value)}
-      />
+      <div className="flex items-start gap-1">
+        <div className="flex-1">
+          <InlineWishEditor
+            wish={wish}
+            choiceIndex={wishIndex}
+            onChange={(field, value) => onUpdateEditWish(wishIndex, field, value)}
+          />
+        </div>
+        {canRemove && (
+          <button
+            onClick={() => onRemoveWish(wishIndex)}
+            className="h-7 w-7 flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors rounded"
+            title={t.common.delete}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
     );
+  };
+
+  // Count extra wishes beyond 3 for display indicator
+  const getExtraWishesCount = (wishes: WishChoice[]) => {
+    const filledWishes = wishes.filter(w => w.class_id);
+    return Math.max(0, filledWishes.length - 3);
   };
 
   if (members.length === 0) {
@@ -163,98 +190,148 @@ export const RosterTable = ({
             {members.map((member) => {
               const isOwnRow = member.id === currentUserId;
               const isEditing = editingUserId === member.id;
+              const extraWishes = getExtraWishesCount(member.wishes);
               
               return (
-                <TableRow 
-                  key={member.id}
-                  className={cn(
-                    "border-border/20",
-                    isOwnRow ? "bg-primary/[0.02]" : "",
-                    isEditing && "bg-primary/[0.05]"
-                  )}
-                >
-                  <TableCell className="font-medium text-foreground text-sm py-2 px-2 md:px-3">
-                    <span className="truncate">{member.username}</span>
-                  </TableCell>
-                  <TableCell className="py-2 px-2 md:px-3">
-                    {isEditing ? (
-                      <CommitmentToggle 
-                        status={editStatus} 
-                        onChange={onEditStatusChange}
-                        compact
-                        asBadge
-                      />
-                    ) : (
-                      <Badge 
-                        variant={member.status === 'confirmed' ? 'default' : 'outline'}
-                        className={cn(
-                          "text-[10px] md:text-xs px-1.5 py-0.5",
-                          member.status === 'confirmed' 
-                            ? 'bg-healer/20 text-healer border-healer/30' 
-                            : member.status === 'withdrawn'
-                            ? 'bg-destructive/20 text-destructive border-destructive/30'
-                            : 'bg-amber-500/20 text-amber-500 border-amber-500/30'
-                        )}
-                      >
-                        {member.status === 'confirmed' ? (
-                          <><CheckCircle className="h-3 w-3" strokeWidth={1.5} /><span className="hidden md:inline ml-1">{t.wishes.commitment.confirmed}</span></>
-                        ) : member.status === 'withdrawn' ? (
-                          <><XCircle className="h-3 w-3" strokeWidth={1.5} /><span className="hidden md:inline ml-1">{t.wishes.commitment.withdrawn}</span></>
-                        ) : (
-                          <><HelpCircle className="h-3 w-3" strokeWidth={1.5} /><span className="hidden md:inline ml-1">{t.wishes.commitment.undecided}</span></>
-                        )}
-                      </Badge>
+                <Fragment key={member.id}>
+                  <TableRow 
+                    className={cn(
+                      "border-border/20",
+                      isOwnRow ? "bg-primary/[0.02]" : "",
+                      isEditing && "bg-primary/[0.05]"
                     )}
-                  </TableCell>
-                  <TableCell className="py-2 px-2 md:px-3">
-                    {isEditing ? renderEditWishCell(0) : renderWishCell(member.wishes, 1)}
-                  </TableCell>
-                  <TableCell className="py-2 px-2 md:px-3">
-                    {isEditing ? renderEditWishCell(1) : renderWishCell(member.wishes, 2)}
-                  </TableCell>
-                  <TableCell className="py-2 px-2 md:px-3">
-                    {isEditing ? renderEditWishCell(2) : renderWishCell(member.wishes, 3)}
-                  </TableCell>
-                  <TableCell className="py-2 px-2 md:px-3">
-                    {isOwnRow && (
-                      <div className="flex gap-1.5 justify-end">
-                        {isEditing ? (
-                          <>
+                  >
+                    <TableCell className="font-medium text-foreground text-sm py-2 px-2 md:px-3">
+                      <div className="flex items-center gap-1.5">
+                        <span className="truncate">{member.username}</span>
+                        {!isEditing && extraWishes > 0 && (
+                          <TooltipProvider delayDuration={200}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge variant="outline" className="text-[10px] px-1 py-0 text-muted-foreground border-muted-foreground/30 flex-shrink-0">
+                                  +{extraWishes}
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="text-xs">
+                                {extraWishes + 3} {language === 'fr' ? 'vœux au total' : 'wishes total'}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-2 px-2 md:px-3">
+                      {isEditing ? (
+                        <CommitmentToggle 
+                          status={editStatus} 
+                          onChange={onEditStatusChange}
+                          compact
+                          asBadge
+                        />
+                      ) : (
+                        <Badge 
+                          variant={member.status === 'confirmed' ? 'default' : 'outline'}
+                          className={cn(
+                            "text-[10px] md:text-xs px-1.5 py-0.5",
+                            member.status === 'confirmed' 
+                              ? 'bg-healer/20 text-healer border-healer/30' 
+                              : member.status === 'withdrawn'
+                              ? 'bg-destructive/20 text-destructive border-destructive/30'
+                              : 'bg-amber-500/20 text-amber-500 border-amber-500/30'
+                          )}
+                        >
+                          {member.status === 'confirmed' ? (
+                            <><CheckCircle className="h-3 w-3" strokeWidth={1.5} /><span className="hidden md:inline ml-1">{t.wishes.commitment.confirmed}</span></>
+                          ) : member.status === 'withdrawn' ? (
+                            <><XCircle className="h-3 w-3" strokeWidth={1.5} /><span className="hidden md:inline ml-1">{t.wishes.commitment.withdrawn}</span></>
+                          ) : (
+                            <><HelpCircle className="h-3 w-3" strokeWidth={1.5} /><span className="hidden md:inline ml-1">{t.wishes.commitment.undecided}</span></>
+                          )}
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="py-2 px-2 md:px-3">
+                      {isEditing ? renderEditWishCell(0, editWishes.length > 1) : renderWishCell(member.wishes, 1)}
+                    </TableCell>
+                    <TableCell className="py-2 px-2 md:px-3">
+                      {isEditing ? renderEditWishCell(1, editWishes.length > 1) : renderWishCell(member.wishes, 2)}
+                    </TableCell>
+                    <TableCell className="py-2 px-2 md:px-3">
+                      {isEditing ? renderEditWishCell(2, editWishes.length > 1) : renderWishCell(member.wishes, 3)}
+                    </TableCell>
+                    <TableCell className="py-2 px-2 md:px-3">
+                      {isOwnRow && (
+                        <div className="flex gap-1.5 justify-end">
+                          {isEditing ? (
+                            <>
+                              <CosmicButton 
+                                size="sm" 
+                                variant="outline" 
+                                onClick={onCancelEditing}
+                                className="h-8 px-2"
+                              >
+                                <X className="h-4 w-4" strokeWidth={1.5} />
+                              </CosmicButton>
+                              <CosmicButton 
+                                size="sm" 
+                                onClick={onSaveEditing}
+                                loading={saving}
+                                className="h-8 px-3"
+                              >
+                                <Save className="h-4 w-4" strokeWidth={1.5} />
+                              </CosmicButton>
+                            </>
+                          ) : (
                             <CosmicButton 
                               size="sm" 
                               variant="outline" 
-                              onClick={onCancelEditing}
-                              className="h-8 px-2"
-                            >
-                              <X className="h-4 w-4" strokeWidth={1.5} />
-                            </CosmicButton>
-                            <CosmicButton 
-                              size="sm" 
-                              onClick={onSaveEditing}
-                              loading={saving}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onStartEditing(member);
+                              }}
+                              icon={<Pencil className="h-3.5 w-3.5" strokeWidth={1.5} />}
                               className="h-8 px-3"
                             >
-                              <Save className="h-4 w-4" strokeWidth={1.5} />
+                              <span className="hidden md:inline">{t.common.edit}</span>
                             </CosmicButton>
-                          </>
-                        ) : (
-                          <CosmicButton 
-                            size="sm" 
-                            variant="outline" 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onStartEditing(member);
-                            }}
-                            icon={<Pencil className="h-3.5 w-3.5" strokeWidth={1.5} />}
-                            className="h-8 px-3"
-                          >
-                            <span className="hidden md:inline">{t.common.edit}</span>
-                          </CosmicButton>
-                        )}
-                      </div>
-                    )}
-                  </TableCell>
-                </TableRow>
+                          )}
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                  
+                  {/* Additional wishes rows when editing */}
+                  {isEditing && editWishes.length > 3 && (
+                    <TableRow className="border-border/10 bg-primary/[0.03]">
+                      <TableCell colSpan={2} className="py-2 px-2 md:px-3">
+                        <span className="text-xs text-muted-foreground">
+                          {language === 'fr' ? 'Vœux supplémentaires' : 'Additional wishes'}
+                        </span>
+                      </TableCell>
+                      {editWishes.slice(3, 6).map((_, idx) => (
+                        <TableCell key={idx + 3} className="py-2 px-2 md:px-3">
+                          {renderEditWishCell(idx + 3, editWishes.length > 1)}
+                        </TableCell>
+                      ))}
+                      <TableCell className="py-2 px-2 md:px-3" />
+                    </TableRow>
+                  )}
+                  
+                  {/* Add wish button row when editing */}
+                  {isEditing && editWishes.length < maxWishes && (
+                    <TableRow className="border-border/10 bg-primary/[0.02]">
+                      <TableCell colSpan={6} className="py-2 px-2 md:px-3">
+                        <button
+                          onClick={onAddWish}
+                          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          {language === 'fr' ? 'Ajouter un vœu' : 'Add a wish'}
+                        </button>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </Fragment>
               );
             })}
           </TableBody>
