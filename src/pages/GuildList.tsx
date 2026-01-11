@@ -43,41 +43,93 @@ const GuildList = () => {
 
   const isConnected = !!profile?.battlenet_id;
 
-  // Handle OAuth callback - must wait for session to be available
+  const loadGuilds = async (userId: string) => {
+    setLoading(true);
+
+    const { data: memberships, error: membershipsError } = await supabase
+      .from('guild_members')
+      .select('guild_id, role')
+      .eq('user_id', userId);
+
+    if (membershipsError) {
+      console.error('Error fetching guild memberships:', membershipsError);
+      setGuilds([]);
+      setLoading(false);
+      return;
+    }
+
+    if (memberships && memberships.length > 0) {
+      const guildIds = memberships.map(m => m.guild_id);
+      const { data: guildData, error: guildError } = await supabase
+        .from('guilds')
+        .select('id, name, server, region, faction, owner_id')
+        .in('id', guildIds);
+
+      if (guildError) {
+        console.error('Error fetching guilds:', guildError);
+        setGuilds([]);
+        setLoading(false);
+        return;
+      }
+
+      if (guildData) {
+        const merged = guildData.map(g => ({
+          ...g,
+          region: g.region || 'eu',
+          faction: g.faction as 'horde' | 'alliance',
+          role: memberships.find(m => m.guild_id === g.id)?.role || 'member',
+        }));
+        setGuilds(merged);
+      }
+    } else {
+      setGuilds([]);
+    }
+
+    setLoading(false);
+  };
+
+  // Handle OAuth callback (return from Battle.net)
+  // Important: don't rely on AuthContext timing; Supabase client session is persisted and may be available
+  // before our context state updates.
   useEffect(() => {
-    // Wait for auth to finish loading
     if (authLoading) return;
-    if (!session?.access_token) return;
 
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
     const stateParam = urlParams.get('state');
     const storedState = localStorage.getItem('battlenet_state');
-    const storedRegion = localStorage.getItem('battlenet_region') as BattleNetRegion || 'eu';
+    const storedRegion = (localStorage.getItem('battlenet_region') as BattleNetRegion) || 'eu';
 
-    if (code && stateParam) {
-      let stateMatches = false;
-      try {
-        const parsedState = JSON.parse(stateParam);
-        stateMatches = storedState ? parsedState.state === storedState : true;
-      } catch {
-        stateMatches = storedState ? stateParam === storedState : true;
-      }
+    if (!code || !stateParam) return;
 
-      if (stateMatches || !storedState) {
-        handleOAuthCallback(code, storedRegion);
-        window.history.replaceState({}, document.title, window.location.pathname);
-        localStorage.removeItem('battlenet_state');
-        localStorage.removeItem('battlenet_region');
-      }
+    // Parse the state JSON to extract the actual state value
+    let stateMatches = false;
+    try {
+      const parsedState = JSON.parse(stateParam);
+      stateMatches = storedState ? parsedState.state === storedState : true;
+    } catch {
+      stateMatches = storedState ? stateParam === storedState : true;
     }
-  }, [authLoading, session?.access_token]);
+
+    if (stateMatches || !storedState) {
+      handleOAuthCallback(code, storedRegion);
+      window.history.replaceState({}, document.title, window.location.pathname);
+      localStorage.removeItem('battlenet_state');
+      localStorage.removeItem('battlenet_region');
+    } else {
+      toast.error(t.errors.generic);
+    }
+  }, [authLoading]);
 
   const handleOAuthCallback = async (code: string, region: BattleNetRegion = 'eu') => {
-    if (!session?.access_token) return;
-
     setIsConnecting(true);
     try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (!currentSession?.access_token) {
+        toast.error(t.errors.unauthorized);
+        return;
+      }
+
       const redirectUri = `${window.location.origin}${window.location.pathname}`;
 
       const { data, error } = await supabase.functions.invoke('battlenet-auth/callback', {
@@ -88,6 +140,10 @@ const GuildList = () => {
 
       toast.success(`${t.battlenet.connected} : ${data.battletag}`);
       await refreshProfile();
+
+      if (user?.id) {
+        await loadGuilds(user.id);
+      }
     } catch (error) {
       console.error('Error completing Battle.net connection:', error);
       toast.error(t.errors.generic);
@@ -97,7 +153,8 @@ const GuildList = () => {
   };
 
   const handleConnect = async () => {
-    if (!session?.access_token) {
+    const { data: { session: currentSession } } = await supabase.auth.getSession();
+    if (!currentSession?.access_token) {
       toast.error(t.errors.unauthorized);
       return;
     }
@@ -126,39 +183,13 @@ const GuildList = () => {
 
   useEffect(() => {
     if (authLoading) return;
-    
+
     if (!user) {
       navigate('/auth');
       return;
     }
-    
-    const fetchGuilds = async () => {
-      const { data: memberships } = await supabase
-        .from('guild_members')
-        .select('guild_id, role')
-        .eq('user_id', user.id);
 
-      if (memberships && memberships.length > 0) {
-        const guildIds = memberships.map(m => m.guild_id);
-        const { data: guildData } = await supabase
-          .from('guilds')
-          .select('id, name, server, region, faction, owner_id')
-          .in('id', guildIds);
-
-        if (guildData) {
-          const merged = guildData.map(g => ({
-            ...g,
-            region: g.region || 'eu',
-            faction: g.faction as 'horde' | 'alliance',
-            role: memberships.find(m => m.guild_id === g.id)?.role || 'member',
-          }));
-          setGuilds(merged);
-        }
-      }
-      setLoading(false);
-    };
-
-    fetchGuilds();
+    loadGuilds(user.id);
   }, [authLoading, user, navigate, profile?.battlenet_id]);
 
   if (authLoading || (loading && !user)) {
