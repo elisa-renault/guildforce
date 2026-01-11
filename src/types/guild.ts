@@ -50,6 +50,11 @@ export interface RoleStats {
   dps: number;
 }
 
+export interface RangeStats {
+  melee: number;
+  ranged: number;
+}
+
 /**
  * Filter state for roster view
  */
