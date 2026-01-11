@@ -147,8 +147,8 @@ export const CommitmentToggle = ({ status, onChange, compact = false, asBadge = 
               type="button"
               onClick={() => onChange(s)}
               className={cn(
-                "flex flex-col items-start gap-2 p-4 rounded-lg border transition-all duration-200 text-left",
-                "focus:outline-none focus:ring-0",
+                "flex flex-col items-start gap-2 p-4 rounded-lg border transition-all duration-200 text-left outline-none",
+                "focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0",
                 isActive 
                   ? statusConfig[s].colorClass
                   : "bg-card/50 border-border/50 hover:border-border"
