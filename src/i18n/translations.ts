@@ -234,6 +234,7 @@ export interface Translations {
     addRankRule: string;
     addUserRule: string;
     noAccessWarning: string;
+    noAccessMessage: string;
   };
   // Errors
   errors: {
@@ -468,7 +469,8 @@ export const translations: Record<Language, Translations> = {
       selectRoster: 'Select roster',
       default: 'Default',
       ranks: 'Ranks',
-      noAccess: 'No access rules',
+      noAccess: "You don't have access to this roster",
+      noAccessMessage: "You can view this roster but cannot edit your wishes.",
       accessRules: 'Who can submit wishes',
       byRank: 'By Rank',
       byUser: 'Specific User',
@@ -707,7 +709,8 @@ export const translations: Record<Language, Translations> = {
       selectRoster: 'Sélectionner un roster',
       default: 'Principal',
       ranks: 'Rangs',
-      noAccess: 'Aucune règle d\'accès',
+      noAccess: "Vous n'avez pas accès à ce roster",
+      noAccessMessage: "Vous pouvez voir ce roster mais ne pouvez pas modifier vos vœux.",
       accessRules: 'Qui peut renseigner ses vœux',
       byRank: 'Par Rang',
       byUser: 'Utilisateur spécifique',

@@ -8,6 +8,7 @@ import { getClassById, getSpecById, getRolesFromSpecs, Role, wowClasses } from '
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
 import { StatsCards, RosterFilters, RosterTable } from '@/components/dashboard';
+import { RosterSelector } from '@/components/roster';
 import { MemberWish, WishData, RoleStats, RangeStats, RosterFilters as RosterFiltersType } from '@/types/guild';
 import { Loader2, Download, Sparkles, ArrowLeft, Settings } from 'lucide-react';
 import { toSlug, getGuildWishesPath, getGuildSettingsPath } from '@/lib/guildSlug';
@@ -16,6 +17,13 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 // Max wishes = number of WoW classes
 const MAX_WISHES = wowClasses.length;
+
+interface RosterData {
+  id: string;
+  name: string;
+  is_default: boolean;
+  hasAccess: boolean;
+}
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -43,6 +51,10 @@ const Dashboard = () => {
   ]);
   const [editStatus, setEditStatus] = useState<CommitmentStatus>('undecided');
   const [saving, setSaving] = useState(false);
+  
+  // Roster state
+  const [rosters, setRosters] = useState<RosterData[]>([]);
+  const [selectedRosterId, setSelectedRosterId] = useState<string | null>(null);
 
   const fetchData = async () => {
     if (!user || !regionSlug || !serverSlug || !guildSlug) return;
@@ -83,10 +95,50 @@ const Dashboard = () => {
     const userIsGM = membershipData.role === 'gm';
     setIsGM(userIsGM);
 
+    // Fetch rosters and check access
+    const { data: rostersData } = await supabase
+      .from('rosters')
+      .select('*')
+      .eq('guild_id', foundGuildId)
+      .order('is_default', { ascending: false })
+      .order('created_at', { ascending: true });
+
+    if (rostersData) {
+      // Check access for each roster
+      const rostersWithAccess: RosterData[] = await Promise.all(
+        rostersData.map(async (roster) => {
+          const { data: hasAccess } = await supabase.rpc('has_roster_access', {
+            p_roster_id: roster.id,
+            p_user_id: user.id,
+          });
+          return {
+            id: roster.id,
+            name: roster.name,
+            is_default: roster.is_default,
+            hasAccess: hasAccess || false,
+          };
+        })
+      );
+      setRosters(rostersWithAccess);
+      
+      // Select default roster or first accessible
+      const defaultRoster = rostersWithAccess.find(r => r.is_default) || rostersWithAccess[0];
+      if (defaultRoster && !selectedRosterId) {
+        setSelectedRosterId(defaultRoster.id);
+      }
+    }
+
+    setLoading(false);
+  };
+
+  // Fetch wishes when roster changes
+  const fetchWishes = async () => {
+    if (!guildId || !selectedRosterId) return;
+
     const { data: membersData } = await supabase
       .from('guild_members')
       .select('user_id, status')
-      .eq('guild_id', foundGuildId);
+      .eq('guild_id', guildId);
 
     if (membersData) {
       const userIds = membersData.map(m => m.user_id);
@@ -96,10 +148,12 @@ const Dashboard = () => {
         .select('id, username')
         .in('id', userIds);
 
+      // Filter wishes by selected roster
       const { data: wishesData } = await supabase
         .from('class_wishes')
         .select('user_id, choice_index, class_id, spec_ids, comment')
-        .eq('guild_id', foundGuildId);
+        .eq('guild_id', guildId)
+        .eq('roster_id', selectedRosterId);
 
       const mergedMembers: MemberWish[] = membersData.map(m => {
         const profile = profiles?.find(p => p.id === m.user_id);
@@ -114,8 +168,6 @@ const Dashboard = () => {
 
       setMembers(mergedMembers);
     }
-
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -125,6 +177,12 @@ const Dashboard = () => {
     }
     fetchData();
   }, [user, regionSlug, serverSlug, guildSlug, navigate]);
+
+  useEffect(() => {
+    if (guildId && selectedRosterId) {
+      fetchWishes();
+    }
+  }, [guildId, selectedRosterId]);
 
   const toggleRow = (memberId: string) => {
     const newExpanded = new Set(expandedRows);
@@ -138,6 +196,13 @@ const Dashboard = () => {
 
   const startEditing = (member: MemberWish) => {
     if (member.id !== user?.id) return;
+    
+    // Check if user has access to this roster
+    const currentRoster = rosters.find(r => r.id === selectedRosterId);
+    if (!currentRoster?.hasAccess) {
+      toast({ title: t.rosters?.noAccess || 'No access to this roster', variant: 'destructive' });
+      return;
+    }
     
     // Load all wishes from member, ensuring at least 3 slots
     const wishCount = Math.max(3, member.wishes.length);
@@ -205,7 +270,7 @@ const Dashboard = () => {
   };
 
   const saveEditing = async () => {
-    if (!user || !guildId || !editingUserId) return;
+    if (!user || !guildId || !editingUserId || !selectedRosterId) return;
     setSaving(true);
 
     try {
@@ -217,18 +282,20 @@ const Dashboard = () => {
         .eq('guild_id', guildId)
         .eq('user_id', user.id);
 
-      // Delete all existing wishes for this user/guild first
+      // Delete all existing wishes for this user/guild/roster first
       await supabase
         .from('class_wishes')
         .delete()
         .eq('guild_id', guildId)
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .eq('roster_id', selectedRosterId);
 
-      // Insert all non-empty wishes
+      // Insert all non-empty wishes with roster_id
       const wishesToInsert = editWishes
         .map((w, i) => ({
           guild_id: guildId,
           user_id: user.id,
+          roster_id: selectedRosterId,
           choice_index: i + 1,
           class_id: w.classId,
           spec_ids: w.specIds,
@@ -245,7 +312,7 @@ const Dashboard = () => {
 
       toast({ title: t.wishes.wishesSaved });
       setEditingUserId(null);
-      await fetchData();
+      await fetchWishes();
     } catch (error: any) {
       toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
     } finally {
@@ -351,6 +418,8 @@ const Dashboard = () => {
     );
   }
 
+  const currentRoster = rosters.find(r => r.id === selectedRosterId);
+
   return (
     <div className="min-h-screen relative pt-16">
       <CosmicBackground />
@@ -372,6 +441,14 @@ const Dashboard = () => {
               </Avatar>
             )}
             <h1 className="text-sm md:text-lg font-semibold text-foreground truncate">{guild?.name}</h1>
+            
+            {/* Roster selector */}
+            <RosterSelector
+              rosters={rosters}
+              selectedRosterId={selectedRosterId}
+              onSelect={setSelectedRosterId}
+              showAccessIndicator={true}
+            />
           </div>
           <div className="flex gap-1.5 md:gap-2">
             <CosmicButton size="sm" variant="outline" onClick={() => guild && navigate(getGuildWishesPath(guild.region, guild.server, guild.name))} icon={<Sparkles className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 md:h-8 px-2 md:px-3">
@@ -392,6 +469,13 @@ const Dashboard = () => {
       </div>
 
       <main className="container mx-auto px-3 md:px-4 py-4 md:py-6 relative z-10">
+        {/* Access warning */}
+        {currentRoster && !currentRoster.hasAccess && (
+          <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive">
+            {t.rosters?.noAccessMessage || 'You can view this roster but cannot edit your wishes.'}
+          </div>
+        )}
+        
         <StatsCards 
           totalPlayers={totalPlayers} 
           confirmedPlayers={confirmedPlayers} 
