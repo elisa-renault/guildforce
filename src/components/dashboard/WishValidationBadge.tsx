@@ -70,12 +70,18 @@ export const WishValidationBadge = ({
 
   // For GM: show validation actions on hover - fixed width container
   if (isGM && onValidate) {
+    const handleContainerClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      e.preventDefault();
+    };
+
     return (
       <div 
         className="relative w-[72px] h-7"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        onClick={(e) => e.stopPropagation()}
+        onClick={handleContainerClick}
+        onMouseDown={(e) => e.stopPropagation()}
       >
         {/* Actions overlay */}
         <div className={cn(
