@@ -16,6 +16,7 @@ import GuildSettings from "./pages/GuildSettings";
 import Profile from "./pages/Profile";
 import Forum from "./pages/Forum";
 import ForumCategory from "./pages/ForumCategory";
+import ForumNewTopic from "./pages/ForumNewTopic";
 import ForumTopic from "./pages/ForumTopic";
 import NotFound from "./pages/NotFound";
 
@@ -38,6 +39,7 @@ const App = () => (
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/forum" element={<Forum />} />
                 <Route path="/forum/category/:categorySlug" element={<ForumCategory />} />
+                <Route path="/forum/category/:categorySlug/new" element={<ForumNewTopic />} />
                 <Route path="/forum/topic/:topicId" element={<ForumTopic />} />
                 <Route path="/guild/:regionSlug/:serverSlug/:guildSlug" element={<Dashboard />} />
                 <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/wishes" element={<Wishes />} />
