@@ -211,6 +211,30 @@ export interface Translations {
     comingSoon: string;
     gmOnly: string;
   };
+  // Rosters
+  rosters: {
+    title: string;
+    createRoster: string;
+    editRoster: string;
+    rosterName: string;
+    rosterNamePlaceholder: string;
+    rosterDescription: string;
+    rosterDescriptionPlaceholder: string;
+    rosterCreated: string;
+    rosterUpdated: string;
+    rosterDeleted: string;
+    selectRoster: string;
+    default: string;
+    ranks: string;
+    noAccess: string;
+    accessRules: string;
+    byRank: string;
+    byUser: string;
+    selectUser: string;
+    addRankRule: string;
+    addUserRule: string;
+    noAccessWarning: string;
+  };
   // Errors
   errors: {
     generic: string;
@@ -430,6 +454,29 @@ export const translations: Record<Language, Translations> = {
       comingSoon: 'Coming Soon',
       gmOnly: 'Only Guild Masters can access this page',
     },
+    rosters: {
+      title: 'Rosters',
+      createRoster: 'New Roster',
+      editRoster: 'Edit Roster',
+      rosterName: 'Name',
+      rosterNamePlaceholder: 'e.g., Mythic Roster',
+      rosterDescription: 'Description',
+      rosterDescriptionPlaceholder: 'Optional description',
+      rosterCreated: 'Roster created',
+      rosterUpdated: 'Roster updated',
+      rosterDeleted: 'Roster deleted',
+      selectRoster: 'Select roster',
+      default: 'Default',
+      ranks: 'Ranks',
+      noAccess: 'No access rules',
+      accessRules: 'Who can submit wishes',
+      byRank: 'By Rank',
+      byUser: 'Specific User',
+      selectUser: 'Select user',
+      addRankRule: 'Add Rank Rule',
+      addUserRule: 'Add User',
+      noAccessWarning: 'No access rules defined. Only GMs will be able to submit wishes.',
+    },
     errors: {
       generic: 'Something went wrong. Please try again.',
       network: 'Network error. Please check your connection.',
@@ -645,6 +692,29 @@ export const translations: Record<Language, Translations> = {
       syncedFromBnet: 'Ces informations sont synchronisées depuis Battle.net',
       comingSoon: 'À venir',
       gmOnly: 'Seuls les Guild Masters peuvent accéder à cette page',
+    },
+    rosters: {
+      title: 'Rosters',
+      createRoster: 'Nouveau Roster',
+      editRoster: 'Modifier le Roster',
+      rosterName: 'Nom',
+      rosterNamePlaceholder: 'ex: Roster Mythique',
+      rosterDescription: 'Description',
+      rosterDescriptionPlaceholder: 'Description optionnelle',
+      rosterCreated: 'Roster créé',
+      rosterUpdated: 'Roster mis à jour',
+      rosterDeleted: 'Roster supprimé',
+      selectRoster: 'Sélectionner un roster',
+      default: 'Principal',
+      ranks: 'Rangs',
+      noAccess: 'Aucune règle d\'accès',
+      accessRules: 'Qui peut renseigner ses vœux',
+      byRank: 'Par Rang',
+      byUser: 'Utilisateur spécifique',
+      selectUser: 'Sélectionner un utilisateur',
+      addRankRule: 'Ajouter une règle de rang',
+      addUserRule: 'Ajouter un utilisateur',
+      noAccessWarning: 'Aucune règle d\'accès définie. Seuls les GM pourront renseigner des vœux.',
     },
     errors: {
       generic: 'Une erreur est survenue. Veuillez réessayer.',
