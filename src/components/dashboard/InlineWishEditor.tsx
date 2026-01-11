@@ -1,7 +1,6 @@
 import { useLanguage } from '@/contexts/LanguageContext';
 import { wowClasses, getClassById, getSpecById, Role } from '@/data/wowClasses';
 import { WishData } from '@/types/guild';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
@@ -31,7 +30,6 @@ export const InlineWishEditor = ({ wish, choiceIndex, onChange }: InlineWishEdit
   const selectedSpecs = wish.specIds.map(id => getSpecById(id)).filter(Boolean);
 
   const handleClassSelect = (classId: string) => {
-    // Toggle off if same class selected
     if (wish.classId === classId) {
       onChange('classId', '');
     } else {
@@ -49,31 +47,32 @@ export const InlineWishEditor = ({ wish, choiceIndex, onChange }: InlineWishEdit
   };
 
   return (
-    <div className="flex items-center gap-2 flex-wrap">
-      {/* Class Dropdown */}
+    <div className="flex flex-col gap-1.5">
+      {/* Class Selector */}
       <Popover open={classOpen} onOpenChange={setClassOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
             size="sm"
             className={cn(
-              "h-8 min-w-[120px] justify-between gap-2 text-xs",
+              "h-7 w-full justify-between gap-1 text-xs font-medium",
               selectedClass 
-                ? "border-border/50" 
-                : "border-dashed border-muted-foreground/30 text-muted-foreground"
+                ? "border-transparent" 
+                : "border-dashed border-muted-foreground/40 text-muted-foreground bg-transparent hover:bg-muted/20"
             )}
             style={selectedClass ? {
-              backgroundColor: `hsl(var(--class-${selectedClass.id}) / 0.15)`,
-              borderColor: `hsl(var(--class-${selectedClass.id}) / 0.4)`,
+              backgroundColor: `hsl(var(--class-${selectedClass.id}) / 0.2)`,
               color: `hsl(var(--class-${selectedClass.id}))`
             } : undefined}
           >
-            {selectedClass ? selectedClass.name[language] : t.wishes.selectClass}
-            <ChevronDown className="h-3 w-3 opacity-50" />
+            <span className="truncate">
+              {selectedClass ? selectedClass.name[language] : t.wishes.selectClass}
+            </span>
+            <ChevronDown className="h-3 w-3 opacity-50 flex-shrink-0" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-44 p-2 bg-card border-border z-50" align="start">
-          <div className="flex flex-col gap-0.5 max-h-[300px] overflow-y-auto">
+        <PopoverContent className="w-44 p-1.5 bg-card border-border z-50" align="start">
+          <div className="flex flex-col gap-0.5 max-h-[280px] overflow-y-auto">
             {wowClasses.map((cls) => {
               const isSelected = wish.classId === cls.id;
               return (
@@ -81,7 +80,7 @@ export const InlineWishEditor = ({ wish, choiceIndex, onChange }: InlineWishEdit
                   key={cls.id}
                   onClick={() => handleClassSelect(cls.id)}
                   className={cn(
-                    "relative flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-colors text-left whitespace-nowrap",
+                    "flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-colors text-left",
                     isSelected 
                       ? "bg-primary/20" 
                       : "hover:bg-primary/10"
@@ -89,7 +88,7 @@ export const InlineWishEditor = ({ wish, choiceIndex, onChange }: InlineWishEdit
                   style={{ color: `hsl(var(--class-${cls.id}))` }}
                 >
                   {isSelected && <Check className="h-3 w-3 flex-shrink-0" />}
-                  <span>{cls.name[language]}</span>
+                  <span className="truncate">{cls.name[language]}</span>
                 </button>
               );
             })}
@@ -97,88 +96,92 @@ export const InlineWishEditor = ({ wish, choiceIndex, onChange }: InlineWishEdit
         </PopoverContent>
       </Popover>
 
-      {/* Spec Dropdown - only shown if class is selected */}
-      {selectedClass && (
-        <Popover open={specOpen} onOpenChange={setSpecOpen}>
+      {/* Specs & Comment Row */}
+      <div className="flex items-center gap-1">
+        {/* Spec Selector */}
+        {selectedClass ? (
+          <Popover open={specOpen} onOpenChange={setSpecOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className={cn(
+                  "h-6 flex-1 justify-between gap-1 text-[10px] bg-background/50",
+                  selectedSpecs.length > 0
+                    ? "border-border/60"
+                    : "border-dashed border-muted-foreground/30 text-muted-foreground"
+                )}
+              >
+                {selectedSpecs.length > 0 ? (
+                  <span className="flex items-center gap-0.5">
+                    {selectedSpecs.map(spec => {
+                      const config = roleConfig[spec!.role];
+                      const Icon = config.icon;
+                      return <Icon key={spec!.id} className={cn("h-3 w-3", config.color)} />;
+                    })}
+                  </span>
+                ) : (
+                  <span className="truncate">{t.wishes.specs}</span>
+                )}
+                <ChevronDown className="h-2.5 w-2.5 opacity-50 flex-shrink-0" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-44 p-1.5 bg-card border-border z-50" align="start">
+              <div className="space-y-0.5">
+                {selectedClass.specs.map((spec) => {
+                  const isSelected = wish.specIds.includes(spec.id);
+                  const config = roleConfig[spec.role];
+                  const Icon = config.icon;
+                  
+                  return (
+                    <button
+                      key={spec.id}
+                      onClick={() => handleSpecToggle(spec.id)}
+                      className={cn(
+                        "w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-colors text-left",
+                        isSelected 
+                          ? "bg-primary/20" 
+                          : "hover:bg-primary/10"
+                      )}
+                    >
+                      <Icon className={cn("h-3.5 w-3.5", config.color)} />
+                      <span className="flex-1 truncate">{spec.name[language]}</span>
+                      {isSelected && <Check className="h-3 w-3 text-primary flex-shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </PopoverContent>
+          </Popover>
+        ) : (
+          <div className="flex-1" />
+        )}
+
+        {/* Comment Button */}
+        <Popover open={commentOpen} onOpenChange={setCommentOpen}>
           <PopoverTrigger asChild>
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               className={cn(
-                "h-8 min-w-[100px] justify-between gap-2 text-xs",
-                selectedSpecs.length > 0
-                  ? "border-border/50"
-                  : "border-dashed border-muted-foreground/30 text-muted-foreground"
+                "h-6 w-6 p-0",
+                wish.comment ? "text-primary" : "text-muted-foreground/50 hover:text-muted-foreground"
               )}
+              title={t.wishes.comment}
             >
-              {selectedSpecs.length > 0 ? (
-                <span className="flex items-center gap-1">
-                  {selectedSpecs.slice(0, 2).map(spec => {
-                    const config = roleConfig[spec!.role];
-                    const Icon = config.icon;
-                    return <Icon key={spec!.id} className={cn("h-3.5 w-3.5", config.color)} />;
-                  })}
-                  {selectedSpecs.length > 2 && <span>+{selectedSpecs.length - 2}</span>}
-                </span>
-              ) : (
-                t.wishes.selectSpecs
-              )}
-              <ChevronDown className="h-3 w-3 opacity-50" />
+              <MessageSquare className="h-3 w-3" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-48 p-2 bg-card border-border z-50" align="start">
-            <div className="space-y-1">
-              {selectedClass.specs.map((spec) => {
-                const isSelected = wish.specIds.includes(spec.id);
-                const config = roleConfig[spec.role];
-                const Icon = config.icon;
-                
-                return (
-                  <button
-                    key={spec.id}
-                    onClick={() => handleSpecToggle(spec.id)}
-                    className={cn(
-                      "w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-colors text-left",
-                      isSelected 
-                        ? "bg-primary/20" 
-                        : "hover:bg-primary/10"
-                    )}
-                  >
-                    <Icon className={cn("h-4 w-4", config.color)} />
-                    <span className="flex-1">{spec.name[language]}</span>
-                    {isSelected && <Check className="h-3 w-3 text-primary" />}
-                  </button>
-                );
-              })}
-            </div>
+          <PopoverContent className="w-56 p-2 bg-card border-border z-50" align="end">
+            <Textarea
+              placeholder={t.wishes.commentPlaceholder}
+              value={wish.comment}
+              onChange={(e) => onChange('comment', e.target.value)}
+              className="min-h-[60px] resize-none text-xs"
+            />
           </PopoverContent>
         </Popover>
-      )}
-
-      {/* Comment Button */}
-      <Popover open={commentOpen} onOpenChange={setCommentOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className={cn(
-              "h-8 w-8 p-0",
-              wish.comment ? "text-primary" : "text-muted-foreground"
-            )}
-            title={t.wishes.comment}
-          >
-            <MessageSquare className="h-4 w-4" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-64 p-3 bg-card border-border z-50" align="start">
-          <Textarea
-            placeholder={t.wishes.commentPlaceholder}
-            value={wish.comment}
-            onChange={(e) => onChange('comment', e.target.value)}
-            className="min-h-[80px] resize-none text-sm"
-          />
-        </PopoverContent>
-      </Popover>
+      </div>
     </div>
   );
 };
