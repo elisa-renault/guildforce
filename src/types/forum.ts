@@ -43,8 +43,7 @@ export interface ForumTopic {
     username: string;
   } | null;
   category?: ForumCategory;
-  reaction_count?: number;
-  user_has_reacted?: boolean;
+  reactions?: ReactionSummary;
 }
 
 export interface ForumPost {
@@ -68,8 +67,7 @@ export interface ForumPost {
       username: string;
     };
   } | null;
-  reaction_count?: number;
-  user_has_reacted?: boolean;
+  reactions?: ReactionSummary;
 }
 
 export interface ForumReaction {
@@ -79,4 +77,23 @@ export interface ForumReaction {
   post_id: string | null;
   reaction_type: string;
   created_at: string;
+}
+
+// Available reaction types with their emojis
+export const REACTION_TYPES = {
+  like: '👍',
+  love: '❤️',
+  laugh: '😄',
+  wow: '😮',
+  sad: '😢',
+  angry: '😠',
+} as const;
+
+export type ReactionType = keyof typeof REACTION_TYPES;
+
+// Summary of reactions for a post/topic
+export interface ReactionSummary {
+  counts: Record<ReactionType, number>;
+  userReactions: ReactionType[];
+  total: number;
 }

@@ -1,7 +1,48 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { ForumCategory, ForumTopic, ForumPost } from '@/types/forum';
+import { ForumCategory, ForumTopic, ForumPost, ReactionSummary, ReactionType, REACTION_TYPES } from '@/types/forum';
 import { useAuth } from '@/contexts/AuthContext';
+
+// Helper function to get reactions summary for a topic or post
+async function getReactionsSummary(
+  type: 'topic' | 'post',
+  id: string,
+  userId?: string
+): Promise<ReactionSummary> {
+  const column = type === 'topic' ? 'topic_id' : 'post_id';
+  
+  // Get all reactions for this item
+  const { data: reactions } = await supabase
+    .from('forum_reactions')
+    .select('reaction_type, user_id')
+    .eq(column, id);
+
+  // Initialize counts
+  const counts: Record<ReactionType, number> = {
+    like: 0,
+    love: 0,
+    laugh: 0,
+    wow: 0,
+    sad: 0,
+    angry: 0,
+  };
+  
+  const userReactions: ReactionType[] = [];
+  let total = 0;
+
+  (reactions || []).forEach((r) => {
+    const reactionType = r.reaction_type as ReactionType;
+    if (reactionType in counts) {
+      counts[reactionType]++;
+      total++;
+      if (userId && r.user_id === userId) {
+        userReactions.push(reactionType);
+      }
+    }
+  });
+
+  return { counts, userReactions, total };
+}
 
 export function useForumCategories(guildId?: string | null) {
   const [categories, setCategories] = useState<ForumCategory[]>([]);
@@ -94,7 +135,6 @@ export function useForumTopics(categoryId: string | null, page: number = 1, limi
       const from = (page - 1) * limit;
       const to = from + limit - 1;
 
-      // Get total count
       const { count } = await supabase
         .from('forum_topics')
         .select('*', { count: 'exact', head: true })
@@ -102,7 +142,6 @@ export function useForumTopics(categoryId: string | null, page: number = 1, limi
 
       setTotalCount(count || 0);
 
-      // Get topics with authors
       const { data, error: fetchError } = await supabase
         .from('forum_topics')
         .select('*')
@@ -114,7 +153,6 @@ export function useForumTopics(categoryId: string | null, page: number = 1, limi
 
       if (fetchError) throw fetchError;
 
-      // Enrich with author info
       const enrichedTopics = await Promise.all(
         (data || []).map(async (topic) => {
           const { data: author } = await supabase
@@ -133,30 +171,14 @@ export function useForumTopics(categoryId: string | null, page: number = 1, limi
             lastReplyAuthor = lra;
           }
 
-          // Get reaction count
-          const { count: reactionCount } = await supabase
-            .from('forum_reactions')
-            .select('*', { count: 'exact', head: true })
-            .eq('topic_id', topic.id);
-
-          // Check if user has reacted
-          let userHasReacted = false;
-          if (user) {
-            const { data: userReaction } = await supabase
-              .from('forum_reactions')
-              .select('id')
-              .eq('topic_id', topic.id)
-              .eq('user_id', user.id)
-              .limit(1);
-            userHasReacted = (userReaction?.length || 0) > 0;
-          }
+          // Get reactions summary
+          const reactions = await getReactionsSummary('topic', topic.id, user?.id);
 
           return {
             ...topic,
             author,
             last_reply_author: lastReplyAuthor,
-            reaction_count: reactionCount || 0,
-            user_has_reacted: userHasReacted,
+            reactions,
           } as ForumTopic;
         })
       );
@@ -239,30 +261,14 @@ export function useForumTopic(topicId: string | null) {
         .eq('id', data.category_id)
         .single();
 
-      // Get reaction count
-      const { count: reactionCount } = await supabase
-        .from('forum_reactions')
-        .select('*', { count: 'exact', head: true })
-        .eq('topic_id', topicId);
-
-      // Check if user has reacted
-      let userHasReacted = false;
-      if (user) {
-        const { data: userReaction } = await supabase
-          .from('forum_reactions')
-          .select('id')
-          .eq('topic_id', topicId)
-          .eq('user_id', user.id)
-          .limit(1);
-        userHasReacted = (userReaction?.length || 0) > 0;
-      }
+      // Get reactions summary
+      const reactions = await getReactionsSummary('topic', topicId, user?.id);
 
       setTopic({
         ...data,
         author,
         category,
-        reaction_count: reactionCount || 0,
-        user_has_reacted: userHasReacted,
+        reactions,
       } as ForumTopic);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch topic');
@@ -333,28 +339,14 @@ export function useForumPosts(topicId: string | null, page: number = 1, limit: n
             }
           }
 
-          const { count: reactionCount } = await supabase
-            .from('forum_reactions')
-            .select('*', { count: 'exact', head: true })
-            .eq('post_id', post.id);
-
-          let userHasReacted = false;
-          if (user) {
-            const { data: userReaction } = await supabase
-              .from('forum_reactions')
-              .select('id')
-              .eq('post_id', post.id)
-              .eq('user_id', user.id)
-              .limit(1);
-            userHasReacted = (userReaction?.length || 0) > 0;
-          }
+          // Get reactions summary
+          const reactions = await getReactionsSummary('post', post.id, user?.id);
 
           return {
             ...post,
             author,
             quoted_post: quotedPost,
-            reaction_count: reactionCount || 0,
-            user_has_reacted: userHasReacted,
+            reactions,
           } as ForumPost;
         })
       );
@@ -438,10 +430,13 @@ export function useForumActions() {
     return data;
   };
 
-  const updateTopic = async (topicId: string, updates: { title?: string; content?: string; is_pinned?: boolean; is_locked?: boolean }) => {
+  const updateTopic = async (
+    topicId: string,
+    updates: { title?: string; content?: string; is_pinned?: boolean; is_locked?: boolean }
+  ) => {
     const { data, error } = await supabase
       .from('forum_topics')
-      .update({ ...updates, updated_at: new Date().toISOString() })
+      .update(updates)
       .eq('id', topicId)
       .select()
       .single();
@@ -453,7 +448,7 @@ export function useForumActions() {
   const updatePost = async (postId: string, content: string) => {
     const { data, error } = await supabase
       .from('forum_posts')
-      .update({ content, is_edited: true, updated_at: new Date().toISOString() })
+      .update({ content, is_edited: true })
       .eq('id', postId)
       .select()
       .single();
@@ -480,17 +475,18 @@ export function useForumActions() {
     if (error) throw error;
   };
 
-  const toggleReaction = async (type: 'topic' | 'post', id: string) => {
+  const toggleReaction = async (type: 'topic' | 'post', id: string, reactionType: ReactionType = 'like') => {
     if (!user) throw new Error('Not authenticated');
 
     const column = type === 'topic' ? 'topic_id' : 'post_id';
 
-    // Check if already reacted
+    // Check if already reacted with this type
     const { data: existing } = await supabase
       .from('forum_reactions')
       .select('id')
       .eq(column, id)
       .eq('user_id', user.id)
+      .eq('reaction_type', reactionType)
       .limit(1);
 
     if (existing && existing.length > 0) {
@@ -507,7 +503,7 @@ export function useForumActions() {
         .insert({
           user_id: user.id,
           [column]: id,
-          reaction_type: 'like',
+          reaction_type: reactionType,
         });
       return true;
     }

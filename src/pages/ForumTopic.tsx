@@ -5,12 +5,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useForumTopic, useForumPosts, useForumActions } from '@/hooks/useForum';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
-import { ForumPost, MarkdownEditor } from '@/components/forum';
-import { ForumPost as ForumPostType } from '@/types/forum';
+import { ForumPost, MarkdownEditor, ReactionPicker } from '@/components/forum';
+import { ForumPost as ForumPostType, ReactionType } from '@/types/forum';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { 
-  Loader2, ArrowLeft, ChevronLeft, ChevronRight, Heart, Pin, Lock, 
+  Loader2, ArrowLeft, ChevronLeft, ChevronRight, Pin, Lock, 
   Edit3, Trash2, User, Clock, Eye, MessageSquare, Send
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -131,9 +131,9 @@ const ForumTopicPage = () => {
     }
   };
 
-  const handleReaction = async (type: 'topic' | 'post', id: string) => {
+  const handleReaction = async (type: 'topic' | 'post', id: string, reactionType: ReactionType = 'like') => {
     try {
-      await toggleReaction(type, id);
+      await toggleReaction(type, id, reactionType);
       if (type === 'topic') refetchTopic();
       else refetchPosts();
     } catch (error) {
@@ -247,18 +247,21 @@ const ForumTopicPage = () => {
                     {topic.reply_count} réponses
                   </span>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleReaction('topic', topic.id)}
-                  className={`h-7 px-2 ${topic.user_has_reacted ? 'text-red-500' : ''}`}
-                >
-                  <Heart className={`h-4 w-4 mr-1 ${topic.user_has_reacted ? 'fill-current' : ''}`} />
-                  {topic.reaction_count || 0}
-                </Button>
               </div>
               <div className="prose prose-invert prose-sm max-w-none">
                 <ReactMarkdown>{topic.content}</ReactMarkdown>
+              </div>
+              {/* Topic reactions */}
+              <div className="prose prose-invert prose-sm max-w-none">
+                <ReactMarkdown>{topic.content}</ReactMarkdown>
+              </div>
+              {/* Topic reactions */}
+              <div className="mt-3 pt-3 border-t border-border/30">
+                <ReactionPicker
+                  reactions={topic.reactions}
+                  onReaction={(reactionType) => handleReaction('topic', topic.id, reactionType)}
+                  disabled={topic.is_locked || !user}
+                />
               </div>
             </div>
           </div>
@@ -290,7 +293,7 @@ const ForumTopicPage = () => {
                   setDeleteTarget({ type: 'post', id });
                   setDeleteDialogOpen(true);
                 }}
-                onReaction={(id) => handleReaction('post', id)}
+                onReaction={(id, reactionType) => handleReaction('post', id, reactionType)}
                 isTopicLocked={topic.is_locked}
               />
             ))
