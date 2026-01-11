@@ -250,7 +250,7 @@ const Profile = () => {
       <main className="container mx-auto px-4 py-6 relative z-10">
         <h1 className="font-display text-2xl gradient-text mb-6">{t.profile.title}</h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-4xl">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-4xl mx-auto">
           {/* Left column: Avatar + Profile stacked */}
           <div className="space-y-4">
             {/* Avatar */}
