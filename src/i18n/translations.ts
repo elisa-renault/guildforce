@@ -146,6 +146,16 @@ export interface Translations {
       withdrawn: string;
       withdrawnDesc: string;
     };
+    validation: {
+      pending: string;
+      approved: string;
+      rejected: string;
+      approve: string;
+      reject: string;
+      reset: string;
+      approvedBy: string;
+      rejectedBy: string;
+    };
   };
   // Dashboard
   dashboard: {
@@ -448,6 +458,16 @@ export const translations: Record<Language, Translations> = {
         withdrawn: 'Withdrawn',
         withdrawnDesc: 'I will not participate this season',
       },
+      validation: {
+        pending: 'Pending',
+        approved: 'Approved',
+        rejected: 'Rejected',
+        approve: 'Approve',
+        reject: 'Reject',
+        reset: 'Reset',
+        approvedBy: 'Approved by',
+        rejectedBy: 'Rejected by',
+      },
     },
     dashboard: {
       title: 'Roster Dashboard',
@@ -741,6 +761,16 @@ export const translations: Record<Language, Translations> = {
         undecidedDesc: 'Ma disponibilité ou mon choix de classe peut changer',
         withdrawn: 'Retrait',
         withdrawnDesc: 'Je ne participerai pas cette saison',
+      },
+      validation: {
+        pending: 'En attente',
+        approved: 'Validé',
+        rejected: 'Refusé',
+        approve: 'Valider',
+        reject: 'Refuser',
+        reset: 'Réinitialiser',
+        approvedBy: 'Validé par',
+        rejectedBy: 'Refusé par',
       },
     },
     dashboard: {
