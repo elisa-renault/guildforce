@@ -165,7 +165,28 @@ export const ForumPost = ({
           </div>
         ) : (
           <div className="prose prose-invert prose-sm max-w-none">
-            <ReactMarkdown>{post.content}</ReactMarkdown>
+            <ReactMarkdown
+              components={{
+                // Custom renderer for mentions
+                a: ({ href, children }) => {
+                  // Check if this is a mention link (starts with /profile/)
+                  if (href?.startsWith('/profile/')) {
+                    return (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-primary/20 text-primary font-medium text-sm cursor-pointer hover:bg-primary/30 transition-colors">
+                        {children}
+                      </span>
+                    );
+                  }
+                  return (
+                    <a href={href} className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">
+                      {children}
+                    </a>
+                  );
+                },
+              }}
+            >
+              {post.content}
+            </ReactMarkdown>
           </div>
         )}
 
