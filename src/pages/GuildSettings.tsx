@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
+import { RosterManager } from '@/components/roster';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Loader2, ArrowLeft, Upload, Trash2, Shield, Info } from 'lucide-react';
 import { toSlug, getGuildPath } from '@/lib/guildSlug';
@@ -22,6 +23,32 @@ interface GuildData {
   avatar_url: string | null;
 }
 
+interface AccessRule {
+  id: string;
+  access_type: 'user' | 'rank';
+  user_id?: string;
+  min_rank_index?: number;
+  max_rank_index?: number;
+}
+
+interface Roster {
+  id: string;
+  name: string;
+  description: string | null;
+  is_default: boolean;
+  access_rules: AccessRule[];
+}
+
+interface GuildMember {
+  user_id: string;
+  username: string;
+}
+
+interface GuildRank {
+  rank_index: number;
+  rank_name: string;
+}
+
 const GuildSettings = () => {
   const navigate = useNavigate();
   const { regionSlug, serverSlug, guildSlug } = useParams();
@@ -35,6 +62,98 @@ const GuildSettings = () => {
   const [isGM, setIsGM] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const [rosters, setRosters] = useState<Roster[]>([]);
+  const [members, setMembers] = useState<GuildMember[]>([]);
+  const [ranks, setRanks] = useState<GuildRank[]>([]);
+
+  const loadRostersAndMembers = async (guildId: string) => {
+    // Load rosters with access rules
+    const { data: rostersData } = await supabase
+      .from('rosters')
+      .select('*')
+      .eq('guild_id', guildId)
+      .order('is_default', { ascending: false })
+      .order('created_at');
+
+    if (rostersData) {
+      // Load access rules for each roster
+      const rostersWithRules: Roster[] = await Promise.all(
+        rostersData.map(async (roster) => {
+          const { data: rulesData } = await supabase
+            .from('roster_access_rules')
+            .select('*')
+            .eq('roster_id', roster.id);
+
+          return {
+            id: roster.id,
+            name: roster.name,
+            description: roster.description,
+            is_default: roster.is_default,
+            access_rules: (rulesData || []).map(r => ({
+              id: r.id,
+              access_type: r.access_type as 'user' | 'rank',
+              user_id: r.user_id ?? undefined,
+              min_rank_index: r.min_rank_index ?? undefined,
+              max_rank_index: r.max_rank_index ?? undefined,
+            })),
+          };
+        })
+      );
+      setRosters(rostersWithRules);
+    }
+
+    // Load guild members with usernames
+    const { data: membersData } = await supabase
+      .from('guild_members')
+      .select('user_id')
+      .eq('guild_id', guildId);
+
+    if (membersData) {
+      const userIds = membersData.map(m => m.user_id);
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, username')
+        .in('id', userIds);
+
+      const membersWithNames: GuildMember[] = membersData.map(m => ({
+        user_id: m.user_id,
+        username: profilesData?.find(p => p.id === m.user_id)?.username || 'Unknown',
+      }));
+      setMembers(membersWithNames);
+    }
+
+    // Load guild ranks from wow_guild_memberships
+    const { data: guildData } = await supabase
+      .from('guilds')
+      .select('name, server, region')
+      .eq('id', guildId)
+      .single();
+
+    if (guildData) {
+      const { data: ranksData } = await supabase
+        .from('wow_guild_memberships')
+        .select('rank_index, rank_name')
+        .ilike('guild_name', guildData.name)
+        .ilike('guild_realm_slug', guildData.server)
+        .ilike('guild_region', guildData.region);
+
+      if (ranksData) {
+        // Deduplicate ranks
+        const uniqueRanks = new Map<number, string>();
+        ranksData.forEach(r => {
+          if (!uniqueRanks.has(r.rank_index)) {
+            uniqueRanks.set(r.rank_index, r.rank_name || `Rank ${r.rank_index}`);
+          }
+        });
+
+        const ranksArray: GuildRank[] = Array.from(uniqueRanks.entries())
+          .map(([rank_index, rank_name]) => ({ rank_index, rank_name }))
+          .sort((a, b) => a.rank_index - b.rank_index);
+        
+        setRanks(ranksArray);
+      }
+    }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -72,6 +191,10 @@ const GuildSettings = () => {
 
       setGuild(matchedGuild);
       setIsGM(true);
+      
+      // Load rosters, members, and ranks
+      await loadRostersAndMembers(matchedGuild.id);
+      
       setLoading(false);
     };
 
@@ -316,15 +439,16 @@ const GuildSettings = () => {
             </div>
           </GlowCard>
 
-          {/* Coming Soon Section */}
-          <GlowCard className="p-6 md:col-span-2">
-            <h2 className="font-display text-lg mb-4">{t.guildSettings.comingSoon}</h2>
-            <p className="text-muted-foreground text-sm">
-              {language === 'fr' 
-                ? 'De nouvelles fonctionnalités seront bientôt disponibles : gestion des officiers, annonces de guilde, paramètres de visibilité...'
-                : 'New features coming soon: officer management, guild announcements, visibility settings...'}
-            </p>
-          </GlowCard>
+          {/* Roster Manager Section */}
+          <div className="md:col-span-2">
+            <RosterManager
+              guildId={guild.id}
+              rosters={rosters}
+              members={members}
+              ranks={ranks}
+              onRosterChange={() => loadRostersAndMembers(guild.id)}
+            />
+          </div>
         </div>
       </main>
     </div>

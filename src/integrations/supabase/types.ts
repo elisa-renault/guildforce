@@ -84,6 +84,7 @@ export type Database = {
           created_at: string
           guild_id: string
           id: string
+          roster_id: string | null
           spec_ids: string[]
           updated_at: string
           user_id: string
@@ -95,6 +96,7 @@ export type Database = {
           created_at?: string
           guild_id: string
           id?: string
+          roster_id?: string | null
           spec_ids?: string[]
           updated_at?: string
           user_id: string
@@ -106,6 +108,7 @@ export type Database = {
           created_at?: string
           guild_id?: string
           id?: string
+          roster_id?: string | null
           spec_ids?: string[]
           updated_at?: string
           user_id?: string
@@ -116,6 +119,13 @@ export type Database = {
             columns: ["guild_id"]
             isOneToOne: false
             referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_wishes_roster_id_fkey"
+            columns: ["roster_id"]
+            isOneToOne: false
+            referencedRelation: "rosters"
             referencedColumns: ["id"]
           },
           {
@@ -243,6 +253,82 @@ export type Database = {
           username?: string
         }
         Relationships: []
+      }
+      roster_access_rules: {
+        Row: {
+          access_type: string
+          created_at: string
+          id: string
+          max_rank_index: number | null
+          min_rank_index: number | null
+          roster_id: string
+          user_id: string | null
+        }
+        Insert: {
+          access_type: string
+          created_at?: string
+          id?: string
+          max_rank_index?: number | null
+          min_rank_index?: number | null
+          roster_id: string
+          user_id?: string | null
+        }
+        Update: {
+          access_type?: string
+          created_at?: string
+          id?: string
+          max_rank_index?: number | null
+          min_rank_index?: number | null
+          roster_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roster_access_rules_roster_id_fkey"
+            columns: ["roster_id"]
+            isOneToOne: false
+            referencedRelation: "rosters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rosters: {
+        Row: {
+          created_at: string
+          description: string | null
+          guild_id: string
+          id: string
+          is_default: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          guild_id: string
+          id?: string
+          is_default?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          guild_id?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rosters_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wow_characters: {
         Row: {
@@ -374,6 +460,14 @@ export type Database = {
           main_character_name: string
           username: string
         }[]
+      }
+      has_roster_access: {
+        Args: { p_roster_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_guild_gm: {
+        Args: { p_guild_id: string; p_user_id: string }
+        Returns: boolean
       }
       is_guild_member: {
         Args: { _guild_id: string; _user_id: string }
