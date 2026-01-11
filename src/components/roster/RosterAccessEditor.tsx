@@ -119,53 +119,79 @@ const RankSlider = ({ maxValue, maxRank, ranks, onChange }: RankSliderProps) => 
   };
 
   return (
-    <div className="py-2 select-none">
-      <div 
-        ref={containerRef}
-        className="flex items-center justify-between cursor-pointer"
-        onMouseDown={handleMouseDown}
-        onTouchStart={handleTouchStart}
-      >
-        {allRankIndices.map((index, i) => {
-          const isSelected = index <= maxValue;
-          const isFirst = i === 0;
-          const isEndpoint = index === maxValue;
-          const prevSelected = i > 0 && allRankIndices[i - 1] <= maxValue;
-          
-          return (
-            <div key={index} className="flex-1 flex flex-col items-center relative">
-              {/* Connector line */}
-              {!isFirst && (
-                <div 
-                  className={`absolute top-[9px] right-1/2 w-full h-0.5 -z-10 transition-colors ${
-                    isSelected && prevSelected ? 'bg-primary' : 'bg-border'
+    <div className="py-4 select-none">
+      {/* Track container */}
+      <div className="relative h-8 flex items-center">
+        {/* Background track */}
+        <div 
+          ref={containerRef}
+          className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1 bg-border rounded-full cursor-pointer"
+          onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
+        />
+        
+        {/* Filled track */}
+        <div 
+          className="absolute top-1/2 -translate-y-1/2 h-1 bg-primary rounded-full pointer-events-none"
+          style={{ 
+            left: 0,
+            width: `${(maxValue / maxRank) * 100}%`
+          }}
+        />
+        
+        {/* Tick marks container - positioned absolutely */}
+        <div 
+          ref={containerRef}
+          className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between cursor-pointer"
+          onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
+        >
+          {allRankIndices.map((index) => {
+            const isSelected = index <= maxValue;
+            const isEndpoint = index === maxValue;
+            
+            return (
+              <div 
+                key={index} 
+                className="relative flex items-center justify-center"
+                style={{ width: '20px' }}
+              >
+                {/* Tick mark - fixed size container */}
+                <div
+                  onClick={(e) => { e.stopPropagation(); handleTickClick(index); }}
+                  className={`transition-colors z-10 ${
+                    isEndpoint 
+                      ? 'w-5 h-5 rounded-full bg-primary cursor-grab active:cursor-grabbing shadow-lg shadow-primary/40' 
+                      : isSelected
+                        ? 'w-2.5 h-2.5 rounded-full bg-primary cursor-pointer'
+                        : 'w-2.5 h-2.5 rounded-full bg-muted-foreground/40 cursor-pointer hover:bg-muted-foreground/60'
                   }`}
                 />
-              )}
-              
-              {/* Tick mark */}
-              <div
-                onClick={(e) => { e.stopPropagation(); handleTickClick(index); }}
-                className={`relative transition-all z-10 ${
-                  isEndpoint 
-                    ? 'w-5 h-5 rounded-full border-2 bg-primary border-primary cursor-grab active:cursor-grabbing shadow-lg shadow-primary/30' 
-                    : isSelected
-                      ? 'w-3 h-3 rounded-full bg-primary cursor-pointer hover:scale-125'
-                      : 'w-3 h-3 rounded-full bg-muted-foreground/30 cursor-pointer hover:bg-muted-foreground/50'
-                }`}
-              >
-                {/* GM lock indicator */}
+                
+                {/* GM Crown - positioned above */}
                 {index === 0 && (
-                  <Crown className="absolute -top-4 left-1/2 -translate-x-1/2 h-3 w-3 text-primary" />
+                  <Crown className="absolute -top-5 h-3.5 w-3.5 text-primary" />
                 )}
               </div>
-              
-              {/* Label */}
+            );
+          })}
+        </div>
+      </div>
+      
+      {/* Labels row - separate fixed grid */}
+      <div className="flex justify-between mt-2">
+        {allRankIndices.map((index) => {
+          const isSelected = index <= maxValue;
+          return (
+            <div 
+              key={index} 
+              className="flex justify-center"
+              style={{ width: '20px' }}
+            >
               <span 
-                className={`text-[10px] mt-1.5 whitespace-nowrap transition-colors ${
+                className={`text-[10px] tabular-nums ${
                   isSelected ? 'text-foreground font-medium' : 'text-muted-foreground'
                 }`}
-                title={getRankName(index)}
               >
                 {index}
               </span>
@@ -174,7 +200,7 @@ const RankSlider = ({ maxValue, maxRank, ranks, onChange }: RankSliderProps) => 
         })}
       </div>
       
-      {/* Show selected range description */}
+      {/* Range description */}
       <div className="text-xs text-muted-foreground mt-3 text-center">
         <span className="text-primary font-medium">{getRankName(0)}</span>
         {maxValue > 0 && (
