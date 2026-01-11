@@ -17,7 +17,7 @@ const NotFound = () => {
     <div className="min-h-screen flex items-center justify-center p-4 relative">
       <CosmicBackground />
 
-      <GlowCard className="w-full max-w-md p-8 text-center relative z-10 animate-scale-in">
+      <GlowCard className="w-full max-w-md p-8 text-center relative z-10">
         <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 border border-primary/20 flex items-center justify-center">
           <AlertCircle className="h-8 w-8 text-primary" />
         </div>

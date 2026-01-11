@@ -170,14 +170,14 @@ export const RosterTable = ({
 
   if (members.length === 0) {
     return (
-      <GlowCard className="overflow-hidden animate-fade-in" style={{ animationDelay: '300ms' }} hoverable={false}>
+      <GlowCard className="overflow-hidden" hoverable={false}>
         <div className="text-center py-16 text-muted-foreground">{t.dashboard.noData}</div>
       </GlowCard>
     );
   }
 
   return (
-    <GlowCard className="overflow-hidden animate-fade-in" style={{ animationDelay: '300ms' }} hoverable={false}>
+    <GlowCard className="overflow-hidden" hoverable={false}>
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
@@ -191,7 +191,7 @@ export const RosterTable = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {members.map((member, index) => {
+            {members.map((member) => {
               const isExpanded = expandedRows.has(member.id);
               const isOwnRow = member.id === currentUserId;
               
@@ -199,11 +199,10 @@ export const RosterTable = ({
                 <Fragment key={member.id}>
                   <TableRow 
                     className={cn(
-                      "border-border/20 transition-colors cursor-pointer",
+                      "border-border/20 cursor-pointer",
                       isOwnRow ? "hover:bg-primary/5 bg-primary/[0.02]" : "hover:bg-white/[0.02]",
                       isExpanded && "bg-white/[0.03]"
                     )}
-                    style={{ animationDelay: `${350 + index * 30}ms` }}
                     onClick={() => onToggleRow(member.id)}
                   >
                     <TableCell className="w-8 pr-0">

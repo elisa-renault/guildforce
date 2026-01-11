@@ -85,7 +85,7 @@ const GuildList = () => {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : !isConnected ? (
-          <GlowCard className="max-w-md mx-auto p-8 text-center animate-fade-in">
+          <GlowCard className="max-w-md mx-auto p-8 text-center">
             <LinkIcon className="h-16 w-16 mx-auto mb-6 text-muted-foreground" strokeWidth={1.5} />
             <p className="text-muted-foreground mb-6 text-lg">{t.guild.noGuilds}</p>
             <CosmicButton onClick={() => navigate('/profile')}>
@@ -95,11 +95,10 @@ const GuildList = () => {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {guilds.length > 0 ? (
-              guilds.map((guild, index) => (
+              guilds.map((guild) => (
                 <GlowCard 
                   key={guild.id}
-                  className="p-6 animate-fade-in cursor-pointer hover:border-primary/50 transition-colors"
-                  style={{ animationDelay: `${index * 100}ms` } as React.CSSProperties}
+                  className="p-6 cursor-pointer hover:border-primary/50"
                   onClick={() => navigate(guild.role === 'gm' ? `/guild/${guild.id}` : `/guild/${guild.id}/wishes`)}
                 >
                   <div className="flex items-center justify-between">
@@ -119,7 +118,7 @@ const GuildList = () => {
                 </GlowCard>
               ))
             ) : (
-              <GlowCard className="col-span-full p-8 text-center animate-fade-in">
+              <GlowCard className="col-span-full p-8 text-center">
                 <Shield className="h-16 w-16 mx-auto mb-6 text-muted-foreground" strokeWidth={1.5} />
                 <p className="text-muted-foreground text-lg">{t.guild.noGuilds}</p>
               </GlowCard>
