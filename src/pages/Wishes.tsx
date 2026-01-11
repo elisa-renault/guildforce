@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ClassGrid } from '@/components/ClassGrid';
-import { SpecButtons } from '@/components/SpecButtons';
+import { WishCardEditor } from '@/components/WishCardEditor';
 import { CommitmentToggle, CommitmentStatus } from '@/components/CommitmentToggle';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
@@ -245,36 +243,10 @@ const Wishes = () => {
                 </div>
               </div>
 
-              <div className="space-y-5">
-                <div>
-                  <Label className="text-foreground mb-3 block">{t.wishes.selectClass}</Label>
-                  <ClassGrid
-                    value={wish.classId}
-                    onChange={(classId) => updateWish(index, 'classId', classId)}
-                  />
-                </div>
-
-                {wish.classId && (
-                  <div>
-                    <Label className="text-foreground mb-3 block">{t.wishes.selectSpecs}</Label>
-                    <SpecButtons
-                      classId={wish.classId}
-                      selectedSpecs={wish.specIds}
-                      onChange={(specIds) => updateWish(index, 'specIds', specIds)}
-                    />
-                  </div>
-                )}
-
-                <div>
-                  <Label className="text-foreground mb-2 block">{t.wishes.comment}</Label>
-                  <Textarea
-                    placeholder={t.wishes.commentPlaceholder}
-                    value={wish.comment}
-                    onChange={(e) => updateWish(index, 'comment', e.target.value)}
-                    className="cosmic-input min-h-[80px] resize-none"
-                  />
-                </div>
-              </div>
+              <WishCardEditor
+                wish={wish}
+                onChange={(field, value) => updateWish(index, field, value)}
+              />
             </GlowCard>
           ))}
         </div>
