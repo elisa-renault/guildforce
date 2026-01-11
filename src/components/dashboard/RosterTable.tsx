@@ -45,30 +45,28 @@ export const RosterTable = ({
 
   const renderWishCell = (wishes: WishChoice[], choiceIndex: number) => {
     const wish = wishes.find(w => w.choice_index === choiceIndex);
-    if (!wish) return <span className="text-muted-foreground">-</span>;
+    if (!wish) return <span className="text-muted-foreground text-xs">-</span>;
 
     const cls = getClassById(wish.class_id);
-    if (!cls) return <span className="text-muted-foreground">-</span>;
+    if (!cls) return <span className="text-muted-foreground text-xs">-</span>;
 
     const roles = getRolesFromSpecs(wish.spec_ids);
 
     return (
-      <div className="space-y-1.5">
+      <div className="flex items-center gap-1.5">
         <Badge 
           variant="outline" 
-          className={cn(
-            'text-xs font-medium',
-            `bg-class-${cls.id}/20 border-class-${cls.id}/50`
-          )}
+          className="text-[10px] md:text-xs font-medium px-1.5 py-0"
           style={{ 
             backgroundColor: `hsl(var(--class-${cls.id}) / 0.15)`,
             borderColor: `hsl(var(--class-${cls.id}) / 0.4)`,
             color: `hsl(var(--class-${cls.id}))`
           }}
         >
-          {cls.name[language]}
+          <span className="hidden md:inline">{cls.name[language]}</span>
+          <span className="md:hidden">{cls.name[language].slice(0, 3)}</span>
         </Badge>
-        <div className="flex flex-wrap gap-1">
+        <div className="flex gap-0.5">
           {roles.map(role => (
             <RoleBadge key={role} role={role} size="sm" />
           ))}
@@ -102,12 +100,12 @@ export const RosterTable = ({
         <Table>
           <TableHeader>
             <TableRow className="border-border/30 hover:bg-transparent">
-              <TableHead className="text-muted-foreground">{t.dashboard.player}</TableHead>
-              <TableHead className="text-muted-foreground">{t.wishes.status}</TableHead>
-              <TableHead className="text-muted-foreground">{t.dashboard.firstChoice}</TableHead>
-              <TableHead className="text-muted-foreground">{t.dashboard.secondChoice}</TableHead>
-              <TableHead className="text-muted-foreground">{t.dashboard.thirdChoice}</TableHead>
-              <TableHead className="text-muted-foreground w-[120px]"></TableHead>
+              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3">{t.dashboard.player}</TableHead>
+              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3">{t.wishes.status}</TableHead>
+              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3"><span className="hidden md:inline">{t.dashboard.firstChoice}</span><span className="md:hidden">#1</span></TableHead>
+              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3"><span className="hidden md:inline">{t.dashboard.secondChoice}</span><span className="md:hidden">#2</span></TableHead>
+              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3"><span className="hidden md:inline">{t.dashboard.thirdChoice}</span><span className="md:hidden">#3</span></TableHead>
+              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3 w-[80px] md:w-[100px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -124,17 +122,17 @@ export const RosterTable = ({
                     isEditing && "bg-primary/[0.05]"
                   )}
                 >
-                  <TableCell className="font-medium text-foreground">
-                    <div className="flex items-center gap-2">
-                      {member.username}
+                  <TableCell className="font-medium text-foreground text-sm py-2 px-2 md:px-3">
+                    <div className="flex items-center gap-1.5">
+                      <span className="truncate max-w-[80px] md:max-w-none">{member.username}</span>
                       {isOwnRow && !isEditing && (
-                        <Badge variant="outline" className="text-xs text-primary border-primary/30 bg-primary/10">
+                        <Badge variant="outline" className="text-[10px] px-1 py-0 text-primary border-primary/30 bg-primary/10">
                           {t.common.you}
                         </Badge>
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="py-2 px-2 md:px-3">
                     {isEditing ? (
                       <CommitmentToggle 
                         confirmed={editConfirmed} 
@@ -144,29 +142,31 @@ export const RosterTable = ({
                     ) : (
                       <Badge 
                         variant={member.status === 'confirmed' ? 'default' : 'outline'}
-                        className={member.status === 'confirmed' 
-                          ? 'bg-healer/20 text-healer border-healer/30' 
-                          : 'border-border/50 text-muted-foreground'
-                        }
+                        className={cn(
+                          "text-[10px] md:text-xs px-1.5 py-0",
+                          member.status === 'confirmed' 
+                            ? 'bg-healer/20 text-healer border-healer/30' 
+                            : 'border-border/50 text-muted-foreground'
+                        )}
                       >
                         {member.status === 'confirmed' ? (
-                          <><CheckCircle className="h-3 w-3 mr-1" strokeWidth={1.5} /> {t.wishes.confirmed}</>
+                          <><CheckCircle className="h-3 w-3" strokeWidth={1.5} /><span className="hidden md:inline ml-1">{t.wishes.confirmed}</span></>
                         ) : (
-                          <><HelpCircle className="h-3 w-3 mr-1" strokeWidth={1.5} /> {t.wishes.potential}</>
+                          <><HelpCircle className="h-3 w-3" strokeWidth={1.5} /><span className="hidden md:inline ml-1">{t.wishes.potential}</span></>
                         )}
                       </Badge>
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="py-2 px-2 md:px-3">
                     {isEditing ? renderEditWishCell(0) : renderWishCell(member.wishes, 1)}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="py-2 px-2 md:px-3">
                     {isEditing ? renderEditWishCell(1) : renderWishCell(member.wishes, 2)}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="py-2 px-2 md:px-3">
                     {isEditing ? renderEditWishCell(2) : renderWishCell(member.wishes, 3)}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="py-2 px-2 md:px-3">
                     {isOwnRow && (
                       isEditing ? (
                         <div className="flex gap-1">
@@ -174,17 +174,17 @@ export const RosterTable = ({
                             size="sm" 
                             variant="outline" 
                             onClick={onCancelEditing}
-                            className="h-8 px-2"
+                            className="h-7 px-1.5"
                           >
-                            <X className="h-4 w-4" strokeWidth={1.5} />
+                            <X className="h-3.5 w-3.5" strokeWidth={1.5} />
                           </CosmicButton>
                           <CosmicButton 
                             size="sm" 
                             onClick={onSaveEditing}
                             loading={saving}
-                            className="h-8 px-2"
+                            className="h-7 px-1.5"
                           >
-                            <Save className="h-4 w-4" strokeWidth={1.5} />
+                            <Save className="h-3.5 w-3.5" strokeWidth={1.5} />
                           </CosmicButton>
                         </div>
                       ) : (
@@ -195,10 +195,10 @@ export const RosterTable = ({
                             e.stopPropagation();
                             onStartEditing(member);
                           }}
-                          icon={<Pencil className="h-3.5 w-3.5" strokeWidth={1.5} />}
-                          className="h-8"
+                          icon={<Pencil className="h-3 w-3" strokeWidth={1.5} />}
+                          className="h-7 px-2"
                         >
-                          <span className="hidden sm:inline">{t.common.edit}</span>
+                          <span className="hidden md:inline">{t.common.edit}</span>
                         </CosmicButton>
                       )
                     )}
