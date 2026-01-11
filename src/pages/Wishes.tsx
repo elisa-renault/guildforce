@@ -9,6 +9,7 @@ import { CommitmentToggle, CommitmentStatus } from '@/components/CommitmentToggl
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
+import { RosterSelector } from '@/components/roster';
 import { Loader2, Save, GripVertical, Plus, Trash2, ChevronUp, ChevronDown, ArrowLeft } from 'lucide-react';
 import { toSlug, getGuildPath } from '@/lib/guildSlug';
 import {
@@ -34,6 +35,13 @@ interface WishData {
   classId: string;
   specIds: string[];
   comment: string;
+}
+
+interface RosterData {
+  id: string;
+  name: string;
+  is_default: boolean;
+  hasAccess: boolean;
 }
 
 interface SortableWishCardProps {
@@ -157,6 +165,10 @@ const Wishes = () => {
     { id: 'wish-2', classId: '', specIds: [], comment: '' },
     { id: 'wish-3', classId: '', specIds: [], comment: '' },
   ]);
+  
+  // Roster state
+  const [rosters, setRosters] = useState<RosterData[]>([]);
+  const [selectedRosterId, setSelectedRosterId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -198,21 +210,38 @@ const Wishes = () => {
       setGuildId(foundGuildId);
       setGuild({ name: matchedGuild.name, server: matchedGuild.server, region: matchedGuild.region || 'eu', faction: matchedGuild.faction });
 
-      const { data: wishesData } = await supabase
-        .from('class_wishes')
+      // Fetch rosters and check access
+      const { data: rostersData } = await supabase
+        .from('rosters')
         .select('*')
         .eq('guild_id', foundGuildId)
-        .eq('user_id', user.id)
-        .order('choice_index');
+        .order('is_default', { ascending: false })
+        .order('created_at', { ascending: true });
 
-      if (wishesData && wishesData.length > 0) {
-        const loadedWishes: WishData[] = wishesData.map((w, index) => ({
-          id: `wish-${index + 1}`,
-          classId: w.class_id,
-          specIds: w.spec_ids || [],
-          comment: w.comment || '',
-        }));
-        setWishes(loadedWishes);
+      if (rostersData) {
+        // Check access for each roster - only show accessible ones on Wishes page
+        const rostersWithAccess: RosterData[] = [];
+        for (const roster of rostersData) {
+          const { data: hasAccess } = await supabase.rpc('has_roster_access', {
+            p_roster_id: roster.id,
+            p_user_id: user.id,
+          });
+          if (hasAccess) {
+            rostersWithAccess.push({
+              id: roster.id,
+              name: roster.name,
+              is_default: roster.is_default,
+              hasAccess: true,
+            });
+          }
+        }
+        setRosters(rostersWithAccess);
+        
+        // Select default roster or first accessible
+        const defaultRoster = rostersWithAccess.find(r => r.is_default) || rostersWithAccess[0];
+        if (defaultRoster) {
+          setSelectedRosterId(defaultRoster.id);
+        }
       }
 
       const { data: memberData } = await supabase
@@ -237,6 +266,40 @@ const Wishes = () => {
 
     fetchData();
   }, [user, regionSlug, serverSlug, guildSlug, navigate]);
+
+  // Fetch wishes when roster changes
+  useEffect(() => {
+    if (!guildId || !selectedRosterId || !user) return;
+
+    const fetchWishes = async () => {
+      const { data: wishesData } = await supabase
+        .from('class_wishes')
+        .select('*')
+        .eq('guild_id', guildId)
+        .eq('user_id', user.id)
+        .eq('roster_id', selectedRosterId)
+        .order('choice_index');
+
+      if (wishesData && wishesData.length > 0) {
+        const loadedWishes: WishData[] = wishesData.map((w, index) => ({
+          id: `wish-${index + 1}`,
+          classId: w.class_id,
+          specIds: w.spec_ids || [],
+          comment: w.comment || '',
+        }));
+        setWishes(loadedWishes);
+      } else {
+        // Reset to empty wishes if no data for this roster
+        setWishes([
+          { id: 'wish-1', classId: '', specIds: [], comment: '' },
+          { id: 'wish-2', classId: '', specIds: [], comment: '' },
+          { id: 'wish-3', classId: '', specIds: [], comment: '' },
+        ]);
+      }
+    };
+
+    fetchWishes();
+  }, [guildId, selectedRosterId, user]);
 
   const updateWish = (index: number, field: keyof Omit<WishData, 'id'>, value: any) => {
     const updated = [...wishes];
@@ -283,7 +346,7 @@ const Wishes = () => {
   };
 
   const saveWishes = async () => {
-    if (!user || !guildId) return;
+    if (!user || !guildId || !selectedRosterId) return;
     setSaving(true);
 
     try {
@@ -295,18 +358,20 @@ const Wishes = () => {
         .eq('guild_id', guildId)
         .eq('user_id', user.id);
 
-      // Delete all existing wishes first
+      // Delete all existing wishes for this roster first
       await supabase
         .from('class_wishes')
         .delete()
         .eq('guild_id', guildId)
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .eq('roster_id', selectedRosterId);
 
-      // Insert wishes with new order
+      // Insert wishes with new order and roster_id
       const wishesToInsert = wishes
         .map((w, i) => ({
           guild_id: guildId,
           user_id: user.id,
+          roster_id: selectedRosterId,
           choice_index: i + 1,
           class_id: w.classId,
           spec_ids: w.specIds,
@@ -338,6 +403,9 @@ const Wishes = () => {
     );
   }
 
+  // Only show accessible rosters
+  const accessibleRosters = rosters.filter(r => r.hasAccess);
+
   return (
     <div className="min-h-screen relative pt-16">
       <CosmicBackground />
@@ -354,6 +422,13 @@ const Wishes = () => {
               <ArrowLeft className="h-4 w-4 text-muted-foreground" />
             </button>
             <h1 className="text-lg font-semibold text-foreground">{guild?.name}</h1>
+            
+            {/* Roster selector - only show accessible rosters */}
+            <RosterSelector
+              rosters={accessibleRosters}
+              selectedRosterId={selectedRosterId}
+              onSelect={setSelectedRosterId}
+            />
           </div>
           <CosmicButton 
             size="sm" 
