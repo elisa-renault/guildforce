@@ -155,6 +155,8 @@ export interface Translations {
     tank: string;
     healer: string;
     dps: string;
+    melee: string;
+    ranged: string;
     player: string;
     discord: string;
     firstChoice: string;
@@ -351,6 +353,8 @@ export const translations: Record<Language, Translations> = {
       tank: 'Tank',
       healer: 'Healer',
       dps: 'DPS',
+      melee: 'Melee',
+      ranged: 'Ranged',
       player: 'Player',
       discord: 'Discord',
       firstChoice: '1st Choice',
@@ -543,6 +547,8 @@ export const translations: Record<Language, Translations> = {
       tank: 'Tank',
       healer: 'Heal',
       dps: 'DPS',
+      melee: 'Mêlée',
+      ranged: 'Distance',
       player: 'Joueur',
       discord: 'Discord',
       firstChoice: '1er choix',
