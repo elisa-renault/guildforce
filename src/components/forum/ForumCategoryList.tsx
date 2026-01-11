@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ForumCategory } from '@/types/forum';
 import { GlowCard } from '@/components/GlowCard';
-import { MessageSquare, Clock, ChevronRight, FolderOpen, Users, BookOpen, ArrowLeftRight, Coffee, MessageCircle } from 'lucide-react';
+import { MessageSquare, Clock, ChevronRight, FolderOpen, Users, MessageCircle, Megaphone, Lightbulb, HelpCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 
@@ -13,11 +13,11 @@ interface ForumCategoryListProps {
 
 // Map category slugs to icons
 const categoryIcons: Record<string, React.ElementType> = {
+  announcements: Megaphone,
+  feedback: Lightbulb,
+  support: HelpCircle,
   general: MessageCircle,
-  recruitment: Users,
-  guides: BookOpen,
-  trading: ArrowLeftRight,
-  'off-topic': Coffee,
+  guilds: Users,
 };
 
 export const ForumCategoryList = ({ categories, basePath = '/forum' }: ForumCategoryListProps) => {
