@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { ClassGrid } from '@/components/ClassGrid';
 import { SpecButtons } from '@/components/SpecButtons';
-import { CommitmentToggle } from '@/components/CommitmentToggle';
+import { CommitmentToggle, CommitmentStatus } from '@/components/CommitmentToggle';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
@@ -31,7 +31,7 @@ const Wishes = () => {
   const [saving, setSaving] = useState(false);
   const [guildId, setGuildId] = useState<string | null>(null);
   const [guild, setGuild] = useState<{ name: string; server: string; region: string; faction: string } | null>(null);
-  const [confirmed, setConfirmed] = useState(false);
+  const [confirmed, setConfirmed] = useState<CommitmentStatus>('undecided');
   const [wishes, setWishes] = useState<WishData[]>([
     { classId: '', specIds: [], comment: '' },
     { classId: '', specIds: [], comment: '' },
@@ -98,7 +98,15 @@ const Wishes = () => {
         .eq('user_id', user.id)
         .single();
 
-      if (memberData) setConfirmed(memberData.status === 'confirmed');
+      if (memberData) {
+        // Map DB status to CommitmentStatus
+        const statusMap: Record<string, CommitmentStatus> = {
+          'confirmed': 'confirmed',
+          'potential': 'undecided',
+          'withdrawn': 'withdrawn',
+        };
+        setConfirmed(statusMap[memberData.status] || 'undecided');
+      }
 
       setLoading(false);
     };
@@ -120,9 +128,11 @@ const Wishes = () => {
     setSaving(true);
 
     try {
+      // Map CommitmentStatus to DB status
+      const dbStatus = confirmed === 'withdrawn' ? 'withdrawn' : (confirmed === 'confirmed' ? 'confirmed' : 'potential');
       await supabase
         .from('guild_members')
-        .update({ status: confirmed ? 'confirmed' : 'potential' })
+        .update({ status: dbStatus })
         .eq('guild_id', guildId)
         .eq('user_id', user.id);
 
@@ -210,7 +220,7 @@ const Wishes = () => {
 
         {/* Commitment toggle */}
         <GlowCard className="p-6 mb-8">
-          <CommitmentToggle confirmed={confirmed} onChange={setConfirmed} />
+          <CommitmentToggle status={confirmed} onChange={setConfirmed} />
         </GlowCard>
 
         {/* Wish cards */}
