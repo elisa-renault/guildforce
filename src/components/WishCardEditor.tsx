@@ -53,16 +53,16 @@ export const WishCardEditor = ({ wish, onChange }: WishCardEditorProps) => {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_1fr] gap-4 lg:gap-6">
       {/* Class Selector */}
       <div>
-        <Label className="text-foreground mb-3 block">{t.wishes.selectClass}</Label>
+        <Label className="text-foreground mb-2 block text-sm">{t.wishes.selectClass}</Label>
         <Popover open={classOpen} onOpenChange={setClassOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
               className={cn(
-                "w-full justify-between h-12 text-sm font-medium",
+                "w-full justify-between h-10 text-sm font-medium",
                 selectedClass 
                   ? "border-transparent" 
                   : "border-dashed border-muted-foreground/40 text-muted-foreground bg-card/50 hover:bg-card/80"
@@ -107,14 +107,14 @@ export const WishCardEditor = ({ wish, onChange }: WishCardEditorProps) => {
 
       {/* Spec Selector */}
       <div>
-        <Label className="text-foreground mb-3 block">{t.wishes.selectSpecs}</Label>
+        <Label className="text-foreground mb-2 block text-sm">{t.wishes.selectSpecs}</Label>
         {selectedClass ? (
           <Popover open={specOpen} onOpenChange={setSpecOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
                 className={cn(
-                  "w-full justify-between h-12 text-sm bg-card/50 hover:bg-card/80",
+                  "w-full justify-between h-10 text-sm bg-card/50 hover:bg-card/80",
                   selectedSpecs.length > 0
                     ? "border-border"
                     : "border-dashed border-muted-foreground/40 text-muted-foreground"
@@ -175,25 +175,22 @@ export const WishCardEditor = ({ wish, onChange }: WishCardEditorProps) => {
             </PopoverContent>
           </Popover>
         ) : (
-          <div className="h-12 w-full rounded-md border border-dashed border-muted-foreground/20 bg-card/30 flex items-center justify-center gap-2">
+          <div className="h-10 w-full rounded-md border border-dashed border-muted-foreground/20 bg-card/30 flex items-center justify-center gap-2">
             <Shield className="h-4 w-4 text-muted-foreground/30" />
             <Heart className="h-4 w-4 text-muted-foreground/30" />
             <Swords className="h-4 w-4 text-muted-foreground/30" />
-            <span className="text-sm text-muted-foreground/50 ml-1">
-              {language === 'fr' ? 'Sélectionnez d\'abord une classe' : 'Select a class first'}
-            </span>
           </div>
         )}
       </div>
 
       {/* Comment */}
       <div>
-        <Label className="text-foreground mb-2 block">{t.wishes.comment}</Label>
+        <Label className="text-foreground mb-2 block text-sm">{t.wishes.comment}</Label>
         <Textarea
           placeholder={t.wishes.commentPlaceholder}
           value={wish.comment}
           onChange={(e) => onChange('comment', e.target.value)}
-          className="cosmic-input min-h-[80px] resize-none"
+          className="cosmic-input h-10 min-h-[40px] resize-none py-2"
         />
       </div>
     </div>
