@@ -53,16 +53,6 @@ const Profile = () => {
     setLoading(false);
   }, [authLoading, user, navigate]);
 
-  // Show loading while auth is initializing - prevents flash
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <CosmicBackground />
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   useEffect(() => {
     if (!profile) return;
 
@@ -117,7 +107,8 @@ const Profile = () => {
     }
   };
 
-  if (loading) {
+  // Show loading while auth is initializing - prevents flash
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <CosmicBackground />
