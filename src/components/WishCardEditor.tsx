@@ -53,7 +53,7 @@ export const WishCardEditor = ({ wish, onChange }: WishCardEditorProps) => {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr_1fr] gap-4 lg:gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-[242px_1fr_1fr] gap-4 lg:gap-6">
       {/* Class Selector */}
       <div>
         <Label className="text-foreground mb-2 block text-sm">{t.wishes.selectClass}</Label>
