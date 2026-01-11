@@ -3,8 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
-import { RoleBadge } from '@/components/RoleBadge';
-import { CheckCircle, HelpCircle, XCircle, Pencil, X, Save } from 'lucide-react';
+import { CheckCircle, HelpCircle, XCircle, Pencil, X, Save, Shield, Heart, Swords } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getClassById, getSpecById } from '@/data/wowClasses';
 import { MemberWish, WishData, WishChoice } from '@/types/guild';
@@ -45,35 +44,69 @@ export const RosterTable = ({
 
   const renderWishCell = (wishes: WishChoice[], choiceIndex: number) => {
     const wish = wishes.find(w => w.choice_index === choiceIndex);
-    if (!wish) return <span className="text-muted-foreground text-xs">-</span>;
+    
+    // Empty state matching editor structure
+    if (!wish) {
+      return (
+        <div className="flex flex-col gap-1.5">
+          <div className="h-7 w-full rounded-md border border-dashed border-muted-foreground/20 bg-transparent" />
+          <div className="h-6 w-full" />
+        </div>
+      );
+    }
 
     const cls = getClassById(wish.class_id);
-    if (!cls) return <span className="text-muted-foreground text-xs">-</span>;
+    if (!cls) {
+      return (
+        <div className="flex flex-col gap-1.5">
+          <div className="h-7 w-full rounded-md border border-dashed border-muted-foreground/20 bg-transparent" />
+          <div className="h-6 w-full" />
+        </div>
+      );
+    }
 
     // Get specs with their details
     const specs = wish.spec_ids.map(id => getSpecById(id)).filter(Boolean);
     const firstSpec = specs[0];
 
+    // Role config for icons
+    const roleConfig: Record<string, { icon: typeof import('lucide-react').Shield; color: string }> = {
+      tank: { icon: Shield, color: 'text-tank' },
+      healer: { icon: Heart, color: 'text-healer' },
+      dps: { icon: Swords, color: 'text-dps' },
+    };
+
     return (
-      <div className="flex flex-col gap-0.5">
-        <Badge 
-          variant="outline" 
-          className="text-[10px] md:text-xs font-medium px-1.5 py-0 w-fit"
+      <div className="flex flex-col gap-1.5">
+        {/* Class - same height as editor button */}
+        <div 
+          className="h-7 w-full rounded-md flex items-center px-2 text-xs font-medium"
           style={{ 
-            backgroundColor: `hsl(var(--class-${cls.id}) / 0.15)`,
-            borderColor: `hsl(var(--class-${cls.id}) / 0.4)`,
+            backgroundColor: `hsl(var(--class-${cls.id}) / 0.2)`,
             color: `hsl(var(--class-${cls.id}))`
           }}
         >
-          <span className="hidden md:inline">{cls.name[language]}</span>
-          <span className="md:hidden">{cls.name[language].slice(0, 3)}</span>
-        </Badge>
-        {firstSpec && (
-          <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-            {firstSpec.name[language]}
-            {specs.length > 1 && <span className="opacity-60">+{specs.length - 1}</span>}
-          </span>
-        )}
+          <span className="truncate">{cls.name[language]}</span>
+        </div>
+        
+        {/* Spec - same height as editor spec row */}
+        <div className="h-6 w-full flex items-center gap-1 px-1 text-[10px]">
+          {firstSpec ? (
+            <>
+              {(() => {
+                const config = roleConfig[firstSpec.role];
+                const Icon = config?.icon;
+                return Icon ? <Icon className={cn("h-3 w-3 flex-shrink-0", config.color)} /> : null;
+              })()}
+              <span className="truncate text-muted-foreground">{firstSpec.name[language]}</span>
+              {specs.length > 1 && (
+                <span className="text-muted-foreground/60 flex-shrink-0">+{specs.length - 1}</span>
+              )}
+            </>
+          ) : (
+            <span className="text-muted-foreground/50">—</span>
+          )}
+        </div>
       </div>
     );
   };
