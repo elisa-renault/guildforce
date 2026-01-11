@@ -174,14 +174,7 @@ export const RosterTable = ({
                   )}
                 >
                   <TableCell className="font-medium text-foreground text-sm py-2 px-2 md:px-3">
-                    <div className="flex items-center gap-1.5">
-                      <span className="truncate">{member.username}</span>
-                      {isOwnRow && (
-                        <Badge variant="outline" className="text-[10px] px-1 py-0 text-primary border-primary/30 bg-primary/10 flex-shrink-0">
-                          {t.common.you}
-                        </Badge>
-                      )}
-                    </div>
+                    <span className="truncate">{member.username}</span>
                   </TableCell>
                   <TableCell className="py-2 px-2 md:px-3">
                     {isEditing ? (
@@ -189,6 +182,7 @@ export const RosterTable = ({
                         status={editStatus} 
                         onChange={onEditStatusChange}
                         compact
+                        asBadge
                       />
                     ) : (
                       <Badge 
