@@ -1,0 +1,250 @@
+import { useState, useEffect } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { GlowCard } from '@/components/GlowCard';
+import { PollQuestionEditor } from './PollQuestionEditor';
+import { Plus, Save, Play, Loader2 } from 'lucide-react';
+import type { PollFormData, QuestionFormData } from '@/types/poll';
+
+interface Roster {
+  id: string;
+  name: string;
+}
+
+interface PollEditorProps {
+  initialData?: PollFormData;
+  rosters: Roster[];
+  onSave: (data: PollFormData) => Promise<void>;
+  onPublish?: (data: PollFormData) => Promise<void>;
+  saving?: boolean;
+}
+
+const defaultQuestion: QuestionFormData = {
+  question_text: '',
+  question_type: 'single_choice',
+  is_required: true,
+  options: ['', ''],
+};
+
+export const PollEditor = ({
+  initialData,
+  rosters,
+  onSave,
+  onPublish,
+  saving = false,
+}: PollEditorProps) => {
+  const { language } = useLanguage();
+  
+  const [formData, setFormData] = useState<PollFormData>(initialData || {
+    title: '',
+    description: '',
+    is_anonymous: false,
+    allow_multiple_responses: false,
+    roster_id: null,
+    ends_at: null,
+    questions: [{ ...defaultQuestion }],
+  });
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData(initialData);
+    }
+  }, [initialData]);
+
+  const handleAddQuestion = () => {
+    setFormData((prev) => ({
+      ...prev,
+      questions: [...prev.questions, { ...defaultQuestion }],
+    }));
+  };
+
+  const handleQuestionChange = (index: number, question: QuestionFormData) => {
+    setFormData((prev) => ({
+      ...prev,
+      questions: prev.questions.map((q, i) => (i === index ? question : q)),
+    }));
+  };
+
+  const handleRemoveQuestion = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      questions: prev.questions.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleSave = async () => {
+    await onSave(formData);
+  };
+
+  const handlePublish = async () => {
+    if (onPublish) {
+      await onPublish(formData);
+    }
+  };
+
+  const isValid = formData.title.trim() && 
+    formData.questions.length > 0 &&
+    formData.questions.every(q => 
+      q.question_text.trim() && 
+      (q.question_type === 'text' || q.question_type === 'rating' || q.options.every(o => o.trim()))
+    );
+
+  return (
+    <div className="space-y-6">
+      <GlowCard className="p-6">
+        <h2 className="text-lg font-semibold mb-4">
+          {language === 'fr' ? 'Informations générales' : 'General Information'}
+        </h2>
+
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="title">
+              {language === 'fr' ? 'Titre du sondage' : 'Poll Title'} *
+            </Label>
+            <Input
+              id="title"
+              value={formData.title}
+              onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
+              placeholder={language === 'fr' ? 'Ex: Retour sur la saison 3' : 'Ex: Season 3 Feedback'}
+              className="bg-background"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">
+              {language === 'fr' ? 'Description (optionnelle)' : 'Description (optional)'}
+            </Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+              placeholder={language === 'fr' 
+                ? 'Expliquez le but du sondage...' 
+                : 'Explain the purpose of this poll...'}
+              className="bg-background resize-none"
+              rows={3}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>
+                {language === 'fr' ? 'Roster ciblé' : 'Target Roster'}
+              </Label>
+              <Select
+                value={formData.roster_id || 'all'}
+                onValueChange={(value) => setFormData((prev) => ({ 
+                  ...prev, 
+                  roster_id: value === 'all' ? null : value 
+                }))}
+              >
+                <SelectTrigger className="bg-background">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">
+                    {language === 'fr' ? 'Tous les membres' : 'All members'}
+                  </SelectItem>
+                  {rosters.map((roster) => (
+                    <SelectItem key={roster.id} value={roster.id}>
+                      {roster.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="ends_at">
+                {language === 'fr' ? 'Date de clôture (optionnelle)' : 'End Date (optional)'}
+              </Label>
+              <Input
+                id="ends_at"
+                type="datetime-local"
+                value={formData.ends_at ? formData.ends_at.slice(0, 16) : ''}
+                onChange={(e) => setFormData((prev) => ({ 
+                  ...prev, 
+                  ends_at: e.target.value ? new Date(e.target.value).toISOString() : null 
+                }))}
+                className="bg-background"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex items-center gap-2">
+              <Switch
+                id="anonymous"
+                checked={formData.is_anonymous}
+                onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, is_anonymous: checked }))}
+              />
+              <Label htmlFor="anonymous" className="cursor-pointer">
+                {language === 'fr' ? 'Réponses anonymes' : 'Anonymous responses'}
+              </Label>
+            </div>
+          </div>
+        </div>
+      </GlowCard>
+
+      <GlowCard className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">
+            {language === 'fr' ? 'Questions' : 'Questions'}
+          </h2>
+          <Button variant="outline" size="sm" onClick={handleAddQuestion}>
+            <Plus className="h-4 w-4 mr-1" />
+            {language === 'fr' ? 'Ajouter' : 'Add'}
+          </Button>
+        </div>
+
+        <div className="space-y-4">
+          {formData.questions.map((question, index) => (
+            <PollQuestionEditor
+              key={index}
+              question={question}
+              index={index}
+              onChange={(q) => handleQuestionChange(index, q)}
+              onRemove={() => handleRemoveQuestion(index)}
+              canRemove={formData.questions.length > 1}
+            />
+          ))}
+        </div>
+      </GlowCard>
+
+      <div className="flex items-center justify-end gap-3">
+        <Button 
+          variant="outline" 
+          onClick={handleSave}
+          disabled={!formData.title.trim() || saving}
+        >
+          {saving ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <Save className="h-4 w-4 mr-2" />
+          )}
+          {language === 'fr' ? 'Enregistrer brouillon' : 'Save Draft'}
+        </Button>
+        
+        {onPublish && (
+          <Button 
+            onClick={handlePublish}
+            disabled={!isValid || saving}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            {saving ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Play className="h-4 w-4 mr-2" />
+            )}
+            {language === 'fr' ? 'Publier le sondage' : 'Publish Poll'}
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+};
