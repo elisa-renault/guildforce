@@ -10,3 +10,5 @@ export { ReportDialog } from './ReportDialog';
 export { ReportsManager } from './ReportsManager';
 export { NotificationBell } from './NotificationBell';
 export { TopicSubscriptionButton } from './TopicSubscriptionButton';
+export { SanctionDialog } from './SanctionDialog';
+export { SanctionsManager } from './SanctionsManager';
