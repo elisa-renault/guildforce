@@ -52,25 +52,28 @@ const ForumCategory = () => {
 
       <main className="container mx-auto px-4 py-8 relative z-10 max-w-5xl">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <button
-            onClick={() => navigate('/forum')}
-            className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4 text-muted-foreground" />
-          </button>
-          <div className="flex-1">
-            <h1 className="font-display text-2xl text-foreground">
-              {t.forum.categoryNames[category.slug as keyof typeof t.forum.categoryNames] || category.name}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {t.forum.categoryDescriptions[category.slug as keyof typeof t.forum.categoryDescriptions] || category.description}
-            </p>
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex items-start gap-3">
+            <button
+              onClick={() => navigate('/forum')}
+              className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors flex-shrink-0 mt-1"
+            >
+              <ArrowLeft className="h-4 w-4 text-muted-foreground" />
+            </button>
+            <div className="flex-1 min-w-0">
+              <h1 className="font-display text-xl sm:text-2xl text-foreground">
+                {t.forum.categoryNames[category.slug as keyof typeof t.forum.categoryNames] || category.name}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                {t.forum.categoryDescriptions[category.slug as keyof typeof t.forum.categoryDescriptions] || category.description}
+              </p>
+            </div>
           </div>
           {user && (
             <CosmicButton 
               onClick={() => navigate(`/forum/category/${categorySlug}/new`)} 
               icon={<Plus className="h-4 w-4" />}
+              className="w-full sm:w-auto sm:self-end"
             >
               {language === 'fr' ? 'Nouveau sujet' : 'New topic'}
             </CosmicButton>
