@@ -21,6 +21,7 @@ interface ForumPostProps {
   onDelete?: (postId: string) => void;
   onReaction?: (postId: string, reactionType: ReactionType) => void;
   isTopicLocked?: boolean;
+  isModerator?: boolean;
 }
 
 export const ForumPost = ({
@@ -30,6 +31,7 @@ export const ForumPost = ({
   onDelete,
   onReaction,
   isTopicLocked = false,
+  isModerator = false,
 }: ForumPostProps) => {
   const { user } = useAuth();
   const { language, t } = useLanguage();
@@ -43,7 +45,7 @@ export const ForumPost = ({
   const authorRoles = roles.get(post.author_id) || [];
 
   const isAuthor = user?.id === post.author_id;
-
+  const canDelete = isAuthor || isModerator;
   const handleSaveEdit = () => {
     if (editContent.trim() && onEdit) {
       onEdit(post.id, editContent);
@@ -96,26 +98,26 @@ export const ForumPost = ({
               </Button>
             )}
             {isAuthor && !isTopicLocked && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsEditing(true)}
-                  className="h-7 px-2"
-                  title={language === 'fr' ? 'Modifier' : 'Edit'}
-                >
-                  <Edit3 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onDelete?.(post.id)}
-                  className="h-7 px-2 text-destructive hover:text-destructive"
-                  title={language === 'fr' ? 'Supprimer' : 'Delete'}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsEditing(true)}
+                className="h-7 px-2"
+                title={language === 'fr' ? 'Modifier' : 'Edit'}
+              >
+                <Edit3 className="h-4 w-4" />
+              </Button>
+            )}
+            {canDelete && !isTopicLocked && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onDelete?.(post.id)}
+                className="h-7 px-2 text-destructive hover:text-destructive"
+                title={language === 'fr' ? 'Supprimer' : 'Delete'}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             )}
             {/* Report button - only for other users' posts */}
             {user && !isAuthor && (
