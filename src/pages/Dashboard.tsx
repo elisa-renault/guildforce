@@ -9,6 +9,7 @@ import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
 import { StatsCards, RosterFilters, RosterTable } from '@/components/dashboard';
 import { RosterSelector, RosterEditDialog } from '@/components/roster';
+import { ActivePollWidget } from '@/components/polls';
 import { MemberWish, WishData, RoleStats, RangeStats, RosterFilters as RosterFiltersType, ValidationStatus } from '@/types/guild';
 import { Loader2, Sparkles, ArrowLeft, Settings, Shield } from 'lucide-react';
 import { toSlug, getGuildWishesPath, getGuildSettingsPath } from '@/lib/guildSlug';
@@ -542,6 +543,15 @@ const Dashboard = () => {
           roleStats={roleStats}
           rangeStats={rangeStats}
         />
+
+        {/* Active Poll Widget */}
+        {guildId && guild && (
+          <ActivePollWidget 
+            guildId={guildId} 
+            guildSlug={`${regionSlug}/${serverSlug}/${guildSlug}`}
+            isGM={isGM}
+          />
+        )}
 
         <RosterFilters 
           filters={filters} 
