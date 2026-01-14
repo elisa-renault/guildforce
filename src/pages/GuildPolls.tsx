@@ -4,14 +4,13 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { CosmicBackground } from '@/components/CosmicBackground';
-import { GlobalNav } from '@/components/GlobalNav';
 import { Footer } from '@/components/Footer';
 import { PollCard } from '@/components/polls';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Plus, Loader2 } from 'lucide-react';
 import { useGuildPolls, usePollMutations } from '@/hooks/useGuildPolls';
-import { parseGuildSlug } from '@/lib/guildSlug';
+import { toSlug } from '@/lib/guildSlug';
 
 const GuildPolls = () => {
   const { regionSlug, serverSlug, guildSlug } = useParams();
@@ -30,20 +29,26 @@ const GuildPolls = () => {
     const loadGuild = async () => {
       if (!regionSlug || !serverSlug || !guildSlug || !user) return;
       
-      const parsed = parseGuildSlug(guildSlug);
-      if (!parsed) return;
-
-      const { data: guild } = await supabase
+      // Find guild by matching slugified values
+      const { data: allGuilds } = await supabase
         .from('guilds')
-        .select('id, owner_id')
-        .eq('region', regionSlug.toUpperCase())
-        .eq('server', parsed.server)
-        .eq('name', parsed.name)
-        .single();
+        .select('id, name, server, region');
 
-      if (guild) {
-        setGuildId(guild.id);
-        setIsGM(guild.owner_id === user.id);
+      const matchedGuild = allGuilds?.find(g =>
+        toSlug(g.region || 'eu') === regionSlug &&
+        toSlug(g.server) === serverSlug &&
+        toSlug(g.name) === guildSlug
+      );
+
+      if (matchedGuild) {
+        setGuildId(matchedGuild.id);
+        
+        // Check GM status
+        const { data: gmCheck } = await supabase.rpc('is_guild_gm', {
+          p_guild_id: matchedGuild.id,
+          p_user_id: user.id,
+        });
+        setIsGM(gmCheck || false);
       }
       setLoading(false);
     };
@@ -73,21 +78,21 @@ const GuildPolls = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
+        <CosmicBackground />
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col relative">
+    <div className="min-h-screen flex flex-col relative pt-16">
       <CosmicBackground />
-      <GlobalNav />
 
       <main className="flex-1 container mx-auto px-4 py-8 relative z-10">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+              <Button variant="ghost" size="icon" onClick={() => navigate(`/guild/${fullSlug}`)}>
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <h1 className="text-2xl font-bold">

@@ -13,6 +13,10 @@ import Wishes from "./pages/Wishes";
 import MemberWishes from "./pages/MemberWishes";
 import Dashboard from "./pages/Dashboard";
 import GuildSettings from "./pages/GuildSettings";
+import GuildPolls from "./pages/GuildPolls";
+import GuildPollNew from "./pages/GuildPollNew";
+import GuildPollView from "./pages/GuildPollView";
+import GuildPollResults from "./pages/GuildPollResults";
 import Profile from "./pages/Profile";
 import Forum from "./pages/Forum";
 import ForumCategory from "./pages/ForumCategory";
@@ -47,6 +51,11 @@ const App = () => (
                 <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/wishes" element={<Wishes />} />
                 <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/settings" element={<GuildSettings />} />
                 <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/member/:memberId" element={<MemberWishes />} />
+                <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/polls" element={<GuildPolls />} />
+                <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/polls/new" element={<GuildPollNew />} />
+                <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/polls/:pollId/edit" element={<GuildPollNew />} />
+                <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/poll/:pollId" element={<GuildPollView />} />
+                <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/poll/:pollId/results" element={<GuildPollResults />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
