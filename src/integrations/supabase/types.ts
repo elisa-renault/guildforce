@@ -598,6 +598,67 @@ export type Database = {
           },
         ]
       }
+      forum_user_sanctions: {
+        Row: {
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          reason: string | null
+          revoked_at: string | null
+          revoked_by: string | null
+          sanction_type: Database["public"]["Enums"]["forum_sanction_type"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          reason?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          sanction_type: Database["public"]["Enums"]["forum_sanction_type"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          reason?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          sanction_type?: Database["public"]["Enums"]["forum_sanction_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_user_sanctions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "forum_user_sanctions_revoked_by_fkey"
+            columns: ["revoked_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "forum_user_sanctions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guild_activity_logs: {
         Row: {
           action_details: Json | null
@@ -1005,6 +1066,15 @@ export type Database = {
           username: string
         }[]
       }
+      get_user_forum_sanction: {
+        Args: { p_user_id: string }
+        Returns: {
+          created_at: string
+          expires_at: string
+          reason: string
+          sanction_type: Database["public"]["Enums"]["forum_sanction_type"]
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1025,6 +1095,10 @@ export type Database = {
         Returns: boolean
       }
       is_guild_owner_or_gm: { Args: { _guild_id: string }; Returns: boolean }
+      is_user_forum_sanctioned: {
+        Args: { p_user_id: string }
+        Returns: boolean
+      }
       log_guild_activity: {
         Args: {
           p_action_details?: Json
@@ -1039,6 +1113,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      forum_sanction_type: "timeout" | "ban"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1167,6 +1242,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      forum_sanction_type: ["timeout", "ban"],
     },
   },
 } as const

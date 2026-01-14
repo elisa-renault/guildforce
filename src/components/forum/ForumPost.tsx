@@ -9,7 +9,8 @@ import { MarkdownEditor } from './MarkdownEditor';
 import { ReactionPicker } from './ReactionPicker';
 import { UserRoleBadge } from './UserRoleBadge';
 import { ReportDialog } from './ReportDialog';
-import { Quote, Edit3, Trash2, User, Clock, Check, X, Flag } from 'lucide-react';
+import { SanctionDialog } from './SanctionDialog';
+import { Quote, Edit3, Trash2, User, Clock, Check, X, Flag, Ban } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import ReactMarkdown from 'react-markdown';
@@ -39,6 +40,7 @@ export const ForumPost = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [sanctionDialogOpen, setSanctionDialogOpen] = useState(false);
 
   const authorIds = useMemo(() => post.author_id ? [post.author_id] : [], [post.author_id]);
   const { roles } = useUserRoles(authorIds);
@@ -131,6 +133,18 @@ export const ForumPost = ({
                 <Flag className="h-4 w-4" />
               </Button>
             )}
+            {/* Sanction button - only for moderators on other users' posts */}
+            {isModerator && !isAuthor && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSanctionDialogOpen(true)}
+                className="h-7 px-2 text-muted-foreground hover:text-destructive"
+                title={language === 'fr' ? 'Sanctionner' : 'Sanction'}
+              >
+                <Ban className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
 
@@ -211,6 +225,19 @@ export const ForumPost = ({
         targetType="post"
         targetId={post.id}
       />
+
+      {/* Sanction dialog */}
+      {post.author && (
+        <SanctionDialog
+          open={sanctionDialogOpen}
+          onOpenChange={setSanctionDialogOpen}
+          targetUser={{
+            id: post.author_id,
+            username: post.author.username,
+            avatar_url: post.author.avatar_url,
+          }}
+        />
+      )}
     </div>
   );
 };
