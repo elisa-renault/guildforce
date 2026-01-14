@@ -76,7 +76,7 @@ export const GlobalNav = () => {
         {/* Left side - Logo */}
         <button 
           onClick={() => navigate('/')}
-          className="font-display text-lg text-foreground hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded px-1"
+          className="font-display text-lg text-foreground hover:text-primary-foreground hover:drop-shadow-[0_0_12px_hsl(292,63%,50%)] transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded px-1"
           aria-label="Accueil Guildforce"
         >
           Guildforce
