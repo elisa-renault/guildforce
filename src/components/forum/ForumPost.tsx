@@ -108,7 +108,7 @@ export const ForumPost = ({
                 <Edit3 className="h-4 w-4" />
               </Button>
             )}
-            {canDelete && !isTopicLocked && (
+            {canDelete && (!isTopicLocked || isModerator) && (
               <Button
                 variant="ghost"
                 size="sm"
