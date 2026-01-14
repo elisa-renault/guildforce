@@ -11,7 +11,7 @@ import { StatsCards, RosterFilters, RosterTable } from '@/components/dashboard';
 import { RosterSelector, RosterEditDialog } from '@/components/roster';
 import { ActivePollWidget } from '@/components/polls';
 import { MemberWish, WishData, RoleStats, RangeStats, RosterFilters as RosterFiltersType, ValidationStatus } from '@/types/guild';
-import { Loader2, Sparkles, ArrowLeft, Settings, Shield } from 'lucide-react';
+import { Loader2, Sparkles, ArrowLeft, Settings, Shield, BarChart3 } from 'lucide-react';
 import { toSlug, getGuildWishesPath, getGuildSettingsPath } from '@/lib/guildSlug';
 import { CommitmentStatus } from '@/components/CommitmentToggle';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -515,6 +515,11 @@ const Dashboard = () => {
             <CosmicButton size="sm" variant="outline" onClick={() => guild && navigate(getGuildWishesPath(guild.region, guild.server, guild.name))} icon={<Sparkles className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 md:h-8 px-2 md:px-3">
               <span className="hidden md:inline">{t.wishes.editMyWishes}</span>
             </CosmicButton>
+            {isGM && guild && (
+              <CosmicButton size="sm" variant="outline" onClick={() => navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/polls`)} icon={<BarChart3 className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 md:h-8 px-2 md:px-3">
+                <span className="hidden md:inline">{language === 'fr' ? 'Sondages' : 'Polls'}</span>
+              </CosmicButton>
+            )}
             {isGM && selectedRosterId && (
               <CosmicButton size="sm" variant="outline" onClick={() => setRosterSettingsOpen(true)} icon={<Settings className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 md:h-8 px-2 md:px-3">
                 <span className="hidden md:inline">{t.dashboard.roster}</span>
