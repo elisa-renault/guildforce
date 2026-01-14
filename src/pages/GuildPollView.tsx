@@ -106,7 +106,8 @@ const GuildPollView = () => {
     <div className="min-h-screen relative pt-16">
       <CosmicBackground />
 
-      <div className="container mx-auto px-4 py-8 max-w-3xl">
+      <div className="container mx-auto px-4 py-8 max-w-3xl relative z-10">
+        {/* Header */}
         <div className="flex items-center gap-4 mb-6">
           <button
             onClick={() => navigate(`${basePath}/polls`)}
@@ -136,7 +137,7 @@ const GuildPollView = () => {
         </div>
 
         {/* Poll metadata */}
-        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6">
+        <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mb-6">
           {poll.is_anonymous && (
             <span className="bg-muted/50 px-2 py-1 rounded">
               {language === 'fr' ? 'Anonyme' : 'Anonymous'}
