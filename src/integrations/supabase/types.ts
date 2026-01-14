@@ -763,6 +763,156 @@ export type Database = {
           },
         ]
       }
+      guild_poll_questions: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          is_required: boolean
+          options: Json | null
+          poll_id: string
+          question_text: string
+          question_type: Database["public"]["Enums"]["poll_question_type"]
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_required?: boolean
+          options?: Json | null
+          poll_id: string
+          question_text: string
+          question_type?: Database["public"]["Enums"]["poll_question_type"]
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_required?: boolean
+          options?: Json | null
+          poll_id?: string
+          question_text?: string
+          question_type?: Database["public"]["Enums"]["poll_question_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_poll_questions_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "guild_polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guild_poll_responses: {
+        Row: {
+          created_at: string
+          id: string
+          question_id: string
+          response_value: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          question_id: string
+          response_value: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          question_id?: string
+          response_value?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_poll_responses_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "guild_poll_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_poll_responses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guild_polls: {
+        Row: {
+          allow_multiple_responses: boolean
+          created_at: string
+          created_by: string
+          description: string | null
+          ends_at: string | null
+          guild_id: string
+          id: string
+          is_anonymous: boolean
+          roster_id: string | null
+          starts_at: string | null
+          status: Database["public"]["Enums"]["poll_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          allow_multiple_responses?: boolean
+          created_at?: string
+          created_by: string
+          description?: string | null
+          ends_at?: string | null
+          guild_id: string
+          id?: string
+          is_anonymous?: boolean
+          roster_id?: string | null
+          starts_at?: string | null
+          status?: Database["public"]["Enums"]["poll_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          allow_multiple_responses?: boolean
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          ends_at?: string | null
+          guild_id?: string
+          id?: string
+          is_anonymous?: boolean
+          roster_id?: string | null
+          starts_at?: string | null
+          status?: Database["public"]["Enums"]["poll_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_polls_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_polls_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_polls_roster_id_fkey"
+            columns: ["roster_id"]
+            isOneToOne: false
+            referencedRelation: "rosters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guilds: {
         Row: {
           avatar_url: string | null
@@ -1114,6 +1264,12 @@ export type Database = {
     Enums: {
       app_role: "admin" | "moderator" | "user"
       forum_sanction_type: "timeout" | "ban"
+      poll_question_type:
+        | "single_choice"
+        | "multiple_choice"
+        | "text"
+        | "rating"
+      poll_status: "draft" | "active" | "closed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1243,6 +1399,13 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "moderator", "user"],
       forum_sanction_type: ["timeout", "ban"],
+      poll_question_type: [
+        "single_choice",
+        "multiple_choice",
+        "text",
+        "rating",
+      ],
+      poll_status: ["draft", "active", "closed"],
     },
   },
 } as const
