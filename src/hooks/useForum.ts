@@ -11,13 +11,29 @@ async function getReactionsSummary(
 ): Promise<ReactionSummary> {
   const column = type === 'topic' ? 'topic_id' : 'post_id';
   
-  // Get all reactions for this item
+  // Get all reactions for this item with user info
   const { data: reactions } = await supabase
     .from('forum_reactions')
     .select('reaction_type, user_id')
     .eq(column, id);
 
-  // Initialize counts
+  // Get unique user IDs
+  const userIds = [...new Set((reactions || []).map(r => r.user_id))];
+  
+  // Fetch usernames for all users who reacted
+  let usernameMap: Record<string, string> = {};
+  if (userIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, username')
+      .in('id', userIds);
+    
+    (profiles || []).forEach(p => {
+      usernameMap[p.id] = p.username;
+    });
+  }
+
+  // Initialize counts and usersByReaction
   const counts: Record<ReactionType, number> = {
     like: 0,
     love: 0,
@@ -25,6 +41,15 @@ async function getReactionsSummary(
     wow: 0,
     sad: 0,
     angry: 0,
+  };
+  
+  const usersByReaction: Record<ReactionType, string[]> = {
+    like: [],
+    love: [],
+    laugh: [],
+    wow: [],
+    sad: [],
+    angry: [],
   };
   
   const userReactions: ReactionType[] = [];
@@ -35,13 +60,20 @@ async function getReactionsSummary(
     if (reactionType in counts) {
       counts[reactionType]++;
       total++;
+      
+      // Add username to the list
+      const username = usernameMap[r.user_id];
+      if (username && !usersByReaction[reactionType].includes(username)) {
+        usersByReaction[reactionType].push(username);
+      }
+      
       if (userId && r.user_id === userId) {
         userReactions.push(reactionType);
       }
     }
   });
 
-  return { counts, userReactions, total };
+  return { counts, userReactions, total, usersByReaction };
 }
 
 export function useForumCategories(guildId?: string | null) {
