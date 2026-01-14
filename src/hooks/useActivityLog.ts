@@ -7,6 +7,7 @@ export type ActionType =
   | 'wish_updated'
   | 'wish_deleted'
   | 'member_joined'
+  | 'commitment_changed'
   | 'roster_created'
   | 'roster_updated'
   | 'roster_deleted';
