@@ -379,6 +379,7 @@ const ForumTopicPage = () => {
                 }}
                 onReaction={(id, reactionType) => handleReaction('post', id, reactionType)}
                 isTopicLocked={topic.is_locked}
+                isModerator={isModerator}
               />
             ))
           )}
