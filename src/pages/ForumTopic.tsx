@@ -4,15 +4,16 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useForumTopic, useForumPosts, useForumActions } from '@/hooks/useForum';
 import { useUserRoles } from '@/hooks/useUserRoles';
+import { useIsModerator } from '@/hooks/useAdmin';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
-import { ForumPost, MarkdownEditor, ReactionPicker, UserRoleBadge, TopicSubscriptionButton } from '@/components/forum';
+import { ForumPost, MarkdownEditor, ReactionPicker, UserRoleBadge, TopicSubscriptionButton, ReportDialog } from '@/components/forum';
 import { ForumPost as ForumPostType, ReactionType } from '@/types/forum';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { 
   Loader2, ArrowLeft, ChevronLeft, ChevronRight, Pin, Lock, 
-  Edit3, Trash2, User, Clock, Eye, MessageSquare, Send
+  Edit3, Trash2, User, Clock, Eye, MessageSquare, Send, Flag
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
@@ -41,15 +42,18 @@ const ForumTopicPage = () => {
   const [page, setPage] = useState(1);
   const { posts, totalCount, loading: postsLoading, refetch: refetchPosts, refreshPostReactions } = useForumPosts(topicId || null, page);
   const { createPost, updatePost, deletePost, deleteTopic, updateTopic, toggleReaction } = useForumActions();
+  const { isModerator } = useIsModerator();
 
   const [replyContent, setReplyContent] = useState('');
   const [quotedPost, setQuotedPost] = useState<ForumPostType | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'topic' | 'post'; id: string } | null>(null);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
 
   const totalPages = Math.ceil(totalCount / 20);
   const isAuthor = user?.id === topic?.author_id;
+  const canModerate = isAuthor || isModerator;
 
   // Get author roles for badge display
   const authorIds = useMemo(() => topic?.author_id ? [topic.author_id] : [], [topic?.author_id]);
@@ -239,13 +243,25 @@ const ForumTopicPage = () => {
             {user && topicId && (
               <TopicSubscriptionButton topicId={topicId} variant="button" />
             )}
-            {isAuthor && (
+            {/* Report button - for all logged-in users (except author) */}
+            {user && !isAuthor && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setReportDialogOpen(true)}
+                className="text-muted-foreground hover:text-destructive"
+              >
+                <Flag className="h-4 w-4" />
+              </Button>
+            )}
+            {/* Moderation actions - for author and moderators */}
+            {canModerate && (
               <>
                 <Button variant="outline" size="sm" onClick={handleTogglePin}>
-                  <Pin className="h-4 w-4" />
+                  <Pin className={`h-4 w-4 ${topic.is_pinned ? 'text-primary' : ''}`} />
                 </Button>
                 <Button variant="outline" size="sm" onClick={handleToggleLock}>
-                  <Lock className="h-4 w-4" />
+                  <Lock className={`h-4 w-4 ${topic.is_locked ? 'text-amber-500' : ''}`} />
                 </Button>
                 <Button 
                   variant="outline" 
@@ -477,6 +493,16 @@ const ForumTopicPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Report dialog */}
+      {topicId && (
+        <ReportDialog
+          open={reportDialogOpen}
+          onOpenChange={setReportDialogOpen}
+          targetType="topic"
+          targetId={topicId}
+        />
+      )}
     </div>
   );
 };
