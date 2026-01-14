@@ -6,6 +6,7 @@ export { MarkdownEditor } from './MarkdownEditor';
 export { MentionAutocomplete, renderMentions } from './MentionAutocomplete';
 export { ReactionPicker } from './ReactionPicker';
 export { UserRoleBadge } from './UserRoleBadge';
+export { UserContextMenu } from './UserContextMenu';
 export { ReportDialog } from './ReportDialog';
 export { ReportsManager } from './ReportsManager';
 export { NotificationBell } from './NotificationBell';
