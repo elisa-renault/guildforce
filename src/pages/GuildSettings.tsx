@@ -420,21 +420,21 @@ const GuildSettings = () => {
             <h2 className="font-display text-lg mb-4">{t.guildSettings.guildInfo}</h2>
             
             <div className="space-y-3">
-              <div className="flex justify-between py-2 border-b border-border/50">
-                <span className="text-muted-foreground">{t.guild.name}</span>
-                <span className="font-medium">{guild.name}</span>
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-1 py-2 border-b border-border/50">
+                <span className="text-muted-foreground text-sm">{t.guild.name}</span>
+                <span className="font-medium text-right break-words">{guild.name}</span>
               </div>
-              <div className="flex justify-between py-2 border-b border-border/50">
-                <span className="text-muted-foreground">{t.guild.server}</span>
-                <span className="font-medium">{guild.server.charAt(0).toUpperCase() + guild.server.slice(1)}</span>
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-1 py-2 border-b border-border/50">
+                <span className="text-muted-foreground text-sm">{t.guild.server}</span>
+                <span className="font-medium text-right break-words">{guild.server.charAt(0).toUpperCase() + guild.server.slice(1)}</span>
               </div>
-              <div className="flex justify-between py-2 border-b border-border/50">
-                <span className="text-muted-foreground">{t.battlenet.region}</span>
-                <span className="font-medium uppercase">{guild.region}</span>
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-1 py-2 border-b border-border/50">
+                <span className="text-muted-foreground text-sm">{t.battlenet.region}</span>
+                <span className="font-medium uppercase text-right">{guild.region}</span>
               </div>
-              <div className="flex justify-between py-2 border-b border-border/50">
-                <span className="text-muted-foreground">{t.guild.faction}</span>
-                <span className={`font-medium ${
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-1 py-2 border-b border-border/50">
+                <span className="text-muted-foreground text-sm">{t.guild.faction}</span>
+                <span className={`font-medium text-right ${
                   guild.faction === 'horde' ? 'text-red-400' : 'text-blue-400'
                 }`}>
                   {guild.faction === 'horde' ? t.guild.horde : t.guild.alliance}
