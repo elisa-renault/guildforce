@@ -26,6 +26,7 @@ import {
   RefreshCw,
   PlusCircle,
   Edit3,
+  UserCog,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
@@ -40,6 +41,7 @@ const ACTION_ICONS: Record<ActionType, React.ReactNode> = {
   wish_updated: <Edit3 className="h-4 w-4" />,
   wish_deleted: <Trash2 className="h-4 w-4" />,
   member_joined: <UserPlus className="h-4 w-4" />,
+  commitment_changed: <UserCog className="h-4 w-4" />,
   roster_created: <FileText className="h-4 w-4" />,
   roster_updated: <Pencil className="h-4 w-4" />,
   roster_deleted: <Trash2 className="h-4 w-4" />,
@@ -51,6 +53,7 @@ const ACTION_COLORS: Record<ActionType, string> = {
   wish_updated: 'bg-amber-500/20 text-amber-400',
   wish_deleted: 'bg-red-500/20 text-red-400',
   member_joined: 'bg-cyan-500/20 text-cyan-400',
+  commitment_changed: 'bg-violet-500/20 text-violet-400',
   roster_created: 'bg-blue-500/20 text-blue-400',
   roster_updated: 'bg-amber-500/20 text-amber-400',
   roster_deleted: 'bg-red-500/20 text-red-400',
@@ -70,6 +73,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
       wish_updated: { en: 'Wish Updated', fr: 'Vœu modifié' },
       wish_deleted: { en: 'Wish Deleted', fr: 'Vœu supprimé' },
       member_joined: { en: 'Member Joined', fr: 'Nouveau membre' },
+      commitment_changed: { en: 'Commitment', fr: 'Engagement' },
       roster_created: { en: 'Roster Created', fr: 'Roster créé' },
       roster_updated: { en: 'Roster Updated', fr: 'Roster modifié' },
       roster_deleted: { en: 'Roster Deleted', fr: 'Roster supprimé' },
@@ -253,6 +257,39 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
           </div>
         );
 
+      case 'commitment_changed': {
+        const oldStatus = details.old_status as string;
+        const newStatus = details.new_status as string;
+        
+        const getStatusLabel = (status: string) => {
+          if (status === 'confirmed') return language === 'fr' ? 'Confirmé' : 'Confirmed';
+          if (status === 'withdrawn') return language === 'fr' ? 'Retrait' : 'Withdrawn';
+          return language === 'fr' ? 'Indécis' : 'Undecided';
+        };
+
+        const getStatusColor = (status: string) => {
+          if (status === 'confirmed') return 'text-healer';
+          if (status === 'withdrawn') return 'text-destructive';
+          return 'text-amber-500';
+        };
+
+        return (
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <span className="font-medium">{log.target_user_profile?.username || 'Unknown'}</span>
+              <span className="text-muted-foreground text-sm">
+                {language === 'fr' ? 'a changé son engagement' : 'changed commitment'}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <span className={`${getStatusColor(oldStatus)} opacity-60`}>{getStatusLabel(oldStatus)}</span>
+              <span className="text-muted-foreground">→</span>
+              <span className={getStatusColor(newStatus)}>{getStatusLabel(newStatus)}</span>
+            </div>
+          </div>
+        );
+      }
+
       case 'roster_created':
         return (
           <div className="flex items-center gap-2">
@@ -336,6 +373,9 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
               </SelectItem>
               <SelectItem value="member_joined">
                 {language === 'fr' ? 'Membres' : 'Members'}
+              </SelectItem>
+              <SelectItem value="commitment_changed">
+                {language === 'fr' ? 'Engagements' : 'Commitments'}
               </SelectItem>
               <SelectItem value="roster_created">
                 {language === 'fr' ? 'Rosters créés' : 'Rosters Created'}
