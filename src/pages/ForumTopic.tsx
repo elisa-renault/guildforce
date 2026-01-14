@@ -7,7 +7,7 @@ import { useUserRoles } from '@/hooks/useUserRoles';
 import { useIsModerator } from '@/hooks/useAdmin';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
-import { ForumPost, MarkdownEditor, ReactionPicker, UserRoleBadge, TopicSubscriptionButton, ReportDialog } from '@/components/forum';
+import { ForumPost, MarkdownEditor, ReactionPicker, UserRoleBadge, TopicSubscriptionButton, ReportDialog, UserContextMenu } from '@/components/forum';
 import { ForumPost as ForumPostType, ReactionType } from '@/types/forum';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -283,19 +283,51 @@ const ForumTopicPage = () => {
         <div className="mb-6 p-4 rounded-lg bg-card/50 border border-primary/30">
           <div className="flex gap-4">
             <div className="flex flex-col items-center gap-2 min-w-[80px]">
-              <Avatar className="h-12 w-12">
-                {topic.author?.avatar_url ? (
-                  <AvatarImage src={topic.author.avatar_url} alt={topic.author.username} />
-                ) : (
+              {topic.author ? (
+                <UserContextMenu 
+                  user={{
+                    id: topic.author_id,
+                    username: topic.author.username,
+                    avatar_url: topic.author.avatar_url,
+                  }} 
+                  isModerator={isModerator}
+                >
+                  <Avatar className="h-12 w-12 hover:ring-2 hover:ring-primary/50 transition-all">
+                    {topic.author.avatar_url ? (
+                      <AvatarImage src={topic.author.avatar_url} alt={topic.author.username} />
+                    ) : (
+                      <AvatarFallback className="bg-primary/20 text-primary">
+                        <User className="h-6 w-6" />
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                </UserContextMenu>
+              ) : (
+                <Avatar className="h-12 w-12">
                   <AvatarFallback className="bg-primary/20 text-primary">
                     <User className="h-6 w-6" />
                   </AvatarFallback>
-                )}
-              </Avatar>
+                </Avatar>
+              )}
               <div className="flex flex-col items-center gap-1">
-                <span className="text-sm font-medium text-foreground text-center">
-                  {topic.author?.username || 'Inconnu'}
-                </span>
+                {topic.author ? (
+                  <UserContextMenu 
+                    user={{
+                      id: topic.author_id,
+                      username: topic.author.username,
+                      avatar_url: topic.author.avatar_url,
+                    }} 
+                    isModerator={isModerator}
+                  >
+                    <span className="text-sm font-medium text-foreground text-center hover:text-primary transition-colors">
+                      {topic.author.username}
+                    </span>
+                  </UserContextMenu>
+                ) : (
+                  <span className="text-sm font-medium text-foreground text-center">
+                    Inconnu
+                  </span>
+                )}
                 <UserRoleBadge roles={topicAuthorRoles} size="sm" />
               </div>
             </div>
