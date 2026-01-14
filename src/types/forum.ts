@@ -121,6 +121,8 @@ export interface ReactionSummary {
   counts: Record<ReactionType, number>;
   userReactions: ReactionType[];
   total: number;
+  // Usernames per reaction type
+  usersByReaction: Record<ReactionType, string[]>;
 }
 
 // Report reasons
