@@ -216,43 +216,45 @@ export const PollEditor = ({
         </div>
       </GlowCard>
 
-      {/* Validation feedback */}
-      {!isValid && formData.title.trim() && (
-        <div className="text-sm text-amber-500 text-center">
-          {language === 'fr' 
-            ? '⚠️ Remplis toutes les options de réponse pour pouvoir publier'
-            : '⚠️ Fill in all answer options to publish'}
-        </div>
-      )}
+      {/* Sticky actions */}
+      <div className="sticky bottom-0 z-20 -mx-4 sm:mx-0 sm:rounded-lg px-4 py-3 bg-background/80 backdrop-blur border border-border/50">
+        {/* Validation feedback */}
+        {!isValid && formData.title.trim() && (
+          <div className="mb-2 text-sm text-muted-foreground">
+            {language === 'fr'
+              ? 'Remplis toutes les options de réponse (A, B, …) pour pouvoir publier.'
+              : 'Fill in all answer options (A, B, …) to publish.'}
+          </div>
+        )}
 
-      <div className="flex items-center justify-end gap-3">
-        <Button 
-          variant="outline" 
-          onClick={handleSave}
-          disabled={!formData.title.trim() || saving}
-        >
-          {saving ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-          ) : (
-            <Save className="h-4 w-4 mr-2" />
-          )}
-          {language === 'fr' ? 'Enregistrer brouillon' : 'Save Draft'}
-        </Button>
-        
-        {onPublish && (
-          <Button 
-            onClick={handlePublish}
-            disabled={!isValid || saving}
-            className="bg-green-600 hover:bg-green-700"
+        <div className="flex items-center justify-end gap-3">
+          <Button
+            variant="outline"
+            onClick={handleSave}
+            disabled={!formData.title.trim() || saving}
           >
             {saving ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (
-              <Play className="h-4 w-4 mr-2" />
+              <Save className="h-4 w-4 mr-2" />
             )}
-            {language === 'fr' ? 'Publier le sondage' : 'Publish Poll'}
+            {language === 'fr' ? 'Enregistrer brouillon' : 'Save Draft'}
           </Button>
-        )}
+
+          {onPublish && (
+            <Button
+              onClick={handlePublish}
+              disabled={!isValid || saving}
+            >
+              {saving ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Play className="h-4 w-4 mr-2" />
+              )}
+              {language === 'fr' ? 'Publier le sondage' : 'Publish Poll'}
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
