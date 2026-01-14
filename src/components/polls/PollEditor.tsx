@@ -216,6 +216,15 @@ export const PollEditor = ({
         </div>
       </GlowCard>
 
+      {/* Validation feedback */}
+      {!isValid && formData.title.trim() && (
+        <div className="text-sm text-amber-500 text-center">
+          {language === 'fr' 
+            ? '⚠️ Remplis toutes les options de réponse pour pouvoir publier'
+            : '⚠️ Fill in all answer options to publish'}
+        </div>
+      )}
+
       <div className="flex items-center justify-end gap-3">
         <Button 
           variant="outline" 

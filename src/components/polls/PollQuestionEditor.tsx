@@ -122,8 +122,8 @@ export const PollQuestionEditor = ({
                   <Input
                     value={option}
                     onChange={(e) => handleOptionChange(optionIndex, e.target.value)}
-                    placeholder={`${language === 'fr' ? 'Option' : 'Option'} ${optionIndex + 1}`}
-                    className="flex-1 bg-background"
+                    placeholder={`${language === 'fr' ? 'Option' : 'Option'} ${optionIndex + 1} *`}
+                    className={`flex-1 bg-background ${!option.trim() ? 'border-destructive/50' : ''}`}
                   />
                   {question.options.length > 2 && (
                     <Button
