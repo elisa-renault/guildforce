@@ -39,10 +39,10 @@ import {
 } from '@/components/ui/alert-dialog';
 import {
   Loader2, ArrowLeft, Plus, Trash2, Edit3, User, Shield, 
-  MessageSquare, Settings, Users, ChevronUp, ChevronDown, Flag
+  MessageSquare, Settings, Users, ChevronUp, ChevronDown, Flag, Ban
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { DynamicIcon, ReportsManager } from '@/components/forum';
+import { DynamicIcon, ReportsManager, SanctionsManager } from '@/components/forum';
 
 interface Category {
   id: string;
@@ -336,6 +336,10 @@ const ForumAdmin = () => {
               <Users className="h-4 w-4 mr-2" />
               {language === 'fr' ? 'Utilisateurs' : 'Users'}
             </TabsTrigger>
+            <TabsTrigger value="sanctions" className="data-[state=active]:bg-primary/20">
+              <Ban className="h-4 w-4 mr-2" />
+              {language === 'fr' ? 'Sanctions' : 'Sanctions'}
+            </TabsTrigger>
           </TabsList>
 
           {/* Reports Tab */}
@@ -585,6 +589,11 @@ const ForumAdmin = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Sanctions Tab */}
+          <TabsContent value="sanctions">
+            <SanctionsManager />
           </TabsContent>
         </Tabs>
       </main>
