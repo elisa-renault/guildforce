@@ -9,8 +9,8 @@ import { MarkdownEditor } from './MarkdownEditor';
 import { ReactionPicker } from './ReactionPicker';
 import { UserRoleBadge } from './UserRoleBadge';
 import { ReportDialog } from './ReportDialog';
-import { SanctionDialog } from './SanctionDialog';
-import { Quote, Edit3, Trash2, User, Clock, Check, X, Flag, Ban } from 'lucide-react';
+import { UserContextMenu } from './UserContextMenu';
+import { Quote, Edit3, Trash2, User, Clock, Check, X, Flag } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import ReactMarkdown from 'react-markdown';
@@ -40,7 +40,6 @@ export const ForumPost = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
-  const [sanctionDialogOpen, setSanctionDialogOpen] = useState(false);
 
   const authorIds = useMemo(() => post.author_id ? [post.author_id] : [], [post.author_id]);
   const { roles } = useUserRoles(authorIds);
@@ -55,23 +54,47 @@ export const ForumPost = ({
     }
   };
 
+  const authorData = post.author ? {
+    id: post.author_id,
+    username: post.author.username,
+    avatar_url: post.author.avatar_url,
+  } : null;
+
   return (
     <div className="flex gap-4 p-4 rounded-lg bg-card/50 border border-border/50">
       {/* Author info */}
       <div className="flex flex-col items-center gap-2 min-w-[80px]">
-        <Avatar className="h-12 w-12">
-          {post.author?.avatar_url ? (
-            <AvatarImage src={post.author.avatar_url} alt={post.author.username} />
-          ) : (
+        {authorData ? (
+          <UserContextMenu user={authorData} isModerator={isModerator}>
+            <Avatar className="h-12 w-12 hover:ring-2 hover:ring-primary/50 transition-all">
+              {post.author?.avatar_url ? (
+                <AvatarImage src={post.author.avatar_url} alt={post.author.username} />
+              ) : (
+                <AvatarFallback className="bg-primary/20 text-primary">
+                  <User className="h-6 w-6" />
+                </AvatarFallback>
+              )}
+            </Avatar>
+          </UserContextMenu>
+        ) : (
+          <Avatar className="h-12 w-12">
             <AvatarFallback className="bg-primary/20 text-primary">
               <User className="h-6 w-6" />
             </AvatarFallback>
-          )}
-        </Avatar>
+          </Avatar>
+        )}
         <div className="flex flex-col items-center gap-1">
-          <span className="text-sm font-medium text-foreground text-center">
-            {post.author?.username || 'Inconnu'}
-          </span>
+          {authorData ? (
+            <UserContextMenu user={authorData} isModerator={isModerator}>
+              <span className="text-sm font-medium text-foreground text-center hover:text-primary transition-colors">
+                {post.author?.username || 'Inconnu'}
+              </span>
+            </UserContextMenu>
+          ) : (
+            <span className="text-sm font-medium text-foreground text-center">
+              Inconnu
+            </span>
+          )}
           <UserRoleBadge roles={authorRoles} size="sm" />
         </div>
       </div>
@@ -131,18 +154,6 @@ export const ForumPost = ({
                 title={language === 'fr' ? 'Signaler' : 'Report'}
               >
                 <Flag className="h-4 w-4" />
-              </Button>
-            )}
-            {/* Sanction button - only for moderators on other users' posts */}
-            {isModerator && !isAuthor && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSanctionDialogOpen(true)}
-                className="h-7 px-2 text-muted-foreground hover:text-destructive"
-                title={language === 'fr' ? 'Sanctionner' : 'Sanction'}
-              >
-                <Ban className="h-4 w-4" />
               </Button>
             )}
           </div>
@@ -226,18 +237,6 @@ export const ForumPost = ({
         targetId={post.id}
       />
 
-      {/* Sanction dialog */}
-      {post.author && (
-        <SanctionDialog
-          open={sanctionDialogOpen}
-          onOpenChange={setSanctionDialogOpen}
-          targetUser={{
-            id: post.author_id,
-            username: post.author.username,
-            avatar_url: post.author.avatar_url,
-          }}
-        />
-      )}
     </div>
   );
 };
