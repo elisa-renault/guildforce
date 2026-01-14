@@ -306,7 +306,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4 mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2">
           <History className="h-5 w-5 text-primary" />
           <h3 className="font-semibold">
@@ -315,7 +315,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
         </div>
         <div className="flex items-center gap-2">
           <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="w-[160px] h-8 bg-card border-border">
+            <SelectTrigger className="w-full sm:w-[160px] h-8 bg-card border-border">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-card border-border">
@@ -352,7 +352,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
             variant="ghost"
             size="icon"
             onClick={() => refetch()}
-            className="h-8 w-8"
+            className="h-8 w-8 flex-shrink-0"
           >
             <RefreshCw className="h-4 w-4" />
           </Button>
@@ -383,21 +383,42 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
             {logs.map((log) => (
               <div
                 key={log.id}
-                className="flex items-start gap-3 p-3 rounded-lg bg-card/50 hover:bg-card/80 transition-colors"
+                className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3 p-3 rounded-lg bg-card/50 hover:bg-card/80 transition-colors"
               >
-                {/* Action Icon */}
-                <div className={`p-2 rounded-full ${ACTION_COLORS[log.action_type]}`}>
+                {/* Mobile: Top row with icon, badge, roster, timestamp */}
+                <div className="flex items-center gap-2 sm:hidden">
+                  <div className={`p-1.5 rounded-full flex-shrink-0 ${ACTION_COLORS[log.action_type]}`}>
+                    {ACTION_ICONS[log.action_type]}
+                  </div>
+                  <Badge variant="secondary" className="text-xs">
+                    {getActionLabel(log.action_type)}
+                  </Badge>
+                  {log.roster && (
+                    <span className="text-xs text-muted-foreground truncate">
+                      {log.roster.name}
+                    </span>
+                  )}
+                  <span className="text-xs text-muted-foreground ml-auto whitespace-nowrap">
+                    {formatDistanceToNow(new Date(log.created_at), {
+                      addSuffix: true,
+                      locale: dateLocale,
+                    })}
+                  </span>
+                </div>
+
+                {/* Desktop: Action Icon */}
+                <div className={`hidden sm:flex p-2 rounded-full flex-shrink-0 ${ACTION_COLORS[log.action_type]}`}>
                   {ACTION_ICONS[log.action_type]}
                 </div>
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="hidden sm:flex items-center gap-2 mb-1">
                     <Badge variant="secondary" className="text-xs">
                       {getActionLabel(log.action_type)}
                     </Badge>
                     {log.roster && (
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-muted-foreground truncate">
                         {log.roster.name}
                       </span>
                     )}
@@ -405,8 +426,8 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
                   {renderLogDetails(log)}
                 </div>
 
-                {/* Timestamp */}
-                <div className="text-xs text-muted-foreground whitespace-nowrap">
+                {/* Desktop: Timestamp */}
+                <div className="hidden sm:block text-xs text-muted-foreground whitespace-nowrap flex-shrink-0">
                   {formatDistanceToNow(new Date(log.created_at), {
                     addSuffix: true,
                     locale: dateLocale,
