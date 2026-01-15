@@ -9,7 +9,7 @@ import { GuildSubNav } from '@/components/guild';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { PollResponse, PollResults } from '@/components/polls';
 import { usePoll, usePollResults, usePollMutations } from '@/hooks/useGuildPolls';
-import { Loader2, BarChart3 } from 'lucide-react';
+import { Loader2, BarChart3, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import type { ResponseValue } from '@/types/poll';
