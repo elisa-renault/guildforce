@@ -9,6 +9,7 @@ import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { RosterManager } from '@/components/roster';
 import { ActivityLog } from '@/components/dashboard';
+import { GuildPermissionsEditor } from '@/components/permissions';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Loader2, ArrowLeft, Upload, Trash2, Shield, Info, History } from 'lucide-react';
 import { toSlug, getGuildPath } from '@/lib/guildSlug';
@@ -452,6 +453,13 @@ const GuildSettings = () => {
           <div className="md:col-span-2">
             <GlowCard className="p-6 h-[500px]">
               <ActivityLog guildId={guild.id} />
+            </GlowCard>
+          </div>
+
+          {/* Permissions Section */}
+          <div className="md:col-span-2">
+            <GlowCard className="p-6">
+              <GuildPermissionsEditor guildId={guild.id} />
             </GlowCard>
           </div>
 
