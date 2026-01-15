@@ -41,12 +41,15 @@ interface UseActivityLogOptions {
   guildId: string;
   limit?: number;
   actionTypes?: ActionType[];
+  page?: number;
 }
 
-export const useActivityLog = ({ guildId, limit = 50, actionTypes }: UseActivityLogOptions) => {
+export const useActivityLog = ({ guildId, limit = 50, actionTypes, page = 1 }: UseActivityLogOptions) => {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [totalCount, setTotalCount] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
 
   const fetchLogs = useCallback(async () => {
     if (!guildId) return;
@@ -55,6 +58,22 @@ export const useActivityLog = ({ guildId, limit = 50, actionTypes }: UseActivity
     setError(null);
 
     try {
+      // Get total count first
+      let countQuery = supabase
+        .from('guild_activity_logs')
+        .select('id', { count: 'exact', head: true })
+        .eq('guild_id', guildId);
+
+      if (actionTypes && actionTypes.length > 0) {
+        countQuery = countQuery.in('action_type', actionTypes);
+      }
+
+      const { count } = await countQuery;
+      setTotalCount(count || 0);
+
+      // Calculate offset for pagination
+      const offset = (page - 1) * limit;
+
       let query = supabase
         .from('guild_activity_logs')
         .select(`
@@ -69,7 +88,7 @@ export const useActivityLog = ({ guildId, limit = 50, actionTypes }: UseActivity
         `)
         .eq('guild_id', guildId)
         .order('created_at', { ascending: false })
-        .limit(limit);
+        .range(offset, offset + limit - 1);
 
       if (actionTypes && actionTypes.length > 0) {
         query = query.in('action_type', actionTypes);
@@ -126,17 +145,20 @@ export const useActivityLog = ({ guildId, limit = 50, actionTypes }: UseActivity
       }));
 
       setLogs(enrichedLogs);
+      setHasMore((count || 0) > page * limit);
     } catch (err) {
       console.error('Error fetching activity logs:', err);
       setError('Failed to load activity logs');
     } finally {
       setLoading(false);
     }
-  }, [guildId, limit, actionTypes]);
+  }, [guildId, limit, actionTypes, page]);
 
   useEffect(() => {
     fetchLogs();
   }, [fetchLogs]);
 
-  return { logs, loading, error, refetch: fetchLogs };
+  const totalPages = Math.ceil(totalCount / limit);
+
+  return { logs, loading, error, refetch: fetchLogs, totalCount, totalPages, hasMore };
 };
