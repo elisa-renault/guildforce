@@ -6,7 +6,6 @@ import { useToast } from '@/hooks/use-toast';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
 import { BattleNetIcon } from '@/components/BattleNetIcon';
-import { Footer } from '@/components/Footer';
 import { Shield } from 'lucide-react';
 
 const Index = () => {
@@ -52,7 +51,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen relative pt-16 flex flex-col">
+    <div className="flex-1 relative pt-16 flex flex-col">
       <CosmicBackground />
 
       {/* Hero */}
@@ -83,8 +82,6 @@ const Index = () => {
           </div>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 };
