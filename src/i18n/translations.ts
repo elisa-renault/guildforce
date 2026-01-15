@@ -335,6 +335,25 @@ export interface Translations {
     updated: string;
     deleted: string;
   };
+  // Permissions
+  permissions: {
+    title: string;
+    description: string;
+    noRules: string;
+    saved: string;
+    addRankRule: string;
+    addUserRule: string;
+    manageWishes: string;
+    manageWishesDesc: string;
+    managePolls: string;
+    managePollsDesc: string;
+    manageRosters: string;
+    manageRostersDesc: string;
+    viewActivityLog: string;
+    viewActivityLogDesc: string;
+    manageMembers: string;
+    manageMembersDesc: string;
+  };
   // Errors
   errors: {
     generic: string;
@@ -674,6 +693,24 @@ export const translations: Record<Language, Translations> = {
       updated: 'updated',
       deleted: 'deleted',
     },
+    permissions: {
+      title: 'Permissions',
+      description: 'Delegate specific management rights to members based on their Battle.net rank or individually. GMs always have all permissions.',
+      noRules: 'Only GMs have this permission',
+      saved: 'Permissions saved',
+      addRankRule: 'Add by rank',
+      addUserRule: 'Add user',
+      manageWishes: 'Manage Wishes',
+      manageWishesDesc: 'Approve or reject member wishes',
+      managePolls: 'Manage Polls',
+      managePollsDesc: 'Create, edit and publish polls',
+      manageRosters: 'Manage Rosters',
+      manageRostersDesc: 'Create and configure rosters',
+      viewActivityLog: 'View Activity Log',
+      viewActivityLogDesc: 'Access the guild activity history',
+      manageMembers: 'Manage Members',
+      manageMembersDesc: 'Edit member commitment status',
+    },
     errors: {
       generic: 'Something went wrong. Please try again.',
       network: 'Network error. Please check your connection.',
@@ -1009,6 +1046,24 @@ export const translations: Record<Language, Translations> = {
       newRoster: 'Nouveau roster :',
       updated: 'modifié',
       deleted: 'supprimé',
+    },
+    permissions: {
+      title: 'Permissions',
+      description: 'Déléguez des droits de gestion spécifiques aux membres en fonction de leur rang Battle.net ou individuellement. Les GMs ont toujours toutes les permissions.',
+      noRules: 'Seuls les GMs ont cette permission',
+      saved: 'Permissions enregistrées',
+      addRankRule: 'Ajouter par rang',
+      addUserRule: 'Ajouter un utilisateur',
+      manageWishes: 'Gérer les vœux',
+      manageWishesDesc: 'Approuver ou refuser les vœux des membres',
+      managePolls: 'Gérer les sondages',
+      managePollsDesc: 'Créer, modifier et publier des sondages',
+      manageRosters: 'Gérer les rosters',
+      manageRostersDesc: 'Créer et configurer les rosters',
+      viewActivityLog: 'Voir le journal',
+      viewActivityLogDesc: 'Accéder à l\'historique d\'activité de la guilde',
+      manageMembers: 'Gérer les membres',
+      manageMembersDesc: 'Modifier le statut d\'engagement des membres',
     },
     errors: {
       generic: 'Une erreur est survenue. Veuillez réessayer.',
