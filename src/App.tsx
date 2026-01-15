@@ -18,6 +18,7 @@ import GuildPollNew from "./pages/GuildPollNew";
 import GuildPollView from "./pages/GuildPollView";
 import GuildPollResults from "./pages/GuildPollResults";
 import Profile from "./pages/Profile";
+import PublicProfile from "./pages/PublicProfile";
 import Forum from "./pages/Forum";
 import ForumCategory from "./pages/ForumCategory";
 import ForumNewTopic from "./pages/ForumNewTopic";
@@ -42,6 +43,7 @@ const App = () => (
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/guilds" element={<GuildList />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/u/:username" element={<PublicProfile />} />
                 <Route path="/forum" element={<Forum />} />
                 <Route path="/forum/admin" element={<ForumAdmin />} />
                 <Route path="/forum/category/:categorySlug" element={<ForumCategory />} />
