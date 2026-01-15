@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toSlug } from '@/lib/guildSlug';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { PollResponse, PollResults } from '@/components/polls';
-import { usePoll, usePollMutations } from '@/hooks/useGuildPolls';
+import { usePoll, usePollResults, usePollMutations } from '@/hooks/useGuildPolls';
 import { Loader2, ArrowLeft, BarChart3 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,7 @@ const GuildPollView = () => {
   const [showResults, setShowResults] = useState(false);
 
   const { poll, loading: pollLoading, refetch } = usePoll(pollId);
+  const { poll: pollResults, loading: resultsLoading, refetch: refetchResults } = usePollResults(pollId);
   const { submitAllResponses, saving } = usePollMutations();
 
   useEffect(() => {
@@ -76,12 +77,13 @@ const GuildPollView = () => {
       setHasResponded(true);
       setShowResults(true);
       refetch();
+      refetchResults();
     } catch (error: any) {
       toast({ title: language === 'fr' ? 'Erreur' : 'Error', description: error.message, variant: 'destructive' });
     }
   };
 
-  if (loading || pollLoading) {
+  if (loading || pollLoading || (showResults && resultsLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <CosmicBackground />
@@ -169,9 +171,9 @@ const GuildPollView = () => {
               </div>
             )}
             <PollResults
-              questions={poll.questions || []}
+              questions={pollResults?.questions || poll.questions || []}
               isAnonymous={poll.is_anonymous}
-              totalResponses={poll.response_count || 0}
+              totalResponses={pollResults?.response_count || 0}
             />
           </div>
         ) : (
