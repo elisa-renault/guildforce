@@ -7,13 +7,14 @@ import { useUserRoles } from '@/hooks/useUserRoles';
 import { useIsModerator } from '@/hooks/useAdmin';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
+import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { ForumPost, MarkdownEditor, ReactionPicker, UserRoleBadge, TopicSubscriptionButton, ReportDialog, UserContextMenu } from '@/components/forum';
 import { ForumPost as ForumPostType, ReactionType } from '@/types/forum';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { 
-  Loader2, ArrowLeft, ChevronLeft, ChevronRight, Pin, Lock, 
-  Edit3, Trash2, User, Clock, Eye, MessageSquare, Send, Flag
+  Loader2, ChevronLeft, ChevronRight, Pin, Lock, 
+  Trash2, User, Clock, Eye, MessageSquare, Flag, Send
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
@@ -217,14 +218,23 @@ const ForumTopicPage = () => {
       <CosmicBackground />
 
       <main className="container mx-auto px-4 py-8 relative z-10 max-w-5xl">
+        {/* Breadcrumbs */}
+        <Breadcrumbs 
+          items={[
+            { label: 'Forum', href: '/forum' },
+            { 
+              label: topic.category?.slug 
+                ? (t.forum.categoryNames[topic.category.slug as keyof typeof t.forum.categoryNames] || topic.category.name)
+                : (topic.category?.name || ''),
+              href: `/forum/category/${topic.category?.slug}` 
+            },
+            { label: topic.title },
+          ]}
+          className="mb-6"
+        />
+
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
-          <button
-            onClick={() => navigate(`/forum/category/${topic.category?.slug}`)}
-            className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4 text-muted-foreground" />
-          </button>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               {topic.is_pinned && <Pin className="h-4 w-4 text-primary" />}
@@ -233,11 +243,6 @@ const ForumTopicPage = () => {
                 {topic.title}
               </h1>
             </div>
-            <p className="text-sm text-muted-foreground">
-              {topic.category?.slug 
-                ? (t.forum.categoryNames[topic.category.slug as keyof typeof t.forum.categoryNames] || topic.category.name)
-                : topic.category?.name}
-            </p>
           </div>
           <div className="flex items-center gap-2">
             {user && topicId && (
