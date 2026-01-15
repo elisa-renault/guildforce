@@ -14,7 +14,7 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative">
+    <div className="flex-1 flex items-center justify-center p-4 relative">
       <CosmicBackground />
 
       <GlowCard className="w-full max-w-md p-8 text-center relative z-10">

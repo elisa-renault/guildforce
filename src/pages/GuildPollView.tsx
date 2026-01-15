@@ -90,7 +90,7 @@ const GuildPollView = () => {
 
   if (loading || pollLoading || (showResultsPane && resultsLoading)) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center">
         <CosmicBackground />
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
@@ -99,7 +99,7 @@ const GuildPollView = () => {
 
   if (!poll) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center">
         <CosmicBackground />
         <p className="text-muted-foreground">{language === 'fr' ? 'Sondage introuvable' : 'Poll not found'}</p>
       </div>
@@ -109,7 +109,7 @@ const GuildPollView = () => {
   const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
 
   return (
-    <div className="min-h-screen relative pt-16">
+    <div className="flex-1 relative pt-16">
       <CosmicBackground />
 
       <div className="container mx-auto px-4 py-8 max-w-3xl relative z-10">
