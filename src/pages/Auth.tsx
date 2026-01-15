@@ -196,7 +196,7 @@ const Auth = () => {
 
   if (bnetLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 relative">
+      <div className="flex-1 flex items-center justify-center p-4 relative">
         <CosmicBackground />
         <GlowCard className="w-full max-w-md p-8 relative z-10 text-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
@@ -207,7 +207,7 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative">
+    <div className="flex-1 flex items-center justify-center p-4 relative">
       <CosmicBackground />
 
       <GlowCard className="w-full max-w-md p-8 relative z-10">

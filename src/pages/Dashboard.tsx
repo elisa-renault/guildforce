@@ -472,7 +472,7 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center">
         <CosmicBackground />
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
@@ -484,7 +484,7 @@ const Dashboard = () => {
   const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
 
   return (
-    <div className="min-h-screen relative pt-16">
+    <div className="flex-1 relative pt-16">
       <CosmicBackground />
 
       {/* Guild Sub-Navigation */}
