@@ -42,7 +42,7 @@ const ForumNewTopic = () => {
   // Redirect if not logged in
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center">
         <CosmicBackground />
         <div className="text-center">
           <p className="text-muted-foreground mb-4">
@@ -58,7 +58,7 @@ const ForumNewTopic = () => {
 
   if (categoriesLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center">
         <CosmicBackground />
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
@@ -67,7 +67,7 @@ const ForumNewTopic = () => {
 
   if (!category) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center">
         <CosmicBackground />
         <div className="text-center">
           <p className="text-muted-foreground mb-4">
@@ -84,7 +84,7 @@ const ForumNewTopic = () => {
   const categoryName = t.forum.categoryNames[category.slug as keyof typeof t.forum.categoryNames] || category.name;
 
   return (
-    <div className="min-h-screen relative pt-16">
+    <div className="flex-1 relative pt-16">
       <CosmicBackground />
 
       <main className="container mx-auto px-4 py-8 relative z-10 max-w-3xl">
