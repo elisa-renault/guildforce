@@ -45,7 +45,7 @@ export const UserContextMenu = ({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="bg-card border-border">
           <DropdownMenuItem
-            onClick={() => navigate(`/profile/${targetUser.id}`)}
+            onClick={() => navigate(`/u/${targetUser.username}`)}
             className="cursor-pointer"
           >
             <User className="h-4 w-4 mr-2" />
