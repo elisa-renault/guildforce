@@ -7,14 +7,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { getClassById, getSpecById, getRolesFromSpecs, Role, wowClasses } from '@/data/wowClasses';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
+import { GuildSubNav } from '@/components/guild';
 import { StatsCards, RosterFilters, RosterTable } from '@/components/dashboard';
 import { RosterSelector, RosterEditDialog } from '@/components/roster';
 import { ActivePollWidget } from '@/components/polls';
 import { MemberWish, WishData, RoleStats, RangeStats, RosterFilters as RosterFiltersType, ValidationStatus } from '@/types/guild';
-import { Loader2, Sparkles, ArrowLeft, Settings, Shield, BarChart3 } from 'lucide-react';
-import { toSlug, getGuildWishesPath, getGuildSettingsPath } from '@/lib/guildSlug';
+import { Loader2, Sparkles, Settings } from 'lucide-react';
+import { toSlug, getGuildWishesPath } from '@/lib/guildSlug';
 import { CommitmentStatus } from '@/components/CommitmentToggle';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 // Max wishes = number of WoW classes
 const MAX_WISHES = wowClasses.length;
@@ -481,53 +481,38 @@ const Dashboard = () => {
 
   const currentRoster = rosters.find(r => r.id === selectedRosterId);
 
+  const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
+
   return (
     <div className="min-h-screen relative pt-16">
       <CosmicBackground />
 
-      {/* Sticky toolbar */}
-      <div className="sticky top-14 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50">
+      {/* Guild Sub-Navigation */}
+      {guild && (
+        <GuildSubNav
+          guild={guild}
+          basePath={basePath}
+          isGM={isGM}
+          activeTab="dashboard"
+        />
+      )}
+
+      {/* Roster controls bar */}
+      <div className="sticky top-[104px] z-30 bg-background/80 backdrop-blur-lg border-b border-border/50">
         <div className="container mx-auto px-3 md:px-4 py-2 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => navigate('/guilds')}
-              className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
-              title={t.common.back}
-            >
-              <ArrowLeft className="h-4 w-4 text-muted-foreground" />
-            </button>
-            {guild?.avatar_url && (
-              <Avatar className="h-7 w-7 border border-border/50">
-                <AvatarImage src={guild.avatar_url} alt={guild.name} />
-              </Avatar>
-            )}
-            <h1 className="text-sm md:text-lg font-semibold text-foreground truncate">{guild?.name}</h1>
-            
-            {/* Roster selector */}
-            <RosterSelector
-              rosters={rosters}
-              selectedRosterId={selectedRosterId}
-              onSelect={setSelectedRosterId}
-              showAccessIndicator={true}
-            />
-          </div>
+          <RosterSelector
+            rosters={rosters}
+            selectedRosterId={selectedRosterId}
+            onSelect={setSelectedRosterId}
+            showAccessIndicator={true}
+          />
           <div className="flex gap-1.5 md:gap-2">
             <CosmicButton size="sm" variant="outline" onClick={() => guild && navigate(getGuildWishesPath(guild.region, guild.server, guild.name))} icon={<Sparkles className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 md:h-8 px-2 md:px-3">
               <span className="hidden md:inline">{t.wishes.editMyWishes}</span>
             </CosmicButton>
-            {isGM && guild && (
-              <CosmicButton size="sm" variant="outline" onClick={() => navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/polls`)} icon={<BarChart3 className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 md:h-8 px-2 md:px-3">
-                <span className="hidden md:inline">{language === 'fr' ? 'Sondages' : 'Polls'}</span>
-              </CosmicButton>
-            )}
             {isGM && selectedRosterId && (
               <CosmicButton size="sm" variant="outline" onClick={() => setRosterSettingsOpen(true)} icon={<Settings className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 md:h-8 px-2 md:px-3">
                 <span className="hidden md:inline">{t.dashboard.roster}</span>
-              </CosmicButton>
-            )}
-            {isGM && guild && (
-              <CosmicButton size="sm" variant="outline" onClick={() => navigate(getGuildSettingsPath(guild.region, guild.server, guild.name))} icon={<Shield className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 md:h-8 px-2 md:px-3">
-                <span className="hidden md:inline">{language === 'fr' ? 'Guilde' : 'Guild'}</span>
               </CosmicButton>
             )}
           </div>
