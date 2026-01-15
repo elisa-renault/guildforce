@@ -29,7 +29,7 @@ export const Footer = () => {
             href="https://fr.tipeee.com/elsiabeth/"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-primary/20 transition-colors"
           >
             <TipeeeIcon className="h-4 w-4" />
             <Beer className="h-4 w-4" />
