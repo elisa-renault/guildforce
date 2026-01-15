@@ -68,7 +68,7 @@ export const GuildSubNav = ({
   const visibleTabs = tabs.filter(tab => tab.show);
 
   return (
-    <div className="sticky top-14 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50">
+    <div className="sticky top-16 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50">
       <div className="container mx-auto px-3 md:px-4">
         <div className="flex items-center gap-3 py-2">
           {/* Back to guilds */}
