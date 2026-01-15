@@ -28,6 +28,9 @@ const GuildPollView = () => {
   const { poll: pollResults, loading: resultsLoading, refetch: refetchResults } = usePollResults(pollId);
   const { submitAllResponses, saving } = usePollMutations();
 
+  const isClosed =
+    poll?.status === 'closed' || (poll?.ends_at && new Date(poll.ends_at) < new Date()) || false;
+  const showResultsPane = isClosed || showResults || (!isGM && hasResponded);
   useEffect(() => {
     const fetchData = async () => {
       if (!user || !regionSlug || !serverSlug || !guildSlug) return;
@@ -83,7 +86,7 @@ const GuildPollView = () => {
     }
   };
 
-  if (loading || pollLoading || (showResults && resultsLoading)) {
+  if (loading || pollLoading || (showResultsPane && resultsLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <CosmicBackground />
@@ -102,7 +105,6 @@ const GuildPollView = () => {
   }
 
   const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
-  const isClosed = poll.status === 'closed' || (poll.ends_at && new Date(poll.ends_at) < new Date());
 
   return (
     <div className="min-h-screen relative pt-16">
@@ -123,7 +125,7 @@ const GuildPollView = () => {
               <p className="text-muted-foreground mt-1">{poll.description}</p>
             )}
           </div>
-          {isGM && (
+          {isGM && !isClosed && (
             <Button
               variant="outline"
               size="sm"
@@ -140,7 +142,7 @@ const GuildPollView = () => {
 
         {/* Poll metadata */}
         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mb-6">
-          {poll.is_anonymous && (
+          {!showResultsPane && poll.is_anonymous && (
             <span className="bg-muted/50 px-2 py-1 rounded">
               {language === 'fr' ? 'Anonyme' : 'Anonymous'}
             </span>
@@ -161,7 +163,7 @@ const GuildPollView = () => {
         </div>
 
         {/* Show results or response form */}
-        {showResults || hasResponded || isClosed ? (
+        {showResultsPane ? (
           <div className="space-y-6">
             {hasResponded && !isClosed && (
               <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 text-center">
