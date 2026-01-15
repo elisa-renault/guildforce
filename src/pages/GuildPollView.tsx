@@ -142,11 +142,6 @@ const GuildPollView = () => {
 
         {/* Poll metadata */}
         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mb-6">
-          {!showResultsPane && poll.is_anonymous && (
-            <span className="bg-muted/50 px-2 py-1 rounded">
-              {language === 'fr' ? 'Anonyme' : 'Anonymous'}
-            </span>
-          )}
           {poll.roster?.name && (
             <span className="bg-muted/50 px-2 py-1 rounded">
               {poll.roster.name}
