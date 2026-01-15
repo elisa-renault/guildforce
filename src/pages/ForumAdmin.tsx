@@ -145,7 +145,7 @@ const ForumAdmin = () => {
 
   if (adminLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center">
         <CosmicBackground />
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
@@ -154,7 +154,7 @@ const ForumAdmin = () => {
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center">
         <CosmicBackground />
         <div className="text-center">
           <Shield className="h-12 w-12 text-destructive mx-auto mb-4" />
@@ -298,7 +298,7 @@ const ForumAdmin = () => {
   );
 
   return (
-    <div className="min-h-screen relative pt-16">
+    <div className="flex-1 relative pt-16">
       <CosmicBackground />
 
       <main className="container mx-auto px-4 py-8 relative z-10 max-w-5xl">

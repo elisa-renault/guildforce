@@ -187,7 +187,7 @@ const Profile = () => {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center">
         <CosmicBackground />
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
@@ -196,7 +196,7 @@ const Profile = () => {
 
   if (!profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 relative">
+      <div className="flex-1 flex items-center justify-center p-4 relative">
         <CosmicBackground />
         <GlowCard className="w-full max-w-md p-8 relative z-10 text-center" hoverable={false}>
           <p className="text-foreground mb-2">Profil introuvable.</p>
@@ -214,7 +214,7 @@ const Profile = () => {
   // Setup mode
   if (isSetupMode) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 relative">
+      <div className="flex-1 flex items-center justify-center p-4 relative">
         <CosmicBackground />
         <GlowCard className="w-full max-w-md p-8 relative z-10" hoverable={false}>
           <div className="text-center mb-8">
@@ -265,7 +265,7 @@ const Profile = () => {
 
   // Normal profile view - modular grid layout
   return (
-    <div className="min-h-screen relative pt-16">
+    <div className="flex-1 relative pt-16">
       <CosmicBackground />
 
       <main className="container mx-auto px-4 py-6 relative z-10">

@@ -58,7 +58,7 @@ const PublicProfile = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center">
         <CosmicBackground />
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
@@ -67,7 +67,7 @@ const PublicProfile = () => {
 
   if (notFound || !profile) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 relative">
+      <div className="flex-1 flex items-center justify-center p-4 relative">
         <CosmicBackground />
         <GlowCard className="w-full max-w-md p-8 text-center relative z-10" hoverable={false}>
           <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-muted flex items-center justify-center">
@@ -94,7 +94,7 @@ const PublicProfile = () => {
   });
 
   return (
-    <div className="min-h-screen relative pt-16">
+    <div className="flex-1 relative pt-16">
       <CosmicBackground />
 
       <main className="container mx-auto px-4 py-6 relative z-10">
