@@ -355,6 +355,14 @@ export interface Translations {
     manageMembers: string;
     manageMembersDesc: string;
   };
+  // Guild Navigation
+  guildNav: {
+    dashboard: string;
+    myWishes: string;
+    polls: string;
+    settings: string;
+    activity: string;
+  };
   // Errors
   errors: {
     generic: string;
@@ -713,6 +721,13 @@ export const translations: Record<Language, Translations> = {
       manageMembers: 'Manage Members',
       manageMembersDesc: 'Edit member commitment status',
     },
+    guildNav: {
+      dashboard: 'Dashboard',
+      myWishes: 'My Wishes',
+      polls: 'Polls',
+      settings: 'Settings',
+      activity: 'Activity',
+    },
     errors: {
       generic: 'Something went wrong. Please try again.',
       network: 'Network error. Please check your connection.',
@@ -1067,6 +1082,13 @@ export const translations: Record<Language, Translations> = {
       viewActivityLogDesc: 'Accéder à l\'historique d\'activité de la guilde',
       manageMembers: 'Gérer les membres',
       manageMembersDesc: 'Modifier le statut d\'engagement des membres',
+    },
+    guildNav: {
+      dashboard: 'Tableau de bord',
+      myWishes: 'Mes vœux',
+      polls: 'Sondages',
+      settings: 'Paramètres',
+      activity: 'Activité',
     },
     errors: {
       generic: 'Une erreur est survenue. Veuillez réessayer.',

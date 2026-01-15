@@ -5,9 +5,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toSlug } from '@/lib/guildSlug';
 import { CosmicBackground } from '@/components/CosmicBackground';
+import { GuildSubNav } from '@/components/guild';
+import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { PollResults } from '@/components/polls';
 import { usePollResults } from '@/hooks/useGuildPolls';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 const GuildPollResultsPage = () => {
   const navigate = useNavigate();
