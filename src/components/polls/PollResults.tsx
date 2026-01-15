@@ -73,11 +73,18 @@ export const PollResults = ({
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Users className="h-4 w-4" />
           <span>
-            {totalResponses} {language === 'fr' ? 'réponses' : 'responses'}
+            {totalResponses}{' '}
+            {language === 'fr'
+              ? totalResponses === 1
+                ? 'réponse'
+                : 'réponses'
+              : totalResponses === 1
+                ? 'response'
+                : 'responses'}
           </span>
         </div>
         {isAnonymous && (
-          <Badge variant="outline" className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+          <Badge variant="outline" className="bg-primary/15 text-primary border-primary/30">
             <Lock className="h-3 w-3 mr-1" />
             {language === 'fr' ? 'Anonyme' : 'Anonymous'}
           </Badge>
@@ -108,7 +115,7 @@ export const PollResults = ({
                             {data.count} ({percentage.toFixed(0)}%)
                           </span>
                         </div>
-                        <Progress value={percentage} className="h-2" />
+                        <Progress value={percentage} className="h-2 bg-muted/40" />
                         {!isAnonymous && data.users.length > 0 && (
                           <div className="flex items-center gap-1 mt-1">
                             {data.users.slice(0, 5).map((user) => (
@@ -195,7 +202,7 @@ export const PollResults = ({
                           return (
                             <div key={rating} className="flex items-center gap-2">
                               <span className="w-4 text-sm text-muted-foreground">{rating}</span>
-                              <Progress value={percentage} className="h-2 flex-1" />
+                              <Progress value={percentage} className="h-2 flex-1 bg-muted/40" />
                               <span className="w-8 text-xs text-muted-foreground text-right">
                                 {count}
                               </span>
