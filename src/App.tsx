@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { GlobalNav } from "@/components/GlobalNav";
+import { Footer } from "@/components/Footer";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import GuildList from "./pages/GuildList";
@@ -33,33 +34,36 @@ const App = () => (
     <LanguageProvider>
       <AuthProvider>
         <TooltipProvider>
-          <div className="dark">
+          <div className="dark min-h-screen flex flex-col">
             <div className="grain-overlay" />
             <Toaster />
             <BrowserRouter>
               <GlobalNav />
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/guilds" element={<GuildList />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/u/:username" element={<PublicProfile />} />
-                <Route path="/forum" element={<Forum />} />
-                <Route path="/forum/admin" element={<ForumAdmin />} />
-                <Route path="/forum/category/:categorySlug" element={<ForumCategory />} />
-                <Route path="/forum/category/:categorySlug/new" element={<ForumNewTopic />} />
-                <Route path="/forum/topic/:topicId" element={<ForumTopic />} />
-                <Route path="/guild/:regionSlug/:serverSlug/:guildSlug" element={<Dashboard />} />
-                <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/wishes" element={<Wishes />} />
-                <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/settings" element={<GuildSettings />} />
-                <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/member/:memberId" element={<MemberWishes />} />
-                <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/polls" element={<GuildPolls />} />
-                <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/polls/new" element={<GuildPollNew />} />
-                <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/polls/:pollId/edit" element={<GuildPollNew />} />
-                <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/poll/:pollId" element={<GuildPollView />} />
-                <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/poll/:pollId/results" element={<GuildPollResults />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <div className="flex-1 flex flex-col">
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/guilds" element={<GuildList />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/u/:username" element={<PublicProfile />} />
+                  <Route path="/forum" element={<Forum />} />
+                  <Route path="/forum/admin" element={<ForumAdmin />} />
+                  <Route path="/forum/category/:categorySlug" element={<ForumCategory />} />
+                  <Route path="/forum/category/:categorySlug/new" element={<ForumNewTopic />} />
+                  <Route path="/forum/topic/:topicId" element={<ForumTopic />} />
+                  <Route path="/guild/:regionSlug/:serverSlug/:guildSlug" element={<Dashboard />} />
+                  <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/wishes" element={<Wishes />} />
+                  <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/settings" element={<GuildSettings />} />
+                  <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/member/:memberId" element={<MemberWishes />} />
+                  <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/polls" element={<GuildPolls />} />
+                  <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/polls/new" element={<GuildPollNew />} />
+                  <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/polls/:pollId/edit" element={<GuildPollNew />} />
+                  <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/poll/:pollId" element={<GuildPollView />} />
+                  <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/poll/:pollId/results" element={<GuildPollResults />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </div>
+              <Footer />
             </BrowserRouter>
           </div>
         </TooltipProvider>
