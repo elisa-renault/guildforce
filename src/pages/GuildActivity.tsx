@@ -105,7 +105,7 @@ const GuildActivity = () => {
         activeTab="activity"
       />
 
-      <main className="container mx-auto px-4 py-8 relative z-10 max-w-6xl">
+      <main className="container mx-auto px-4 pt-20 pb-8 relative z-10 max-w-6xl">
         <h1 className="font-display text-2xl md:text-3xl text-foreground mb-6">
           {language === 'fr' ? 'Journal d\'activité' : 'Activity Log'}
         </h1>
