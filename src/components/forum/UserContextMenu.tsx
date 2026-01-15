@@ -37,7 +37,7 @@ export const UserContextMenu = ({
 
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <button className="cursor-pointer focus:outline-none">
             {children}
