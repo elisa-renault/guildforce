@@ -763,6 +763,47 @@ export type Database = {
           },
         ]
       }
+      guild_permissions: {
+        Row: {
+          access_type: string
+          created_at: string
+          guild_id: string
+          id: string
+          max_rank_index: number | null
+          min_rank_index: number | null
+          permission_type: string
+          user_id: string | null
+        }
+        Insert: {
+          access_type: string
+          created_at?: string
+          guild_id: string
+          id?: string
+          max_rank_index?: number | null
+          min_rank_index?: number | null
+          permission_type: string
+          user_id?: string | null
+        }
+        Update: {
+          access_type?: string
+          created_at?: string
+          guild_id?: string
+          id?: string
+          max_rank_index?: number | null
+          min_rank_index?: number | null
+          permission_type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_permissions_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guild_poll_questions: {
         Row: {
           created_at: string
@@ -1224,6 +1265,10 @@ export type Database = {
           reason: string
           sanction_type: Database["public"]["Enums"]["forum_sanction_type"]
         }[]
+      }
+      has_guild_permission: {
+        Args: { p_guild_id: string; p_permission: string; p_user_id: string }
+        Returns: boolean
       }
       has_role: {
         Args: {
