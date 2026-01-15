@@ -8,7 +8,7 @@ import { GlowCard } from '@/components/GlowCard';
 import { GuildSubNav } from '@/components/guild';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Shield, Heart, Swords, Crosshair, CheckCircle, HelpCircle, XCircle, Pencil } from 'lucide-react';
+import { Loader2, Shield, Heart, Swords, Crosshair, CheckCircle, HelpCircle, XCircle, Pencil, ArrowLeft } from 'lucide-react';
 import { CosmicButton } from '@/components/CosmicButton';
 import { toSlug, getGuildPath } from '@/lib/guildSlug';
 import { getClassById, getSpecById, Specialization } from '@/data/wowClasses';
