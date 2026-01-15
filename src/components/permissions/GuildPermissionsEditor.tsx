@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useGuildPermissions, PermissionType, PermissionRule } from '@/hooks/useGuildPermissions';
 import { PermissionSection } from './PermissionSection';
+import { PermissionPresets } from './PermissionPresets';
 import { CosmicButton } from '@/components/CosmicButton';
 import { Loader2, Save, Shield } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface GuildPermissionsEditorProps {
   guildId: string;
@@ -26,12 +28,11 @@ export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps)
     loading,
     saving,
     savePermissions,
-    getPermissionRules,
-    updatePermissionRules,
   } = useGuildPermissions(guildId);
 
   const [localPermissions, setLocalPermissions] = useState<PermissionRule[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
+  const isFrench = t.common.loading === 'Chargement...';
 
   useEffect(() => {
     setLocalPermissions(permissions);
@@ -39,12 +40,30 @@ export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps)
   }, [permissions]);
 
   const handleRulesChange = (permissionType: PermissionType, rules: Omit<PermissionRule, 'permission_type'>[]) => {
-    const updated = updatePermissionRules(permissionType, rules);
-    // Filter by type and update
     const otherPermissions = localPermissions.filter(p => p.permission_type !== permissionType);
     const newRules = rules.map(r => ({ ...r, permission_type: permissionType }));
     setLocalPermissions([...otherPermissions, ...newRules]);
     setHasChanges(true);
+  };
+
+  const handleApplyPreset = (presetPermissions: Record<PermissionType, Omit<PermissionRule, 'permission_type'>[]>) => {
+    const newPermissions: PermissionRule[] = [];
+    
+    (Object.keys(presetPermissions) as PermissionType[]).forEach(type => {
+      presetPermissions[type].forEach(rule => {
+        newPermissions.push({ ...rule, permission_type: type });
+      });
+    });
+    
+    setLocalPermissions(newPermissions);
+    setHasChanges(true);
+    toast.success(isFrench ? 'Preset appliqué' : 'Preset applied');
+  };
+
+  const handleReset = () => {
+    setLocalPermissions([]);
+    setHasChanges(true);
+    toast.info(isFrench ? 'Permissions réinitialisées (GM seul)' : 'Permissions reset (GM only)');
   };
 
   const handleSave = async () => {
@@ -69,8 +88,7 @@ export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps)
       manageMembers: { en: 'Manage Members', fr: 'Gérer les membres' },
       manageMembersDesc: { en: 'Edit member commitment status', fr: 'Modifier le statut d\'engagement des membres' },
     };
-    const lang = (t as any).common?.loading === 'Chargement...' ? 'fr' : 'en';
-    return labels[key]?.[lang] || key;
+    return labels[key]?.[isFrench ? 'fr' : 'en'] || key;
   };
 
   if (loading) {
@@ -91,6 +109,12 @@ export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps)
       <p className="text-sm text-muted-foreground mb-4">
         {(t as any).permissions?.description || 'Delegate specific management rights to members based on their Battle.net rank or individually. GMs always have all permissions.'}
       </p>
+
+      {/* Presets */}
+      <PermissionPresets 
+        onApplyPreset={handleApplyPreset}
+        onReset={handleReset}
+      />
 
       <div className="space-y-3">
         {PERMISSION_TYPES.map(({ type, labelKey, descKey }) => (
