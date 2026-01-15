@@ -27,6 +27,8 @@ import {
   PlusCircle,
   Edit3,
   UserCog,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
@@ -62,9 +64,22 @@ const ACTION_COLORS: Record<ActionType, string> = {
 export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
   const { t, language } = useLanguage();
   const [filter, setFilter] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 25;
   
   const actionTypes = filter === 'all' ? undefined : [filter as ActionType];
-  const { logs, loading, refetch } = useActivityLog({ guildId, limit: 100, actionTypes });
+  const { logs, loading, refetch, totalPages, totalCount } = useActivityLog({ 
+    guildId, 
+    limit: PAGE_SIZE, 
+    actionTypes,
+    page: currentPage 
+  });
+
+  // Reset to page 1 when filter changes
+  const handleFilterChange = (value: string) => {
+    setFilter(value);
+    setCurrentPage(1);
+  };
 
   const getActionLabel = (actionType: ActionType): string => {
     const labels: Record<ActionType, { en: string; fr: string }> = {
@@ -351,7 +366,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
           </h3>
         </div>
         <div className="flex items-center gap-2">
-          <Select value={filter} onValueChange={setFilter}>
+          <Select value={filter} onValueChange={handleFilterChange}>
             <SelectTrigger className="w-full sm:w-[160px] h-8 bg-card border-border">
               <SelectValue />
             </SelectTrigger>
@@ -478,6 +493,38 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
           </div>
         )}
       </ScrollArea>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-4 border-t border-border mt-4">
+          <span className="text-sm text-muted-foreground">
+            {language === 'fr' 
+              ? `${totalCount} entrées`
+              : `${totalCount} entries`}
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1 || loading}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-sm text-muted-foreground min-w-[80px] text-center">
+              {currentPage} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages || loading}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
