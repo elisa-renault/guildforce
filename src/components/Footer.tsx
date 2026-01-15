@@ -1,5 +1,6 @@
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Heart } from 'lucide-react';
+import { Beer } from 'lucide-react';
+import { TipeeeIcon } from './TipeeeIcon';
 import {
   Select,
   SelectContent,
@@ -14,7 +15,7 @@ const languages = [
 ];
 
 export const Footer = () => {
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
 
   return (
     <footer className="relative z-10 border-t border-border/50 bg-background/80 backdrop-blur-sm mt-auto">
@@ -25,13 +26,14 @@ export const Footer = () => {
 
         <div className="flex items-center gap-3">
           <a
-            href="https://ko-fi.com/elsiabeth"
+            href="https://fr.tipeee.com/elsiabeth/"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
           >
-            <Heart className="h-4 w-4" />
-            <span>Ko-fi</span>
+            <TipeeeIcon className="h-4 w-4" />
+            <Beer className="h-4 w-4" />
+            <span>{t.common.tipMe}</span>
           </a>
 
           <Select value={language} onValueChange={(value: 'fr' | 'en') => setLanguage(value)}>
