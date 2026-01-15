@@ -4,11 +4,11 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { CosmicBackground } from '@/components/CosmicBackground';
-import { Footer } from '@/components/Footer';
+import { GuildSubNav } from '@/components/guild';
 import { PollCard } from '@/components/polls';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Plus, Loader2 } from 'lucide-react';
+import { Plus, Loader2 } from 'lucide-react';
 import { useGuildPolls, usePollMutations } from '@/hooks/useGuildPolls';
 import { toSlug } from '@/lib/guildSlug';
 
@@ -18,10 +18,12 @@ const GuildPolls = () => {
   const { language } = useLanguage();
   const { user } = useAuth();
   const [guildId, setGuildId] = useState<string | null>(null);
+  const [guild, setGuild] = useState<{ name: string; server: string; region: string; avatar_url: string | null } | null>(null);
   const [isGM, setIsGM] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fullSlug = `${regionSlug}/${serverSlug}/${guildSlug}`;
+  const basePath = `/guild/${fullSlug}`;
   const { polls, loading: pollsLoading, refetch } = useGuildPolls(guildId || undefined);
   const { publishPoll, closePoll, deletePoll, saving } = usePollMutations();
 
@@ -29,10 +31,9 @@ const GuildPolls = () => {
     const loadGuild = async () => {
       if (!regionSlug || !serverSlug || !guildSlug || !user) return;
       
-      // Find guild by matching slugified values
       const { data: allGuilds } = await supabase
         .from('guilds')
-        .select('id, name, server, region');
+        .select('id, name, server, region, avatar_url');
 
       const matchedGuild = allGuilds?.find(g =>
         toSlug(g.region || 'eu') === regionSlug &&
@@ -42,8 +43,13 @@ const GuildPolls = () => {
 
       if (matchedGuild) {
         setGuildId(matchedGuild.id);
+        setGuild({
+          name: matchedGuild.name,
+          server: matchedGuild.server,
+          region: matchedGuild.region || 'eu',
+          avatar_url: matchedGuild.avatar_url,
+        });
         
-        // Check GM status
         const { data: gmCheck } = await supabase.rpc('is_guild_gm', {
           p_guild_id: matchedGuild.id,
           p_user_id: user.id,
@@ -85,23 +91,27 @@ const GuildPolls = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col relative pt-16">
+    <div className="min-h-screen relative pt-16">
       <CosmicBackground />
 
-      <main className="flex-1 container mx-auto px-4 py-8 relative z-10">
+      {guild && (
+        <GuildSubNav
+          guild={guild}
+          basePath={basePath}
+          isGM={isGM}
+          activeTab="polls"
+        />
+      )}
+
+      <main className="container mx-auto px-4 py-8 relative z-10">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" onClick={() => navigate(`/guild/${fullSlug}`)}>
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <h1 className="text-2xl font-bold">
-                {language === 'fr' ? 'Sondages' : 'Polls'}
-              </h1>
-            </div>
+            <h1 className="text-2xl font-bold">
+              {language === 'fr' ? 'Sondages' : 'Polls'}
+            </h1>
 
             {isGM && (
-              <Button onClick={() => navigate(`/guild/${fullSlug}/polls/new`)}>
+              <Button onClick={() => navigate(`${basePath}/polls/new`)}>
                 <Plus className="h-4 w-4 mr-2" />
                 {language === 'fr' ? 'Nouveau sondage' : 'New Poll'}
               </Button>
@@ -189,8 +199,6 @@ const GuildPolls = () => {
           )}
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 };

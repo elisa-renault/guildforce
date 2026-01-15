@@ -9,9 +9,10 @@ import { CommitmentToggle, CommitmentStatus } from '@/components/CommitmentToggl
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
+import { GuildSubNav } from '@/components/guild';
 import { RosterSelector } from '@/components/roster';
-import { Loader2, Save, GripVertical, Plus, Trash2, ChevronUp, ChevronDown, ArrowLeft } from 'lucide-react';
-import { toSlug, getGuildPath } from '@/lib/guildSlug';
+import { Loader2, Save, GripVertical, Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
+import { toSlug } from '@/lib/guildSlug';
 import {
   DndContext,
   closestCenter,
@@ -406,30 +407,30 @@ const Wishes = () => {
   // Only show accessible rosters
   const accessibleRosters = rosters.filter(r => r.hasAccess);
 
+  const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
+
   return (
     <div className="min-h-screen relative pt-16">
       <CosmicBackground />
 
-      {/* Sticky save bar for guild name + save button */}
-      <div className="sticky top-14 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50">
+      {/* Guild Sub-Navigation */}
+      {guild && (
+        <GuildSubNav
+          guild={{ ...guild, avatar_url: null }}
+          basePath={basePath}
+          isGM={false}
+          activeTab="wishes"
+        />
+      )}
+
+      {/* Roster + Save controls */}
+      <div className="sticky top-[104px] z-30 bg-background/80 backdrop-blur-lg border-b border-border/50">
         <div className="container mx-auto px-3 md:px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => guild && navigate(getGuildPath(guild.region, guild.server, guild.name))}
-              className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
-              title={t.common.back}
-            >
-              <ArrowLeft className="h-4 w-4 text-muted-foreground" />
-            </button>
-            <h1 className="text-lg font-semibold text-foreground">{guild?.name}</h1>
-            
-            {/* Roster selector - only show accessible rosters */}
-            <RosterSelector
-              rosters={accessibleRosters}
-              selectedRosterId={selectedRosterId}
-              onSelect={setSelectedRosterId}
-            />
-          </div>
+          <RosterSelector
+            rosters={accessibleRosters}
+            selectedRosterId={selectedRosterId}
+            onSelect={setSelectedRosterId}
+          />
           <CosmicButton 
             size="sm" 
             onClick={saveWishes} 
