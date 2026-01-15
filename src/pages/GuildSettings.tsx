@@ -7,11 +7,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
+import { GuildSubNav } from '@/components/guild';
 import { RosterManager } from '@/components/roster';
 import { ActivityLog } from '@/components/dashboard';
 import { GuildPermissionsEditor } from '@/components/permissions';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Loader2, ArrowLeft, Upload, Trash2, Shield, Info, History } from 'lucide-react';
+import { Loader2, Upload, Trash2, Shield, Info } from 'lucide-react';
 import { toSlug, getGuildPath } from '@/lib/guildSlug';
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
@@ -330,31 +331,19 @@ const GuildSettings = () => {
     return null;
   }
 
+  const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
+
   return (
     <div className="min-h-screen relative pt-16">
       <CosmicBackground />
 
-      {/* Sticky toolbar */}
-      <div className="sticky top-14 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50">
-        <div className="container mx-auto px-3 md:px-4 py-2 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                if (window.history.length > 2) {
-                  navigate(-1);
-                } else {
-                  navigate(getGuildPath(guild.region, guild.server, guild.name));
-                }
-              }}
-              className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
-              title={t.common.back}
-            >
-              <ArrowLeft className="h-4 w-4 text-muted-foreground" />
-            </button>
-            <h1 className="text-sm md:text-lg font-semibold text-foreground truncate">{t.guildSettings.title}</h1>
-          </div>
-        </div>
-      </div>
+      {/* Guild Sub-Navigation */}
+      <GuildSubNav
+        guild={guild}
+        basePath={basePath}
+        isGM={isGM}
+        activeTab="settings"
+      />
 
       <main className="container mx-auto px-4 py-6 relative z-10">
         <div className="grid gap-6 md:grid-cols-2 max-w-4xl mx-auto">
