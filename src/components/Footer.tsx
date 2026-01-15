@@ -1,4 +1,5 @@
 import { useLanguage } from '@/contexts/LanguageContext';
+import { Heart } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -22,18 +23,30 @@ export const Footer = () => {
           © {new Date().getFullYear()} Guildforce
         </span>
 
-        <Select value={language} onValueChange={(value: 'fr' | 'en') => setLanguage(value)}>
-          <SelectTrigger className="w-[120px] h-9 bg-card border-border text-foreground">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {languages.map((lang) => (
-              <SelectItem key={lang.code} value={lang.code}>
-                {lang.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-4">
+          <a
+            href="https://ko-fi.com/elsiabeth"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors"
+          >
+            <Heart className="h-4 w-4" />
+            <span className="hidden sm:inline">Ko-fi</span>
+          </a>
+
+          <Select value={language} onValueChange={(value: 'fr' | 'en') => setLanguage(value)}>
+            <SelectTrigger className="w-[120px] h-9 bg-card border-border text-foreground">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {languages.map((lang) => (
+                <SelectItem key={lang.code} value={lang.code}>
+                  {lang.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
     </footer>
   );
