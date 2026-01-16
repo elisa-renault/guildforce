@@ -70,7 +70,8 @@ const RosterWishes = () => {
       const subH = subNav?.offsetHeight ?? 44;
       setControlsTop(globalH + subH);
     };
-    compute();
+    // Small delay to ensure SubNav is mounted after guild loads
+    const timer = setTimeout(compute, 50);
     window.addEventListener('resize', compute);
     const ro = new ResizeObserver(compute);
     const globalNavEl = document.querySelector<HTMLElement>('[data-global-nav]');
@@ -78,10 +79,11 @@ const RosterWishes = () => {
     if (globalNavEl) ro.observe(globalNavEl);
     if (subNavEl) ro.observe(subNavEl);
     return () => {
+      clearTimeout(timer);
       ro.disconnect();
       window.removeEventListener('resize', compute);
     };
-  }, []);
+  }, [guild]); // Re-run when guild is loaded so SubNav is available
 
   const fetchData = async () => {
     if (!user || !regionSlug || !serverSlug || !guildSlug) return;
