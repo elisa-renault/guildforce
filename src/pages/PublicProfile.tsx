@@ -15,6 +15,7 @@ interface PublicProfileData {
   username: string;
   avatar_url: string | null;
   battletag: string | null;
+  show_battletag: boolean | null;
   created_at: string;
 }
 
@@ -37,7 +38,7 @@ const PublicProfile = () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('id, username, avatar_url, battletag, created_at')
+          .select('id, username, avatar_url, battletag, show_battletag, created_at')
           .ilike('username', username)
           .single();
 
@@ -111,7 +112,7 @@ const PublicProfile = () => {
               
               <h1 className="text-2xl font-display text-foreground">{profile.username}</h1>
               
-              {profile.battletag && (
+              {profile.battletag && profile.show_battletag !== false && (
                 <p className="text-sm text-muted-foreground mt-1">{profile.battletag}</p>
               )}
             </div>
