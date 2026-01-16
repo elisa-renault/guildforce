@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useForumCategories, useForumTopics } from '@/hooks/useForum';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
+import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { ForumTopicList } from '@/components/forum';
 import { Loader2, Plus, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -51,6 +52,15 @@ const ForumCategory = () => {
       <CosmicBackground />
 
       <main className="container mx-auto px-4 py-8 relative z-10 max-w-5xl">
+        {/* Breadcrumbs */}
+        <Breadcrumbs 
+          items={[
+            { label: 'Forum', href: '/forum' },
+            { label: t.forum.categoryNames[category.slug as keyof typeof t.forum.categoryNames] || category.name },
+          ]}
+          className="mb-4"
+        />
+
         {/* Header */}
         <div className="flex flex-col gap-4 mb-6">
           <div className="flex items-start gap-3">
