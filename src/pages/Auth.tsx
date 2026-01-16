@@ -223,10 +223,10 @@ const Auth = () => {
 
       {/* Main Content */}
       <div className="flex-1 flex items-center justify-center px-4 py-20 relative z-10">
-        <div className="w-full max-w-5xl grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+        <div className="w-full max-w-5xl grid lg:grid-cols-2 gap-8 lg:gap-16 items-start">
           
           {/* Left Column - Branding (visible on lg+) */}
-          <div className="hidden lg:flex flex-col items-start gap-6">
+          <div className="hidden lg:flex flex-col items-start gap-6 lg:self-center">
             <div className="flex items-center gap-4">
               <div className="p-4 rounded-2xl bg-primary/20 border border-primary/30">
                 <Shield className="h-12 w-12 text-primary" />
@@ -242,8 +242,6 @@ const Auth = () => {
                 {t.auth.bnetNote}
               </p>
             </div>
-
-            
           </div>
 
           {/* Right Column - Auth Form */}
@@ -263,6 +261,7 @@ const Auth = () => {
               </p>
             </div>
 
+            {/* Card wrapper for alignment reference */}
             <GlowCard className="w-full max-w-md p-6 sm:p-8">
               {/* Region Selector */}
               <div className="space-y-2 mb-6">
