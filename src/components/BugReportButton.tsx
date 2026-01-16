@@ -137,7 +137,7 @@ const BugReportButton = React.forwardRef<HTMLButtonElement, React.ComponentProps
               ref={ref}
               variant="outline"
               size="icon"
-              className="fixed bottom-24 right-4 z-40 h-12 w-12 rounded-full bg-card/80 backdrop-blur-sm border-border shadow-lg hover:bg-primary/20 hover:border-primary/50 transition-all"
+              className="fixed bottom-4 right-4 z-[60] h-10 w-10 rounded-full bg-card/80 backdrop-blur-sm border-border shadow-lg hover:bg-primary/20 hover:border-primary/50 transition-all"
               onClick={() => setIsOpen(true)}
               {...props}
             >
