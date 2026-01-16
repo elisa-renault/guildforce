@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { GlowCard } from '@/components/GlowCard';
 import { Slider } from '@/components/ui/slider';
 import { Send, Loader2, CheckCircle, Lock } from 'lucide-react';
+import { RankingInput } from './RankingInput';
 import type { GuildPollQuestion, ResponseValue } from '@/types/poll';
 
 interface PollResponseProps {
@@ -267,18 +268,11 @@ export const PollResponse = ({
             )}
 
             {question.question_type === 'ranking' && (
-              <div className="pl-5 space-y-2">
-                <p className="text-xs text-muted-foreground mb-2">
-                  {language === 'fr' ? 'Classez les éléments par ordre de préférence (1 = meilleur)' : 'Rank items by preference (1 = best)'}
-                </p>
-                {((responses[question.id] as { type: 'ranking'; values: string[] })?.values || question.options).map((option, optIndex) => (
-                  <div key={optIndex} className="flex items-center gap-3 p-2 rounded bg-background border border-border">
-                    <span className="w-6 h-6 rounded-full bg-primary/20 text-primary text-sm flex items-center justify-center font-medium">
-                      {optIndex + 1}
-                    </span>
-                    <span className="text-foreground">{option}</span>
-                  </div>
-                ))}
+              <div className="pl-5">
+                <RankingInput
+                  items={(responses[question.id] as { type: 'ranking'; values: string[] })?.values || question.options}
+                  onChange={(newItems) => updateResponse(question.id, { type: 'ranking', values: newItems })}
+                />
               </div>
             )}
           </div>
