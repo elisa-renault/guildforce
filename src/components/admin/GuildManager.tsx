@@ -91,8 +91,8 @@ export function GuildManager() {
   const handleSyncAll = async () => {
     setSyncing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('battlenet-auth', {
-        body: { action: 'scheduled-sync' }
+      const { data, error } = await supabase.functions.invoke('battlenet-auth/scheduled-sync', {
+        body: {}
       });
       
       if (error) throw error;
