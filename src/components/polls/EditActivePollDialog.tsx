@@ -1,3 +1,4 @@
+import React, { forwardRef } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
   Dialog,
@@ -16,13 +17,13 @@ interface EditActivePollDialogProps {
   onEditFull: () => void;
 }
 
-export const EditActivePollDialog = ({
+export const EditActivePollDialog = forwardRef<HTMLDivElement, EditActivePollDialogProps>(({
   open,
   onOpenChange,
   responseCount,
   onEditMetadata,
   onEditFull,
-}: EditActivePollDialogProps) => {
+}, ref) => {
   const { language } = useLanguage();
 
   return (
@@ -40,7 +41,7 @@ export const EditActivePollDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
+        <div ref={ref} className="grid gap-4 py-4">
           <button
             type="button"
             className="h-auto py-4 px-4 flex flex-col items-start gap-2 text-left rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors"
@@ -80,4 +81,6 @@ export const EditActivePollDialog = ({
       </DialogContent>
     </Dialog>
   );
-};
+});
+
+EditActivePollDialog.displayName = 'EditActivePollDialog';

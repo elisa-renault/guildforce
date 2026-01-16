@@ -1,3 +1,4 @@
+import React, { forwardRef } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -19,7 +20,7 @@ interface SortableQuestionProps {
   id: string;
 }
 
-export const SortableQuestion = ({
+export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps>(({
   question,
   index,
   onChange,
@@ -27,7 +28,7 @@ export const SortableQuestion = ({
   canRemove,
   compact = false,
   id,
-}: SortableQuestionProps) => {
+}, outerRef) => {
   const { language } = useLanguage();
 
   const {
@@ -280,4 +281,6 @@ export const SortableQuestion = ({
       </div>
     </div>
   );
-};
+});
+
+SortableQuestion.displayName = 'SortableQuestion';
