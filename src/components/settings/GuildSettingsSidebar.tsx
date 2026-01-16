@@ -1,28 +1,30 @@
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { User, Shield, Users2, History, RefreshCw } from 'lucide-react';
+import { User, Shield, Users2, History, RefreshCw, Key } from 'lucide-react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
-export type SettingsSection = 'profile' | 'permissions' | 'rosters' | 'activity' | 'battlenet';
+export type SettingsSection = 'profile' | 'permissions' | 'rosters' | 'activity' | 'battlenet' | 'mypermissions';
 
 interface SectionConfig {
   id: SettingsSection;
   labelEn: string;
   labelFr: string;
   icon: React.ElementType;
-  category: 'guild' | 'management' | 'audit' | 'integration';
+  category: 'guild' | 'management' | 'audit' | 'integration' | 'mypermissions';
 }
 
 const SECTIONS: SectionConfig[] = [
   { id: 'profile', labelEn: 'Profile', labelFr: 'Profil', icon: User, category: 'guild' },
   { id: 'permissions', labelEn: 'Permissions', labelFr: 'Permissions', icon: Shield, category: 'management' },
+  { id: 'mypermissions', labelEn: 'My Permissions', labelFr: 'Mes permissions', icon: Key, category: 'mypermissions' },
   { id: 'rosters', labelEn: 'Rosters', labelFr: 'Rosters', icon: Users2, category: 'management' },
   { id: 'activity', labelEn: 'Activity', labelFr: 'Activité', icon: History, category: 'audit' },
   { id: 'battlenet', labelEn: 'Battle.net', labelFr: 'Battle.net', icon: RefreshCw, category: 'integration' },
 ];
 
 const CATEGORIES = {
+  mypermissions: { en: 'MY ACCESS', fr: 'MON ACCÈS' },
   guild: { en: 'GUILD', fr: 'GUILDE' },
   management: { en: 'MANAGEMENT', fr: 'GESTION' },
   audit: { en: 'AUDIT', fr: 'AUDIT' },
@@ -90,7 +92,7 @@ export const GuildSettingsSidebar = ({
   return (
     <aside className="w-56 flex-shrink-0 bg-card/30 backdrop-blur-sm border-r border-border/50 py-4 px-2">
       <nav className="space-y-4">
-        {(['guild', 'management', 'audit', 'integration'] as const).map((categoryKey) => {
+        {(['mypermissions', 'guild', 'management', 'audit', 'integration'] as const).map((categoryKey) => {
           const sections = sectionsByCategory[categoryKey];
           if (!sections || sections.length === 0) return null;
 
