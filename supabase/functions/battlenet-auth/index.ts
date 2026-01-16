@@ -662,6 +662,159 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Resync Battle.net data for current user (uses stored token)
+    if (path === 'resync' && req.method === 'POST') {
+      const authHeader = req.headers.get('Authorization');
+      if (!authHeader) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+
+      if (userError || !user) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      log.info(`Resync requested for user ${sanitizePII(user.id, 'id')}`);
+
+      // Get stored Battle.net token
+      const { data: tokenData, error: tokenError } = await supabase
+        .from('battlenet_tokens')
+        .select('access_token, expires_at')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (tokenError || !tokenData) {
+        log.error('No Battle.net token found for user');
+        return new Response(JSON.stringify({ error: 'No Battle.net account linked. Please connect your Battle.net account first.' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Check if token is expired
+      if (new Date(tokenData.expires_at) < new Date()) {
+        log.error('Battle.net token expired');
+        return new Response(JSON.stringify({ error: 'Battle.net session expired. Please reconnect your Battle.net account.' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Get user's region from their profile or default to EU
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('battlenet_id')
+        .eq('id', user.id)
+        .single();
+
+      // Check wow_guild_memberships for region hint
+      const { data: membership } = await supabase
+        .from('wow_guild_memberships')
+        .select('guild_region')
+        .eq('user_id', user.id)
+        .limit(1)
+        .maybeSingle();
+
+      const region = getValidRegion(membership?.guild_region);
+
+      // Re-fetch characters and guilds
+      await fetchAndStoreCharacters(supabase, tokenData.access_token, user.id, region);
+
+      log.info(`Resync completed for user ${sanitizePII(user.id, 'id')}`);
+
+      return new Response(JSON.stringify({ 
+        success: true, 
+        message: 'Battle.net data synchronized successfully'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Scheduled sync for all users with valid tokens (called by cron)
+    if (path === 'scheduled-sync' && req.method === 'POST') {
+      // Verify this is a legitimate cron call via secret header
+      const cronSecret = req.headers.get('x-cron-secret');
+      const expectedSecret = Deno.env.get('CRON_SECRET');
+      
+      // Allow calls with valid cron secret OR with service role authorization
+      const authHeader = req.headers.get('Authorization');
+      const isServiceRole = authHeader?.includes(SUPABASE_SERVICE_ROLE_KEY.substring(0, 20));
+      
+      if (!isServiceRole && cronSecret !== expectedSecret) {
+        log.error('Unauthorized scheduled sync attempt');
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      log.info('Starting scheduled sync for all users...');
+
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+      // Get all users with valid (non-expired) Battle.net tokens
+      const { data: validTokens, error: tokensError } = await supabase
+        .from('battlenet_tokens')
+        .select('user_id, access_token')
+        .gt('expires_at', new Date().toISOString());
+
+      if (tokensError) {
+        log.error('Failed to fetch tokens:', tokensError);
+        return new Response(JSON.stringify({ error: 'Failed to fetch tokens' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      log.info(`Found ${validTokens?.length || 0} users with valid tokens to sync`);
+
+      let syncedCount = 0;
+      let errorCount = 0;
+
+      for (const tokenRecord of (validTokens || [])) {
+        try {
+          // Get user's region from their guild memberships
+          const { data: membership } = await supabase
+            .from('wow_guild_memberships')
+            .select('guild_region')
+            .eq('user_id', tokenRecord.user_id)
+            .limit(1)
+            .maybeSingle();
+
+          const region = getValidRegion(membership?.guild_region);
+
+          await fetchAndStoreCharacters(supabase, tokenRecord.access_token, tokenRecord.user_id, region);
+          syncedCount++;
+          
+          // Small delay to avoid rate limiting
+          await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (err) {
+          log.error(`Error syncing user ${sanitizePII(tokenRecord.user_id, 'id')}:`, err);
+          errorCount++;
+        }
+      }
+
+      log.info(`Scheduled sync completed: ${syncedCount} synced, ${errorCount} errors`);
+
+      return new Response(JSON.stringify({ 
+        success: true, 
+        synced: syncedCount,
+        errors: errorCount,
+        total: validTokens?.length || 0
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     return new Response(JSON.stringify({ error: 'Not found' }), {
       status: 404,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
