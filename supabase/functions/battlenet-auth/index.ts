@@ -313,32 +313,56 @@ async function fetchPublicGuildRoster(
     }
 
     const apiUrl = BATTLENET_API_URLS[region];
-    const namespace = BATTLENET_DYNAMIC_NAMESPACES[region];
     const locale = BATTLENET_LOCALES[region];
 
-    // Build guild slug for API call
-    const guildSlug = guildName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    // Build slugs for API call
+    const guildSlug = guildName
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '');
     const serverSlug = realmSlug.toLowerCase().replace(/\s+/g, '-').replace(/'/g, '');
-    const rosterUrl = `${apiUrl}/data/wow/guild/${serverSlug}/${encodeURIComponent(guildSlug)}/roster?namespace=${namespace}&locale=${locale}`;
 
-    log.debug(`Fetching public roster from: ${rosterUrl}`);
+    const namespacesToTry = Array.from(
+      new Set([BATTLENET_NAMESPACES[region], BATTLENET_DYNAMIC_NAMESPACES[region]])
+    );
 
-    const rosterResponse = await fetch(rosterUrl, {
-      headers: { 'Authorization': `Bearer ${clientToken}` },
-    });
+    let lastFailure: { status: number; body: string; rosterUrl: string; namespace: string } | null = null;
 
-    if (!rosterResponse.ok) {
-      log.info(`Public roster fetch failed for ${guildName} on ${serverSlug}: ${rosterResponse.status}`);
-      return null;
+    for (const namespace of namespacesToTry) {
+      const rosterUrl = `${apiUrl}/data/wow/guild/${serverSlug}/${encodeURIComponent(guildSlug)}/roster?namespace=${namespace}&locale=${locale}`;
+      log.debug(`Fetching public roster from: ${rosterUrl}`);
+
+      const rosterResponse = await fetch(rosterUrl, {
+        headers: { 'Authorization': `Bearer ${clientToken}` },
+      });
+
+      if (!rosterResponse.ok) {
+        const body = await rosterResponse.text();
+        lastFailure = { status: rosterResponse.status, body, rosterUrl, namespace };
+        // Try the next namespace (some endpoints are picky)
+        continue;
+      }
+
+      const roster = await rosterResponse.json();
+      const faction = roster.guild?.faction?.type || 'UNKNOWN';
+
+      return {
+        members: roster.members || [],
+        faction,
+      };
     }
 
-    const roster = await rosterResponse.json();
-    const faction = roster.guild?.faction?.type || 'UNKNOWN';
+    if (lastFailure) {
+      // Use info level so we can diagnose production issues
+      log.info(
+        `Public roster fetch failed for ${guildName} on ${serverSlug} (${region.toUpperCase()}) ` +
+          `[ns=${lastFailure.namespace}] ${lastFailure.status} url=${lastFailure.rosterUrl} body=${lastFailure.body?.slice(0, 200)}`
+      );
+    } else {
+      log.info(`Public roster fetch failed for ${guildName} on ${serverSlug} (${region.toUpperCase()}): no namespaces tried`);
+    }
 
-    return {
-      members: roster.members || [],
-      faction,
-    };
+    return null;
   } catch (error) {
     log.error('Error fetching public guild roster:', error);
     return null;
