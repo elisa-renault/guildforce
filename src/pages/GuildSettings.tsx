@@ -504,10 +504,9 @@ const GuildSettings = () => {
                 onClick={handleResyncBattlenet}
                 disabled={syncing}
                 loading={syncing}
-                icon={syncing ? undefined : <RefreshCw className="h-4 w-4" />}
+                icon={syncing ? <RefreshCw className="h-4 w-4 animate-spin" /> : <BattleNetIcon className="h-4 w-4" />}
                 className="w-full sm:w-auto"
               >
-                <BattleNetIcon className="h-4 w-4 mr-1" />
                 {syncing ? t.guildSettings.syncing : t.guildSettings.resyncBattlenet}
               </CosmicButton>
               <p className="text-xs text-muted-foreground">
