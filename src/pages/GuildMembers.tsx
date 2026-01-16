@@ -26,28 +26,28 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { Crown, Shield, Search, Users, CheckCircle2, XCircle } from 'lucide-react';
+import { Crown, Shield, Search, Users, CheckCircle2, XCircle, RefreshCw } from 'lucide-react';
 import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
+import { wowClasses } from '@/data/wowClasses';
+import { BATTLENET_CLASS_MAP } from '@/data/battlenetClasses';
 
-interface WowMember {
+interface RosterMember {
   id: string;
-  user_id: string;
-  character_id: string | null;
+  character_name: string;
+  character_realm: string;
+  character_realm_slug: string;
+  character_class_id: number;
+  character_level: number;
   rank_index: number;
   rank_name: string | null;
   is_guild_master: boolean | null;
-  character?: {
-    name: string;
-    realm: string;
-    level: number;
-    class_id: number;
-  } | null;
+  matched_user_id: string | null;
+  matched_character_id: string | null;
   profile?: {
     id: string;
     username: string;
     avatar_url: string | null;
   } | null;
-  isOnGuildforce: boolean;
 }
 
 interface GuildInfo {
@@ -65,12 +65,13 @@ const GuildMembers = () => {
   const { language } = useLanguage();
 
   const [guild, setGuild] = useState<GuildInfo | null>(null);
-  const [members, setMembers] = useState<WowMember[]>([]);
+  const [members, setMembers] = useState<RosterMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [isGM, setIsGM] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [rankFilter, setRankFilter] = useState<string>('all');
   const [guildforceFilter, setGuildforceFilter] = useState<string>('all');
+  const [hasRosterCache, setHasRosterCache] = useState(false);
 
   const { hasPermission: hasActivityPermission } = useHasGuildPermission(guild?.id || null, 'view_activity_log');
 
@@ -78,6 +79,24 @@ const GuildMembers = () => {
   const uniqueRanks = Array.from(
     new Map(members.map(m => [m.rank_index, { index: m.rank_index, name: m.rank_name }])).values()
   ).sort((a, b) => a.index - b.index);
+
+  // Get class color from Battle.net class ID
+  const getClassColor = (battlenetClassId: number): string => {
+    const classKey = BATTLENET_CLASS_MAP[battlenetClassId];
+    if (!classKey) return 'hsl(var(--muted-foreground))';
+    const wowClass = wowClasses.find(c => c.id === classKey);
+    return wowClass?.color || 'hsl(var(--muted-foreground))';
+  };
+
+  const getClassName = (battlenetClassId: number): string => {
+    const classKey = BATTLENET_CLASS_MAP[battlenetClassId];
+    if (!classKey) return 'Unknown';
+    const wowClass = wowClasses.find(c => c.id === classKey);
+    if (!wowClass) return 'Unknown';
+    // wowClass.name is an object with { en, fr } keys
+    const name = wowClass.name as unknown as { en: string; fr: string };
+    return name[language] || name.en || 'Unknown';
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -109,70 +128,117 @@ const GuildMembers = () => {
         });
         setIsGM(!!gmCheck);
 
-        // Get all WoW guild memberships for this guild
-        const { data: wowMembers, error: wowError } = await supabase
-          .from('wow_guild_memberships')
-          .select(`
-            id,
-            user_id,
-            character_id,
-            rank_index,
-            rank_name,
-            is_guild_master,
-            wow_characters!wow_guild_memberships_character_id_fkey (
-              name,
-              realm,
-              level,
-              class_id
-            )
-          `)
-          .ilike('guild_name', guildData.name)
-          .ilike('guild_realm_slug', guildData.server)
-          .ilike('guild_region', guildData.region)
+        // First try to get from roster cache (full guild roster)
+        const { data: rosterCache, error: rosterError } = await supabase
+          .from('guild_roster_cache')
+          .select('*')
+          .eq('guild_id', guildData.id)
           .order('rank_index', { ascending: true });
 
-        if (wowError) {
-          console.error('Error loading WoW members:', wowError);
-          return;
-        }
+        if (!rosterError && rosterCache && rosterCache.length > 0) {
+          setHasRosterCache(true);
+          
+          // Get profiles for matched users
+          const userIds = rosterCache
+            .filter(m => m.matched_user_id)
+            .map(m => m.matched_user_id as string);
+          
+          let profilesMap: Record<string, { id: string; username: string; avatar_url: string | null }> = {};
+          if (userIds.length > 0) {
+            const { data: profiles } = await supabase
+              .from('profiles')
+              .select('id, username, avatar_url')
+              .in('id', userIds);
 
-        // Get Guildforce members for this guild
-        const { data: guildforceMembers } = await supabase
-          .from('guild_members')
-          .select('user_id')
-          .eq('guild_id', guildData.id);
+            profiles?.forEach(p => {
+              profilesMap[p.id] = p;
+            });
+          }
 
-        const guildforceUserIds = new Set(guildforceMembers?.map(m => m.user_id) || []);
+          // Build member list from cache
+          const memberList: RosterMember[] = rosterCache.map(m => ({
+            id: m.id,
+            character_name: m.character_name,
+            character_realm: m.character_realm,
+            character_realm_slug: m.character_realm_slug,
+            character_class_id: m.character_class_id,
+            character_level: m.character_level,
+            rank_index: m.rank_index,
+            rank_name: m.rank_name,
+            is_guild_master: m.is_guild_master,
+            matched_user_id: m.matched_user_id,
+            matched_character_id: m.matched_character_id,
+            profile: m.matched_user_id ? profilesMap[m.matched_user_id] || null : null,
+          }));
 
-        // Get profiles for all user_ids
-        const userIds = [...new Set(wowMembers?.map(m => m.user_id) || [])];
-        
-        let profilesMap: Record<string, { id: string; username: string; avatar_url: string | null }> = {};
-        if (userIds.length > 0) {
-          const { data: profiles } = await supabase
-            .from('profiles')
-            .select('id, username, avatar_url')
-            .in('id', userIds);
+          setMembers(memberList);
+        } else {
+          // Fallback to wow_guild_memberships (only synced users)
+          setHasRosterCache(false);
+          
+          const { data: wowMembers, error: wowError } = await supabase
+            .from('wow_guild_memberships')
+            .select(`
+              id,
+              user_id,
+              character_id,
+              rank_index,
+              rank_name,
+              is_guild_master,
+              wow_characters!wow_guild_memberships_character_id_fkey (
+                name,
+                realm,
+                realm_slug,
+                level,
+                class_id
+              )
+            `)
+            .ilike('guild_name', guildData.name)
+            .ilike('guild_realm_slug', guildData.server)
+            .ilike('guild_region', guildData.region)
+            .order('rank_index', { ascending: true });
 
-          profiles?.forEach(p => {
-            profilesMap[p.id] = p;
+          if (wowError) {
+            console.error('Error loading WoW members:', wowError);
+            return;
+          }
+
+          // Get profiles for all user_ids
+          const userIds = [...new Set(wowMembers?.map(m => m.user_id) || [])];
+          
+          let profilesMap: Record<string, { id: string; username: string; avatar_url: string | null }> = {};
+          if (userIds.length > 0) {
+            const { data: profiles } = await supabase
+              .from('profiles')
+              .select('id, username, avatar_url')
+              .in('id', userIds);
+
+            profiles?.forEach(p => {
+              profilesMap[p.id] = p;
+            });
+          }
+
+          // Build member list
+          const memberList: RosterMember[] = (wowMembers || []).map(m => {
+            const char = m.wow_characters as any;
+            return {
+              id: m.id,
+              character_name: char?.name || 'Unknown',
+              character_realm: char?.realm || '',
+              character_realm_slug: char?.realm_slug || '',
+              character_class_id: char?.class_id || 0,
+              character_level: char?.level || 0,
+              rank_index: m.rank_index,
+              rank_name: m.rank_name,
+              is_guild_master: m.is_guild_master,
+              matched_user_id: m.user_id,
+              matched_character_id: m.character_id,
+              profile: profilesMap[m.user_id] || null,
+            };
           });
+
+          setMembers(memberList);
         }
-
-        // Build member list
-        const memberList: WowMember[] = (wowMembers || []).map(m => ({
-          id: m.id,
-          user_id: m.user_id,
-          character_id: m.character_id,
-          rank_index: m.rank_index,
-          rank_name: m.rank_name,
-          is_guild_master: m.is_guild_master,
-          character: m.wow_characters as WowMember['character'],
-          profile: profilesMap[m.user_id] || null,
-          isOnGuildforce: guildforceUserIds.has(m.user_id),
-        }));
-
-        setMembers(memberList);
       } catch (error) {
         console.error('Error loading guild members:', error);
       } finally {
@@ -186,7 +252,7 @@ const GuildMembers = () => {
   // Filter members
   const filteredMembers = members.filter(member => {
     // Search filter
-    const characterName = member.character?.name?.toLowerCase() || '';
+    const characterName = member.character_name?.toLowerCase() || '';
     const username = member.profile?.username?.toLowerCase() || '';
     const searchLower = searchQuery.toLowerCase();
     
@@ -200,10 +266,10 @@ const GuildMembers = () => {
     }
 
     // Guildforce filter
-    if (guildforceFilter === 'guildforce' && !member.isOnGuildforce) {
+    if (guildforceFilter === 'guildforce' && !member.matched_user_id) {
       return false;
     }
-    if (guildforceFilter === 'not-guildforce' && member.isOnGuildforce) {
+    if (guildforceFilter === 'not-guildforce' && member.matched_user_id) {
       return false;
     }
 
@@ -236,6 +302,9 @@ const GuildMembers = () => {
 
   if (!guild) return null;
 
+  const guildforceCount = members.filter(m => m.matched_user_id).length;
+  const notOnGuildforceCount = members.filter(m => !m.matched_user_id).length;
+
   return (
     <div className="flex-1 relative">
       <CosmicBackground />
@@ -262,6 +331,17 @@ const GuildMembers = () => {
               {members.length}
             </Badge>
           </div>
+          
+          {!hasRosterCache && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <RefreshCw className="h-4 w-4" />
+              <span>
+                {language === 'fr' 
+                  ? 'Sync Battle.net pour voir tous les membres' 
+                  : 'Sync Battle.net to see all members'}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Filters */}
@@ -317,11 +397,11 @@ const GuildMembers = () => {
           </span>
           <span>•</span>
           <span className="text-healer">
-            {members.filter(m => m.isOnGuildforce).length} {language === 'fr' ? 'sur Guildforce' : 'on Guildforce'}
+            {guildforceCount} {language === 'fr' ? 'sur Guildforce' : 'on Guildforce'}
           </span>
           <span>•</span>
           <span className="text-muted-foreground">
-            {members.filter(m => !m.isOnGuildforce).length} {language === 'fr' ? 'non inscrits' : 'not registered'}
+            {notOnGuildforceCount} {language === 'fr' ? 'non inscrits' : 'not registered'}
           </span>
         </div>
 
@@ -332,6 +412,7 @@ const GuildMembers = () => {
               <TableRow className="border-border/50 hover:bg-transparent">
                 <TableHead className="w-[50px]">#</TableHead>
                 <TableHead>{language === 'fr' ? 'Personnage' : 'Character'}</TableHead>
+                <TableHead className="hidden md:table-cell">{language === 'fr' ? 'Classe' : 'Class'}</TableHead>
                 <TableHead>{language === 'fr' ? 'Joueur' : 'Player'}</TableHead>
                 <TableHead>{language === 'fr' ? 'Rang' : 'Rank'}</TableHead>
                 <TableHead className="text-center">Guildforce</TableHead>
@@ -340,7 +421,7 @@ const GuildMembers = () => {
             <TableBody>
               {filteredMembers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                     {language === 'fr' ? 'Aucun membre trouvé' : 'No members found'}
                   </TableCell>
                 </TableRow>
@@ -350,10 +431,10 @@ const GuildMembers = () => {
                     key={member.id}
                     className={cn(
                       "border-border/30 transition-colors",
-                      member.isOnGuildforce && "hover:bg-primary/5 cursor-pointer"
+                      member.profile && "hover:bg-primary/5 cursor-pointer"
                     )}
                     onClick={() => {
-                      if (member.isOnGuildforce && member.profile) {
+                      if (member.profile) {
                         navigate(`/u/${member.profile.username}`);
                       }
                     }}
@@ -369,15 +450,26 @@ const GuildMembers = () => {
                         {!member.is_guild_master && member.rank_index <= 2 && (
                           <Shield className="h-4 w-4 text-primary" />
                         )}
-                        <span className="font-medium">
-                          {member.character?.name || 'Unknown'}
+                        <span 
+                          className="font-medium"
+                          style={{ color: getClassColor(member.character_class_id) }}
+                        >
+                          {member.character_name}
                         </span>
-                        {member.character?.level && (
+                        {member.character_level > 0 && (
                           <span className="text-xs text-muted-foreground">
-                            Lv.{member.character.level}
+                            Lv.{member.character_level}
                           </span>
                         )}
                       </div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <span 
+                        className="text-sm"
+                        style={{ color: getClassColor(member.character_class_id) }}
+                      >
+                        {getClassName(member.character_class_id)}
+                      </span>
                     </TableCell>
                     <TableCell>
                       {member.profile ? (
@@ -407,7 +499,7 @@ const GuildMembers = () => {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-center">
-                      {member.isOnGuildforce ? (
+                      {member.matched_user_id ? (
                         <CheckCircle2 className="h-4 w-4 text-healer mx-auto" />
                       ) : (
                         <XCircle className="h-4 w-4 text-muted-foreground/50 mx-auto" />
