@@ -9,7 +9,7 @@ import { GuildSubNav } from '@/components/guild';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { PollResponse, PollResults } from '@/components/polls';
 import { usePoll, usePollResults, usePollMutations } from '@/hooks/useGuildPolls';
-import { Loader2, BarChart3, ArrowLeft } from 'lucide-react';
+import { Loader2, BarChart3, ArrowLeft, Lock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import type { ResponseValue } from '@/types/poll';
@@ -25,10 +25,11 @@ const GuildPollView = () => {
   const [isGM, setIsGM] = useState(false);
   const [hasResponded, setHasResponded] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [canViewResults, setCanViewResults] = useState<boolean | null>(null);
 
   const { poll, loading: pollLoading, refetch } = usePoll(pollId);
   const { poll: pollResults, loading: resultsLoading, refetch: refetchResults } = usePollResults(pollId);
-  const { submitAllResponses, saving } = usePollMutations();
+  const { submitAllResponses, checkCanViewResults, saving } = usePollMutations();
 
   const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
 
@@ -43,7 +44,24 @@ const GuildPollView = () => {
 
   const isClosed =
     poll?.status === 'closed' || (poll?.ends_at && new Date(poll.ends_at) < new Date()) || false;
-  const showResultsPane = isClosed || showResults || (!isGM && hasResponded);
+  
+  // GM always can see results, otherwise check permission
+  const userCanViewResults = isGM || canViewResults === true;
+  const showResultsPane = isClosed || showResults || (!isGM && hasResponded && userCanViewResults);
+
+  // Check results access permission when poll loads
+  useEffect(() => {
+    const checkAccess = async () => {
+      if (pollId && !isGM) {
+        const canView = await checkCanViewResults(pollId);
+        setCanViewResults(canView);
+      } else if (isGM) {
+        setCanViewResults(true);
+      }
+    };
+    checkAccess();
+  }, [pollId, isGM, checkCanViewResults]);
+
   useEffect(() => {
     const fetchData = async () => {
       if (!user || !regionSlug || !serverSlug || !guildSlug) return;
@@ -137,7 +155,8 @@ const GuildPollView = () => {
               <p className="text-muted-foreground mt-1">{poll.description}</p>
             )}
           </div>
-          {isGM && !isClosed && (
+          {/* Show/Hide results button - for GM or users with permission who already responded */}
+          {(isGM || (userCanViewResults && hasResponded)) && !isClosed && (
             <Button
               variant="outline"
               size="sm"
@@ -170,7 +189,7 @@ const GuildPollView = () => {
         </div>
 
         {/* Show results or response form */}
-        {showResultsPane ? (
+        {showResultsPane && userCanViewResults ? (
           <div className="space-y-6">
             {hasResponded && !isClosed && (
               <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 text-center">
@@ -184,6 +203,22 @@ const GuildPollView = () => {
               isAnonymous={poll.is_anonymous}
               totalResponses={pollResults?.response_count || 0}
             />
+          </div>
+        ) : hasResponded && !userCanViewResults ? (
+          <div className="space-y-6">
+            <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 text-center">
+              <p className="text-primary">
+                {language === 'fr' ? 'Vous avez déjà répondu à ce sondage' : 'You have already responded to this poll'}
+              </p>
+            </div>
+            <div className="bg-muted/30 border border-muted rounded-lg p-8 text-center">
+              <Lock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">
+                {language === 'fr' 
+                  ? 'Les résultats de ce sondage sont réservés à certains membres.' 
+                  : 'Results for this poll are restricted to certain members.'}
+              </p>
+            </div>
           </div>
         ) : (
           <PollResponse
