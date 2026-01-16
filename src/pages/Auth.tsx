@@ -336,12 +336,15 @@ const Auth = () => {
           </div>
         </div>
 
-        {/* Back Button - Outside grid, centered */}
-        <div className="w-full max-w-5xl mt-4 flex justify-center lg:justify-end lg:pr-[calc(50%-14rem)]">
-          <Button variant="ghost" onClick={() => navigate('/')} className="text-muted-foreground hover:text-foreground gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            {t.common.back}
-          </Button>
+        {/* Back Button - Outside grid, aligned under card */}
+        <div className="w-full max-w-5xl mt-4 grid lg:grid-cols-2 gap-8 lg:gap-16">
+          <div className="hidden lg:block" /> {/* Spacer for left column */}
+          <div className="flex justify-center">
+            <Button variant="ghost" onClick={() => navigate('/')} className="text-muted-foreground hover:text-foreground gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              {t.common.back}
+            </Button>
+          </div>
         </div>
       </div>
     </div>;
