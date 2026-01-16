@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Beer } from 'lucide-react';
 import { TipeeeIcon } from './TipeeeIcon';
@@ -20,13 +21,27 @@ export const Footer = () => {
   return (
     <footer className="relative z-10 border-t border-border/50 bg-background/80 backdrop-blur-sm mt-auto">
       <div className="container mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm text-muted-foreground">
             © {new Date().getFullYear()} Guildforce
           </span>
           <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded bg-primary/20 text-primary border border-primary/30">
             Alpha
           </span>
+          <span className="text-muted-foreground/50 hidden sm:inline">|</span>
+          <div className="hidden sm:flex items-center gap-2 text-xs">
+            <Link to="/legal" className="text-muted-foreground hover:text-foreground transition-colors">
+              {t.legal.legalNotice}
+            </Link>
+            <span className="text-muted-foreground/50">·</span>
+            <Link to="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
+              {t.legal.privacyPolicy}
+            </Link>
+            <span className="text-muted-foreground/50">·</span>
+            <Link to="/terms" className="text-muted-foreground hover:text-foreground transition-colors">
+              {t.legal.termsOfService}
+            </Link>
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
