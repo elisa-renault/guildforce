@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { GlowCard } from '@/components/GlowCard';
-import { Slider } from '@/components/ui/slider';
+import { StarRating } from '@/components/ui/star-rating';
 import { Send, Loader2, CheckCircle, Lock } from 'lucide-react';
 import { RankingInput } from './RankingInput';
 import type { GuildPollQuestion, ResponseValue } from '@/types/poll';
@@ -196,23 +196,20 @@ export const PollResponse = ({
 
             {question.question_type === 'rating' && (
               <div className="pl-5 space-y-3">
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <span>1</span>
-                  <span>5</span>
-                </div>
-                <Slider
-                  value={[(responses[question.id] as { type: 'rating'; value: number })?.value || 3]}
-                  onValueChange={([value]) => updateResponse(question.id, { type: 'rating', value })}
-                  min={1}
-                  max={5}
-                  step={1}
-                  className="w-full"
-                />
-                <div className="text-center">
-                  <span className="text-lg font-semibold text-primary">
-                    {(responses[question.id] as { type: 'rating'; value: number })?.value || 3}
-                  </span>
-                  <span className="text-muted-foreground"> / 5</span>
+                <div className="flex flex-col items-center gap-2">
+                  <StarRating
+                    value={(responses[question.id] as { type: 'rating'; value: number })?.value || 3}
+                    onChange={(value) => updateResponse(question.id, { type: 'rating', value })}
+                    max={5}
+                    allowHalf={true}
+                    size="lg"
+                  />
+                  <div className="text-center">
+                    <span className="text-lg font-semibold text-primary">
+                      {(responses[question.id] as { type: 'rating'; value: number })?.value || 3}
+                    </span>
+                    <span className="text-muted-foreground"> / 5</span>
+                  </div>
                 </div>
               </div>
             )}
@@ -246,23 +243,27 @@ export const PollResponse = ({
 
             {question.question_type === 'scale' && (
               <div className="pl-5 space-y-3">
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <span>{question.scale_config?.min_label || question.scale_config?.min || 1}</span>
-                  <span>{question.scale_config?.max_label || question.scale_config?.max || 10}</span>
-                </div>
-                <Slider
-                  value={[(responses[question.id] as { type: 'scale'; value: number })?.value || Math.floor(((question.scale_config?.min || 1) + (question.scale_config?.max || 10)) / 2)]}
-                  onValueChange={([value]) => updateResponse(question.id, { type: 'scale', value })}
-                  min={question.scale_config?.min || 1}
-                  max={question.scale_config?.max || 10}
-                  step={question.scale_config?.step || 1}
-                  className="w-full"
-                />
-                <div className="text-center">
-                  <span className="text-lg font-semibold text-primary">
-                    {(responses[question.id] as { type: 'scale'; value: number })?.value || Math.floor(((question.scale_config?.min || 1) + (question.scale_config?.max || 10)) / 2)}
-                  </span>
-                  <span className="text-muted-foreground"> / {question.scale_config?.max || 10}</span>
+                {question.scale_config?.min_label || question.scale_config?.max_label ? (
+                  <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+                    {question.scale_config?.min_label && <span>{question.scale_config.min_label}</span>}
+                    <span>—</span>
+                    {question.scale_config?.max_label && <span>{question.scale_config.max_label}</span>}
+                  </div>
+                ) : null}
+                <div className="flex flex-col items-center gap-2">
+                  <StarRating
+                    value={(responses[question.id] as { type: 'scale'; value: number })?.value || Math.floor(((question.scale_config?.min || 1) + (question.scale_config?.max || 5)) / 2)}
+                    onChange={(value) => updateResponse(question.id, { type: 'scale', value })}
+                    max={question.scale_config?.max || 5}
+                    allowHalf={true}
+                    size="lg"
+                  />
+                  <div className="text-center">
+                    <span className="text-lg font-semibold text-primary">
+                      {(responses[question.id] as { type: 'scale'; value: number })?.value || Math.floor(((question.scale_config?.min || 1) + (question.scale_config?.max || 5)) / 2)}
+                    </span>
+                    <span className="text-muted-foreground"> / {question.scale_config?.max || 5}</span>
+                  </div>
                 </div>
               </div>
             )}
