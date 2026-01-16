@@ -3,9 +3,11 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Trash2, Users, Crown, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Trash2, Users, Crown, ChevronDown, ChevronUp, ShieldAlert, AlertTriangle } from 'lucide-react';
 import { PermissionType, PermissionRule, GuildMember, GuildRank } from '@/hooks/useGuildPermissions';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Badge } from '@/components/ui/badge';
 
 interface PermissionSectionProps {
   permissionType: PermissionType;
@@ -15,6 +17,7 @@ interface PermissionSectionProps {
   members: GuildMember[];
   ranks: GuildRank[];
   onChange: (rules: Omit<PermissionRule, 'permission_type'>[]) => void;
+  isSensitive?: boolean;
 }
 
 interface RankSliderProps {
@@ -237,7 +240,8 @@ export const PermissionSection = ({
   rules, 
   members, 
   ranks, 
-  onChange 
+  onChange,
+  isSensitive = false,
 }: PermissionSectionProps) => {
   const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(rules.length > 0);
@@ -292,11 +296,34 @@ export const PermissionSection = ({
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <div className="border border-border/50 rounded-lg overflow-hidden">
+      <div className={`border rounded-lg overflow-hidden ${
+        isSensitive ? 'border-orange-500/30 bg-orange-500/5' : 'border-border/50'
+      }`}>
         <CollapsibleTrigger asChild>
           <button className="w-full p-4 flex items-center justify-between hover:bg-muted/30 transition-colors text-left">
             <div className="flex-1">
-              <div className="font-medium text-sm">{label}</div>
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-sm">{label}</span>
+                {isSensitive && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Badge variant="outline" className="text-orange-500 border-orange-500/50 text-[10px] px-1.5 py-0">
+                          <ShieldAlert className="h-3 w-3 mr-1" />
+                          {isFrench ? 'Sensible' : 'Sensitive'}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        <p className="text-xs max-w-[200px]">
+                          {isFrench 
+                            ? 'Cette permission permet de modifier des données critiques. Accordez-la avec précaution.'
+                            : 'This permission allows modifying critical data. Grant it carefully.'}
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
               <div className="text-xs text-muted-foreground mt-0.5">{description}</div>
             </div>
             <div className="flex items-center gap-2">
@@ -333,6 +360,12 @@ export const PermissionSection = ({
               >
                 {isFrench ? 'Tous les membres de la guilde' : 'All guild members'}
               </label>
+              {isAllMembers && isSensitive && (
+                <Badge variant="outline" className="text-orange-500 border-orange-500/50 text-[10px]">
+                  <AlertTriangle className="h-3 w-3 mr-1" />
+                  {isFrench ? 'Risqué' : 'Risky'}
+                </Badge>
+              )}
             </div>
 
             {!isAllMembers && (
