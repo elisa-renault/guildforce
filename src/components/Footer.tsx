@@ -20,7 +20,10 @@ export const Footer = () => {
   const { language, setLanguage, t } = useLanguage();
 
   return (
-    <footer className="relative z-10 border-t border-border/50 bg-background/80 backdrop-blur-sm mt-auto">
+    <footer
+      className="relative z-10 border-t border-border/50 bg-background/80 backdrop-blur-sm mt-auto"
+      style={{ paddingBottom: 'var(--cookie-banner-offset, 0px)' }}
+    >
       <div className="container mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm text-muted-foreground">
