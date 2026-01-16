@@ -6,3 +6,4 @@ export { PollResponse } from './PollResponse';
 export { PollResults } from './PollResults';
 export { ActivePollWidget } from './ActivePollWidget';
 export { RankingInput } from './RankingInput';
+export { EditActivePollDialog } from './EditActivePollDialog';

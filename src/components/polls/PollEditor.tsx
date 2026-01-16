@@ -23,6 +23,7 @@ interface PollEditorProps {
   onSave: (data: PollFormData) => Promise<void>;
   onPublish?: (data: PollFormData) => Promise<void>;
   saving?: boolean;
+  metadataOnly?: boolean;
 }
 
 const defaultQuestion: QuestionFormData = {
@@ -44,6 +45,7 @@ export const PollEditor = ({
   onSave,
   onPublish,
   saving = false,
+  metadataOnly = false,
 }: PollEditorProps) => {
   const { language } = useLanguage();
   
@@ -265,24 +267,34 @@ export const PollEditor = ({
       )}
 
       {/* Questions without section */}
-      <GlowCard className="p-6">
+      <GlowCard className={`p-6 ${metadataOnly ? 'opacity-60 pointer-events-none' : ''}`}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">
             {formData.sections.length > 0 
               ? (language === 'fr' ? 'Questions générales' : 'General Questions')
               : (language === 'fr' ? 'Questions' : 'Questions')}
           </h2>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleAddSection}>
-              <Layers className="h-4 w-4 mr-1" />
-              {language === 'fr' ? 'Section' : 'Section'}
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleAddQuestion}>
-              <Plus className="h-4 w-4 mr-1" />
-              {language === 'fr' ? 'Question' : 'Question'}
-            </Button>
-          </div>
+          {!metadataOnly && (
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={handleAddSection}>
+                <Layers className="h-4 w-4 mr-1" />
+                {language === 'fr' ? 'Section' : 'Section'}
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleAddQuestion}>
+                <Plus className="h-4 w-4 mr-1" />
+                {language === 'fr' ? 'Question' : 'Question'}
+              </Button>
+            </div>
+          )}
         </div>
+
+        {metadataOnly && (
+          <p className="text-sm text-muted-foreground mb-4">
+            {language === 'fr' 
+              ? 'Les questions ne peuvent pas être modifiées en mode paramètres.'
+              : 'Questions cannot be modified in settings mode.'}
+          </p>
+        )}
 
         <div className="space-y-4">
           {formData.questions.length === 0 && formData.sections.length === 0 && (
