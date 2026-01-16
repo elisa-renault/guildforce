@@ -1376,7 +1376,7 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
           
           const guildKey = `${charDetail.guild.name}-${charDetail.guild.realm?.slug || char.realmSlug}`;
           const guildRealmSlug = charDetail.guild.realm?.slug || char.realmSlug;
-          const guildFaction = charDetail.faction?.type || 'UNKNOWN';
+          const guildFaction = charDetail.guild.faction?.type || 'UNKNOWN';
           
           const insertedChar = insertedChars?.find(
             (ic: any) => ic.name.toLowerCase() === char.name.toLowerCase() && ic.realm_slug === char.realmSlug
