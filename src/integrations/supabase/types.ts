@@ -1117,6 +1117,47 @@ export type Database = {
         }
         Relationships: []
       }
+      legal_pages: {
+        Row: {
+          content_en: string
+          content_fr: string
+          id: string
+          slug: string
+          title_en: string
+          title_fr: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          content_en: string
+          content_fr: string
+          id?: string
+          slug: string
+          title_en: string
+          title_fr: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          content_en?: string
+          content_fr?: string
+          id?: string
+          slug?: string
+          title_en?: string
+          title_fr?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legal_pages_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       poll_results_access_rules: {
         Row: {
           access_type: string
