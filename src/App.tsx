@@ -7,8 +7,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { GlobalNav } from "@/components/GlobalNav";
 import { Footer } from "@/components/Footer";
-import { CookieBanner } from "@/components/CookieBanner";
-import { BugReportButton } from "@/components/BugReportButton";
+import { StickyBottomBar } from "@/components/StickyBottomBar";
 import "@/lib/logCapture";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -77,8 +76,7 @@ const App = () => (
                   <Route path="*" element={<NotFound />} />
               </Routes>
               </div>
-              <BugReportButton />
-              <CookieBanner />
+              <StickyBottomBar />
               <Footer />
             </BrowserRouter>
           </div>
