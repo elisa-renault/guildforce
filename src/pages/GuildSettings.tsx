@@ -328,13 +328,23 @@ const GuildSettings = () => {
         throw new Error('Not authenticated');
       }
 
-      const { error } = await supabase.functions.invoke('battlenet-auth/resync', {
+      const { data, error } = await supabase.functions.invoke('battlenet-auth/resync', {
         headers: {
           Authorization: `Bearer ${session.session.access_token}`,
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Check if this is a token expiration error
+        const errorMessage = error.message || '';
+        const isTokenExpired = errorMessage.includes('expired') || errorMessage.includes('401');
+        
+        toast({
+          title: isTokenExpired ? t.guildSettings.resyncTokenExpired : t.guildSettings.resyncError,
+          variant: 'destructive',
+        });
+        return;
+      }
 
       // Reload data after sync
       if (guild) {
@@ -355,9 +365,11 @@ const GuildSettings = () => {
       toast({ title: t.guildSettings.resyncSuccess });
     } catch (error: any) {
       console.error('Resync error:', error);
+      const errorMessage = error?.message || '';
+      const isTokenExpired = errorMessage.includes('expired') || errorMessage.includes('401');
+      
       toast({
-        title: t.guildSettings.resyncError,
-        description: error.message,
+        title: isTokenExpired ? t.guildSettings.resyncTokenExpired : t.guildSettings.resyncError,
         variant: 'destructive',
       });
     } finally {
