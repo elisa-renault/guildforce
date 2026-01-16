@@ -52,6 +52,7 @@ export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps)
     permissions,
     members,
     ranks,
+    officerRankThreshold,
     loading,
     saving,
     savePermissions,
@@ -199,6 +200,7 @@ export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps)
               rules={getLocalRules(type)}
               members={members}
               ranks={ranks}
+              officerRankThreshold={officerRankThreshold}
               onChange={(rules) => handleRulesChange(type, rules)}
               isSensitive={isSensitive}
             />
@@ -220,6 +222,7 @@ export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps)
               rules={getLocalRules(type)}
               members={members}
               ranks={ranks}
+              officerRankThreshold={officerRankThreshold}
               onChange={(rules) => handleRulesChange(type, rules)}
               isSensitive={isSensitive}
             />

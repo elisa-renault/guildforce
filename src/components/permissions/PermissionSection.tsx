@@ -16,6 +16,7 @@ interface PermissionSectionProps {
   rules: PermissionRule[];
   members: GuildMember[];
   ranks: GuildRank[];
+  officerRankThreshold: number;
   onChange: (rules: Omit<PermissionRule, 'permission_type'>[]) => void;
   isSensitive?: boolean;
 }
@@ -24,13 +25,16 @@ interface RankSliderProps {
   maxValue: number;
   maxRank: number;
   ranks: GuildRank[];
+  officerRankThreshold: number;
   onChange: (max: number) => void;
 }
 
-const RankSlider = ({ maxValue, maxRank, ranks, onChange }: RankSliderProps) => {
+const RankSlider = ({ maxValue, maxRank, ranks, officerRankThreshold, onChange }: RankSliderProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const sortedRanks = [...ranks].sort((a, b) => a.rank_index - b.rank_index);
+  const { t } = useLanguage();
+  const isFrench = t.common.loading === 'Chargement...';
   
   const minRank = 0;
   const allRankIndices: number[] = [];
@@ -39,6 +43,10 @@ const RankSlider = ({ maxValue, maxRank, ranks, onChange }: RankSliderProps) => 
   }
 
   const getRankName = (index: number) => {
+    // If this rank is within officer threshold, show "Officiers" instead
+    if (index <= officerRankThreshold && index > 0) {
+      return isFrench ? 'Officiers' : 'Officers';
+    }
     const rank = sortedRanks.find(r => r.rank_index === index);
     return rank?.rank_name || `Rank ${index}`;
   };
@@ -194,7 +202,7 @@ const RankSlider = ({ maxValue, maxRank, ranks, onChange }: RankSliderProps) => 
 };
 
 // Helper to generate summary badge text
-const getSummaryBadge = (rules: PermissionRule[], maxRankIndex: number, members: GuildMember[], ranks: GuildRank[], isFrench: boolean): { text: string; variant: 'default' | 'secondary' | 'outline' } => {
+const getSummaryBadge = (rules: PermissionRule[], maxRankIndex: number, members: GuildMember[], ranks: GuildRank[], officerRankThreshold: number, isFrench: boolean): { text: string; variant: 'default' | 'secondary' | 'outline' } => {
   if (rules.length === 0) {
     return { text: isFrench ? 'GM seul' : 'GM only', variant: 'outline' };
   }
@@ -211,11 +219,11 @@ const getSummaryBadge = (rules: PermissionRule[], maxRankIndex: number, members:
 
   if (rankRule) {
     const maxIdx = rankRule.max_rank_index ?? 0;
-    const rankName = ranks.find(r => r.rank_index === maxIdx)?.rank_name;
-    if (maxIdx === 0) {
+    // If the max rank is within officer threshold, show "Officers"
+    if (maxIdx <= officerRankThreshold && maxIdx > 0) {
+      parts.push(isFrench ? 'Officiers' : 'Officers');
+    } else if (maxIdx === 0) {
       parts.push(isFrench ? 'Rang 0' : 'Rank 0');
-    } else if (rankName) {
-      parts.push(isFrench ? `Rangs 0-${maxIdx}` : `Ranks 0-${maxIdx}`);
     } else {
       parts.push(isFrench ? `Rangs 0-${maxIdx}` : `Ranks 0-${maxIdx}`);
     }
@@ -240,6 +248,7 @@ export const PermissionSection = ({
   rules, 
   members, 
   ranks, 
+  officerRankThreshold,
   onChange,
   isSensitive = false,
 }: PermissionSectionProps) => {
@@ -292,7 +301,7 @@ export const PermissionSection = ({
     .map(r => r.user_id)
     .filter(Boolean);
 
-  const summaryBadge = getSummaryBadge(rules, maxRankIndex, members, sortedRanks, isFrench);
+  const summaryBadge = getSummaryBadge(rules, maxRankIndex, members, sortedRanks, officerRankThreshold, isFrench);
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -385,6 +394,7 @@ export const PermissionSection = ({
                               maxValue={rule.max_rank_index ?? 0}
                               maxRank={maxRankIndex}
                               ranks={sortedRanks}
+                              officerRankThreshold={officerRankThreshold}
                               onChange={(max) => updateRule(index, { min_rank_index: 0, max_rank_index: max })}
                             />
                           </div>
