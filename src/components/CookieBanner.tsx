@@ -88,12 +88,16 @@ export const CookieBanner: React.FC = () => {
     saveConsent(preferences);
   };
 
-  if (!showBanner && !showPreferences) {
-    return null;
-  }
+  // Calculate approximate banner height for spacer
+  const bannerHeight = showBanner && !showPreferences ? 'pb-32 md:pb-24' : '';
 
   return (
     <>
+      {/* Spacer to prevent banner from covering footer */}
+      {showBanner && !showPreferences && (
+        <div className="h-32 md:h-24" aria-hidden="true" />
+      )}
+      
       {/* Main Banner */}
       {showBanner && !showPreferences && (
         <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-card/95 backdrop-blur-md border-t border-border shadow-lg animate-in slide-in-from-bottom-4 duration-300">
