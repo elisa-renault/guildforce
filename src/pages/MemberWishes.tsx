@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -51,6 +51,15 @@ const MemberWishes = () => {
   const [wishes, setWishes] = useState<WishChoice[]>([]);
   const [isGM, setIsGM] = useState(false);
   const [validatingWish, setValidatingWish] = useState<number | null>(null);
+
+  // Handle back navigation - use history or fallback to roster page
+  const handleBack = useCallback(() => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else if (guild) {
+      navigate(`${getGuildPath(guild.region, guild.server, guild.name)}/roster`);
+    }
+  }, [navigate, guild]);
 
   useEffect(() => {
     if (!user || !regionSlug || !serverSlug || !guildSlug || !memberId) {
@@ -211,7 +220,7 @@ const MemberWishes = () => {
         <div className="container mx-auto px-3 md:px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button
-              onClick={() => guild && navigate(getGuildPath(guild.region, guild.server, guild.name))}
+              onClick={handleBack}
               className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
               title={t.common.back}
             >
