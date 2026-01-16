@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -27,6 +28,35 @@ export const GuildSubNav = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
+  const [subNavTop, setSubNavTop] = useState<number>(64);
+
+  useEffect(() => {
+    let raf = 0;
+
+    const compute = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const globalNav = document.querySelector<HTMLElement>('[data-global-nav]');
+        if (!globalNav) return;
+
+        const nextTop = Math.max(0, Math.round(globalNav.offsetHeight));
+        setSubNavTop((prev) => (prev === nextTop ? prev : nextTop));
+      });
+    };
+
+    compute();
+    window.addEventListener('resize', compute);
+
+    const ro = new ResizeObserver(compute);
+    const globalNavEl = document.querySelector<HTMLElement>('[data-global-nav]');
+    if (globalNavEl) ro.observe(globalNavEl);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+      window.removeEventListener('resize', compute);
+    };
+  }, []);
 
   // Settings is shown if user is GM OR has any settings permission
   const showSettings = isGM || hasSettingsPermission;
@@ -98,7 +128,7 @@ export const GuildSubNav = ({
   };
 
   return (
-    <div data-guild-subnav className="sticky top-16 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50 w-full">
+    <div data-guild-subnav className="sticky z-40 bg-background/80 backdrop-blur-lg border-b border-border/50 w-full" style={{ top: subNavTop }}>
       <div className="max-w-full overflow-hidden px-3 md:container md:mx-auto md:px-4">
         <div className="flex items-center gap-2 py-2">
           {/* Back button - uses browser history or fallback */}
