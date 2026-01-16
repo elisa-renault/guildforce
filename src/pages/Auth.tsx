@@ -334,11 +334,13 @@ const Auth = () => {
               </Collapsible>
             </GlowCard>
 
-            {/* Back Button - Outside Card */}
-            <Button variant="ghost" onClick={() => navigate('/')} className="mt-4 text-muted-foreground hover:text-foreground gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              {t.common.back}
-            </Button>
+            {/* Back Button - Outside Card, same width as card */}
+            <div className="w-full max-w-md flex justify-center">
+              <Button variant="ghost" onClick={() => navigate('/')} className="mt-4 text-muted-foreground hover:text-foreground gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                {t.common.back}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
