@@ -345,14 +345,15 @@ const GuildSettings = () => {
         activeTab="settings"
       />
 
-      <main className="container mx-auto px-4 py-6 relative z-10">
-        <div className="grid gap-6 md:grid-cols-2 max-w-4xl mx-auto">
+      <main className="container mx-auto px-4 py-6 relative z-10 max-w-7xl">
+        {/* Top Section: Avatar + Guild Info side by side on desktop, stacked on mobile */}
+        <div className="grid gap-6 lg:grid-cols-3 mb-6">
           {/* Avatar Section */}
           <GlowCard className="p-6">
             <h2 className="font-display text-lg mb-4">{t.guildSettings.avatar}</h2>
             
             <div className="flex flex-col items-center gap-4">
-              <Avatar className="h-32 w-32 border-2 border-border">
+              <Avatar className="h-28 w-28 lg:h-32 lg:w-32 border-2 border-border">
                 {guild.avatar_url ? (
                   <AvatarImage src={guild.avatar_url} alt={guild.name} />
                 ) : (
@@ -361,12 +362,12 @@ const GuildSettings = () => {
                       ? 'bg-red-500/20 text-red-400' 
                       : 'bg-blue-500/20 text-blue-400'
                   }`}>
-                    <Shield className="h-12 w-12" strokeWidth={1.5} />
+                    <Shield className="h-10 w-10 lg:h-12 lg:w-12" strokeWidth={1.5} />
                   </AvatarFallback>
                 )}
               </Avatar>
 
-              <div className="flex gap-2">
+              <div className="flex flex-wrap justify-center gap-2">
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -405,24 +406,24 @@ const GuildSettings = () => {
             </div>
           </GlowCard>
 
-          {/* Guild Info Section */}
-          <GlowCard className="p-6">
+          {/* Guild Info Section - spans 2 columns on large screens */}
+          <GlowCard className="p-6 lg:col-span-2">
             <h2 className="font-display text-lg mb-4">{t.guildSettings.guildInfo}</h2>
             
-            <div className="space-y-3">
-              <div className="flex flex-col sm:flex-row sm:justify-between gap-1 py-2 border-b border-border/50">
+            <div className="grid sm:grid-cols-2 gap-x-8 gap-y-1">
+              <div className="flex justify-between gap-2 py-2 border-b border-border/50">
                 <span className="text-muted-foreground text-sm">{t.guild.name}</span>
                 <span className="font-medium text-right break-words">{guild.name}</span>
               </div>
-              <div className="flex flex-col sm:flex-row sm:justify-between gap-1 py-2 border-b border-border/50">
+              <div className="flex justify-between gap-2 py-2 border-b border-border/50">
                 <span className="text-muted-foreground text-sm">{t.guild.server}</span>
                 <span className="font-medium text-right break-words">{guild.server.charAt(0).toUpperCase() + guild.server.slice(1)}</span>
               </div>
-              <div className="flex flex-col sm:flex-row sm:justify-between gap-1 py-2 border-b border-border/50">
+              <div className="flex justify-between gap-2 py-2 border-b border-border/50">
                 <span className="text-muted-foreground text-sm">{t.battlenet.region}</span>
                 <span className="font-medium uppercase text-right">{guild.region}</span>
               </div>
-              <div className="flex flex-col sm:flex-row sm:justify-between gap-1 py-2 border-b border-border/50">
+              <div className="flex justify-between gap-2 py-2 border-b border-border/50">
                 <span className="text-muted-foreground text-sm">{t.guild.faction}</span>
                 <span className={`font-medium text-right ${
                   guild.faction === 'horde' ? 'text-red-400' : 'text-blue-400'
@@ -437,27 +438,24 @@ const GuildSettings = () => {
               <span>{t.guildSettings.syncedFromBnet}</span>
             </div>
           </GlowCard>
-
-
-          {/* Permissions Section */}
-          <div className="md:col-span-2">
-            <GlowCard className="p-6">
-              <GuildPermissionsEditor guildId={guild.id} />
-            </GlowCard>
-          </div>
-
-          {/* Roster Manager Section */}
-          <div className="md:col-span-2">
-            <RosterManager
-              guildId={guild.id}
-              rosters={rosters}
-              members={members}
-              ranks={ranks}
-              onRosterChange={() => loadRostersAndMembers(guild.id)}
-              initialRosterId={initialRosterId}
-            />
-          </div>
         </div>
+
+        {/* Permissions Section - Full width */}
+        <div className="mb-6">
+          <GlowCard className="p-6">
+            <GuildPermissionsEditor guildId={guild.id} />
+          </GlowCard>
+        </div>
+
+        {/* Roster Manager Section - Full width */}
+        <RosterManager
+          guildId={guild.id}
+          rosters={rosters}
+          members={members}
+          ranks={ranks}
+          onRosterChange={() => loadRostersAndMembers(guild.id)}
+          initialRosterId={initialRosterId}
+        />
       </main>
     </div>
   );
