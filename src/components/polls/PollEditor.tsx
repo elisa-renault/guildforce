@@ -15,6 +15,7 @@ import {
   DndContext,
   DragEndEvent,
   DragStartEvent,
+  DragOverEvent,
   KeyboardSensor,
   PointerSensor,
   closestCenter,
@@ -167,6 +168,7 @@ export const PollEditor = ({
   const { language } = useLanguage();
   const [openSections, setOpenSections] = useState<Record<number, boolean>>({});
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
+  const [overId, setOverId] = useState<UniqueIdentifier | null>(null);
   
   const [formData, setFormData] = useState<PollFormData>(initialData || {
     title: '',
@@ -287,11 +289,17 @@ export const PollEditor = ({
   // Unified drag handlers
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id);
+    setOverId(null);
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    setOverId(event.over?.id ?? null);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
+    setOverId(null);
     
     if (!over || active.id === over.id) return;
 
@@ -569,6 +577,7 @@ export const PollEditor = ({
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
         >
           <div className="space-y-4">
@@ -582,7 +591,13 @@ export const PollEditor = ({
 
             {/* General Questions */}
             {formData.questions.length > 0 && (
-              <div className="space-y-3">
+              <div 
+                className={`space-y-3 p-3 rounded-lg border-2 border-dashed transition-colors duration-200 ${
+                  activeId && overId?.toString().startsWith('general-q-')
+                    ? 'border-primary bg-primary/10'
+                    : 'border-transparent'
+                }`}
+              >
                 <h3 className="text-sm font-medium text-muted-foreground">
                   {language === 'fr' ? 'Questions générales' : 'General Questions'}
                 </h3>
@@ -605,53 +620,69 @@ export const PollEditor = ({
             {/* Sections with their questions */}
             {formData.sections.length > 0 && (
               <SortableContext items={sectionHeaderIds} strategy={verticalListSortingStrategy}>
-                {formData.sections.map((section, sectionIndex) => (
-                  <div key={`section-${sectionIndex}`} className="space-y-2">
-                    <SortableSectionHeader
-                      section={section}
-                      sectionIndex={sectionIndex}
-                      isOpen={openSections[sectionIndex] !== false}
-                      onToggle={() => toggleSection(sectionIndex)}
-                      onRemove={() => handleRemoveSection(sectionIndex)}
-                      onChange={(s) => handleSectionChange(sectionIndex, s)}
-                      canRemove={true}
-                    />
+                {formData.sections.map((section, sectionIndex) => {
+                  // Determine if this section is a drop target
+                  const overIdStr = overId?.toString() || '';
+                  const isSectionDropTarget = activeId && (
+                    overIdStr === `section-header-${sectionIndex}` ||
+                    overIdStr.startsWith(`section-${sectionIndex}-q-`)
+                  );
+                  
+                  return (
+                    <div 
+                      key={`section-${sectionIndex}`} 
+                      className={`space-y-2 p-3 rounded-lg border-2 border-dashed transition-colors duration-200 ${
+                        isSectionDropTarget
+                          ? 'border-primary bg-primary/10'
+                          : 'border-transparent'
+                      }`}
+                    >
+                      <SortableSectionHeader
+                        section={section}
+                        sectionIndex={sectionIndex}
+                        isOpen={openSections[sectionIndex] !== false}
+                        onToggle={() => toggleSection(sectionIndex)}
+                        onRemove={() => handleRemoveSection(sectionIndex)}
+                        onChange={(s) => handleSectionChange(sectionIndex, s)}
+                        canRemove={true}
+                      />
 
-                    <Collapsible open={openSections[sectionIndex] !== false}>
-                      <CollapsibleContent>
-                        <div className="ml-8 space-y-3">
-                          <SortableContext 
-                            items={section.questions.map((_, qi) => `section-${sectionIndex}-q-${qi}`)} 
-                            strategy={verticalListSortingStrategy}
-                          >
-                            {section.questions.map((question, qIndex) => (
-                              <SortableQuestion
-                                key={`section-${sectionIndex}-q-${qIndex}`}
-                                id={`section-${sectionIndex}-q-${qIndex}`}
-                                question={question}
-                                index={qIndex}
-                                onChange={(q) => handleSectionQuestionChange(sectionIndex, qIndex, q)}
-                                onRemove={() => handleRemoveSectionQuestion(sectionIndex, qIndex)}
-                                canRemove={true}
-                                compact
-                              />
-                            ))}
-                          </SortableContext>
+                      <Collapsible open={openSections[sectionIndex] !== false}>
+                        <CollapsibleContent>
+                          <div className="ml-8 space-y-3">
+                            <SortableContext 
+                              items={section.questions.map((_, qi) => `section-${sectionIndex}-q-${qi}`)} 
+                              strategy={verticalListSortingStrategy}
+                            >
+                              {section.questions.map((question, qIndex) => (
+                                <SortableQuestion
+                                  key={`section-${sectionIndex}-q-${qIndex}`}
+                                  id={`section-${sectionIndex}-q-${qIndex}`}
+                                  question={question}
+                                  index={qIndex}
+                                  onChange={(q) => handleSectionQuestionChange(sectionIndex, qIndex, q)}
+                                  onRemove={() => handleRemoveSectionQuestion(sectionIndex, qIndex)}
+                                  canRemove={true}
+                                  compact
+                                />
+                              ))}
+                            </SortableContext>
 
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleAddSectionQuestion(sectionIndex)}
-                            className="text-primary w-full border border-dashed border-primary/30 hover:border-primary/50"
-                          >
-                            <Plus className="h-4 w-4 mr-1" />
-                            {language === 'fr' ? 'Ajouter une question' : 'Add question'}
-                          </Button>
-                        </div>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  </div>
-                ))}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleAddSectionQuestion(sectionIndex)}
+                              className="text-primary w-full border border-dashed border-primary/30 hover:border-primary/50"
+                            >
+                              <Plus className="h-4 w-4 mr-1" />
+                              {language === 'fr' ? 'Ajouter une question' : 'Add question'}
+                            </Button>
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </div>
+                  );
+                })}
               </SortableContext>
             )}
           </div>
