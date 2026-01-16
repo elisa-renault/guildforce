@@ -3,7 +3,8 @@ import { GlowCard } from '@/components/GlowCard';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Lock, User, Users, Calendar, Clock, ListOrdered, SlidersHorizontal } from 'lucide-react';
+import { StarDisplay } from '@/components/ui/star-rating';
+import { Lock, User, Users, Calendar, Clock, ListOrdered } from 'lucide-react';
 import type { GuildPollQuestion, ResponseValue, ScaleConfig } from '@/types/poll';
 import { format, parseISO } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
@@ -53,44 +54,57 @@ export const PollResults = ({
   };
 
   const getRatingStats = (question: GuildPollQuestion) => {
-    const ratings = question.responses?.map((r) => {
+    const responses = question.responses?.map((r) => {
       const value = r.response_value as ResponseValue;
-      return value.type === 'rating' ? value.value : 0;
+      return {
+        value: value.type === 'rating' ? value.value : 0,
+        user: r.user
+      };
     }) || [];
 
-    if (ratings.length === 0) return { average: 0, distribution: {} };
+    if (responses.length === 0) return { average: 0, distribution: {}, individualRatings: [] };
 
-    const average = ratings.reduce((a, b) => a + b, 0) / ratings.length;
-    const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-    ratings.forEach((r) => {
-      if (distribution[r] !== undefined) distribution[r]++;
+    const values = responses.map(r => r.value);
+    const average = values.reduce((a, b) => a + b, 0) / values.length;
+    const distribution: Record<number, number> = {};
+    for (let i = 0; i <= 5; i++) {
+      distribution[i] = 0;
+    }
+    // Handle half stars by rounding to nearest 0.5
+    values.forEach((v) => {
+      const rounded = Math.round(v);
+      if (distribution[rounded] !== undefined) distribution[rounded]++;
     });
 
-    return { average, distribution };
+    return { average, distribution, individualRatings: responses };
   };
 
   const getScaleStats = (question: GuildPollQuestion) => {
     const config = question.scale_config as ScaleConfig | null;
-    const min = config?.min ?? 1;
-    const max = config?.max ?? 10;
+    const max = config?.max ?? 5;
 
-    const values = question.responses?.map((r) => {
+    const responses = question.responses?.map((r) => {
       const value = r.response_value as ResponseValue;
-      return value.type === 'scale' ? value.value : 0;
-    }).filter(v => v >= min && v <= max) || [];
+      return {
+        value: value.type === 'scale' ? value.value : 0,
+        user: r.user
+      };
+    }) || [];
 
-    if (values.length === 0) return { average: 0, distribution: {}, config };
+    if (responses.length === 0) return { average: 0, distribution: {}, config, individualRatings: [] };
 
-    const average = values.reduce((a, b) => a + b, 0) / values.length;
+    const values = responses.map(r => r.value).filter(v => v >= 0 && v <= max);
+    const average = values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
     const distribution: Record<number, number> = {};
-    for (let i = min; i <= max; i++) {
+    for (let i = 0; i <= max; i++) {
       distribution[i] = 0;
     }
     values.forEach((v) => {
-      if (distribution[v] !== undefined) distribution[v]++;
+      const rounded = Math.round(v);
+      if (distribution[rounded] !== undefined) distribution[rounded]++;
     });
 
-    return { average, distribution, config };
+    return { average, distribution, config, individualRatings: responses };
   };
 
   const getRankingStats = (question: GuildPollQuestion) => {
@@ -286,36 +300,53 @@ export const PollResults = ({
             )}
 
             {question.question_type === 'rating' && (
-              <div className="pl-5 space-y-3">
+              <div className="pl-5 space-y-4">
                 {(() => {
-                  const { average, distribution } = getRatingStats(question);
+                  const { average, individualRatings } = getRatingStats(question);
                   const total = question.responses?.length || 0;
 
                   return (
                     <>
                       <div className="flex items-center gap-4">
-                        <div className="text-3xl font-bold text-primary">
-                          {average.toFixed(1)}
-                        </div>
-                        <div className="text-muted-foreground">
-                          / 5 ({total} {language === 'fr' ? 'votes' : 'votes'})
+                        <StarDisplay value={average} max={5} size="lg" />
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-2xl font-bold text-primary">
+                            {average.toFixed(1)}
+                          </span>
+                          <span className="text-muted-foreground">
+                            / 5 ({total} {language === 'fr' ? 'votes' : 'votes'})
+                          </span>
                         </div>
                       </div>
-                      <div className="space-y-1">
-                        {[5, 4, 3, 2, 1].map((rating) => {
-                          const count = distribution[rating] || 0;
-                          const percentage = total > 0 ? (count / total) * 100 : 0;
-                          return (
-                            <div key={rating} className="flex items-center gap-2">
-                              <span className="w-4 text-sm text-muted-foreground">{rating}</span>
-                              <Progress value={percentage} className="h-2 flex-1 bg-muted/40" />
-                              <span className="w-8 text-xs text-muted-foreground text-right">
-                                {count}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
+                      {!isAnonymous && individualRatings.length > 0 && (
+                        <div className="space-y-2 pt-2 border-t border-border/50">
+                          <p className="text-sm text-muted-foreground mb-2">
+                            {language === 'fr' ? 'Votes individuels' : 'Individual votes'}
+                          </p>
+                          <div className="grid gap-2">
+                            {individualRatings.map((rating, idx) => (
+                              <div key={idx} className="flex items-center gap-3">
+                                {rating.user && (
+                                  <div className="flex items-center gap-2 min-w-[120px]">
+                                    <Avatar className="h-6 w-6">
+                                      {rating.user.avatar_url ? (
+                                        <AvatarImage src={rating.user.avatar_url} />
+                                      ) : (
+                                        <AvatarFallback className="bg-primary/20 text-primary text-xs">
+                                          <User className="h-3 w-3" />
+                                        </AvatarFallback>
+                                      )}
+                                    </Avatar>
+                                    <span className="text-sm font-medium truncate">{rating.user.username}</span>
+                                  </div>
+                                )}
+                                <StarDisplay value={rating.value} max={5} size="sm" />
+                                <span className="text-sm text-muted-foreground">{rating.value}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </>
                   );
                 })()}
@@ -389,44 +420,61 @@ export const PollResults = ({
 
             {/* Scale results */}
             {question.question_type === 'scale' && (
-              <div className="pl-5 space-y-3">
+              <div className="pl-5 space-y-4">
                 {(() => {
-                  const { average, distribution, config } = getScaleStats(question);
+                  const { average, config, individualRatings } = getScaleStats(question);
                   const total = question.responses?.length || 0;
-                  const min = config?.min ?? 1;
-                  const max = config?.max ?? 10;
+                  const max = config?.max ?? 5;
 
                   return (
                     <>
-                      <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                        <SlidersHorizontal className="h-4 w-4" />
-                        <span className="text-sm">{total} {language === 'fr' ? 'réponses' : 'responses'}</span>
-                      </div>
                       <div className="flex items-center gap-4">
-                        <div className="text-3xl font-bold text-primary">
-                          {average.toFixed(1)}
-                        </div>
-                        <div className="text-muted-foreground text-sm">
-                          {config?.min_label && <span className="mr-2">{config.min_label}</span>}
-                          {min} - {max}
-                          {config?.max_label && <span className="ml-2">{config.max_label}</span>}
+                        <StarDisplay value={average} max={max} size="lg" />
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-2xl font-bold text-primary">
+                            {average.toFixed(1)}
+                          </span>
+                          <span className="text-muted-foreground">
+                            / {max} ({total} {language === 'fr' ? 'votes' : 'votes'})
+                          </span>
                         </div>
                       </div>
-                      <div className="space-y-1">
-                        {Array.from({ length: max - min + 1 }, (_, i) => max - i).map((value) => {
-                          const count = distribution[value] || 0;
-                          const percentage = total > 0 ? (count / total) * 100 : 0;
-                          return (
-                            <div key={value} className="flex items-center gap-2">
-                              <span className="w-6 text-sm text-muted-foreground text-right">{value}</span>
-                              <Progress value={percentage} className="h-2 flex-1 bg-muted/40" />
-                              <span className="w-8 text-xs text-muted-foreground text-right">
-                                {count}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
+                      {(config?.min_label || config?.max_label) && (
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          {config?.min_label && <span>{config.min_label}</span>}
+                          <span>—</span>
+                          {config?.max_label && <span>{config.max_label}</span>}
+                        </div>
+                      )}
+                      {!isAnonymous && individualRatings.length > 0 && (
+                        <div className="space-y-2 pt-2 border-t border-border/50">
+                          <p className="text-sm text-muted-foreground mb-2">
+                            {language === 'fr' ? 'Votes individuels' : 'Individual votes'}
+                          </p>
+                          <div className="grid gap-2">
+                            {individualRatings.map((rating, idx) => (
+                              <div key={idx} className="flex items-center gap-3">
+                                {rating.user && (
+                                  <div className="flex items-center gap-2 min-w-[120px]">
+                                    <Avatar className="h-6 w-6">
+                                      {rating.user.avatar_url ? (
+                                        <AvatarImage src={rating.user.avatar_url} />
+                                      ) : (
+                                        <AvatarFallback className="bg-primary/20 text-primary text-xs">
+                                          <User className="h-3 w-3" />
+                                        </AvatarFallback>
+                                      )}
+                                    </Avatar>
+                                    <span className="text-sm font-medium truncate">{rating.user.username}</span>
+                                  </div>
+                                )}
+                                <StarDisplay value={rating.value} max={max} size="sm" />
+                                <span className="text-sm text-muted-foreground">{rating.value}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </>
                   );
                 })()}
