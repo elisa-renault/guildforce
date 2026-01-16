@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Shield, User, LogOut, MessageSquare, Menu, X } from 'lucide-react';
+import { useIsAdmin } from '@/hooks/useAdmin';
+import { Shield, User, LogOut, MessageSquare, Menu, Crown } from 'lucide-react';
 import { CosmicButton } from '@/components/CosmicButton';
 import { NotificationBell } from '@/components/forum/NotificationBell';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -10,8 +11,9 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 export const GlobalNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { user, signOut } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Don't show nav on auth page
@@ -67,6 +69,20 @@ export const GlobalNav = () => {
         <User className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
         <span>{t.profile.title}</span>
       </button>
+      {isAdmin && (
+        <button
+          onClick={() => handleNavigation('/admin')}
+          className={`${navButtonBase} ${mobile ? 'w-full justify-start' : ''} ${
+            isActive('/admin') || startsWithPath('/forum/admin')
+              ? navButtonActive
+              : navButtonInactive
+          }`}
+          aria-current={isActive('/admin') ? 'page' : undefined}
+        >
+          <Crown className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+          <span>{language === 'fr' ? 'Admin' : 'Admin'}</span>
+        </button>
+      )}
     </>
   );
 
