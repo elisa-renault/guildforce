@@ -655,11 +655,11 @@ export const PollEditor = ({
             )}
           </div>
 
-          <DragOverlay>
+          <DragOverlay dropAnimation={null}>
             {activeId && getActiveQuestion() && (
-              <div className="border border-primary rounded-lg p-4 bg-card shadow-lg opacity-90">
+              <div className="border border-primary rounded-lg p-3 bg-card shadow-xl max-w-md pointer-events-none">
                 <div className="flex items-center gap-2 text-sm">
-                  <GripVertical className="h-4 w-4 text-muted-foreground" />
+                  <GripVertical className="h-4 w-4 text-primary" />
                   <span className="truncate">{getActiveQuestion()?.question_text || (language === 'fr' ? 'Question...' : 'Question...')}</span>
                 </div>
               </div>
