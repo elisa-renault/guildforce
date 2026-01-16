@@ -425,10 +425,8 @@ const GuildMembers = () => {
                   variant="outline"
                   size="sm"
                   className={cn(
-                    "h-9 md:h-8 min-w-[130px] md:min-w-[180px] justify-between gap-2 text-sm flex-shrink-0 whitespace-nowrap",
-                    hasClassFilters 
-                      ? "border-border/60" 
-                      : "border-border/40 text-muted-foreground"
+                    "h-9 md:h-8 min-w-[130px] md:min-w-[200px] justify-between gap-2 text-sm flex-shrink-0 whitespace-nowrap border-border",
+                    hasClassFilters && "border-border/60"
                   )}
                 >
                   {hasClassFilters ? (
@@ -450,7 +448,7 @@ const GuildMembers = () => {
                       )}
                     </span>
                   ) : (
-                    <span>{language === 'fr' ? 'Toutes les classes' : 'All classes'}</span>
+                    <span className="text-muted-foreground">{language === 'fr' ? 'Toutes les classes' : 'All classes'}</span>
                   )}
                   <ChevronDown className="h-3.5 w-3.5 opacity-50 flex-shrink-0" />
                 </Button>
@@ -495,10 +493,8 @@ const GuildMembers = () => {
                   variant="outline"
                   size="sm"
                   className={cn(
-                    "h-9 md:h-8 min-w-[110px] md:min-w-[150px] justify-between gap-2 text-sm flex-shrink-0 whitespace-nowrap",
-                    hasRankFilters 
-                      ? "border-border/60" 
-                      : "border-border/40 text-muted-foreground"
+                    "h-9 md:h-8 min-w-[110px] md:min-w-[160px] justify-between gap-2 text-sm flex-shrink-0 whitespace-nowrap border-border",
+                    hasRankFilters && "border-border/60"
                   )}
                 >
                   {hasRankFilters ? (
@@ -506,7 +502,7 @@ const GuildMembers = () => {
                       {rankFilters.length} {language === 'fr' ? (rankFilters.length > 1 ? 'rangs' : 'rang') : (rankFilters.length > 1 ? 'ranks' : 'rank')}
                     </span>
                   ) : (
-                    <span>{language === 'fr' ? 'Tous les rangs' : 'All ranks'}</span>
+                    <span className="text-muted-foreground">{language === 'fr' ? 'Tous les rangs' : 'All ranks'}</span>
                   )}
                   <ChevronDown className="h-3.5 w-3.5 opacity-50 flex-shrink-0" />
                 </Button>
@@ -559,26 +555,24 @@ const GuildMembers = () => {
                   variant="outline"
                   size="sm"
                   className={cn(
-                    "h-9 md:h-8 min-w-[100px] md:min-w-[140px] justify-between gap-2 text-sm flex-shrink-0 whitespace-nowrap",
-                    hasGuildforceFilter 
-                      ? "border-border/60" 
-                      : "border-border/40 text-muted-foreground"
+                    "h-9 md:h-8 min-w-[100px] md:min-w-[160px] justify-between gap-2 text-sm flex-shrink-0 whitespace-nowrap border-border",
+                    hasGuildforceFilter && "border-border/60"
                   )}
                 >
                   {guildforceFilter === 'guildforce' && (
                     <span className="flex items-center gap-1.5 text-healer">
                       <CheckCircle2 className="h-4 w-4" />
-                      <span className="hidden md:inline">Guildforce</span>
+                      <span>Guildforce</span>
                     </span>
                   )}
                   {guildforceFilter === 'not-guildforce' && (
                     <span className="flex items-center gap-1.5 text-muted-foreground">
                       <XCircle className="h-4 w-4" />
-                      <span className="hidden md:inline">{language === 'fr' ? 'Non inscrit' : 'Not registered'}</span>
+                      <span>{language === 'fr' ? 'Non inscrit' : 'Not registered'}</span>
                     </span>
                   )}
                   {guildforceFilter === 'all' && (
-                    <span>Guildforce</span>
+                    <span className="text-muted-foreground">Guildforce</span>
                   )}
                   <ChevronDown className="h-3.5 w-3.5 opacity-50 flex-shrink-0" />
                 </Button>
