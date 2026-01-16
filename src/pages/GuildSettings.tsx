@@ -528,53 +528,56 @@ const GuildSettings = () => {
             </div>
 
             {/* Officer Rank Threshold */}
-            <div className="mt-5 pt-4 border-t border-border/50">
-              <div className="flex items-center gap-2 mb-3">
+            <div className="mt-6">
+              <div className="flex items-center gap-2 mb-2">
                 <Crown className="h-4 w-4 text-amber-400" />
                 <Label className="text-sm font-medium">
                   {language === 'fr' ? 'Rang officier minimum' : 'Minimum officer rank'}
                 </Label>
               </div>
-              <p className="text-xs text-muted-foreground mb-3">
+              <p className="text-xs text-muted-foreground mb-4">
                 {language === 'fr' 
-                  ? 'Les rangs 0 à ce rang seront considérés comme officiers et affichés avec le badge officier.'
-                  : 'Ranks 0 to this rank will be considered officers and displayed with the officer badge.'}
+                  ? 'Les rangs 0 à ce rang seront considérés comme officiers et affichés avec le badge officier. Ce paramètre est propre à Guildforce.'
+                  : 'Ranks 0 to this rank will be considered officers and displayed with the officer badge. This setting is specific to Guildforce.'}
               </p>
               
-              <div className="flex items-center gap-4">
-                <Slider
-                  value={[officerRank]}
-                  onValueChange={(value) => setOfficerRank(value[0])}
-                  onValueCommit={(value) => handleOfficerRankChange(value[0])}
-                  min={0}
-                  max={9}
-                  step={1}
-                  disabled={savingOfficerRank}
-                  className="flex-1"
-                />
-                <div className="w-16 text-center">
-                  <span className="text-sm font-medium">
-                    0 → {officerRank}
-                  </span>
-                </div>
-              </div>
-              
-              {ranks.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {ranks.filter(r => r.rank_index <= officerRank).map(rank => (
-                    <span 
-                      key={rank.rank_index}
-                      className="px-2 py-0.5 rounded-full text-xs bg-primary/20 text-primary border border-primary/30"
-                    >
-                      {rank.rank_name}
+              <div className="space-y-3">
+                <div className="flex items-center gap-4">
+                  <Slider
+                    value={[officerRank]}
+                    onValueChange={(value) => setOfficerRank(value[0])}
+                    onValueCommit={(value) => handleOfficerRankChange(value[0])}
+                    min={0}
+                    max={9}
+                    step={1}
+                    disabled={savingOfficerRank}
+                    className="flex-1"
+                  />
+                  <div className="w-16 text-right">
+                    <span className="text-sm font-medium">
+                      0 → {officerRank}
                     </span>
-                  ))}
+                  </div>
                 </div>
-              )}
+                
+                {ranks.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {ranks.filter(r => r.rank_index <= officerRank).map(rank => (
+                      <span 
+                        key={rank.rank_index}
+                        className="px-2 py-0.5 rounded-full text-xs bg-primary/20 text-primary border border-primary/30"
+                      >
+                        {rank.rank_name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="mt-4 flex flex-col gap-3">
-              <div className="flex items-start gap-2 text-xs text-muted-foreground">
+            {/* Battle.net Sync Section */}
+            <div className="mt-6 pt-4 border-t border-border/50">
+              <div className="flex items-start gap-2 text-xs text-muted-foreground mb-3">
                 <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
                 <span>{t.guildSettings.syncedFromBnet}</span>
               </div>
@@ -590,7 +593,7 @@ const GuildSettings = () => {
               >
                 {syncing ? t.guildSettings.syncing : t.guildSettings.resyncBattlenet}
               </CosmicButton>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground mt-2">
                 {t.guildSettings.resyncDescription}
               </p>
             </div>
