@@ -221,7 +221,7 @@ const Profile = () => {
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/25">
               <Sparkles className="h-8 w-8 text-white" strokeWidth={1.5} />
             </div>
-            <h1 className="font-display text-2xl gradient-text mb-2">Bienvenue sur Guildforce !</h1>
+            <h1 className="font-display text-2xl text-foreground mb-2">Bienvenue sur Guildforce !</h1>
             <p className="text-muted-foreground text-sm">Choisis ton pseudo pour être identifié par ta guilde</p>
             {profile?.battletag && (
               <p className="text-xs text-muted-foreground mt-2">Connecté en tant que {profile.battletag}</p>
@@ -269,7 +269,7 @@ const Profile = () => {
       <CosmicBackground />
 
       <main className="container mx-auto px-4 py-6 relative z-10">
-        <h1 className="font-display text-2xl gradient-text mb-6 text-center">{t.profile.title}</h1>
+        <h1 className="font-display text-2xl text-foreground mb-6 text-center">{t.profile.title}</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-4xl mx-auto">
           {/* Left column: Avatar + Profile stacked */}
