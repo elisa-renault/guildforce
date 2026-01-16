@@ -8,6 +8,7 @@ import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { GuildManager } from '@/components/admin/GuildManager';
 import { UserManager } from '@/components/admin/UserManager';
+import { LegalPagesEditor } from '@/components/admin/LegalPagesEditor';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Users, 
@@ -16,7 +17,8 @@ import {
   AlertTriangle,
   ChevronRight,
   Crown,
-  LayoutDashboard
+  LayoutDashboard,
+  FileText
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -36,7 +38,7 @@ export default function Admin() {
   const { isAdmin, loading: adminLoading } = useIsAdmin();
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'guilds'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'guilds' | 'legal'>('dashboard');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -150,7 +152,7 @@ export default function Admin() {
     }
   ];
 
-  const goToTab = (tab: 'dashboard' | 'users' | 'guilds') => {
+  const goToTab = (tab: 'dashboard' | 'users' | 'guilds' | 'legal') => {
     setActiveTab(tab);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -186,6 +188,16 @@ export default function Admin() {
       onClick: () => goToTab('guilds'),
       color: 'text-green-400',
     },
+    {
+      title: language === 'fr' ? 'Pages légales' : 'Legal Pages',
+      description:
+        language === 'fr'
+          ? 'Modifier le contenu des mentions légales, confidentialité et CGU'
+          : 'Edit legal notice, privacy policy and terms of service content',
+      icon: FileText,
+      onClick: () => goToTab('legal'),
+      color: 'text-amber-400',
+    },
   ];
 
   return (
@@ -207,8 +219,8 @@ export default function Admin() {
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'dashboard' | 'users' | 'guilds')} className="space-y-6">
-          <TabsList className="bg-card border border-border p-1">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'dashboard' | 'users' | 'guilds' | 'legal')} className="space-y-6">
+          <TabsList className="bg-card border border-border p-1 flex-wrap h-auto gap-1">
             <TabsTrigger value="dashboard" className="gap-2 data-[state=active]:bg-primary/20 data-[state=active]:text-foreground">
               <LayoutDashboard className="h-4 w-4" />
               <span>{language === 'fr' ? 'Tableau de bord' : 'Dashboard'}</span>
@@ -220,6 +232,10 @@ export default function Admin() {
             <TabsTrigger value="guilds" className="gap-2 data-[state=active]:bg-primary/20 data-[state=active]:text-foreground">
               <Shield className="h-4 w-4" />
               <span>{language === 'fr' ? 'Guildes' : 'Guilds'}</span>
+            </TabsTrigger>
+            <TabsTrigger value="legal" className="gap-2 data-[state=active]:bg-primary/20 data-[state=active]:text-foreground">
+              <FileText className="h-4 w-4" />
+              <span>{language === 'fr' ? 'Pages légales' : 'Legal Pages'}</span>
             </TabsTrigger>
           </TabsList>
 
@@ -275,6 +291,10 @@ export default function Admin() {
 
           <TabsContent value="guilds">
             <GuildManager />
+          </TabsContent>
+
+          <TabsContent value="legal">
+            <LegalPagesEditor />
           </TabsContent>
         </Tabs>
       </div>
