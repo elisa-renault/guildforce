@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -8,8 +8,10 @@ import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Table,
   TableBody,
@@ -18,15 +20,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { Crown, Shield, Search, Users, CheckCircle2, XCircle, RefreshCw } from 'lucide-react';
+import { Crown, Shield, Search, Users, CheckCircle2, XCircle, RefreshCw, ChevronDown, ChevronLeft, ChevronRight, Check, X } from 'lucide-react';
 import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
 import { wowClasses } from '@/data/wowClasses';
 import { BATTLENET_CLASS_MAP } from '@/data/battlenetClasses';
@@ -59,6 +54,8 @@ interface GuildInfo {
   officer_rank_threshold: number;
 }
 
+const ITEMS_PER_PAGE = 20;
+
 const GuildMembers = () => {
   const { regionSlug, serverSlug, guildSlug } = useParams();
   const navigate = useNavigate();
@@ -70,16 +67,32 @@ const GuildMembers = () => {
   const [loading, setLoading] = useState(true);
   const [isGM, setIsGM] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [rankFilter, setRankFilter] = useState<string>('all');
-  const [guildforceFilter, setGuildforceFilter] = useState<string>('all');
+  const [classFilters, setClassFilters] = useState<string[]>([]);
+  const [rankFilters, setRankFilters] = useState<number[]>([]);
+  const [guildforceFilter, setGuildforceFilter] = useState<'all' | 'guildforce' | 'not-guildforce'>('all');
   const [hasRosterCache, setHasRosterCache] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  
+  // Popover states
+  const [classOpen, setClassOpen] = useState(false);
+  const [rankOpen, setRankOpen] = useState(false);
+  const [guildforceOpen, setGuildforceOpen] = useState(false);
 
   const { hasPermission: hasActivityPermission } = useHasGuildPermission(guild?.id || null, 'view_activity_log');
 
   // Get unique ranks for filter
-  const uniqueRanks = Array.from(
-    new Map(members.map(m => [m.rank_index, { index: m.rank_index, name: m.rank_name }])).values()
-  ).sort((a, b) => a.index - b.index);
+  const uniqueRanks = useMemo(() => 
+    Array.from(
+      new Map(members.map(m => [m.rank_index, { index: m.rank_index, name: m.rank_name }])).values()
+    ).sort((a, b) => a.index - b.index),
+    [members]
+  );
+
+  // Get unique classes present in the guild
+  const uniqueClasses = useMemo(() => {
+    const classIds = new Set(members.map(m => BATTLENET_CLASS_MAP[m.character_class_id]).filter(Boolean));
+    return wowClasses.filter(c => classIds.has(c.id));
+  }, [members]);
 
   // Get class color from Battle.net class ID
   const getClassColor = (battlenetClassId: number): string => {
@@ -94,9 +107,26 @@ const GuildMembers = () => {
     if (!classKey) return 'Unknown';
     const wowClass = wowClasses.find(c => c.id === classKey);
     if (!wowClass) return 'Unknown';
-    // wowClass.name is an object with { en, fr } keys
     const name = wowClass.name as unknown as { en: string; fr: string };
     return name[language] || name.en || 'Unknown';
+  };
+
+  const toggleClass = (classId: string) => {
+    setClassFilters(prev => 
+      prev.includes(classId) 
+        ? prev.filter(c => c !== classId)
+        : [...prev, classId]
+    );
+    setCurrentPage(1);
+  };
+
+  const toggleRank = (rankIndex: number) => {
+    setRankFilters(prev => 
+      prev.includes(rankIndex)
+        ? prev.filter(r => r !== rankIndex)
+        : [...prev, rankIndex]
+    );
+    setCurrentPage(1);
   };
 
   useEffect(() => {
@@ -251,31 +281,53 @@ const GuildMembers = () => {
   }, [regionSlug, serverSlug, guildSlug, user, navigate]);
 
   // Filter members
-  const filteredMembers = members.filter(member => {
-    // Search filter
-    const characterName = member.character_name?.toLowerCase() || '';
-    const username = member.profile?.username?.toLowerCase() || '';
-    const searchLower = searchQuery.toLowerCase();
-    
-    if (searchQuery && !characterName.includes(searchLower) && !username.includes(searchLower)) {
-      return false;
-    }
+  const filteredMembers = useMemo(() => {
+    return members.filter(member => {
+      // Search filter
+      const characterName = member.character_name?.toLowerCase() || '';
+      const username = member.profile?.username?.toLowerCase() || '';
+      const searchLower = searchQuery.toLowerCase();
+      
+      if (searchQuery && !characterName.includes(searchLower) && !username.includes(searchLower)) {
+        return false;
+      }
 
-    // Rank filter
-    if (rankFilter !== 'all' && member.rank_index !== parseInt(rankFilter)) {
-      return false;
-    }
+      // Class filter
+      if (classFilters.length > 0) {
+        const memberClassKey = BATTLENET_CLASS_MAP[member.character_class_id];
+        if (!memberClassKey || !classFilters.includes(memberClassKey)) {
+          return false;
+        }
+      }
 
-    // Guildforce filter
-    if (guildforceFilter === 'guildforce' && !member.matched_user_id) {
-      return false;
-    }
-    if (guildforceFilter === 'not-guildforce' && member.matched_user_id) {
-      return false;
-    }
+      // Rank filter
+      if (rankFilters.length > 0 && !rankFilters.includes(member.rank_index)) {
+        return false;
+      }
 
-    return true;
-  });
+      // Guildforce filter
+      if (guildforceFilter === 'guildforce' && !member.matched_user_id) {
+        return false;
+      }
+      if (guildforceFilter === 'not-guildforce' && member.matched_user_id) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [members, searchQuery, classFilters, rankFilters, guildforceFilter]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredMembers.length / ITEMS_PER_PAGE);
+  const paginatedMembers = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredMembers.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredMembers, currentPage]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, guildforceFilter]);
 
   const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
 
@@ -284,6 +336,11 @@ const GuildMembers = () => {
     { label: guild?.name || '...', href: basePath },
     { label: language === 'fr' ? 'Membres' : 'Members' },
   ];
+
+  const hasClassFilters = classFilters.length > 0;
+  const hasRankFilters = rankFilters.length > 0;
+  const hasGuildforceFilter = guildforceFilter !== 'all';
+  const selectedClasses = wowClasses.filter(c => classFilters.includes(c.id));
 
   if (loading) {
     return (
@@ -322,7 +379,7 @@ const GuildMembers = () => {
         <Breadcrumbs items={breadcrumbItems} className="mb-4" />
 
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
           <div className="flex items-center gap-3">
             <Users className="h-6 w-6 text-primary" />
             <h1 className="text-xl md:text-2xl font-bold">
@@ -345,50 +402,224 @@ const GuildMembers = () => {
           )}
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        {/* Filters - Dashboard style */}
+        <div className="flex flex-col gap-2 mb-4">
+          {/* Search - full width on mobile */}
+          <div className="relative w-full md:max-w-[280px]">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
             <Input
               placeholder={language === 'fr' ? 'Rechercher un personnage ou joueur...' : 'Search character or player...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 bg-card border-border"
+              className="h-9 md:h-8 pl-8 text-sm cosmic-input"
             />
           </div>
           
-          <Select value={rankFilter} onValueChange={setRankFilter}>
-            <SelectTrigger className="w-full sm:w-[180px] bg-card border-border">
-              <SelectValue placeholder={language === 'fr' ? 'Tous les rangs' : 'All ranks'} />
-            </SelectTrigger>
-            <SelectContent className="bg-card border-border">
-              <SelectItem value="all">
-                {language === 'fr' ? 'Tous les rangs' : 'All ranks'}
-              </SelectItem>
-              {uniqueRanks.map((rank) => (
-                <SelectItem key={rank.index} value={rank.index.toString()}>
-                  {rank.name || `Rank ${rank.index}`}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {/* Filters row - horizontal scroll on mobile */}
+          <div className="flex gap-2 items-center overflow-x-auto pb-1 -mx-3 px-3 md:mx-0 md:px-0 md:overflow-visible md:flex-wrap">
+            
+            {/* Class Filter */}
+            <Popover open={classOpen} onOpenChange={setClassOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    "h-9 md:h-8 min-w-[130px] md:min-w-[180px] justify-between gap-2 text-sm flex-shrink-0 whitespace-nowrap",
+                    hasClassFilters 
+                      ? "border-border/60" 
+                      : "border-border/40 text-muted-foreground"
+                  )}
+                >
+                  {hasClassFilters ? (
+                    <span className="flex items-center gap-1.5">
+                      {selectedClasses.length <= 2 ? (
+                        selectedClasses.map((cls) => (
+                          <span 
+                            key={cls.id} 
+                            style={{ color: cls.color }}
+                            className="truncate max-w-[60px] md:max-w-none"
+                          >
+                            {cls.name[language]}
+                          </span>
+                        ))
+                      ) : (
+                        <span>
+                          {selectedClasses.length} {language === 'fr' ? 'classes' : 'classes'}
+                        </span>
+                      )}
+                    </span>
+                  ) : (
+                    <span>{language === 'fr' ? 'Toutes les classes' : 'All classes'}</span>
+                  )}
+                  <ChevronDown className="h-3.5 w-3.5 opacity-50 flex-shrink-0" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-56 p-1.5 bg-card border-border z-50" align="start">
+                <div className="flex flex-col gap-0.5 max-h-[320px] overflow-y-auto">
+                  {hasClassFilters && (
+                    <button
+                      onClick={() => { setClassFilters([]); setCurrentPage(1); }}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left hover:bg-primary/10 text-muted-foreground"
+                    >
+                      <X className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span>{language === 'fr' ? 'Effacer' : 'Clear'}</span>
+                    </button>
+                  )}
+                  {uniqueClasses.map((cls) => {
+                    const isSelected = classFilters.includes(cls.id);
+                    
+                    return (
+                      <button
+                        key={cls.id}
+                        onClick={() => toggleClass(cls.id)}
+                        className={cn(
+                          "flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left",
+                          isSelected ? "bg-primary/20" : "hover:bg-primary/10"
+                        )}
+                        style={{ color: cls.color }}
+                      >
+                        {isSelected && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
+                        <span>{cls.name[language]}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </PopoverContent>
+            </Popover>
 
-          <Select value={guildforceFilter} onValueChange={setGuildforceFilter}>
-            <SelectTrigger className="w-full sm:w-[180px] bg-card border-border">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-card border-border">
-              <SelectItem value="all">
-                {language === 'fr' ? 'Tous' : 'All'}
-              </SelectItem>
-              <SelectItem value="guildforce">
-                {language === 'fr' ? 'Sur Guildforce' : 'On Guildforce'}
-              </SelectItem>
-              <SelectItem value="not-guildforce">
-                {language === 'fr' ? 'Pas sur Guildforce' : 'Not on Guildforce'}
-              </SelectItem>
-            </SelectContent>
-          </Select>
+            {/* Rank Filter */}
+            <Popover open={rankOpen} onOpenChange={setRankOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    "h-9 md:h-8 min-w-[110px] md:min-w-[150px] justify-between gap-2 text-sm flex-shrink-0 whitespace-nowrap",
+                    hasRankFilters 
+                      ? "border-border/60" 
+                      : "border-border/40 text-muted-foreground"
+                  )}
+                >
+                  {hasRankFilters ? (
+                    <span>
+                      {rankFilters.length} {language === 'fr' ? (rankFilters.length > 1 ? 'rangs' : 'rang') : (rankFilters.length > 1 ? 'ranks' : 'rank')}
+                    </span>
+                  ) : (
+                    <span>{language === 'fr' ? 'Tous les rangs' : 'All ranks'}</span>
+                  )}
+                  <ChevronDown className="h-3.5 w-3.5 opacity-50 flex-shrink-0" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-52 p-1.5 bg-card border-border z-50" align="start">
+                <div className="flex flex-col gap-0.5 max-h-[320px] overflow-y-auto">
+                  {hasRankFilters && (
+                    <button
+                      onClick={() => { setRankFilters([]); setCurrentPage(1); }}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left hover:bg-primary/10 text-muted-foreground"
+                    >
+                      <X className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span>{language === 'fr' ? 'Effacer' : 'Clear'}</span>
+                    </button>
+                  )}
+                  {uniqueRanks.map((rank) => {
+                    const isSelected = rankFilters.includes(rank.index);
+                    const isGMRank = rank.index === 0;
+                    const isOfficer = rank.index <= (guild?.officer_rank_threshold ?? 2);
+                    
+                    return (
+                      <button
+                        key={rank.index}
+                        onClick={() => toggleRank(rank.index)}
+                        className={cn(
+                          "flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left",
+                          isSelected ? "bg-primary/20" : "hover:bg-primary/10"
+                        )}
+                      >
+                        {isSelected && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
+                        {isGMRank && <Crown className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" />}
+                        {!isGMRank && isOfficer && <Shield className="h-3.5 w-3.5 text-primary flex-shrink-0" />}
+                        <span className={cn(
+                          isGMRank && "text-amber-400",
+                          !isGMRank && isOfficer && "text-primary"
+                        )}>
+                          {rank.name || `Rank ${rank.index}`}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            {/* Guildforce Filter */}
+            <Popover open={guildforceOpen} onOpenChange={setGuildforceOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    "h-9 md:h-8 min-w-[100px] md:min-w-[140px] justify-between gap-2 text-sm flex-shrink-0 whitespace-nowrap",
+                    hasGuildforceFilter 
+                      ? "border-border/60" 
+                      : "border-border/40 text-muted-foreground"
+                  )}
+                >
+                  {guildforceFilter === 'guildforce' && (
+                    <span className="flex items-center gap-1.5 text-healer">
+                      <CheckCircle2 className="h-4 w-4" />
+                      <span className="hidden md:inline">Guildforce</span>
+                    </span>
+                  )}
+                  {guildforceFilter === 'not-guildforce' && (
+                    <span className="flex items-center gap-1.5 text-muted-foreground">
+                      <XCircle className="h-4 w-4" />
+                      <span className="hidden md:inline">{language === 'fr' ? 'Non inscrit' : 'Not registered'}</span>
+                    </span>
+                  )}
+                  {guildforceFilter === 'all' && (
+                    <span>Guildforce</span>
+                  )}
+                  <ChevronDown className="h-3.5 w-3.5 opacity-50 flex-shrink-0" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-48 p-1.5 bg-card border-border z-50" align="start">
+                <div className="flex flex-col gap-0.5">
+                  {hasGuildforceFilter && (
+                    <button
+                      onClick={() => { setGuildforceFilter('all'); setCurrentPage(1); }}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left hover:bg-primary/10 text-muted-foreground"
+                    >
+                      <X className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span>{language === 'fr' ? 'Effacer' : 'Clear'}</span>
+                    </button>
+                  )}
+                  <button
+                    onClick={() => { setGuildforceFilter('guildforce'); setGuildforceOpen(false); setCurrentPage(1); }}
+                    className={cn(
+                      "flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left",
+                      guildforceFilter === 'guildforce' ? "bg-primary/20" : "hover:bg-primary/10"
+                    )}
+                  >
+                    {guildforceFilter === 'guildforce' && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
+                    <CheckCircle2 className="h-4 w-4 text-healer" />
+                    <span className="text-healer">{language === 'fr' ? 'Sur Guildforce' : 'On Guildforce'}</span>
+                  </button>
+                  <button
+                    onClick={() => { setGuildforceFilter('not-guildforce'); setGuildforceOpen(false); setCurrentPage(1); }}
+                    className={cn(
+                      "flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left",
+                      guildforceFilter === 'not-guildforce' ? "bg-primary/20" : "hover:bg-primary/10"
+                    )}
+                  >
+                    {guildforceFilter === 'not-guildforce' && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
+                    <XCircle className="h-4 w-4 text-muted-foreground" />
+                    <span>{language === 'fr' ? 'Non inscrits' : 'Not registered'}</span>
+                  </button>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
 
         {/* Stats summary */}
@@ -420,14 +651,14 @@ const GuildMembers = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredMembers.length === 0 ? (
+              {paginatedMembers.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                     {language === 'fr' ? 'Aucun membre trouvé' : 'No members found'}
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredMembers.map((member, index) => (
+                paginatedMembers.map((member, index) => (
                   <TableRow
                     key={member.id}
                     className={cn(
@@ -441,7 +672,7 @@ const GuildMembers = () => {
                     }}
                   >
                     <TableCell className="text-muted-foreground text-sm">
-                      {index + 1}
+                      {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -512,6 +743,35 @@ const GuildMembers = () => {
             </TableBody>
           </Table>
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-4">
+            <span className="text-sm text-muted-foreground">
+              {language === 'fr' ? 'Page' : 'Page'} {currentPage} / {totalPages}
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="h-8"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="h-8"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
