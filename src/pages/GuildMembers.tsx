@@ -56,6 +56,7 @@ interface GuildInfo {
   server: string;
   region: string;
   avatar_url: string | null;
+  officer_rank_threshold: number;
 }
 
 const GuildMembers = () => {
@@ -109,7 +110,7 @@ const GuildMembers = () => {
         // Get guild info using ilike matching on slugs
         const { data: guildData, error: guildError } = await supabase
           .from('guilds')
-          .select('id, name, server, region, avatar_url')
+          .select('id, name, server, region, avatar_url, officer_rank_threshold')
           .ilike('region', regionSlug)
           .ilike('server', serverSlug.replace(/-/g, '%'))
           .ilike('name', guildSlug.replace(/-/g, '%'))
@@ -447,7 +448,7 @@ const GuildMembers = () => {
                         {member.is_guild_master && (
                           <Crown className="h-4 w-4 text-amber-400" />
                         )}
-                        {!member.is_guild_master && member.rank_index <= 2 && (
+                        {!member.is_guild_master && member.rank_index <= (guild?.officer_rank_threshold ?? 2) && (
                           <Shield className="h-4 w-4 text-primary" />
                         )}
                         <span 
@@ -492,7 +493,7 @@ const GuildMembers = () => {
                         className={cn(
                           "text-xs",
                           member.is_guild_master && "bg-amber-500/20 text-amber-400 border-amber-500/30",
-                          !member.is_guild_master && member.rank_index <= 2 && "bg-primary/20 text-primary border-primary/30"
+                          !member.is_guild_master && member.rank_index <= (guild?.officer_rank_threshold ?? 2) && "bg-primary/20 text-primary border-primary/30"
                         )}
                       >
                         {member.rank_name || `Rank ${member.rank_index}`}
