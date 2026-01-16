@@ -34,14 +34,27 @@ export const GuildBattleNetSection = ({
         },
       });
 
-      // Check for error in the response body (edge function returns error in data when status is non-2xx)
-      const responseError = error?.message || data?.error || '';
-      const isTokenExpired = responseError.includes('expired') || responseError.includes('reconnect');
+      // Extract error message from various possible locations
+      // FunctionsHttpError stores context, or error could be in data
+      let errorMessage = '';
+      if (error) {
+        // Try to get message from error context (FunctionsHttpError)
+        try {
+          const context = await (error as any).context?.json?.();
+          errorMessage = context?.error || error.message || '';
+        } catch {
+          errorMessage = error.message || '';
+        }
+      } else if (data?.error) {
+        errorMessage = data.error;
+      }
+
+      const isTokenExpired = errorMessage.includes('expired') || errorMessage.includes('reconnect');
 
       if (error || data?.error) {
         toast({
           title: isTokenExpired ? t.guildSettings.resyncTokenExpired : t.guildSettings.resyncError,
-          description: isTokenExpired ? undefined : responseError,
+          description: isTokenExpired ? undefined : (errorMessage || undefined),
           variant: 'destructive',
         });
         return;
