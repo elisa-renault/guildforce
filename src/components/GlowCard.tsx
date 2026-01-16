@@ -1,4 +1,4 @@
-import { ReactNode, CSSProperties, MouseEvent } from 'react';
+import { ReactNode, CSSProperties, MouseEvent, forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 
 interface GlowCardProps {
@@ -9,35 +9,34 @@ interface GlowCardProps {
   style?: CSSProperties;
 }
 
-export const GlowCard = ({
-  children,
-  className,
-  hoverable = true,
-  onClick,
-  style
-}: GlowCardProps) => {
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    e.currentTarget.style.setProperty('--mouse-x', `${x}px`);
-    e.currentTarget.style.setProperty('--mouse-y', `${y}px`);
-  };
+export const GlowCard = forwardRef<HTMLDivElement, GlowCardProps>(
+  ({ children, className, hoverable = true, onClick, style }, ref) => {
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      e.currentTarget.style.setProperty('--mouse-x', `${x}px`);
+      e.currentTarget.style.setProperty('--mouse-y', `${y}px`);
+    };
 
-  return (
-    <div
-      className={cn(
-        'glass-card p-6 transition-all duration-500',
-        hoverable && 'hover:border-primary/30',
-        onClick && 'cursor-pointer',
-        className
-      )}
-      onClick={onClick}
-      onMouseMove={hoverable ? handleMouseMove : undefined}
-      style={style}
-    >
-      <span className="spotlight" />
-      {children}
-    </div>
-  );
-};
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          'glass-card p-6 transition-all duration-500',
+          hoverable && 'hover:border-primary/30',
+          onClick && 'cursor-pointer',
+          className
+        )}
+        onClick={onClick}
+        onMouseMove={hoverable ? handleMouseMove : undefined}
+        style={style}
+      >
+        <span className="spotlight" />
+        {children}
+      </div>
+    );
+  }
+);
+
+GlowCard.displayName = 'GlowCard';
