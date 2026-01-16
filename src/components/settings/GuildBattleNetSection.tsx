@@ -34,12 +34,14 @@ export const GuildBattleNetSection = ({
         },
       });
 
-      if (error) {
-        const errorMessage = error.message || '';
-        const isTokenExpired = errorMessage.includes('expired') || errorMessage.includes('401');
-        
+      // Check for error in the response body (edge function returns error in data when status is non-2xx)
+      const responseError = error?.message || data?.error || '';
+      const isTokenExpired = responseError.includes('expired') || responseError.includes('reconnect');
+
+      if (error || data?.error) {
         toast({
           title: isTokenExpired ? t.guildSettings.resyncTokenExpired : t.guildSettings.resyncError,
+          description: isTokenExpired ? undefined : responseError,
           variant: 'destructive',
         });
         return;
@@ -49,11 +51,8 @@ export const GuildBattleNetSection = ({
       toast({ title: t.guildSettings.resyncSuccess });
     } catch (error: any) {
       console.error('Resync error:', error);
-      const errorMessage = error?.message || '';
-      const isTokenExpired = errorMessage.includes('expired') || errorMessage.includes('401');
-      
       toast({
-        title: isTokenExpired ? t.guildSettings.resyncTokenExpired : t.guildSettings.resyncError,
+        title: t.guildSettings.resyncError,
         variant: 'destructive',
       });
     } finally {
