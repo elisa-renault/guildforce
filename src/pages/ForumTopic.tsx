@@ -230,11 +230,17 @@ const ForumTopicPage = () => {
             },
             { label: topic.title },
           ]}
-          className="mb-6"
+          className="mb-4"
         />
 
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-start gap-3 mb-6">
+          <button
+            onClick={() => navigate(`/forum/category/${topic.category?.slug}`)}
+            className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors flex-shrink-0 mt-1"
+          >
+            <ChevronLeft className="h-4 w-4 text-muted-foreground" />
+          </button>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               {topic.is_pinned && <Pin className="h-4 w-4 text-primary" />}
@@ -244,7 +250,7 @@ const ForumTopicPage = () => {
               </h1>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {user && topicId && (
               <TopicSubscriptionButton topicId={topicId} variant="button" />
             )}
