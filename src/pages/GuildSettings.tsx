@@ -377,7 +377,7 @@ const GuildSettings = () => {
         />
 
         {/* Main Content */}
-        <main className="flex-1 p-3 pt-14 md:p-6 md:pt-6 md:max-w-5xl overflow-x-hidden min-w-0">
+        <main className="flex-1 p-3 md:p-6 md:max-w-5xl overflow-x-hidden min-w-0">
           {renderSectionContent()}
         </main>
       </div>
