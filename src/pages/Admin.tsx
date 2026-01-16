@@ -93,9 +93,9 @@ export default function Admin() {
 
   if (authLoading || adminLoading) {
     return (
-      <main className="flex-1 pt-20 pb-8">
+      <main className="flex-1 pt-20 pb-8 relative">
         <CosmicBackground />
-        <div className="container max-w-6xl mx-auto px-4">
+        <div className="container max-w-6xl mx-auto px-4 relative z-10">
           <Skeleton className="h-10 w-64 mb-8" />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[...Array(6)].map((_, i) => (
@@ -189,9 +189,9 @@ export default function Admin() {
   ];
 
   return (
-    <main className="flex-1 pt-20 pb-8">
+    <main className="flex-1 pt-20 pb-8 relative">
       <CosmicBackground />
-      <div className="container max-w-6xl mx-auto px-4">
+      <div className="container max-w-6xl mx-auto px-4 relative z-10">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <div className="p-2 rounded-lg bg-primary/20 ring-1 ring-primary/50">
