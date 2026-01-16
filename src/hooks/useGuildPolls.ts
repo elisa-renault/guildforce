@@ -593,25 +593,32 @@ export const usePollMutations = () => {
     }
   };
 
-  // Fetch poll results access rules
-  const fetchResultsAccessRules = async (pollId: string) => {
-    const { data, error } = await supabase
-      .from('poll_results_access_rules')
-      .select('*')
-      .eq('poll_id', pollId);
+  // Fetch poll results access rules (memoized to avoid infinite refetch loops in consumers)
+  const fetchResultsAccessRules = useCallback(async (pollId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('poll_results_access_rules')
+        .select('*')
+        .eq('poll_id', pollId);
 
-    if (error) {
+      if (error) {
+        console.error('Error fetching results access rules:', error);
+        return [];
+      }
+
+      return (
+        data?.map((rule) => ({
+          access_type: rule.access_type as 'rank_range' | 'user',
+          user_id: rule.user_id || undefined,
+          min_rank_index: rule.min_rank_index ?? undefined,
+          max_rank_index: rule.max_rank_index ?? undefined,
+        })) || []
+      );
+    } catch (error) {
       console.error('Error fetching results access rules:', error);
       return [];
     }
-
-    return data?.map(rule => ({
-      access_type: rule.access_type as 'rank_range' | 'user',
-      user_id: rule.user_id || undefined,
-      min_rank_index: rule.min_rank_index ?? undefined,
-      max_rank_index: rule.max_rank_index ?? undefined,
-    })) || [];
-  };
+  }, []);
 
   // Save poll results access rules
   const saveResultsAccessRules = async (
@@ -654,21 +661,26 @@ export const usePollMutations = () => {
   };
 
   // Check if current user can view results
-  const checkCanViewResults = async (pollId: string): Promise<boolean> => {
+  const checkCanViewResults = useCallback(async (pollId: string): Promise<boolean> => {
     if (!user) return false;
 
-    const { data, error } = await supabase.rpc('can_view_poll_results', {
-      p_poll_id: pollId,
-      p_user_id: user.id,
-    });
+    try {
+      const { data, error } = await supabase.rpc('can_view_poll_results', {
+        p_poll_id: pollId,
+        p_user_id: user.id,
+      });
 
-    if (error) {
+      if (error) {
+        console.error('Error checking results access:', error);
+        return false;
+      }
+
+      return data || false;
+    } catch (error) {
       console.error('Error checking results access:', error);
       return false;
     }
-
-    return data || false;
-  };
+  }, [user]);
 
   return {
     saving,
