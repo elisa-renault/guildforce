@@ -86,16 +86,16 @@ const BugReportButton = React.forwardRef<HTMLButtonElement, React.ComponentProps
           category,
           priority,
           current_url: window.location.href,
-          console_logs: getRecentLogs(),
-          browser_info: getBrowserInfo(),
-          user_context: user ? {
+          console_logs: JSON.parse(JSON.stringify(getRecentLogs())),
+          browser_info: JSON.parse(JSON.stringify(getBrowserInfo())),
+          user_context: user ? JSON.parse(JSON.stringify({
             userId: user.id,
             username: profile?.username,
             battletag: profile?.battletag
-          } : { anonymous: true }
+          })) : { anonymous: true }
         };
 
-        const { error } = await supabase.from('bug_reports').insert(reportData);
+        const { error } = await supabase.from('bug_reports').insert([reportData]);
 
         if (error) throw error;
 
