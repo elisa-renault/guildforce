@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useLayoutEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -59,6 +59,29 @@ const RosterWishes = () => {
   const [rosters, setRosters] = useState<RosterData[]>([]);
   const [selectedRosterId, setSelectedRosterId] = useState<string | null>(null);
   const [rosterSettingsOpen, setRosterSettingsOpen] = useState(false);
+
+  // Dynamic offset for sticky roster controls bar
+  const [controlsTop, setControlsTop] = useState<number>(108);
+  useLayoutEffect(() => {
+    const compute = () => {
+      const globalNav = document.querySelector<HTMLElement>('[data-global-nav]');
+      const subNav = document.querySelector<HTMLElement>('[data-guild-subnav]');
+      const globalH = globalNav?.offsetHeight ?? 64;
+      const subH = subNav?.offsetHeight ?? 44;
+      setControlsTop(globalH + subH);
+    };
+    compute();
+    window.addEventListener('resize', compute);
+    const ro = new ResizeObserver(compute);
+    const globalNavEl = document.querySelector<HTMLElement>('[data-global-nav]');
+    const subNavEl = document.querySelector<HTMLElement>('[data-guild-subnav]');
+    if (globalNavEl) ro.observe(globalNavEl);
+    if (subNavEl) ro.observe(subNavEl);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', compute);
+    };
+  }, []);
 
   const fetchData = async () => {
     if (!user || !regionSlug || !serverSlug || !guildSlug) return;
@@ -516,7 +539,7 @@ const RosterWishes = () => {
       )}
 
       {/* Roster controls bar */}
-      <div className="sticky top-[104px] z-30 bg-background/80 backdrop-blur-lg border-b border-border/50">
+      <div className="sticky z-30 bg-background/80 backdrop-blur-lg border-b border-border/50" style={{ top: controlsTop }}>
         <div className="container mx-auto px-3 md:px-4 py-2 flex items-center justify-between">
           <RosterSelector
             rosters={rosters}
