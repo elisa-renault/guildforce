@@ -228,6 +228,7 @@ export interface Translations {
     resyncError: string;
     resyncTokenExpired: string;
     syncing: string;
+    officerRankUpdated: string;
   };
   // Rosters
   rosters: {
@@ -605,6 +606,7 @@ export const translations: Record<Language, Translations> = {
       resyncError: 'Sync failed. Please try again.',
       resyncTokenExpired: 'Battle.net session expired. Please reconnect your Battle.net account from your profile.',
       syncing: 'Syncing...',
+      officerRankUpdated: 'Officer rank updated',
     },
     rosters: {
       title: 'Rosters',
@@ -973,6 +975,7 @@ export const translations: Record<Language, Translations> = {
       resyncError: 'Échec de la synchronisation. Veuillez réessayer.',
       resyncTokenExpired: 'Session Battle.net expirée. Veuillez reconnecter votre compte Battle.net depuis votre profil.',
       syncing: 'Synchronisation...',
+      officerRankUpdated: 'Rang officier mis à jour',
     },
     rosters: {
       title: 'Rosters',
