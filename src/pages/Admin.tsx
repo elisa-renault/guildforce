@@ -190,18 +190,18 @@ export default function Admin() {
         </div>
 
         <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="bg-card/50 border border-border/50">
-            <TabsTrigger value="dashboard" className="gap-2">
+          <TabsList className="bg-card border border-border p-1">
+            <TabsTrigger value="dashboard" className="gap-2 data-[state=active]:bg-primary/20 data-[state=active]:text-foreground">
               <LayoutDashboard className="h-4 w-4" />
-              <span className="hidden sm:inline">{language === 'fr' ? 'Tableau de bord' : 'Dashboard'}</span>
+              <span>{language === 'fr' ? 'Tableau de bord' : 'Dashboard'}</span>
             </TabsTrigger>
-            <TabsTrigger value="users" className="gap-2">
+            <TabsTrigger value="users" className="gap-2 data-[state=active]:bg-primary/20 data-[state=active]:text-foreground">
               <Users className="h-4 w-4" />
-              <span className="hidden sm:inline">{language === 'fr' ? 'Utilisateurs' : 'Users'}</span>
+              <span>{language === 'fr' ? 'Utilisateurs' : 'Users'}</span>
             </TabsTrigger>
-            <TabsTrigger value="guilds" className="gap-2">
+            <TabsTrigger value="guilds" className="gap-2 data-[state=active]:bg-primary/20 data-[state=active]:text-foreground">
               <Shield className="h-4 w-4" />
-              <span className="hidden sm:inline">{language === 'fr' ? 'Guildes' : 'Guilds'}</span>
+              <span>{language === 'fr' ? 'Guildes' : 'Guilds'}</span>
             </TabsTrigger>
           </TabsList>
 
