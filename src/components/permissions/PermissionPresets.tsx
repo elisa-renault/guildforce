@@ -152,15 +152,12 @@ export const PermissionPresets = ({ onApplyPreset, onReset }: PermissionPresetsP
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2 p-3 rounded-lg bg-muted/20 border border-border/30">
-      <Wand2 className="h-4 w-4 text-primary flex-shrink-0" />
-      <span className="text-sm text-muted-foreground mr-1">
-        {isFrench ? 'Preset :' : 'Preset:'}
-      </span>
+    <div className="flex flex-wrap items-center gap-1.5 p-2 rounded-md bg-muted/20 border border-border/30">
+      <Wand2 className="h-3.5 w-3.5 text-primary flex-shrink-0" />
       
       <Select value={selectedPreset} onValueChange={(v) => setSelectedPreset(v as PresetKey)}>
-        <SelectTrigger className="w-[180px] h-8 text-xs bg-card border-border">
-          <SelectValue placeholder={isFrench ? 'Sélectionner...' : 'Select...'} />
+        <SelectTrigger className="w-[140px] h-7 text-[11px] bg-card border-border">
+          <SelectValue placeholder={isFrench ? 'Preset...' : 'Preset...'} />
         </SelectTrigger>
         <SelectContent className="bg-card border-border">
           {(Object.keys(PRESETS) as PresetKey[]).map((key) => {
@@ -169,13 +166,9 @@ export const PermissionPresets = ({ onApplyPreset, onReset }: PermissionPresetsP
               <HoverCard key={key} openDelay={200} closeDelay={100}>
                 <HoverCardTrigger asChild>
                   <SelectItem value={key} className="text-xs hover:bg-primary/20 cursor-pointer">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <span>{isFrench ? preset.labelFr : preset.labelEn}</span>
-                      {preset.recommended && (
-                        <Badge variant="secondary" className="text-[9px] px-1 py-0">
-                          ★
-                        </Badge>
-                      )}
+                      {preset.recommended && <span className="text-primary">★</span>}
                     </div>
                   </SelectItem>
                 </HoverCardTrigger>
@@ -194,12 +187,12 @@ export const PermissionPresets = ({ onApplyPreset, onReset }: PermissionPresetsP
         size="sm"
         onClick={handleApplyPreset}
         disabled={!selectedPreset}
-        className="h-8 text-xs"
+        className="h-7 text-[11px] px-2"
       >
         {isFrench ? 'Appliquer' : 'Apply'}
       </Button>
       
-      <div className="flex-1" />
+      <div className="flex-1 min-w-0" />
       
       <TooltipProvider>
         <Tooltip>
@@ -209,13 +202,13 @@ export const PermissionPresets = ({ onApplyPreset, onReset }: PermissionPresetsP
               variant="ghost"
               size="sm"
               onClick={onReset}
-              className="h-8 text-xs text-muted-foreground hover:text-destructive"
+              className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
             >
               <RotateCcw className="h-3 w-3" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p className="text-xs">{isFrench ? 'Réinitialiser (GM seul)' : 'Reset (GM only)'}</p>
+            <p className="text-xs">{isFrench ? 'Réinitialiser' : 'Reset'}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
