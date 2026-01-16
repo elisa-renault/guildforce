@@ -8,8 +8,9 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GlowCard } from '@/components/GlowCard';
 import { PollQuestionEditor } from './PollQuestionEditor';
-import { Plus, Save, Play, Loader2 } from 'lucide-react';
-import type { PollFormData, QuestionFormData } from '@/types/poll';
+import { PollSectionEditor } from './PollSectionEditor';
+import { Plus, Save, Play, Loader2, Layers } from 'lucide-react';
+import type { PollFormData, QuestionFormData, SectionFormData } from '@/types/poll';
 
 interface Roster {
   id: string;
@@ -31,6 +32,12 @@ const defaultQuestion: QuestionFormData = {
   options: ['', ''],
 };
 
+const defaultSection: SectionFormData = {
+  title: '',
+  description: '',
+  questions: [{ ...defaultQuestion }],
+};
+
 export const PollEditor = ({
   initialData,
   rosters,
@@ -47,15 +54,21 @@ export const PollEditor = ({
     allow_multiple_responses: false,
     roster_id: null,
     ends_at: null,
+    sections: [],
     questions: [{ ...defaultQuestion }],
   });
 
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);
+      setFormData({
+        ...initialData,
+        sections: initialData.sections || [],
+        questions: initialData.questions || [{ ...defaultQuestion }],
+      });
     }
   }, [initialData]);
 
+  // Questions without section
   const handleAddQuestion = () => {
     setFormData((prev) => ({
       ...prev,
@@ -77,6 +90,28 @@ export const PollEditor = ({
     }));
   };
 
+  // Sections
+  const handleAddSection = () => {
+    setFormData((prev) => ({
+      ...prev,
+      sections: [...prev.sections, { ...defaultSection }],
+    }));
+  };
+
+  const handleSectionChange = (index: number, section: SectionFormData) => {
+    setFormData((prev) => ({
+      ...prev,
+      sections: prev.sections.map((s, i) => (i === index ? section : s)),
+    }));
+  };
+
+  const handleRemoveSection = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      sections: prev.sections.filter((_, i) => i !== index),
+    }));
+  };
+
   const handleSave = async () => {
     await onSave(formData);
   };
@@ -87,12 +122,25 @@ export const PollEditor = ({
     }
   };
 
-  const isValid = formData.title.trim() && 
-    formData.questions.length > 0 &&
-    formData.questions.every(q => 
-      q.question_text.trim() && 
-      (q.question_type === 'text' || q.question_type === 'rating' || q.options.every(o => o.trim()))
-    );
+  const validateQuestion = (q: QuestionFormData) => {
+    if (!q.question_text.trim()) return false;
+    if (q.question_type === 'text' || q.question_type === 'rating' || 
+        q.question_type === 'date' || q.question_type === 'time' || 
+        q.question_type === 'datetime' || q.question_type === 'scale') {
+      return true;
+    }
+    return q.options.every(o => o.trim());
+  };
+
+  const allQuestionsValid = [
+    ...formData.questions,
+    ...formData.sections.flatMap(s => s.questions),
+  ].every(validateQuestion);
+
+  const hasQuestions = formData.questions.length > 0 || 
+    formData.sections.some(s => s.questions.length > 0);
+
+  const isValid = formData.title.trim() && hasQuestions && allQuestionsValid;
 
   return (
     <div className="space-y-6">
@@ -191,18 +239,59 @@ export const PollEditor = ({
         </div>
       </GlowCard>
 
+      {/* Sections */}
+      {formData.sections.length > 0 && (
+        <GlowCard className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <Layers className="h-5 w-5 text-primary" />
+              {language === 'fr' ? 'Sections' : 'Sections'}
+            </h2>
+          </div>
+
+          <div className="space-y-4">
+            {formData.sections.map((section, index) => (
+              <PollSectionEditor
+                key={index}
+                section={section}
+                index={index}
+                onChange={(s) => handleSectionChange(index, s)}
+                onRemove={() => handleRemoveSection(index)}
+                canRemove={true}
+              />
+            ))}
+          </div>
+        </GlowCard>
+      )}
+
+      {/* Questions without section */}
       <GlowCard className="p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">
-            {language === 'fr' ? 'Questions' : 'Questions'}
+            {formData.sections.length > 0 
+              ? (language === 'fr' ? 'Questions générales' : 'General Questions')
+              : (language === 'fr' ? 'Questions' : 'Questions')}
           </h2>
-          <Button variant="outline" size="sm" onClick={handleAddQuestion}>
-            <Plus className="h-4 w-4 mr-1" />
-            {language === 'fr' ? 'Ajouter' : 'Add'}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleAddSection}>
+              <Layers className="h-4 w-4 mr-1" />
+              {language === 'fr' ? 'Section' : 'Section'}
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleAddQuestion}>
+              <Plus className="h-4 w-4 mr-1" />
+              {language === 'fr' ? 'Question' : 'Question'}
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-4">
+          {formData.questions.length === 0 && formData.sections.length === 0 && (
+            <p className="text-muted-foreground text-sm text-center py-4">
+              {language === 'fr' 
+                ? 'Ajoutez des questions ou des sections pour commencer' 
+                : 'Add questions or sections to get started'}
+            </p>
+          )}
           {formData.questions.map((question, index) => (
             <PollQuestionEditor
               key={index}
@@ -210,7 +299,7 @@ export const PollEditor = ({
               index={index}
               onChange={(q) => handleQuestionChange(index, q)}
               onRemove={() => handleRemoveQuestion(index)}
-              canRemove={formData.questions.length > 1}
+              canRemove={formData.questions.length > 1 || formData.sections.some(s => s.questions.length > 0)}
             />
           ))}
         </div>
