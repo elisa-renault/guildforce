@@ -328,7 +328,7 @@ async function fetchPublicGuildRoster(
     });
 
     if (!rosterResponse.ok) {
-      log.debug(`Public roster fetch failed: ${rosterResponse.status}`);
+      log.info(`Public roster fetch failed for ${guildName} on ${serverSlug}: ${rosterResponse.status}`);
       return null;
     }
 
