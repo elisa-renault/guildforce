@@ -10,7 +10,8 @@ export type ActionType =
   | 'commitment_changed'
   | 'roster_created'
   | 'roster_updated'
-  | 'roster_deleted';
+  | 'roster_deleted'
+  | 'permissions_updated';
 
 export interface ActivityLog {
   id: string;
