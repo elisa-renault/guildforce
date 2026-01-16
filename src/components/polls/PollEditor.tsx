@@ -209,20 +209,27 @@ export const PollEditor = ({
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
+  // Avoid re-initializing the editor on every parent re-render (initialData can be a new object each time)
+  const initialDataStrRef = useRef<string | null>(null);
   useEffect(() => {
-    if (initialData) {
-      setFormData({
-        ...initialData,
-        sections: initialData.sections || [],
-        questions: initialData.questions || [{ ...defaultQuestion }],
-      });
-      // Open all sections by default
-      const openState: Record<number, boolean> = {};
-      (initialData.sections || []).forEach((_, i) => {
-        openState[i] = true;
-      });
-      setOpenSections(openState);
-    }
+    if (!initialData) return;
+
+    const nextStr = JSON.stringify(initialData);
+    if (initialDataStrRef.current === nextStr) return;
+    initialDataStrRef.current = nextStr;
+
+    setFormData({
+      ...initialData,
+      sections: initialData.sections || [],
+      questions: initialData.questions || [{ ...defaultQuestion }],
+    });
+
+    // Open all sections by default
+    const openState: Record<number, boolean> = {};
+    (initialData.sections || []).forEach((_, i) => {
+      openState[i] = true;
+    });
+    setOpenSections(openState);
   }, [initialData]);
 
   // Only initialize access rules once on mount or when they actually change
