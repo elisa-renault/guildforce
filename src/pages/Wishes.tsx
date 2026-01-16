@@ -159,7 +159,7 @@ const Wishes = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [guildId, setGuildId] = useState<string | null>(null);
-  const [guild, setGuild] = useState<{ name: string; server: string; region: string; faction: string } | null>(null);
+  const [guild, setGuild] = useState<{ name: string; server: string; region: string; faction: string; avatar_url?: string | null } | null>(null);
   const [confirmed, setConfirmed] = useState<CommitmentStatus>('undecided');
   const [wishes, setWishes] = useState<WishData[]>([
     { id: 'wish-1', classId: '', specIds: [], comment: '' },
@@ -170,6 +170,10 @@ const Wishes = () => {
   // Roster state
   const [rosters, setRosters] = useState<RosterData[]>([]);
   const [selectedRosterId, setSelectedRosterId] = useState<string | null>(null);
+  
+  // GM and permissions state
+  const [isGM, setIsGM] = useState(false);
+  const [hasActivityPermission, setHasActivityPermission] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -192,9 +196,9 @@ const Wishes = () => {
 
     const fetchData = async () => {
       // Find guild by slugified region, server and name
-      const { data: allGuilds } = await supabase
+const { data: allGuilds } = await supabase
         .from('guilds')
-        .select('id, name, server, region, faction');
+        .select('id, name, server, region, faction, avatar_url');
       
       const matchedGuild = allGuilds?.find(g => 
         toSlug(g.region || 'eu') === regionSlug &&
@@ -209,7 +213,28 @@ const Wishes = () => {
       
       const foundGuildId = matchedGuild.id;
       setGuildId(foundGuildId);
-      setGuild({ name: matchedGuild.name, server: matchedGuild.server, region: matchedGuild.region || 'eu', faction: matchedGuild.faction });
+      setGuild({ 
+        name: matchedGuild.name, 
+        server: matchedGuild.server, 
+        region: matchedGuild.region || 'eu', 
+        faction: matchedGuild.faction,
+        avatar_url: matchedGuild.avatar_url 
+      });
+
+      // Check if user is GM
+      const { data: gmCheck } = await supabase.rpc('is_guild_gm', {
+        p_guild_id: foundGuildId,
+        p_user_id: user.id,
+      });
+      setIsGM(!!gmCheck);
+
+      // Check activity permission
+      const { data: activityPerm } = await supabase.rpc('has_guild_permission', {
+        p_guild_id: foundGuildId,
+        p_permission: 'view_activity_log',
+        p_user_id: user.id,
+      });
+      setHasActivityPermission(!!activityPerm);
 
       // Fetch rosters and check access
       const { data: rostersData } = await supabase
@@ -416,9 +441,10 @@ const Wishes = () => {
       {/* Guild Sub-Navigation */}
       {guild && (
         <GuildSubNav
-          guild={{ ...guild, avatar_url: null }}
+          guild={guild}
           basePath={basePath}
-          isGM={false}
+          isGM={isGM}
+          hasActivityPermission={hasActivityPermission}
           activeTab="wishes"
         />
       )}
