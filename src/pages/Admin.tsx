@@ -6,15 +6,16 @@ import { useIsAdmin } from '@/hooks/useAdmin';
 import { supabase } from '@/integrations/supabase/client';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
+import { GuildManager } from '@/components/admin/GuildManager';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Users, 
   Shield, 
   MessageSquare, 
   AlertTriangle,
-  Settings,
-  Activity,
   ChevronRight,
-  Crown
+  Crown,
+  LayoutDashboard
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -173,7 +174,7 @@ export default function Admin() {
       <CosmicBackground />
       <div className="container max-w-6xl mx-auto px-4">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-8">
+        <div className="flex items-center gap-3 mb-6">
           <div className="p-2 rounded-lg bg-primary/20 ring-1 ring-primary/50">
             <Crown className="h-6 w-6 text-primary" />
           </div>
@@ -187,47 +188,68 @@ export default function Admin() {
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
-          {statCards.map((stat, index) => (
-            <GlowCard key={index} className="p-4">
-              <div className="flex flex-col">
-                <stat.icon className={`h-5 w-5 ${stat.color} mb-2`} />
-                <span className="text-2xl font-bold text-foreground">
-                  {loadingStats ? <Skeleton className="h-8 w-12" /> : stat.value}
-                </span>
-                <span className="text-xs text-muted-foreground">{stat.label}</span>
-              </div>
-            </GlowCard>
-          ))}
-        </div>
+        <Tabs defaultValue="dashboard" className="space-y-6">
+          <TabsList className="bg-card/50 border border-border/50">
+            <TabsTrigger value="dashboard" className="gap-2">
+              <LayoutDashboard className="h-4 w-4" />
+              <span className="hidden sm:inline">{language === 'fr' ? 'Tableau de bord' : 'Dashboard'}</span>
+            </TabsTrigger>
+            <TabsTrigger value="guilds" className="gap-2">
+              <Shield className="h-4 w-4" />
+              <span className="hidden sm:inline">{language === 'fr' ? 'Guildes' : 'Guilds'}</span>
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Admin Sections */}
-        <h2 className="text-lg font-medium text-foreground mb-4">
-          {language === 'fr' ? 'Sections d\'administration' : 'Admin Sections'}
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {adminSections.map((section, index) => (
-            <GlowCard 
-              key={index} 
-              className="p-5 cursor-pointer hover:ring-primary/50 transition-all"
-              onClick={() => navigate(section.path)}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-4">
-                  <div className={`p-2 rounded-lg bg-card ${section.color}`}>
-                    <section.icon className="h-5 w-5" />
+          <TabsContent value="dashboard" className="space-y-6">
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+              {statCards.map((stat, index) => (
+                <GlowCard key={index} className="p-4">
+                  <div className="flex flex-col">
+                    <stat.icon className={`h-5 w-5 ${stat.color} mb-2`} />
+                    <span className="text-2xl font-bold text-foreground">
+                      {loadingStats ? <Skeleton className="h-8 w-12" /> : stat.value}
+                    </span>
+                    <span className="text-xs text-muted-foreground">{stat.label}</span>
                   </div>
-                  <div>
-                    <h3 className="font-medium text-foreground">{section.title}</h3>
-                    <p className="text-sm text-muted-foreground mt-1">{section.description}</p>
-                  </div>
-                </div>
-                <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                </GlowCard>
+              ))}
+            </div>
+
+            {/* Admin Sections */}
+            <div>
+              <h2 className="text-lg font-medium text-foreground mb-4">
+                {language === 'fr' ? 'Accès rapide' : 'Quick Access'}
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {adminSections.map((section, index) => (
+                  <GlowCard 
+                    key={index} 
+                    className="p-5 cursor-pointer hover:ring-primary/50 transition-all"
+                    onClick={() => navigate(section.path)}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-4">
+                        <div className={`p-2 rounded-lg bg-card ${section.color}`}>
+                          <section.icon className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-foreground">{section.title}</h3>
+                          <p className="text-sm text-muted-foreground mt-1">{section.description}</p>
+                        </div>
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                    </div>
+                  </GlowCard>
+                ))}
               </div>
-            </GlowCard>
-          ))}
-        </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="guilds">
+            <GuildManager />
+          </TabsContent>
+        </Tabs>
       </div>
     </main>
   );
