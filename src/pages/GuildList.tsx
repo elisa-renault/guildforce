@@ -261,7 +261,7 @@ const GuildList = () => {
       <CosmicBackground />
 
       <main className="container mx-auto px-4 py-8 relative z-10">
-        <h1 className="font-display text-3xl gradient-text mb-8 text-center">{t.common.myGuilds}</h1>
+        <h1 className="font-display text-3xl text-foreground mb-8 text-center">{t.common.myGuilds}</h1>
 
         {loading || isConnecting ? (
           <div className="flex items-center justify-center py-20">
