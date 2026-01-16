@@ -7,9 +7,24 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GlowCard } from '@/components/GlowCard';
-import { PollQuestionEditor } from './PollQuestionEditor';
-import { PollSectionEditor } from './PollSectionEditor';
+import { SortableQuestion } from './SortableQuestion';
+import { SortableSection } from './SortableSection';
 import { Plus, Save, Play, Loader2, Layers } from 'lucide-react';
+import {
+  DndContext,
+  DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  arrayMove,
+} from '@dnd-kit/sortable';
 import type { PollFormData, QuestionFormData, SectionFormData } from '@/types/poll';
 
 interface Roster {
@@ -59,6 +74,11 @@ export const PollEditor = ({
     sections: [],
     questions: [{ ...defaultQuestion }],
   });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   useEffect(() => {
     if (initialData) {
@@ -114,6 +134,39 @@ export const PollEditor = ({
     }));
   };
 
+  // Drag and drop handlers
+  const handleSectionDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (over && active.id !== over.id) {
+      const oldIndex = formData.sections.findIndex((_, i) => `section-${i}` === active.id);
+      const newIndex = formData.sections.findIndex((_, i) => `section-${i}` === over.id);
+      
+      if (oldIndex !== -1 && newIndex !== -1) {
+        setFormData((prev) => ({
+          ...prev,
+          sections: arrayMove(prev.sections, oldIndex, newIndex),
+        }));
+      }
+    }
+  };
+
+  const handleQuestionDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (over && active.id !== over.id) {
+      const oldIndex = formData.questions.findIndex((_, i) => `general-q-${i}` === active.id);
+      const newIndex = formData.questions.findIndex((_, i) => `general-q-${i}` === over.id);
+      
+      if (oldIndex !== -1 && newIndex !== -1) {
+        setFormData((prev) => ({
+          ...prev,
+          questions: arrayMove(prev.questions, oldIndex, newIndex),
+        }));
+      }
+    }
+  };
+
   const handleSave = async () => {
     await onSave(formData);
   };
@@ -143,6 +196,9 @@ export const PollEditor = ({
     formData.sections.some(s => s.questions.length > 0);
 
   const isValid = formData.title.trim() && hasQuestions && allQuestionsValid;
+
+  const sectionIds = formData.sections.map((_, i) => `section-${i}`);
+  const questionIds = formData.questions.map((_, i) => `general-q-${i}`);
 
   return (
     <div className="space-y-6">
@@ -243,7 +299,7 @@ export const PollEditor = ({
 
       {/* Sections */}
       {formData.sections.length > 0 && (
-        <GlowCard className="p-6">
+        <GlowCard className={`p-6 ${metadataOnly ? 'opacity-60 pointer-events-none' : ''}`}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <Layers className="h-5 w-5 text-primary" />
@@ -251,18 +307,27 @@ export const PollEditor = ({
             </h2>
           </div>
 
-          <div className="space-y-4">
-            {formData.sections.map((section, index) => (
-              <PollSectionEditor
-                key={index}
-                section={section}
-                index={index}
-                onChange={(s) => handleSectionChange(index, s)}
-                onRemove={() => handleRemoveSection(index)}
-                canRemove={true}
-              />
-            ))}
-          </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleSectionDragEnd}
+          >
+            <SortableContext items={sectionIds} strategy={verticalListSortingStrategy}>
+              <div className="space-y-4">
+                {formData.sections.map((section, index) => (
+                  <SortableSection
+                    key={`section-${index}`}
+                    id={`section-${index}`}
+                    section={section}
+                    sectionIndex={index}
+                    onChange={(s) => handleSectionChange(index, s)}
+                    onRemove={() => handleRemoveSection(index)}
+                    canRemove={true}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         </GlowCard>
       )}
 
@@ -296,25 +361,34 @@ export const PollEditor = ({
           </p>
         )}
 
-        <div className="space-y-4">
-          {formData.questions.length === 0 && formData.sections.length === 0 && (
-            <p className="text-muted-foreground text-sm text-center py-4">
-              {language === 'fr' 
-                ? 'Ajoutez des questions ou des sections pour commencer' 
-                : 'Add questions or sections to get started'}
-            </p>
-          )}
-          {formData.questions.map((question, index) => (
-            <PollQuestionEditor
-              key={index}
-              question={question}
-              index={index}
-              onChange={(q) => handleQuestionChange(index, q)}
-              onRemove={() => handleRemoveQuestion(index)}
-              canRemove={formData.questions.length > 1 || formData.sections.some(s => s.questions.length > 0)}
-            />
-          ))}
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleQuestionDragEnd}
+        >
+          <SortableContext items={questionIds} strategy={verticalListSortingStrategy}>
+            <div className="space-y-4">
+              {formData.questions.length === 0 && formData.sections.length === 0 && (
+                <p className="text-muted-foreground text-sm text-center py-4">
+                  {language === 'fr' 
+                    ? 'Ajoutez des questions ou des sections pour commencer' 
+                    : 'Add questions or sections to get started'}
+                </p>
+              )}
+              {formData.questions.map((question, index) => (
+                <SortableQuestion
+                  key={`general-q-${index}`}
+                  id={`general-q-${index}`}
+                  question={question}
+                  index={index}
+                  onChange={(q) => handleQuestionChange(index, q)}
+                  onRemove={() => handleRemoveQuestion(index)}
+                  canRemove={formData.questions.length > 1 || formData.sections.some(s => s.questions.length > 0)}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       </GlowCard>
 
       {/* Sticky actions */}
