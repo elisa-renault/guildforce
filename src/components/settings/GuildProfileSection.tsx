@@ -1,11 +1,10 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { Upload, Trash2, Shield, Crown } from 'lucide-react';
 
@@ -33,6 +32,200 @@ interface GuildProfileSectionProps {
   onOfficerRankChange: (rank: number) => void;
   onGuildUpdate: (guild: GuildData) => void;
 }
+
+// Custom slider component matching permissions style
+interface OfficerRankSliderProps {
+  maxValue: number;
+  maxRank: number;
+  ranks: GuildRank[];
+  onChange: (max: number) => void;
+  onCommit: (max: number) => void;
+  disabled?: boolean;
+}
+
+const OfficerRankSlider = ({ maxValue, maxRank, ranks, onChange, onCommit, disabled }: OfficerRankSliderProps) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [localValue, setLocalValue] = useState(maxValue);
+  const sortedRanks = [...ranks].sort((a, b) => a.rank_index - b.rank_index);
+  
+  const allRankIndices: number[] = [];
+  for (let i = 0; i <= maxRank; i++) {
+    allRankIndices.push(i);
+  }
+
+  const getRankName = (index: number) => {
+    const rank = sortedRanks.find(r => r.rank_index === index);
+    return rank?.rank_name || `Rank ${index}`;
+  };
+
+  const getIndexFromPosition = useCallback((clientX: number): number => {
+    if (!containerRef.current) return localValue;
+    
+    const rect = containerRef.current.getBoundingClientRect();
+    const relativeX = clientX - rect.left;
+    const percentage = Math.max(0, Math.min(1, relativeX / rect.width));
+    const index = Math.round(percentage * maxRank);
+    
+    return Math.max(0, Math.min(maxRank, index));
+  }, [maxRank, localValue]);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (disabled) return;
+    e.preventDefault();
+    setIsDragging(true);
+    const newIndex = getIndexFromPosition(e.clientX);
+    setLocalValue(newIndex);
+    onChange(newIndex);
+  };
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDragging || disabled) return;
+    const newIndex = getIndexFromPosition(e.clientX);
+    setLocalValue(newIndex);
+    onChange(newIndex);
+  }, [isDragging, getIndexFromPosition, onChange, disabled]);
+
+  const handleMouseUp = useCallback(() => {
+    if (isDragging && !disabled) {
+      onCommit(localValue);
+    }
+    setIsDragging(false);
+  }, [isDragging, localValue, onCommit, disabled]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (disabled) return;
+    setIsDragging(true);
+    const touch = e.touches[0];
+    const newIndex = getIndexFromPosition(touch.clientX);
+    setLocalValue(newIndex);
+    onChange(newIndex);
+  };
+
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (!isDragging || disabled) return;
+    const touch = e.touches[0];
+    const newIndex = getIndexFromPosition(touch.clientX);
+    setLocalValue(newIndex);
+    onChange(newIndex);
+  }, [isDragging, getIndexFromPosition, onChange, disabled]);
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('touchmove', handleTouchMove);
+      window.addEventListener('touchend', handleMouseUp);
+    }
+    
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleMouseUp);
+    };
+  }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove]);
+
+  useEffect(() => {
+    if (!isDragging) {
+      setLocalValue(maxValue);
+    }
+  }, [maxValue, isDragging]);
+
+  const handleTickClick = (index: number) => {
+    if (disabled) return;
+    setLocalValue(index);
+    onChange(index);
+    onCommit(index);
+  };
+
+  const trackLeftOffset = 10;
+  const trackRightOffset = 10;
+
+  return (
+    <div className="py-3 select-none">
+      <div className="relative h-8 flex items-center">
+        <div 
+          className="absolute top-1/2 -translate-y-1/2 h-1 bg-border rounded-full"
+          style={{ 
+            left: `${trackLeftOffset}px`,
+            right: `${trackRightOffset}px`
+          }}
+        />
+        
+        <div 
+          className="absolute top-1/2 -translate-y-1/2 h-1 bg-primary rounded-full pointer-events-none"
+          style={{ 
+            left: `${trackLeftOffset}px`,
+            width: maxRank > 0 ? `calc((100% - ${trackLeftOffset + trackRightOffset}px) * ${localValue / maxRank})` : '0px'
+          }}
+        />
+        
+        <div 
+          ref={containerRef}
+          className={`absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+          onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
+        >
+          {allRankIndices.map((index) => {
+            const isSelected = index <= localValue;
+            const isEndpoint = index === localValue;
+            
+            return (
+              <div 
+                key={index} 
+                className="relative flex items-center justify-center"
+                style={{ width: '20px' }}
+              >
+                <div
+                  onClick={(e) => { e.stopPropagation(); handleTickClick(index); }}
+                  className={`transition-colors z-10 ${
+                    isEndpoint 
+                      ? `w-5 h-5 rounded-full bg-primary shadow-lg shadow-primary/40 ${disabled ? 'cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'}` 
+                      : isSelected
+                        ? `w-2.5 h-2.5 rounded-full bg-primary ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`
+                        : `w-2.5 h-2.5 rounded-full bg-muted-foreground/40 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-muted-foreground/60'}`
+                  }`}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      
+      <div className="flex justify-between mt-1">
+        {allRankIndices.map((index) => {
+          const isSelected = index <= localValue;
+          return (
+            <div 
+              key={index} 
+              className="flex justify-center"
+              style={{ width: '20px' }}
+            >
+              <span 
+                className={`text-[10px] tabular-nums ${
+                  isSelected ? 'text-foreground font-medium' : 'text-muted-foreground'
+                }`}
+              >
+                {index}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      
+      <div className="text-xs text-muted-foreground mt-2 text-center">
+        <span className="text-primary font-medium">{getRankName(0)}</span>
+        {localValue > 0 && (
+          <>
+            <span className="mx-1">→</span>
+            <span className="text-primary font-medium">{getRankName(localValue)}</span>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
 
 export const GuildProfileSection = ({
   guild,
@@ -275,45 +468,37 @@ export const GuildProfileSection = ({
               <Label className="text-sm font-medium">
                 {language === 'fr' ? 'Rang officier minimum' : 'Minimum officer rank'}
               </Label>
+              <span className="text-sm font-medium text-muted-foreground ml-auto">
+                0 → {localOfficerRank}
+              </span>
             </div>
-            <p className="text-xs text-muted-foreground mb-4">
+            <p className="text-xs text-muted-foreground mb-3">
               {language === 'fr' 
                 ? 'Les rangs 0 à ce rang seront considérés comme officiers et affichés avec le badge officier. Ce paramètre est propre à Guildforce.'
                 : 'Ranks 0 to this rank will be considered officers and displayed with the officer badge. This setting is specific to Guildforce.'}
             </p>
             
-            <div className="space-y-3">
-              <div className="flex items-center gap-4">
-                <Slider
-                  value={[localOfficerRank]}
-                  onValueChange={(value) => setLocalOfficerRank(value[0])}
-                  onValueCommit={(value) => handleOfficerRankCommit(value[0])}
-                  min={0}
-                  max={9}
-                  step={1}
-                  disabled={savingOfficerRank}
-                  className="flex-1"
-                />
-                <div className="w-16 text-right">
-                  <span className="text-sm font-medium">
-                    0 → {localOfficerRank}
+            <OfficerRankSlider
+              maxValue={localOfficerRank}
+              maxRank={9}
+              ranks={ranks}
+              onChange={setLocalOfficerRank}
+              onCommit={handleOfficerRankCommit}
+              disabled={savingOfficerRank}
+            />
+            
+            {ranks.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {ranks.filter(r => r.rank_index <= localOfficerRank).map(rank => (
+                  <span 
+                    key={rank.rank_index}
+                    className="px-2 py-0.5 rounded-full text-xs bg-primary/20 text-primary border border-primary/30"
+                  >
+                    {rank.rank_name}
                   </span>
-                </div>
+                ))}
               </div>
-              
-              {ranks.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {ranks.filter(r => r.rank_index <= localOfficerRank).map(rank => (
-                    <span 
-                      key={rank.rank_index}
-                      className="px-2 py-0.5 rounded-full text-xs bg-primary/20 text-primary border border-primary/30"
-                    >
-                      {rank.rank_name}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
+            )}
           </div>
         </GlowCard>
       </div>
