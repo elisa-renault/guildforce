@@ -10,7 +10,6 @@ import { CosmicButton } from '@/components/CosmicButton';
 import { GuildSubNav } from '@/components/guild';
 import { StatsCards, RosterFilters, RosterTable } from '@/components/dashboard';
 import { RosterSelector, RosterEditDialog } from '@/components/roster';
-import { ActivePollWidget } from '@/components/polls';
 import { MemberWish, WishData, RoleStats, RangeStats, RosterFilters as RosterFiltersType, ValidationStatus } from '@/types/guild';
 import { Loader2, Sparkles, Settings } from 'lucide-react';
 import { toSlug, getGuildWishesPath } from '@/lib/guildSlug';
@@ -26,7 +25,7 @@ interface RosterData {
   hasAccess: boolean;
 }
 
-const Dashboard = () => {
+const RosterWishes = () => {
   const navigate = useNavigate();
   const { regionSlug, serverSlug, guildSlug } = useParams();
   const { t, language } = useLanguage();
@@ -37,6 +36,7 @@ const Dashboard = () => {
   const [guild, setGuild] = useState<{ name: string; server: string; region: string; faction: string; avatar_url: string | null } | null>(null);
   const [members, setMembers] = useState<MemberWish[]>([]);
   const [isGM, setIsGM] = useState(false);
+  const [hasSettingsPermission, setHasSettingsPermission] = useState(false);
   const [filters, setFilters] = useState<RosterFiltersType>({
     roleFilters: [],
     classFilters: [],
@@ -53,7 +53,7 @@ const Dashboard = () => {
   ]);
   const [editStatus, setEditStatus] = useState<CommitmentStatus>('undecided');
   const [saving, setSaving] = useState(false);
-  
+
   // Roster state
   const [rosters, setRosters] = useState<RosterData[]>([]);
   const [selectedRosterId, setSelectedRosterId] = useState<string | null>(null);
@@ -61,27 +61,27 @@ const Dashboard = () => {
 
   const fetchData = async () => {
     if (!user || !regionSlug || !serverSlug || !guildSlug) return;
-    
+
     // First, find the guild by matching slugified region, server and name
     const { data: allGuilds } = await supabase
       .from('guilds')
       .select('id, name, server, region, faction, avatar_url');
-    
-    const matchedGuild = allGuilds?.find(g => 
-      toSlug(g.region || 'eu') === regionSlug && 
-      toSlug(g.server) === serverSlug && 
+
+    const matchedGuild = allGuilds?.find(g =>
+      toSlug(g.region || 'eu') === regionSlug &&
+      toSlug(g.server) === serverSlug &&
       toSlug(g.name) === guildSlug
     );
-    
+
     if (!matchedGuild) {
       navigate('/guilds');
       return;
     }
-    
+
     const foundGuildId = matchedGuild.id;
     setGuildId(foundGuildId);
     setGuild({ name: matchedGuild.name, server: matchedGuild.server, region: matchedGuild.region || 'eu', faction: matchedGuild.faction, avatar_url: matchedGuild.avatar_url });
-    
+
     // Check if user is a member of this guild
     const { data: membershipData, error: membershipError } = await supabase
       .from('guild_members')
@@ -89,14 +89,22 @@ const Dashboard = () => {
       .eq('guild_id', foundGuildId)
       .eq('user_id', user.id)
       .single();
-    
+
     if (membershipError || !membershipData) {
       navigate('/guilds');
       return;
     }
-    
+
     const userIsGM = membershipData.role === 'gm';
     setIsGM(userIsGM);
+
+    // Check settings permissions
+    const { data: settingsPerm } = await supabase.rpc('has_guild_permission', {
+      p_guild_id: foundGuildId,
+      p_permission: 'view_activity_log',
+      p_user_id: user.id,
+    });
+    setHasSettingsPermission(!!userIsGM || !!settingsPerm);
 
     // Fetch rosters and check access
     const { data: rostersData } = await supabase
@@ -123,7 +131,7 @@ const Dashboard = () => {
         })
       );
       setRosters(rostersWithAccess);
-      
+
       // Select default roster or first accessible
       const defaultRoster = rostersWithAccess.find(r => r.is_default) || rostersWithAccess[0];
       if (defaultRoster && !selectedRosterId) {
@@ -145,7 +153,7 @@ const Dashboard = () => {
 
     if (membersData) {
       const userIds = membersData.map(m => m.user_id);
-      
+
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, username')
@@ -160,7 +168,7 @@ const Dashboard = () => {
 
       // Fetch validator profiles if there are any
       const validatorIds = [...new Set(wishesData?.filter(w => w.validated_by).map(w => w.validated_by) || [])];
-      const { data: validatorProfiles } = validatorIds.length > 0 
+      const { data: validatorProfiles } = validatorIds.length > 0
         ? await supabase.from('profiles').select('id, username').in('id', validatorIds)
         : { data: [] };
 
@@ -214,14 +222,14 @@ const Dashboard = () => {
 
   const startEditing = (member: MemberWish) => {
     if (member.id !== user?.id) return;
-    
+
     // Check if user has access to this roster
     const currentRoster = rosters.find(r => r.id === selectedRosterId);
     if (!currentRoster?.hasAccess) {
       toast({ title: t.rosters?.noAccess || 'No access to this roster', variant: 'destructive' });
       return;
     }
-    
+
     // Load all wishes from member, ensuring at least 3 slots
     const wishCount = Math.max(3, member.wishes.length);
     const loadedWishes: WishData[] = Array.from({ length: wishCount }, () => ({
@@ -229,7 +237,7 @@ const Dashboard = () => {
       specIds: [],
       comment: '',
     }));
-    
+
     member.wishes.forEach(w => {
       const idx = w.choice_index - 1;
       if (idx >= 0 && idx < loadedWishes.length) {
@@ -240,7 +248,7 @@ const Dashboard = () => {
         };
       }
     });
-    
+
     setEditWishes(loadedWishes);
     // Map DB status to CommitmentStatus
     const statusMap: Record<string, CommitmentStatus> = {
@@ -250,7 +258,7 @@ const Dashboard = () => {
     };
     setEditStatus(statusMap[member.status] || 'undecided');
     setEditingUserId(member.id);
-    
+
     // Expand the row if not already
     const newExpanded = new Set(expandedRows);
     newExpanded.add(member.id);
@@ -406,10 +414,10 @@ const Dashboard = () => {
         const roles = getRolesFromSpecs(w.spec_ids);
         return filters.roleFilters.some(rf => roles.includes(rf as Role));
       });
-      
+
       if (isAndMode) {
         // AND: all selected roles must be present across wishes
-        const allRolesPresent = filters.roleFilters.every(rf => 
+        const allRolesPresent = filters.roleFilters.every(rf =>
           m.wishes.some(w => getRolesFromSpecs(w.spec_ids).includes(rf as Role))
         );
         if (!allRolesPresent) return false;
@@ -422,7 +430,7 @@ const Dashboard = () => {
     if (filters.classFilters.length > 0) {
       if (isAndMode) {
         // AND: all selected classes must be present
-        const allClassesPresent = filters.classFilters.every(cf => 
+        const allClassesPresent = filters.classFilters.every(cf =>
           m.wishes.some(w => w.class_id === cf)
         );
         if (!allClassesPresent) return false;
@@ -437,13 +445,13 @@ const Dashboard = () => {
     if (filters.validationFilters.length > 0) {
       if (isAndMode) {
         // AND: all selected validation statuses must be present
-        const allStatusesPresent = filters.validationFilters.every(vs => 
+        const allStatusesPresent = filters.validationFilters.every(vs =>
           m.wishes.some(w => (w.validation_status || 'pending') === vs)
         );
         if (!allStatusesPresent) return false;
       } else {
         // OR: at least one validation status must match
-        const hasStatus = m.wishes.some(w => 
+        const hasStatus = m.wishes.some(w =>
           filters.validationFilters.includes((w.validation_status || 'pending') as ValidationStatus)
         );
         if (!hasStatus) return false;
@@ -493,7 +501,8 @@ const Dashboard = () => {
           guild={guild}
           basePath={basePath}
           isGM={isGM}
-          activeTab="dashboard"
+          hasSettingsPermission={hasSettingsPermission}
+          activeTab="roster"
         />
       )}
 
@@ -526,26 +535,17 @@ const Dashboard = () => {
             {t.rosters?.noAccessMessage || 'You can view this roster but cannot edit your wishes.'}
           </div>
         )}
-        
-        <StatsCards 
-          totalPlayers={totalPlayers} 
-          confirmedPlayers={confirmedPlayers} 
+
+        <StatsCards
+          totalPlayers={totalPlayers}
+          confirmedPlayers={confirmedPlayers}
           roleStats={roleStats}
           rangeStats={rangeStats}
         />
 
-        {/* Active Poll Widget */}
-        {guildId && guild && (
-          <ActivePollWidget 
-            guildId={guildId} 
-            guildSlug={`${regionSlug}/${serverSlug}/${guildSlug}`}
-            isGM={isGM}
-          />
-        )}
-
-        <RosterFilters 
-          filters={filters} 
-          onFiltersChange={setFilters} 
+        <RosterFilters
+          filters={filters}
+          onFiltersChange={setFilters}
         />
 
         <RosterTable
@@ -585,4 +585,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default RosterWishes;
