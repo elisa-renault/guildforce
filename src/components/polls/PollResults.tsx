@@ -302,7 +302,7 @@ export const PollResults = ({
             {question.question_type === 'rating' && (
               <div className="pl-5 space-y-4">
                 {(() => {
-                  const { average, individualRatings } = getRatingStats(question);
+                  const { average, distribution, individualRatings } = getRatingStats(question);
                   const total = question.responses?.length || 0;
 
                   return (
@@ -314,9 +314,26 @@ export const PollResults = ({
                             {average.toFixed(1)}
                           </span>
                           <span className="text-muted-foreground">
-                            / 5 ({total} {language === 'fr' ? 'votes' : 'votes'})
+                            / 5 ({total} {total === 1 ? 'vote' : 'votes'})
                           </span>
                         </div>
+                      </div>
+                      <div className="space-y-1">
+                        {[5, 4, 3, 2, 1, 0].map((rating) => {
+                          const count = distribution[rating] || 0;
+                          const percentage = total > 0 ? (count / total) * 100 : 0;
+                          return (
+                            <div key={rating} className="flex items-center gap-2">
+                              <div className="w-16 flex items-center gap-1">
+                                <StarDisplay value={rating} max={5} size="sm" />
+                              </div>
+                              <Progress value={percentage} className="h-2 flex-1 bg-muted/40" />
+                              <span className="w-8 text-xs text-muted-foreground text-right">
+                                {count}
+                              </span>
+                            </div>
+                          );
+                        })}
                       </div>
                       {!isAnonymous && individualRatings.length > 0 && (
                         <div className="space-y-2 pt-2 border-t border-border/50">
@@ -422,7 +439,7 @@ export const PollResults = ({
             {question.question_type === 'scale' && (
               <div className="pl-5 space-y-4">
                 {(() => {
-                  const { average, config, individualRatings } = getScaleStats(question);
+                  const { average, distribution, config, individualRatings } = getScaleStats(question);
                   const total = question.responses?.length || 0;
                   const max = config?.max ?? 5;
 
@@ -435,7 +452,7 @@ export const PollResults = ({
                             {average.toFixed(1)}
                           </span>
                           <span className="text-muted-foreground">
-                            / {max} ({total} {language === 'fr' ? 'votes' : 'votes'})
+                            / {max} ({total} {total === 1 ? 'vote' : 'votes'})
                           </span>
                         </div>
                       </div>
@@ -446,6 +463,23 @@ export const PollResults = ({
                           {config?.max_label && <span>{config.max_label}</span>}
                         </div>
                       )}
+                      <div className="space-y-1">
+                        {Array.from({ length: max + 1 }, (_, i) => max - i).map((value) => {
+                          const count = distribution[value] || 0;
+                          const percentage = total > 0 ? (count / total) * 100 : 0;
+                          return (
+                            <div key={value} className="flex items-center gap-2">
+                              <div className="w-20 flex items-center gap-1">
+                                <StarDisplay value={value} max={max} size="sm" />
+                              </div>
+                              <Progress value={percentage} className="h-2 flex-1 bg-muted/40" />
+                              <span className="w-8 text-xs text-muted-foreground text-right">
+                                {count}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
                       {!isAnonymous && individualRatings.length > 0 && (
                         <div className="space-y-2 pt-2 border-t border-border/50">
                           <p className="text-sm text-muted-foreground mb-2">
