@@ -67,8 +67,31 @@ export const PollCard = ({
     navigate(`/guild/${guildSlug}/polls/${poll.id}/edit`);
   };
 
+  // Handle click on the card itself - navigate to poll view for voting
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking on buttons or dialogs
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('[role="dialog"]')) {
+      return;
+    }
+    
+    // For active polls, go to vote/respond view
+    // For closed polls, go to results
+    // For drafts (GM only), go to edit
+    if (poll.status === 'active') {
+      handleRespond();
+    } else if (poll.status === 'closed') {
+      handleViewResults();
+    } else if (poll.status === 'draft' && isGM) {
+      handleEdit();
+    }
+  };
+
   return (
-    <GlowCard className="p-4">
+    <GlowCard 
+      className="p-4 cursor-pointer transition-colors hover:bg-primary/5"
+      onClick={handleCardClick}
+    >
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">

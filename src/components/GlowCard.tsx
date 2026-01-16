@@ -1,11 +1,11 @@
-import { ReactNode, CSSProperties } from 'react';
+import { ReactNode, CSSProperties, MouseEvent } from 'react';
 import { cn } from '@/lib/utils';
 
 interface GlowCardProps {
   children: ReactNode;
   className?: string;
   hoverable?: boolean;
-  onClick?: () => void;
+  onClick?: (e: MouseEvent<HTMLDivElement>) => void;
   style?: CSSProperties;
 }
 
