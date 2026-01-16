@@ -66,7 +66,6 @@ const ALL_PERMISSIONS: { type: PermissionType; labelEn: string; labelFr: string 
   { type: 'manage_polls', labelEn: 'Manage polls', labelFr: 'Gérer les sondages' },
   { type: 'manage_rosters', labelEn: 'Manage rosters', labelFr: 'Gérer les rosters' },
   { type: 'view_activity_log', labelEn: 'View activity log', labelFr: 'Voir le journal' },
-  { type: 'manage_members', labelEn: 'Manage members', labelFr: 'Gérer les membres' },
 ];
 
 export const PermissionPresets = ({ onApplyPreset, onReset }: PermissionPresetsProps) => {
@@ -79,7 +78,7 @@ export const PermissionPresets = ({ onApplyPreset, onReset }: PermissionPresetsP
     if (!selectedPreset) return;
     
     const preset = PRESETS[selectedPreset];
-    const allPermissionTypes: PermissionType[] = ['manage_wishes', 'manage_polls', 'manage_rosters', 'view_activity_log', 'manage_members'];
+    const allPermissionTypes: PermissionType[] = ['manage_wishes', 'manage_polls', 'manage_rosters', 'view_activity_log'];
     
     const newPermissions: Record<PermissionType, Omit<PermissionRule, 'permission_type'>[]> = {} as any;
     

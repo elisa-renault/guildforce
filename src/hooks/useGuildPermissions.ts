@@ -7,8 +7,7 @@ export type PermissionType =
   | 'manage_wishes' 
   | 'manage_polls' 
   | 'manage_rosters' 
-  | 'view_activity_log' 
-  | 'manage_members';
+  | 'view_activity_log';
 
 export interface PermissionRule {
   id?: string;
