@@ -6,7 +6,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { AlertTriangle, FileEdit, Settings } from 'lucide-react';
 
 interface EditActivePollDialogProps {
@@ -42,14 +41,14 @@ export const EditActivePollDialog = ({
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
-          <Button
-            variant="outline"
-            className="h-auto py-4 flex flex-col items-start gap-2 text-left"
+          <button
+            type="button"
+            className="h-auto py-4 px-4 flex flex-col items-start gap-2 text-left rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors"
             onClick={onEditMetadata}
           >
             <div className="flex items-center gap-2">
               <Settings className="h-5 w-5 text-primary" />
-              <span className="font-semibold">
+              <span className="font-semibold text-foreground">
                 {language === 'fr' ? 'Modifier les paramètres' : 'Edit Settings'}
               </span>
             </div>
@@ -58,11 +57,11 @@ export const EditActivePollDialog = ({
                 ? 'Titre, description, date de fin, roster cible. Les réponses sont conservées.'
                 : 'Title, description, end date, target roster. Responses are preserved.'}
             </p>
-          </Button>
+          </button>
 
-          <Button
-            variant="outline"
-            className="h-auto py-4 flex flex-col items-start gap-2 text-left border-destructive/50 hover:bg-destructive/10"
+          <button
+            type="button"
+            className="h-auto py-4 px-4 flex flex-col items-start gap-2 text-left rounded-lg border border-destructive/50 bg-card hover:bg-destructive/10 transition-colors"
             onClick={onEditFull}
           >
             <div className="flex items-center gap-2">
@@ -76,7 +75,7 @@ export const EditActivePollDialog = ({
                 ? 'Questions et options. ⚠️ Cela réinitialisera toutes les réponses existantes.'
                 : 'Questions and options. ⚠️ This will reset all existing responses.'}
             </p>
-          </Button>
+          </button>
         </div>
       </DialogContent>
     </Dialog>
