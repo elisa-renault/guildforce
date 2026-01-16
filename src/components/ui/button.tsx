@@ -12,9 +12,10 @@ const buttonVariants = cva(
           default: "bg-primary text-primary-foreground hover:bg-primary/90",
           destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
           // Ensure outline buttons are always visible on dark backgrounds.
-          outline: "border border-border bg-card text-foreground hover:bg-accent hover:text-accent-foreground",
+          outline: "border border-border bg-card/60 text-foreground hover:bg-card hover:text-foreground",
           secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-          ghost: "hover:bg-accent hover:text-accent-foreground",
+          // Ghost buttons are often used for icon-only actions; give them a visible base color.
+          ghost: "text-foreground/90 hover:bg-accent/40 hover:text-foreground",
           link: "text-primary underline-offset-4 hover:underline",
         },
       size: {
