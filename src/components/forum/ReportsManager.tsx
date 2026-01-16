@@ -438,10 +438,12 @@ export const ReportsManager = () => {
             )}
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">
+              <label htmlFor="resolution-note" className="text-sm font-medium">
                 {language === 'fr' ? 'Note de résolution (optionnel)' : 'Resolution note (optional)'}
               </label>
               <Textarea
+                id="resolution-note"
+                name="resolution-note"
                 value={resolutionNote}
                 onChange={(e) => setResolutionNote(e.target.value)}
                 placeholder={language === 'fr' ? 'Action prise...' : 'Action taken...'}
