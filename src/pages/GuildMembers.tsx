@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
+import { formatDistanceToNow } from 'date-fns';
+import { fr, enUS } from 'date-fns/locale';
 import { GuildSubNav } from '@/components/guild/GuildSubNav';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { CosmicBackground } from '@/components/CosmicBackground';
@@ -72,6 +74,7 @@ const GuildMembers = () => {
   const [guildforceFilter, setGuildforceFilter] = useState<'all' | 'guildforce' | 'not-guildforce'>('all');
   const [hasRosterCache, setHasRosterCache] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [lastSyncDate, setLastSyncDate] = useState<string | null>(null);
   
   // Popover states
   const [classOpen, setClassOpen] = useState(false);
@@ -168,6 +171,15 @@ const GuildMembers = () => {
 
         if (!rosterError && rosterCache && rosterCache.length > 0) {
           setHasRosterCache(true);
+          
+          // Get the most recent updated_at for sync date display
+          const mostRecentUpdate = rosterCache.reduce((latest, m) => {
+            const current = m.updated_at ? new Date(m.updated_at).getTime() : 0;
+            return current > latest ? current : latest;
+          }, 0);
+          if (mostRecentUpdate > 0) {
+            setLastSyncDate(new Date(mostRecentUpdate).toISOString());
+          }
           
           // Get profiles for matched users
           const userIds = rosterCache
@@ -389,6 +401,19 @@ const GuildMembers = () => {
               {members.length}
             </Badge>
           </div>
+          
+          {hasRosterCache && lastSyncDate && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <RefreshCw className="h-3.5 w-3.5" />
+              <span>
+                {language === 'fr' ? 'Synchro ' : 'Synced '}
+                {formatDistanceToNow(new Date(lastSyncDate), { 
+                  addSuffix: true, 
+                  locale: language === 'fr' ? fr : enUS 
+                })}
+              </span>
+            </div>
+          )}
           
           {!hasRosterCache && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
