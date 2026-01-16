@@ -14,38 +14,69 @@ export const useGuildPolls = (guildId: string | undefined) => {
     
     setLoading(true);
     try {
+      // Fetch polls with questions count in a single query
       const { data, error } = await supabase
         .from('guild_polls')
         .select(`
           *,
           creator:profiles!guild_polls_created_by_fkey(id, username, avatar_url),
-          roster:rosters(id, name)
+          roster:rosters(id, name),
+          questions:guild_poll_questions(id)
         `)
         .eq('guild_id', guildId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      // Fetch response counts for each poll
-      const pollsWithCounts = await Promise.all(
-        (data || []).map(async (poll) => {
-          const { count } = await supabase
-            .from('guild_poll_responses')
-            .select('user_id', { count: 'exact', head: true })
-            .in('question_id', 
-              (await supabase
-                .from('guild_poll_questions')
-                .select('id')
-                .eq('poll_id', poll.id)
-              ).data?.map(q => q.id) || []
-            );
+      if (!data || data.length === 0) {
+        setPolls([]);
+        return;
+      }
 
-          return {
-            ...poll,
-            response_count: count || 0,
-          } as GuildPoll;
-        })
+      // Get all question IDs from all polls in one go
+      const allQuestionIds = data.flatMap(poll => 
+        (poll.questions as { id: string }[] | null)?.map(q => q.id) || []
       );
+
+      // Fetch response counts in a single query if there are questions
+      let responseCounts: Record<string, number> = {};
+      if (allQuestionIds.length > 0) {
+        const { data: responses } = await supabase
+          .from('guild_poll_responses')
+          .select('question_id, user_id')
+          .in('question_id', allQuestionIds);
+
+        // Count unique users per poll
+        const pollUserMap: Record<string, Set<string>> = {};
+        for (const poll of data) {
+          pollUserMap[poll.id] = new Set();
+        }
+
+        // Map question_id back to poll_id
+        const questionToPoll: Record<string, string> = {};
+        for (const poll of data) {
+          for (const q of (poll.questions as { id: string }[] | null) || []) {
+            questionToPoll[q.id] = poll.id;
+          }
+        }
+
+        for (const response of responses || []) {
+          const pollId = questionToPoll[response.question_id];
+          if (pollId) {
+            pollUserMap[pollId].add(response.user_id);
+          }
+        }
+
+        for (const [pollId, users] of Object.entries(pollUserMap)) {
+          responseCounts[pollId] = users.size;
+        }
+      }
+
+      const pollsWithCounts = data.map(poll => ({
+        ...poll,
+        questions: undefined, // Remove questions array from the list view
+        response_count: responseCounts[poll.id] || 0,
+      })) as GuildPoll[];
 
       setPolls(pollsWithCounts);
     } catch (error) {
