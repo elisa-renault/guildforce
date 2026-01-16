@@ -388,6 +388,123 @@ export const usePollMutations = () => {
     }
   };
 
+  const resetPollResponses = async (pollId: string): Promise<boolean> => {
+    setSaving(true);
+    try {
+      // Get all question IDs for this poll
+      const { data: questions, error: questionsError } = await supabase
+        .from('guild_poll_questions')
+        .select('id')
+        .eq('poll_id', pollId);
+
+      if (questionsError) throw questionsError;
+
+      if (questions && questions.length > 0) {
+        const questionIds = questions.map(q => q.id);
+        
+        const { error } = await supabase
+          .from('guild_poll_responses')
+          .delete()
+          .in('question_id', questionIds);
+
+        if (error) throw error;
+      }
+
+      toast.success('Réponses réinitialisées');
+      return true;
+    } catch (error) {
+      console.error('Error resetting poll responses:', error);
+      toast.error('Erreur lors de la réinitialisation des réponses');
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updatePollQuestions = async (pollId: string, data: PollFormData): Promise<boolean> => {
+    setSaving(true);
+    try {
+      // Delete existing questions and sections
+      await supabase
+        .from('guild_poll_questions')
+        .delete()
+        .eq('poll_id', pollId);
+
+      await supabase
+        .from('guild_poll_sections')
+        .delete()
+        .eq('poll_id', pollId);
+
+      // Recreate sections and questions
+      let globalOrder = 0;
+      
+      for (let sIndex = 0; sIndex < data.sections.length; sIndex++) {
+        const section = data.sections[sIndex];
+        
+        const { data: sectionData, error: sectionError } = await supabase
+          .from('guild_poll_sections')
+          .insert({
+            poll_id: pollId,
+            title: section.title,
+            description: section.description || null,
+            display_order: sIndex,
+          })
+          .select('id')
+          .single();
+
+        if (sectionError) throw sectionError;
+
+        if (section.questions.length > 0) {
+          const sectionQuestions = section.questions.map((q, qIndex) => ({
+            poll_id: pollId,
+            section_id: sectionData.id,
+            question_text: q.question_text,
+            question_type: q.question_type,
+            is_required: q.is_required,
+            display_order: globalOrder + qIndex,
+            options: q.options,
+            scale_config: q.scale_config as any || null,
+          }));
+
+          const { error: questionsError } = await supabase
+            .from('guild_poll_questions')
+            .insert(sectionQuestions);
+
+          if (questionsError) throw questionsError;
+          globalOrder += section.questions.length;
+        }
+      }
+
+      if (data.questions.length > 0) {
+        const questionsToInsert = data.questions.map((q, index) => ({
+          poll_id: pollId,
+          section_id: null,
+          question_text: q.question_text,
+          question_type: q.question_type,
+          is_required: q.is_required,
+          display_order: globalOrder + index,
+          options: q.options,
+          scale_config: q.scale_config as any || null,
+        }));
+
+        const { error: questionsError } = await supabase
+          .from('guild_poll_questions')
+          .insert(questionsToInsert);
+
+        if (questionsError) throw questionsError;
+      }
+
+      toast.success('Questions mises à jour');
+      return true;
+    } catch (error) {
+      console.error('Error updating poll questions:', error);
+      toast.error('Erreur lors de la mise à jour des questions');
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const submitResponse = async (
     questionId: string, 
     responseValue: ResponseValue
@@ -449,9 +566,11 @@ export const usePollMutations = () => {
     saving,
     createPoll,
     updatePoll,
+    updatePollQuestions,
     publishPoll,
     closePoll,
     deletePoll,
+    resetPollResponses,
     submitResponse,
     submitAllResponses,
   };
