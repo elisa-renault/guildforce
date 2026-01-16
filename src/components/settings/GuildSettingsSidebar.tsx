@@ -54,12 +54,12 @@ export const GuildSettingsSidebar = ({
     return acc;
   }, {} as Record<string, SectionConfig[]>);
 
-  // Mobile: horizontal scrollable tabs
+  // Mobile: horizontal scrollable tabs - more compact
   if (isMobile) {
     return (
-      <div className="border-b border-border/50 bg-card/30 backdrop-blur-sm">
+      <div className="sticky top-[calc(4rem+52px)] z-30 border-b border-border/50 bg-background/90 backdrop-blur-sm">
         <ScrollArea className="w-full">
-          <div className="flex items-center gap-1 p-2">
+          <div className="flex items-center gap-0.5 px-2 py-1.5">
             {visibleSectionConfigs.map((section) => {
               const Icon = section.icon;
               const isActive = activeSection === section.id;
@@ -68,13 +68,13 @@ export const GuildSettingsSidebar = ({
                   key={section.id}
                   onClick={() => onSectionChange(section.id)}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap",
+                    "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap",
                     isActive
                       ? "bg-primary/20 text-foreground ring-1 ring-primary/50"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   )}
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon className="h-3.5 w-3.5" />
                   <span>{language === 'fr' ? section.labelFr : section.labelEn}</span>
                 </button>
               );
