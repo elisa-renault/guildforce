@@ -9,6 +9,7 @@ import { GuildSubNav } from '@/components/guild';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { PollEditor } from '@/components/polls';
 import { usePollMutations } from '@/hooks/useGuildPolls';
+import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
 import type { PollFormData, SectionFormData, QuestionFormData } from '@/types/poll';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -41,6 +42,10 @@ const GuildPollNew = () => {
   const [pendingFullEditData, setPendingFullEditData] = useState<PollFormData | null>(null);
 
   const { createPoll, updatePoll, updatePollQuestions, publishPoll, resetPollResponses, saving } = usePollMutations();
+  const { hasPermission: hasManagePolls, loading: permLoading } = useHasGuildPermission(guildId, 'manage_polls');
+
+  // User can manage polls if they are GM OR have manage_polls permission
+  const canManagePolls = isGM || hasManagePolls;
 
   const isActivePoll = existingPoll?.status === 'active';
   const isMetadataOnly = editMode === 'metadata';
@@ -72,18 +77,15 @@ const GuildPollNew = () => {
         avatar_url: null,
       });
 
-      // Check GM status
+      // Check GM status (we'll also check permission later)
       const { data: gmCheck } = await supabase.rpc('is_guild_gm', {
         p_guild_id: matchedGuild.id,
         p_user_id: user.id,
       });
 
-      if (!gmCheck) {
-        navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}`);
-        return;
-      }
+      setIsGM(gmCheck || false);
 
-      setIsGM(true);
+      // Note: We don't redirect here anymore - we'll check canManagePolls after permission loads
 
       // Fetch rosters
       const { data: rostersData } = await supabase
@@ -191,7 +193,7 @@ const GuildPollNew = () => {
     }
   };
 
-  if (loading) {
+  if (loading || permLoading) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <CosmicBackground />
@@ -200,7 +202,9 @@ const GuildPollNew = () => {
     );
   }
 
-  if (!isGM) {
+  // Redirect if user doesn't have permission (check after loading is complete)
+  if (!canManagePolls) {
+    navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}`);
     return null;
   }
 
@@ -273,7 +277,7 @@ const GuildPollNew = () => {
         <GuildSubNav
           guild={guild}
           basePath={basePath}
-          isGM={isGM}
+          isGM={canManagePolls}
           activeTab="polls"
         />
       )}
