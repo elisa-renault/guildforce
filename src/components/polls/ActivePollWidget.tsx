@@ -1,3 +1,4 @@
+import React, { forwardRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useGuildPolls } from '@/hooks/useGuildPolls';
@@ -13,7 +14,8 @@ interface ActivePollWidgetProps {
   isGM?: boolean;
 }
 
-export const ActivePollWidget = ({ guildId, guildSlug, isGM = false }: ActivePollWidgetProps) => {
+export const ActivePollWidget = forwardRef<HTMLDivElement, ActivePollWidgetProps>(
+  ({ guildId, guildSlug, isGM = false }, ref) => {
   const navigate = useNavigate();
   const { language } = useLanguage();
   const locale = language === 'fr' ? fr : enUS;
@@ -41,7 +43,7 @@ export const ActivePollWidget = ({ guildId, guildSlug, isGM = false }: ActivePol
   };
 
   return (
-    <div className="mb-6">
+    <div ref={ref} className="mb-6">
       <GlowCard 
         className="p-4 cursor-pointer hover:border-primary/50 transition-colors overflow-hidden"
         onClick={handleClick}
@@ -97,4 +99,6 @@ export const ActivePollWidget = ({ guildId, guildSlug, isGM = false }: ActivePol
       </GlowCard>
     </div>
   );
-};
+});
+
+ActivePollWidget.displayName = 'ActivePollWidget';
