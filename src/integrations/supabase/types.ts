@@ -1290,6 +1290,15 @@ export type Database = {
         Returns: boolean
       }
       is_guild_owner_or_gm: { Args: { _guild_id: string }; Returns: boolean }
+      is_same_wow_guild: {
+        Args: {
+          p_guild_name: string
+          p_guild_realm_slug: string
+          p_guild_region: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       is_user_forum_sanctioned: {
         Args: { p_user_id: string }
         Returns: boolean
@@ -1304,6 +1313,10 @@ export type Database = {
           p_user_id: string
         }
         Returns: string
+      }
+      shares_wow_guild: {
+        Args: { p_current_user_id: string; p_target_user_id: string }
+        Returns: boolean
       }
     }
     Enums: {
