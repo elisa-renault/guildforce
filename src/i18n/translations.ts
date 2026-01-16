@@ -222,6 +222,11 @@ export interface Translations {
     syncedFromBnet: string;
     comingSoon: string;
     gmOnly: string;
+    resyncBattlenet: string;
+    resyncDescription: string;
+    resyncSuccess: string;
+    resyncError: string;
+    syncing: string;
   };
   // Rosters
   rosters: {
@@ -593,6 +598,11 @@ export const translations: Record<Language, Translations> = {
       syncedFromBnet: 'This information is synced from Battle.net',
       comingSoon: 'Coming Soon',
       gmOnly: 'Only Guild Masters can access this page',
+      resyncBattlenet: 'Resync Battle.net',
+      resyncDescription: 'Refresh characters and guild memberships from Battle.net',
+      resyncSuccess: 'Battle.net data synced successfully',
+      resyncError: 'Sync failed. Please try again.',
+      syncing: 'Syncing...',
     },
     rosters: {
       title: 'Rosters',
@@ -955,6 +965,11 @@ export const translations: Record<Language, Translations> = {
       syncedFromBnet: 'Ces informations sont synchronisées depuis Battle.net',
       comingSoon: 'À venir',
       gmOnly: 'Seuls les Guild Masters peuvent accéder à cette page',
+      resyncBattlenet: 'Resync Battle.net',
+      resyncDescription: 'Rafraîchir les personnages et appartenances depuis Battle.net',
+      resyncSuccess: 'Données Battle.net synchronisées',
+      resyncError: 'Échec de la synchronisation. Veuillez réessayer.',
+      syncing: 'Synchronisation...',
     },
     rosters: {
       title: 'Rosters',
