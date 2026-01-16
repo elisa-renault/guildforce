@@ -50,6 +50,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return nextProfile;
   };
 
+  // Background sync of Battle.net data on login (non-blocking)
+  const triggerBattleNetSync = async (accessToken: string) => {
+    try {
+      // Fire and forget - don't block the UI
+      supabase.functions.invoke('battlenet-auth/resync', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: {},
+      }).then(({ error }) => {
+        if (error) {
+          console.debug('Background Battle.net sync skipped:', error.message);
+        } else {
+          console.debug('Background Battle.net sync completed');
+        }
+      });
+    } catch (err) {
+      // Silently ignore - this is a background operation
+      console.debug('Background sync error:', err);
+    }
+  };
+
   useEffect(() => {
     let cancelled = false;
 
@@ -63,7 +83,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        await fetchProfile(session.user.id);
+        const profileData = await fetchProfile(session.user.id);
+        
+        // Trigger background sync if user has Battle.net linked
+        if (profileData?.battlenet_id && session.access_token) {
+          triggerBattleNetSync(session.access_token);
+        }
       } else {
         setProfile(null);
       }
@@ -74,7 +99,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     init();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, newSession) => {
+      (event, newSession) => {
         // Only update state if there's an actual change
         setSession((prev) => {
           if (prev?.access_token === newSession?.access_token) return prev;
@@ -88,8 +113,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         // Defer profile fetch to avoid edge-case deadlocks
         if (newSession?.user) {
-          setTimeout(() => {
-            fetchProfile(newSession.user!.id);
+          setTimeout(async () => {
+            const profileData = await fetchProfile(newSession.user!.id);
+            
+            // Trigger background sync on SIGNED_IN event if Battle.net is linked
+            if (event === 'SIGNED_IN' && profileData?.battlenet_id && newSession.access_token) {
+              triggerBattleNetSync(newSession.access_token);
+            }
           }, 0);
         } else {
           setProfile(null);
