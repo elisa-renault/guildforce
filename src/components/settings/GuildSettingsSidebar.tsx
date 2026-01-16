@@ -59,9 +59,9 @@ export const GuildSettingsSidebar = ({
   // Mobile: horizontal scrollable tabs - more compact
   if (isMobile) {
     return (
-      <div className="sticky top-[calc(4rem+52px)] z-30 border-b border-border/50 bg-background/90 backdrop-blur-sm">
+      <div className="sticky top-[calc(4rem+52px)] z-30 border-b border-border/50 bg-background/90 backdrop-blur-sm -mx-3 px-3">
         <ScrollArea className="w-full">
-          <div className="flex items-center gap-0.5 px-2 py-1.5">
+          <div className="flex items-center gap-0.5 py-1.5">
             {visibleSectionConfigs.map((section) => {
               const Icon = section.icon;
               const isActive = activeSection === section.id;
@@ -70,7 +70,7 @@ export const GuildSettingsSidebar = ({
                   key={section.id}
                   onClick={() => onSectionChange(section.id)}
                   className={cn(
-                    "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap",
+                    "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0",
                     isActive
                       ? "bg-primary/20 text-foreground ring-1 ring-primary/50"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/50"

@@ -108,17 +108,17 @@ const GuildPolls = () => {
         />
       )}
 
-      <main className="container mx-auto px-4 py-8 relative z-10">
+      <main className="container mx-auto px-3 md:px-4 py-6 md:py-8 relative z-10 overflow-x-hidden">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+            <h1 className="text-xl md:text-2xl font-bold">
               {language === 'fr' ? 'Sondages' : 'Polls'}
             </h1>
 
             {canManagePolls && (
-              <Button onClick={() => navigate(`${basePath}/polls/new`)}>
-                <Plus className="h-4 w-4 mr-2" />
-                {language === 'fr' ? 'Nouveau sondage' : 'New Poll'}
+              <Button onClick={() => navigate(`${basePath}/polls/new`)} size="sm" className="md:size-default">
+                <Plus className="h-4 w-4 md:mr-2" />
+                <span className="hidden sm:inline">{language === 'fr' ? 'Nouveau sondage' : 'New Poll'}</span>
               </Button>
             )}
           </div>
