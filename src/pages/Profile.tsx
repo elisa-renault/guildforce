@@ -7,6 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useLanguage, Language } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -17,7 +20,7 @@ import { CosmicButton } from '@/components/CosmicButton';
 import { BattleNetConnect } from '@/components/BattleNetConnect';
 import { AvatarCropDialog } from '@/components/AvatarCropDialog';
 
-import { User, Save, Globe, Loader2, Sparkles, Upload, Trash2, ExternalLink } from 'lucide-react';
+import { User, Save, Globe, Loader2, Sparkles, Upload, Trash2, ExternalLink, Shield, AlertTriangle } from 'lucide-react';
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -31,6 +34,11 @@ const Profile = () => {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
   const [selectedImageSrc, setSelectedImageSrc] = useState<string | null>(null);
+  const [showBattletag, setShowBattletag] = useState(true);
+  const [deletionPending, setDeletionPending] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [requestingDeletion, setRequestingDeletion] = useState(false);
 
   const profileSchema = z.object({
     username: z.string().min(2, 'Le pseudo doit contenir au moins 2 caractères').max(30, 'Le pseudo ne peut pas dépasser 30 caractères'),
@@ -55,7 +63,24 @@ const Profile = () => {
   useEffect(() => {
     if (!profile) return;
     form.reset({ username: profile.username || '' });
+    // @ts-ignore - show_battletag may not be in type yet
+    setShowBattletag(profile.show_battletag !== false);
   }, [profile, form]);
+
+  // Check for pending deletion request
+  useEffect(() => {
+    async function checkDeletionRequest() {
+      if (!user) return;
+      const { data } = await supabase
+        .from('account_deletion_requests')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('status', 'pending')
+        .maybeSingle();
+      setDeletionPending(!!data);
+    }
+    checkDeletionRequest();
+  }, [user]);
 
   const onSubmit = async (values: z.infer<typeof profileSchema>) => {
     if (!user) return;
@@ -91,6 +116,63 @@ const Profile = () => {
     setLanguage(newLang);
     if (user) {
       await supabase.from('profiles').update({ preferred_language: newLang }).eq('id', user.id);
+    }
+  };
+
+  const handleBattletagVisibilityChange = async (checked: boolean) => {
+    setShowBattletag(checked);
+    if (user) {
+      await supabase.from('profiles').update({ show_battletag: checked }).eq('id', user.id);
+    }
+  };
+
+  const handleRequestDeletion = async () => {
+    if (!user || deleteConfirmText !== profile?.username) return;
+    setRequestingDeletion(true);
+
+    try {
+      const { error } = await supabase
+        .from('account_deletion_requests')
+        .insert({ user_id: user.id });
+
+      if (error) throw error;
+
+      setDeletionPending(true);
+      setDeleteDialogOpen(false);
+      setDeleteConfirmText('');
+      toast({
+        title: language === 'fr' ? 'Demande enregistrée' : 'Request submitted',
+        description: language === 'fr' 
+          ? 'Ta demande de suppression a été enregistrée. Un administrateur la traitera sous 30 jours.'
+          : 'Your deletion request has been submitted. An admin will process it within 30 days.',
+      });
+    } catch (error: any) {
+      toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
+    } finally {
+      setRequestingDeletion(false);
+    }
+  };
+
+  const handleCancelDeletion = async () => {
+    if (!user) return;
+    try {
+      const { error } = await supabase
+        .from('account_deletion_requests')
+        .update({ status: 'cancelled' })
+        .eq('user_id', user.id)
+        .eq('status', 'pending');
+
+      if (error) throw error;
+
+      setDeletionPending(false);
+      toast({
+        title: language === 'fr' ? 'Demande annulée' : 'Request cancelled',
+        description: language === 'fr' 
+          ? 'Ta demande de suppression a été annulée.'
+          : 'Your deletion request has been cancelled.',
+      });
+    } catch (error: any) {
+      toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
     }
   };
 
@@ -373,11 +455,156 @@ const Profile = () => {
             </GlowCard>
           </div>
 
-          {/* Right column: Battle.net connection */}
-          <GlowCard className="p-5" hoverable={false}>
-            <h2 className="text-sm font-medium text-foreground mb-4">{t.profile.accountConnection}</h2>
-            <BattleNetConnect />
-          </GlowCard>
+          {/* Right column: Battle.net + Privacy + Danger Zone */}
+          <div className="space-y-4">
+            {/* Battle.net connection */}
+            <GlowCard className="p-5" hoverable={false}>
+              <h2 className="text-sm font-medium text-foreground mb-4">{t.profile.accountConnection}</h2>
+              <BattleNetConnect />
+            </GlowCard>
+
+            {/* Privacy section */}
+            <GlowCard className="p-5" hoverable={false}>
+              <h2 className="text-sm font-medium text-foreground mb-4 flex items-center gap-2">
+                <Shield className="h-4 w-4 text-primary" strokeWidth={1.5} />
+                {language === 'fr' ? 'Confidentialité' : 'Privacy'}
+              </h2>
+
+              {/* BattleTag visibility toggle */}
+              {profile?.battletag && (
+                <div className="flex items-center justify-between py-2 mb-4">
+                  <Label htmlFor="show-battletag" className="text-sm text-foreground cursor-pointer">
+                    {language === 'fr' ? 'Afficher mon BattleTag sur le profil public' : 'Show BattleTag on public profile'}
+                  </Label>
+                  <Switch
+                    id="show-battletag"
+                    checked={showBattletag}
+                    onCheckedChange={handleBattletagVisibilityChange}
+                  />
+                </div>
+              )}
+
+              {/* Privacy info */}
+              <div className="space-y-3 text-sm">
+                <div className="p-3 rounded-lg bg-muted/30 border border-border">
+                  <p className="font-medium text-foreground mb-1">
+                    {language === 'fr' ? 'Données publiques' : 'Public data'}
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    {language === 'fr' 
+                      ? 'Ton pseudo et avatar sont visibles sur ton profil public.'
+                      : 'Your username and avatar are visible on your public profile.'}
+                  </p>
+                </div>
+                <div className="p-3 rounded-lg bg-muted/30 border border-border">
+                  <p className="font-medium text-foreground mb-1">
+                    {language === 'fr' ? 'Données de guilde' : 'Guild data'}
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    {language === 'fr' 
+                      ? 'Tes personnages WoW et vœux de classe sont visibles uniquement par les membres de ta guilde.'
+                      : 'Your WoW characters and class wishes are only visible to your guild members.'}
+                  </p>
+                </div>
+                <div className="p-3 rounded-lg bg-muted/30 border border-border">
+                  <p className="font-medium text-foreground mb-1">
+                    {language === 'fr' ? 'Données privées' : 'Private data'}
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    {language === 'fr' 
+                      ? 'Ton email et tes tokens Battle.net ne sont jamais partagés.'
+                      : 'Your email and Battle.net tokens are never shared.'}
+                  </p>
+                </div>
+              </div>
+            </GlowCard>
+
+            {/* Danger Zone */}
+            <GlowCard className="p-5 border-destructive/30" hoverable={false}>
+              <h2 className="text-sm font-medium text-destructive mb-4 flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4" strokeWidth={1.5} />
+                {language === 'fr' ? 'Zone de danger' : 'Danger Zone'}
+              </h2>
+
+              {deletionPending ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    {language === 'fr' 
+                      ? 'Une demande de suppression est en cours de traitement.'
+                      : 'A deletion request is pending processing.'}
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCancelDeletion}
+                    className="w-full"
+                  >
+                    {language === 'fr' ? 'Annuler la demande' : 'Cancel request'}
+                  </Button>
+                </div>
+              ) : (
+                <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      {language === 'fr' ? 'Demander la suppression de mon compte' : 'Request account deletion'}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="bg-card border-border">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="text-foreground">
+                        {language === 'fr' ? 'Supprimer ton compte ?' : 'Delete your account?'}
+                      </AlertDialogTitle>
+                      <AlertDialogDescription className="space-y-3">
+                        <p>
+                          {language === 'fr' 
+                            ? 'Cette action est irréversible. Toutes tes données seront définitivement supprimées :'
+                            : 'This action is irreversible. All your data will be permanently deleted:'}
+                        </p>
+                        <ul className="list-disc list-inside text-sm space-y-1">
+                          <li>{language === 'fr' ? 'Ton profil et avatar' : 'Your profile and avatar'}</li>
+                          <li>{language === 'fr' ? 'Tes personnages WoW' : 'Your WoW characters'}</li>
+                          <li>{language === 'fr' ? 'Tes vœux de classe' : 'Your class wishes'}</li>
+                          <li>{language === 'fr' ? 'Tes messages sur le forum' : 'Your forum posts'}</li>
+                        </ul>
+                        <div className="pt-2">
+                          <Label htmlFor="confirm-delete" className="text-foreground text-sm">
+                            {language === 'fr' 
+                              ? `Tape "${profile?.username}" pour confirmer`
+                              : `Type "${profile?.username}" to confirm`}
+                          </Label>
+                          <Input
+                            id="confirm-delete"
+                            value={deleteConfirmText}
+                            onChange={(e) => setDeleteConfirmText(e.target.value)}
+                            className="mt-2 cosmic-input"
+                            placeholder={profile?.username || ''}
+                          />
+                        </div>
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel className="bg-muted">
+                        {t.common.cancel}
+                      </AlertDialogCancel>
+                      <Button
+                        variant="destructive"
+                        onClick={handleRequestDeletion}
+                        disabled={deleteConfirmText !== profile?.username || requestingDeletion}
+                      >
+                        {requestingDeletion && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                        {language === 'fr' ? 'Confirmer la suppression' : 'Confirm deletion'}
+                      </Button>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+            </GlowCard>
+          </div>
         </div>
 
         {/* Avatar Crop Dialog */}
