@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
 import { getClassById, getSpecById, getRolesFromSpecs, Role, wowClasses } from '@/data/wowClasses';
 import { CosmicBackground } from '@/components/CosmicBackground';
@@ -60,34 +61,57 @@ const RosterWishes = () => {
   const [selectedRosterId, setSelectedRosterId] = useState<string | null>(null);
   const [rosterSettingsOpen, setRosterSettingsOpen] = useState(false);
 
-  // Dynamic offset for sticky roster controls bar - measured after SubNav renders
+  const isMobile = useIsMobile();
+
+  // Dynamic offset for roster controls bar.
+  // On mobile we render it as `fixed` (like the Settings tabs) to avoid a top-vs-scroll mismatch.
+  const controlsRef = useRef<HTMLDivElement | null>(null);
   const [controlsTop, setControlsTop] = useState<number>(112);
-  useEffect(() => {
-    if (!guild) return; // Wait for SubNav to be rendered
-    
+  const [controlsSpacerH, setControlsSpacerH] = useState<number>(0);
+
+  useLayoutEffect(() => {
+    if (!guild) return;
+
+    let raf = 0;
+
     const compute = () => {
-      const globalNav = document.querySelector<HTMLElement>('[data-global-nav]');
-      const subNav = document.querySelector<HTMLElement>('[data-guild-subnav]');
-      const globalH = globalNav?.offsetHeight ?? 64;
-      const subH = subNav?.offsetHeight ?? 48;
-      setControlsTop(globalH + subH);
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const globalNav = document.querySelector<HTMLElement>('[data-global-nav]');
+        const subNav = document.querySelector<HTMLElement>('[data-guild-subnav]');
+
+        const fallbackGlobalH = globalNav?.offsetHeight ?? 64;
+        const fallbackSubH = subNav?.offsetHeight ?? 48;
+
+        const nextTop = subNav
+          ? Math.max(0, Math.round(subNav.getBoundingClientRect().bottom))
+          : fallbackGlobalH + fallbackSubH;
+
+        setControlsTop((prev) => (prev === nextTop ? prev : nextTop));
+
+        if (isMobile) {
+          const nextH = Math.round(controlsRef.current?.offsetHeight ?? 0);
+          setControlsSpacerH((prev) => (prev === nextH ? prev : nextH));
+        }
+      });
     };
-    
-    // Double RAF ensures styles are applied
-    requestAnimationFrame(() => requestAnimationFrame(compute));
-    
+
+    compute();
     window.addEventListener('resize', compute);
+
     const ro = new ResizeObserver(compute);
     const globalNavEl = document.querySelector<HTMLElement>('[data-global-nav]');
     const subNavEl = document.querySelector<HTMLElement>('[data-guild-subnav]');
     if (globalNavEl) ro.observe(globalNavEl);
     if (subNavEl) ro.observe(subNavEl);
-    
+    if (controlsRef.current) ro.observe(controlsRef.current);
+
     return () => {
+      cancelAnimationFrame(raf);
       ro.disconnect();
       window.removeEventListener('resize', compute);
     };
-  }, [guild]);
+  }, [guild, isMobile]);
 
   const fetchData = async () => {
     if (!user || !regionSlug || !serverSlug || !guildSlug) return;
@@ -545,7 +569,11 @@ const RosterWishes = () => {
       )}
 
       {/* Roster controls bar */}
-      <div className="sticky z-30 bg-background/80 backdrop-blur-lg border-b border-border/50" style={{ top: controlsTop }}>
+      <div
+        ref={controlsRef}
+        className={`${isMobile ? 'fixed left-0 right-0' : 'sticky'} z-30 bg-background/80 backdrop-blur-lg border-b border-border/50`}
+        style={{ top: controlsTop }}
+      >
         <div className="container mx-auto px-3 md:px-4 py-2 flex items-center justify-between">
           <RosterSelector
             rosters={rosters}
@@ -565,6 +593,9 @@ const RosterWishes = () => {
           </div>
         </div>
       </div>
+      {isMobile && controlsSpacerH > 0 && (
+        <div aria-hidden="true" style={{ height: controlsSpacerH }} />
+      )}
 
       <main className="container mx-auto px-3 md:px-4 py-4 md:py-6 relative z-10">
         {/* Access warning */}
