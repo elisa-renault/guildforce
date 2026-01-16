@@ -88,10 +88,7 @@ export const CookieBanner: React.FC = () => {
     saveConsent(preferences);
   };
 
-  if (!showBanner && !showPreferences) {
-    return null;
-  }
-
+  // Always render the preferences dialog, but banner only when needed
   return (
     <>
       {/* Main Banner - sticky at bottom, stays above footer */}
