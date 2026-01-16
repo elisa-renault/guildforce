@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Heart, BarChart3, Settings, History, ArrowLeft } from 'lucide-react';
+import { LayoutDashboard, Heart, BarChart3, Settings, History, ArrowLeft, Users } from 'lucide-react';
 
 interface GuildSubNavProps {
   guild: {
@@ -14,7 +14,7 @@ interface GuildSubNavProps {
   basePath: string;
   isGM: boolean;
   hasActivityPermission?: boolean;
-  activeTab: 'dashboard' | 'wishes' | 'polls' | 'settings' | 'activity';
+  activeTab: 'dashboard' | 'wishes' | 'polls' | 'settings' | 'activity' | 'members';
 }
 
 export const GuildSubNav = ({
@@ -40,6 +40,13 @@ export const GuildSubNav = ({
       label: t.guildNav?.myWishes || t.wishes.title,
       icon: Heart,
       path: `${basePath}/wishes`,
+      show: true,
+    },
+    {
+      id: 'members' as const,
+      label: t.common.loading === 'Chargement...' ? 'Membres' : 'Members',
+      icon: Users,
+      path: `${basePath}/members`,
       show: true,
     },
     {
