@@ -35,6 +35,7 @@ const RosterWishes = () => {
   const [guildId, setGuildId] = useState<string | null>(null);
   const [guild, setGuild] = useState<{ name: string; server: string; region: string; faction: string; avatar_url: string | null } | null>(null);
   const [members, setMembers] = useState<MemberWish[]>([]);
+  const [canManageWishes, setCanManageWishes] = useState(false);
   const [isGM, setIsGM] = useState(false);
   const [hasSettingsPermission, setHasSettingsPermission] = useState(false);
   const [filters, setFilters] = useState<RosterFiltersType>({
@@ -97,6 +98,14 @@ const RosterWishes = () => {
 
     const userIsGM = membershipData.role === 'gm';
     setIsGM(userIsGM);
+
+    // Check manage_wishes permission
+    const { data: wishPerm } = await supabase.rpc('has_guild_permission', {
+      p_guild_id: foundGuildId,
+      p_permission: 'manage_wishes',
+      p_user_id: user.id,
+    });
+    setCanManageWishes(!!userIsGM || !!wishPerm);
 
     // Check settings permissions
     const { data: settingsPerm } = await supabase.rpc('has_guild_permission', {
@@ -346,9 +355,9 @@ const RosterWishes = () => {
     }
   };
 
-  // Validate a wish (GM only)
+  // Validate a wish (GM or users with manage_wishes permission)
   const validateWish = async (userId: string, choiceIndex: number, status: ValidationStatus) => {
-    if (!user || !guildId || !selectedRosterId || !isGM) return;
+    if (!user || !guildId || !selectedRosterId || !canManageWishes) return;
 
     // Optimistic UI update so the badge changes instantly
     setMembers((prev) =>
@@ -557,7 +566,7 @@ const RosterWishes = () => {
           editStatus={editStatus}
           saving={saving}
           maxWishes={MAX_WISHES}
-          isGM={isGM}
+          isGM={canManageWishes}
           onToggleRow={toggleRow}
           onStartEditing={startEditing}
           onCancelEditing={cancelEditing}
