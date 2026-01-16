@@ -1,3 +1,4 @@
+import React, { forwardRef } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
   DndContext,
@@ -29,7 +30,7 @@ interface SortableItemProps {
   item: string;
 }
 
-const SortableItem = ({ id, index, item }: SortableItemProps) => {
+const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(({ id, index, item }, outerRef) => {
   const {
     attributes,
     listeners,
@@ -66,9 +67,11 @@ const SortableItem = ({ id, index, item }: SortableItemProps) => {
       <span className="text-foreground flex-1">{item}</span>
     </div>
   );
-};
+});
 
-export const RankingInput = ({ items, onChange }: RankingInputProps) => {
+SortableItem.displayName = 'SortableItem';
+
+export const RankingInput = forwardRef<HTMLDivElement, RankingInputProps>(({ items, onChange }, ref) => {
   const { language } = useLanguage();
   
   const sensors = useSensors(
@@ -94,7 +97,7 @@ export const RankingInput = ({ items, onChange }: RankingInputProps) => {
   };
 
   return (
-    <div className="space-y-2">
+    <div ref={ref} className="space-y-2">
       <p className="text-xs text-muted-foreground mb-3">
         {language === 'fr' 
           ? 'Glissez-déposez pour classer les éléments (1 = meilleur)' 
@@ -115,4 +118,6 @@ export const RankingInput = ({ items, onChange }: RankingInputProps) => {
       </DndContext>
     </div>
   );
-};
+});
+
+RankingInput.displayName = 'RankingInput';
