@@ -333,15 +333,13 @@ const Auth = () => {
                   </form>
                 </CollapsibleContent>
               </Collapsible>
-
-              {/* Back Button - Inside Card */}
-              <div className="mt-6 pt-4 border-t border-border/30">
-                <Button variant="ghost" onClick={() => navigate('/')} className="w-full text-muted-foreground hover:text-foreground gap-2">
-                  <ArrowLeft className="h-4 w-4" />
-                  {t.common.back}
-                </Button>
-              </div>
             </GlowCard>
+
+            {/* Back Button - Outside Card */}
+            <Button variant="ghost" onClick={() => navigate('/')} className="mt-4 text-muted-foreground hover:text-foreground gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              {t.common.back}
+            </Button>
           </div>
         </div>
       </div>
