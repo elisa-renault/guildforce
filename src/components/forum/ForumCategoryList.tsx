@@ -1,3 +1,4 @@
+import React, { forwardRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ForumCategory } from '@/types/forum';
@@ -19,7 +20,8 @@ const categoryIcons: Record<string, React.ElementType> = {
   bugs: Bug,
 };
 
-export const ForumCategoryList = ({ categories, basePath = '/forum' }: ForumCategoryListProps) => {
+export const ForumCategoryList = forwardRef<HTMLDivElement, ForumCategoryListProps>(
+  ({ categories, basePath = '/forum' }, ref) => {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
   const locale = language === 'fr' ? fr : enUS;
@@ -108,7 +110,7 @@ export const ForumCategoryList = ({ categories, basePath = '/forum' }: ForumCate
   };
 
   return (
-    <div className="space-y-6">
+    <div ref={ref} className="space-y-6">
       {globalCategories.length > 0 && (
         <div>
           <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
@@ -134,4 +136,6 @@ export const ForumCategoryList = ({ categories, basePath = '/forum' }: ForumCate
       )}
     </div>
   );
-};
+});
+
+ForumCategoryList.displayName = 'ForumCategoryList';
