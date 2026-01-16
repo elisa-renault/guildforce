@@ -1,6 +1,6 @@
 export const CosmicBackground = () => {
   return (
-    <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+    <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
       {/* Base very dark background */}
       <div 
         className="absolute inset-0"
@@ -65,8 +65,7 @@ export const CosmicBackground = () => {
         }}
       />
 
-      {/* Noise overlay */}
-      <div className="noise-overlay" />
+      {/* Grain désactivé pour éviter de masquer l'UI */}
     </div>
   );
 };
