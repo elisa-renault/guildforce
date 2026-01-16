@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { GuildManager } from '@/components/admin/GuildManager';
+import { UserManager } from '@/components/admin/UserManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Users, 
@@ -194,6 +195,10 @@ export default function Admin() {
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">{language === 'fr' ? 'Tableau de bord' : 'Dashboard'}</span>
             </TabsTrigger>
+            <TabsTrigger value="users" className="gap-2">
+              <Users className="h-4 w-4" />
+              <span className="hidden sm:inline">{language === 'fr' ? 'Utilisateurs' : 'Users'}</span>
+            </TabsTrigger>
             <TabsTrigger value="guilds" className="gap-2">
               <Shield className="h-4 w-4" />
               <span className="hidden sm:inline">{language === 'fr' ? 'Guildes' : 'Guilds'}</span>
@@ -244,6 +249,10 @@ export default function Admin() {
                 ))}
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="users">
+            <UserManager />
           </TabsContent>
 
           <TabsContent value="guilds">
