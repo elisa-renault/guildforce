@@ -17,7 +17,7 @@ import { CosmicButton } from '@/components/CosmicButton';
 import { BattleNetConnect } from '@/components/BattleNetConnect';
 import { AvatarCropDialog } from '@/components/AvatarCropDialog';
 
-import { User, Save, Globe, Loader2, Sparkles, Upload, Trash2 } from 'lucide-react';
+import { User, Save, Globe, Loader2, Sparkles, Upload, Trash2, ExternalLink } from 'lucide-react';
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -269,7 +269,18 @@ const Profile = () => {
       <CosmicBackground />
 
       <main className="container mx-auto px-4 py-6 relative z-10">
-        <h1 className="font-display text-2xl text-foreground mb-6 text-center">{t.profile.title}</h1>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
+          <h1 className="font-display text-2xl text-foreground">{t.profile.title}</h1>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(`/u/${profile.username}`)}
+            className="gap-1.5"
+          >
+            <ExternalLink className="h-3.5 w-3.5" strokeWidth={1.5} />
+            {language === 'fr' ? 'Voir mon profil public' : 'View public profile'}
+          </Button>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-4xl mx-auto">
           {/* Left column: Avatar + Profile stacked */}
