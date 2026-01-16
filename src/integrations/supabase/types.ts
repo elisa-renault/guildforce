@@ -1035,6 +1035,7 @@ export type Database = {
           faction: string
           id: string
           name: string
+          officer_rank_threshold: number
           owner_id: string | null
           region: string
           server: string
@@ -1047,6 +1048,7 @@ export type Database = {
           faction: string
           id?: string
           name: string
+          officer_rank_threshold?: number
           owner_id?: string | null
           region?: string
           server: string
@@ -1059,6 +1061,7 @@ export type Database = {
           faction?: string
           id?: string
           name?: string
+          officer_rank_threshold?: number
           owner_id?: string | null
           region?: string
           server?: string
