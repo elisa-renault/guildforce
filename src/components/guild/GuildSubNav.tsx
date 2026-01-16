@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -25,6 +25,7 @@ export const GuildSubNav = ({
   activeTab,
 }: GuildSubNavProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useLanguage();
 
   // Settings is shown if user is GM OR has any settings permission
@@ -73,13 +74,36 @@ export const GuildSubNav = ({
 
   const visibleTabs = tabs.filter(tab => tab.show);
 
+  // Determine fallback based on current page
+  const getFallbackPath = () => {
+    // If on wishes page, fallback to roster
+    if (activeTab === 'wishes') {
+      return `${basePath}/roster`;
+    }
+    // If on a subpage of the guild, fallback to overview
+    if (location.pathname !== basePath && location.pathname.startsWith(basePath)) {
+      return basePath;
+    }
+    // Otherwise, go to guilds list
+    return '/guilds';
+  };
+
+  const handleBack = () => {
+    // Check if there's history to go back to
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate(getFallbackPath());
+    }
+  };
+
   return (
     <div className="sticky top-16 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50">
       <div className="container mx-auto px-3 md:px-4">
         <div className="flex items-center gap-2 md:gap-3 py-2">
-          {/* Back to guilds */}
+          {/* Back button - uses browser history or fallback */}
           <button
-            onClick={() => navigate('/guilds')}
+            onClick={handleBack}
             className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors flex-shrink-0"
             title={t.common.back}
           >
