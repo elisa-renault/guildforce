@@ -377,6 +377,15 @@ export interface Translations {
     unauthorized: string;
     notFound: string;
   };
+  // Legal pages
+  legal: {
+    legalNotice: string;
+    privacyPolicy: string;
+    termsOfService: string;
+    lastUpdated: string;
+    editLegalPages: string;
+    editLegalPagesDesc: string;
+  };
 }
 
 export const translations: Record<Language, Translations> = {
@@ -748,6 +757,14 @@ export const translations: Record<Language, Translations> = {
       unauthorized: 'You are not authorized to perform this action.',
       notFound: 'The requested resource was not found.',
     },
+    legal: {
+      legalNotice: 'Legal Notice',
+      privacyPolicy: 'Privacy Policy',
+      termsOfService: 'Terms of Service',
+      lastUpdated: 'Last updated',
+      editLegalPages: 'Manage Legal Pages',
+      editLegalPagesDesc: 'Edit mandatory legal pages content',
+    },
   },
   fr: {
     common: {
@@ -1116,6 +1133,14 @@ export const translations: Record<Language, Translations> = {
       network: 'Erreur réseau. Vérifiez votre connexion.',
       unauthorized: 'Vous n\'êtes pas autorisé à effectuer cette action.',
       notFound: 'La ressource demandée est introuvable.',
+    },
+    legal: {
+      legalNotice: 'Mentions légales',
+      privacyPolicy: 'Confidentialité',
+      termsOfService: 'CGU',
+      lastUpdated: 'Dernière mise à jour',
+      editLegalPages: 'Gérer les pages légales',
+      editLegalPagesDesc: 'Modifier le contenu des pages légales obligatoires',
     },
   },
 };
