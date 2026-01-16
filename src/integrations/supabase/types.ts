@@ -954,6 +954,79 @@ export type Database = {
           },
         ]
       }
+      guild_roster_cache: {
+        Row: {
+          character_class_id: number
+          character_level: number
+          character_name: string
+          character_realm: string
+          character_realm_slug: string
+          created_at: string
+          guild_id: string
+          id: string
+          is_guild_master: boolean | null
+          matched_character_id: string | null
+          matched_user_id: string | null
+          rank_index: number
+          rank_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          character_class_id: number
+          character_level?: number
+          character_name: string
+          character_realm: string
+          character_realm_slug: string
+          created_at?: string
+          guild_id: string
+          id?: string
+          is_guild_master?: boolean | null
+          matched_character_id?: string | null
+          matched_user_id?: string | null
+          rank_index?: number
+          rank_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          character_class_id?: number
+          character_level?: number
+          character_name?: string
+          character_realm?: string
+          character_realm_slug?: string
+          created_at?: string
+          guild_id?: string
+          id?: string
+          is_guild_master?: boolean | null
+          matched_character_id?: string | null
+          matched_user_id?: string | null
+          rank_index?: number
+          rank_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_roster_cache_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_roster_cache_matched_character_id_fkey"
+            columns: ["matched_character_id"]
+            isOneToOne: false
+            referencedRelation: "wow_characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_roster_cache_matched_user_id_fkey"
+            columns: ["matched_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guilds: {
         Row: {
           avatar_url: string | null
