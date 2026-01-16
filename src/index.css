@@ -13,11 +13,11 @@
     --background: 240 10% 4%;
     --foreground: 30 15% 92%;
 
-    /* Card with subtle transparency */
-    --card: 240 10% 7%;
+    /* Card with subtle transparency (slightly brighter for contrast) */
+    --card: 240 10% 9%;
     --card-foreground: 30 15% 92%;
 
-    --popover: 240 10% 6%;
+    --popover: 240 10% 8%;
     --popover-foreground: 30 15% 92%;
 
     /* Plum primary - #62196e */
@@ -28,8 +28,9 @@
     --secondary: 292 55% 40%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 240 10% 12%;
-    --muted-foreground: 240 5% 55%;
+    /* Raised contrast to avoid "invisible" muted text on dark backgrounds */
+    --muted: 240 10% 16%;
+    --muted-foreground: 240 6% 70%;
 
     /* Accent - slightly different plum tone */
     --accent: 292 58% 35%;
@@ -38,8 +39,8 @@
     --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 10% 15%;
-    --input: 240 10% 10%;
+    --border: 240 10% 24%;
+    --input: 240 10% 14%;
     --ring: 292 63% 26%;
 
     --radius: 0.5rem;
