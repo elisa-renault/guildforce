@@ -19,11 +19,22 @@ interface RosterSelectorProps {
 export const RosterSelector = ({ rosters, selectedRosterId, onSelect, showAccessIndicator = false }: RosterSelectorProps) => {
   const { t } = useLanguage();
   
-  if (rosters.length <= 1) {
-    return null;
-  }
-
   const selectedRoster = rosters.find(r => r.id === selectedRosterId);
+
+  // If only one roster, display it as static text (no dropdown)
+  if (rosters.length <= 1) {
+    if (!selectedRoster) return null;
+    
+    return (
+      <div className="flex items-center gap-1.5 md:gap-2 min-w-0">
+        <Layers className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+        <span className="text-sm md:text-base font-medium truncate">{selectedRoster.name}</span>
+        {selectedRoster.is_default && (
+          <span className="text-xs text-muted-foreground flex-shrink-0">({t.rosters?.default || 'Default'})</span>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center gap-1.5 md:gap-2 min-w-0">
