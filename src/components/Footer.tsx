@@ -20,9 +20,14 @@ export const Footer = () => {
   return (
     <footer className="relative z-10 border-t border-border/50 bg-background/80 backdrop-blur-sm mt-auto">
       <div className="container mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-3">
-        <span className="text-sm text-muted-foreground">
-          © {new Date().getFullYear()} Guildforce
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">
+            © {new Date().getFullYear()} Guildforce
+          </span>
+          <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded bg-primary/20 text-primary border border-primary/30">
+            Alpha
+          </span>
+        </div>
 
         <div className="flex items-center gap-3">
           <a
