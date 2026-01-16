@@ -27,6 +27,73 @@ export interface Translations {
     you: string;
     settings: string;
     tipMe: string;
+    all: string;
+    refresh: string;
+  };
+  // Bug Report
+  bugReport: {
+    button: string;
+    title: string;
+    subtitle: string;
+    titleField: string;
+    titlePlaceholder: string;
+    descriptionField: string;
+    descriptionPlaceholder: string;
+    category: string;
+    categories: {
+      bug: string;
+      ui: string;
+      performance: string;
+      feature: string;
+      other: string;
+    };
+    priority: string;
+    priorities: {
+      low: string;
+      medium: string;
+      high: string;
+      critical: string;
+    };
+    statuses: {
+      open: string;
+      investigating: string;
+      resolved: string;
+      closed: string;
+      wontfix: string;
+    };
+    autoInfo: string;
+    errorsDetected: string;
+    browser: string;
+    userStatus: string;
+    submit: string;
+    success: string;
+    error: string;
+    errorMissingFields: string;
+    anonymous: string;
+    admin: {
+      title: string;
+      criticalPending: string;
+      noReports: string;
+      fetchError: string;
+      updateError: string;
+      statusUpdated: string;
+      deleted: string;
+      deleteError: string;
+      filterStatus: string;
+      filterPriority: string;
+      reporter: string;
+      createdAt: string;
+      consoleLogs: string;
+      browserInfo: string;
+      userContext: string;
+      resolvedBy: string;
+      resolutionNote: string;
+      resolutionNotePlaceholder: string;
+      markInvestigating: string;
+      markResolved: string;
+      markWontfix: string;
+      delete: string;
+    };
   };
   // Battle.net
   battlenet: {
