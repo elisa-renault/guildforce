@@ -219,7 +219,7 @@ const Overview = () => {
             {t.common.loading === 'Chargement...' ? 'Bienvenue' : 'Welcome'}, {user?.user_metadata?.username || 'Aventurier'}
           </h1>
           <p className="text-muted-foreground">
-            {guild?.name} • {guild?.server}
+            {guild?.name} • {guild?.server ? guild.server.charAt(0).toUpperCase() + guild.server.slice(1).toLowerCase() : ''}
           </p>
         </div>
 
