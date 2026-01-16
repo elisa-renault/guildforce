@@ -10,6 +10,7 @@ import { GuildManager } from '@/components/admin/GuildManager';
 import { UserManager } from '@/components/admin/UserManager';
 import { LegalPagesEditor } from '@/components/admin/LegalPagesEditor';
 import { BugReportsManager } from '@/components/admin/BugReportsManager';
+import { DeletionRequestsManager } from '@/components/admin/DeletionRequestsManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Users, 
@@ -20,7 +21,8 @@ import {
   Crown,
   LayoutDashboard,
   FileText,
-  Bug
+  Bug,
+  Trash2
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -32,6 +34,7 @@ interface AdminStats {
   pendingReports: number;
   activeSanctions: number;
   openBugs: number;
+  pendingDeletions: number;
 }
 
 export default function Admin() {
@@ -41,7 +44,7 @@ export default function Admin() {
   const { isAdmin, loading: adminLoading } = useIsAdmin();
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'guilds' | 'legal' | 'bugs'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'guilds' | 'legal' | 'bugs' | 'deletions'>('dashboard');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -67,7 +70,8 @@ export default function Admin() {
           { count: postsCount },
           { count: reportsCount },
           { count: sanctionsCount },
-          { count: bugsCount }
+          { count: bugsCount },
+          { count: deletionsCount }
         ] = await Promise.all([
           supabase.from('profiles').select('*', { count: 'exact', head: true }),
           supabase.from('guilds').select('*', { count: 'exact', head: true }),
@@ -75,7 +79,8 @@ export default function Admin() {
           supabase.from('forum_posts').select('*', { count: 'exact', head: true }),
           supabase.from('forum_reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
           supabase.from('forum_user_sanctions').select('*', { count: 'exact', head: true }).eq('is_active', true),
-          supabase.from('bug_reports').select('*', { count: 'exact', head: true }).eq('status', 'open')
+          supabase.from('bug_reports').select('*', { count: 'exact', head: true }).eq('status', 'open'),
+          supabase.from('account_deletion_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending')
         ]);
 
         setStats({
@@ -85,7 +90,8 @@ export default function Admin() {
           totalPosts: postsCount || 0,
           pendingReports: reportsCount || 0,
           activeSanctions: sanctionsCount || 0,
-          openBugs: bugsCount || 0
+          openBugs: bugsCount || 0,
+          pendingDeletions: deletionsCount || 0
         });
       } catch (error) {
         console.error('Error fetching admin stats:', error);
@@ -161,10 +167,16 @@ export default function Admin() {
       value: stats?.openBugs ?? '-',
       icon: Bug,
       color: stats?.openBugs && stats.openBugs > 0 ? 'text-red-400' : 'text-muted-foreground'
+    },
+    {
+      label: language === 'fr' ? 'Suppressions en attente' : 'Pending Deletions',
+      value: stats?.pendingDeletions ?? '-',
+      icon: Trash2,
+      color: stats?.pendingDeletions && stats.pendingDeletions > 0 ? 'text-red-400' : 'text-muted-foreground'
     }
   ];
 
-  const goToTab = (tab: 'dashboard' | 'users' | 'guilds' | 'legal' | 'bugs') => {
+  const goToTab = (tab: 'dashboard' | 'users' | 'guilds' | 'legal' | 'bugs' | 'deletions') => {
     setActiveTab(tab);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -211,6 +223,16 @@ export default function Admin() {
       color: 'text-amber-400',
     },
     {
+      title: language === 'fr' ? 'Demandes de suppression' : 'Deletion Requests',
+      description:
+        language === 'fr'
+          ? 'Traiter les demandes de suppression de compte (RGPD)'
+          : 'Process account deletion requests (GDPR)',
+      icon: Trash2,
+      onClick: () => goToTab('deletions'),
+      color: 'text-red-400',
+    },
+    {
       title: language === 'fr' ? 'Rapports de bugs' : 'Bug Reports',
       description:
         language === 'fr'
@@ -241,7 +263,7 @@ export default function Admin() {
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'dashboard' | 'users' | 'guilds' | 'legal')} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'dashboard' | 'users' | 'guilds' | 'legal' | 'bugs' | 'deletions')} className="space-y-6">
           <TabsList className="bg-card border border-border p-1 flex-wrap h-auto gap-1">
             <TabsTrigger value="dashboard" className="gap-2 data-[state=active]:bg-primary/20 data-[state=active]:text-foreground">
               <LayoutDashboard className="h-4 w-4" />
@@ -262,6 +284,10 @@ export default function Admin() {
             <TabsTrigger value="bugs" className="gap-2 data-[state=active]:bg-primary/20 data-[state=active]:text-foreground">
               <Bug className="h-4 w-4" />
               <span>{language === 'fr' ? 'Bugs' : 'Bugs'}</span>
+            </TabsTrigger>
+            <TabsTrigger value="deletions" className="gap-2 data-[state=active]:bg-primary/20 data-[state=active]:text-foreground">
+              <Trash2 className="h-4 w-4" />
+              <span>{language === 'fr' ? 'Suppressions' : 'Deletions'}</span>
             </TabsTrigger>
           </TabsList>
 
@@ -325,6 +351,10 @@ export default function Admin() {
 
           <TabsContent value="bugs">
             <BugReportsManager />
+          </TabsContent>
+
+          <TabsContent value="deletions">
+            <DeletionRequestsManager />
           </TabsContent>
         </Tabs>
       </div>
