@@ -46,6 +46,75 @@ export type Database = {
           },
         ]
       }
+      bug_reports: {
+        Row: {
+          browser_info: Json | null
+          category: string
+          console_logs: Json | null
+          created_at: string
+          current_url: string | null
+          description: string
+          id: string
+          priority: string
+          reporter_id: string | null
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          title: string
+          user_context: Json | null
+        }
+        Insert: {
+          browser_info?: Json | null
+          category?: string
+          console_logs?: Json | null
+          created_at?: string
+          current_url?: string | null
+          description: string
+          id?: string
+          priority?: string
+          reporter_id?: string | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          title: string
+          user_context?: Json | null
+        }
+        Update: {
+          browser_info?: Json | null
+          category?: string
+          console_logs?: Json | null
+          created_at?: string
+          current_url?: string | null
+          description?: string
+          id?: string
+          priority?: string
+          reporter_id?: string | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          title?: string
+          user_context?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bug_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bug_reports_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       characters: {
         Row: {
           class_id: string
