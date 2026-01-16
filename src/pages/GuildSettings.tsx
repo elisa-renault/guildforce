@@ -368,7 +368,7 @@ const GuildSettings = () => {
       />
 
       {/* Settings Layout */}
-      <div className="flex-1 flex flex-col md:flex-row relative z-10">
+      <div className="flex-1 flex flex-col md:flex-row relative z-10 overflow-x-hidden">
         {/* Sidebar - on mobile it's sticky below GuildSubNav */}
         <GuildSettingsSidebar
           activeSection={activeSection}
@@ -377,7 +377,7 @@ const GuildSettings = () => {
         />
 
         {/* Main Content */}
-        <main className="flex-1 p-3 md:p-6 max-w-5xl overflow-x-hidden">
+        <main className="flex-1 p-3 md:p-6 md:max-w-5xl overflow-x-hidden min-w-0">
           {renderSectionContent()}
         </main>
       </div>
