@@ -373,15 +373,15 @@ export const GuildProfileSection = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Avatar + Info Grid */}
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-4 md:gap-6 lg:grid-cols-3">
         {/* Avatar Section */}
-        <GlowCard className="p-6">
-          <h2 className="font-display text-lg mb-4">{t.guildSettings.avatar}</h2>
+        <GlowCard className="p-4 md:p-6">
+          <h2 className="font-display text-base md:text-lg mb-3 md:mb-4">{t.guildSettings.avatar}</h2>
           
-          <div className="flex flex-col items-center gap-4">
-            <Avatar className="h-28 w-28 lg:h-32 lg:w-32 border-2 border-border">
+          <div className="flex flex-col items-center gap-3 md:gap-4">
+            <Avatar className="h-24 w-24 md:h-28 md:w-28 lg:h-32 lg:w-32 border-2 border-border">
               {guild.avatar_url ? (
                 <AvatarImage src={guild.avatar_url} alt={guild.name} />
               ) : (
@@ -390,7 +390,7 @@ export const GuildProfileSection = ({
                     ? 'bg-red-500/20 text-red-400' 
                     : 'bg-blue-500/20 text-blue-400'
                 }`}>
-                  <Shield className="h-10 w-10 lg:h-12 lg:w-12" strokeWidth={1.5} />
+                  <Shield className="h-8 w-8 md:h-10 md:w-10 lg:h-12 lg:w-12" strokeWidth={1.5} />
                 </AvatarFallback>
               )}
             </Avatar>
@@ -435,10 +435,10 @@ export const GuildProfileSection = ({
         </GlowCard>
 
         {/* Guild Info Section */}
-        <GlowCard className="p-6 lg:col-span-2">
-          <h2 className="font-display text-lg mb-4">{t.guildSettings.guildInfo}</h2>
+        <GlowCard className="p-4 md:p-6 lg:col-span-2">
+          <h2 className="font-display text-base md:text-lg mb-3 md:mb-4">{t.guildSettings.guildInfo}</h2>
           
-          <div className="grid sm:grid-cols-2 gap-x-8 gap-y-1">
+          <div className="grid gap-y-0.5 sm:grid-cols-2 sm:gap-x-8">
             <div className="flex justify-between gap-2 py-2 border-b border-border/50">
               <span className="text-muted-foreground text-sm">{t.guild.name}</span>
               <span className="font-medium text-right break-words">{guild.name}</span>
@@ -462,20 +462,20 @@ export const GuildProfileSection = ({
           </div>
 
           {/* Officer Rank Threshold */}
-          <div className="mt-6">
-            <div className="flex items-center gap-2 mb-2">
+          <div className="mt-4 md:mt-6">
+            <div className="flex items-center gap-2 mb-1.5 md:mb-2">
               <Crown className="h-4 w-4 text-amber-400" />
-              <Label className="text-sm font-medium">
+              <Label className="text-xs md:text-sm font-medium">
                 {language === 'fr' ? 'Rang officier minimum' : 'Minimum officer rank'}
               </Label>
-              <span className="text-sm font-medium text-muted-foreground ml-auto">
+              <span className="text-xs md:text-sm font-medium text-muted-foreground ml-auto">
                 0 → {localOfficerRank}
               </span>
             </div>
-            <p className="text-xs text-muted-foreground mb-3">
+            <p className="text-[10px] md:text-xs text-muted-foreground mb-2 md:mb-3">
               {language === 'fr' 
-                ? 'Les rangs 0 à ce rang seront considérés comme officiers et affichés avec le badge officier. Ce paramètre est propre à Guildforce.'
-                : 'Ranks 0 to this rank will be considered officers and displayed with the officer badge. This setting is specific to Guildforce.'}
+                ? 'Les rangs 0 à ce rang seront considérés comme officiers.'
+                : 'Ranks 0 to this rank will be considered officers.'}
             </p>
             
             <OfficerRankSlider

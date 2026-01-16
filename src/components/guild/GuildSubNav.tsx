@@ -73,7 +73,7 @@ export const GuildSubNav = ({
   return (
     <div className="sticky top-16 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50">
       <div className="container mx-auto px-3 md:px-4">
-        <div className="flex items-center gap-3 py-2">
+        <div className="flex items-center gap-2 md:gap-3 py-2">
           {/* Back to guilds */}
           <button
             onClick={() => navigate('/guilds')}
@@ -86,21 +86,21 @@ export const GuildSubNav = ({
           {/* Guild avatar + name */}
           <div className="flex items-center gap-2 min-w-0 flex-shrink-0">
             {guild.avatar_url && (
-              <Avatar className="h-7 w-7 border border-border/50">
+              <Avatar className="h-6 w-6 md:h-7 md:w-7 border border-border/50">
                 <AvatarImage src={guild.avatar_url} alt={guild.name} />
-                <AvatarFallback className="text-xs">{guild.name.charAt(0)}</AvatarFallback>
+                <AvatarFallback className="text-[10px] md:text-xs">{guild.name.charAt(0)}</AvatarFallback>
               </Avatar>
             )}
-            <span className="font-semibold text-foreground truncate max-w-[120px] md:max-w-[200px]">
+            <span className="font-semibold text-sm md:text-base text-foreground truncate max-w-[100px] md:max-w-[200px]">
               {guild.name}
             </span>
           </div>
 
           {/* Divider */}
-          <div className="h-6 w-px bg-border/50 flex-shrink-0 hidden sm:block" />
+          <div className="h-5 md:h-6 w-px bg-border/50 flex-shrink-0 hidden md:block" />
 
-          {/* Navigation tabs */}
-          <nav className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
+          {/* Navigation tabs - icons only on mobile, icons + text on desktop */}
+          <nav className="flex items-center gap-0.5 md:gap-1 overflow-x-auto scrollbar-hide ml-auto md:ml-0">
             {visibleTabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -110,14 +110,15 @@ export const GuildSubNav = ({
                   key={tab.id}
                   onClick={() => navigate(tab.path)}
                   className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap",
+                    "flex items-center justify-center gap-1.5 p-2 md:px-3 md:py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap",
                     isActive
                       ? "bg-primary/20 text-foreground ring-1 ring-primary/50"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   )}
+                  title={tab.label}
                 >
                   <Icon className="h-4 w-4" />
-                  <span className="hidden sm:inline">{tab.label}</span>
+                  <span className="hidden md:inline">{tab.label}</span>
                 </button>
               );
             })}
