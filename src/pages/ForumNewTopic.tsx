@@ -8,7 +8,7 @@ import { CosmicButton } from '@/components/CosmicButton';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { MarkdownEditor } from '@/components/forum';
 import { Input } from '@/components/ui/input';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
 const ForumNewTopic = () => {
@@ -96,17 +96,25 @@ const ForumNewTopic = () => {
             { label: categoryName, href: `/forum/category/${categorySlug}` },
             { label: language === 'fr' ? 'Nouveau sujet' : 'New topic' },
           ]}
-          className="mb-6"
+          className="mb-4"
         />
 
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="font-display text-2xl text-foreground">
-            {language === 'fr' ? 'Nouveau sujet' : 'New topic'}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {language === 'fr' ? `Dans ${categoryName}` : `In ${categoryName}`}
-          </p>
+        <div className="flex items-start gap-3 mb-8">
+          <button
+            onClick={() => navigate(`/forum/category/${categorySlug}`)}
+            className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors flex-shrink-0 mt-1"
+          >
+            <ChevronLeft className="h-4 w-4 text-muted-foreground" />
+          </button>
+          <div>
+            <h1 className="font-display text-2xl text-foreground">
+              {language === 'fr' ? 'Nouveau sujet' : 'New topic'}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {language === 'fr' ? `Dans ${categoryName}` : `In ${categoryName}`}
+            </p>
+          </div>
         </div>
 
         {/* Form */}
