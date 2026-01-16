@@ -91,16 +91,20 @@ export function GuildManager() {
   const handleSyncAll = async () => {
     setSyncing(true);
     try {
+      // Call with apikey header so the edge function accepts the request
       const { data, error } = await supabase.functions.invoke('battlenet-auth/scheduled-sync', {
-        body: {}
+        body: {},
       });
       
       if (error) throw error;
       
+      const users = data?.users || {};
+      const guilds = data?.guilds || {};
+      
       toast.success(
         language === 'fr' 
-          ? `Synchronisation terminée : ${data?.usersProcessed || 0} utilisateurs, ${data?.guildsProcessed || 0} guildes` 
-          : `Sync complete: ${data?.usersProcessed || 0} users, ${data?.guildsProcessed || 0} guilds`
+          ? `Sync terminée : ${users.synced || 0} utilisateurs, ${guilds.synced || 0} guildes (${guilds.skipped || 0} ignorées)` 
+          : `Sync complete: ${users.synced || 0} users, ${guilds.synced || 0} guilds (${guilds.skipped || 0} skipped)`
       );
       fetchGuilds();
     } catch (error) {
