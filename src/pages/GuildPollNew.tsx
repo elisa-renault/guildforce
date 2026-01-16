@@ -9,7 +9,7 @@ import { GuildSubNav } from '@/components/guild';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { PollEditor } from '@/components/polls';
 import { usePollMutations } from '@/hooks/useGuildPolls';
-import { PollFormData } from '@/types/poll';
+import type { PollFormData, SectionFormData, QuestionFormData } from '@/types/poll';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -100,6 +100,7 @@ const GuildPollNew = () => {
           .from('guild_polls')
           .select(`
             *,
+            sections:guild_poll_sections(*),
             questions:guild_poll_questions(*)
           `)
           .eq('id', pollId)
@@ -203,6 +204,61 @@ const GuildPollNew = () => {
     return null;
   }
 
+  const toPollFormData = (poll: any): PollFormData => {
+    const rawSections = Array.isArray(poll?.sections) ? poll.sections : [];
+    const rawQuestions = Array.isArray(poll?.questions) ? poll.questions : [];
+
+    const sectionsById = new Map<string, SectionFormData>();
+    const sections: SectionFormData[] = rawSections
+      .slice()
+      .sort((a: any, b: any) => (a.display_order ?? 0) - (b.display_order ?? 0))
+      .map((s: any) => {
+        const section: SectionFormData = {
+          id: s.id,
+          title: s.title || '',
+          description: s.description || '',
+          questions: [],
+        };
+        if (s.id) sectionsById.set(s.id, section);
+        return section;
+      });
+
+    const sortedQuestions = rawQuestions
+      .slice()
+      .sort((a: any, b: any) => (a.display_order ?? 0) - (b.display_order ?? 0));
+
+    const generalQuestions: QuestionFormData[] = [];
+
+    for (const q of sortedQuestions) {
+      const qForm: QuestionFormData = {
+        id: q.id,
+        section_id: q.section_id ?? null,
+        question_text: q.question_text || '',
+        question_type: q.question_type,
+        is_required: !!q.is_required,
+        options: Array.isArray(q.options) ? q.options : [],
+        scale_config: q.scale_config ?? null,
+      };
+
+      if (qForm.section_id && sectionsById.has(qForm.section_id)) {
+        sectionsById.get(qForm.section_id)!.questions.push(qForm);
+      } else {
+        generalQuestions.push({ ...qForm, section_id: null });
+      }
+    }
+
+    return {
+      title: poll.title || '',
+      description: poll.description || '',
+      is_anonymous: !!poll.is_anonymous,
+      allow_multiple_responses: !!poll.allow_multiple_responses,
+      roster_id: poll.roster_id ?? null,
+      ends_at: poll.ends_at ?? null,
+      sections,
+      questions: generalQuestions,
+    };
+  };
+
   const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
   const breadcrumbs = [
     { label: t.guildNav?.polls || 'Polls', href: `${basePath}/polls` },
@@ -260,23 +316,7 @@ const GuildPollNew = () => {
 
         <PollEditor
           rosters={rosters}
-          initialData={existingPoll ? {
-            title: existingPoll.title,
-            description: existingPoll.description || '',
-            is_anonymous: existingPoll.is_anonymous,
-            allow_multiple_responses: existingPoll.allow_multiple_responses,
-            roster_id: existingPoll.roster_id,
-            ends_at: existingPoll.ends_at,
-            sections: [],
-            questions: existingPoll.questions?.map((q: any) => ({
-              id: q.id,
-              question_text: q.question_text,
-              question_type: q.question_type,
-              is_required: q.is_required,
-              options: q.options || [],
-              scale_config: q.scale_config || null,
-            })) || [],
-          } : undefined}
+          initialData={existingPoll ? toPollFormData(existingPoll) : undefined}
           onSave={handleSave}
           onPublish={isActivePoll ? undefined : handlePublish}
           saving={saving}
