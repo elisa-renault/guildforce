@@ -9,6 +9,7 @@ import { GlowCard } from '@/components/GlowCard';
 import { GuildManager } from '@/components/admin/GuildManager';
 import { UserManager } from '@/components/admin/UserManager';
 import { LegalPagesEditor } from '@/components/admin/LegalPagesEditor';
+import { BugReportsManager } from '@/components/admin/BugReportsManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Users, 
@@ -18,7 +19,8 @@ import {
   ChevronRight,
   Crown,
   LayoutDashboard,
-  FileText
+  FileText,
+  Bug
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -29,6 +31,7 @@ interface AdminStats {
   totalPosts: number;
   pendingReports: number;
   activeSanctions: number;
+  openBugs: number;
 }
 
 export default function Admin() {
@@ -38,7 +41,7 @@ export default function Admin() {
   const { isAdmin, loading: adminLoading } = useIsAdmin();
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'guilds' | 'legal'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'guilds' | 'legal' | 'bugs'>('dashboard');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -63,14 +66,16 @@ export default function Admin() {
           { count: topicsCount },
           { count: postsCount },
           { count: reportsCount },
-          { count: sanctionsCount }
+          { count: sanctionsCount },
+          { count: bugsCount }
         ] = await Promise.all([
           supabase.from('profiles').select('*', { count: 'exact', head: true }),
           supabase.from('guilds').select('*', { count: 'exact', head: true }),
           supabase.from('forum_topics').select('*', { count: 'exact', head: true }),
           supabase.from('forum_posts').select('*', { count: 'exact', head: true }),
           supabase.from('forum_reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-          supabase.from('forum_user_sanctions').select('*', { count: 'exact', head: true }).eq('is_active', true)
+          supabase.from('forum_user_sanctions').select('*', { count: 'exact', head: true }).eq('is_active', true),
+          supabase.from('bug_reports').select('*', { count: 'exact', head: true }).eq('status', 'open')
         ]);
 
         setStats({
@@ -79,7 +84,8 @@ export default function Admin() {
           totalTopics: topicsCount || 0,
           totalPosts: postsCount || 0,
           pendingReports: reportsCount || 0,
-          activeSanctions: sanctionsCount || 0
+          activeSanctions: sanctionsCount || 0,
+          openBugs: bugsCount || 0
         });
       } catch (error) {
         console.error('Error fetching admin stats:', error);
@@ -149,10 +155,16 @@ export default function Admin() {
       value: stats?.activeSanctions ?? '-',
       icon: AlertTriangle,
       color: stats?.activeSanctions && stats.activeSanctions > 0 ? 'text-red-400' : 'text-muted-foreground'
+    },
+    {
+      label: language === 'fr' ? 'Bugs ouverts' : 'Open Bugs',
+      value: stats?.openBugs ?? '-',
+      icon: Bug,
+      color: stats?.openBugs && stats.openBugs > 0 ? 'text-red-400' : 'text-muted-foreground'
     }
   ];
 
-  const goToTab = (tab: 'dashboard' | 'users' | 'guilds' | 'legal') => {
+  const goToTab = (tab: 'dashboard' | 'users' | 'guilds' | 'legal' | 'bugs') => {
     setActiveTab(tab);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -198,6 +210,16 @@ export default function Admin() {
       onClick: () => goToTab('legal'),
       color: 'text-amber-400',
     },
+    {
+      title: language === 'fr' ? 'Rapports de bugs' : 'Bug Reports',
+      description:
+        language === 'fr'
+          ? 'Consulter et gérer les signalements de bugs'
+          : 'View and manage bug reports',
+      icon: Bug,
+      onClick: () => goToTab('bugs'),
+      color: 'text-red-400',
+    },
   ];
 
   return (
@@ -236,6 +258,10 @@ export default function Admin() {
             <TabsTrigger value="legal" className="gap-2 data-[state=active]:bg-primary/20 data-[state=active]:text-foreground">
               <FileText className="h-4 w-4" />
               <span>{language === 'fr' ? 'Pages légales' : 'Legal Pages'}</span>
+            </TabsTrigger>
+            <TabsTrigger value="bugs" className="gap-2 data-[state=active]:bg-primary/20 data-[state=active]:text-foreground">
+              <Bug className="h-4 w-4" />
+              <span>{language === 'fr' ? 'Bugs' : 'Bugs'}</span>
             </TabsTrigger>
           </TabsList>
 
@@ -295,6 +321,10 @@ export default function Admin() {
 
           <TabsContent value="legal">
             <LegalPagesEditor />
+          </TabsContent>
+
+          <TabsContent value="bugs">
+            <BugReportsManager />
           </TabsContent>
         </Tabs>
       </div>
