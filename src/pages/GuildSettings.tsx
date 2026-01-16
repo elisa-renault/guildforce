@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -6,19 +6,18 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
-import { CosmicButton } from '@/components/CosmicButton';
-import { GuildSubNav } from '@/components/guild';
+import { GuildSubNav } from '@/components/guild/GuildSubNav';
 import { RosterManager } from '@/components/roster';
-
 import { GuildPermissionsEditor } from '@/components/permissions';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Slider } from '@/components/ui/slider';
-import { Label } from '@/components/ui/label';
-import { Loader2, Upload, Trash2, Shield, Info, RefreshCw, Crown } from 'lucide-react';
+import { 
+  GuildSettingsSidebar, 
+  GuildProfileSection, 
+  GuildBattleNetSection, 
+  GuildActivitySection,
+  type SettingsSection 
+} from '@/components/settings';
+import { Loader2 } from 'lucide-react';
 import { toSlug, getGuildPath } from '@/lib/guildSlug';
-import { BattleNetIcon } from '@/components/BattleNetIcon';
-
-const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 
 interface GuildData {
   id: string;
@@ -59,24 +58,23 @@ interface GuildRank {
 const GuildSettings = () => {
   const navigate = useNavigate();
   const { regionSlug, serverSlug, guildSlug } = useParams();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialSection = (searchParams.get('section') as SettingsSection) || 'profile';
   const initialRosterId = searchParams.get('roster');
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const { user } = useAuth();
   const { toast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [loading, setLoading] = useState(true);
   const [guild, setGuild] = useState<GuildData | null>(null);
   const [isGM, setIsGM] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [removing, setRemoving] = useState(false);
-  const [syncing, setSyncing] = useState(false);
-  const [savingOfficerRank, setSavingOfficerRank] = useState(false);
+  const [hasManageRosters, setHasManageRosters] = useState(false);
+  const [hasViewActivityLog, setHasViewActivityLog] = useState(false);
   const [officerRank, setOfficerRank] = useState<number>(2);
   const [rosters, setRosters] = useState<Roster[]>([]);
   const [members, setMembers] = useState<GuildMember[]>([]);
   const [ranks, setRanks] = useState<GuildRank[]>([]);
+  const [activeSection, setActiveSection] = useState<SettingsSection>(initialSection);
 
   const loadRostersAndMembers = async (guildId: string) => {
     // Load rosters with access rules
@@ -88,7 +86,6 @@ const GuildSettings = () => {
       .order('created_at');
 
     if (rostersData) {
-      // Load access rules for each roster
       const rostersWithRules: Roster[] = await Promise.all(
         rostersData.map(async (roster) => {
           const { data: rulesData } = await supabase
@@ -150,7 +147,6 @@ const GuildSettings = () => {
         .ilike('guild_region', guildData.region);
 
       if (ranksData) {
-        // Deduplicate ranks
         const uniqueRanks = new Map<number, string>();
         ranksData.forEach(r => {
           if (!uniqueRanks.has(r.rank_index)) {
@@ -194,19 +190,53 @@ const GuildSettings = () => {
       const { data: isOwnerOrGM } = await supabase.rpc('is_guild_owner_or_gm', {
         _guild_id: matchedGuild.id
       });
+      
+      const gmStatus = !!isOwnerOrGM;
+      setIsGM(gmStatus);
 
-      if (!isOwnerOrGM) {
-        // Not a GM, redirect to dashboard
+      // Check delegated permissions
+      const [rostersPermResult, activityPermResult] = await Promise.all([
+        supabase.rpc('has_guild_permission', {
+          p_guild_id: matchedGuild.id,
+          p_permission: 'manage_rosters',
+          p_user_id: user.id,
+        }),
+        supabase.rpc('has_guild_permission', {
+          p_guild_id: matchedGuild.id,
+          p_permission: 'view_activity_log',
+          p_user_id: user.id,
+        }),
+      ]);
+
+      const hasRostersPerm = !!rostersPermResult.data;
+      const hasActivityPerm = !!activityPermResult.data;
+      
+      setHasManageRosters(hasRostersPerm);
+      setHasViewActivityLog(hasActivityPerm);
+
+      // Check if user has ANY access to settings
+      const hasAnyAccess = gmStatus || hasRostersPerm || hasActivityPerm;
+      
+      if (!hasAnyAccess) {
         navigate(getGuildPath(matchedGuild.region || 'eu', matchedGuild.server, matchedGuild.name));
         return;
       }
 
       setGuild(matchedGuild);
       setOfficerRank(matchedGuild.officer_rank_threshold ?? 2);
-      setIsGM(true);
       
       // Load rosters, members, and ranks
       await loadRostersAndMembers(matchedGuild.id);
+      
+      // Determine first accessible section
+      const visibleSections = getVisibleSections(gmStatus, hasRostersPerm, hasActivityPerm);
+      const requestedSection = searchParams.get('section') as SettingsSection;
+      
+      if (requestedSection && visibleSections.includes(requestedSection)) {
+        setActiveSection(requestedSection);
+      } else {
+        setActiveSection(visibleSections[0] || 'profile');
+      }
       
       setLoading(false);
     };
@@ -214,201 +244,40 @@ const GuildSettings = () => {
     loadGuildAndCheckAccess();
   }, [user, regionSlug, serverSlug, guildSlug, navigate]);
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !guild) return;
-
-    // Validate file type
-    if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.type)) {
-      toast({
-        title: t.guildSettings.uploadError,
-        description: t.guildSettings.avatarHint,
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    // Validate file size
-    if (file.size > MAX_FILE_SIZE) {
-      toast({
-        title: t.guildSettings.uploadError,
-        description: t.guildSettings.avatarHint,
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setUploading(true);
-
-    try {
-      // Generate file path
-      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-      const filePath = `${guild.id}/avatar.${ext}`;
-
-      // Delete existing avatar if any
-      if (guild.avatar_url) {
-        const oldPath = guild.avatar_url.split('/guild-avatars/')[1]?.split('?')[0];
-        if (oldPath) {
-          await supabase.storage.from('guild-avatars').remove([oldPath]);
-        }
-      }
-
-      // Upload new avatar
-      const { error: uploadError } = await supabase.storage
-        .from('guild-avatars')
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      // Get public URL with cache-busting timestamp
-      const { data: urlData } = supabase.storage
-        .from('guild-avatars')
-        .getPublicUrl(filePath);
-
-      const avatarUrl = `${urlData.publicUrl}?t=${Date.now()}`;
-
-      // Update guild record
-      const { error: updateError } = await supabase
-        .from('guilds')
-        .update({ avatar_url: avatarUrl })
-        .eq('id', guild.id);
-
-      if (updateError) throw updateError;
-
-      setGuild({ ...guild, avatar_url: avatarUrl });
-      toast({ title: t.guildSettings.avatarUpdated });
-    } catch (error: any) {
-      console.error('Upload error:', error);
-      toast({
-        title: t.guildSettings.uploadError,
-        description: error.message,
-        variant: 'destructive',
-      });
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
-  };
-
-  const handleRemoveAvatar = async () => {
-    if (!guild || !guild.avatar_url) return;
-
-    setRemoving(true);
-
-    try {
-      // Delete from storage
-      const oldPath = guild.avatar_url.split('/guild-avatars/')[1]?.split('?')[0];
-      if (oldPath) {
-        await supabase.storage.from('guild-avatars').remove([oldPath]);
-      }
-
-      // Update guild record
-      const { error: updateError } = await supabase
-        .from('guilds')
-        .update({ avatar_url: null })
-        .eq('id', guild.id);
-
-      if (updateError) throw updateError;
-
-      setGuild({ ...guild, avatar_url: null });
-      toast({ title: t.guildSettings.avatarRemoved });
-    } catch (error: any) {
-      console.error('Remove error:', error);
-      toast({
-        title: t.errors.generic,
-        description: error.message,
-        variant: 'destructive',
-      });
-    } finally {
-      setRemoving(false);
-    }
-  };
-
-  const handleResyncBattlenet = async () => {
-    setSyncing(true);
-    try {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.access_token) {
-        throw new Error('Not authenticated');
-      }
-
-      const { data, error } = await supabase.functions.invoke('battlenet-auth/resync', {
-        headers: {
-          Authorization: `Bearer ${session.session.access_token}`,
-        },
-      });
-
-      if (error) {
-        // Check if this is a token expiration error
-        const errorMessage = error.message || '';
-        const isTokenExpired = errorMessage.includes('expired') || errorMessage.includes('401');
-        
-        toast({
-          title: isTokenExpired ? t.guildSettings.resyncTokenExpired : t.guildSettings.resyncError,
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      // Reload data after sync
-      if (guild) {
-        await loadRostersAndMembers(guild.id);
-        
-        // Reload guild data for faction update
-        const { data: updatedGuild } = await supabase
-          .from('guilds')
-          .select('id, name, server, region, faction, avatar_url, officer_rank_threshold')
-          .eq('id', guild.id)
-          .single();
-        
-        if (updatedGuild) {
-          setGuild(updatedGuild);
-        }
-      }
-
-      toast({ title: t.guildSettings.resyncSuccess });
-    } catch (error: any) {
-      console.error('Resync error:', error);
-      const errorMessage = error?.message || '';
-      const isTokenExpired = errorMessage.includes('expired') || errorMessage.includes('401');
-      
-      toast({
-        title: isTokenExpired ? t.guildSettings.resyncTokenExpired : t.guildSettings.resyncError,
-        variant: 'destructive',
-      });
-    } finally {
-      setSyncing(false);
-    }
-  };
-
-  const handleOfficerRankChange = async (newRank: number) => {
-    if (!guild) return;
+  const getVisibleSections = (gm: boolean, rosters: boolean, activity: boolean): SettingsSection[] => {
+    const sections: SettingsSection[] = [];
     
-    setOfficerRank(newRank);
-    setSavingOfficerRank(true);
+    if (gm) {
+      sections.push('profile', 'permissions', 'rosters', 'activity', 'battlenet');
+    } else {
+      if (rosters) sections.push('rosters');
+      if (activity) sections.push('activity');
+    }
     
-    try {
-      const { error } = await supabase
+    return sections;
+  };
+
+  const visibleSections = getVisibleSections(isGM, hasManageRosters, hasViewActivityLog);
+
+  const handleSectionChange = (section: SettingsSection) => {
+    setActiveSection(section);
+    setSearchParams({ section });
+  };
+
+  const handleResyncComplete = async () => {
+    if (guild) {
+      await loadRostersAndMembers(guild.id);
+      
+      // Reload guild data
+      const { data: updatedGuild } = await supabase
         .from('guilds')
-        .update({ officer_rank_threshold: newRank })
-        .eq('id', guild.id);
+        .select('id, name, server, region, faction, avatar_url, officer_rank_threshold')
+        .eq('id', guild.id)
+        .single();
       
-      if (error) throw error;
-      
-      setGuild({ ...guild, officer_rank_threshold: newRank });
-      toast({ title: language === 'fr' ? 'Rang officier mis à jour' : 'Officer rank updated' });
-    } catch (error: any) {
-      console.error('Error updating officer rank:', error);
-      toast({
-        title: language === 'fr' ? 'Erreur lors de la mise à jour' : 'Update failed',
-        variant: 'destructive',
-      });
-      // Revert on error
-      setOfficerRank(guild.officer_rank_threshold);
-    } finally {
-      setSavingOfficerRank(false);
+      if (updatedGuild) {
+        setGuild(updatedGuild);
+      }
     }
   };
 
@@ -421,14 +290,62 @@ const GuildSettings = () => {
     );
   }
 
-  if (!guild || !isGM) {
+  if (!guild) {
     return null;
   }
 
   const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
 
+  const renderSectionContent = () => {
+    switch (activeSection) {
+      case 'profile':
+        return (
+          <GuildProfileSection
+            guild={guild}
+            ranks={ranks}
+            officerRank={officerRank}
+            onOfficerRankChange={setOfficerRank}
+            onGuildUpdate={setGuild}
+          />
+        );
+      
+      case 'permissions':
+        return (
+          <GlowCard className="p-6">
+            <GuildPermissionsEditor guildId={guild.id} />
+          </GlowCard>
+        );
+      
+      case 'rosters':
+        return (
+          <RosterManager
+            guildId={guild.id}
+            rosters={rosters}
+            members={members}
+            ranks={ranks}
+            onRosterChange={() => loadRostersAndMembers(guild.id)}
+            initialRosterId={initialRosterId}
+          />
+        );
+      
+      case 'activity':
+        return <GuildActivitySection guildId={guild.id} />;
+      
+      case 'battlenet':
+        return (
+          <GuildBattleNetSection
+            guildId={guild.id}
+            onResyncComplete={handleResyncComplete}
+          />
+        );
+      
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div className="flex-1 relative pt-16">
+    <div className="flex-1 relative pt-16 flex flex-col">
       <CosmicBackground />
 
       {/* Guild Sub-Navigation */}
@@ -436,187 +353,24 @@ const GuildSettings = () => {
         guild={guild}
         basePath={basePath}
         isGM={isGM}
+        hasSettingsPermission={isGM || hasManageRosters || hasViewActivityLog}
         activeTab="settings"
       />
 
-      <main className="container mx-auto px-4 py-6 relative z-10 max-w-7xl">
-        {/* Top Section: Avatar + Guild Info side by side on desktop, stacked on mobile */}
-        <div className="grid gap-6 lg:grid-cols-3 mb-6">
-          {/* Avatar Section */}
-          <GlowCard className="p-6">
-            <h2 className="font-display text-lg mb-4">{t.guildSettings.avatar}</h2>
-            
-            <div className="flex flex-col items-center gap-4">
-              <Avatar className="h-28 w-28 lg:h-32 lg:w-32 border-2 border-border">
-                {guild.avatar_url ? (
-                  <AvatarImage src={guild.avatar_url} alt={guild.name} />
-                ) : (
-                  <AvatarFallback className={`${
-                    guild.faction === 'horde' 
-                      ? 'bg-red-500/20 text-red-400' 
-                      : 'bg-blue-500/20 text-blue-400'
-                  }`}>
-                    <Shield className="h-10 w-10 lg:h-12 lg:w-12" strokeWidth={1.5} />
-                  </AvatarFallback>
-                )}
-              </Avatar>
-
-              <div className="flex flex-wrap justify-center gap-2">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/gif"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                />
-                <CosmicButton
-                  size="sm"
-                  variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
-                  loading={uploading}
-                  icon={<Upload className="h-4 w-4" />}
-                >
-                  {t.guildSettings.uploadAvatar}
-                </CosmicButton>
-                {guild.avatar_url && (
-                  <CosmicButton
-                    size="sm"
-                    variant="outline"
-                    onClick={handleRemoveAvatar}
-                    disabled={removing}
-                    loading={removing}
-                    icon={<Trash2 className="h-4 w-4" />}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    {t.guildSettings.removeAvatar}
-                  </CosmicButton>
-                )}
-              </div>
-
-              <p className="text-xs text-muted-foreground text-center">
-                {t.guildSettings.avatarHint}
-              </p>
-            </div>
-          </GlowCard>
-
-          {/* Guild Info Section - spans 2 columns on large screens */}
-          <GlowCard className="p-6 lg:col-span-2">
-            <h2 className="font-display text-lg mb-4">{t.guildSettings.guildInfo}</h2>
-            
-            <div className="grid sm:grid-cols-2 gap-x-8 gap-y-1">
-              <div className="flex justify-between gap-2 py-2 border-b border-border/50">
-                <span className="text-muted-foreground text-sm">{t.guild.name}</span>
-                <span className="font-medium text-right break-words">{guild.name}</span>
-              </div>
-              <div className="flex justify-between gap-2 py-2 border-b border-border/50">
-                <span className="text-muted-foreground text-sm">{t.guild.server}</span>
-                <span className="font-medium text-right break-words">{guild.server.charAt(0).toUpperCase() + guild.server.slice(1)}</span>
-              </div>
-              <div className="flex justify-between gap-2 py-2 border-b border-border/50">
-                <span className="text-muted-foreground text-sm">{t.battlenet.region}</span>
-                <span className="font-medium uppercase text-right">{guild.region}</span>
-              </div>
-              <div className="flex justify-between gap-2 py-2 border-b border-border/50">
-                <span className="text-muted-foreground text-sm">{t.guild.faction}</span>
-                <span className={`font-medium text-right ${
-                  guild.faction === 'horde' ? 'text-red-400' : 'text-blue-400'
-                }`}>
-                  {guild.faction === 'horde' ? t.guild.horde : t.guild.alliance}
-                </span>
-              </div>
-            </div>
-
-            {/* Officer Rank Threshold */}
-            <div className="mt-6">
-              <div className="flex items-center gap-2 mb-2">
-                <Crown className="h-4 w-4 text-amber-400" />
-                <Label className="text-sm font-medium">
-                  {language === 'fr' ? 'Rang officier minimum' : 'Minimum officer rank'}
-                </Label>
-              </div>
-              <p className="text-xs text-muted-foreground mb-4">
-                {language === 'fr' 
-                  ? 'Les rangs 0 à ce rang seront considérés comme officiers et affichés avec le badge officier. Ce paramètre est propre à Guildforce.'
-                  : 'Ranks 0 to this rank will be considered officers and displayed with the officer badge. This setting is specific to Guildforce.'}
-              </p>
-              
-              <div className="space-y-3">
-                <div className="flex items-center gap-4">
-                  <Slider
-                    value={[officerRank]}
-                    onValueChange={(value) => setOfficerRank(value[0])}
-                    onValueCommit={(value) => handleOfficerRankChange(value[0])}
-                    min={0}
-                    max={9}
-                    step={1}
-                    disabled={savingOfficerRank}
-                    className="flex-1"
-                  />
-                  <div className="w-16 text-right">
-                    <span className="text-sm font-medium">
-                      0 → {officerRank}
-                    </span>
-                  </div>
-                </div>
-                
-                {ranks.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {ranks.filter(r => r.rank_index <= officerRank).map(rank => (
-                      <span 
-                        key={rank.rank_index}
-                        className="px-2 py-0.5 rounded-full text-xs bg-primary/20 text-primary border border-primary/30"
-                      >
-                        {rank.rank_name}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Battle.net Sync Section */}
-            <div className="mt-6 pt-4 border-t border-border/50">
-              <div className="flex items-start gap-2 text-xs text-muted-foreground mb-3">
-                <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                <span>{t.guildSettings.syncedFromBnet}</span>
-              </div>
-              
-              <CosmicButton
-                size="sm"
-                variant="outline"
-                onClick={handleResyncBattlenet}
-                disabled={syncing}
-                loading={syncing}
-                icon={syncing ? <RefreshCw className="h-4 w-4 animate-spin" /> : <BattleNetIcon className="h-4 w-4" />}
-                className="w-full sm:w-auto"
-              >
-                {syncing ? t.guildSettings.syncing : t.guildSettings.resyncBattlenet}
-              </CosmicButton>
-              <p className="text-xs text-muted-foreground mt-2">
-                {t.guildSettings.resyncDescription}
-              </p>
-            </div>
-          </GlowCard>
-        </div>
-
-        {/* Permissions Section - Full width */}
-        <div className="mb-6">
-          <GlowCard className="p-6">
-            <GuildPermissionsEditor guildId={guild.id} />
-          </GlowCard>
-        </div>
-
-        {/* Roster Manager Section - Full width */}
-        <RosterManager
-          guildId={guild.id}
-          rosters={rosters}
-          members={members}
-          ranks={ranks}
-          onRosterChange={() => loadRostersAndMembers(guild.id)}
-          initialRosterId={initialRosterId}
+      {/* Settings Layout */}
+      <div className="flex-1 flex flex-col md:flex-row relative z-10">
+        {/* Sidebar */}
+        <GuildSettingsSidebar
+          activeSection={activeSection}
+          onSectionChange={handleSectionChange}
+          visibleSections={visibleSections}
         />
-      </main>
+
+        {/* Main Content */}
+        <main className="flex-1 p-4 md:p-6 max-w-5xl">
+          {renderSectionContent()}
+        </main>
+      </div>
     </div>
   );
 };
