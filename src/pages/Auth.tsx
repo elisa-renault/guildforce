@@ -222,11 +222,12 @@ const Auth = () => {
       <CosmicBackground />
 
       {/* Main Content */}
-      <div className="flex-1 flex items-center justify-center px-4 py-20 relative z-10">
-        <div className="w-full max-w-5xl grid lg:grid-cols-2 gap-8 lg:gap-16 items-start">
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-20 relative z-10">
+        {/* Grid for Card alignment only */}
+        <div className="w-full max-w-5xl grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
           
           {/* Left Column - Branding (visible on lg+) */}
-          <div className="hidden lg:flex flex-col items-start gap-6 lg:self-center">
+          <div className="hidden lg:flex flex-col items-start gap-6">
             <div className="flex items-center gap-4">
               <div className="p-4 rounded-2xl bg-primary/20 border border-primary/30">
                 <Shield className="h-12 w-12 text-primary" />
@@ -244,7 +245,7 @@ const Auth = () => {
             </div>
           </div>
 
-          {/* Right Column - Auth Form */}
+          {/* Right Column - Auth Form (Card only for alignment) */}
           <div className="flex flex-col items-center lg:items-stretch">
             
             {/* Mobile Header */}
@@ -261,7 +262,6 @@ const Auth = () => {
               </p>
             </div>
 
-            {/* Card wrapper for alignment reference */}
             <GlowCard className="w-full max-w-md p-6 sm:p-8">
               {/* Region Selector */}
               <div className="space-y-2 mb-6">
@@ -333,15 +333,15 @@ const Auth = () => {
                 </CollapsibleContent>
               </Collapsible>
             </GlowCard>
-
-            {/* Back Button - Outside Card, same width as card */}
-            <div className="w-full max-w-md flex justify-center">
-              <Button variant="ghost" onClick={() => navigate('/')} className="mt-4 text-muted-foreground hover:text-foreground gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                {t.common.back}
-              </Button>
-            </div>
           </div>
+        </div>
+
+        {/* Back Button - Outside grid, centered */}
+        <div className="w-full max-w-5xl mt-4 flex justify-center lg:justify-end lg:pr-[calc(50%-14rem)]">
+          <Button variant="ghost" onClick={() => navigate('/')} className="text-muted-foreground hover:text-foreground gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            {t.common.back}
+          </Button>
         </div>
       </div>
     </div>;
