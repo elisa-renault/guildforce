@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -29,6 +29,17 @@ const GuildPollView = () => {
   const { poll, loading: pollLoading, refetch } = usePoll(pollId);
   const { poll: pollResults, loading: resultsLoading, refetch: refetchResults } = usePollResults(pollId);
   const { submitAllResponses, saving } = usePollMutations();
+
+  const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
+
+  // Handle back navigation - use history or fallback to polls list
+  const handleBack = useCallback(() => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate(`${basePath}/polls`);
+    }
+  }, [navigate, basePath]);
 
   const isClosed =
     poll?.status === 'closed' || (poll?.ends_at && new Date(poll.ends_at) < new Date()) || false;
@@ -106,7 +117,6 @@ const GuildPollView = () => {
     );
   }
 
-  const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
 
   return (
     <div className="flex-1 relative pt-16">
@@ -116,7 +126,7 @@ const GuildPollView = () => {
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
           <button
-            onClick={() => navigate(`${basePath}/polls`)}
+            onClick={handleBack}
             className="w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
           >
             <ArrowLeft className="h-5 w-5 text-muted-foreground" />
