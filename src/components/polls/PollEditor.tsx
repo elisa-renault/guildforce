@@ -771,7 +771,7 @@ export const PollEditor = ({
 
         <div className="flex items-center justify-end gap-3">
           <Button
-            variant="outline"
+            variant={onPublish ? "outline" : "default"}
             onClick={handleSave}
             disabled={!formData.title.trim() || saving}
           >
@@ -780,7 +780,10 @@ export const PollEditor = ({
             ) : (
               <Save className="h-4 w-4 mr-2" />
             )}
-            {language === 'fr' ? 'Enregistrer brouillon' : 'Save Draft'}
+            {onPublish 
+              ? (language === 'fr' ? 'Enregistrer brouillon' : 'Save Draft')
+              : (language === 'fr' ? 'Enregistrer' : 'Save')
+            }
           </Button>
 
           {onPublish && (
