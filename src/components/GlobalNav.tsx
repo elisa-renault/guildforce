@@ -90,13 +90,18 @@ export const GlobalNav = () => {
     <header className="fixed top-0 left-0 right-0 z-50 glass-header" role="banner">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         {/* Left side - Logo */}
-        <button 
-          onClick={() => navigate('/')}
-          className="font-display text-lg text-foreground hover:text-primary-foreground hover:drop-shadow-[0_0_12px_hsl(292,63%,50%)] transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded px-1"
-          aria-label="Accueil Guildforce"
-        >
-          Guildforce
-        </button>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => navigate('/')}
+            className="font-display text-lg text-foreground hover:text-primary-foreground hover:drop-shadow-[0_0_12px_hsl(292,63%,50%)] transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded px-1"
+            aria-label="Accueil Guildforce"
+          >
+            Guildforce
+          </button>
+          <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded bg-primary/20 text-primary border border-primary/30">
+            Alpha
+          </span>
+        </div>
 
         {/* Center navigation - Desktop only */}
         {user && (
