@@ -390,6 +390,7 @@ export interface Translations {
   cookies: {
     title: string;
     description: string;
+    learnMore: string;
     acceptAll: string;
     rejectAll: string;
     customize: string;
@@ -786,6 +787,7 @@ export const translations: Record<Language, Translations> = {
     cookies: {
       title: 'We use cookies',
       description: 'We use cookies to improve your experience and analyze site traffic. You can choose which cookies to accept.',
+      learnMore: 'Learn more about our privacy policy',
       acceptAll: 'Accept all',
       rejectAll: 'Reject all',
       customize: 'Customize',
@@ -1180,6 +1182,7 @@ export const translations: Record<Language, Translations> = {
     cookies: {
       title: 'Nous utilisons des cookies',
       description: 'Nous utilisons des cookies pour améliorer votre expérience et analyser le trafic. Vous pouvez choisir quels cookies accepter.',
+      learnMore: 'En savoir plus sur notre politique de confidentialité',
       acceptAll: 'Tout accepter',
       rejectAll: 'Tout refuser',
       customize: 'Personnaliser',
