@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
@@ -105,7 +106,10 @@ export const CookieBanner: React.FC = () => {
                     {t.cookies.title}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {t.cookies.description}
+                    {t.cookies.description}{' '}
+                    <Link to="/privacy" className="text-primary hover:underline">
+                      {t.cookies.learnMore}
+                    </Link>
                   </p>
                 </div>
               </div>
