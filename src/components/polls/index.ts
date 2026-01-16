@@ -5,3 +5,4 @@ export { PollSectionEditor } from './PollSectionEditor';
 export { PollResponse } from './PollResponse';
 export { PollResults } from './PollResults';
 export { ActivePollWidget } from './ActivePollWidget';
+export { RankingInput } from './RankingInput';
