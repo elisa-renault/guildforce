@@ -562,6 +562,83 @@ export const usePollMutations = () => {
     }
   };
 
+  // Fetch poll results access rules
+  const fetchResultsAccessRules = async (pollId: string) => {
+    const { data, error } = await supabase
+      .from('poll_results_access_rules')
+      .select('*')
+      .eq('poll_id', pollId);
+
+    if (error) {
+      console.error('Error fetching results access rules:', error);
+      return [];
+    }
+
+    return data?.map(rule => ({
+      access_type: rule.access_type as 'rank_range' | 'user',
+      user_id: rule.user_id || undefined,
+      min_rank_index: rule.min_rank_index ?? undefined,
+      max_rank_index: rule.max_rank_index ?? undefined,
+    })) || [];
+  };
+
+  // Save poll results access rules
+  const saveResultsAccessRules = async (
+    pollId: string, 
+    rules: { access_type: 'rank_range' | 'user'; user_id?: string; min_rank_index?: number; max_rank_index?: number }[]
+  ): Promise<boolean> => {
+    setSaving(true);
+    try {
+      // Delete existing rules
+      await supabase
+        .from('poll_results_access_rules')
+        .delete()
+        .eq('poll_id', pollId);
+
+      // Insert new rules if any
+      if (rules.length > 0) {
+        const rulesToInsert = rules.map(rule => ({
+          poll_id: pollId,
+          access_type: rule.access_type,
+          user_id: rule.access_type === 'user' ? rule.user_id : null,
+          min_rank_index: rule.access_type === 'rank_range' ? rule.min_rank_index : null,
+          max_rank_index: rule.access_type === 'rank_range' ? rule.max_rank_index : null,
+        }));
+
+        const { error } = await supabase
+          .from('poll_results_access_rules')
+          .insert(rulesToInsert);
+
+        if (error) throw error;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error saving results access rules:', error);
+      toast.error('Erreur lors de la sauvegarde des permissions');
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Check if current user can view results
+  const checkCanViewResults = async (pollId: string): Promise<boolean> => {
+    if (!user) return false;
+
+    const { data, error } = await supabase.rpc('can_view_poll_results', {
+      p_poll_id: pollId,
+      p_user_id: user.id,
+    });
+
+    if (error) {
+      console.error('Error checking results access:', error);
+      return false;
+    }
+
+    return data || false;
+  };
+
   return {
     saving,
     createPoll,
@@ -573,5 +650,8 @@ export const usePollMutations = () => {
     resetPollResponses,
     submitResponse,
     submitAllResponses,
+    fetchResultsAccessRules,
+    saveResultsAccessRules,
+    checkCanViewResults,
   };
 };
