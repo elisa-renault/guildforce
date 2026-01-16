@@ -1,5 +1,24 @@
 export type PollStatus = 'draft' | 'active' | 'closed';
-export type PollQuestionType = 'single_choice' | 'multiple_choice' | 'text' | 'rating';
+export type PollQuestionType = 'single_choice' | 'multiple_choice' | 'text' | 'rating' | 'date' | 'time' | 'datetime' | 'ranking' | 'scale';
+
+export interface GuildPollSection {
+  id: string;
+  poll_id: string;
+  title: string;
+  description: string | null;
+  display_order: number;
+  created_at: string;
+  // For form
+  questions?: GuildPollQuestion[];
+}
+
+export interface ScaleConfig {
+  min: number;
+  max: number;
+  step: number;
+  min_label?: string;
+  max_label?: string;
+}
 
 export interface GuildPoll {
   id: string;
@@ -25,6 +44,7 @@ export interface GuildPoll {
     id: string;
     name: string;
   };
+  sections?: GuildPollSection[];
   questions?: GuildPollQuestion[];
   response_count?: number;
   member_count?: number;
@@ -33,11 +53,13 @@ export interface GuildPoll {
 export interface GuildPollQuestion {
   id: string;
   poll_id: string;
+  section_id: string | null;
   question_text: string;
   question_type: PollQuestionType;
   is_required: boolean;
   display_order: number;
   options: string[];
+  scale_config: ScaleConfig | null;
   created_at: string;
   // For responses
   responses?: GuildPollResponse[];
@@ -62,7 +84,19 @@ export type ResponseValue =
   | { type: 'single_choice'; value: string }
   | { type: 'multiple_choice'; values: string[] }
   | { type: 'text'; value: string }
-  | { type: 'rating'; value: number };
+  | { type: 'rating'; value: number }
+  | { type: 'date'; value: string }
+  | { type: 'time'; value: string }
+  | { type: 'datetime'; value: string }
+  | { type: 'ranking'; values: string[] }
+  | { type: 'scale'; value: number };
+
+export interface SectionFormData {
+  id?: string;
+  title: string;
+  description: string;
+  questions: QuestionFormData[];
+}
 
 export interface PollFormData {
   title: string;
@@ -71,13 +105,16 @@ export interface PollFormData {
   allow_multiple_responses: boolean;
   roster_id: string | null;
   ends_at: string | null;
-  questions: QuestionFormData[];
+  sections: SectionFormData[];
+  questions: QuestionFormData[]; // Questions without section
 }
 
 export interface QuestionFormData {
   id?: string;
+  section_id?: string | null;
   question_text: string;
   question_type: PollQuestionType;
   is_required: boolean;
   options: string[];
+  scale_config?: ScaleConfig | null;
 }

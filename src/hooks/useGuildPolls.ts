@@ -107,6 +107,7 @@ export const usePoll = (pollId: string | undefined) => {
       const questionsWithResponses = questions?.map(q => ({
         ...q,
         options: q.options as string[],
+        scale_config: q.scale_config as any,
         my_response: myResponses?.find(r => r.question_id === q.id) as GuildPollResponse | undefined,
       })) as GuildPollQuestion[];
 
@@ -175,6 +176,7 @@ export const usePollResults = (pollId: string | undefined) => {
       const questionsWithResponses = questions?.map(q => ({
         ...q,
         options: q.options as string[],
+        scale_config: q.scale_config as any,
         responses: allResponses?.filter(r => r.question_id === q.id) as GuildPollResponse[],
       })) as GuildPollQuestion[];
 
@@ -228,15 +230,58 @@ export const usePollMutations = () => {
 
       if (pollError) throw pollError;
 
-      // Create questions
+      // Create sections and their questions
+      let globalOrder = 0;
+      
+      for (let sIndex = 0; sIndex < data.sections.length; sIndex++) {
+        const section = data.sections[sIndex];
+        
+        const { data: sectionData, error: sectionError } = await supabase
+          .from('guild_poll_sections')
+          .insert({
+            poll_id: poll.id,
+            title: section.title,
+            description: section.description || null,
+            display_order: sIndex,
+          })
+          .select('id')
+          .single();
+
+        if (sectionError) throw sectionError;
+
+        // Create section questions
+        if (section.questions.length > 0) {
+          const sectionQuestions = section.questions.map((q, qIndex) => ({
+            poll_id: poll.id,
+            section_id: sectionData.id,
+            question_text: q.question_text,
+            question_type: q.question_type,
+            is_required: q.is_required,
+            display_order: globalOrder + qIndex,
+            options: q.options,
+            scale_config: q.scale_config as any || null,
+          }));
+
+          const { error: questionsError } = await supabase
+            .from('guild_poll_questions')
+            .insert(sectionQuestions);
+
+          if (questionsError) throw questionsError;
+          globalOrder += section.questions.length;
+        }
+      }
+
+      // Create questions without section
       if (data.questions.length > 0) {
         const questionsToInsert = data.questions.map((q, index) => ({
           poll_id: poll.id,
+          section_id: null,
           question_text: q.question_text,
           question_type: q.question_type,
           is_required: q.is_required,
-          display_order: index,
+          display_order: globalOrder + index,
           options: q.options,
+          scale_config: q.scale_config as any || null,
         }));
 
         const { error: questionsError } = await supabase

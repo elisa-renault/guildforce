@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GripVertical, Plus, Trash2, X } from 'lucide-react';
-import type { QuestionFormData, PollQuestionType } from '@/types/poll';
+import type { QuestionFormData, PollQuestionType, ScaleConfig } from '@/types/poll';
 
 interface PollQuestionEditorProps {
   question: QuestionFormData;
@@ -13,6 +13,7 @@ interface PollQuestionEditorProps {
   onChange: (question: QuestionFormData) => void;
   onRemove: () => void;
   canRemove: boolean;
+  compact?: boolean;
 }
 
 export const PollQuestionEditor = ({
@@ -21,6 +22,7 @@ export const PollQuestionEditor = ({
   onChange,
   onRemove,
   canRemove,
+  compact = false,
 }: PollQuestionEditorProps) => {
   const { language } = useLanguage();
 
@@ -29,9 +31,18 @@ export const PollQuestionEditor = ({
     { value: 'multiple_choice', label: language === 'fr' ? 'Choix multiples' : 'Multiple choice' },
     { value: 'text', label: language === 'fr' ? 'Texte libre' : 'Free text' },
     { value: 'rating', label: language === 'fr' ? 'Échelle (1-5)' : 'Rating (1-5)' },
+    { value: 'date', label: language === 'fr' ? 'Date' : 'Date' },
+    { value: 'time', label: language === 'fr' ? 'Heure' : 'Time' },
+    { value: 'datetime', label: language === 'fr' ? 'Date et heure' : 'Date & Time' },
+    { value: 'ranking', label: language === 'fr' ? 'Classement' : 'Ranking' },
+    { value: 'scale', label: language === 'fr' ? 'Échelle personnalisée' : 'Custom Scale' },
   ];
 
-  const needsOptions = question.question_type === 'single_choice' || question.question_type === 'multiple_choice';
+  const needsOptions = question.question_type === 'single_choice' || 
+                       question.question_type === 'multiple_choice' || 
+                       question.question_type === 'ranking';
+
+  const needsScaleConfig = question.question_type === 'scale';
 
   const handleAddOption = () => {
     onChange({
@@ -56,8 +67,32 @@ export const PollQuestionEditor = ({
     });
   };
 
+  const handleTypeChange = (value: PollQuestionType) => {
+    const needsOpts = value === 'single_choice' || value === 'multiple_choice' || value === 'ranking';
+    const needsScale = value === 'scale';
+    
+    onChange({ 
+      ...question, 
+      question_type: value,
+      options: needsOpts 
+        ? (question.options.length > 0 ? question.options : ['', ''])
+        : [],
+      scale_config: needsScale 
+        ? (question.scale_config || { min: 1, max: 10, step: 1, min_label: '', max_label: '' })
+        : null,
+    });
+  };
+
+  const handleScaleConfigChange = (field: keyof ScaleConfig, value: string | number) => {
+    const currentConfig = question.scale_config || { min: 1, max: 10, step: 1 };
+    onChange({
+      ...question,
+      scale_config: { ...currentConfig, [field]: value },
+    });
+  };
+
   return (
-    <div className="border border-border rounded-lg p-4 bg-card/50">
+    <div className={`border border-border rounded-lg p-4 ${compact ? 'bg-background/50' : 'bg-card/50'}`}>
       <div className="flex items-start gap-3">
         <div className="flex items-center gap-2 pt-2 text-muted-foreground">
           <GripVertical className="h-5 w-5 cursor-grab" />
@@ -77,13 +112,7 @@ export const PollQuestionEditor = ({
 
             <Select
               value={question.question_type}
-              onValueChange={(value: PollQuestionType) => onChange({ 
-                ...question, 
-                question_type: value,
-                options: value === 'single_choice' || value === 'multiple_choice' 
-                  ? (question.options.length > 0 ? question.options : ['', ''])
-                  : [],
-              })}
+              onValueChange={handleTypeChange}
             >
               <SelectTrigger className="w-[180px] bg-background">
                 <SelectValue />
@@ -112,7 +141,9 @@ export const PollQuestionEditor = ({
           {needsOptions && (
             <div className="space-y-2 pl-4">
               <Label className="text-xs text-muted-foreground">
-                {language === 'fr' ? 'Options de réponse' : 'Answer options'}
+                {question.question_type === 'ranking' 
+                  ? (language === 'fr' ? 'Éléments à classer' : 'Items to rank')
+                  : (language === 'fr' ? 'Options de réponse' : 'Answer options')}
               </Label>
               {question.options.map((option, optionIndex) => (
                 <div key={optionIndex} className="flex items-center gap-2">
@@ -146,6 +177,63 @@ export const PollQuestionEditor = ({
                 <Plus className="h-4 w-4 mr-1" />
                 {language === 'fr' ? 'Ajouter une option' : 'Add option'}
               </Button>
+            </div>
+          )}
+
+          {needsScaleConfig && (
+            <div className="space-y-3 pl-4">
+              <Label className="text-xs text-muted-foreground">
+                {language === 'fr' ? 'Configuration de l\'échelle' : 'Scale Configuration'}
+              </Label>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="space-y-1">
+                  <Label className="text-xs">Min</Label>
+                  <Input
+                    type="number"
+                    value={question.scale_config?.min || 1}
+                    onChange={(e) => handleScaleConfigChange('min', parseInt(e.target.value) || 1)}
+                    className="bg-background"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Max</Label>
+                  <Input
+                    type="number"
+                    value={question.scale_config?.max || 10}
+                    onChange={(e) => handleScaleConfigChange('max', parseInt(e.target.value) || 10)}
+                    className="bg-background"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">{language === 'fr' ? 'Pas' : 'Step'}</Label>
+                  <Input
+                    type="number"
+                    value={question.scale_config?.step || 1}
+                    onChange={(e) => handleScaleConfigChange('step', parseInt(e.target.value) || 1)}
+                    className="bg-background"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label className="text-xs">{language === 'fr' ? 'Label min' : 'Min label'}</Label>
+                  <Input
+                    value={question.scale_config?.min_label || ''}
+                    onChange={(e) => handleScaleConfigChange('min_label', e.target.value)}
+                    placeholder={language === 'fr' ? 'Ex: Pas du tout' : 'Ex: Not at all'}
+                    className="bg-background"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">{language === 'fr' ? 'Label max' : 'Max label'}</Label>
+                  <Input
+                    value={question.scale_config?.max_label || ''}
+                    onChange={(e) => handleScaleConfigChange('max_label', e.target.value)}
+                    placeholder={language === 'fr' ? 'Ex: Totalement' : 'Ex: Completely'}
+                    className="bg-background"
+                  />
+                </div>
+              </div>
             </div>
           )}
 
