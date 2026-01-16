@@ -839,6 +839,115 @@ Deno.serve(async (req) => {
 // ============================================================================
 
 /**
+ * Stores the full guild roster in guild_roster_cache table.
+ * This allows showing all WoW guild members, even those not on Guildforce yet.
+ * 
+ * @param supabase - Supabase client
+ * @param guildName - Guild name
+ * @param guildRealmSlug - Guild realm slug
+ * @param guildFaction - Guild faction
+ * @param region - Battle.net region
+ * @param rosterMembers - Array of roster members from Blizzard API
+ */
+async function storeFullRoster(
+  supabase: any,
+  guildName: string,
+  guildRealmSlug: string,
+  guildFaction: string,
+  region: BattleNetRegion,
+  rosterMembers: any[]
+) {
+  try {
+    if (!rosterMembers || rosterMembers.length === 0) {
+      log.debug('No roster members to store');
+      return;
+    }
+
+    // Find the app guild by name, realm and region
+    const { data: appGuild, error: guildError } = await supabase
+      .from('guilds')
+      .select('id')
+      .ilike('name', guildName)
+      .ilike('server', guildRealmSlug)
+      .ilike('region', region)
+      .maybeSingle();
+
+    if (guildError || !appGuild) {
+      log.debug(`App guild not found for ${guildName}, skipping roster cache`);
+      return;
+    }
+
+    const guildId = appGuild.id;
+    log.info(`Storing full roster (${rosterMembers.length} members) for guild ${sanitizePII(guildName, 'name')}`);
+
+    // Get all existing wow_characters to match Guildforce users
+    const { data: existingChars } = await supabase
+      .from('wow_characters')
+      .select('id, user_id, name, realm_slug');
+
+    // Build a map for quick lookup
+    const charMap = new Map<string, { id: string; user_id: string }>();
+    for (const char of (existingChars || [])) {
+      const key = `${char.name.toLowerCase()}-${char.realm_slug.toLowerCase()}`;
+      charMap.set(key, { id: char.id, user_id: char.user_id });
+    }
+
+    // Prepare roster data
+    const rosterData = rosterMembers.map((member: any) => {
+      const charName = member.character?.name || 'Unknown';
+      const charRealm = member.character?.realm?.name || guildRealmSlug;
+      const charRealmSlug = member.character?.realm?.slug || guildRealmSlug;
+      const charClassId = member.character?.playable_class?.id || 0;
+      const charLevel = member.character?.level || 1;
+      const rankIndex = member.rank ?? 99;
+      const isGM = rankIndex === 0;
+
+      // Try to match with an existing Guildforce user
+      const charKey = `${charName.toLowerCase()}-${charRealmSlug.toLowerCase()}`;
+      const matchedChar = charMap.get(charKey);
+
+      return {
+        guild_id: guildId,
+        character_name: charName,
+        character_realm: charRealm,
+        character_realm_slug: charRealmSlug,
+        character_class_id: charClassId,
+        character_level: charLevel,
+        rank_index: rankIndex,
+        rank_name: isGM ? 'Guild Master' : `Rank ${rankIndex}`,
+        is_guild_master: isGM,
+        matched_user_id: matchedChar?.user_id || null,
+        matched_character_id: matchedChar?.id || null,
+        updated_at: new Date().toISOString(),
+      };
+    });
+
+    // Delete old roster cache for this guild and insert new data
+    await supabase
+      .from('guild_roster_cache')
+      .delete()
+      .eq('guild_id', guildId);
+
+    // Insert in batches of 100 to avoid payload limits
+    const batchSize = 100;
+    for (let i = 0; i < rosterData.length; i += batchSize) {
+      const batch = rosterData.slice(i, i + batchSize);
+      const { error: insertError } = await supabase
+        .from('guild_roster_cache')
+        .insert(batch);
+
+      if (insertError) {
+        log.error(`Error inserting roster batch ${i / batchSize + 1}:`, insertError);
+      }
+    }
+
+    log.info(`Successfully cached ${rosterData.length} roster members for guild ${sanitizePII(guildName, 'name')}`);
+  } catch (error) {
+    log.error('Error storing full roster:', error);
+  }
+}
+
+/**
  * Fetches WoW characters from Battle.net API and stores them in the database.
  * Also fetches guild memberships and triggers auto-join for app guilds.
  * 
@@ -1039,6 +1148,9 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
 
         const roster = await rosterResponse.json();
         log.debug(`Roster has ${roster.members?.length || 0} members`);
+
+        // Store full roster for this guild (for GMs to see all members)
+        await storeFullRoster(supabase, guildInfo.name, guildInfo.realmSlug, guildInfo.faction, region, roster.members || []);
 
         for (const charId of guildInfo.characterIds) {
           const insertedChar = insertedChars?.find((ic: any) => ic.id === charId);
