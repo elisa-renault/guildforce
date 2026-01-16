@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, forwardRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { GlowCard } from '@/components/GlowCard';
@@ -20,14 +20,14 @@ interface PollCardProps {
   onDelete?: (pollId: string) => void;
 }
 
-export const PollCard = ({
+export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
   poll,
   isGM,
   guildSlug,
   onPublish,
   onClose,
   onDelete,
-}: PollCardProps) => {
+}, ref) => {
   const navigate = useNavigate();
   const { language } = useLanguage();
   const locale = language === 'fr' ? fr : enUS;
@@ -89,6 +89,7 @@ export const PollCard = ({
 
   return (
     <GlowCard 
+      ref={ref}
       className="p-4 cursor-pointer transition-colors hover:bg-primary/5"
       onClick={handleCardClick}
     >
@@ -239,4 +240,6 @@ export const PollCard = ({
       />
     </GlowCard>
   );
-};
+});
+
+PollCard.displayName = 'PollCard';
