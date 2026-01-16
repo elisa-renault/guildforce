@@ -212,13 +212,13 @@ const Overview = () => {
         />
       )}
 
-      <main className="container mx-auto px-3 md:px-4 py-6 relative z-10">
+      <main className="container mx-auto px-3 md:px-4 py-6 relative z-10 overflow-x-hidden">
         {/* Welcome Section */}
-        <div className="text-center mb-8">
-          <h1 className="text-2xl md:text-3xl font-display cosmic-text mb-2">
+        <div className="text-center mb-8 px-2">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-display cosmic-text mb-2 break-words">
             {t.common.loading === 'Chargement...' ? 'Bienvenue' : 'Welcome'}, {user?.user_metadata?.username || 'Aventurier'}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-sm sm:text-base">
             {guild?.name} • {guild?.server ? guild.server.charAt(0).toUpperCase() + guild.server.slice(1).toLowerCase() : ''}
           </p>
         </div>
