@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -43,7 +43,6 @@ export const CookieBanner: React.FC = () => {
   const [showBanner, setShowBanner] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
   const [preferences, setPreferences] = useState<CookiePreferences>(defaultPreferences);
-  const bannerRef = useRef<HTMLDivElement | null>(null);
 
   const openPreferences = useCallback(() => {
     setShowPreferences(true);
@@ -89,46 +88,15 @@ export const CookieBanner: React.FC = () => {
     saveConsent(preferences);
   };
 
-  const isBannerVisible = showBanner && !showPreferences;
-
-  useEffect(() => {
-    const root = document.documentElement;
-
-    if (!isBannerVisible) {
-      root.style.setProperty('--cookie-banner-offset', '0px');
-      return;
-    }
-
-    const el = bannerRef.current;
-    if (!el) return;
-
-    const set = () => {
-      const h = el.offsetHeight || 0;
-      root.style.setProperty('--cookie-banner-offset', `${h}px`);
-    };
-
-    set();
-
-    const ro = new ResizeObserver(set);
-    ro.observe(el);
-    window.addEventListener('resize', set);
-
-    return () => {
-      ro.disconnect();
-      window.removeEventListener('resize', set);
-      root.style.setProperty('--cookie-banner-offset', '0px');
-    };
-  }, [isBannerVisible]);
-
   if (!showBanner && !showPreferences) {
     return null;
   }
 
   return (
     <>
-      {/* Main Banner */}
+      {/* Main Banner - sticky at bottom, stays above footer */}
       {showBanner && !showPreferences && (
-        <div ref={bannerRef} className="fixed bottom-0 left-0 right-0 z-50 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-card/95 backdrop-blur-md border-t border-border shadow-lg animate-in slide-in-from-bottom-4 duration-300">
+        <div className="sticky bottom-0 z-50 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-card/95 backdrop-blur-md border-t border-b border-border shadow-lg">
           <div className="container mx-auto max-w-4xl">
             <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
               <div className="flex items-start gap-3 flex-1">

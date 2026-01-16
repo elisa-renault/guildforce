@@ -75,10 +75,10 @@ const App = () => (
                   <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/poll/:pollId/results" element={<GuildPollResults />} />
                   <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/members" element={<GuildMembers />} />
                   <Route path="*" element={<NotFound />} />
-                </Routes>
+              </Routes>
               </div>
-              <Footer />
               <CookieBanner />
+              <Footer />
               <BugReportButton />
             </BrowserRouter>
           </div>
