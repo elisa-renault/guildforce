@@ -132,6 +132,9 @@ export function useGuildPermissions(guildId: string | null) {
     
     setSaving(true);
 
+    // Capture old permissions for logging
+    const oldPermissions = [...permissions];
+
     try {
       // Delete all existing permissions for this guild
       const { error: deleteError } = await supabase
@@ -157,6 +160,45 @@ export function useGuildPermissions(guildId: string | null) {
           .insert(toInsert);
 
         if (insertError) throw insertError;
+      }
+
+      // Log activity
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData.session?.user?.id;
+      
+      if (userId) {
+        // Build a summary of changes
+        const changes: Record<string, { added: number; removed: number; modified: number }> = {};
+        
+        const permissionTypes = ['manage_wishes', 'manage_polls', 'manage_rosters', 'view_activity_log'] as const;
+        
+        permissionTypes.forEach(type => {
+          const oldRules = oldPermissions.filter(p => p.permission_type === type);
+          const newRules = newPermissions.filter(p => p.permission_type === type);
+          
+          const oldCount = oldRules.length;
+          const newCount = newRules.length;
+          
+          if (oldCount !== newCount || JSON.stringify(oldRules) !== JSON.stringify(newRules)) {
+            changes[type] = {
+              added: Math.max(0, newCount - oldCount),
+              removed: Math.max(0, oldCount - newCount),
+              modified: Math.min(oldCount, newCount) > 0 ? 1 : 0,
+            };
+          }
+        });
+
+        if (Object.keys(changes).length > 0) {
+          await supabase.rpc('log_guild_activity', {
+            p_guild_id: guildId,
+            p_user_id: userId,
+            p_action_type: 'permissions_updated',
+            p_action_details: {
+              changes,
+              total_rules: newPermissions.length,
+            },
+          });
+        }
       }
 
       setPermissions(newPermissions);

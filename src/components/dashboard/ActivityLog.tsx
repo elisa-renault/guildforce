@@ -29,6 +29,7 @@ import {
   UserCog,
   ChevronLeft,
   ChevronRight,
+  Shield,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
@@ -47,6 +48,7 @@ const ACTION_ICONS: Record<ActionType, React.ReactNode> = {
   roster_created: <FileText className="h-4 w-4" />,
   roster_updated: <Pencil className="h-4 w-4" />,
   roster_deleted: <Trash2 className="h-4 w-4" />,
+  permissions_updated: <Shield className="h-4 w-4" />,
 };
 
 const ACTION_COLORS: Record<ActionType, string> = {
@@ -59,6 +61,7 @@ const ACTION_COLORS: Record<ActionType, string> = {
   roster_created: 'bg-blue-500/20 text-blue-400',
   roster_updated: 'bg-amber-500/20 text-amber-400',
   roster_deleted: 'bg-red-500/20 text-red-400',
+  permissions_updated: 'bg-orange-500/20 text-orange-400',
 };
 
 export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
@@ -92,6 +95,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
       roster_created: { en: 'Roster Created', fr: 'Roster créé' },
       roster_updated: { en: 'Roster Updated', fr: 'Roster modifié' },
       roster_deleted: { en: 'Roster Deleted', fr: 'Roster supprimé' },
+      permissions_updated: { en: 'Permissions', fr: 'Permissions' },
     };
     return labels[actionType]?.[language] || actionType;
   };
@@ -348,6 +352,46 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
           </div>
         );
 
+      case 'permissions_updated': {
+        const changes = details.changes as Record<string, { added: number; removed: number; modified: number }>;
+        const totalRules = details.total_rules as number;
+        
+        const getPermissionLabel = (type: string) => {
+          const labels: Record<string, { en: string; fr: string }> = {
+            manage_wishes: { en: 'Wishes', fr: 'Vœux' },
+            manage_polls: { en: 'Polls', fr: 'Sondages' },
+            manage_rosters: { en: 'Rosters', fr: 'Rosters' },
+            view_activity_log: { en: 'Activity', fr: 'Journal' },
+          };
+          return labels[type]?.[language] || type;
+        };
+
+        const changedTypes = Object.keys(changes || {});
+        
+        return (
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <span className="font-medium">{log.user_profile?.username || 'System'}</span>
+              <span className="text-muted-foreground text-sm">
+                {language === 'fr' ? 'a modifié les permissions' : 'updated permissions'}
+              </span>
+            </div>
+            {changedTypes.length > 0 && (
+              <div className="flex flex-wrap gap-1 text-xs">
+                {changedTypes.map(type => (
+                  <Badge key={type} variant="outline" className="bg-orange-500/10 text-orange-400">
+                    {getPermissionLabel(type)}
+                  </Badge>
+                ))}
+              </div>
+            )}
+            <span className="text-xs text-muted-foreground">
+              {totalRules} {language === 'fr' ? 'règle(s) active(s)' : 'active rule(s)'}
+            </span>
+          </div>
+        );
+      }
+
       default:
         return null;
     }
@@ -400,6 +444,9 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
               </SelectItem>
               <SelectItem value="roster_deleted">
                 {language === 'fr' ? 'Rosters supprimés' : 'Rosters Deleted'}
+              </SelectItem>
+              <SelectItem value="permissions_updated">
+                {language === 'fr' ? 'Permissions' : 'Permissions'}
               </SelectItem>
             </SelectContent>
           </Select>
