@@ -8,7 +8,7 @@ import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { GuildSubNav } from '@/components/guild/GuildSubNav';
 import { RosterManager } from '@/components/roster';
-import { GuildPermissionsEditor } from '@/components/permissions';
+import { GuildPermissionsEditor, MyPermissionsCard } from '@/components/permissions';
 import { 
   GuildSettingsSidebar, 
   GuildProfileSection, 
@@ -250,6 +250,9 @@ const GuildSettings = () => {
     if (gm) {
       sections.push('profile', 'permissions', 'rosters', 'activity', 'battlenet');
     } else {
+      // Non-GMs with any permission see "My Permissions" first
+      const hasAnyPerm = rosters || activity;
+      if (hasAnyPerm) sections.push('mypermissions');
       if (rosters) sections.push('rosters');
       if (activity) sections.push('activity');
     }
@@ -337,6 +340,13 @@ const GuildSettings = () => {
             guildId={guild.id}
             onResyncComplete={handleResyncComplete}
           />
+        );
+      
+      case 'mypermissions':
+        return (
+          <GlowCard className="p-6">
+            <MyPermissionsCard guildId={guild.id} isGM={isGM} />
+          </GlowCard>
         );
       
       default:
