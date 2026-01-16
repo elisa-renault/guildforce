@@ -47,24 +47,18 @@ export const GuildSettingsSidebar = ({
   const isMobile = useIsMobile();
   const [tabsTop, setTabsTop] = useState<number>(104);
 
+  // Measure heights once on mount and on resize (not scroll) for fixed positioning
   useEffect(() => {
     if (!isMobile) return;
 
-    let raf = 0;
-
     const compute = () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        const subNav = document.querySelector<HTMLElement>('[data-guild-subnav]');
-        const globalNav = document.querySelector<HTMLElement>('[data-global-nav]');
-        if (!subNav && !globalNav) return;
-
-        // Use element heights (stable) instead of viewport bounds (iOS visual viewport can shift on scroll)
-        const globalH = globalNav?.offsetHeight ?? 0;
-        const subH = subNav?.offsetHeight ?? 0;
-        const nextTop = Math.max(0, Math.round(globalH + subH));
-        setTabsTop((prev) => (prev === nextTop ? prev : nextTop));
-      });
+      const subNav = document.querySelector<HTMLElement>('[data-guild-subnav]');
+      const globalNav = document.querySelector<HTMLElement>('[data-global-nav]');
+      
+      const globalH = globalNav?.offsetHeight ?? 64;
+      const subH = subNav?.offsetHeight ?? 40;
+      const nextTop = globalH + subH;
+      setTabsTop((prev) => (prev === nextTop ? prev : nextTop));
     };
 
     compute();
@@ -77,7 +71,6 @@ export const GuildSettingsSidebar = ({
     if (subNavEl) ro.observe(subNavEl);
 
     return () => {
-      cancelAnimationFrame(raf);
       ro.disconnect();
       window.removeEventListener('resize', compute);
     };
@@ -94,35 +87,43 @@ export const GuildSettingsSidebar = ({
     return acc;
   }, {} as Record<string, SectionConfig[]>);
 
-  // Mobile: horizontal scrollable tabs - more compact
+  // Mobile: fixed horizontal tabs - glued under sub-nav
   if (isMobile) {
     return (
-      <div className="sticky z-30 -mx-3 border-b border-border/50 bg-background/95 backdrop-blur-sm px-3" style={{ top: tabsTop }}>
-        <ScrollArea className="w-full">
-          <div className="flex items-center gap-0.5 py-1.5">
-            {visibleSectionConfigs.map((section) => {
-              const Icon = section.icon;
-              const isActive = activeSection === section.id;
-              return (
-                <button
-                  key={section.id}
-                  onClick={() => onSectionChange(section.id)}
-                  className={cn(
-                    "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0",
-                    isActive
-                      ? "bg-primary/20 text-foreground ring-1 ring-primary/50"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                  )}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  <span>{language === 'fr' ? section.labelFr : section.labelEn}</span>
-                </button>
-              );
-            })}
-          </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
-      </div>
+      <>
+        {/* Fixed tabs bar */}
+        <div 
+          className="fixed left-0 right-0 z-30 border-b border-border/50 bg-background/95 backdrop-blur-sm px-3" 
+          style={{ top: tabsTop }}
+        >
+          <ScrollArea className="w-full">
+            <div className="flex items-center gap-0.5 py-1.5">
+              {visibleSectionConfigs.map((section) => {
+                const Icon = section.icon;
+                const isActive = activeSection === section.id;
+                return (
+                  <button
+                    key={section.id}
+                    onClick={() => onSectionChange(section.id)}
+                    className={cn(
+                      "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0",
+                      isActive
+                        ? "bg-primary/20 text-foreground ring-1 ring-primary/50"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    )}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    <span>{language === 'fr' ? section.labelFr : section.labelEn}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
+        </div>
+        {/* Spacer to prevent content from being hidden under fixed tabs */}
+        <div className="h-10" />
+      </>
     );
   }
 
