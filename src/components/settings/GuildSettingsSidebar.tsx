@@ -57,17 +57,17 @@ export const GuildSettingsSidebar = ({
       raf = requestAnimationFrame(() => {
         const subNav = document.querySelector<HTMLElement>('[data-guild-subnav]');
         const globalNav = document.querySelector<HTMLElement>('[data-global-nav]');
-        const target = subNav ?? globalNav;
-        if (!target) return;
+        if (!subNav && !globalNav) return;
 
-        const nextTop = Math.max(0, Math.round(target.getBoundingClientRect().bottom));
+        // Use element heights (stable) instead of viewport bounds (iOS visual viewport can shift on scroll)
+        const globalH = globalNav?.offsetHeight ?? 0;
+        const subH = subNav?.offsetHeight ?? 0;
+        const nextTop = Math.max(0, Math.round(globalH + subH));
         setTabsTop((prev) => (prev === nextTop ? prev : nextTop));
       });
     };
 
     compute();
-
-    window.addEventListener('scroll', compute, { passive: true });
     window.addEventListener('resize', compute);
 
     const ro = new ResizeObserver(compute);
@@ -79,7 +79,6 @@ export const GuildSettingsSidebar = ({
     return () => {
       cancelAnimationFrame(raf);
       ro.disconnect();
-      window.removeEventListener('scroll', compute);
       window.removeEventListener('resize', compute);
     };
   }, [isMobile]);
