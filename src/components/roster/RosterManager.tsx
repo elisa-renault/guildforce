@@ -274,8 +274,10 @@ export const RosterManager = ({ guildId, rosters, members, ranks, onRosterChange
 
           <div className="space-y-4">
             <div>
-              <label className="text-sm text-muted-foreground">{t.rosters?.rosterName || 'Name'}</label>
+              <label htmlFor="roster-create-name" className="text-sm text-muted-foreground">{t.rosters?.rosterName || 'Name'}</label>
               <Input
+                id="roster-create-name"
+                name="roster-name"
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
                 placeholder={t.rosters?.rosterNamePlaceholder || 'e.g., Mythic Roster'}
@@ -284,8 +286,10 @@ export const RosterManager = ({ guildId, rosters, members, ranks, onRosterChange
             </div>
 
             <div>
-              <label className="text-sm text-muted-foreground">{t.rosters?.rosterDescription || 'Description'}</label>
+              <label htmlFor="roster-create-description" className="text-sm text-muted-foreground">{t.rosters?.rosterDescription || 'Description'}</label>
               <Textarea
+                id="roster-create-description"
+                name="roster-description"
                 value={formDescription}
                 onChange={(e) => setFormDescription(e.target.value)}
                 placeholder={t.rosters?.rosterDescriptionPlaceholder || 'Optional description'}
