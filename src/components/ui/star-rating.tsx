@@ -106,7 +106,7 @@ export const StarRating = ({
               <Star
                 className={cn(
                   sizeClasses[size],
-                  'fill-primary text-primary stroke-[1.5]'
+                  'fill-amber-500 text-amber-500 stroke-[1.5]'
                 )}
               />
             </div>
@@ -165,7 +165,7 @@ export const StarDisplay = ({
               <Star
                 className={cn(
                   sizeClasses[size],
-                  'fill-primary text-primary stroke-[1.5]'
+                  'fill-amber-500 text-amber-500 stroke-[1.5]'
                 )}
               />
             </div>
