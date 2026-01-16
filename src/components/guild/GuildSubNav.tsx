@@ -98,7 +98,7 @@ export const GuildSubNav = ({
   };
 
   return (
-    <div className="sticky top-16 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50 w-full">
+    <div data-guild-subnav className="sticky top-16 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50 w-full">
       <div className="max-w-full overflow-hidden px-3 md:container md:mx-auto md:px-4">
         <div className="flex items-center gap-2 py-2">
           {/* Back button - uses browser history or fallback */}
