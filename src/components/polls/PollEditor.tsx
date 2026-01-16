@@ -8,23 +8,29 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GlowCard } from '@/components/GlowCard';
 import { SortableQuestion } from './SortableQuestion';
-import { SortableSection } from './SortableSection';
-import { Plus, Save, Play, Loader2, Layers } from 'lucide-react';
+import { Plus, Save, Play, Loader2, Layers, GripVertical, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   DndContext,
   DragEndEvent,
+  DragOverEvent,
+  DragStartEvent,
   KeyboardSensor,
   PointerSensor,
   closestCenter,
   useSensor,
   useSensors,
+  DragOverlay,
+  UniqueIdentifier,
 } from '@dnd-kit/core';
 import {
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
   arrayMove,
+  useSortable,
 } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import type { PollFormData, QuestionFormData, SectionFormData } from '@/types/poll';
 
 interface Roster {
@@ -54,6 +60,102 @@ const defaultSection: SectionFormData = {
   questions: [{ ...defaultQuestion }],
 };
 
+// Helper to parse question IDs
+const parseQuestionId = (id: string): { type: 'general' | 'section'; sectionIndex?: number; questionIndex: number } | null => {
+  if (id.startsWith('general-q-')) {
+    return { type: 'general', questionIndex: parseInt(id.replace('general-q-', '')) };
+  }
+  const match = id.match(/^section-(\d+)-q-(\d+)$/);
+  if (match) {
+    return { type: 'section', sectionIndex: parseInt(match[1]), questionIndex: parseInt(match[2]) };
+  }
+  return null;
+};
+
+// Sortable Section Header
+const SortableSectionHeader = ({ 
+  section, 
+  sectionIndex, 
+  isOpen,
+  onToggle,
+  onRemove,
+  onChange,
+  canRemove,
+}: { 
+  section: SectionFormData; 
+  sectionIndex: number;
+  isOpen: boolean;
+  onToggle: () => void;
+  onRemove: () => void;
+  onChange: (section: SectionFormData) => void;
+  canRemove: boolean;
+}) => {
+  const { language } = useLanguage();
+  const id = `section-header-${sectionIndex}`;
+  
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="mb-2">
+      <div className="flex items-start gap-3 p-4 bg-primary/10 rounded-lg border border-primary/30">
+        <div 
+          className="flex items-center gap-2 pt-2 text-muted-foreground cursor-grab active:cursor-grabbing"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-5 w-5" />
+          <span className="text-sm font-medium text-primary">S{sectionIndex + 1}</span>
+        </div>
+
+        <div className="flex-1 space-y-2">
+          <Input
+            value={section.title}
+            onChange={(e) => onChange({ ...section, title: e.target.value })}
+            placeholder={language === 'fr' ? 'Titre de la section...' : 'Section title...'}
+            className="bg-background font-medium"
+          />
+          <Textarea
+            value={section.description}
+            onChange={(e) => onChange({ ...section, description: e.target.value })}
+            placeholder={language === 'fr' ? 'Description (optionnelle)...' : 'Description (optional)...'}
+            className="bg-background resize-none text-sm"
+            rows={2}
+          />
+        </div>
+
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onToggle}>
+            {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </Button>
+          {canRemove && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onRemove}
+              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const PollEditor = ({
   initialData,
   rosters,
@@ -63,6 +165,8 @@ export const PollEditor = ({
   metadataOnly = false,
 }: PollEditorProps) => {
   const { language } = useLanguage();
+  const [openSections, setOpenSections] = useState<Record<number, boolean>>({});
+  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   
   const [formData, setFormData] = useState<PollFormData>(initialData || {
     title: '',
@@ -87,8 +191,19 @@ export const PollEditor = ({
         sections: initialData.sections || [],
         questions: initialData.questions || [{ ...defaultQuestion }],
       });
+      // Open all sections by default
+      const openState: Record<number, boolean> = {};
+      (initialData.sections || []).forEach((_, i) => {
+        openState[i] = true;
+      });
+      setOpenSections(openState);
     }
   }, [initialData]);
+
+  // Toggle section
+  const toggleSection = (index: number) => {
+    setOpenSections(prev => ({ ...prev, [index]: !prev[index] }));
+  };
 
   // Questions without section
   const handleAddQuestion = () => {
@@ -114,10 +229,12 @@ export const PollEditor = ({
 
   // Sections
   const handleAddSection = () => {
+    const newIndex = formData.sections.length;
     setFormData((prev) => ({
       ...prev,
       sections: [...prev.sections, { ...defaultSection }],
     }));
+    setOpenSections(prev => ({ ...prev, [newIndex]: true }));
   };
 
   const handleSectionChange = (index: number, section: SectionFormData) => {
@@ -134,37 +251,140 @@ export const PollEditor = ({
     }));
   };
 
-  // Drag and drop handlers
-  const handleSectionDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    
-    if (over && active.id !== over.id) {
-      const oldIndex = formData.sections.findIndex((_, i) => `section-${i}` === active.id);
-      const newIndex = formData.sections.findIndex((_, i) => `section-${i}` === over.id);
-      
-      if (oldIndex !== -1 && newIndex !== -1) {
-        setFormData((prev) => ({
-          ...prev,
-          sections: arrayMove(prev.sections, oldIndex, newIndex),
-        }));
-      }
-    }
+  const handleSectionQuestionChange = (sectionIndex: number, qIndex: number, question: QuestionFormData) => {
+    setFormData((prev) => ({
+      ...prev,
+      sections: prev.sections.map((s, i) => 
+        i === sectionIndex 
+          ? { ...s, questions: s.questions.map((q, j) => j === qIndex ? question : q) }
+          : s
+      ),
+    }));
   };
 
-  const handleQuestionDragEnd = (event: DragEndEvent) => {
+  const handleRemoveSectionQuestion = (sectionIndex: number, qIndex: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      sections: prev.sections.map((s, i) => 
+        i === sectionIndex 
+          ? { ...s, questions: s.questions.filter((_, j) => j !== qIndex) }
+          : s
+      ),
+    }));
+  };
+
+  const handleAddSectionQuestion = (sectionIndex: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      sections: prev.sections.map((s, i) => 
+        i === sectionIndex 
+          ? { ...s, questions: [...s.questions, { ...defaultQuestion }] }
+          : s
+      ),
+    }));
+  };
+
+  // Unified drag handlers
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+    setActiveId(null);
     
-    if (over && active.id !== over.id) {
-      const oldIndex = formData.questions.findIndex((_, i) => `general-q-${i}` === active.id);
-      const newIndex = formData.questions.findIndex((_, i) => `general-q-${i}` === over.id);
+    if (!over || active.id === over.id) return;
+
+    const activeIdStr = active.id.toString();
+    const overIdStr = over.id.toString();
+
+    // Handle section reordering
+    if (activeIdStr.startsWith('section-header-') && overIdStr.startsWith('section-header-')) {
+      const oldIndex = parseInt(activeIdStr.replace('section-header-', ''));
+      const newIndex = parseInt(overIdStr.replace('section-header-', ''));
       
-      if (oldIndex !== -1 && newIndex !== -1) {
-        setFormData((prev) => ({
-          ...prev,
-          questions: arrayMove(prev.questions, oldIndex, newIndex),
-        }));
-      }
+      setFormData((prev) => ({
+        ...prev,
+        sections: arrayMove(prev.sections, oldIndex, newIndex),
+      }));
+      return;
     }
+
+    // Handle question movement
+    const activeInfo = parseQuestionId(activeIdStr);
+    const overInfo = parseQuestionId(overIdStr);
+    
+    if (!activeInfo) return;
+
+    // Get the active question
+    let activeQuestion: QuestionFormData;
+    if (activeInfo.type === 'general') {
+      activeQuestion = formData.questions[activeInfo.questionIndex];
+    } else {
+      activeQuestion = formData.sections[activeInfo.sectionIndex!].questions[activeInfo.questionIndex];
+    }
+
+    // Determine target location
+    let targetType: 'general' | 'section' = 'general';
+    let targetSectionIndex: number | undefined;
+    let targetQuestionIndex: number = 0;
+
+    if (overInfo) {
+      targetType = overInfo.type;
+      targetSectionIndex = overInfo.sectionIndex;
+      targetQuestionIndex = overInfo.questionIndex;
+    } else if (overIdStr.startsWith('section-drop-')) {
+      // Dropping on a section drop zone
+      targetType = 'section';
+      targetSectionIndex = parseInt(overIdStr.replace('section-drop-', ''));
+      targetQuestionIndex = formData.sections[targetSectionIndex].questions.length;
+    } else if (overIdStr === 'general-drop') {
+      targetType = 'general';
+      targetQuestionIndex = formData.questions.length;
+    }
+
+    setFormData((prev) => {
+      const newFormData = { ...prev };
+      
+      // Remove from source
+      if (activeInfo.type === 'general') {
+        newFormData.questions = prev.questions.filter((_, i) => i !== activeInfo.questionIndex);
+      } else {
+        newFormData.sections = prev.sections.map((s, i) => 
+          i === activeInfo.sectionIndex 
+            ? { ...s, questions: s.questions.filter((_, j) => j !== activeInfo.questionIndex) }
+            : s
+        );
+      }
+
+      // Add to target
+      if (targetType === 'general') {
+        // Adjust index if removing from same container above target
+        let adjustedIndex = targetQuestionIndex;
+        if (activeInfo.type === 'general' && activeInfo.questionIndex < targetQuestionIndex) {
+          adjustedIndex--;
+        }
+        const newQuestions = [...newFormData.questions];
+        newQuestions.splice(adjustedIndex, 0, activeQuestion);
+        newFormData.questions = newQuestions;
+      } else {
+        // Adjust index if removing from same section above target
+        let adjustedIndex = targetQuestionIndex;
+        if (activeInfo.type === 'section' && activeInfo.sectionIndex === targetSectionIndex && activeInfo.questionIndex < targetQuestionIndex) {
+          adjustedIndex--;
+        }
+        newFormData.sections = newFormData.sections.map((s, i) => {
+          if (i === targetSectionIndex) {
+            const newQuestions = [...s.questions];
+            newQuestions.splice(adjustedIndex, 0, activeQuestion);
+            return { ...s, questions: newQuestions };
+          }
+          return s;
+        });
+      }
+
+      return newFormData;
+    });
   };
 
   const handleSave = async () => {
@@ -197,8 +417,23 @@ export const PollEditor = ({
 
   const isValid = formData.title.trim() && hasQuestions && allQuestionsValid;
 
-  const sectionIds = formData.sections.map((_, i) => `section-${i}`);
-  const questionIds = formData.questions.map((_, i) => `general-q-${i}`);
+  // Build all sortable IDs
+  const sectionHeaderIds = formData.sections.map((_, i) => `section-header-${i}`);
+  const allQuestionIds = [
+    ...formData.questions.map((_, i) => `general-q-${i}`),
+    ...formData.sections.flatMap((s, si) => s.questions.map((_, qi) => `section-${si}-q-${qi}`)),
+  ];
+
+  // Get active question for overlay
+  const getActiveQuestion = (): QuestionFormData | null => {
+    if (!activeId) return null;
+    const info = parseQuestionId(activeId.toString());
+    if (!info) return null;
+    if (info.type === 'general') {
+      return formData.questions[info.questionIndex];
+    }
+    return formData.sections[info.sectionIndex!]?.questions[info.questionIndex] || null;
+  };
 
   return (
     <div className="space-y-6">
@@ -297,47 +532,11 @@ export const PollEditor = ({
         </div>
       </GlowCard>
 
-      {/* Sections */}
-      {formData.sections.length > 0 && (
-        <GlowCard className={`p-6 ${metadataOnly ? 'opacity-60 pointer-events-none' : ''}`}>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <Layers className="h-5 w-5 text-primary" />
-              {language === 'fr' ? 'Sections' : 'Sections'}
-            </h2>
-          </div>
-
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleSectionDragEnd}
-          >
-            <SortableContext items={sectionIds} strategy={verticalListSortingStrategy}>
-              <div className="space-y-4">
-                {formData.sections.map((section, index) => (
-                  <SortableSection
-                    key={`section-${index}`}
-                    id={`section-${index}`}
-                    section={section}
-                    sectionIndex={index}
-                    onChange={(s) => handleSectionChange(index, s)}
-                    onRemove={() => handleRemoveSection(index)}
-                    canRemove={true}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
-        </GlowCard>
-      )}
-
-      {/* Questions without section */}
+      {/* Unified Questions & Sections Editor */}
       <GlowCard className={`p-6 ${metadataOnly ? 'opacity-60 pointer-events-none' : ''}`}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">
-            {formData.sections.length > 0 
-              ? (language === 'fr' ? 'Questions générales' : 'General Questions')
-              : (language === 'fr' ? 'Questions' : 'Questions')}
+            {language === 'fr' ? 'Questions' : 'Questions'}
           </h2>
           {!metadataOnly && (
             <div className="flex items-center gap-2">
@@ -364,30 +563,104 @@ export const PollEditor = ({
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
-          onDragEnd={handleQuestionDragEnd}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
         >
-          <SortableContext items={questionIds} strategy={verticalListSortingStrategy}>
-            <div className="space-y-4">
-              {formData.questions.length === 0 && formData.sections.length === 0 && (
-                <p className="text-muted-foreground text-sm text-center py-4">
-                  {language === 'fr' 
-                    ? 'Ajoutez des questions ou des sections pour commencer' 
-                    : 'Add questions or sections to get started'}
-                </p>
-              )}
-              {formData.questions.map((question, index) => (
-                <SortableQuestion
-                  key={`general-q-${index}`}
-                  id={`general-q-${index}`}
-                  question={question}
-                  index={index}
-                  onChange={(q) => handleQuestionChange(index, q)}
-                  onRemove={() => handleRemoveQuestion(index)}
-                  canRemove={formData.questions.length > 1 || formData.sections.some(s => s.questions.length > 0)}
-                />
-              ))}
-            </div>
-          </SortableContext>
+          <div className="space-y-4">
+            {formData.questions.length === 0 && formData.sections.length === 0 && (
+              <p className="text-muted-foreground text-sm text-center py-4">
+                {language === 'fr' 
+                  ? 'Ajoutez des questions ou des sections pour commencer' 
+                  : 'Add questions or sections to get started'}
+              </p>
+            )}
+
+            {/* General Questions */}
+            {formData.questions.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  {language === 'fr' ? 'Questions générales' : 'General Questions'}
+                </h3>
+                <SortableContext items={formData.questions.map((_, i) => `general-q-${i}`)} strategy={verticalListSortingStrategy}>
+                  {formData.questions.map((question, index) => (
+                    <SortableQuestion
+                      key={`general-q-${index}`}
+                      id={`general-q-${index}`}
+                      question={question}
+                      index={index}
+                      onChange={(q) => handleQuestionChange(index, q)}
+                      onRemove={() => handleRemoveQuestion(index)}
+                      canRemove={formData.questions.length > 1 || formData.sections.some(s => s.questions.length > 0)}
+                    />
+                  ))}
+                </SortableContext>
+              </div>
+            )}
+
+            {/* Sections with their questions */}
+            {formData.sections.length > 0 && (
+              <SortableContext items={sectionHeaderIds} strategy={verticalListSortingStrategy}>
+                {formData.sections.map((section, sectionIndex) => (
+                  <div key={`section-${sectionIndex}`} className="space-y-2">
+                    <SortableSectionHeader
+                      section={section}
+                      sectionIndex={sectionIndex}
+                      isOpen={openSections[sectionIndex] !== false}
+                      onToggle={() => toggleSection(sectionIndex)}
+                      onRemove={() => handleRemoveSection(sectionIndex)}
+                      onChange={(s) => handleSectionChange(sectionIndex, s)}
+                      canRemove={true}
+                    />
+
+                    <Collapsible open={openSections[sectionIndex] !== false}>
+                      <CollapsibleContent>
+                        <div className="ml-8 space-y-3">
+                          <SortableContext 
+                            items={section.questions.map((_, qi) => `section-${sectionIndex}-q-${qi}`)} 
+                            strategy={verticalListSortingStrategy}
+                          >
+                            {section.questions.map((question, qIndex) => (
+                              <SortableQuestion
+                                key={`section-${sectionIndex}-q-${qIndex}`}
+                                id={`section-${sectionIndex}-q-${qIndex}`}
+                                question={question}
+                                index={qIndex}
+                                onChange={(q) => handleSectionQuestionChange(sectionIndex, qIndex, q)}
+                                onRemove={() => handleRemoveSectionQuestion(sectionIndex, qIndex)}
+                                canRemove={true}
+                                compact
+                              />
+                            ))}
+                          </SortableContext>
+
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleAddSectionQuestion(sectionIndex)}
+                            className="text-primary w-full border border-dashed border-primary/30 hover:border-primary/50"
+                          >
+                            <Plus className="h-4 w-4 mr-1" />
+                            {language === 'fr' ? 'Ajouter une question' : 'Add question'}
+                          </Button>
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  </div>
+                ))}
+              </SortableContext>
+            )}
+          </div>
+
+          <DragOverlay>
+            {activeId && getActiveQuestion() && (
+              <div className="border border-primary rounded-lg p-4 bg-card shadow-lg opacity-90">
+                <div className="flex items-center gap-2 text-sm">
+                  <GripVertical className="h-4 w-4 text-muted-foreground" />
+                  <span className="truncate">{getActiveQuestion()?.question_text || (language === 'fr' ? 'Question...' : 'Question...')}</span>
+                </div>
+              </div>
+            )}
+          </DragOverlay>
         </DndContext>
       </GlowCard>
 
