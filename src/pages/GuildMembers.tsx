@@ -431,8 +431,13 @@ const GuildMembers = () => {
         <div className="flex flex-col gap-2 mb-4">
           {/* Search - full width on mobile */}
           <div className="relative w-full md:max-w-[280px]">
+            <label htmlFor="member-search" className="sr-only">
+              {language === 'fr' ? 'Rechercher un personnage ou joueur' : 'Search character or player'}
+            </label>
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
             <Input
+              id="member-search"
+              name="member-search"
               placeholder={language === 'fr' ? 'Rechercher un personnage ou joueur...' : 'Search character or player...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}

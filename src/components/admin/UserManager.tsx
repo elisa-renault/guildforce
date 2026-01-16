@@ -195,8 +195,13 @@ export function UserManager() {
     <div className="space-y-4">
       {/* Search */}
       <div className="relative">
+        <label htmlFor="user-search" className="sr-only">
+          {language === 'fr' ? 'Rechercher par nom ou battletag' : 'Search by name or battletag'}
+        </label>
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
+          id="user-search"
+          name="user-search"
           placeholder={language === 'fr' ? 'Rechercher par nom ou battletag...' : 'Search by name or battletag...'}
           value={searchQuery}
           onChange={(e) => handleSearch(e.target.value)}

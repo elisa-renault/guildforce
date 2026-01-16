@@ -163,8 +163,10 @@ export const SanctionDialog = ({
 
           {/* Reason */}
           <div className="space-y-2">
-            <Label>{language === 'fr' ? 'Raison' : 'Reason'}</Label>
+            <Label htmlFor="sanction-reason">{language === 'fr' ? 'Raison' : 'Reason'}</Label>
             <Textarea
+              id="sanction-reason"
+              name="sanction-reason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder={language === 'fr' ? 'Décrivez la raison de cette sanction...' : 'Describe the reason for this sanction...'}

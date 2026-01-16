@@ -193,8 +193,10 @@ export const RosterEditDialog = ({ open, onOpenChange, rosterId, guildId, onSave
         ) : (
           <div className="space-y-4">
             <div>
-              <label className="text-sm text-muted-foreground">{t.rosters?.rosterName || 'Name'}</label>
+              <label htmlFor="roster-edit-name" className="text-sm text-muted-foreground">{t.rosters?.rosterName || 'Name'}</label>
               <Input
+                id="roster-edit-name"
+                name="roster-name"
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
                 placeholder={t.rosters?.rosterNamePlaceholder || 'e.g., Mythic Roster'}
@@ -203,8 +205,10 @@ export const RosterEditDialog = ({ open, onOpenChange, rosterId, guildId, onSave
             </div>
 
             <div>
-              <label className="text-sm text-muted-foreground">{t.rosters?.rosterDescription || 'Description'}</label>
+              <label htmlFor="roster-edit-description" className="text-sm text-muted-foreground">{t.rosters?.rosterDescription || 'Description'}</label>
               <Textarea
+                id="roster-edit-description"
+                name="roster-description"
                 value={formDescription}
                 onChange={(e) => setFormDescription(e.target.value)}
                 placeholder={t.rosters?.rosterDescriptionPlaceholder || 'Optional description'}
