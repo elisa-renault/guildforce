@@ -4,20 +4,47 @@ import { useGuildPermissions, PermissionType, PermissionRule } from '@/hooks/use
 import { PermissionSection } from './PermissionSection';
 import { PermissionPresets } from './PermissionPresets';
 import { CosmicButton } from '@/components/CosmicButton';
-import { Loader2, Save, Shield } from 'lucide-react';
+import { Loader2, Save, Shield, Users, Settings, Eye } from 'lucide-react';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
 
 interface GuildPermissionsEditorProps {
   guildId: string;
 }
 
-const PERMISSION_TYPES: { type: PermissionType; labelKey: string; descKey: string }[] = [
-  { type: 'manage_wishes', labelKey: 'manageWishes', descKey: 'manageWishesDesc' },
-  { type: 'manage_polls', labelKey: 'managePolls', descKey: 'managePollsDesc' },
-  { type: 'manage_rosters', labelKey: 'manageRosters', descKey: 'manageRostersDesc' },
-  { type: 'view_activity_log', labelKey: 'viewActivityLog', descKey: 'viewActivityLogDesc' },
-  { type: 'manage_members', labelKey: 'manageMembers', descKey: 'manageMembersDesc' },
+interface PermissionConfig {
+  type: PermissionType;
+  labelKey: string;
+  descKey: string;
+  category: 'content' | 'admin' | 'audit';
+  isSensitive?: boolean;
+}
+
+const PERMISSION_CONFIGS: PermissionConfig[] = [
+  { type: 'manage_wishes', labelKey: 'manageWishes', descKey: 'manageWishesDesc', category: 'content' },
+  { type: 'manage_polls', labelKey: 'managePolls', descKey: 'managePollsDesc', category: 'content' },
+  { type: 'manage_rosters', labelKey: 'manageRosters', descKey: 'manageRostersDesc', category: 'content' },
+  { type: 'manage_members', labelKey: 'manageMembers', descKey: 'manageMembersDesc', category: 'admin', isSensitive: true },
+  { type: 'view_activity_log', labelKey: 'viewActivityLog', descKey: 'viewActivityLogDesc', category: 'audit' },
 ];
+
+const CATEGORY_INFO = {
+  content: { 
+    labelEn: 'Content Management', 
+    labelFr: 'Gestion du contenu',
+    icon: Settings,
+  },
+  admin: { 
+    labelEn: 'Administration', 
+    labelFr: 'Administration',
+    icon: Users,
+  },
+  audit: { 
+    labelEn: 'Audit', 
+    labelFr: 'Audit',
+    icon: Eye,
+  },
+};
 
 export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps) => {
   const { t } = useLanguage();
@@ -91,6 +118,12 @@ export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps)
     return labels[key]?.[isFrench ? 'fr' : 'en'] || key;
   };
 
+  // Calculate summary stats
+  const delegatedCount = new Set(localPermissions.map(p => p.permission_type)).size;
+  const rankRules = localPermissions.filter(p => p.access_type === 'rank');
+  const userRules = localPermissions.filter(p => p.access_type === 'user');
+  const uniqueUsers = new Set(userRules.map(r => r.user_id)).size;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -99,14 +132,49 @@ export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps)
     );
   }
 
+  const groupedPermissions = {
+    content: PERMISSION_CONFIGS.filter(p => p.category === 'content'),
+    admin: PERMISSION_CONFIGS.filter(p => p.category === 'admin'),
+    audit: PERMISSION_CONFIGS.filter(p => p.category === 'audit'),
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 mb-4">
-        <Shield className="h-5 w-5 text-primary" />
-        <h3 className="font-display text-lg">{(t as any).permissions?.title || 'Permissions'}</h3>
+      {/* Header with summary */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Shield className="h-5 w-5 text-primary" />
+          <h3 className="font-display text-lg">{(t as any).permissions?.title || 'Permissions'}</h3>
+        </div>
+        
+        {/* Summary badges */}
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          {delegatedCount > 0 ? (
+            <>
+              <Badge variant="secondary">
+                {delegatedCount} {isFrench ? 'permission' : 'permission'}{delegatedCount > 1 ? 's' : ''} {isFrench ? 'déléguée' : 'delegated'}{delegatedCount > 1 ? 's' : ''}
+              </Badge>
+              {rankRules.length > 0 && (
+                <Badge variant="outline">
+                  <Users className="h-3 w-3 mr-1" />
+                  {isFrench ? 'Par rang' : 'By rank'}
+                </Badge>
+              )}
+              {uniqueUsers > 0 && (
+                <Badge variant="outline">
+                  +{uniqueUsers} {isFrench ? 'utilisateur' : 'user'}{uniqueUsers > 1 ? 's' : ''}
+                </Badge>
+              )}
+            </>
+          ) : (
+            <Badge variant="outline" className="text-muted-foreground">
+              {isFrench ? 'GM uniquement' : 'GM only'}
+            </Badge>
+          )}
+        </div>
       </div>
 
-      <p className="text-sm text-muted-foreground mb-4">
+      <p className="text-sm text-muted-foreground">
         {(t as any).permissions?.description || 'Delegate specific management rights to members based on their Battle.net rank or individually. GMs always have all permissions.'}
       </p>
 
@@ -116,19 +184,39 @@ export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps)
         onReset={handleReset}
       />
 
-      <div className="space-y-3">
-        {PERMISSION_TYPES.map(({ type, labelKey, descKey }) => (
-          <PermissionSection
-            key={type}
-            permissionType={type}
-            label={getLabel(labelKey)}
-            description={getLabel(descKey)}
-            rules={getLocalRules(type)}
-            members={members}
-            ranks={ranks}
-            onChange={(rules) => handleRulesChange(type, rules)}
-          />
-        ))}
+      {/* Grouped permissions */}
+      <div className="space-y-6">
+        {(['content', 'admin', 'audit'] as const).map(category => {
+          const categoryPerms = groupedPermissions[category];
+          if (categoryPerms.length === 0) return null;
+          
+          const info = CATEGORY_INFO[category];
+          const Icon = info.icon;
+          
+          return (
+            <div key={category} className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <Icon className="h-4 w-4" />
+                <span>{isFrench ? info.labelFr : info.labelEn}</span>
+              </div>
+              <div className="space-y-2">
+                {categoryPerms.map(({ type, labelKey, descKey, isSensitive }) => (
+                  <PermissionSection
+                    key={type}
+                    permissionType={type}
+                    label={getLabel(labelKey)}
+                    description={getLabel(descKey)}
+                    rules={getLocalRules(type)}
+                    members={members}
+                    ranks={ranks}
+                    onChange={(rules) => handleRulesChange(type, rules)}
+                    isSensitive={isSensitive}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {hasChanges && (
