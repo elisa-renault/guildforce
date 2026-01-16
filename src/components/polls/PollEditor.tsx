@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -655,16 +656,21 @@ export const PollEditor = ({
             )}
           </div>
 
-          <DragOverlay dropAnimation={null}>
-            {activeId && getActiveQuestion() && (
-              <div className="border border-primary rounded-lg p-3 bg-card shadow-xl max-w-md pointer-events-none">
-                <div className="flex items-center gap-2 text-sm">
-                  <GripVertical className="h-4 w-4 text-primary" />
-                  <span className="truncate">{getActiveQuestion()?.question_text || (language === 'fr' ? 'Question...' : 'Question...')}</span>
-                </div>
-              </div>
+          {typeof document !== 'undefined' &&
+            createPortal(
+              <DragOverlay dropAnimation={null} adjustScale={false}>
+                {activeId && getActiveQuestion() && (
+                  <div className="border border-primary rounded-lg p-3 bg-card shadow-xl max-w-md pointer-events-none">
+                    <div className="flex items-center gap-2 text-sm">
+                      <GripVertical className="h-4 w-4 text-primary" />
+                      <span className="truncate">{getActiveQuestion()?.question_text || (language === 'fr' ? 'Question...' : 'Question...')}</span>
+                    </div>
+                  </div>
+                )}
+              </DragOverlay>,
+              document.body
             )}
-          </DragOverlay>
+
         </DndContext>
       </GlowCard>
 
