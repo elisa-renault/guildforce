@@ -67,11 +67,10 @@ const RosterWishes = () => {
   // On mobile we render it as `fixed` (like the Settings tabs) to avoid a top-vs-scroll mismatch.
   const controlsRef = useRef<HTMLDivElement | null>(null);
   const [controlsTop, setControlsTop] = useState<number>(112);
-  const [controlsSpacerH, setControlsSpacerH] = useState<number>(0);
+  // Default spacer to ~44px (py-2 + h-7 button) so it's never 0 on first paint
+  const [controlsSpacerH, setControlsSpacerH] = useState<number>(isMobile ? 44 : 0);
 
   useLayoutEffect(() => {
-    if (!guild) return;
-
     let raf = 0;
 
     const compute = () => {
@@ -83,20 +82,23 @@ const RosterWishes = () => {
         const fallbackGlobalH = globalNav?.offsetHeight ?? 64;
         const fallbackSubH = subNav?.offsetHeight ?? 48;
 
+        // Use getBoundingClientRect for precise positioning when SubNav exists
         const nextTop = subNav
           ? Math.max(0, Math.round(subNav.getBoundingClientRect().bottom))
           : fallbackGlobalH + fallbackSubH;
 
         setControlsTop((prev) => (prev === nextTop ? prev : nextTop));
 
-        if (isMobile) {
-          const nextH = Math.round(controlsRef.current?.offsetHeight ?? 0);
+        if (isMobile && controlsRef.current) {
+          const nextH = Math.round(controlsRef.current.offsetHeight);
           setControlsSpacerH((prev) => (prev === nextH ? prev : nextH));
         }
       });
     };
 
+    // Run immediately on mount to measure controls bar height
     compute();
+
     window.addEventListener('resize', compute);
 
     const ro = new ResizeObserver(compute);
