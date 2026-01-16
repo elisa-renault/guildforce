@@ -7,7 +7,7 @@ import { toSlug } from '@/lib/guildSlug';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GuildSubNav } from '@/components/guild';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { PollEditor } from '@/components/polls';
+import { PollEditor, type ResultsAccessRule } from '@/components/polls';
 import { usePollMutations } from '@/hooks/useGuildPolls';
 import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
 import type { PollFormData, SectionFormData, QuestionFormData } from '@/types/poll';
@@ -24,6 +24,16 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
+interface GuildMember {
+  user_id: string;
+  username: string;
+}
+
+interface GuildRank {
+  rank_index: number;
+  rank_name: string;
+}
+
 const GuildPollNew = () => {
   const navigate = useNavigate();
   const { regionSlug, serverSlug, guildSlug, pollId } = useParams();
@@ -37,11 +47,14 @@ const GuildPollNew = () => {
   const [guild, setGuild] = useState<{ name: string; server: string; region: string; avatar_url: string | null } | null>(null);
   const [isGM, setIsGM] = useState(false);
   const [rosters, setRosters] = useState<{ id: string; name: string }[]>([]);
+  const [members, setMembers] = useState<GuildMember[]>([]);
+  const [ranks, setRanks] = useState<GuildRank[]>([]);
   const [existingPoll, setExistingPoll] = useState<any>(null);
+  const [initialAccessRules, setInitialAccessRules] = useState<ResultsAccessRule[]>([]);
   const [confirmResetDialog, setConfirmResetDialog] = useState(false);
-  const [pendingFullEditData, setPendingFullEditData] = useState<PollFormData | null>(null);
+  const [pendingFullEditData, setPendingFullEditData] = useState<{ data: PollFormData; rules: ResultsAccessRule[] } | null>(null);
 
-  const { createPoll, updatePoll, updatePollQuestions, publishPoll, resetPollResponses, saving } = usePollMutations();
+  const { createPoll, updatePoll, updatePollQuestions, publishPoll, resetPollResponses, saveResultsAccessRules, fetchResultsAccessRules, saving } = usePollMutations();
   const { hasPermission: hasManagePolls, loading: permLoading } = useHasGuildPermission(guildId, 'manage_polls');
 
   // User can manage polls if they are GM OR have manage_polls permission
@@ -77,15 +90,13 @@ const GuildPollNew = () => {
         avatar_url: null,
       });
 
-      // Check GM status (we'll also check permission later)
+      // Check GM status
       const { data: gmCheck } = await supabase.rpc('is_guild_gm', {
         p_guild_id: matchedGuild.id,
         p_user_id: user.id,
       });
 
       setIsGM(gmCheck || false);
-
-      // Note: We don't redirect here anymore - we'll check canManagePolls after permission loads
 
       // Fetch rosters
       const { data: rostersData } = await supabase
@@ -96,7 +107,34 @@ const GuildPollNew = () => {
 
       setRosters(rostersData || []);
 
-      // If editing, fetch existing poll
+      // Fetch members with profiles for access rules
+      const { data: rosterCache } = await supabase
+        .from('guild_roster_cache')
+        .select('matched_user_id, rank_index, rank_name')
+        .eq('guild_id', matchedGuild.id)
+        .not('matched_user_id', 'is', null);
+
+      // Get unique user IDs and fetch their profiles
+      const userIds = [...new Set(rosterCache?.map(r => r.matched_user_id).filter(Boolean) || [])];
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, username')
+          .in('id', userIds);
+
+        setMembers(profiles?.map(p => ({ user_id: p.id, username: p.username })) || []);
+      }
+
+      // Get unique ranks
+      const uniqueRanks = new Map<number, string>();
+      rosterCache?.forEach(r => {
+        if (r.rank_index !== null && !uniqueRanks.has(r.rank_index)) {
+          uniqueRanks.set(r.rank_index, r.rank_name || `Rank ${r.rank_index}`);
+        }
+      });
+      setRanks(Array.from(uniqueRanks.entries()).map(([rank_index, rank_name]) => ({ rank_index, rank_name })));
+
+      // If editing, fetch existing poll and access rules
       if (pollId) {
         const { data: pollData } = await supabase
           .from('guild_polls')
@@ -110,6 +148,8 @@ const GuildPollNew = () => {
 
         if (pollData) {
           setExistingPoll(pollData);
+          const rules = await fetchResultsAccessRules(pollId);
+          setInitialAccessRules(rules);
         }
       }
 
@@ -117,30 +157,30 @@ const GuildPollNew = () => {
     };
 
     fetchData();
-  }, [user, regionSlug, serverSlug, guildSlug, pollId, navigate]);
+  }, [user, regionSlug, serverSlug, guildSlug, pollId, navigate, fetchResultsAccessRules]);
 
-  const handleSave = async (data: PollFormData) => {
+  const handleSave = async (data: PollFormData, accessRules?: ResultsAccessRule[]) => {
     if (!guildId) return;
 
     try {
       if (existingPoll) {
-        // For active polls with full edit mode, we need confirmation
         if (isActivePoll && editMode === 'full') {
-          setPendingFullEditData(data);
+          setPendingFullEditData({ data, rules: accessRules || [] });
           setConfirmResetDialog(true);
           return;
         }
         
         await updatePoll(existingPoll.id, data);
+        if (accessRules) await saveResultsAccessRules(existingPoll.id, accessRules);
         
-        // Update questions for draft polls or when explicitly allowed
         if (!isActivePoll || editMode === 'full') {
           await updatePollQuestions(existingPoll.id, data);
         }
         
         toast({ title: language === 'fr' ? 'Sondage enregistré' : 'Poll saved' });
       } else {
-        await createPoll(guildId, data);
+        const newPollId = await createPoll(guildId, data);
+        if (newPollId && accessRules) await saveResultsAccessRules(newPollId, accessRules);
         toast({ title: language === 'fr' ? 'Brouillon enregistré' : 'Draft saved' });
       }
       navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/polls`);
@@ -153,12 +193,10 @@ const GuildPollNew = () => {
     if (!pendingFullEditData || !existingPoll) return;
 
     try {
-      // Reset all responses first
       await resetPollResponses(existingPoll.id);
-      
-      // Then update metadata and questions
-      await updatePoll(existingPoll.id, pendingFullEditData);
-      await updatePollQuestions(existingPoll.id, pendingFullEditData);
+      await updatePoll(existingPoll.id, pendingFullEditData.data);
+      await updatePollQuestions(existingPoll.id, pendingFullEditData.data);
+      if (pendingFullEditData.rules) await saveResultsAccessRules(existingPoll.id, pendingFullEditData.rules);
       
       toast({ title: language === 'fr' ? 'Sondage mis à jour' : 'Poll updated' });
       navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/polls`);
@@ -170,20 +208,20 @@ const GuildPollNew = () => {
     }
   };
 
-  const handlePublish = async (data: PollFormData) => {
+  const handlePublish = async (data: PollFormData, accessRules?: ResultsAccessRule[]) => {
     if (!guildId) return;
 
     try {
       let pollIdToPublish = existingPoll?.id;
       
       if (!pollIdToPublish) {
-        // Create first, then publish
         pollIdToPublish = await createPoll(guildId, data);
       } else {
         await updatePoll(existingPoll.id, data);
       }
       
       if (pollIdToPublish) {
+        if (accessRules) await saveResultsAccessRules(pollIdToPublish, accessRules);
         await publishPoll(pollIdToPublish);
         toast({ title: language === 'fr' ? 'Sondage publié !' : 'Poll published!' });
         navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/polls`);

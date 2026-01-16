@@ -1117,6 +1117,44 @@ export type Database = {
         }
         Relationships: []
       }
+      poll_results_access_rules: {
+        Row: {
+          access_type: string
+          created_at: string
+          id: string
+          max_rank_index: number | null
+          min_rank_index: number | null
+          poll_id: string
+          user_id: string | null
+        }
+        Insert: {
+          access_type: string
+          created_at?: string
+          id?: string
+          max_rank_index?: number | null
+          min_rank_index?: number | null
+          poll_id: string
+          user_id?: string | null
+        }
+        Update: {
+          access_type?: string
+          created_at?: string
+          id?: string
+          max_rank_index?: number | null
+          min_rank_index?: number | null
+          poll_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poll_results_access_rules_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "guild_polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1371,6 +1409,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_view_poll_results: {
+        Args: { p_poll_id: string; p_user_id: string }
+        Returns: boolean
+      }
       get_public_profile_info: {
         Args: { _user_id: string }
         Returns: {
