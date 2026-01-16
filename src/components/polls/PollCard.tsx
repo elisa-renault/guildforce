@@ -1,13 +1,15 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { GlowCard } from '@/components/GlowCard';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { BarChart3, Clock, Edit, Eye, Users, Lock, Trash2, Play, User } from 'lucide-react';
+import { BarChart3, Clock, Edit, Eye, Users, Lock, Trash2, Play, User, Settings } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import type { GuildPoll } from '@/types/poll';
+import { EditActivePollDialog } from './EditActivePollDialog';
 
 interface PollCardProps {
   poll: GuildPoll;
@@ -29,6 +31,17 @@ export const PollCard = ({
   const navigate = useNavigate();
   const { language } = useLanguage();
   const locale = language === 'fr' ? fr : enUS;
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+
+  const handleEditMetadata = () => {
+    setEditDialogOpen(false);
+    navigate(`/guild/${guildSlug}/polls/${poll.id}/edit?mode=metadata`);
+  };
+
+  const handleEditFull = () => {
+    setEditDialogOpen(false);
+    navigate(`/guild/${guildSlug}/polls/${poll.id}/edit?mode=full`);
+  };
 
   const statusColors = {
     draft: 'bg-muted text-muted-foreground',
@@ -151,6 +164,10 @@ export const PollCard = ({
 
               {poll.status === 'active' && (
                 <>
+                  <Button size="sm" variant="outline" onClick={() => setEditDialogOpen(true)}>
+                    <Settings className="h-4 w-4 mr-1.5" />
+                    {language === 'fr' ? 'Modifier' : 'Edit'}
+                  </Button>
                   <Button size="sm" variant="outline" onClick={handleViewResults}>
                     <BarChart3 className="h-4 w-4 mr-1.5" />
                     {language === 'fr' ? 'Résultats' : 'Results'}
@@ -188,6 +205,14 @@ export const PollCard = ({
           )}
         </div>
       </div>
+
+      <EditActivePollDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        responseCount={poll.response_count || 0}
+        onEditMetadata={handleEditMetadata}
+        onEditFull={handleEditFull}
+      />
     </GlowCard>
   );
 };
