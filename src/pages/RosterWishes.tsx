@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -60,30 +60,34 @@ const RosterWishes = () => {
   const [selectedRosterId, setSelectedRosterId] = useState<string | null>(null);
   const [rosterSettingsOpen, setRosterSettingsOpen] = useState(false);
 
-  // Dynamic offset for sticky roster controls bar
-  const [controlsTop, setControlsTop] = useState<number>(108);
-  useLayoutEffect(() => {
+  // Dynamic offset for sticky roster controls bar - measured after SubNav renders
+  const [controlsTop, setControlsTop] = useState<number>(112);
+  useEffect(() => {
+    if (!guild) return; // Wait for SubNav to be rendered
+    
     const compute = () => {
       const globalNav = document.querySelector<HTMLElement>('[data-global-nav]');
       const subNav = document.querySelector<HTMLElement>('[data-guild-subnav]');
       const globalH = globalNav?.offsetHeight ?? 64;
-      const subH = subNav?.offsetHeight ?? 44;
+      const subH = subNav?.offsetHeight ?? 48;
       setControlsTop(globalH + subH);
     };
-    // Small delay to ensure SubNav is mounted after guild loads
-    const timer = setTimeout(compute, 50);
+    
+    // Double RAF ensures styles are applied
+    requestAnimationFrame(() => requestAnimationFrame(compute));
+    
     window.addEventListener('resize', compute);
     const ro = new ResizeObserver(compute);
     const globalNavEl = document.querySelector<HTMLElement>('[data-global-nav]');
     const subNavEl = document.querySelector<HTMLElement>('[data-guild-subnav]');
     if (globalNavEl) ro.observe(globalNavEl);
     if (subNavEl) ro.observe(subNavEl);
+    
     return () => {
-      clearTimeout(timer);
       ro.disconnect();
       window.removeEventListener('resize', compute);
     };
-  }, [guild]); // Re-run when guild is loaded so SubNav is available
+  }, [guild]);
 
   const fetchData = async () => {
     if (!user || !regionSlug || !serverSlug || !guildSlug) return;
