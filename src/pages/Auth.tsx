@@ -210,11 +210,11 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="flex-1 flex flex-col pt-16">
       <CosmicBackground />
 
       {/* Main Content */}
-      <div className="flex-1 flex items-center justify-center px-4 py-20 relative z-10">
+      <div className="flex-1 flex items-center justify-center px-4 py-8 relative z-10">
         <div className="w-full max-w-5xl grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
           
           {/* Left Column - Branding (visible on lg+) */}
