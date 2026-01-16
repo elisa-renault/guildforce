@@ -64,101 +64,141 @@ const GuildPollNew = () => {
   const isMetadataOnly = editMode === 'metadata';
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchData = async () => {
       if (!user || !regionSlug || !serverSlug || !guildSlug) return;
 
-      const { data: allGuilds } = await supabase
-        .from('guilds')
-        .select('id, name, server, region, officer_rank_threshold');
+      try {
+        const { data: allGuilds, error: guildsError } = await supabase
+          .from('guilds')
+          .select('id, name, server, region, officer_rank_threshold');
 
-      const matchedGuild = allGuilds?.find(g =>
-        toSlug(g.region || 'eu') === regionSlug &&
-        toSlug(g.server) === serverSlug &&
-        toSlug(g.name) === guildSlug
-      );
+        if (guildsError) throw guildsError;
 
-      if (!matchedGuild) {
-        navigate('/guilds');
-        return;
-      }
+        const matchedGuild = allGuilds?.find((g) =>
+          toSlug(g.region || 'eu') === regionSlug &&
+          toSlug(g.server) === serverSlug &&
+          toSlug(g.name) === guildSlug
+        );
 
-      setGuildId(matchedGuild.id);
-      setGuild({
-        name: matchedGuild.name,
-        server: matchedGuild.server,
-        region: matchedGuild.region || 'eu',
-        avatar_url: null,
-        officer_rank_threshold: matchedGuild.officer_rank_threshold ?? 2,
-      });
-
-      // Check GM status
-      const { data: gmCheck } = await supabase.rpc('is_guild_gm', {
-        p_guild_id: matchedGuild.id,
-        p_user_id: user.id,
-      });
-
-      setIsGM(gmCheck || false);
-
-      // Fetch rosters
-      const { data: rostersData } = await supabase
-        .from('rosters')
-        .select('id, name')
-        .eq('guild_id', matchedGuild.id)
-        .order('name');
-
-      setRosters(rostersData || []);
-
-      // Fetch members with profiles for access rules
-      const { data: rosterCache } = await supabase
-        .from('guild_roster_cache')
-        .select('matched_user_id, rank_index, rank_name')
-        .eq('guild_id', matchedGuild.id)
-        .not('matched_user_id', 'is', null);
-
-      // Get unique user IDs and fetch their profiles
-      const userIds = [...new Set(rosterCache?.map(r => r.matched_user_id).filter(Boolean) || [])];
-      if (userIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('id, username')
-          .in('id', userIds);
-
-        setMembers(profiles?.map(p => ({ user_id: p.id, username: p.username })) || []);
-      }
-
-      // Get unique ranks
-      const uniqueRanks = new Map<number, string>();
-      rosterCache?.forEach(r => {
-        if (r.rank_index !== null && !uniqueRanks.has(r.rank_index)) {
-          uniqueRanks.set(r.rank_index, r.rank_name || `Rank ${r.rank_index}`);
+        // Only redirect to /guilds when the guild truly doesn't exist.
+        // (Network hiccups should not kick the user out of an editing screen.)
+        if (!matchedGuild) {
+          navigate('/guilds', { replace: true });
+          return;
         }
-      });
-      setRanks(Array.from(uniqueRanks.entries()).map(([rank_index, rank_name]) => ({ rank_index, rank_name })));
 
-      // If editing, fetch existing poll and access rules
-      if (pollId) {
-        const { data: pollData } = await supabase
-          .from('guild_polls')
-          .select(`
-            *,
-            sections:guild_poll_sections(*),
-            questions:guild_poll_questions(*)
-          `)
-          .eq('id', pollId)
-          .single();
+        if (cancelled) return;
 
-        if (pollData) {
-          setExistingPoll(pollData);
-          const rules = await fetchResultsAccessRules(pollId);
-          setInitialAccessRules(rules);
+        setGuildId(matchedGuild.id);
+        setGuild({
+          name: matchedGuild.name,
+          server: matchedGuild.server,
+          region: matchedGuild.region || 'eu',
+          avatar_url: null,
+          officer_rank_threshold: matchedGuild.officer_rank_threshold ?? 2,
+        });
+
+        // Check GM status
+        const { data: gmCheck, error: gmError } = await supabase.rpc('is_guild_gm', {
+          p_guild_id: matchedGuild.id,
+          p_user_id: user.id,
+        });
+        if (gmError) throw gmError;
+        if (cancelled) return;
+        setIsGM(!!gmCheck);
+
+        // Fetch rosters
+        const { data: rostersData, error: rostersError } = await supabase
+          .from('rosters')
+          .select('id, name')
+          .eq('guild_id', matchedGuild.id)
+          .order('name');
+        if (rostersError) throw rostersError;
+        if (cancelled) return;
+        setRosters(rostersData || []);
+
+        // Fetch members with profiles for access rules
+        const { data: rosterCache, error: rosterCacheError } = await supabase
+          .from('guild_roster_cache')
+          .select('matched_user_id, rank_index, rank_name')
+          .eq('guild_id', matchedGuild.id)
+          .not('matched_user_id', 'is', null);
+        if (rosterCacheError) throw rosterCacheError;
+
+        // Get unique user IDs and fetch their profiles
+        const userIds = [
+          ...new Set(rosterCache?.map((r) => r.matched_user_id).filter(Boolean) || []),
+        ];
+        if (userIds.length > 0) {
+          const { data: profiles, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, username')
+            .in('id', userIds);
+          if (profilesError) throw profilesError;
+          if (cancelled) return;
+          setMembers(profiles?.map((p) => ({ user_id: p.id, username: p.username })) || []);
+        } else if (!cancelled) {
+          setMembers([]);
         }
-      }
 
-      setLoading(false);
+        // Get unique ranks
+        const uniqueRanks = new Map<number, string>();
+        rosterCache?.forEach((r) => {
+          if (r.rank_index !== null && !uniqueRanks.has(r.rank_index)) {
+            uniqueRanks.set(r.rank_index, r.rank_name || `Rank ${r.rank_index}`);
+          }
+        });
+        if (!cancelled) {
+          setRanks(
+            Array.from(uniqueRanks.entries()).map(([rank_index, rank_name]) => ({
+              rank_index,
+              rank_name,
+            }))
+          );
+        }
+
+        // If editing, fetch existing poll and access rules
+        if (pollId) {
+          const { data: pollData, error: pollError } = await supabase
+            .from('guild_polls')
+            .select(`
+              *,
+              sections:guild_poll_sections(*),
+              questions:guild_poll_questions(*)
+            `)
+            .eq('id', pollId)
+            .single();
+
+          if (pollError) throw pollError;
+
+          if (!cancelled && pollData) {
+            setExistingPoll(pollData);
+            const rules = await fetchResultsAccessRules(pollId);
+            if (!cancelled) setInitialAccessRules(rules);
+          }
+        }
+      } catch (error: any) {
+        console.error('Error loading poll editor data:', error);
+        toast({
+          title: language === 'fr' ? 'Connexion instable' : 'Unstable connection',
+          description: language === 'fr'
+            ? "Impossible de charger certaines données du sondage. Vérifie ta connexion et réessaie (la page ne te redirige plus automatiquement)."
+            : "Some poll data couldn't be loaded. Check your connection and retry (you won't be redirected automatically).",
+          variant: 'destructive',
+        });
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     };
 
     fetchData();
-  }, [user, regionSlug, serverSlug, guildSlug, pollId, navigate, fetchResultsAccessRules]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, regionSlug, serverSlug, guildSlug, pollId, navigate, fetchResultsAccessRules, toast, language]);
 
   const handleSave = async (data: PollFormData, accessRules?: ResultsAccessRule[]) => {
     if (!guildId) return;
@@ -232,6 +272,17 @@ const GuildPollNew = () => {
     }
   };
 
+  // If permissions are loaded and user can't manage polls, redirect away.
+  // (Done in an effect to avoid navigation during render.)
+  useEffect(() => {
+    if (loading || permLoading) return;
+    if (!regionSlug || !serverSlug || !guildSlug) return;
+
+    if (!canManagePolls) {
+      navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}`, { replace: true });
+    }
+  }, [loading, permLoading, canManagePolls, navigate, regionSlug, serverSlug, guildSlug]);
+
   if (loading || permLoading) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -241,9 +292,7 @@ const GuildPollNew = () => {
     );
   }
 
-  // Redirect if user doesn't have permission (check after loading is complete)
   if (!canManagePolls) {
-    navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}`);
     return null;
   }
 
