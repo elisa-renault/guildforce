@@ -96,7 +96,7 @@ export const CookieBanner: React.FC = () => {
     <>
       {/* Main Banner */}
       {showBanner && !showPreferences && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-card/95 backdrop-blur-md border-t border-border shadow-lg animate-in slide-in-from-bottom-4 duration-300">
+        <div className="fixed bottom-16 left-0 right-0 z-50 p-4 bg-card/95 backdrop-blur-md border-t border-b border-border shadow-lg animate-in slide-in-from-bottom-4 duration-300">
           <div className="container mx-auto max-w-4xl">
             <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
               <div className="flex items-start gap-3 flex-1">
