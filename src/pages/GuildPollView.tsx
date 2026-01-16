@@ -9,7 +9,7 @@ import { GuildSubNav } from '@/components/guild';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { PollResponse, PollResults } from '@/components/polls';
 import { usePoll, usePollResults, usePollMutations } from '@/hooks/useGuildPolls';
-import { Loader2, BarChart3, ArrowLeft, Lock } from 'lucide-react';
+import { Loader2, BarChart3, ArrowLeft, Lock, Edit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import type { ResponseValue } from '@/types/poll';
@@ -25,6 +25,7 @@ const GuildPollView = () => {
   const [isGM, setIsGM] = useState(false);
   const [hasResponded, setHasResponded] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [canViewResults, setCanViewResults] = useState<boolean | null>(null);
 
   const { poll, loading: pollLoading, refetch } = usePoll(pollId);
@@ -47,7 +48,8 @@ const GuildPollView = () => {
   
   // GM always can see results, otherwise check permission
   const userCanViewResults = isGM || canViewResults === true;
-  const showResultsPane = isClosed || showResults || (!isGM && hasResponded && userCanViewResults);
+  // Show results pane unless user is editing their responses
+  const showResultsPane = !isEditing && (isClosed || showResults || (!isGM && hasResponded && userCanViewResults));
 
   // Check results access permission when poll loads
   useEffect(() => {
@@ -110,6 +112,7 @@ const GuildPollView = () => {
       toast({ title: language === 'fr' ? 'Réponses enregistrées !' : 'Responses submitted!' });
       setHasResponded(true);
       setShowResults(true);
+      setIsEditing(false);
       refetch();
       refetchResults();
     } catch (error: any) {
@@ -192,10 +195,18 @@ const GuildPollView = () => {
         {showResultsPane && userCanViewResults ? (
           <div className="space-y-6">
             {hasResponded && !isClosed && (
-              <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 text-center">
+              <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 flex items-center justify-between">
                 <p className="text-primary">
                   {language === 'fr' ? 'Vous avez déjà répondu à ce sondage' : 'You have already responded to this poll'}
                 </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditing(true)}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  {language === 'fr' ? 'Modifier' : 'Edit'}
+                </Button>
               </div>
             )}
             <PollResults
@@ -204,12 +215,22 @@ const GuildPollView = () => {
               totalResponses={pollResults?.response_count || 0}
             />
           </div>
-        ) : hasResponded && !userCanViewResults ? (
+        ) : hasResponded && !userCanViewResults && !isEditing ? (
           <div className="space-y-6">
-            <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 text-center">
+            <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 flex items-center justify-between">
               <p className="text-primary">
                 {language === 'fr' ? 'Vous avez déjà répondu à ce sondage' : 'You have already responded to this poll'}
               </p>
+              {!isClosed && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditing(true)}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  {language === 'fr' ? 'Modifier' : 'Edit'}
+                </Button>
+              )}
             </div>
             <div className="bg-muted/30 border border-muted rounded-lg p-8 text-center">
               <Lock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
