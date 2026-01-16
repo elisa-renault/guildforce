@@ -24,7 +24,6 @@ const PERMISSION_CONFIGS: PermissionConfig[] = [
   { type: 'manage_wishes', labelKey: 'manageWishes', descKey: 'manageWishesDesc', category: 'content' },
   { type: 'manage_polls', labelKey: 'managePolls', descKey: 'managePollsDesc', category: 'content' },
   { type: 'manage_rosters', labelKey: 'manageRosters', descKey: 'manageRostersDesc', category: 'content' },
-  { type: 'manage_members', labelKey: 'manageMembers', descKey: 'manageMembersDesc', category: 'admin', isSensitive: true },
   { type: 'view_activity_log', labelKey: 'viewActivityLog', descKey: 'viewActivityLogDesc', category: 'audit' },
 ];
 
@@ -112,8 +111,6 @@ export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps)
       manageRostersDesc: { en: 'Create and configure rosters', fr: 'Créer et configurer les rosters' },
       viewActivityLog: { en: 'View Activity Log', fr: 'Voir le journal' },
       viewActivityLogDesc: { en: 'Access the guild activity history', fr: 'Accéder à l\'historique d\'activité' },
-      manageMembers: { en: 'Manage Members', fr: 'Gérer les membres' },
-      manageMembersDesc: { en: 'Edit member commitment status', fr: 'Modifier le statut d\'engagement des membres' },
     };
     return labels[key]?.[isFrench ? 'fr' : 'en'] || key;
   };
