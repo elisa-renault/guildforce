@@ -23,8 +23,9 @@ export const GlobalNav = () => {
   const startsWithPath = (path: string) => location.pathname.startsWith(path);
 
   const navButtonBase = "inline-flex items-center justify-center gap-2 px-3 py-2 rounded text-sm font-normal transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background";
-  const navButtonInactive = "text-muted-foreground hover:text-foreground hover:bg-white/5";
-  const navButtonActive = "text-foreground bg-primary/20 ring-1 ring-primary/50";
+  // Improve contrast: inactive nav items were too dim on some displays.
+  const navButtonInactive = "text-foreground/80 hover:text-foreground hover:bg-accent/30";
+  const navButtonActive = "text-foreground bg-primary/25 ring-1 ring-primary/50";
 
   const handleNavigation = (path: string) => {
     navigate(path);
