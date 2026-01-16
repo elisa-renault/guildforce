@@ -22,7 +22,7 @@ const NotFound = () => {
           <AlertCircle className="h-8 w-8 text-primary" />
         </div>
         
-        <h1 className="text-6xl font-display gradient-text mb-4">404</h1>
+        <h1 className="text-6xl font-display text-foreground mb-4">404</h1>
         <p className="text-xl text-muted-foreground mb-8">
           Oops! Page not found
         </p>

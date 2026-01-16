@@ -232,7 +232,7 @@ const Auth = () => {
               <div className="p-4 rounded-2xl bg-primary/20 border border-primary/30">
                 <Shield className="h-12 w-12 text-primary" />
               </div>
-              <h1 className="text-4xl font-bold gradient-text">Guildforce</h1>
+              <h1 className="text-4xl font-display text-foreground">Guildforce</h1>
             </div>
             
             <div className="space-y-4">
@@ -252,7 +252,7 @@ const Auth = () => {
             <div className="lg:hidden text-center space-y-2 mb-4">
               <div className="flex items-center justify-center gap-3 mb-4">
                 <Shield className="h-8 w-8 text-primary" />
-                <span className="text-2xl font-bold gradient-text">Guildforce</span>
+                <span className="text-2xl font-display text-foreground">Guildforce</span>
               </div>
               <h1 className="text-2xl font-semibold text-foreground">
                 {t.auth.loginTitle}

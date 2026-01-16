@@ -34,7 +34,7 @@ const Forum = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="font-display text-3xl gradient-text flex items-center gap-3">
+            <h1 className="font-display text-3xl text-foreground flex items-center gap-3">
               <MessageSquare className="h-8 w-8" />
               Forum
             </h1>
