@@ -8,6 +8,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { GlobalNav } from "@/components/GlobalNav";
 import { Footer } from "@/components/Footer";
 import { CookieBanner } from "@/components/CookieBanner";
+import { BugReportButton } from "@/components/BugReportButton";
+import "@/lib/logCapture";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import GuildList from "./pages/GuildList";
@@ -77,6 +79,7 @@ const App = () => (
               </div>
               <Footer />
               <CookieBanner />
+              <BugReportButton />
             </BrowserRouter>
           </div>
         </TooltipProvider>
