@@ -60,7 +60,7 @@ const LegalPage = () => {
   const updatedAt = page?.updated_at ? new Date(page.updated_at).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US') : '';
 
   return (
-    <div className="min-h-screen flex flex-col pt-16">
+    <div className="flex-1 flex flex-col pt-16 relative">
       <CosmicBackground />
 
       <main className="container mx-auto px-4 py-8 relative z-10 flex-1">
