@@ -762,11 +762,13 @@ Deno.serve(async (req) => {
         });
       }
 
-      log.info('Starting scheduled sync for all users...');
+      log.info('Starting scheduled sync for all users AND all guilds...');
 
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-      // Get all users with valid (non-expired) Battle.net tokens
+      // =====================================================================
+      // PHASE 1: Sync all users with valid tokens (existing behavior)
+      // =====================================================================
       const { data: validTokens, error: tokensError } = await supabase
         .from('battlenet_tokens')
         .select('user_id, access_token')
@@ -780,14 +782,13 @@ Deno.serve(async (req) => {
         });
       }
 
-      log.info(`Found ${validTokens?.length || 0} users with valid tokens to sync`);
+      log.info(`Phase 1: Found ${validTokens?.length || 0} users with valid tokens to sync`);
 
-      let syncedCount = 0;
-      let errorCount = 0;
+      let usersSynced = 0;
+      let usersErrors = 0;
 
       for (const tokenRecord of (validTokens || [])) {
         try {
-          // Get user's region from their guild memberships
           const { data: membership } = await supabase
             .from('wow_guild_memberships')
             .select('guild_region')
@@ -798,23 +799,125 @@ Deno.serve(async (req) => {
           const region = getValidRegion(membership?.guild_region);
 
           await fetchAndStoreCharacters(supabase, tokenRecord.access_token, tokenRecord.user_id, region);
-          syncedCount++;
+          usersSynced++;
           
-          // Small delay to avoid rate limiting
           await new Promise(resolve => setTimeout(resolve, 500));
         } catch (err) {
           log.error(`Error syncing user ${sanitizePII(tokenRecord.user_id, 'id')}:`, err);
-          errorCount++;
+          usersErrors++;
         }
       }
 
-      log.info(`Scheduled sync completed: ${syncedCount} synced, ${errorCount} errors`);
+      log.info(`Phase 1 completed: ${usersSynced} users synced, ${usersErrors} errors`);
+
+      // =====================================================================
+      // PHASE 2: Sync all guilds using ANY member with a valid token
+      // This ensures guilds are synced even if their owner has no valid token
+      // =====================================================================
+      log.info('Phase 2: Syncing all guilds roster cache...');
+
+      const { data: allGuilds, error: guildsError } = await supabase
+        .from('guilds')
+        .select('id, name, server, region');
+
+      if (guildsError) {
+        log.error('Failed to fetch guilds:', guildsError);
+      }
+
+      let guildsSynced = 0;
+      let guildsSkipped = 0;
+
+      for (const guild of (allGuilds || [])) {
+        try {
+          // Check if guild was already synced recently (within last hour)
+          const { data: recentCache } = await supabase
+            .from('guild_roster_cache')
+            .select('updated_at')
+            .eq('guild_id', guild.id)
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (recentCache) {
+            const lastUpdate = new Date(recentCache.updated_at);
+            const hourAgo = new Date(Date.now() - 60 * 60 * 1000);
+            if (lastUpdate > hourAgo) {
+              log.debug(`Guild ${sanitizePII(guild.name, 'name')} was synced recently, skipping`);
+              guildsSkipped++;
+              continue;
+            }
+          }
+
+          // Find ANY member of this guild with a valid Battle.net token
+          const { data: guildMemberWithToken } = await supabase
+            .from('wow_guild_memberships')
+            .select(`
+              user_id,
+              guild_region,
+              battlenet_tokens!inner(access_token, expires_at)
+            `)
+            .ilike('guild_name', guild.name)
+            .ilike('guild_realm', guild.server)
+            .gt('battlenet_tokens.expires_at', new Date().toISOString())
+            .limit(1)
+            .maybeSingle();
+
+          if (!guildMemberWithToken) {
+            log.debug(`No member with valid token found for guild ${sanitizePII(guild.name, 'name')}`);
+            guildsSkipped++;
+            continue;
+          }
+
+          const tokenData = guildMemberWithToken.battlenet_tokens as any;
+          const region = getValidRegion(guildMemberWithToken.guild_region || guild.region);
+          const apiUrl = BATTLENET_API_URLS[region];
+          const namespace = BATTLENET_NAMESPACES[region];
+          const locale = BATTLENET_LOCALES[region];
+
+          // Build guild slug for API call
+          const guildSlug = guild.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+          const serverSlug = guild.server.toLowerCase().replace(/\s+/g, '-').replace(/'/g, '');
+          const rosterUrl = `${apiUrl}/data/wow/guild/${serverSlug}/${encodeURIComponent(guildSlug)}/roster?namespace=${namespace}&locale=${locale}`;
+
+          log.debug(`Fetching roster for guild ${sanitizePII(guild.name, 'name')} from ${rosterUrl}`);
+
+          const rosterResponse = await fetch(rosterUrl, {
+            headers: { 'Authorization': `Bearer ${tokenData.access_token}` },
+          });
+
+          if (!rosterResponse.ok) {
+            log.debug(`Failed to fetch roster for ${guild.name}: ${rosterResponse.status}`);
+            guildsSkipped++;
+            continue;
+          }
+
+          const roster = await rosterResponse.json();
+          const guildFaction = roster.guild?.faction?.type || 'UNKNOWN';
+
+          // Update faction if it differs (Battle.net is source of truth)
+          await supabase
+            .from('guilds')
+            .update({ faction: guildFaction.toLowerCase() })
+            .eq('id', guild.id);
+
+          // Store the full roster in cache
+          await storeFullRosterForGuild(supabase, guild.id, guild.name, roster.members || []);
+          guildsSynced++;
+
+          // Rate limit protection
+          await new Promise(resolve => setTimeout(resolve, 300));
+        } catch (err) {
+          log.error(`Error syncing guild ${sanitizePII(guild.name, 'name')}:`, err);
+        }
+      }
+
+      log.info(`Phase 2 completed: ${guildsSynced} guilds synced, ${guildsSkipped} skipped`);
+      log.info(`Scheduled sync completed: ${usersSynced} users, ${guildsSynced} guilds`);
 
       return new Response(JSON.stringify({ 
         success: true, 
-        synced: syncedCount,
-        errors: errorCount,
-        total: validTokens?.length || 0
+        users: { synced: usersSynced, errors: usersErrors, total: validTokens?.length || 0 },
+        guilds: { synced: guildsSynced, skipped: guildsSkipped, total: allGuilds?.length || 0 }
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -944,6 +1047,96 @@ async function storeFullRoster(
     log.info(`Successfully cached ${rosterData.length} roster members for guild ${sanitizePII(guildName, 'name')}`);
   } catch (error) {
     log.error('Error storing full roster:', error);
+  }
+}
+
+/**
+ * Stores guild roster for scheduled sync - simplified version that takes guild_id directly.
+ * Used by the scheduled-sync endpoint to update rosters for all guilds.
+ * 
+ * @param supabase - Supabase client
+ * @param guildId - App guild ID
+ * @param guildName - Guild name (for logging)
+ * @param rosterMembers - Array of roster members from Blizzard API
+ */
+async function storeFullRosterForGuild(
+  supabase: any,
+  guildId: string,
+  guildName: string,
+  rosterMembers: any[]
+) {
+  try {
+    if (!rosterMembers || rosterMembers.length === 0) {
+      log.debug('No roster members to store');
+      return;
+    }
+
+    log.info(`Storing full roster (${rosterMembers.length} members) for guild ${sanitizePII(guildName, 'name')}`);
+
+    // Get all existing wow_characters to match Guildforce users
+    const { data: existingChars } = await supabase
+      .from('wow_characters')
+      .select('id, user_id, name, realm_slug');
+
+    // Build a map for quick lookup
+    const charMap = new Map<string, { id: string; user_id: string }>();
+    for (const char of (existingChars || [])) {
+      const key = `${char.name.toLowerCase()}-${char.realm_slug.toLowerCase()}`;
+      charMap.set(key, { id: char.id, user_id: char.user_id });
+    }
+
+    // Prepare roster data
+    const rosterData = rosterMembers.map((member: any) => {
+      const charName = member.character?.name || 'Unknown';
+      const charRealm = member.character?.realm?.name || 'Unknown';
+      const charRealmSlug = member.character?.realm?.slug || 'unknown';
+      const charClassId = member.character?.playable_class?.id || 0;
+      const charLevel = member.character?.level || 1;
+      const rankIndex = member.rank ?? 99;
+      const isGM = rankIndex === 0;
+
+      // Try to match with an existing Guildforce user
+      const charKey = `${charName.toLowerCase()}-${charRealmSlug.toLowerCase()}`;
+      const matchedChar = charMap.get(charKey);
+
+      return {
+        guild_id: guildId,
+        character_name: charName,
+        character_realm: charRealm,
+        character_realm_slug: charRealmSlug,
+        character_class_id: charClassId,
+        character_level: charLevel,
+        rank_index: rankIndex,
+        rank_name: isGM ? 'Guild Master' : `Rank ${rankIndex}`,
+        is_guild_master: isGM,
+        matched_user_id: matchedChar?.user_id || null,
+        matched_character_id: matchedChar?.id || null,
+        updated_at: new Date().toISOString(),
+      };
+    });
+
+    // Delete old roster cache for this guild and insert new data
+    await supabase
+      .from('guild_roster_cache')
+      .delete()
+      .eq('guild_id', guildId);
+
+    // Insert in batches of 100 to avoid payload limits
+    const batchSize = 100;
+    for (let i = 0; i < rosterData.length; i += batchSize) {
+      const batch = rosterData.slice(i, i + batchSize);
+      const { error: insertError } = await supabase
+        .from('guild_roster_cache')
+        .insert(batch);
+
+      if (insertError) {
+        log.error(`Error inserting roster batch ${i / batchSize + 1}:`, insertError);
+      }
+    }
+
+    log.info(`Successfully cached ${rosterData.length} roster members for guild ${sanitizePII(guildName, 'name')}`);
+  } catch (error) {
+    log.error('Error storing full roster for guild:', error);
   }
 }
 
