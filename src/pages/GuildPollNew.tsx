@@ -358,7 +358,10 @@ const GuildPollNew = () => {
 
         <PollEditor
           rosters={rosters}
+          members={members}
+          ranks={ranks}
           initialData={existingPoll ? toPollFormData(existingPoll) : undefined}
+          initialAccessRules={initialAccessRules}
           onSave={handleSave}
           onPublish={isActivePoll ? undefined : handlePublish}
           saving={saving}
