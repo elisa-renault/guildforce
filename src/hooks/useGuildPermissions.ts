@@ -32,6 +32,7 @@ export function useGuildPermissions(guildId: string | null) {
   const [permissions, setPermissions] = useState<PermissionRule[]>([]);
   const [members, setMembers] = useState<GuildMember[]>([]);
   const [ranks, setRanks] = useState<GuildRank[]>([]);
+  const [officerRankThreshold, setOfficerRankThreshold] = useState<number>(2);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
@@ -85,11 +86,12 @@ export function useGuildPermissions(guildId: string | null) {
       // Load guild ranks
       const { data: guildData } = await supabase
         .from('guilds')
-        .select('name, server, region')
+        .select('name, server, region, officer_rank_threshold')
         .eq('id', guildId)
         .single();
 
       if (guildData) {
+        setOfficerRankThreshold(guildData.officer_rank_threshold ?? 2);
         const { data: ranksData } = await supabase
           .from('wow_guild_memberships')
           .select('rank_index, rank_name')
@@ -228,6 +230,7 @@ export function useGuildPermissions(guildId: string | null) {
     permissions,
     members,
     ranks,
+    officerRankThreshold,
     loading,
     saving,
     savePermissions,
