@@ -386,6 +386,24 @@ export interface Translations {
     editLegalPages: string;
     editLegalPagesDesc: string;
   };
+  // Cookie consent
+  cookies: {
+    title: string;
+    description: string;
+    acceptAll: string;
+    rejectAll: string;
+    customize: string;
+    savePreferences: string;
+    preferencesTitle: string;
+    preferencesDescription: string;
+    essential: string;
+    essentialDesc: string;
+    analytics: string;
+    analyticsDesc: string;
+    marketing: string;
+    marketingDesc: string;
+    manageCookies: string;
+  };
 }
 
 export const translations: Record<Language, Translations> = {
@@ -765,6 +783,23 @@ export const translations: Record<Language, Translations> = {
       editLegalPages: 'Manage Legal Pages',
       editLegalPagesDesc: 'Edit mandatory legal pages content',
     },
+    cookies: {
+      title: 'We use cookies',
+      description: 'We use cookies to improve your experience and analyze site traffic. You can choose which cookies to accept.',
+      acceptAll: 'Accept all',
+      rejectAll: 'Reject all',
+      customize: 'Customize',
+      savePreferences: 'Save preferences',
+      preferencesTitle: 'Cookie preferences',
+      preferencesDescription: 'Manage your cookie preferences. Essential cookies are always enabled as they are necessary for the site to function.',
+      essential: 'Essential cookies',
+      essentialDesc: 'Required for the site to function properly. Cannot be disabled.',
+      analytics: 'Analytics cookies',
+      analyticsDesc: 'Help us understand how visitors interact with the site.',
+      marketing: 'Marketing cookies',
+      marketingDesc: 'Used to display personalized ads based on your interests.',
+      manageCookies: 'Cookie settings',
+    },
   },
   fr: {
     common: {
@@ -1141,6 +1176,23 @@ export const translations: Record<Language, Translations> = {
       lastUpdated: 'Dernière mise à jour',
       editLegalPages: 'Gérer les pages légales',
       editLegalPagesDesc: 'Modifier le contenu des pages légales obligatoires',
+    },
+    cookies: {
+      title: 'Nous utilisons des cookies',
+      description: 'Nous utilisons des cookies pour améliorer votre expérience et analyser le trafic. Vous pouvez choisir quels cookies accepter.',
+      acceptAll: 'Tout accepter',
+      rejectAll: 'Tout refuser',
+      customize: 'Personnaliser',
+      savePreferences: 'Enregistrer',
+      preferencesTitle: 'Préférences des cookies',
+      preferencesDescription: 'Gérez vos préférences de cookies. Les cookies essentiels sont toujours activés car ils sont nécessaires au fonctionnement du site.',
+      essential: 'Cookies essentiels',
+      essentialDesc: 'Nécessaires au bon fonctionnement du site. Ne peuvent pas être désactivés.',
+      analytics: 'Cookies analytiques',
+      analyticsDesc: 'Nous aident à comprendre comment les visiteurs interagissent avec le site.',
+      marketing: 'Cookies marketing',
+      marketingDesc: 'Utilisés pour afficher des publicités personnalisées selon vos centres d\'intérêt.',
+      manageCookies: 'Gérer les cookies',
     },
   },
 };

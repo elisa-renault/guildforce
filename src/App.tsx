@@ -7,6 +7,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { GlobalNav } from "@/components/GlobalNav";
 import { Footer } from "@/components/Footer";
+import { CookieBanner } from "@/components/CookieBanner";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import GuildList from "./pages/GuildList";
@@ -75,6 +76,7 @@ const App = () => (
                 </Routes>
               </div>
               <Footer />
+              <CookieBanner />
             </BrowserRouter>
           </div>
         </TooltipProvider>

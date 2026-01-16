@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Beer } from 'lucide-react';
+import { Beer, Cookie } from 'lucide-react';
 import { TipeeeIcon } from './TipeeeIcon';
+import { openCookiePreferences } from './CookieBanner';
 import {
   Select,
   SelectContent,
@@ -41,6 +42,14 @@ export const Footer = () => {
             <Link to="/terms" className="text-muted-foreground hover:text-foreground transition-colors">
               {t.legal.termsOfService}
             </Link>
+            <span className="text-muted-foreground/50">·</span>
+            <button
+              onClick={openCookiePreferences}
+              className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+            >
+              <Cookie className="h-3 w-3" />
+              {t.cookies.manageCookies}
+            </button>
           </div>
         </div>
 
