@@ -78,11 +78,6 @@ export const GuildBattleNetSection = ({
       <h2 className="font-display text-lg mb-4">Battle.net</h2>
       
       <div className="space-y-4">
-        <div className="flex items-start gap-2 text-sm text-muted-foreground">
-          <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
-          <span>{t.guildSettings.syncedFromBnet}</span>
-        </div>
-        
         <CosmicButton
           variant="outline"
           onClick={handleResyncBattlenet}
