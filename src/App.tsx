@@ -19,6 +19,7 @@ import GuildPollNew from "./pages/GuildPollNew";
 import GuildPollView from "./pages/GuildPollView";
 import GuildPollResults from "./pages/GuildPollResults";
 import GuildActivity from "./pages/GuildActivity";
+import GuildMembers from "./pages/GuildMembers";
 import Profile from "./pages/Profile";
 import PublicProfile from "./pages/PublicProfile";
 import Forum from "./pages/Forum";
@@ -62,6 +63,7 @@ const App = () => (
                   <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/poll/:pollId" element={<GuildPollView />} />
                   <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/poll/:pollId/results" element={<GuildPollResults />} />
                   <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/activity" element={<GuildActivity />} />
+                  <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/members" element={<GuildMembers />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </div>
