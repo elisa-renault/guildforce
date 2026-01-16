@@ -129,6 +129,7 @@ export const CookieBanner: React.FC = () => {
                   {t.cookies.rejectAll}
                 </Button>
                 <Button
+                  variant="outline"
                   size="sm"
                   onClick={acceptAll}
                   className="flex-1 md:flex-none"
@@ -209,7 +210,7 @@ export const CookieBanner: React.FC = () => {
             <Button variant="outline" onClick={rejectAll}>
               {t.cookies.rejectAll}
             </Button>
-            <Button onClick={saveCustomPreferences}>
+            <Button variant="outline" onClick={saveCustomPreferences}>
               {t.cookies.savePreferences}
             </Button>
           </div>
