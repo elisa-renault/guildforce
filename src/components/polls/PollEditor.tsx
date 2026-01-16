@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
@@ -223,7 +223,17 @@ export const PollEditor = ({
     }
   }, [initialData]);
 
+  // Only initialize access rules once on mount or when they actually change
+  const initialAccessRulesRef = useRef<ResultsAccessRule[] | null>(null);
   useEffect(() => {
+    // Skip if we've already initialized and the arrays are equivalent
+    if (initialAccessRulesRef.current !== null) {
+      const currentRulesStr = JSON.stringify(initialAccessRulesRef.current);
+      const newRulesStr = JSON.stringify(initialAccessRules);
+      if (currentRulesStr === newRulesStr) return;
+    }
+    
+    initialAccessRulesRef.current = initialAccessRules;
     setRestrictResultsAccess(initialAccessRules.length > 0);
     setResultsAccessRules(initialAccessRules);
   }, [initialAccessRules]);
