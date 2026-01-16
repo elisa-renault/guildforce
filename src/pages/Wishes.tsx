@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -59,7 +59,7 @@ interface SortableWishCardProps {
   usedClassIds: string[];
 }
 
-const SortableWishCard = ({ wish, index, totalWishes, onChange, onRemove, onClear, onMoveUp, onMoveDown, canRemove, choiceLabels, usedClassIds }: SortableWishCardProps) => {
+const SortableWishCard = forwardRef<HTMLDivElement, SortableWishCardProps>(({ wish, index, totalWishes, onChange, onRemove, onClear, onMoveUp, onMoveDown, canRemove, choiceLabels, usedClassIds }, outerRef) => {
   const { t } = useLanguage();
   const {
     attributes,
@@ -148,7 +148,9 @@ const SortableWishCard = ({ wish, index, totalWishes, onChange, onRemove, onClea
       </GlowCard>
     </div>
   );
-};
+});
+
+SortableWishCard.displayName = 'SortableWishCard';
 
 const Wishes = () => {
   const navigate = useNavigate();
