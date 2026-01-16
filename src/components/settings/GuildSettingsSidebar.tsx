@@ -59,7 +59,7 @@ export const GuildSettingsSidebar = ({
   // Mobile: horizontal scrollable tabs - more compact
   if (isMobile) {
     return (
-      <div className="sticky top-[calc(4rem+52px)] z-30 border-b border-border/50 bg-background/90 backdrop-blur-sm -mx-3 px-3">
+      <div className="fixed inset-x-0 top-[calc(4rem+52px)] z-30 border-b border-border/50 bg-background/95 backdrop-blur-sm px-3">
         <ScrollArea className="w-full">
           <div className="flex items-center gap-0.5 py-1.5">
             {visibleSectionConfigs.map((section) => {
