@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Heart, BarChart3, Settings, ArrowLeft, Users } from 'lucide-react';
+import { LayoutDashboard, Table, BarChart3, Settings, ArrowLeft, Users } from 'lucide-react';
 
 interface GuildSubNavProps {
   guild: {
@@ -14,7 +14,7 @@ interface GuildSubNavProps {
   basePath: string;
   isGM: boolean;
   hasSettingsPermission?: boolean;
-  activeTab: 'dashboard' | 'wishes' | 'polls' | 'settings' | 'members';
+  activeTab: 'overview' | 'roster' | 'polls' | 'settings' | 'members' | 'wishes' | 'dashboard';
 }
 
 export const GuildSubNav = ({
@@ -30,26 +30,22 @@ export const GuildSubNav = ({
   // Settings is shown if user is GM OR has any settings permission
   const showSettings = isGM || hasSettingsPermission;
 
+  // Map legacy activeTab values
+  const normalizedActiveTab = activeTab === 'dashboard' ? 'overview' : activeTab;
+
   const tabs = [
     {
-      id: 'dashboard' as const,
-      label: t.guildNav?.dashboard || 'Dashboard',
+      id: 'overview' as const,
+      label: t.common.loading === 'Chargement...' ? 'Aperçu' : 'Overview',
       icon: LayoutDashboard,
       path: basePath,
       show: true,
     },
     {
-      id: 'wishes' as const,
-      label: t.guildNav?.myWishes || t.wishes.title,
-      icon: Heart,
-      path: `${basePath}/wishes`,
-      show: true,
-    },
-    {
-      id: 'members' as const,
-      label: t.common.loading === 'Chargement...' ? 'Membres' : 'Members',
-      icon: Users,
-      path: `${basePath}/members`,
+      id: 'roster' as const,
+      label: t.common.loading === 'Chargement...' ? 'Table de vœux' : 'Wishes Table',
+      icon: Table,
+      path: `${basePath}/roster`,
       show: true,
     },
     {
@@ -57,6 +53,13 @@ export const GuildSubNav = ({
       label: t.guildNav?.polls || 'Sondages',
       icon: BarChart3,
       path: `${basePath}/polls`,
+      show: true,
+    },
+    {
+      id: 'members' as const,
+      label: t.common.loading === 'Chargement...' ? 'Membres' : 'Members',
+      icon: Users,
+      path: `${basePath}/members`,
       show: true,
     },
     {
@@ -103,7 +106,7 @@ export const GuildSubNav = ({
           <nav className="flex items-center gap-0.5 md:gap-1 overflow-x-auto scrollbar-hide ml-auto md:ml-0">
             {visibleTabs.map((tab) => {
               const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
+              const isActive = normalizedActiveTab === tab.id || (activeTab === 'wishes' && tab.id === 'roster');
 
               return (
                 <button
