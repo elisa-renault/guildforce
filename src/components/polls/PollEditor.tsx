@@ -33,19 +33,33 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { PollFormData, QuestionFormData, SectionFormData } from '@/types/poll';
+import { PollResultsAccessEditor, type ResultsAccessRule } from './PollResultsAccessEditor';
 
 interface Roster {
   id: string;
   name: string;
 }
 
+interface GuildMember {
+  user_id: string;
+  username: string;
+}
+
+interface GuildRank {
+  rank_index: number;
+  rank_name: string;
+}
+
 interface PollEditorProps {
   initialData?: PollFormData;
   rosters: Roster[];
-  onSave: (data: PollFormData) => Promise<void>;
-  onPublish?: (data: PollFormData) => Promise<void>;
+  members?: GuildMember[];
+  ranks?: GuildRank[];
+  onSave: (data: PollFormData, accessRules?: ResultsAccessRule[]) => Promise<void>;
+  onPublish?: (data: PollFormData, accessRules?: ResultsAccessRule[]) => Promise<void>;
   saving?: boolean;
   metadataOnly?: boolean;
+  initialAccessRules?: ResultsAccessRule[];
 }
 
 const defaultQuestion: QuestionFormData = {
@@ -160,15 +174,22 @@ const SortableSectionHeader = ({
 export const PollEditor = ({
   initialData,
   rosters,
+  members = [],
+  ranks = [],
   onSave,
   onPublish,
   saving = false,
   metadataOnly = false,
+  initialAccessRules = [],
 }: PollEditorProps) => {
   const { language } = useLanguage();
   const [openSections, setOpenSections] = useState<Record<number, boolean>>({});
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const [overId, setOverId] = useState<UniqueIdentifier | null>(null);
+  
+  // Results access state
+  const [restrictResultsAccess, setRestrictResultsAccess] = useState(initialAccessRules.length > 0);
+  const [resultsAccessRules, setResultsAccessRules] = useState<ResultsAccessRule[]>(initialAccessRules);
   
   const [formData, setFormData] = useState<PollFormData>(initialData || {
     title: '',
@@ -201,6 +222,11 @@ export const PollEditor = ({
       setOpenSections(openState);
     }
   }, [initialData]);
+
+  useEffect(() => {
+    setRestrictResultsAccess(initialAccessRules.length > 0);
+    setResultsAccessRules(initialAccessRules);
+  }, [initialAccessRules]);
 
   // Toggle section
   const toggleSection = (index: number) => {
@@ -401,12 +427,14 @@ export const PollEditor = ({
   };
 
   const handleSave = async () => {
-    await onSave(formData);
+    const rulesToSave = restrictResultsAccess ? resultsAccessRules : [];
+    await onSave(formData, rulesToSave);
   };
 
   const handlePublish = async () => {
     if (onPublish) {
-      await onPublish(formData);
+      const rulesToSave = restrictResultsAccess ? resultsAccessRules : [];
+      await onPublish(formData, rulesToSave);
     }
   };
 
@@ -544,6 +572,20 @@ export const PollEditor = ({
           </div>
         </div>
       </GlowCard>
+
+      {/* Results Access Control */}
+      {(members.length > 0 || ranks.length > 0) && (
+        <GlowCard className="p-6">
+          <PollResultsAccessEditor
+            accessRules={resultsAccessRules}
+            members={members}
+            ranks={ranks}
+            onChange={setResultsAccessRules}
+            restrictAccess={restrictResultsAccess}
+            onRestrictAccessChange={setRestrictResultsAccess}
+          />
+        </GlowCard>
+      )}
 
       {/* Unified Questions & Sections Editor */}
       <GlowCard className={`p-6 ${metadataOnly ? 'opacity-60 pointer-events-none' : ''}`}>
