@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -44,6 +45,44 @@ export const GuildSettingsSidebar = ({
 }: GuildSettingsSidebarProps) => {
   const { language } = useLanguage();
   const isMobile = useIsMobile();
+  const [tabsTop, setTabsTop] = useState<number>(104);
+
+  useEffect(() => {
+    if (!isMobile) return;
+
+    let raf = 0;
+
+    const compute = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const subNav = document.querySelector<HTMLElement>('[data-guild-subnav]');
+        const globalNav = document.querySelector<HTMLElement>('[data-global-nav]');
+        const target = subNav ?? globalNav;
+        if (!target) return;
+
+        const nextTop = Math.max(0, Math.round(target.getBoundingClientRect().bottom));
+        setTabsTop((prev) => (prev === nextTop ? prev : nextTop));
+      });
+    };
+
+    compute();
+
+    window.addEventListener('scroll', compute, { passive: true });
+    window.addEventListener('resize', compute);
+
+    const ro = new ResizeObserver(compute);
+    const subNavEl = document.querySelector<HTMLElement>('[data-guild-subnav]');
+    const globalNavEl = document.querySelector<HTMLElement>('[data-global-nav]');
+    if (globalNavEl) ro.observe(globalNavEl);
+    if (subNavEl) ro.observe(subNavEl);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+      window.removeEventListener('scroll', compute);
+      window.removeEventListener('resize', compute);
+    };
+  }, [isMobile]);
 
   const visibleSectionConfigs = SECTIONS.filter(s => visibleSections.includes(s.id));
 
@@ -59,7 +98,7 @@ export const GuildSettingsSidebar = ({
   // Mobile: horizontal scrollable tabs - more compact
   if (isMobile) {
     return (
-      <div className="sticky top-[104px] z-30 -mx-3 border-b border-border/50 bg-background/95 backdrop-blur-sm px-3">
+      <div className="sticky z-30 -mx-3 border-b border-border/50 bg-background/95 backdrop-blur-sm px-3" style={{ top: tabsTop }}>
         <ScrollArea className="w-full">
           <div className="flex items-center gap-0.5 py-1.5">
             {visibleSectionConfigs.map((section) => {
