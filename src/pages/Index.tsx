@@ -7,6 +7,22 @@ import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
 import { BattleNetIcon } from '@/components/BattleNetIcon';
 import { Shield } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+type BattleNetRegion = 'eu' | 'us' | 'kr' | 'tw';
+
+const REGION_LABELS: Record<BattleNetRegion, string> = {
+  eu: 'Europe',
+  us: 'Americas',
+  kr: 'Korea',
+  tw: 'Taiwan',
+};
 
 const Index = () => {
   const navigate = useNavigate();
@@ -14,6 +30,7 @@ const Index = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [bnetLoading, setBnetLoading] = useState(false);
+  const [selectedRegion, setSelectedRegion] = useState<BattleNetRegion>('eu');
 
   const handleBattleNetLogin = async () => {
     setBnetLoading(true);
@@ -28,7 +45,7 @@ const Index = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ redirectUri, state, mode: 'login' }),
+          body: JSON.stringify({ redirectUri, state, mode: 'login', region: selectedRegion }),
         }
       );
 
@@ -70,7 +87,21 @@ const Index = () => {
           </p>
 
           {/* Single CTA Button */}
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center gap-4">
+            {!user && (
+              <Select value={selectedRegion} onValueChange={(v) => setSelectedRegion(v as BattleNetRegion)}>
+                <SelectTrigger className="w-40 bg-card/60 border-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(REGION_LABELS) as BattleNetRegion[]).map((r) => (
+                    <SelectItem key={r} value={r}>
+                      {REGION_LABELS[r]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <CosmicButton 
               size="lg" 
               onClick={() => user ? navigate('/guilds') : handleBattleNetLogin()}
