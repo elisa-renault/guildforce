@@ -12,8 +12,9 @@ import { RosterManager } from '@/components/roster';
 
 import { GuildPermissionsEditor } from '@/components/permissions';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Loader2, Upload, Trash2, Shield, Info } from 'lucide-react';
+import { Loader2, Upload, Trash2, Shield, Info, RefreshCw } from 'lucide-react';
 import { toSlug, getGuildPath } from '@/lib/guildSlug';
+import { BattleNetIcon } from '@/components/BattleNetIcon';
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 
@@ -67,6 +68,7 @@ const GuildSettings = () => {
   const [isGM, setIsGM] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [rosters, setRosters] = useState<Roster[]>([]);
   const [members, setMembers] = useState<GuildMember[]>([]);
   const [ranks, setRanks] = useState<GuildRank[]>([]);
@@ -318,6 +320,51 @@ const GuildSettings = () => {
     }
   };
 
+  const handleResyncBattlenet = async () => {
+    setSyncing(true);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.access_token) {
+        throw new Error('Not authenticated');
+      }
+
+      const { error } = await supabase.functions.invoke('battlenet-auth/resync', {
+        headers: {
+          Authorization: `Bearer ${session.session.access_token}`,
+        },
+      });
+
+      if (error) throw error;
+
+      // Reload data after sync
+      if (guild) {
+        await loadRostersAndMembers(guild.id);
+        
+        // Reload guild data for faction update
+        const { data: updatedGuild } = await supabase
+          .from('guilds')
+          .select('id, name, server, region, faction, avatar_url')
+          .eq('id', guild.id)
+          .single();
+        
+        if (updatedGuild) {
+          setGuild(updatedGuild);
+        }
+      }
+
+      toast({ title: t.guildSettings.resyncSuccess });
+    } catch (error: any) {
+      console.error('Resync error:', error);
+      toast({
+        title: t.guildSettings.resyncError,
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -433,9 +480,27 @@ const GuildSettings = () => {
               </div>
             </div>
 
-            <div className="mt-4 flex items-start gap-2 text-xs text-muted-foreground">
-              <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
-              <span>{t.guildSettings.syncedFromBnet}</span>
+            <div className="mt-4 flex flex-col gap-3">
+              <div className="flex items-start gap-2 text-xs text-muted-foreground">
+                <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                <span>{t.guildSettings.syncedFromBnet}</span>
+              </div>
+              
+              <CosmicButton
+                size="sm"
+                variant="outline"
+                onClick={handleResyncBattlenet}
+                disabled={syncing}
+                loading={syncing}
+                icon={syncing ? undefined : <RefreshCw className="h-4 w-4" />}
+                className="w-full sm:w-auto"
+              >
+                <BattleNetIcon className="h-4 w-4 mr-1" />
+                {syncing ? t.guildSettings.syncing : t.guildSettings.resyncBattlenet}
+              </CosmicButton>
+              <p className="text-xs text-muted-foreground">
+                {t.guildSettings.resyncDescription}
+              </p>
             </div>
           </GlowCard>
         </div>
