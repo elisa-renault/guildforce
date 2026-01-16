@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_deletion_requests: {
+        Row: {
+          created_at: string | null
+          id: string
+          processed_at: string | null
+          processed_by: string | null
+          requested_at: string | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          requested_at?: string | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          requested_at?: string | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_deletion_requests_processed_by_fkey"
+            columns: ["processed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       battlenet_tokens: {
         Row: {
           access_token: string | null
@@ -1274,6 +1312,7 @@ export type Database = {
           id: string
           main_character_name: string | null
           preferred_language: string
+          show_battletag: boolean | null
           updated_at: string
           username: string
         }
@@ -1285,6 +1324,7 @@ export type Database = {
           id: string
           main_character_name?: string | null
           preferred_language?: string
+          show_battletag?: boolean | null
           updated_at?: string
           username: string
         }
@@ -1296,6 +1336,7 @@ export type Database = {
           id?: string
           main_character_name?: string | null
           preferred_language?: string
+          show_battletag?: boolean | null
           updated_at?: string
           username?: string
         }
