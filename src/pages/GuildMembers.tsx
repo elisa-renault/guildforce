@@ -740,28 +740,38 @@ const GuildMembers = () => {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-4 mt-4 pb-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="h-8 border-border"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span className="text-sm text-muted-foreground">
-              {language === 'fr' ? 'Page' : 'Page'} {currentPage} / {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="h-8 border-border"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+          <div className="relative z-10 mt-4 pb-6">
+            <div className="flex items-center justify-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="h-9 px-3 !bg-input/60 backdrop-blur-sm !border-border/50 hover:!bg-input/80"
+                aria-label={language === 'fr' ? 'Page précédente' : 'Previous page'}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <span className="hidden sm:inline">{language === 'fr' ? 'Précédent' : 'Previous'}</span>
+              </Button>
+
+              <span className="min-w-[92px] text-center text-sm text-foreground/70">
+                {language === 'fr' ? 'Page' : 'Page'} {currentPage} / {totalPages}
+              </span>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="h-9 px-3 !bg-input/60 backdrop-blur-sm !border-border/50 hover:!bg-input/80"
+                aria-label={language === 'fr' ? 'Page suivante' : 'Next page'}
+              >
+                <span className="hidden sm:inline">{language === 'fr' ? 'Suivant' : 'Next'}</span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         )}
       </main>
