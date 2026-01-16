@@ -610,8 +610,10 @@ const ForumAdmin = () => {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>{language === 'fr' ? 'Nom' : 'Name'}</Label>
+              <Label htmlFor="category-name">{language === 'fr' ? 'Nom' : 'Name'}</Label>
               <Input
+                id="category-name"
+                name="category-name"
                 value={categoryForm.name}
                 onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
                 placeholder="General Discussion"
@@ -619,8 +621,10 @@ const ForumAdmin = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label>Slug</Label>
+              <Label htmlFor="category-slug">Slug</Label>
               <Input
+                id="category-slug"
+                name="category-slug"
                 value={categoryForm.slug}
                 onChange={(e) => setCategoryForm({ ...categoryForm, slug: e.target.value })}
                 placeholder="general"
@@ -628,8 +632,10 @@ const ForumAdmin = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label>Description</Label>
+              <Label htmlFor="category-description">Description</Label>
               <Textarea
+                id="category-description"
+                name="category-description"
                 value={categoryForm.description}
                 onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
                 placeholder="Description..."
@@ -638,8 +644,10 @@ const ForumAdmin = () => {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>{language === 'fr' ? 'Icône (emoji)' : 'Icon (emoji)'}</Label>
+                <Label htmlFor="category-icon">{language === 'fr' ? 'Icône (emoji)' : 'Icon (emoji)'}</Label>
                 <Input
+                  id="category-icon"
+                  name="category-icon"
                   value={categoryForm.icon}
                   onChange={(e) => setCategoryForm({ ...categoryForm, icon: e.target.value })}
                   placeholder="💬"
@@ -647,8 +655,10 @@ const ForumAdmin = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label>{language === 'fr' ? 'Ordre' : 'Order'}</Label>
+                <Label htmlFor="category-order">{language === 'fr' ? 'Ordre' : 'Order'}</Label>
                 <Input
+                  id="category-order"
+                  name="category-order"
                   type="number"
                   value={categoryForm.display_order}
                   onChange={(e) => setCategoryForm({ ...categoryForm, display_order: parseInt(e.target.value) || 0 })}
