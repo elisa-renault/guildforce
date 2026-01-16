@@ -13,7 +13,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import {
   DndContext,
   DragEndEvent,
-  DragOverEvent,
   DragStartEvent,
   KeyboardSensor,
   PointerSensor,
@@ -333,6 +332,11 @@ export const PollEditor = ({
       targetType = overInfo.type;
       targetSectionIndex = overInfo.sectionIndex;
       targetQuestionIndex = overInfo.questionIndex;
+    } else if (overIdStr.startsWith('section-header-')) {
+      // Dropping a question onto a section header => move to that section (end)
+      targetType = 'section';
+      targetSectionIndex = parseInt(overIdStr.replace('section-header-', ''));
+      targetQuestionIndex = formData.sections[targetSectionIndex].questions.length;
     } else if (overIdStr.startsWith('section-drop-')) {
       // Dropping on a section drop zone
       targetType = 'section';
