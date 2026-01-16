@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, forwardRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -36,7 +36,7 @@ interface GuildWithMembership {
   avatar_url?: string | null;
 }
 
-const GuildList = () => {
+const GuildList = forwardRef<HTMLDivElement>((_, ref) => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { user, profile, session, loading: authLoading, refreshProfile } = useAuth();
@@ -257,7 +257,7 @@ const GuildList = () => {
   }
 
   return (
-    <div className="flex-1 relative pt-16">
+    <div ref={ref} className="flex-1 relative pt-16">
       <CosmicBackground />
 
       <main className="container mx-auto px-4 py-8 relative z-10">
@@ -393,6 +393,8 @@ const GuildList = () => {
       </main>
     </div>
   );
-};
+});
+
+GuildList.displayName = 'GuildList';
 
 export default GuildList;
