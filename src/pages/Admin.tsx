@@ -36,6 +36,7 @@ export default function Admin() {
   const { isAdmin, loading: adminLoading } = useIsAdmin();
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'guilds'>('dashboard');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -149,25 +150,42 @@ export default function Admin() {
     }
   ];
 
+  const goToTab = (tab: 'dashboard' | 'users' | 'guilds') => {
+    setActiveTab(tab);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const adminSections = [
     {
       title: language === 'fr' ? 'Administration Forum' : 'Forum Administration',
-      description: language === 'fr' 
-        ? 'Gérer les catégories, modérateurs, signalements et sanctions' 
-        : 'Manage categories, moderators, reports and sanctions',
+      description:
+        language === 'fr'
+          ? 'Gérer les catégories, modérateurs, signalements et sanctions'
+          : 'Manage categories, moderators, reports and sanctions',
       icon: MessageSquare,
-      path: '/forum/admin',
-      color: 'text-purple-400'
+      onClick: () => navigate('/forum/admin'),
+      color: 'text-purple-400',
     },
     {
       title: language === 'fr' ? 'Gestion des Utilisateurs' : 'User Management',
-      description: language === 'fr' 
-        ? 'Attribuer des rôles (Admin, Modérateur) aux utilisateurs' 
-        : 'Assign roles (Admin, Moderator) to users',
+      description:
+        language === 'fr'
+          ? 'Attribuer des rôles (Admin, Modérateur) aux utilisateurs'
+          : 'Assign roles (Admin, Moderator) to users',
       icon: Users,
-      path: '/forum/admin',
-      color: 'text-blue-400'
-    }
+      onClick: () => goToTab('users'),
+      color: 'text-blue-400',
+    },
+    {
+      title: language === 'fr' ? 'Gestion des Guildes' : 'Guild Management',
+      description:
+        language === 'fr'
+          ? 'Rechercher, modifier et supprimer des guildes'
+          : 'Search, edit and delete guilds',
+      icon: Shield,
+      onClick: () => goToTab('guilds'),
+      color: 'text-green-400',
+    },
   ];
 
   return (
@@ -189,7 +207,7 @@ export default function Admin() {
           </div>
         </div>
 
-        <Tabs defaultValue="dashboard" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'dashboard' | 'users' | 'guilds')} className="space-y-6">
           <TabsList className="bg-card border border-border p-1">
             <TabsTrigger value="dashboard" className="gap-2 data-[state=active]:bg-primary/20 data-[state=active]:text-foreground">
               <LayoutDashboard className="h-4 w-4" />
@@ -231,7 +249,7 @@ export default function Admin() {
                   <GlowCard 
                     key={index} 
                     className="p-5 cursor-pointer hover:ring-primary/50 transition-all"
-                    onClick={() => navigate(section.path)}
+                    onClick={section.onClick}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-4">
