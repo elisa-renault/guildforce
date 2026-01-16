@@ -314,7 +314,7 @@ const GuildMembers = () => {
         guild={guild}
         basePath={basePath}
         isGM={isGM}
-        hasActivityPermission={hasActivityPermission}
+        hasSettingsPermission={isGM || hasActivityPermission}
         activeTab="members"
       />
 

@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, Heart, BarChart3, Settings, History, ArrowLeft, Users } from 'lucide-react';
+import { LayoutDashboard, Heart, BarChart3, Settings, ArrowLeft, Users } from 'lucide-react';
 
 interface GuildSubNavProps {
   guild: {
@@ -13,19 +13,22 @@ interface GuildSubNavProps {
   };
   basePath: string;
   isGM: boolean;
-  hasActivityPermission?: boolean;
-  activeTab: 'dashboard' | 'wishes' | 'polls' | 'settings' | 'activity' | 'members';
+  hasSettingsPermission?: boolean;
+  activeTab: 'dashboard' | 'wishes' | 'polls' | 'settings' | 'members';
 }
 
 export const GuildSubNav = ({
   guild,
   basePath,
   isGM,
-  hasActivityPermission = false,
+  hasSettingsPermission = false,
   activeTab,
 }: GuildSubNavProps) => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+
+  // Settings is shown if user is GM OR has any settings permission
+  const showSettings = isGM || hasSettingsPermission;
 
   const tabs = [
     {
@@ -61,14 +64,7 @@ export const GuildSubNav = ({
       label: t.guildNav?.settings || t.common.settings,
       icon: Settings,
       path: `${basePath}/settings`,
-      show: isGM,
-    },
-    {
-      id: 'activity' as const,
-      label: t.guildNav?.activity || t.activityLog.title,
-      icon: History,
-      path: `${basePath}/activity`,
-      show: isGM || hasActivityPermission,
+      show: showSettings,
     },
   ];
 
