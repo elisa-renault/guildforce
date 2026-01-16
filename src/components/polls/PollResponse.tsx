@@ -45,7 +45,7 @@ export const PollResponse = ({
             initial[q.id] = { type: 'text', value: '' };
             break;
           case 'rating':
-            initial[q.id] = { type: 'rating', value: 3 };
+            initial[q.id] = { type: 'rating', value: 0 };
             break;
           case 'date':
             initial[q.id] = { type: 'date', value: '' };
@@ -60,9 +60,7 @@ export const PollResponse = ({
             initial[q.id] = { type: 'ranking', values: [...q.options] };
             break;
           case 'scale':
-            const min = q.scale_config?.min || 1;
-            const max = q.scale_config?.max || 10;
-            initial[q.id] = { type: 'scale', value: Math.floor((min + max) / 2) };
+            initial[q.id] = { type: 'scale', value: 0 };
             break;
         }
       }
@@ -96,7 +94,7 @@ export const PollResponse = ({
         return !!response.value.trim();
       case 'rating':
       case 'scale':
-        return response.value > 0;
+        return response.value >= 0;
       case 'date':
       case 'time':
       case 'datetime':
@@ -198,7 +196,7 @@ export const PollResponse = ({
               <div className="pl-5 space-y-3">
                 <div className="flex flex-col items-center gap-2">
                   <StarRating
-                    value={(responses[question.id] as { type: 'rating'; value: number })?.value || 3}
+                    value={(responses[question.id] as { type: 'rating'; value: number })?.value ?? 0}
                     onChange={(value) => updateResponse(question.id, { type: 'rating', value })}
                     max={5}
                     allowHalf={true}
@@ -206,7 +204,7 @@ export const PollResponse = ({
                   />
                   <div className="text-center">
                     <span className="text-lg font-semibold text-primary">
-                      {(responses[question.id] as { type: 'rating'; value: number })?.value || 3}
+                      {(responses[question.id] as { type: 'rating'; value: number })?.value ?? 0}
                     </span>
                     <span className="text-muted-foreground"> / 5</span>
                   </div>
@@ -252,7 +250,7 @@ export const PollResponse = ({
                 ) : null}
                 <div className="flex flex-col items-center gap-2">
                   <StarRating
-                    value={(responses[question.id] as { type: 'scale'; value: number })?.value || Math.floor(((question.scale_config?.min || 1) + (question.scale_config?.max || 5)) / 2)}
+                    value={(responses[question.id] as { type: 'scale'; value: number })?.value ?? 0}
                     onChange={(value) => updateResponse(question.id, { type: 'scale', value })}
                     max={question.scale_config?.max || 5}
                     allowHalf={true}
@@ -260,7 +258,7 @@ export const PollResponse = ({
                   />
                   <div className="text-center">
                     <span className="text-lg font-semibold text-primary">
-                      {(responses[question.id] as { type: 'scale'; value: number })?.value || Math.floor(((question.scale_config?.min || 1) + (question.scale_config?.max || 5)) / 2)}
+                      {(responses[question.id] as { type: 'scale'; value: number })?.value ?? 0}
                     </span>
                     <span className="text-muted-foreground"> / {question.scale_config?.max || 5}</span>
                   </div>
