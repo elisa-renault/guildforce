@@ -344,7 +344,7 @@ const GuildMembers = () => {
 
   if (loading) {
     return (
-      <div className="flex-1 relative">
+      <div className="flex-1 relative pt-16">
         <CosmicBackground />
         <div className="container mx-auto px-4 pt-20 pb-8">
           <Skeleton className="h-12 w-1/3 mb-6" />
@@ -364,7 +364,7 @@ const GuildMembers = () => {
   const notOnGuildforceCount = members.filter(m => !m.matched_user_id).length;
 
   return (
-    <div className="flex-1 relative">
+    <div className="flex-1 relative pt-16">
       <CosmicBackground />
 
       <GuildSubNav
