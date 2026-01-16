@@ -139,84 +139,90 @@ export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps)
   };
 
   return (
-    <div className="space-y-4">
-      {/* Header with summary */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div className="space-y-3">
+      {/* Header with summary - compact */}
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
-          <Shield className="h-5 w-5 text-primary" />
-          <h3 className="font-display text-lg">{(t as any).permissions?.title || 'Permissions'}</h3>
+          <Shield className="h-4 w-4 text-primary" />
+          <h3 className="font-display text-base">{(t as any).permissions?.title || 'Permissions'}</h3>
         </div>
         
         {/* Summary badges */}
-        <div className="flex flex-wrap items-center gap-2 text-xs">
+        <div className="flex items-center gap-1.5 text-[11px]">
           {delegatedCount > 0 ? (
             <>
-              <Badge variant="secondary">
-                {delegatedCount} {isFrench ? 'permission' : 'permission'}{delegatedCount > 1 ? 's' : ''} {isFrench ? 'déléguée' : 'delegated'}{delegatedCount > 1 ? 's' : ''}
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                {delegatedCount} {isFrench ? 'déléguée' : 'delegated'}{delegatedCount > 1 ? 's' : ''}
               </Badge>
               {rankRules.length > 0 && (
-                <Badge variant="outline">
-                  <Users className="h-3 w-3 mr-1" />
-                  {isFrench ? 'Par rang' : 'By rank'}
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                  <Users className="h-2.5 w-2.5 mr-0.5" />
+                  {isFrench ? 'Rangs' : 'Ranks'}
                 </Badge>
               )}
               {uniqueUsers > 0 && (
-                <Badge variant="outline">
-                  +{uniqueUsers} {isFrench ? 'utilisateur' : 'user'}{uniqueUsers > 1 ? 's' : ''}
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                  +{uniqueUsers}
                 </Badge>
               )}
             </>
           ) : (
-            <Badge variant="outline" className="text-muted-foreground">
-              {isFrench ? 'GM uniquement' : 'GM only'}
+            <Badge variant="outline" className="text-muted-foreground text-[10px] px-1.5 py-0">
+              {isFrench ? 'GM seul' : 'GM only'}
             </Badge>
           )}
         </div>
       </div>
 
-      <p className="text-sm text-muted-foreground">
-        {(t as any).permissions?.description || 'Delegate specific management rights to members based on their Battle.net rank or individually. GMs always have all permissions.'}
-      </p>
-
-      {/* Presets */}
+      {/* Presets - inline */}
       <PermissionPresets 
         onApplyPreset={handleApplyPreset}
         onReset={handleReset}
       />
 
-      {/* Grouped permissions */}
-      <div className="space-y-6">
-        {(['content', 'admin', 'audit'] as const).map(category => {
-          const categoryPerms = groupedPermissions[category];
-          if (categoryPerms.length === 0) return null;
-          
-          const info = CATEGORY_INFO[category];
-          const Icon = info.icon;
-          
-          return (
-            <div key={category} className="space-y-2">
-              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                <Icon className="h-4 w-4" />
-                <span>{isFrench ? info.labelFr : info.labelEn}</span>
-              </div>
-              <div className="space-y-2">
-                {categoryPerms.map(({ type, labelKey, descKey, isSensitive }) => (
-                  <PermissionSection
-                    key={type}
-                    permissionType={type}
-                    label={getLabel(labelKey)}
-                    description={getLabel(descKey)}
-                    rules={getLocalRules(type)}
-                    members={members}
-                    ranks={ranks}
-                    onChange={(rules) => handleRulesChange(type, rules)}
-                    isSensitive={isSensitive}
-                  />
-                ))}
-              </div>
-            </div>
-          );
-        })}
+      {/* Two-column grid on desktop */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+        {/* Content permissions */}
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground px-1">
+            <Settings className="h-3 w-3" />
+            <span>{isFrench ? 'Contenu' : 'Content'}</span>
+          </div>
+          {groupedPermissions.content.map(({ type, labelKey, descKey, isSensitive }) => (
+            <PermissionSection
+              key={type}
+              permissionType={type}
+              label={getLabel(labelKey)}
+              description={getLabel(descKey)}
+              rules={getLocalRules(type)}
+              members={members}
+              ranks={ranks}
+              onChange={(rules) => handleRulesChange(type, rules)}
+              isSensitive={isSensitive}
+            />
+          ))}
+        </div>
+
+        {/* Admin + Audit permissions */}
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground px-1">
+            <Users className="h-3 w-3" />
+            <span>{isFrench ? 'Admin & Audit' : 'Admin & Audit'}</span>
+          </div>
+          {[...groupedPermissions.admin, ...groupedPermissions.audit].map(({ type, labelKey, descKey, isSensitive }) => (
+            <PermissionSection
+              key={type}
+              permissionType={type}
+              label={getLabel(labelKey)}
+              description={getLabel(descKey)}
+              rules={getLocalRules(type)}
+              members={members}
+              ranks={ranks}
+              onChange={(rules) => handleRulesChange(type, rules)}
+              isSensitive={isSensitive}
+            />
+          ))}
+        </div>
       </div>
 
       {hasChanges && (
