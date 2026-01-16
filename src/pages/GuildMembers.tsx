@@ -425,8 +425,8 @@ const GuildMembers = () => {
                   variant="outline"
                   size="sm"
                   className={cn(
-                    "h-9 md:h-8 min-w-[130px] md:min-w-[200px] justify-between gap-2 text-sm flex-shrink-0 whitespace-nowrap border-border",
-                    hasClassFilters && "border-border/60"
+                    "h-9 md:h-8 min-w-[130px] md:min-w-[200px] justify-between gap-2 text-sm flex-shrink-0 whitespace-nowrap !bg-input/60 backdrop-blur-sm !border-border/50 hover:!bg-input/80 hover:!text-foreground",
+                    hasClassFilters && "!border-border/70"
                   )}
                 >
                   {hasClassFilters ? (
@@ -448,7 +448,7 @@ const GuildMembers = () => {
                       )}
                     </span>
                   ) : (
-                    <span className="text-muted-foreground">{language === 'fr' ? 'Toutes les classes' : 'All classes'}</span>
+                    <span className="text-foreground/70">{language === 'fr' ? 'Toutes les classes' : 'All classes'}</span>
                   )}
                   <ChevronDown className="h-3.5 w-3.5 opacity-50 flex-shrink-0" />
                 </Button>
@@ -493,8 +493,8 @@ const GuildMembers = () => {
                   variant="outline"
                   size="sm"
                   className={cn(
-                    "h-9 md:h-8 min-w-[110px] md:min-w-[160px] justify-between gap-2 text-sm flex-shrink-0 whitespace-nowrap border-border",
-                    hasRankFilters && "border-border/60"
+                    "h-9 md:h-8 min-w-[110px] md:min-w-[160px] justify-between gap-2 text-sm flex-shrink-0 whitespace-nowrap !bg-input/60 backdrop-blur-sm !border-border/50 hover:!bg-input/80 hover:!text-foreground",
+                    hasRankFilters && "!border-border/70"
                   )}
                 >
                   {hasRankFilters ? (
@@ -502,7 +502,7 @@ const GuildMembers = () => {
                       {rankFilters.length} {language === 'fr' ? (rankFilters.length > 1 ? 'rangs' : 'rang') : (rankFilters.length > 1 ? 'ranks' : 'rank')}
                     </span>
                   ) : (
-                    <span className="text-muted-foreground">{language === 'fr' ? 'Tous les rangs' : 'All ranks'}</span>
+                    <span className="text-foreground/70">{language === 'fr' ? 'Tous les rangs' : 'All ranks'}</span>
                   )}
                   <ChevronDown className="h-3.5 w-3.5 opacity-50 flex-shrink-0" />
                 </Button>
@@ -555,8 +555,8 @@ const GuildMembers = () => {
                   variant="outline"
                   size="sm"
                   className={cn(
-                    "h-9 md:h-8 min-w-[100px] md:min-w-[160px] justify-between gap-2 text-sm flex-shrink-0 whitespace-nowrap border-border",
-                    hasGuildforceFilter && "border-border/60"
+                    "h-9 md:h-8 min-w-[100px] md:min-w-[160px] justify-between gap-2 text-sm flex-shrink-0 whitespace-nowrap !bg-input/60 backdrop-blur-sm !border-border/50 hover:!bg-input/80 hover:!text-foreground",
+                    hasGuildforceFilter && "!border-border/70"
                   )}
                 >
                   {guildforceFilter === 'guildforce' && (
@@ -572,7 +572,7 @@ const GuildMembers = () => {
                     </span>
                   )}
                   {guildforceFilter === 'all' && (
-                    <span className="text-muted-foreground">Guildforce</span>
+                    <span className="text-foreground/70">Guildforce</span>
                   )}
                   <ChevronDown className="h-3.5 w-3.5 opacity-50 flex-shrink-0" />
                 </Button>
