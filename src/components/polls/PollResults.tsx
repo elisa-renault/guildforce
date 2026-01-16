@@ -4,10 +4,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { StarDisplay } from '@/components/ui/star-rating';
-import { Lock, User, Users, Calendar, Clock, ListOrdered } from 'lucide-react';
+import { Lock, User, Users, Calendar, Clock, ListOrdered, Star } from 'lucide-react';
 import type { GuildPollQuestion, ResponseValue, ScaleConfig } from '@/types/poll';
 import { format, parseISO } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 interface PollResultsProps {
   questions: GuildPollQuestion[];
@@ -265,7 +266,10 @@ export const PollResults = ({
 
             {question.question_type === 'text' && (
               <div className="space-y-2 pl-5 max-h-60 overflow-y-auto">
-                {question.responses?.map((response, respIndex) => {
+                {question.responses?.filter((response) => {
+                  const value = response.response_value as ResponseValue;
+                  return value.type === 'text' && value.value && value.value.trim().length > 0;
+                }).map((response, respIndex) => {
                   const value = response.response_value as ResponseValue;
                   if (value.type !== 'text') return null;
                   return (
@@ -291,7 +295,10 @@ export const PollResults = ({
                     </div>
                   );
                 })}
-                {(!question.responses || question.responses.length === 0) && (
+                {(!question.responses || question.responses.filter((r) => {
+                  const v = r.response_value as ResponseValue;
+                  return v.type === 'text' && v.value && v.value.trim().length > 0;
+                }).length === 0) && (
                   <p className="text-sm text-muted-foreground italic">
                     {language === 'fr' ? 'Aucune réponse' : 'No responses'}
                   </p>
@@ -324,8 +331,16 @@ export const PollResults = ({
                           const percentage = total > 0 ? (count / total) * 100 : 0;
                           return (
                             <div key={rating} className="flex items-center gap-2">
-                              <div className="w-16 flex items-center gap-1">
-                                <StarDisplay value={rating} max={5} size="sm" />
+                              <div className="w-16 flex items-center justify-end gap-0.5">
+                                {Array.from({ length: 5 }, (_, i) => (
+                                  <Star
+                                    key={i}
+                                    className={cn(
+                                      'h-3 w-3 stroke-[1.5]',
+                                      i < rating ? 'fill-amber-500 text-amber-500' : 'text-muted-foreground/30'
+                                    )}
+                                  />
+                                ))}
                               </div>
                               <Progress value={percentage} className="h-2 flex-1 bg-muted/40" />
                               <span className="w-8 text-xs text-muted-foreground text-right">
@@ -469,8 +484,16 @@ export const PollResults = ({
                           const percentage = total > 0 ? (count / total) * 100 : 0;
                           return (
                             <div key={value} className="flex items-center gap-2">
-                              <div className="w-20 flex items-center gap-1">
-                                <StarDisplay value={value} max={max} size="sm" />
+                              <div className="w-20 flex items-center justify-end gap-0.5">
+                                {Array.from({ length: max }, (_, i) => (
+                                  <Star
+                                    key={i}
+                                    className={cn(
+                                      'h-3 w-3 stroke-[1.5]',
+                                      i < value ? 'fill-amber-500 text-amber-500' : 'text-muted-foreground/30'
+                                    )}
+                                  />
+                                ))}
                               </div>
                               <Progress value={percentage} className="h-2 flex-1 bg-muted/40" />
                               <span className="w-8 text-xs text-muted-foreground text-right">
