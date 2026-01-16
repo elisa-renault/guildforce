@@ -226,6 +226,7 @@ export interface Translations {
     resyncDescription: string;
     resyncSuccess: string;
     resyncError: string;
+    resyncTokenExpired: string;
     syncing: string;
   };
   // Rosters
@@ -602,6 +603,7 @@ export const translations: Record<Language, Translations> = {
       resyncDescription: 'Refresh characters and guild memberships from Battle.net',
       resyncSuccess: 'Battle.net data synced successfully',
       resyncError: 'Sync failed. Please try again.',
+      resyncTokenExpired: 'Battle.net session expired. Please reconnect your Battle.net account from your profile.',
       syncing: 'Syncing...',
     },
     rosters: {
@@ -969,6 +971,7 @@ export const translations: Record<Language, Translations> = {
       resyncDescription: 'Rafraîchir les personnages et appartenances depuis Battle.net',
       resyncSuccess: 'Données Battle.net synchronisées',
       resyncError: 'Échec de la synchronisation. Veuillez réessayer.',
+      resyncTokenExpired: 'Session Battle.net expirée. Veuillez reconnecter votre compte Battle.net depuis votre profil.',
       syncing: 'Synchronisation...',
     },
     rosters: {
