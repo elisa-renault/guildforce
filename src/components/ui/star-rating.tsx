@@ -39,9 +39,14 @@ export const StarRating = ({
     (starIndex: number, isLeftHalf: boolean) => {
       if (disabled) return;
       const newValue = allowHalf && isLeftHalf ? starIndex + 0.5 : starIndex + 1;
-      onChange(newValue);
+      // If clicking on the same value, reset to 0
+      if (newValue === value) {
+        onChange(0);
+      } else {
+        onChange(newValue);
+      }
     },
-    [allowHalf, disabled, onChange]
+    [allowHalf, disabled, onChange, value]
   );
 
   const handleMouseMove = useCallback(
