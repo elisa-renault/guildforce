@@ -227,8 +227,10 @@ export const PermissionRow = ({
     } else if (level === 'all') {
       onChange([{ access_type: 'rank', min_rank_index: 0, max_rank_index: maxRankIndex }, ...userRules]);
     } else if (level === 'custom') {
-      // Open popover for custom selection
-      setCustomPopoverOpen(true);
+      // Create a rank rule with default value (1 to start customizing) and open popover
+      onChange([{ access_type: 'rank', min_rank_index: 0, max_rank_index: 1 }, ...userRules]);
+      // Use setTimeout to ensure state updates before opening popover
+      setTimeout(() => setCustomPopoverOpen(true), 50);
     }
   };
   
