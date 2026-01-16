@@ -120,10 +120,12 @@ const ForumNewTopic = () => {
         {/* Form */}
         <div className="space-y-6 bg-card/50 border border-border/50 rounded-xl p-6">
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
+            <label htmlFor="topic-title" className="block text-sm font-medium text-foreground mb-2">
               {language === 'fr' ? 'Titre' : 'Title'}
             </label>
             <Input
+              id="topic-title"
+              name="topic-title"
               placeholder={language === 'fr' ? 'Titre du sujet' : 'Topic title'}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -132,7 +134,7 @@ const ForumNewTopic = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
+            <label htmlFor="topic-content" className="block text-sm font-medium text-foreground mb-2">
               {language === 'fr' ? 'Contenu' : 'Content'}
             </label>
             <MarkdownEditor

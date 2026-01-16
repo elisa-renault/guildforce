@@ -205,9 +205,12 @@ export const IndividualAccessEditor = ({
               {permissionTypes.map(({ type, label }) => (
                 <label 
                   key={type} 
+                  htmlFor={`perm-${user.userId}-${type}`}
                   className="flex items-center gap-1.5 cursor-pointer"
                 >
                   <Checkbox
+                    id={`perm-${user.userId}-${type}`}
+                    name={`perm-${user.userId}-${type}`}
                     checked={user.permissions.includes(type)}
                     onCheckedChange={(checked) => handleTogglePermission(user.userId, type, !!checked)}
                     className="h-3 w-3"
