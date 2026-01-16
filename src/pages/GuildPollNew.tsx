@@ -44,7 +44,7 @@ const GuildPollNew = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [guildId, setGuildId] = useState<string | null>(null);
-  const [guild, setGuild] = useState<{ name: string; server: string; region: string; avatar_url: string | null } | null>(null);
+  const [guild, setGuild] = useState<{ name: string; server: string; region: string; avatar_url: string | null; officer_rank_threshold: number } | null>(null);
   const [isGM, setIsGM] = useState(false);
   const [rosters, setRosters] = useState<{ id: string; name: string }[]>([]);
   const [members, setMembers] = useState<GuildMember[]>([]);
@@ -69,7 +69,7 @@ const GuildPollNew = () => {
 
       const { data: allGuilds } = await supabase
         .from('guilds')
-        .select('id, name, server, region');
+        .select('id, name, server, region, officer_rank_threshold');
 
       const matchedGuild = allGuilds?.find(g =>
         toSlug(g.region || 'eu') === regionSlug &&
@@ -88,6 +88,7 @@ const GuildPollNew = () => {
         server: matchedGuild.server,
         region: matchedGuild.region || 'eu',
         avatar_url: null,
+        officer_rank_threshold: matchedGuild.officer_rank_threshold ?? 2,
       });
 
       // Check GM status
@@ -360,6 +361,7 @@ const GuildPollNew = () => {
           rosters={rosters}
           members={members}
           ranks={ranks}
+          officerRankThreshold={guild?.officer_rank_threshold ?? 2}
           initialData={existingPoll ? toPollFormData(existingPoll) : undefined}
           initialAccessRules={initialAccessRules}
           onSave={handleSave}
