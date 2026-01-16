@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, forwardRef } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { wowClasses, getClassById, Role, RangeType, Specialization } from '@/data/wowClasses';
 import { Button } from '@/components/ui/button';
@@ -34,7 +34,8 @@ const getSpecIcon = (spec: Specialization) => {
   return spec.range === 'ranged' ? Crosshair : Swords;
 };
 
-export const WishCardEditor = ({ wish, onChange, usedClassIds = [] }: WishCardEditorProps) => {
+export const WishCardEditor = forwardRef<HTMLDivElement, WishCardEditorProps>(
+  ({ wish, onChange, usedClassIds = [] }, ref) => {
   const { language, t } = useLanguage();
   const [classOpen, setClassOpen] = useState(false);
   const [specOpen, setSpecOpen] = useState(false);
@@ -71,7 +72,7 @@ export const WishCardEditor = ({ wish, onChange, usedClassIds = [] }: WishCardEd
   const commentPlaceholder = language === 'fr' ? 'Note...' : 'Note...';
 
   return (
-    <div className="flex flex-col lg:flex-row gap-2 lg:gap-3 flex-1">
+    <div ref={ref} className="flex flex-col lg:flex-row gap-2 lg:gap-3 flex-1">
       {/* Class Selector */}
       <Popover open={classOpen} onOpenChange={setClassOpen}>
         <PopoverTrigger asChild>
@@ -204,4 +205,6 @@ export const WishCardEditor = ({ wish, onChange, usedClassIds = [] }: WishCardEd
       />
     </div>
   );
-};
+});
+
+WishCardEditor.displayName = 'WishCardEditor';
