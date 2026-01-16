@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useGuildPermissions, PermissionType, PermissionRule } from '@/hooks/useGuildPermissions';
 import { PermissionSection } from './PermissionSection';
-import { PermissionPresets } from './PermissionPresets';
 import { CosmicButton } from '@/components/CosmicButton';
-import { Loader2, Save, Shield, Users, Settings, Eye } from 'lucide-react';
+import { Loader2, Save, Shield, Users, Settings, Eye, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface GuildPermissionsEditorProps {
   guildId: string;
@@ -72,19 +73,6 @@ export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps)
     setHasChanges(true);
   };
 
-  const handleApplyPreset = (presetPermissions: Record<PermissionType, Omit<PermissionRule, 'permission_type'>[]>) => {
-    const newPermissions: PermissionRule[] = [];
-    
-    (Object.keys(presetPermissions) as PermissionType[]).forEach(type => {
-      presetPermissions[type].forEach(rule => {
-        newPermissions.push({ ...rule, permission_type: type });
-      });
-    });
-    
-    setLocalPermissions(newPermissions);
-    setHasChanges(true);
-    toast.success(isFrench ? 'Preset appliqué' : 'Preset applied');
-  };
 
   const handleReset = () => {
     setLocalPermissions([]);
@@ -171,11 +159,28 @@ export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps)
         </div>
       </div>
 
-      {/* Presets - inline */}
-      <PermissionPresets 
-        onApplyPreset={handleApplyPreset}
-        onReset={handleReset}
-      />
+      {/* Reset button */}
+      {delegatedCount > 0 && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleReset}
+                className="h-7 text-xs text-muted-foreground hover:text-destructive gap-1.5"
+              >
+                <RotateCcw className="h-3 w-3" />
+                {isFrench ? 'Réinitialiser' : 'Reset'}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-xs">{isFrench ? 'Retirer toutes les permissions déléguées' : 'Remove all delegated permissions'}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
 
       {/* Two-column grid on desktop */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">

@@ -12,7 +12,9 @@ import { RosterManager } from '@/components/roster';
 
 import { GuildPermissionsEditor } from '@/components/permissions';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Loader2, Upload, Trash2, Shield, Info, RefreshCw } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
+import { Label } from '@/components/ui/label';
+import { Loader2, Upload, Trash2, Shield, Info, RefreshCw, Crown } from 'lucide-react';
 import { toSlug, getGuildPath } from '@/lib/guildSlug';
 import { BattleNetIcon } from '@/components/BattleNetIcon';
 
@@ -25,6 +27,7 @@ interface GuildData {
   region: string;
   faction: string;
   avatar_url: string | null;
+  officer_rank_threshold: number;
 }
 
 interface AccessRule {
@@ -69,6 +72,8 @@ const GuildSettings = () => {
   const [uploading, setUploading] = useState(false);
   const [removing, setRemoving] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [savingOfficerRank, setSavingOfficerRank] = useState(false);
+  const [officerRank, setOfficerRank] = useState<number>(2);
   const [rosters, setRosters] = useState<Roster[]>([]);
   const [members, setMembers] = useState<GuildMember[]>([]);
   const [ranks, setRanks] = useState<GuildRank[]>([]);
@@ -172,7 +177,7 @@ const GuildSettings = () => {
       // Find the guild by matching slugified region, server and name
       const { data: allGuilds } = await supabase
         .from('guilds')
-        .select('id, name, server, region, faction, avatar_url');
+        .select('id, name, server, region, faction, avatar_url, officer_rank_threshold');
       
       const matchedGuild = allGuilds?.find(g => 
         toSlug(g.region || 'eu') === regionSlug && 
@@ -197,6 +202,7 @@ const GuildSettings = () => {
       }
 
       setGuild(matchedGuild);
+      setOfficerRank(matchedGuild.officer_rank_threshold ?? 2);
       setIsGM(true);
       
       // Load rosters, members, and ranks
@@ -353,7 +359,7 @@ const GuildSettings = () => {
         // Reload guild data for faction update
         const { data: updatedGuild } = await supabase
           .from('guilds')
-          .select('id, name, server, region, faction, avatar_url')
+          .select('id, name, server, region, faction, avatar_url, officer_rank_threshold')
           .eq('id', guild.id)
           .single();
         
@@ -374,6 +380,35 @@ const GuildSettings = () => {
       });
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const handleOfficerRankChange = async (newRank: number) => {
+    if (!guild) return;
+    
+    setOfficerRank(newRank);
+    setSavingOfficerRank(true);
+    
+    try {
+      const { error } = await supabase
+        .from('guilds')
+        .update({ officer_rank_threshold: newRank })
+        .eq('id', guild.id);
+      
+      if (error) throw error;
+      
+      setGuild({ ...guild, officer_rank_threshold: newRank });
+      toast({ title: language === 'fr' ? 'Rang officier mis à jour' : 'Officer rank updated' });
+    } catch (error: any) {
+      console.error('Error updating officer rank:', error);
+      toast({
+        title: language === 'fr' ? 'Erreur lors de la mise à jour' : 'Update failed',
+        variant: 'destructive',
+      });
+      // Revert on error
+      setOfficerRank(guild.officer_rank_threshold);
+    } finally {
+      setSavingOfficerRank(false);
     }
   };
 
@@ -490,6 +525,52 @@ const GuildSettings = () => {
                   {guild.faction === 'horde' ? t.guild.horde : t.guild.alliance}
                 </span>
               </div>
+            </div>
+
+            {/* Officer Rank Threshold */}
+            <div className="mt-5 pt-4 border-t border-border/50">
+              <div className="flex items-center gap-2 mb-3">
+                <Crown className="h-4 w-4 text-amber-400" />
+                <Label className="text-sm font-medium">
+                  {language === 'fr' ? 'Rang officier minimum' : 'Minimum officer rank'}
+                </Label>
+              </div>
+              <p className="text-xs text-muted-foreground mb-3">
+                {language === 'fr' 
+                  ? 'Les rangs 0 à ce rang seront considérés comme officiers et affichés avec le badge officier.'
+                  : 'Ranks 0 to this rank will be considered officers and displayed with the officer badge.'}
+              </p>
+              
+              <div className="flex items-center gap-4">
+                <Slider
+                  value={[officerRank]}
+                  onValueChange={(value) => setOfficerRank(value[0])}
+                  onValueCommit={(value) => handleOfficerRankChange(value[0])}
+                  min={0}
+                  max={9}
+                  step={1}
+                  disabled={savingOfficerRank}
+                  className="flex-1"
+                />
+                <div className="w-16 text-center">
+                  <span className="text-sm font-medium">
+                    0 → {officerRank}
+                  </span>
+                </div>
+              </div>
+              
+              {ranks.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {ranks.filter(r => r.rank_index <= officerRank).map(rank => (
+                    <span 
+                      key={rank.rank_index}
+                      className="px-2 py-0.5 rounded-full text-xs bg-primary/20 text-primary border border-primary/30"
+                    >
+                      {rank.rank_name}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="mt-4 flex flex-col gap-3">
