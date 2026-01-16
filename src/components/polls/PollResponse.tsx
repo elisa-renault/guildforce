@@ -46,6 +46,23 @@ export const PollResponse = ({
           case 'rating':
             initial[q.id] = { type: 'rating', value: 3 };
             break;
+          case 'date':
+            initial[q.id] = { type: 'date', value: '' };
+            break;
+          case 'time':
+            initial[q.id] = { type: 'time', value: '' };
+            break;
+          case 'datetime':
+            initial[q.id] = { type: 'datetime', value: '' };
+            break;
+          case 'ranking':
+            initial[q.id] = { type: 'ranking', values: [...q.options] };
+            break;
+          case 'scale':
+            const min = q.scale_config?.min || 1;
+            const max = q.scale_config?.max || 10;
+            initial[q.id] = { type: 'scale', value: Math.floor((min + max) / 2) };
+            break;
         }
       }
     });
@@ -77,7 +94,14 @@ export const PollResponse = ({
       case 'text':
         return !!response.value.trim();
       case 'rating':
+      case 'scale':
         return response.value > 0;
+      case 'date':
+      case 'time':
+      case 'datetime':
+        return !!response.value;
+      case 'ranking':
+        return response.values.length > 0;
       default:
         return false;
     }
@@ -189,6 +213,72 @@ export const PollResponse = ({
                   </span>
                   <span className="text-muted-foreground"> / 5</span>
                 </div>
+              </div>
+            )}
+
+            {question.question_type === 'date' && (
+              <Input
+                type="date"
+                value={(responses[question.id] as { type: 'date'; value: string })?.value || ''}
+                onChange={(e) => updateResponse(question.id, { type: 'date', value: e.target.value })}
+                className="bg-background max-w-xs"
+              />
+            )}
+
+            {question.question_type === 'time' && (
+              <Input
+                type="time"
+                value={(responses[question.id] as { type: 'time'; value: string })?.value || ''}
+                onChange={(e) => updateResponse(question.id, { type: 'time', value: e.target.value })}
+                className="bg-background max-w-xs"
+              />
+            )}
+
+            {question.question_type === 'datetime' && (
+              <Input
+                type="datetime-local"
+                value={(responses[question.id] as { type: 'datetime'; value: string })?.value || ''}
+                onChange={(e) => updateResponse(question.id, { type: 'datetime', value: e.target.value })}
+                className="bg-background max-w-xs"
+              />
+            )}
+
+            {question.question_type === 'scale' && (
+              <div className="pl-5 space-y-3">
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <span>{question.scale_config?.min_label || question.scale_config?.min || 1}</span>
+                  <span>{question.scale_config?.max_label || question.scale_config?.max || 10}</span>
+                </div>
+                <Slider
+                  value={[(responses[question.id] as { type: 'scale'; value: number })?.value || Math.floor(((question.scale_config?.min || 1) + (question.scale_config?.max || 10)) / 2)]}
+                  onValueChange={([value]) => updateResponse(question.id, { type: 'scale', value })}
+                  min={question.scale_config?.min || 1}
+                  max={question.scale_config?.max || 10}
+                  step={question.scale_config?.step || 1}
+                  className="w-full"
+                />
+                <div className="text-center">
+                  <span className="text-lg font-semibold text-primary">
+                    {(responses[question.id] as { type: 'scale'; value: number })?.value || Math.floor(((question.scale_config?.min || 1) + (question.scale_config?.max || 10)) / 2)}
+                  </span>
+                  <span className="text-muted-foreground"> / {question.scale_config?.max || 10}</span>
+                </div>
+              </div>
+            )}
+
+            {question.question_type === 'ranking' && (
+              <div className="pl-5 space-y-2">
+                <p className="text-xs text-muted-foreground mb-2">
+                  {language === 'fr' ? 'Classez les éléments par ordre de préférence (1 = meilleur)' : 'Rank items by preference (1 = best)'}
+                </p>
+                {((responses[question.id] as { type: 'ranking'; values: string[] })?.values || question.options).map((option, optIndex) => (
+                  <div key={optIndex} className="flex items-center gap-3 p-2 rounded bg-background border border-border">
+                    <span className="w-6 h-6 rounded-full bg-primary/20 text-primary text-sm flex items-center justify-center font-medium">
+                      {optIndex + 1}
+                    </span>
+                    <span className="text-foreground">{option}</span>
+                  </div>
+                ))}
               </div>
             )}
           </div>

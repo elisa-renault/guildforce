@@ -814,6 +814,8 @@ export type Database = {
           poll_id: string
           question_text: string
           question_type: Database["public"]["Enums"]["poll_question_type"]
+          scale_config: Json | null
+          section_id: string | null
         }
         Insert: {
           created_at?: string
@@ -824,6 +826,8 @@ export type Database = {
           poll_id: string
           question_text: string
           question_type?: Database["public"]["Enums"]["poll_question_type"]
+          scale_config?: Json | null
+          section_id?: string | null
         }
         Update: {
           created_at?: string
@@ -834,6 +838,8 @@ export type Database = {
           poll_id?: string
           question_text?: string
           question_type?: Database["public"]["Enums"]["poll_question_type"]
+          scale_config?: Json | null
+          section_id?: string | null
         }
         Relationships: [
           {
@@ -841,6 +847,13 @@ export type Database = {
             columns: ["poll_id"]
             isOneToOne: false
             referencedRelation: "guild_polls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_poll_questions_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "guild_poll_sections"
             referencedColumns: ["id"]
           },
         ]
@@ -880,6 +893,41 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guild_poll_sections: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          poll_id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          poll_id: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          poll_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_poll_sections_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "guild_polls"
             referencedColumns: ["id"]
           },
         ]
@@ -1403,6 +1451,11 @@ export type Database = {
         | "multiple_choice"
         | "text"
         | "rating"
+        | "date"
+        | "time"
+        | "datetime"
+        | "ranking"
+        | "scale"
       poll_status: "draft" | "active" | "closed"
     }
     CompositeTypes: {
@@ -1538,6 +1591,11 @@ export const Constants = {
         "multiple_choice",
         "text",
         "rating",
+        "date",
+        "time",
+        "datetime",
+        "ranking",
+        "scale",
       ],
       poll_status: ["draft", "active", "closed"],
     },

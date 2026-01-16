@@ -189,12 +189,14 @@ const GuildPollNew = () => {
             allow_multiple_responses: existingPoll.allow_multiple_responses,
             roster_id: existingPoll.roster_id,
             ends_at: existingPoll.ends_at,
+            sections: [],
             questions: existingPoll.questions?.map((q: any) => ({
               id: q.id,
               question_text: q.question_text,
               question_type: q.question_type,
               is_required: q.is_required,
               options: q.options || [],
+              scale_config: q.scale_config || null,
             })) || [],
           } : undefined}
           onSave={handleSave}
