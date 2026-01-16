@@ -158,7 +158,7 @@ export const PollCard = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
           {poll.status === 'active' && !isGM && (
             <Button size="sm" onClick={handleRespond}>
               <Edit className="h-4 w-4 mr-1.5" />
