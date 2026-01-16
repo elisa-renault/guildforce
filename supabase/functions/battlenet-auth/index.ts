@@ -30,6 +30,22 @@ const BATTLENET_NAMESPACES: Record<BattleNetRegion, string> = {
   tw: 'profile-tw',
 };
 
+// Game Data API namespaces (different from Profile API)
+const BATTLENET_DYNAMIC_NAMESPACES: Record<BattleNetRegion, string> = {
+  eu: 'dynamic-eu',
+  us: 'dynamic-us',
+  kr: 'dynamic-kr',
+  tw: 'dynamic-tw',
+};
+
+// OAuth URLs per region (for client credentials)
+const BATTLENET_OAUTH_URLS: Record<BattleNetRegion, string> = {
+  eu: 'https://oauth.battle.net',
+  us: 'https://oauth.battle.net',
+  kr: 'https://oauth.battle.net',
+  tw: 'https://oauth.battle.net',
+};
+
 const BATTLENET_LOCALES: Record<BattleNetRegion, string> = {
   eu: 'en_GB',
   us: 'en_US',
@@ -216,6 +232,117 @@ function generateSecurePassword(): string {
     password += chars[array[i] % chars.length];
   }
   return password;
+}
+
+// ============================================================================
+// GAME DATA API CLIENT CREDENTIALS
+// ============================================================================
+
+// Cache for client credentials tokens per region (valid for ~24h)
+const clientTokenCache = new Map<BattleNetRegion, { token: string; expiresAt: number }>();
+
+/**
+ * Gets a client credentials token for the Game Data API.
+ * This token allows access to public game data without user OAuth.
+ * Tokens are cached in memory for efficiency.
+ * 
+ * @param region - Battle.net region
+ * @returns Access token for Game Data API calls
+ */
+async function getClientCredentialsToken(region: BattleNetRegion): Promise<string | null> {
+  try {
+    // Check cache first
+    const cached = clientTokenCache.get(region);
+    if (cached && cached.expiresAt > Date.now()) {
+      log.debug(`Using cached client token for ${region}`);
+      return cached.token;
+    }
+
+    log.debug(`Fetching new client credentials token for ${region}...`);
+
+    const tokenResponse = await fetch(`${BATTLENET_OAUTH_URL}/token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Basic ${btoa(`${BATTLENET_CLIENT_ID}:${BATTLENET_CLIENT_SECRET}`)}`,
+      },
+      body: new URLSearchParams({
+        grant_type: 'client_credentials',
+      }),
+    });
+
+    if (!tokenResponse.ok) {
+      const errorText = await tokenResponse.text();
+      log.error(`Client credentials token failed: ${tokenResponse.status}`, errorText);
+      return null;
+    }
+
+    const tokenData: TokenResponse = await tokenResponse.json();
+    
+    // Cache the token (expires_in is in seconds, subtract 5min buffer)
+    const expiresAt = Date.now() + (tokenData.expires_in - 300) * 1000;
+    clientTokenCache.set(region, { token: tokenData.access_token, expiresAt });
+
+    log.debug(`Got client credentials token for ${region}, expires in ${tokenData.expires_in}s`);
+    return tokenData.access_token;
+  } catch (error) {
+    log.error('Error getting client credentials token:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetches guild roster using Game Data API (public data, no user auth required).
+ * Uses client credentials token instead of user OAuth token.
+ * 
+ * @param region - Battle.net region
+ * @param realmSlug - Guild realm slug
+ * @param guildName - Guild name
+ * @returns Roster data or null if failed
+ */
+async function fetchPublicGuildRoster(
+  region: BattleNetRegion,
+  realmSlug: string,
+  guildName: string
+): Promise<{ members: any[]; faction: string } | null> {
+  try {
+    const clientToken = await getClientCredentialsToken(region);
+    if (!clientToken) {
+      log.error('Could not get client token for public roster fetch');
+      return null;
+    }
+
+    const apiUrl = BATTLENET_API_URLS[region];
+    const namespace = BATTLENET_DYNAMIC_NAMESPACES[region];
+    const locale = BATTLENET_LOCALES[region];
+
+    // Build guild slug for API call
+    const guildSlug = guildName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const serverSlug = realmSlug.toLowerCase().replace(/\s+/g, '-').replace(/'/g, '');
+    const rosterUrl = `${apiUrl}/data/wow/guild/${serverSlug}/${encodeURIComponent(guildSlug)}/roster?namespace=${namespace}&locale=${locale}`;
+
+    log.debug(`Fetching public roster from: ${rosterUrl}`);
+
+    const rosterResponse = await fetch(rosterUrl, {
+      headers: { 'Authorization': `Bearer ${clientToken}` },
+    });
+
+    if (!rosterResponse.ok) {
+      log.debug(`Public roster fetch failed: ${rosterResponse.status}`);
+      return null;
+    }
+
+    const roster = await rosterResponse.json();
+    const faction = roster.guild?.faction?.type || 'UNKNOWN';
+
+    return {
+      members: roster.members || [],
+      faction,
+    };
+  } catch (error) {
+    log.error('Error fetching public guild roster:', error);
+    return null;
+  }
 }
 
 // ============================================================================
@@ -811,10 +938,11 @@ Deno.serve(async (req) => {
       log.info(`Phase 1 completed: ${usersSynced} users synced, ${usersErrors} errors`);
 
       // =====================================================================
-      // PHASE 2: Sync all guilds using ANY member with a valid token
-      // This ensures guilds are synced even if their owner has no valid token
+      // PHASE 2: Sync all guilds using Game Data API (client credentials)
+      // This uses public API access - no user tokens required!
+      // Like WoWProgress, Raider.io, etc.
       // =====================================================================
-      log.info('Phase 2: Syncing all guilds roster cache...');
+      log.info('Phase 2: Syncing all guilds roster cache using Game Data API...');
 
       const { data: allGuilds, error: guildsError } = await supabase
         .from('guilds')
@@ -826,6 +954,7 @@ Deno.serve(async (req) => {
 
       let guildsSynced = 0;
       let guildsSkipped = 0;
+      let guildsErrors = 0;
 
       for (const guild of (allGuilds || [])) {
         try {
@@ -848,70 +977,41 @@ Deno.serve(async (req) => {
             }
           }
 
-          // Find ANY member of this guild with a valid Battle.net token
-          const { data: guildMemberWithToken } = await supabase
-            .from('wow_guild_memberships')
-            .select(`
-              user_id,
-              guild_region,
-              battlenet_tokens!inner(access_token, expires_at)
-            `)
-            .ilike('guild_name', guild.name)
-            .ilike('guild_realm', guild.server)
-            .gt('battlenet_tokens.expires_at', new Date().toISOString())
-            .limit(1)
-            .maybeSingle();
-
-          if (!guildMemberWithToken) {
-            log.debug(`No member with valid token found for guild ${sanitizePII(guild.name, 'name')}`);
-            guildsSkipped++;
-            continue;
-          }
-
-          const tokenData = guildMemberWithToken.battlenet_tokens as any;
-          const region = getValidRegion(guildMemberWithToken.guild_region || guild.region);
-          const apiUrl = BATTLENET_API_URLS[region];
-          const namespace = BATTLENET_NAMESPACES[region];
-          const locale = BATTLENET_LOCALES[region];
-
-          // Build guild slug for API call
-          const guildSlug = guild.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+          const region = getValidRegion(guild.region);
+          
+          // Derive realm slug from server name
           const serverSlug = guild.server.toLowerCase().replace(/\s+/g, '-').replace(/'/g, '');
-          const rosterUrl = `${apiUrl}/data/wow/guild/${serverSlug}/${encodeURIComponent(guildSlug)}/roster?namespace=${namespace}&locale=${locale}`;
 
-          log.debug(`Fetching roster for guild ${sanitizePII(guild.name, 'name')} from ${rosterUrl}`);
+          // Use public Game Data API - no user token required!
+          const rosterData = await fetchPublicGuildRoster(region, serverSlug, guild.name);
 
-          const rosterResponse = await fetch(rosterUrl, {
-            headers: { 'Authorization': `Bearer ${tokenData.access_token}` },
-          });
-
-          if (!rosterResponse.ok) {
-            log.debug(`Failed to fetch roster for ${guild.name}: ${rosterResponse.status}`);
-            guildsSkipped++;
+          if (!rosterData) {
+            log.debug(`Failed to fetch public roster for ${sanitizePII(guild.name, 'name')}`);
+            guildsErrors++;
             continue;
           }
-
-          const roster = await rosterResponse.json();
-          const guildFaction = roster.guild?.faction?.type || 'UNKNOWN';
 
           // Update faction if it differs (Battle.net is source of truth)
-          await supabase
-            .from('guilds')
-            .update({ faction: guildFaction.toLowerCase() })
-            .eq('id', guild.id);
+          if (rosterData.faction && rosterData.faction !== 'UNKNOWN') {
+            await supabase
+              .from('guilds')
+              .update({ faction: rosterData.faction.toLowerCase() })
+              .eq('id', guild.id);
+          }
 
           // Store the full roster in cache
-          await storeFullRosterForGuild(supabase, guild.id, guild.name, roster.members || []);
+          await storeFullRosterForGuild(supabase, guild.id, guild.name, rosterData.members);
           guildsSynced++;
 
-          // Rate limit protection
-          await new Promise(resolve => setTimeout(resolve, 300));
+          // Rate limit protection (Game Data API: 36,000 req/hour = 10/sec max)
+          await new Promise(resolve => setTimeout(resolve, 200));
         } catch (err) {
           log.error(`Error syncing guild ${sanitizePII(guild.name, 'name')}:`, err);
+          guildsErrors++;
         }
       }
 
-      log.info(`Phase 2 completed: ${guildsSynced} guilds synced, ${guildsSkipped} skipped`);
+      log.info(`Phase 2 completed: ${guildsSynced} guilds synced, ${guildsSkipped} skipped, ${guildsErrors} errors`);
       log.info(`Scheduled sync completed: ${usersSynced} users, ${guildsSynced} guilds`);
 
       return new Response(JSON.stringify({ 
