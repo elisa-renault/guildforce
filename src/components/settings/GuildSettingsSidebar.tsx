@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -47,8 +47,8 @@ export const GuildSettingsSidebar = ({
   const isMobile = useIsMobile();
   const [tabsTop, setTabsTop] = useState<number>(104);
 
-  // Measure heights once on mount and on resize (not scroll) for fixed positioning
-  useEffect(() => {
+  // Measure heights synchronously before paint to avoid flicker
+  useLayoutEffect(() => {
     if (!isMobile) return;
 
     const compute = () => {
@@ -56,12 +56,15 @@ export const GuildSettingsSidebar = ({
       const globalNav = document.querySelector<HTMLElement>('[data-global-nav]');
       
       const globalH = globalNav?.offsetHeight ?? 64;
-      const subH = subNav?.offsetHeight ?? 40;
+      const subH = subNav?.offsetHeight ?? 44;
       const nextTop = globalH + subH;
-      setTabsTop((prev) => (prev === nextTop ? prev : nextTop));
+      setTabsTop(nextTop);
     };
 
+    // Run immediately
     compute();
+    
+    // Also run on resize
     window.addEventListener('resize', compute);
 
     const ro = new ResizeObserver(compute);
