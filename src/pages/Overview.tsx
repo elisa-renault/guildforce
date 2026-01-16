@@ -225,15 +225,15 @@ const Overview = () => {
 
         <div className="grid md:grid-cols-2 gap-4 md:gap-6">
           {/* Left Column - My Status + Wishes */}
-          <div className="space-y-4">
+          <div className="space-y-4 min-w-0">
             {/* My Status Card */}
-            <GlowCard className="p-4">
-              <div className="flex items-center justify-between mb-4">
+            <GlowCard className="p-4 overflow-hidden">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
                 <h2 className="font-semibold text-foreground">
                   {t.common.loading === 'Chargement...' ? 'Mon statut' : 'My Status'}
                 </h2>
                 <div className={cn(
-                  "flex items-center gap-2 px-3 py-1.5 rounded-full border",
+                  "flex items-center gap-2 px-3 py-1.5 rounded-full border shrink-0",
                   statusConfig.bgColor
                 )}>
                   <StatusIcon className={cn("h-4 w-4", statusConfig.color)} />
@@ -327,7 +327,7 @@ const Overview = () => {
           </div>
 
           {/* Right Column - Active Polls */}
-          <div className="space-y-4">
+          <div className="space-y-4 min-w-0">
             {guildId && guild && (
               <ActivePollWidget
                 guildId={guildId}

@@ -43,54 +43,54 @@ export const ActivePollWidget = ({ guildId, guildSlug, isGM = false }: ActivePol
   return (
     <div className="mb-6">
       <GlowCard 
-        className="p-4 cursor-pointer hover:border-primary/50 transition-colors"
+        className="p-4 cursor-pointer hover:border-primary/50 transition-colors overflow-hidden"
         onClick={handleClick}
       >
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <BarChart3 className="h-4 w-4 text-primary shrink-0" />
-              <span className="text-xs font-medium text-primary uppercase tracking-wide">
-                {language === 'fr' ? 'Sondage en cours' : 'Active Poll'}
-              </span>
-            </div>
-            
-            <h3 className="font-semibold text-foreground truncate">
-              {activePoll.title}
-            </h3>
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4 text-primary shrink-0" />
+            <span className="text-xs font-medium text-primary uppercase tracking-wide">
+              {language === 'fr' ? 'Sondage en cours' : 'Active Poll'}
+            </span>
+          </div>
+          
+          <h3 className="font-semibold text-foreground line-clamp-2">
+            {activePoll.title}
+          </h3>
 
-            <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-              {activePoll.response_count !== undefined && (
-                <div className="flex items-center gap-1">
-                  <Users className="h-3 w-3" />
-                  <span>{activePoll.response_count} {language === 'fr' ? 'réponses' : 'responses'}</span>
-                </div>
-              )}
-              {activePoll.ends_at && (
-                <div className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  <span>
-                    {language === 'fr' ? 'Fin' : 'Ends'}{' '}
-                    {formatDistanceToNow(new Date(activePoll.ends_at), { addSuffix: true, locale })}
-                  </span>
-                </div>
-              )}
-            </div>
+          <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+            {activePoll.response_count !== undefined && (
+              <div className="flex items-center gap-1">
+                <Users className="h-3 w-3 shrink-0" />
+                <span>{activePoll.response_count} {language === 'fr' ? 'réponses' : 'responses'}</span>
+              </div>
+            )}
+            {activePoll.ends_at && (
+              <div className="flex items-center gap-1">
+                <Clock className="h-3 w-3 shrink-0" />
+                <span>
+                  {language === 'fr' ? 'Fin' : 'Ends'}{' '}
+                  {formatDistanceToNow(new Date(activePoll.ends_at), { addSuffix: true, locale })}
+                </span>
+              </div>
+            )}
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          {/* Actions row */}
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/30" onClick={(e) => e.stopPropagation()}>
             {isGM && (
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={handleResultsClick}
               >
-                <BarChart3 className="h-4 w-4 mr-1" />
-                {language === 'fr' ? 'Résultats' : 'Results'}
+                <BarChart3 className="h-4 w-4 sm:mr-1.5" />
+                <span className="hidden sm:inline">{language === 'fr' ? 'Résultats' : 'Results'}</span>
               </Button>
             )}
-            <Button variant="ghost" size="icon">
-              <ChevronRight className="h-5 w-5" />
+            <Button variant="ghost" size="sm" className="ml-auto">
+              <span className="text-sm">{language === 'fr' ? 'Voir' : 'View'}</span>
+              <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           </div>
         </div>

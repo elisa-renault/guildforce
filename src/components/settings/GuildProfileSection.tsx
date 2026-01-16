@@ -373,11 +373,11 @@ export const GuildProfileSection = ({
   };
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="space-y-4 md:space-y-6 overflow-x-hidden">
       {/* Avatar + Info Grid */}
       <div className="grid gap-4 md:gap-6 lg:grid-cols-3">
         {/* Avatar Section */}
-        <GlowCard className="p-4 md:p-6">
+        <GlowCard className="p-4 md:p-6 overflow-hidden">
           <h2 className="font-display text-base md:text-lg mb-3 md:mb-4">{t.guildSettings.avatar}</h2>
           
           <div className="flex flex-col items-center gap-3 md:gap-4">
