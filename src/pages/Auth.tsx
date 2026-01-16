@@ -247,10 +247,10 @@ const Auth = () => {
           </div>
 
           {/* Right Column - Auth Form */}
-          <div className="flex flex-col items-center lg:items-stretch gap-4">
+          <div className="flex flex-col items-center lg:items-stretch">
             
             {/* Mobile Header */}
-            <div className="lg:hidden text-center space-y-2 mb-2">
+            <div className="lg:hidden text-center space-y-2 mb-4">
               <div className="flex items-center justify-center gap-3 mb-4">
                 <Shield className="h-8 w-8 text-primary" />
                 <span className="text-2xl font-bold gradient-text">Guildforce</span>
@@ -333,13 +333,15 @@ const Auth = () => {
                   </form>
                 </CollapsibleContent>
               </Collapsible>
-            </GlowCard>
 
-            {/* Back Button */}
-            <Button variant="ghost" onClick={() => navigate('/')} className="text-muted-foreground hover:text-foreground gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              {t.common.back}
-            </Button>
+              {/* Back Button - Inside Card */}
+              <div className="mt-6 pt-4 border-t border-border/30">
+                <Button variant="ghost" onClick={() => navigate('/')} className="w-full text-muted-foreground hover:text-foreground gap-2">
+                  <ArrowLeft className="h-4 w-4" />
+                  {t.common.back}
+                </Button>
+              </div>
+            </GlowCard>
           </div>
         </div>
       </div>
