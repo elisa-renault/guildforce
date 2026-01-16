@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Loader2 } from 'lucide-react';
 import { useGuildPolls, usePollMutations } from '@/hooks/useGuildPolls';
 import { toSlug } from '@/lib/guildSlug';
+import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
 
 const GuildPolls = () => {
   const { regionSlug, serverSlug, guildSlug } = useParams();
@@ -26,6 +27,10 @@ const GuildPolls = () => {
   const basePath = `/guild/${fullSlug}`;
   const { polls, loading: pollsLoading, refetch } = useGuildPolls(guildId || undefined);
   const { publishPoll, closePoll, deletePoll, saving } = usePollMutations();
+  const { hasPermission: hasManagePolls, loading: permLoading } = useHasGuildPermission(guildId, 'manage_polls');
+
+  // User can manage polls if they are GM OR have manage_polls permission
+  const canManagePolls = isGM || hasManagePolls;
 
   useEffect(() => {
     const loadGuild = async () => {
@@ -81,7 +86,7 @@ const GuildPolls = () => {
   const activePolls = polls.filter(p => p.status === 'active');
   const closedPolls = polls.filter(p => p.status === 'closed');
 
-  if (loading) {
+  if (loading || permLoading) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <CosmicBackground />
@@ -110,7 +115,7 @@ const GuildPolls = () => {
               {language === 'fr' ? 'Sondages' : 'Polls'}
             </h1>
 
-            {isGM && (
+            {canManagePolls && (
               <Button onClick={() => navigate(`${basePath}/polls/new`)}>
                 <Plus className="h-4 w-4 mr-2" />
                 {language === 'fr' ? 'Nouveau sondage' : 'New Poll'}
@@ -132,7 +137,7 @@ const GuildPolls = () => {
                 <TabsTrigger value="active">
                   {language === 'fr' ? 'Actifs' : 'Active'} ({activePolls.length})
                 </TabsTrigger>
-                {isGM && (
+                {canManagePolls && (
                   <TabsTrigger value="draft">
                     {language === 'fr' ? 'Brouillons' : 'Drafts'} ({draftPolls.length})
                   </TabsTrigger>
@@ -147,7 +152,7 @@ const GuildPolls = () => {
                   <PollCard
                     key={poll.id}
                     poll={poll}
-                    isGM={isGM}
+                    isGM={canManagePolls}
                     guildSlug={fullSlug}
                     onClose={handleClose}
                   />
@@ -159,13 +164,13 @@ const GuildPolls = () => {
                 )}
               </TabsContent>
 
-              {isGM && (
+              {canManagePolls && (
                 <TabsContent value="draft" className="space-y-4">
                   {draftPolls.map((poll) => (
                     <PollCard
                       key={poll.id}
                       poll={poll}
-                      isGM={isGM}
+                      isGM={canManagePolls}
                       guildSlug={fullSlug}
                       onPublish={handlePublish}
                       onDelete={handleDelete}
@@ -184,9 +189,9 @@ const GuildPolls = () => {
                   <PollCard
                     key={poll.id}
                     poll={poll}
-                    isGM={isGM}
+                    isGM={canManagePolls}
                     guildSlug={fullSlug}
-                    onDelete={isGM ? handleDelete : undefined}
+                    onDelete={canManagePolls ? handleDelete : undefined}
                   />
                 ))}
                 {closedPolls.length === 0 && (
