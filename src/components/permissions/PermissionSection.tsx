@@ -296,38 +296,34 @@ export const PermissionSection = ({
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <div className={`border rounded-lg overflow-hidden ${
+      <div className={`border rounded-md overflow-hidden ${
         isSensitive ? 'border-orange-500/30 bg-orange-500/5' : 'border-border/50'
       }`}>
         <CollapsibleTrigger asChild>
-          <button className="w-full p-4 flex items-center justify-between hover:bg-muted/30 transition-colors text-left">
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <span className="font-medium text-sm">{label}</span>
+          <button className="w-full px-3 py-2 flex items-center justify-between hover:bg-muted/30 transition-colors text-left gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="font-medium text-xs truncate">{label}</span>
                 {isSensitive && (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger>
-                        <Badge variant="outline" className="text-orange-500 border-orange-500/50 text-[10px] px-1.5 py-0">
-                          <ShieldAlert className="h-3 w-3 mr-1" />
-                          {isFrench ? 'Sensible' : 'Sensitive'}
-                        </Badge>
+                        <ShieldAlert className="h-3 w-3 text-orange-500 flex-shrink-0" />
                       </TooltipTrigger>
                       <TooltipContent side="top">
                         <p className="text-xs max-w-[200px]">
                           {isFrench 
-                            ? 'Cette permission permet de modifier des données critiques. Accordez-la avec précaution.'
-                            : 'This permission allows modifying critical data. Grant it carefully.'}
+                            ? 'Permission sensible - accordez-la avec précaution'
+                            : 'Sensitive permission - grant carefully'}
                         </p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 )}
               </div>
-              <div className="text-xs text-muted-foreground mt-0.5">{description}</div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className={`text-xs px-2 py-0.5 rounded-full ${
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full whitespace-nowrap ${
                 summaryBadge.variant === 'default' 
                   ? 'bg-primary/20 text-primary' 
                   : summaryBadge.variant === 'secondary'
@@ -337,32 +333,33 @@ export const PermissionSection = ({
                 {summaryBadge.text}
               </span>
               {isOpen ? (
-                <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                <ChevronUp className="h-3 w-3 text-muted-foreground" />
               ) : (
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                <ChevronDown className="h-3 w-3 text-muted-foreground" />
               )}
             </div>
           </button>
         </CollapsibleTrigger>
         
         <CollapsibleContent>
-          <div className="px-4 pb-4 space-y-3 border-t border-border/50 pt-3">
+          <div className="px-3 pb-2 space-y-2 border-t border-border/50 pt-2">
             {/* All members checkbox */}
-            <div className="flex items-center gap-2 p-2 rounded-md bg-muted/10">
+            <div className="flex items-center gap-2">
               <Checkbox
                 id={`${permissionType}-all`}
                 checked={isAllMembers}
                 onCheckedChange={handleAllMembersToggle}
+                className="h-3.5 w-3.5"
               />
               <label
                 htmlFor={`${permissionType}-all`}
-                className="text-sm cursor-pointer select-none flex-1"
+                className="text-xs cursor-pointer select-none flex-1"
               >
-                {isFrench ? 'Tous les membres de la guilde' : 'All guild members'}
+                {isFrench ? 'Tous les membres' : 'All members'}
               </label>
               {isAllMembers && isSensitive && (
-                <Badge variant="outline" className="text-orange-500 border-orange-500/50 text-[10px]">
-                  <AlertTriangle className="h-3 w-3 mr-1" />
+                <Badge variant="outline" className="text-orange-500 border-orange-500/50 text-[9px] px-1 py-0">
+                  <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
                   {isFrench ? 'Risqué' : 'Risky'}
                 </Badge>
               )}
@@ -371,18 +368,18 @@ export const PermissionSection = ({
             {!isAllMembers && (
               <>
                 {rules.length === 0 ? (
-                  <p className="text-xs text-muted-foreground py-2">
-                    {(t as any).permissions?.noRules || 'Only GMs have this permission'}
+                  <p className="text-[10px] text-muted-foreground">
+                    {isFrench ? 'GM uniquement' : 'GM only'}
                   </p>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     {rules.map((rule, index) => (
-                      <div key={index} className="flex items-start gap-2 p-3 rounded-lg border border-border/30 bg-muted/10">
+                      <div key={index} className="flex items-center gap-2 p-2 rounded border border-border/30 bg-muted/10">
                         {rule.access_type === 'rank' ? (
-                          <div className="flex-1 space-y-1">
-                            <div className="flex items-center gap-2 text-xs">
-                              <Crown className="h-3 w-3 text-primary" />
-                              <span>{t.rosters?.byRank || 'By Rank'}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1 text-[10px] text-muted-foreground mb-1">
+                              <Crown className="h-2.5 w-2.5 text-primary" />
+                              <span>{isFrench ? 'Rangs 0' : 'Ranks 0'} → {rule.max_rank_index ?? 0}</span>
                             </div>
                             <RankSlider
                               maxValue={rule.max_rank_index ?? 0}
@@ -392,16 +389,12 @@ export const PermissionSection = ({
                             />
                           </div>
                         ) : (
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 text-xs mb-2">
-                              <Users className="h-3 w-3 text-primary" />
-                              <span>{t.rosters?.byUser || 'Specific User'}</span>
-                            </div>
+                          <div className="flex-1 min-w-0">
                             <Select
                               value={rule.user_id || ''}
                               onValueChange={(value) => updateRule(index, { user_id: value })}
                             >
-                              <SelectTrigger className="w-full bg-card border-border h-8 text-xs">
+                              <SelectTrigger className="w-full bg-card border-border h-7 text-xs">
                                 <SelectValue placeholder={t.rosters?.selectUser || 'Select user'} />
                               </SelectTrigger>
                               <SelectContent className="bg-card border-border">
@@ -419,7 +412,7 @@ export const PermissionSection = ({
 
                         <button
                           onClick={() => removeRule(index)}
-                          className="w-7 h-7 rounded-md bg-destructive/10 flex items-center justify-center hover:bg-destructive/20 transition-colors flex-shrink-0"
+                          className="w-6 h-6 rounded bg-destructive/10 flex items-center justify-center hover:bg-destructive/20 transition-colors flex-shrink-0"
                         >
                           <Trash2 className="h-3 w-3 text-destructive" />
                         </button>
@@ -428,17 +421,17 @@ export const PermissionSection = ({
                   </div>
                 )}
 
-                <div className="flex gap-2 pt-1">
+                <div className="flex gap-1.5">
                   {!hasRankRule && (
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
                       onClick={addRankRule}
-                      className="text-xs h-7"
+                      className="text-[10px] h-6 px-2"
                     >
-                      <Plus className="h-3 w-3 mr-1" />
-                      {(t as any).permissions?.addRankRule || 'Add by rank'}
+                      <Plus className="h-2.5 w-2.5 mr-0.5" />
+                      {isFrench ? 'Rang' : 'Rank'}
                     </Button>
                   )}
                   <Button
@@ -447,10 +440,10 @@ export const PermissionSection = ({
                     size="sm"
                     onClick={addUserRule}
                     disabled={members.length === 0}
-                    className="text-xs h-7"
+                    className="text-[10px] h-6 px-2"
                   >
-                    <Plus className="h-3 w-3 mr-1" />
-                    {(t as any).permissions?.addUserRule || 'Add user'}
+                    <Plus className="h-2.5 w-2.5 mr-0.5" />
+                    {isFrench ? 'Utilisateur' : 'User'}
                   </Button>
                 </div>
               </>
