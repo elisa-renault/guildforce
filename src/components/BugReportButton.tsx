@@ -131,28 +131,31 @@ const BugReportButton = React.forwardRef<HTMLButtonElement, React.ComponentProps
 
     return (
       <>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              ref={ref}
-              variant="outline"
-              size="icon"
-              className="fixed bottom-4 right-4 z-[60] h-10 w-10 rounded-full bg-card/80 backdrop-blur-sm border-border shadow-lg hover:bg-primary/20 hover:border-primary/50 transition-all"
-              onClick={() => setIsOpen(true)}
-              {...props}
-            >
-              <Bug className="h-5 w-5" />
-              {errorCount > 0 && (
-                <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center">
-                  {errorCount > 9 ? '9+' : errorCount}
-                </span>
-              )}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="left">
-            {t.bugReport.button}
-          </TooltipContent>
-        </Tooltip>
+        {/* Sticky container for bug button - stays above footer */}
+        <div className="sticky bottom-0 z-[60] flex justify-end pointer-events-none">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                ref={ref}
+                variant="outline"
+                size="icon"
+                className="m-4 h-10 w-10 rounded-full bg-card/80 backdrop-blur-sm border-border shadow-lg hover:bg-primary/20 hover:border-primary/50 transition-all pointer-events-auto"
+                onClick={() => setIsOpen(true)}
+                {...props}
+              >
+                <Bug className="h-5 w-5" />
+                {errorCount > 0 && (
+                  <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center">
+                    {errorCount > 9 ? '9+' : errorCount}
+                  </span>
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="left">
+              {t.bugReport.button}
+            </TooltipContent>
+          </Tooltip>
+        </div>
 
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogContent className="sm:max-w-lg">
