@@ -27,6 +27,7 @@ interface PollResultsAccessEditorProps {
   accessRules: ResultsAccessRule[];
   members: GuildMember[];
   ranks: GuildRank[];
+  officerRankThreshold?: number;
   onChange: (rules: ResultsAccessRule[]) => void;
   restrictAccess: boolean;
   onRestrictAccessChange: (restricted: boolean) => void;
@@ -36,12 +37,14 @@ interface RankSliderProps {
   maxValue: number;
   maxRank: number;
   ranks: GuildRank[];
+  officerRankThreshold: number;
   onChange: (max: number) => void;
 }
 
-const RankSlider = ({ maxValue, maxRank, ranks, onChange }: RankSliderProps) => {
+const RankSlider = ({ maxValue, maxRank, ranks, officerRankThreshold, onChange }: RankSliderProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const { language } = useLanguage();
   const sortedRanks = [...ranks].sort((a, b) => a.rank_index - b.rank_index);
   
   const minRank = 0;
@@ -54,6 +57,13 @@ const RankSlider = ({ maxValue, maxRank, ranks, onChange }: RankSliderProps) => 
   const getRankName = (index: number) => {
     const rank = sortedRanks.find(r => r.rank_index === index);
     return rank?.rank_name || `Rank ${index}`;
+  };
+
+  const getDisplayName = (index: number) => {
+    if (index === officerRankThreshold) {
+      return language === 'fr' ? 'Officiers' : 'Officers';
+    }
+    return getRankName(index);
   };
 
   const getIndexFromPosition = useCallback((clientX: number): number => {
@@ -198,7 +208,7 @@ const RankSlider = ({ maxValue, maxRank, ranks, onChange }: RankSliderProps) => 
         {maxValue > 0 && (
           <>
             <span className="mx-1">→</span>
-            <span className="text-primary font-medium">{getRankName(maxValue)}</span>
+            <span className="text-primary font-medium">{getDisplayName(maxValue)}</span>
           </>
         )}
       </div>
@@ -210,6 +220,7 @@ export const PollResultsAccessEditor = ({
   accessRules, 
   members, 
   ranks, 
+  officerRankThreshold = 2,
   onChange,
   restrictAccess,
   onRestrictAccessChange,
@@ -300,6 +311,7 @@ export const PollResultsAccessEditor = ({
               maxValue={rankRule?.max_rank_index ?? 0}
               maxRank={maxRankIndex}
               ranks={sortedRanks}
+              officerRankThreshold={officerRankThreshold}
               onChange={handleRankChange}
             />
           </div>

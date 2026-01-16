@@ -55,6 +55,7 @@ interface PollEditorProps {
   rosters: Roster[];
   members?: GuildMember[];
   ranks?: GuildRank[];
+  officerRankThreshold?: number;
   onSave: (data: PollFormData, accessRules?: ResultsAccessRule[]) => Promise<void>;
   onPublish?: (data: PollFormData, accessRules?: ResultsAccessRule[]) => Promise<void>;
   saving?: boolean;
@@ -176,6 +177,7 @@ export const PollEditor = ({
   rosters,
   members = [],
   ranks = [],
+  officerRankThreshold = 2,
   onSave,
   onPublish,
   saving = false,
@@ -589,6 +591,7 @@ export const PollEditor = ({
           accessRules={resultsAccessRules}
           members={members}
           ranks={ranks}
+          officerRankThreshold={officerRankThreshold}
           onChange={setResultsAccessRules}
           restrictAccess={restrictResultsAccess}
           onRestrictAccessChange={setRestrictResultsAccess}
