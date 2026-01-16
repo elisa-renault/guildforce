@@ -8,8 +8,9 @@ import { CosmicBackground } from '@/components/CosmicBackground';
 import { GuildSubNav } from '@/components/guild';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { PollResults } from '@/components/polls';
-import { usePollResults } from '@/hooks/useGuildPolls';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { usePollResults, usePollMutations } from '@/hooks/useGuildPolls';
+import { Loader2, ArrowLeft, Lock } from 'lucide-react';
+import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
 
 const GuildPollResultsPage = () => {
   const navigate = useNavigate();
@@ -17,9 +18,13 @@ const GuildPollResultsPage = () => {
   const { language } = useLanguage();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [guildId, setGuildId] = useState<string | null>(null);
   const [isGM, setIsGM] = useState(false);
+  const [canViewResults, setCanViewResults] = useState<boolean | null>(null);
 
   const { poll, loading: resultsLoading } = usePollResults(pollId);
+  const { checkCanViewResults } = usePollMutations();
+  const { hasPermission: hasManagePolls } = useHasGuildPermission(guildId, 'manage_polls');
 
   const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
 
@@ -51,23 +56,38 @@ const GuildPollResultsPage = () => {
         return;
       }
 
+      setGuildId(matchedGuild.id);
+
       // Check GM status
       const { data: gmCheck } = await supabase.rpc('is_guild_gm', {
         p_guild_id: matchedGuild.id,
         p_user_id: user.id,
       });
 
-      if (!gmCheck) {
-        navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}`);
-        return;
-      }
-
-      setIsGM(true);
+      setIsGM(gmCheck || false);
       setLoading(false);
     };
 
     fetchData();
   }, [user, regionSlug, serverSlug, guildSlug, pollId, navigate]);
+
+  // Check results access permission
+  useEffect(() => {
+    const checkAccess = async () => {
+      if (pollId && !isGM && !hasManagePolls) {
+        const canView = await checkCanViewResults(pollId);
+        setCanViewResults(canView);
+      } else if (isGM || hasManagePolls) {
+        setCanViewResults(true);
+      }
+    };
+    if (!loading) {
+      checkAccess();
+    }
+  }, [pollId, isGM, hasManagePolls, checkCanViewResults, loading]);
+
+  // User can view if GM, has manage_polls permission, or has specific results access
+  const userCanViewResults = isGM || hasManagePolls || canViewResults === true;
 
   if (loading || resultsLoading) {
     return (
@@ -78,8 +98,41 @@ const GuildPollResultsPage = () => {
     );
   }
 
-  if (!poll || !isGM) {
+  if (!poll) {
     return null;
+  }
+
+  // If user doesn't have access to view results, show restricted message
+  if (!userCanViewResults) {
+    return (
+      <div className="flex-1 relative pt-16">
+        <CosmicBackground />
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
+          <div className="flex items-center gap-4 mb-6">
+            <button
+              onClick={handleBack}
+              className="w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5 text-muted-foreground" />
+            </button>
+            <div>
+              <h1 className="text-2xl font-bold">{poll.title}</h1>
+              <p className="text-muted-foreground">
+                {language === 'fr' ? 'Résultats' : 'Results'}
+              </p>
+            </div>
+          </div>
+          <div className="bg-muted/30 border border-muted rounded-lg p-8 text-center">
+            <Lock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">
+              {language === 'fr' 
+                ? 'Les résultats de ce sondage sont réservés à certains membres.' 
+                : 'Results for this poll are restricted to certain members.'}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
 
