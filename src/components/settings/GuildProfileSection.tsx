@@ -444,10 +444,6 @@ export const GuildProfileSection = ({
               <span className="font-medium text-right break-words">{guild.name}</span>
             </div>
             <div className="flex justify-between gap-2 py-2 border-b border-border/50">
-              <span className="text-muted-foreground text-sm">{t.guild.server}</span>
-              <span className="font-medium text-right break-words">{guild.server.charAt(0).toUpperCase() + guild.server.slice(1)}</span>
-            </div>
-            <div className="flex justify-between gap-2 py-2 border-b border-border/50">
               <span className="text-muted-foreground text-sm">{t.battlenet.region}</span>
               <span className="font-medium uppercase text-right">{guild.region}</span>
             </div>
@@ -458,6 +454,10 @@ export const GuildProfileSection = ({
               }`}>
                 {guild.faction === 'horde' ? t.guild.horde : t.guild.alliance}
               </span>
+            </div>
+            <div className="flex justify-between gap-2 py-2 border-b border-border/50">
+              <span className="text-muted-foreground text-sm">{t.guild.server}</span>
+              <span className="font-medium text-right break-words">{guild.server.charAt(0).toUpperCase() + guild.server.slice(1)}</span>
             </div>
           </div>
 
