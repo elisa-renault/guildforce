@@ -444,7 +444,7 @@ const { data: allGuilds } = await supabase
           guild={guild}
           basePath={basePath}
           isGM={isGM}
-          hasActivityPermission={hasActivityPermission}
+          hasSettingsPermission={isGM || hasActivityPermission}
           activeTab="wishes"
         />
       )}
