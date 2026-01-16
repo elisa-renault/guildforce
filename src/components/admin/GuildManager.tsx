@@ -47,7 +47,9 @@ import {
   ExternalLink,
   ChevronLeft,
   ChevronRight,
-  Users
+  Users,
+  RefreshCw,
+  Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { toSlug } from '@/lib/guildSlug';
@@ -82,6 +84,32 @@ export function GuildManager() {
   // Delete dialog state
   const [deletingGuild, setDeletingGuild] = useState<Guild | null>(null);
   const [deleting, setDeleting] = useState(false);
+  
+  // Sync all state
+  const [syncing, setSyncing] = useState(false);
+
+  const handleSyncAll = async () => {
+    setSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('battlenet-auth', {
+        body: { action: 'scheduled-sync' }
+      });
+      
+      if (error) throw error;
+      
+      toast.success(
+        language === 'fr' 
+          ? `Synchronisation terminée : ${data?.usersProcessed || 0} utilisateurs, ${data?.guildsProcessed || 0} guildes` 
+          : `Sync complete: ${data?.usersProcessed || 0} users, ${data?.guildsProcessed || 0} guilds`
+      );
+      fetchGuilds();
+    } catch (error) {
+      console.error('Error syncing all guilds:', error);
+      toast.error(language === 'fr' ? 'Erreur lors de la synchronisation' : 'Error during sync');
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const fetchGuilds = async () => {
     setLoading(true);
@@ -221,15 +249,30 @@ export function GuildManager() {
 
   return (
     <div className="space-y-4">
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder={language === 'fr' ? 'Rechercher une guilde...' : 'Search guilds...'}
-          value={searchQuery}
-          onChange={(e) => handleSearch(e.target.value)}
-          className="pl-10"
-        />
+      {/* Header with Sync button */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder={language === 'fr' ? 'Rechercher une guilde...' : 'Search guilds...'}
+            value={searchQuery}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <Button
+          variant="outline"
+          onClick={handleSyncAll}
+          disabled={syncing}
+          className="gap-2 shrink-0"
+        >
+          {syncing ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4" />
+          )}
+          {language === 'fr' ? 'Sync Battle.net' : 'Sync Battle.net'}
+        </Button>
       </div>
 
       {/* Table */}
