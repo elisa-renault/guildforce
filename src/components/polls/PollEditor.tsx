@@ -574,18 +574,16 @@ export const PollEditor = ({
       </GlowCard>
 
       {/* Results Access Control */}
-      {(members.length > 0 || ranks.length > 0) && (
-        <GlowCard className="p-6">
-          <PollResultsAccessEditor
-            accessRules={resultsAccessRules}
-            members={members}
-            ranks={ranks}
-            onChange={setResultsAccessRules}
-            restrictAccess={restrictResultsAccess}
-            onRestrictAccessChange={setRestrictResultsAccess}
-          />
-        </GlowCard>
-      )}
+      <GlowCard className="p-6">
+        <PollResultsAccessEditor
+          accessRules={resultsAccessRules}
+          members={members}
+          ranks={ranks}
+          onChange={setResultsAccessRules}
+          restrictAccess={restrictResultsAccess}
+          onRestrictAccessChange={setRestrictResultsAccess}
+        />
+      </GlowCard>
 
       {/* Unified Questions & Sections Editor */}
       <GlowCard className={`p-6 ${metadataOnly ? 'opacity-60 pointer-events-none' : ''}`}>
