@@ -109,7 +109,7 @@ const PublicProfile = () => {
                 </AvatarFallback>
               </Avatar>
               
-              <h1 className="text-2xl font-display gradient-text">{profile.username}</h1>
+              <h1 className="text-2xl font-display text-foreground">{profile.username}</h1>
               
               {profile.battletag && (
                 <p className="text-sm text-muted-foreground mt-1">{profile.battletag}</p>
