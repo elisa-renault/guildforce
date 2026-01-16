@@ -12,7 +12,8 @@ import Auth from "./pages/Auth";
 import GuildList from "./pages/GuildList";
 import Wishes from "./pages/Wishes";
 import MemberWishes from "./pages/MemberWishes";
-import Dashboard from "./pages/Dashboard";
+import Overview from "./pages/Overview";
+import RosterWishes from "./pages/RosterWishes";
 import GuildSettings from "./pages/GuildSettings";
 import GuildPolls from "./pages/GuildPolls";
 import GuildPollNew from "./pages/GuildPollNew";
@@ -54,7 +55,9 @@ const App = () => (
                   <Route path="/forum/category/:categorySlug" element={<ForumCategory />} />
                   <Route path="/forum/category/:categorySlug/new" element={<ForumNewTopic />} />
                   <Route path="/forum/topic/:topicId" element={<ForumTopic />} />
-                  <Route path="/guild/:regionSlug/:serverSlug/:guildSlug" element={<Dashboard />} />
+                  {/* Guild routes - new structure */}
+                  <Route path="/guild/:regionSlug/:serverSlug/:guildSlug" element={<Overview />} />
+                  <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/roster" element={<RosterWishes />} />
                   <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/wishes" element={<Wishes />} />
                   <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/settings" element={<GuildSettings />} />
                   <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/member/:memberId" element={<MemberWishes />} />
@@ -63,7 +66,6 @@ const App = () => (
                   <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/polls/:pollId/edit" element={<GuildPollNew />} />
                   <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/poll/:pollId" element={<GuildPollView />} />
                   <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/poll/:pollId/results" element={<GuildPollResults />} />
-                  
                   <Route path="/guild/:regionSlug/:serverSlug/:guildSlug/members" element={<GuildMembers />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
