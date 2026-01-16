@@ -958,24 +958,10 @@ Deno.serve(async (req) => {
 
       for (const guild of (allGuilds || [])) {
         try {
-          // Check if guild was already synced recently (within last hour)
-          const { data: recentCache } = await supabase
-            .from('guild_roster_cache')
-            .select('updated_at')
-            .eq('guild_id', guild.id)
-            .order('updated_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
+          // NOTE: We intentionally do NOT skip recently-synced guilds here.
+          // Reason: faction and roster are source-of-truth from Battle.net and must stay correct.
+          // Skipping could keep wrong faction values around for hours.
 
-          if (recentCache) {
-            const lastUpdate = new Date(recentCache.updated_at);
-            const hourAgo = new Date(Date.now() - 60 * 60 * 1000);
-            if (lastUpdate > hourAgo) {
-              log.debug(`Guild ${sanitizePII(guild.name, 'name')} was synced recently, skipping`);
-              guildsSkipped++;
-              continue;
-            }
-          }
 
           const region = getValidRegion(guild.region);
           
@@ -1442,8 +1428,19 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
         const roster = await rosterResponse.json();
         log.debug(`Roster has ${roster.members?.length || 0} members`);
 
+        // Prefer guild faction coming from the roster payload (more reliable than character data,
+        // especially with modern cross-faction guild setups)
+        const rosterGuildFaction = roster.guild?.faction?.type || guildInfo.faction || 'UNKNOWN';
+
         // Store full roster for this guild (for GMs to see all members)
-        await storeFullRoster(supabase, guildInfo.name, guildInfo.realmSlug, guildInfo.faction, region, roster.members || []);
+        await storeFullRoster(
+          supabase,
+          guildInfo.name,
+          guildInfo.realmSlug,
+          rosterGuildFaction,
+          region,
+          roster.members || []
+        );
 
         for (const charId of guildInfo.characterIds) {
           const insertedChar = insertedChars?.find((ic: any) => ic.id === charId);
@@ -1460,7 +1457,7 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
               guildName: guildInfo.name,
               guildRealm: guildInfo.realmSlug,
               guildRealmSlug: guildInfo.realmSlug,
-              guildFaction: guildInfo.faction,
+              guildFaction: rosterGuildFaction,
               rankIndex: rosterMember.rank ?? 99,
               rankName: rosterMember.rank === 0 ? 'Guild Master' : `Rank ${rosterMember.rank}`,
             });
@@ -1470,7 +1467,7 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
               guildName: guildInfo.name,
               guildRealm: guildInfo.realmSlug,
               guildRealmSlug: guildInfo.realmSlug,
-              guildFaction: guildInfo.faction,
+              guildFaction: rosterGuildFaction,
               rankIndex: 99,
               rankName: 'Unknown',
             });
