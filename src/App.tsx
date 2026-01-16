@@ -45,7 +45,7 @@ const App = () => (
             <Toaster />
             <BrowserRouter>
               <GlobalNav />
-              <div className="flex-1 flex flex-col relative z-10 py-4 md:py-0">
+              <div className="flex-1 flex flex-col relative z-10 pb-4 md:pb-0">
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/auth" element={<Auth />} />
