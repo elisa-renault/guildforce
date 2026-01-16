@@ -38,11 +38,10 @@ const App = () => (
       <AuthProvider>
         <TooltipProvider>
           <div className="dark min-h-screen flex flex-col">
-            <div className="grain-overlay" />
             <Toaster />
             <BrowserRouter>
               <GlobalNav />
-              <div className="flex-1 flex flex-col">
+              <div className="flex-1 flex flex-col relative z-10">
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/auth" element={<Auth />} />
