@@ -11,43 +11,11 @@ interface MyPermissionsCardProps {
   isGM: boolean;
 }
 
-interface PermissionInfo {
-  type: PermissionType;
-  labelFr: string;
-  labelEn: string;
-  descFr: string;
-  descEn: string;
-}
-
-const PERMISSIONS: PermissionInfo[] = [
-  { 
-    type: 'manage_wishes', 
-    labelFr: 'Gérer les vœux', 
-    labelEn: 'Manage Wishes',
-    descFr: 'Approuver ou refuser les vœux des membres',
-    descEn: 'Approve or reject member wishes',
-  },
-  { 
-    type: 'manage_polls', 
-    labelFr: 'Gérer les sondages', 
-    labelEn: 'Manage Polls',
-    descFr: 'Créer, modifier et publier des sondages',
-    descEn: 'Create, edit and publish polls',
-  },
-  { 
-    type: 'manage_rosters', 
-    labelFr: 'Gérer les rosters', 
-    labelEn: 'Manage Rosters',
-    descFr: 'Créer et configurer les rosters',
-    descEn: 'Create and configure rosters',
-  },
-  { 
-    type: 'view_activity_log', 
-    labelFr: 'Voir le journal', 
-    labelEn: 'View Activity Log',
-    descFr: 'Accéder à l\'historique d\'activité de la guilde',
-    descEn: 'Access the guild activity history',
-  },
+const PERMISSION_TYPES: PermissionType[] = [
+  'manage_wishes',
+  'manage_polls',
+  'manage_rosters',
+  'view_activity_log',
 ];
 
 export const MyPermissionsCard = ({ guildId, isGM }: MyPermissionsCardProps) => {
@@ -56,7 +24,26 @@ export const MyPermissionsCard = ({ guildId, isGM }: MyPermissionsCardProps) => 
   const [myPermissions, setMyPermissions] = useState<PermissionType[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const isFrench = t.common.loading === 'Chargement...';
+  // Helper to get permission label and description from translations
+  const getPermissionLabel = (type: PermissionType): string => {
+    const keyMap: Record<PermissionType, keyof typeof t.permissions> = {
+      manage_wishes: 'manageWishes',
+      manage_polls: 'managePolls',
+      manage_rosters: 'manageRosters',
+      view_activity_log: 'viewActivityLog',
+    };
+    return (t.permissions as any)[keyMap[type]] || type;
+  };
+
+  const getPermissionDesc = (type: PermissionType): string => {
+    const keyMap: Record<PermissionType, keyof typeof t.permissions> = {
+      manage_wishes: 'manageWishesDesc',
+      manage_polls: 'managePollsDesc',
+      manage_rosters: 'manageRostersDesc',
+      view_activity_log: 'viewActivityLogDesc',
+    };
+    return (t.permissions as any)[keyMap[type]] || '';
+  };
 
   useEffect(() => {
     const loadMyPermissions = async () => {
@@ -67,13 +54,13 @@ export const MyPermissionsCard = ({ guildId, isGM }: MyPermissionsCardProps) => 
 
       try {
         const permissionChecks = await Promise.all(
-          PERMISSIONS.map(async (perm) => {
+          PERMISSION_TYPES.map(async (type) => {
             const { data } = await supabase.rpc('has_guild_permission', {
               p_guild_id: guildId,
               p_user_id: user.id,
-              p_permission: perm.type,
+              p_permission: type,
             });
-            return { type: perm.type, hasPermission: !!data };
+            return { type, hasPermission: !!data };
           })
         );
 
@@ -107,7 +94,7 @@ export const MyPermissionsCard = ({ guildId, isGM }: MyPermissionsCardProps) => 
         <div className="flex items-center gap-2 mb-4">
           <Key className="h-5 w-5 text-primary" />
           <h3 className="font-display text-lg">
-            {isFrench ? 'Mes permissions' : 'My permissions'}
+            {t.permissions.myPermissions}
           </h3>
         </div>
         
@@ -115,12 +102,10 @@ export const MyPermissionsCard = ({ guildId, isGM }: MyPermissionsCardProps) => 
           <Shield className="h-5 w-5 text-primary" />
           <div>
             <p className="font-medium text-primary">
-              {isFrench ? 'Maître de Guilde' : 'Guild Master'}
+              {t.permissions.guildMaster}
             </p>
             <p className="text-sm text-muted-foreground">
-              {isFrench
-                ? 'Vous avez accès à toutes les fonctionnalités de gestion de la guilde.'
-                : 'You have access to all guild management features.'}
+              {t.permissions.guildMasterDesc}
             </p>
           </div>
         </div>
@@ -135,14 +120,12 @@ export const MyPermissionsCard = ({ guildId, isGM }: MyPermissionsCardProps) => 
         <div className="flex items-center gap-2 mb-4">
           <Key className="h-5 w-5 text-primary" />
           <h3 className="font-display text-lg">
-            {isFrench ? 'Mes permissions' : 'My permissions'}
+            {t.permissions.myPermissions}
           </h3>
         </div>
         
         <p className="text-muted-foreground">
-          {isFrench
-            ? 'Vous n\'avez pas de permissions spécifiques accordées par le GM.'
-            : 'You don\'t have any specific permissions granted by the GM.'}
+          {t.permissions.noPermissions}
         </p>
       </div>
     );
@@ -153,7 +136,7 @@ export const MyPermissionsCard = ({ guildId, isGM }: MyPermissionsCardProps) => 
       <div className="flex items-center gap-2 mb-4">
         <Key className="h-5 w-5 text-primary" />
         <h3 className="font-display text-lg">
-          {isFrench ? 'Mes permissions' : 'My permissions'}
+          {t.permissions.myPermissions}
         </h3>
         <Badge variant="secondary" className="text-xs">
           {myPermissions.length}
@@ -161,28 +144,26 @@ export const MyPermissionsCard = ({ guildId, isGM }: MyPermissionsCardProps) => 
       </div>
       
       <p className="text-sm text-muted-foreground mb-4">
-        {isFrench
-          ? 'Ces permissions vous ont été accordées par le GM de la guilde.'
-          : 'These permissions were granted to you by the guild GM.'}
+        {t.permissions.grantedByGm}
       </p>
       
       <div className="space-y-3">
-        {PERMISSIONS.map((perm) => {
-          const hasIt = myPermissions.includes(perm.type);
+        {PERMISSION_TYPES.map((type) => {
+          const hasIt = myPermissions.includes(type);
           if (!hasIt) return null;
           
           return (
             <div
-              key={perm.type}
+              key={type}
               className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20"
             >
               <CheckCircle className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
               <div>
                 <p className="font-medium text-foreground">
-                  {isFrench ? perm.labelFr : perm.labelEn}
+                  {getPermissionLabel(type)}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {isFrench ? perm.descFr : perm.descEn}
+                  {getPermissionDesc(type)}
                 </p>
               </div>
             </div>
