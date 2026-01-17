@@ -104,7 +104,7 @@ const Index = () => {
             )}
             <CosmicButton
               size="lg"
-              className="h-14"
+              className="h-auto md:h-14"
               onClick={() => user ? navigate('/guilds') : handleBattleNetLogin()}
               loading={bnetLoading}
               icon={user ? <Shield className="h-5 w-5" strokeWidth={1.5} /> : <BattleNetIcon className="h-7 w-7" />}
