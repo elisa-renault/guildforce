@@ -27,7 +27,6 @@ import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { getRecentLogs, getErrorCount, getBrowserInfo, sanitizeUrl } from '@/lib/logCapture';
 
@@ -101,9 +100,25 @@ const BugReportButton = React.forwardRef<HTMLButtonElement, React.ComponentProps
           })) : { anonymous: true }
         };
 
-        const { error } = await supabase.from('bug_reports').insert([reportData]);
+        // Call edge function with rate limiting
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const response = await fetch(`${supabaseUrl}/functions/v1/submit-bug-report`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(reportData),
+        });
 
-        if (error) throw error;
+        if (response.status === 429) {
+          const data = await response.json();
+          toast.error(t.bugReport.rateLimitError || 'Too many reports submitted. Please try again later.');
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Failed to submit bug report');
+        }
 
         toast.success(t.bugReport.success);
         resetForm();
