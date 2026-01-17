@@ -1265,6 +1265,48 @@ export type Database = {
           },
         ]
       }
+      patch_notes: {
+        Row: {
+          content_en: string
+          content_fr: string
+          created_at: string
+          created_by: string | null
+          id: string
+          published_at: string | null
+          status: string
+          title_en: string
+          title_fr: string
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          content_en?: string
+          content_fr?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          published_at?: string | null
+          status?: string
+          title_en: string
+          title_fr: string
+          updated_at?: string
+          version: string
+        }
+        Update: {
+          content_en?: string
+          content_fr?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          published_at?: string | null
+          status?: string
+          title_en?: string
+          title_fr?: string
+          updated_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
       poll_results_access_rules: {
         Row: {
           access_type: string
