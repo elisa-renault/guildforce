@@ -279,6 +279,7 @@ export interface Translations {
     withoutComment: string;
     allComments: string;
     wishesMin: string;
+    wishesCount: string;
   };
   // Profile
   profile: {
@@ -939,6 +940,7 @@ export const translations: Record<Language, Translations> = {
       withoutComment: 'Without comment',
       allComments: 'All comments',
       wishesMin: '≥{{count}} wishes',
+      wishesCount: 'Wishes',
     },
     profile: {
       title: 'My Profile',
@@ -1641,6 +1643,7 @@ export const translations: Record<Language, Translations> = {
       withoutComment: 'Sans commentaire',
       allComments: 'Tous commentaires',
       wishesMin: '≥{{count}} vœux',
+      wishesCount: 'Vœux',
     },
     profile: {
       title: 'Mon profil',
