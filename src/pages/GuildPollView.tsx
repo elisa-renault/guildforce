@@ -145,24 +145,27 @@ const GuildPollView = () => {
 
       <div className="container mx-auto px-4 py-8 max-w-3xl relative z-10">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <button
-            onClick={handleBack}
-            className="w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5 text-muted-foreground" />
-          </button>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold">{poll.title}</h1>
-            {poll.description && (
-              <p className="text-muted-foreground mt-1">{poll.description}</p>
-            )}
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex items-start gap-4">
+            <button
+              onClick={handleBack}
+              className="w-10 h-10 shrink-0 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5 text-muted-foreground" />
+            </button>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-bold">{poll.title}</h1>
+              {poll.description && (
+                <p className="text-muted-foreground mt-1">{poll.description}</p>
+              )}
+            </div>
           </div>
           {/* Show/Hide results button - for GM or users with permission who already responded */}
           {(isGM || (userCanViewResults && hasResponded)) && !isClosed && (
             <Button
               variant="outline"
               size="sm"
+              className="self-start ml-14 md:ml-0 md:self-end"
               onClick={() => setShowResults(!showResults)}
             >
               <BarChart3 className="h-4 w-4 mr-2" />
