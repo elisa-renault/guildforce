@@ -68,11 +68,11 @@ const Index = () => {
   };
 
   return (
-    <div className="flex-1 relative pt-16 md:pt-16 flex flex-col min-h-[calc(100dvh-64px)]">
+    <div className="flex-1 relative pt-16 flex flex-col">
       <CosmicBackground />
 
       {/* Hero */}
-      <main className="flex-1 flex items-center justify-center relative z-10">
+      <main className="flex-1 flex items-center justify-center relative z-10 min-h-0">
         <div className="text-center max-w-4xl mx-auto px-6">
           {/* Title with gradient */}
           <h1 className="font-display text-5xl md:text-7xl mb-8 leading-tight">
