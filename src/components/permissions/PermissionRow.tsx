@@ -38,10 +38,7 @@ const MiniRankSlider = ({
   const { t } = useLanguage();
   const isFrench = t.common.loading === 'Chargement...';
   
-  const allRankIndices: number[] = [];
-  for (let i = 0; i <= maxRank; i++) {
-    allRankIndices.push(i);
-  }
+  const allRankIndices = Array.from({ length: maxRank + 1 }, (_, i) => i);
 
   const getRankName = (index: number) => {
     const rank = sortedRanks.find(r => r.rank_index === index);

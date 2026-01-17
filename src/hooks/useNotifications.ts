@@ -76,7 +76,7 @@ export function useNotifications() {
       setNotifications(enriched);
       setUnreadCount(enriched.filter((n) => !n.is_read).length);
     } catch (err) {
-      console.error('Error fetching notifications:', err);
+      // Notification fetch error handled silently
     } finally {
       setLoading(false);
     }

@@ -51,7 +51,6 @@ export const LegalPagesEditor = () => {
       .order('slug');
 
     if (error) {
-      console.error('Error fetching legal pages:', error);
       toast.error(t.errors.generic);
       return;
     }
@@ -85,7 +84,6 @@ export const LegalPagesEditor = () => {
     setSaving(null);
 
     if (error) {
-      console.error('Error saving legal page:', error);
       toast.error(t.errors.generic, {
         style: { background: 'hsl(var(--card))', borderColor: 'hsl(var(--destructive) / 0.3)' },
       });

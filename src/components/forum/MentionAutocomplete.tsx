@@ -46,7 +46,7 @@ export const MentionAutocomplete = ({
         setUsers(data || []);
         setSelectedIndex(0);
       } catch (error) {
-        console.error('Error searching users:', error);
+        // Search error handled silently
       } finally {
         setLoading(false);
       }

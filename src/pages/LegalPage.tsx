@@ -46,7 +46,6 @@ const LegalPage = () => {
         .single();
 
       if (error) {
-        console.error('Error fetching legal page:', error);
         navigate('/');
         return;
       }
