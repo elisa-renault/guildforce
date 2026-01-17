@@ -122,7 +122,7 @@ export const MobileRosterCard = ({
               onStartEditing(member);
             }}
             icon={<Pencil className="h-3.5 w-3.5" strokeWidth={1.5} />}
-            className="h-7 px-2"
+            className="h-7 w-7 p-0"
           >
             <span className="sr-only">{t.common.edit}</span>
           </CosmicButton>
