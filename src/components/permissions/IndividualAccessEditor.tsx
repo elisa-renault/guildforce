@@ -27,7 +27,6 @@ export const IndividualAccessEditor = ({
   onChange,
 }: IndividualAccessEditorProps) => {
   const { t } = useLanguage();
-  const isFrench = t.common.loading === 'Chargement...';
   const [showAddUser, setShowAddUser] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
 
@@ -101,14 +100,10 @@ export const IndividualAccessEditor = ({
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground">
-              {isFrench 
-                ? 'Aucun accès individuel défini' 
-                : 'No individual access defined'}
+              {t.permissions.noIndividualAccess}
             </p>
             <p className="text-xs text-muted-foreground/70">
-              {isFrench 
-                ? 'Ajoutez des utilisateurs spécifiques pour leur donner des permissions supplémentaires' 
-                : 'Add specific users to give them additional permissions'}
+              {t.permissions.addSpecificUsers}
             </p>
           </div>
           <Button
@@ -119,7 +114,7 @@ export const IndividualAccessEditor = ({
             disabled={availableUsers.length === 0}
           >
             <Plus className="h-3.5 w-3.5" />
-            {isFrench ? 'Ajouter' : 'Add'}
+            {t.common.add}
           </Button>
         </div>
       </div>
@@ -132,7 +127,7 @@ export const IndividualAccessEditor = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
           <User className="h-3 w-3" />
-          <span>{isFrench ? 'Accès individuels' : 'Individual access'}</span>
+          <span>{t.permissions.individualAccess}</span>
           {usersWithPermissions.length > 0 && (
             <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">
               {usersWithPermissions.length}
@@ -148,7 +143,7 @@ export const IndividualAccessEditor = ({
             disabled={availableUsers.length === 0}
           >
             <Plus className="h-3 w-3" />
-            {isFrench ? 'Ajouter' : 'Add'}
+            {t.common.add}
           </Button>
         )}
       </div>
@@ -158,7 +153,7 @@ export const IndividualAccessEditor = ({
         <div className="flex items-center gap-2 p-2 border border-border/50 rounded-md bg-muted/20">
           <Select value={selectedUserId} onValueChange={setSelectedUserId}>
             <SelectTrigger className="flex-1 h-8 text-xs bg-card border-border">
-              <SelectValue placeholder={isFrench ? 'Sélectionner un membre...' : 'Select a member...'} />
+              <SelectValue placeholder={t.permissions.selectMember} />
             </SelectTrigger>
             <SelectContent className="bg-card border-border">
               {availableUsers.map(member => (
