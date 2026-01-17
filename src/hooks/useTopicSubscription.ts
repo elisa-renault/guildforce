@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import log from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -33,7 +34,7 @@ export function useTopicSubscription(topicId: string | null) {
       if (error) throw error;
       setSubscription(data);
     } catch (err) {
-      console.error('Error fetching subscription:', err);
+      log.error('Error fetching subscription:', err);
     } finally {
       setLoading(false);
     }
@@ -63,7 +64,7 @@ export function useTopicSubscription(topicId: string | null) {
       setSubscription(data);
       return data;
     } catch (err) {
-      console.error('Error subscribing:', err);
+      log.error('Error subscribing:', err);
       throw err;
     }
   }, [user, topicId]);
@@ -81,7 +82,7 @@ export function useTopicSubscription(topicId: string | null) {
       if (error) throw error;
       setSubscription(null);
     } catch (err) {
-      console.error('Error unsubscribing:', err);
+      log.error('Error unsubscribing:', err);
       throw err;
     }
   }, [user, topicId, subscription]);

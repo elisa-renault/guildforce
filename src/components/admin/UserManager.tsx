@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import log from '@/lib/logger';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -102,7 +103,7 @@ export function UserManager() {
         setUsers([]);
       }
     } catch (error) {
-      console.error('Error fetching users:', error);
+      log.error('Error fetching users:', error);
       toast.error(language === 'fr' ? 'Erreur lors du chargement des utilisateurs' : 'Error loading users');
     } finally {
       setLoading(false);
@@ -174,7 +175,7 @@ export function UserManager() {
         );
       }
     } catch (error) {
-      console.error('Error toggling role:', error);
+      log.error('Error toggling role:', error);
       toast.error(language === 'fr' ? 'Erreur lors de la modification du rôle' : 'Error updating role');
     } finally {
       setTogglingRole(null);

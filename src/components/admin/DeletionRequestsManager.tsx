@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import log from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
@@ -54,7 +55,7 @@ export function DeletionRequestsManager() {
 
       setRequests(enrichedRequests);
     } catch (error) {
-      console.error('Error fetching deletion requests:', error);
+      log.error('Error fetching deletion requests:', error);
       toast({
         title: language === 'fr' ? 'Erreur' : 'Error',
         description: language === 'fr' ? 'Impossible de charger les demandes' : 'Failed to load requests',
@@ -94,7 +95,7 @@ export function DeletionRequestsManager() {
 
       fetchRequests();
     } catch (error) {
-      console.error('Error processing request:', error);
+      log.error('Error processing request:', error);
       toast({
         title: language === 'fr' ? 'Erreur' : 'Error',
         variant: 'destructive'

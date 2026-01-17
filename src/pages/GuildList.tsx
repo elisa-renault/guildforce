@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import log from '@/lib/logger';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -56,7 +57,7 @@ const GuildList = () => {
       .eq('user_id', userId);
 
     if (membershipsError) {
-      console.error('Error fetching guild memberships:', membershipsError);
+      log.error('Error fetching guild memberships:', membershipsError);
       setGuilds([]);
       setLoading(false);
       return;
@@ -84,7 +85,7 @@ const GuildList = () => {
       ]);
 
       if (guildResult.error) {
-        console.error('Error fetching guilds:', guildResult.error);
+        log.error('Error fetching guilds:', guildResult.error);
         setGuilds([]);
         setLoading(false);
         return;
@@ -200,7 +201,7 @@ const GuildList = () => {
         await loadGuilds(user.id);
       }
     } catch (error) {
-      console.error('Error completing Battle.net connection:', error);
+      log.error('Error completing Battle.net connection:', error);
       toast.error(t.errors.generic);
     } finally {
       setIsConnecting(false);
@@ -230,7 +231,7 @@ const GuildList = () => {
 
       window.location.href = data.authUrl;
     } catch (error) {
-      console.error('Error initiating Battle.net connection:', error);
+      log.error('Error initiating Battle.net connection:', error);
       toast.error(t.errors.generic);
       setIsConnecting(false);
     }
