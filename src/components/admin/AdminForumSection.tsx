@@ -5,29 +5,29 @@ import { Button } from '@/components/ui/button';
 import { ExternalLink, MessageSquare, Shield, AlertTriangle, UserX } from 'lucide-react';
 
 export const AdminForumSection = () => {
-  const { language } = useLanguage();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const sections = [
     {
       icon: MessageSquare,
-      title: language === 'fr' ? 'Catégories' : 'Categories',
-      description: language === 'fr' ? 'Gérer les catégories du forum' : 'Manage forum categories',
+      title: t.admin.categories,
+      description: t.admin.stats.forumAdminDesc,
     },
     {
       icon: Shield,
-      title: language === 'fr' ? 'Modérateurs' : 'Moderators',
-      description: language === 'fr' ? 'Attribuer les droits de modération' : 'Assign moderation rights',
+      title: t.admin.moderators,
+      description: t.admin.stats.forumAdminDesc,
     },
     {
       icon: AlertTriangle,
-      title: language === 'fr' ? 'Signalements' : 'Reports',
-      description: language === 'fr' ? 'Traiter les signalements de contenu' : 'Handle content reports',
+      title: t.admin.reports,
+      description: t.admin.stats.forumAdminDesc,
     },
     {
       icon: UserX,
-      title: language === 'fr' ? 'Sanctions' : 'Sanctions',
-      description: language === 'fr' ? 'Gérer les timeouts et bannissements' : 'Manage timeouts and bans',
+      title: t.admin.sanctions,
+      description: t.admin.stats.forumAdminDesc,
     },
   ];
 
@@ -37,16 +37,14 @@ export const AdminForumSection = () => {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-lg font-semibold text-foreground">
-              {language === 'fr' ? 'Administration du Forum' : 'Forum Administration'}
+              {t.admin.forumAdmin}
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
-              {language === 'fr'
-                ? 'Accédez à la page d\'administration complète du forum'
-                : 'Access the full forum administration page'}
+              {t.admin.stats.forumAdminDesc}
             </p>
           </div>
           <Button onClick={() => navigate('/forum/admin')} className="gap-2">
-            {language === 'fr' ? 'Ouvrir' : 'Open'}
+            {t.common.loading === 'Chargement...' ? 'Ouvrir' : 'Open'}
             <ExternalLink className="h-4 w-4" />
           </Button>
         </div>

@@ -125,7 +125,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
                 className="flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left hover:bg-primary/10 text-muted-foreground"
               >
                 <X className="h-3.5 w-3.5 flex-shrink-0" />
-                <span>{language === 'fr' ? 'Effacer' : 'Clear'}</span>
+                <span>{t.dashboard.clear}</span>
               </button>
             )}
             {(Object.keys(roleConfig) as Role[]).map((role) => {
@@ -179,7 +179,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
                   ))
                 ) : (
                   <span>
-                    {selectedClasses.length} {language === 'fr' ? 'classes' : 'classes'}
+                    {selectedClasses.length} {t.dashboard.classesCount}
                   </span>
                 )}
               </span>
@@ -197,7 +197,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
                 className="flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left hover:bg-primary/10 text-muted-foreground"
               >
                 <X className="h-3.5 w-3.5 flex-shrink-0" />
-                <span>{language === 'fr' ? 'Effacer' : 'Clear'}</span>
+                <span>{t.dashboard.clear}</span>
               </button>
             )}
             {wowClasses.map((cls) => {
@@ -249,7 +249,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
                 })}
               </span>
             ) : (
-              <span>{language === 'fr' ? 'Validation' : 'Validation'}</span>
+              <span>{t.dashboard.validation}</span>
             )}
             <ChevronDown className="h-3.5 w-3.5 opacity-50 flex-shrink-0" />
           </Button>
@@ -262,7 +262,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
                 className="flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left hover:bg-primary/10 text-muted-foreground"
               >
                 <X className="h-3.5 w-3.5 flex-shrink-0" />
-                <span>{language === 'fr' ? 'Effacer' : 'Clear'}</span>
+                <span>{t.dashboard.clear}</span>
               </button>
             )}
             {(Object.keys(validationConfig) as ValidationStatus[]).map((status) => {
