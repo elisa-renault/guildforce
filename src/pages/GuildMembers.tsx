@@ -23,7 +23,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import { Crown, Shield, Search, Users, CheckCircle2, XCircle, RefreshCw, ChevronDown, ChevronLeft, ChevronRight, Check, X } from 'lucide-react';
+import { Crown, Shield, Search, Users, CheckCircle2, XCircle, RefreshCw, ChevronDown, ChevronLeft, ChevronRight, Check, X, Star } from 'lucide-react';
 import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
 import { wowClasses } from '@/data/wowClasses';
 import { BATTLENET_CLASS_MAP } from '@/data/battlenetClasses';
@@ -40,6 +40,7 @@ interface RosterMember {
   is_guild_master: boolean | null;
   matched_user_id: string | null;
   matched_character_id: string | null;
+  is_main_character?: boolean;
   profile?: {
     id: string;
     username: string;
@@ -72,6 +73,7 @@ const GuildMembers = () => {
   const [classFilters, setClassFilters] = useState<string[]>([]);
   const [rankFilters, setRankFilters] = useState<number[]>([]);
   const [guildforceFilter, setGuildforceFilter] = useState<'all' | 'guildforce' | 'not-guildforce'>('all');
+  const [mainFilter, setMainFilter] = useState<'all' | 'main-only' | 'alts-only'>('all');
   const [hasRosterCache, setHasRosterCache] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [lastSyncDate, setLastSyncDate] = useState<string | null>(null);
@@ -80,6 +82,7 @@ const GuildMembers = () => {
   const [classOpen, setClassOpen] = useState(false);
   const [rankOpen, setRankOpen] = useState(false);
   const [guildforceOpen, setGuildforceOpen] = useState(false);
+  const [mainOpen, setMainOpen] = useState(false);
 
   const { hasPermission: hasActivityPermission } = useHasGuildPermission(guild?.id || null, 'view_activity_log');
 
@@ -198,6 +201,22 @@ const GuildMembers = () => {
             });
           }
 
+          // Get main character status for matched characters
+          const matchedCharIds = rosterCache
+            .filter(m => m.matched_character_id)
+            .map(m => m.matched_character_id as string);
+
+          const mainCharIds = new Set<string>();
+          if (matchedCharIds.length > 0) {
+            const { data: mainChars } = await supabase
+              .from('wow_characters')
+              .select('id')
+              .in('id', matchedCharIds)
+              .eq('is_main', true);
+            
+            mainChars?.forEach(c => mainCharIds.add(c.id));
+          }
+
           // Build member list from cache
           const memberList: RosterMember[] = rosterCache.map(m => ({
             id: m.id,
@@ -211,6 +230,7 @@ const GuildMembers = () => {
             is_guild_master: m.is_guild_master,
             matched_user_id: m.matched_user_id,
             matched_character_id: m.matched_character_id,
+            is_main_character: m.matched_character_id ? mainCharIds.has(m.matched_character_id) : false,
             profile: m.matched_user_id ? profilesMap[m.matched_user_id] || null : null,
           }));
 
@@ -324,9 +344,17 @@ const GuildMembers = () => {
         return false;
       }
 
+      // Main/Alt filter
+      if (mainFilter === 'main-only' && !member.is_main_character) {
+        return false;
+      }
+      if (mainFilter === 'alts-only' && member.is_main_character) {
+        return false;
+      }
+
       return true;
     });
-  }, [members, searchQuery, classFilters, rankFilters, guildforceFilter]);
+  }, [members, searchQuery, classFilters, rankFilters, guildforceFilter, mainFilter]);
 
   // Pagination
   const totalPages = Math.ceil(filteredMembers.length / ITEMS_PER_PAGE);
@@ -338,7 +366,7 @@ const GuildMembers = () => {
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, guildforceFilter]);
+  }, [searchQuery, guildforceFilter, mainFilter]);
 
   const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
 
@@ -351,6 +379,7 @@ const GuildMembers = () => {
   const hasClassFilters = classFilters.length > 0;
   const hasRankFilters = rankFilters.length > 0;
   const hasGuildforceFilter = guildforceFilter !== 'all';
+  const hasMainFilter = mainFilter !== 'all';
   const selectedClasses = wowClasses.filter(c => classFilters.includes(c.id));
 
   if (loading) {
@@ -642,6 +671,68 @@ const GuildMembers = () => {
                 </div>
               </PopoverContent>
             </Popover>
+
+            {/* Main/Alt Filter */}
+            <Popover open={mainOpen} onOpenChange={setMainOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    "h-9 md:h-8 min-w-[100px] md:min-w-[140px] justify-between gap-2 text-sm flex-shrink-0 whitespace-nowrap !bg-input/60 backdrop-blur-sm !border-border/50 hover:!bg-input/80 hover:!text-foreground",
+                    hasMainFilter && "!border-border/70"
+                  )}
+                >
+                  {mainFilter === 'main-only' && (
+                    <span className="flex items-center gap-1.5 text-amber-400">
+                      <Star className="h-4 w-4 fill-amber-400" />
+                      <span>{language === 'fr' ? 'Mains' : 'Mains'}</span>
+                    </span>
+                  )}
+                  {mainFilter === 'alts-only' && (
+                    <span className="text-muted-foreground">{language === 'fr' ? 'Alts' : 'Alts'}</span>
+                  )}
+                  {mainFilter === 'all' && (
+                    <span className="text-foreground/70">Main/Alt</span>
+                  )}
+                  <ChevronDown className="h-3.5 w-3.5 opacity-50 flex-shrink-0" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-48 p-1.5 bg-card border-border z-50" align="start">
+                <div className="flex flex-col gap-0.5">
+                  {hasMainFilter && (
+                    <button
+                      onClick={() => { setMainFilter('all'); setCurrentPage(1); }}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left hover:bg-primary/10 text-muted-foreground"
+                    >
+                      <X className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span>{language === 'fr' ? 'Effacer' : 'Clear'}</span>
+                    </button>
+                  )}
+                  <button
+                    onClick={() => { setMainFilter('main-only'); setMainOpen(false); setCurrentPage(1); }}
+                    className={cn(
+                      "flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left",
+                      mainFilter === 'main-only' ? "bg-primary/20" : "hover:bg-primary/10"
+                    )}
+                  >
+                    {mainFilter === 'main-only' && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
+                    <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
+                    <span className="text-amber-400">{language === 'fr' ? 'Mains uniquement' : 'Mains only'}</span>
+                  </button>
+                  <button
+                    onClick={() => { setMainFilter('alts-only'); setMainOpen(false); setCurrentPage(1); }}
+                    className={cn(
+                      "flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left",
+                      mainFilter === 'alts-only' ? "bg-primary/20" : "hover:bg-primary/10"
+                    )}
+                  >
+                    {mainFilter === 'alts-only' && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
+                    <span>{language === 'fr' ? 'Alts uniquement' : 'Alts only'}</span>
+                  </button>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
 
@@ -711,6 +802,9 @@ const GuildMembers = () => {
                         >
                           {member.character_name}
                         </span>
+                        {member.is_main_character && (
+                          <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
+                        )}
                         {member.character_level > 0 && (
                           <span className="text-xs text-muted-foreground">
                             Lv.{member.character_level}
