@@ -160,7 +160,7 @@ export const RosterTable = ({
       return (
         <div className="flex flex-col gap-1.5">
           <div className="h-7 w-full rounded-md border border-dashed border-muted-foreground/20 bg-transparent flex items-center justify-center">
-            <span className="text-[10px] text-muted-foreground/30">{language === 'fr' ? 'Classe' : 'Class'}</span>
+            <span className="text-[10px] text-muted-foreground/30">{t.wishes.selectClass}</span>
           </div>
           <div className="h-6 w-full rounded-md border border-dashed border-muted-foreground/20 bg-transparent flex items-center justify-center gap-1">
             <Shield className="h-3 w-3 text-muted-foreground/20" />
@@ -176,7 +176,7 @@ export const RosterTable = ({
       return (
         <div className="flex flex-col gap-1.5">
           <div className="h-7 w-full rounded-md border border-dashed border-muted-foreground/20 bg-transparent flex items-center justify-center">
-            <span className="text-[10px] text-muted-foreground/30">{language === 'fr' ? 'Classe' : 'Class'}</span>
+            <span className="text-[10px] text-muted-foreground/30">{t.wishes.selectClass}</span>
           </div>
           <div className="h-6 w-full rounded-md border border-dashed border-muted-foreground/20 bg-transparent flex items-center justify-center gap-1">
             <Shield className="h-3 w-3 text-muted-foreground/20" />

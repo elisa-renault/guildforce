@@ -33,7 +33,7 @@ interface AdminStats {
 export default function Admin() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { language } = useLanguage();
+  const { t } = useLanguage();
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, isModerator, loading: rolesLoading } = useAdminRoles();
   const [stats, setStats] = useState<AdminStats | null>(null);
@@ -217,16 +217,13 @@ export default function Admin() {
                   <Crown className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h1 className="text-2xl md:text-3xl font-display text-foreground">
-                    {language === 'fr' ? 'Administration' : 'Administration'}
-                  </h1>
-                  <p className="text-sm text-muted-foreground">
-                    {isAdmin
-                      ? (language === 'fr' ? 'Tableau de bord administrateur' : 'Admin dashboard')
-                      : (language === 'fr' ? 'Tableau de bord modérateur' : 'Moderator dashboard')
-                    }
-                  </p>
-                </div>
+                <h1 className="text-2xl md:text-3xl font-display text-foreground">
+                  {t.admin.administration}
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  {isAdmin ? t.admin.adminDashboard : t.admin.moderatorDashboard}
+                </p>
+              </div>
               </div>
             </div>
           </div>
