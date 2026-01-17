@@ -27,7 +27,7 @@ export const PollResponse = ({
   saving = false,
   alreadyResponded = false,
 }: PollResponseProps) => {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const [responses, setResponses] = useState<Record<string, ResponseValue>>(() => {
     const initial: Record<string, ResponseValue> = {};
     questions.forEach((q) => {
@@ -111,9 +111,8 @@ export const PollResponse = ({
       {isAnonymous && (
         <div className="flex items-center gap-2 p-3 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-300 text-sm">
           <Lock className="h-4 w-4" />
-          {language === 'fr' 
-            ? 'Ce sondage est anonyme. Vos réponses ne seront pas associées à votre nom.' 
-            : 'This poll is anonymous. Your responses will not be associated with your name.'}
+          {t.polls?.anonymousDesc}
+        </div>
         </div>
       )}
 
@@ -186,7 +185,7 @@ export const PollResponse = ({
               <Textarea
                 value={(responses[question.id] as { type: 'text'; value: string })?.value || ''}
                 onChange={(e) => updateResponse(question.id, { type: 'text', value: e.target.value })}
-                placeholder={language === 'fr' ? 'Votre réponse...' : 'Your answer...'}
+                placeholder={t.polls?.anonymousDesc ? undefined : (language === 'fr' ? 'Votre réponse...' : 'Your answer...')}
                 className="bg-background resize-none"
                 rows={3}
               />
@@ -282,7 +281,7 @@ export const PollResponse = ({
         {alreadyResponded && (
           <div className="flex items-center gap-2 text-green-400 text-sm sm:mr-auto">
             <CheckCircle className="h-4 w-4 shrink-0" />
-            <span>{language === 'fr' ? 'Vous avez déjà répondu' : 'You already responded'}</span>
+            <span>{t.polls?.alreadyResponded}</span>
           </div>
         )}
         
@@ -297,9 +296,9 @@ export const PollResponse = ({
           ) : (
             <Send className="h-4 w-4 mr-2" />
           )}
-          {alreadyResponded 
-            ? (language === 'fr' ? 'Modifier mes réponses' : 'Update my responses')
-            : (language === 'fr' ? 'Envoyer mes réponses' : 'Submit my responses')}
+          {alreadyResponded ? t.polls?.updateResponses : t.polls?.submitResponses}
+        </Button>
+      </div>
         </Button>
       </div>
     </div>

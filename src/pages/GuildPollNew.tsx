@@ -181,10 +181,8 @@ const GuildPollNew = () => {
         }
       } catch (error: any) {
         toast({
-          title: language === 'fr' ? 'Connexion instable' : 'Unstable connection',
-          description: language === 'fr'
-            ? "Impossible de charger certaines données du sondage. Vérifie ta connexion et réessaie (la page ne te redirige plus automatiquement)."
-            : "Some poll data couldn't be loaded. Check your connection and retry (you won't be redirected automatically).",
+          title: t.polls?.unstableConnection || 'Unstable connection',
+          description: t.polls?.unstableConnectionDesc || "Some poll data couldn't be loaded.",
           variant: 'destructive',
         });
       } finally {
@@ -217,15 +215,15 @@ const GuildPollNew = () => {
           await updatePollQuestions(existingPoll.id, data);
         }
         
-        toast({ title: language === 'fr' ? 'Sondage enregistré' : 'Poll saved' });
+        toast({ title: t.polls?.saved || 'Poll saved' });
       } else {
         const newPollId = await createPoll(guildId, data);
         if (newPollId && accessRules) await saveResultsAccessRules(newPollId, accessRules);
-        toast({ title: language === 'fr' ? 'Brouillon enregistré' : 'Draft saved' });
+        toast({ title: t.polls?.draftSaved || 'Draft saved' });
       }
       navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/polls`);
     } catch (error: any) {
-      toast({ title: language === 'fr' ? 'Erreur' : 'Error', description: error.message, variant: 'destructive' });
+      toast({ title: t.polls?.error || 'Error', description: error.message, variant: 'destructive' });
     }
   };
 
@@ -238,10 +236,10 @@ const GuildPollNew = () => {
       await updatePollQuestions(existingPoll.id, pendingFullEditData.data);
       if (pendingFullEditData.rules) await saveResultsAccessRules(existingPoll.id, pendingFullEditData.rules);
       
-      toast({ title: language === 'fr' ? 'Sondage mis à jour' : 'Poll updated' });
+      toast({ title: t.polls?.updated || 'Poll updated' });
       navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/polls`);
     } catch (error: any) {
-      toast({ title: language === 'fr' ? 'Erreur' : 'Error', description: error.message, variant: 'destructive' });
+      toast({ title: t.polls?.error || 'Error', description: error.message, variant: 'destructive' });
     } finally {
       setConfirmResetDialog(false);
       setPendingFullEditData(null);
@@ -263,11 +261,11 @@ const GuildPollNew = () => {
       if (pollIdToPublish) {
         if (accessRules) await saveResultsAccessRules(pollIdToPublish, accessRules);
         await publishPoll(pollIdToPublish);
-        toast({ title: language === 'fr' ? 'Sondage publié !' : 'Poll published!' });
+        toast({ title: t.polls?.published || 'Poll published!' });
         navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/polls`);
       }
     } catch (error: any) {
-      toast({ title: language === 'fr' ? 'Erreur' : 'Error', description: error.message, variant: 'destructive' });
+      toast({ title: t.polls?.error || 'Error', description: error.message, variant: 'destructive' });
     }
   };
 
@@ -353,7 +351,7 @@ const GuildPollNew = () => {
   const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
   const breadcrumbs = [
     { label: t.guildNav?.polls || 'Polls', href: `${basePath}/polls` },
-    { label: existingPoll ? (language === 'fr' ? 'Modifier' : 'Edit') : (language === 'fr' ? 'Nouveau' : 'New') },
+    { label: existingPoll ? t.common.edit : t.common.new },
   ];
 
   return (
@@ -372,10 +370,7 @@ const GuildPollNew = () => {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <Breadcrumbs items={breadcrumbs} className="mb-4" />
         <h1 className="text-2xl font-bold mb-6">
-          {existingPoll 
-            ? (language === 'fr' ? 'Modifier le sondage' : 'Edit Poll') 
-            : (language === 'fr' ? 'Nouveau sondage' : 'New Poll')
-          }
+          {existingPoll ? t.polls?.edit : t.polls?.new}
         </h1>
 
         {isActivePoll && (
@@ -383,24 +378,14 @@ const GuildPollNew = () => {
             ? 'bg-blue-500/10 border-blue-500/30' 
             : 'bg-yellow-500/10 border-yellow-500/30'}`}
           >
-            <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
               <AlertTriangle className={`h-5 w-5 ${isMetadataOnly ? 'text-blue-400' : 'text-yellow-400'}`} />
               <span className={`font-medium ${isMetadataOnly ? 'text-blue-400' : 'text-yellow-400'}`}>
-                {isMetadataOnly 
-                  ? (language === 'fr' ? 'Mode paramètres uniquement' : 'Settings only mode')
-                  : (language === 'fr' ? 'Mode édition complète' : 'Full edit mode')
-                }
+                {isMetadataOnly ? t.polls?.settingsOnlyMode : t.polls?.fullEditMode}
               </span>
             </div>
             <p className="text-sm text-muted-foreground mt-1 ml-7">
-              {isMetadataOnly 
-                ? (language === 'fr' 
-                  ? 'Les questions ne peuvent pas être modifiées. Les réponses existantes seront conservées.'
-                  : 'Questions cannot be modified. Existing responses will be preserved.')
-                : (language === 'fr'
-                  ? 'Attention : enregistrer réinitialisera toutes les réponses existantes.'
-                  : 'Warning: saving will reset all existing responses.')
-              }
+              {isMetadataOnly ? t.polls?.settingsOnlyDesc : t.polls?.fullEditDesc}
             </p>
           </div>
         )}
@@ -424,23 +409,21 @@ const GuildPollNew = () => {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-destructive" />
-              {language === 'fr' ? 'Confirmer la réinitialisation' : 'Confirm Reset'}
+              {t.polls?.confirmReset}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {language === 'fr'
-                ? 'Cette action supprimera définitivement toutes les réponses existantes. Cette action est irréversible.'
-                : 'This action will permanently delete all existing responses. This action cannot be undone.'}
+              {t.polls?.resetDescription}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>
-              {language === 'fr' ? 'Annuler' : 'Cancel'}
+              {t.common.cancel}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmFullEdit}
               className="bg-destructive hover:bg-destructive/90"
             >
-              {language === 'fr' ? 'Réinitialiser et enregistrer' : 'Reset and Save'}
+              {t.polls?.resetAndSave}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
