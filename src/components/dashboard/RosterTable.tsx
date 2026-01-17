@@ -22,6 +22,7 @@ type SortDirection = 'asc' | 'desc';
 interface RosterTableProps {
   members: MemberWish[];
   currentUserId: string | undefined;
+  selectedRosterId?: string | null;
   expandedRows: Set<string>;
   editingUserId: string | null;
   editWishes: WishData[];
@@ -51,6 +52,7 @@ const roleConfig: Record<string, { icon: typeof Shield; color: string }> = {
 export const RosterTable = ({
   members,
   currentUserId,
+  selectedRosterId,
   editingUserId,
   editWishes,
   editStatus,
@@ -317,11 +319,21 @@ export const RosterTable = ({
       <div className="space-y-2">
         {members.map((member) => {
           const isOwnRow = member.id === currentUserId;
-          
+
           const handleCardClick = () => {
             if (regionSlug && serverSlug && guildSlug) {
               navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/member/${member.id}`);
             }
+          };
+
+          // Mobile doesn't support inline editing in the roster table.
+          // So we redirect the user to the dedicated Wishes editor page.
+          const handleStartEditing = () => {
+            if (!isOwnRow) return;
+            if (!regionSlug || !serverSlug || !guildSlug) return;
+
+            const qp = selectedRosterId ? `?rosterId=${encodeURIComponent(selectedRosterId)}` : '';
+            navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/wishes${qp}`);
           };
 
           return (
@@ -330,7 +342,7 @@ export const RosterTable = ({
               member={member}
               isOwnRow={isOwnRow}
               isGM={isGM}
-              onStartEditing={onStartEditing}
+              onStartEditing={handleStartEditing}
               onValidateWish={onValidateWish}
               onClick={handleCardClick}
             />
@@ -339,7 +351,6 @@ export const RosterTable = ({
       </div>
     );
   }
-
   // Desktop view - table layout
   return (
     <GlowCard className="overflow-hidden" hoverable={false}>
