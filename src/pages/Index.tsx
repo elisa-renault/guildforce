@@ -68,7 +68,7 @@ const Index = () => {
   };
 
   return (
-    <div className="flex-1 relative pt-16 flex flex-col">
+    <div className="flex-1 relative pt-16 md:pt-16 flex flex-col min-h-[calc(100dvh-64px)]">
       <CosmicBackground />
 
       {/* Hero */}
