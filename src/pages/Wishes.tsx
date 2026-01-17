@@ -1,5 +1,5 @@
 import React, { useState, useEffect, forwardRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -154,10 +154,12 @@ SortableWishCard.displayName = 'SortableWishCard';
 
 const Wishes = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { regionSlug, serverSlug, guildSlug } = useParams();
   const { t } = useLanguage();
   const { user } = useAuth();
   const { toast } = useToast();
+  const requestedRosterId = new URLSearchParams(location.search).get('rosterId');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [guildId, setGuildId] = useState<string | null>(null);
@@ -265,10 +267,14 @@ const { data: allGuilds } = await supabase
         }
         setRosters(rostersWithAccess);
         
-        // Select default roster or first accessible
+        // Select roster from querystring (when coming from roster table) or default roster
+        const requested = requestedRosterId
+          ? rostersWithAccess.find(r => r.id === requestedRosterId)
+          : undefined;
         const defaultRoster = rostersWithAccess.find(r => r.is_default) || rostersWithAccess[0];
-        if (defaultRoster) {
-          setSelectedRosterId(defaultRoster.id);
+        const initialRoster = requested || defaultRoster;
+        if (initialRoster) {
+          setSelectedRosterId(initialRoster.id);
         }
       }
 
@@ -293,7 +299,7 @@ const { data: allGuilds } = await supabase
     };
 
     fetchData();
-  }, [user, regionSlug, serverSlug, guildSlug, navigate]);
+  }, [user, regionSlug, serverSlug, guildSlug, navigate, requestedRosterId]);
 
   // Fetch wishes when roster changes
   useEffect(() => {
