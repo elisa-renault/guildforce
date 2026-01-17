@@ -419,6 +419,31 @@ export interface Translations {
     contentPlaceholder: string;
     confirmDeleteTopic: string;
     confirmDeletePost: string;
+    topicNotFound: string;
+    topicLocked: string;
+    replyingTo: string;
+    noReplies: string;
+    previous: string;
+  };
+  // Admin
+  admin: {
+    forumAdmin: string;
+    userManagement: string;
+    userManagementDesc: string;
+    guildManagement: string;
+    guildManagementDesc: string;
+    legalPages: string;
+    legalPagesDesc: string;
+    deletionRequests: string;
+    deletionRequestsDesc: string;
+    bugReports: string;
+    bugReportsDesc: string;
+    quickAccess: string;
+    forumCategories: string;
+    forumModerators: string;
+    noCategories: string;
+    noModerators: string;
+    accessRestricted: string;
   };
   // Notifications
   notifications: {
@@ -905,6 +930,11 @@ export const translations: Record<Language, Translations> = {
       contentPlaceholder: 'Your message content...',
       confirmDeleteTopic: 'Are you sure you want to delete this topic? This action cannot be undone.',
       confirmDeletePost: 'Are you sure you want to delete this post?',
+      topicNotFound: 'Topic not found',
+      topicLocked: 'This topic is locked',
+      replyingTo: 'Replying to',
+      noReplies: 'No replies yet',
+      previous: 'Previous',
     },
     notifications: {
       title: 'Notifications',
@@ -1093,6 +1123,25 @@ export const translations: Record<Language, Translations> = {
         markWontfix: "Mark as won't fix",
         delete: 'Delete',
       },
+    },
+    admin: {
+      forumAdmin: 'Forum Administration',
+      userManagement: 'User Management',
+      userManagementDesc: 'Assign roles (Admin, Moderator) to users',
+      guildManagement: 'Guild Management',
+      guildManagementDesc: 'Search, edit and delete guilds',
+      legalPages: 'Legal Pages',
+      legalPagesDesc: 'Edit legal notice, privacy policy and terms of service content',
+      deletionRequests: 'Deletion Requests',
+      deletionRequestsDesc: 'Process account deletion requests (GDPR)',
+      bugReports: 'Bug Reports',
+      bugReportsDesc: 'View and manage bug reports',
+      quickAccess: 'Quick Access',
+      forumCategories: 'Forum Categories',
+      forumModerators: 'Forum Moderators',
+      noCategories: 'No categories',
+      noModerators: 'No moderators',
+      accessRestricted: 'Admin access only',
     },
   },
   fr: {
@@ -1445,6 +1494,11 @@ export const translations: Record<Language, Translations> = {
       contentPlaceholder: 'Contenu de votre message...',
       confirmDeleteTopic: 'Êtes-vous sûr de vouloir supprimer ce sujet ? Cette action est irréversible.',
       confirmDeletePost: 'Êtes-vous sûr de vouloir supprimer ce message ?',
+      topicNotFound: 'Sujet non trouvé',
+      topicLocked: 'Ce sujet est verrouillé',
+      replyingTo: 'En réponse à',
+      noReplies: 'Aucune réponse pour le moment',
+      previous: 'Précédent',
     },
     notifications: {
       title: 'Notifications',
@@ -1633,6 +1687,25 @@ export const translations: Record<Language, Translations> = {
         markWontfix: 'Marquer ne sera pas corrigé',
         delete: 'Supprimer',
       },
+    },
+    admin: {
+      forumAdmin: 'Administration du Forum',
+      userManagement: 'Gestion des Utilisateurs',
+      userManagementDesc: 'Attribuer des rôles (Admin, Modérateur) aux utilisateurs',
+      guildManagement: 'Gestion des Guildes',
+      guildManagementDesc: 'Rechercher, modifier et supprimer des guildes',
+      legalPages: 'Pages légales',
+      legalPagesDesc: 'Modifier le contenu des mentions légales, confidentialité et CGU',
+      deletionRequests: 'Demandes de suppression',
+      deletionRequestsDesc: 'Traiter les demandes de suppression de compte (RGPD)',
+      bugReports: 'Rapports de bugs',
+      bugReportsDesc: 'Consulter et gérer les signalements de bugs',
+      quickAccess: 'Accès rapide',
+      forumCategories: 'Catégories du forum',
+      forumModerators: 'Modérateurs du forum',
+      noCategories: 'Aucune catégorie',
+      noModerators: 'Aucun modérateur',
+      accessRestricted: 'Accès réservé aux administrateurs',
     },
   },
 };
