@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import log from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -80,7 +81,7 @@ export const useGuildPolls = (guildId: string | undefined) => {
 
       setPolls(pollsWithCounts);
     } catch (error) {
-      console.error('Error fetching polls:', error);
+      log.error('Error fetching polls:', error);
     } finally {
       setLoading(false);
     }
@@ -147,7 +148,7 @@ export const usePoll = (pollId: string | undefined) => {
         questions: questionsWithResponses,
       } as GuildPoll);
     } catch (error) {
-      console.error('Error fetching poll:', error);
+      log.error('Error fetching poll:', error);
     } finally {
       setLoading(false);
     }
@@ -220,7 +221,7 @@ export const usePollResults = (pollId: string | undefined) => {
         response_count: uniqueRespondents.size,
       } as GuildPoll);
     } catch (error) {
-      console.error('Error fetching poll results:', error);
+      log.error('Error fetching poll results:', error);
     } finally {
       setLoading(false);
     }
@@ -324,7 +325,7 @@ export const usePollMutations = () => {
 
       return poll.id;
     } catch (error) {
-      console.error('Error creating poll:', error);
+      log.error('Error creating poll:', error);
       toast.error('Erreur lors de la création du sondage');
       return null;
     } finally {
@@ -351,7 +352,7 @@ export const usePollMutations = () => {
       if (error) throw error;
       return true;
     } catch (error) {
-      console.error('Error updating poll:', error);
+      log.error('Error updating poll:', error);
       toast.error('Erreur lors de la mise à jour du sondage');
       return false;
     } finally {
@@ -371,7 +372,7 @@ export const usePollMutations = () => {
       toast.success('Sondage publié !');
       return true;
     } catch (error) {
-      console.error('Error publishing poll:', error);
+      log.error('Error publishing poll:', error);
       toast.error('Erreur lors de la publication du sondage');
       return false;
     } finally {
@@ -391,7 +392,7 @@ export const usePollMutations = () => {
       toast.success('Sondage clôturé');
       return true;
     } catch (error) {
-      console.error('Error closing poll:', error);
+      log.error('Error closing poll:', error);
       toast.error('Erreur lors de la clôture du sondage');
       return false;
     } finally {
@@ -411,7 +412,7 @@ export const usePollMutations = () => {
       toast.success('Sondage supprimé');
       return true;
     } catch (error) {
-      console.error('Error deleting poll:', error);
+      log.error('Error deleting poll:', error);
       toast.error('Erreur lors de la suppression du sondage');
       return false;
     } finally {
@@ -444,7 +445,7 @@ export const usePollMutations = () => {
       toast.success('Réponses réinitialisées');
       return true;
     } catch (error) {
-      console.error('Error resetting poll responses:', error);
+      log.error('Error resetting poll responses:', error);
       toast.error('Erreur lors de la réinitialisation des réponses');
       return false;
     } finally {
@@ -528,7 +529,7 @@ export const usePollMutations = () => {
       toast.success('Questions mises à jour');
       return true;
     } catch (error) {
-      console.error('Error updating poll questions:', error);
+      log.error('Error updating poll questions:', error);
       toast.error('Erreur lors de la mise à jour des questions');
       return false;
     } finally {
@@ -556,7 +557,7 @@ export const usePollMutations = () => {
       if (error) throw error;
       return true;
     } catch (error) {
-      console.error('Error submitting response:', error);
+      log.error('Error submitting response:', error);
       toast.error('Erreur lors de l\'envoi de la réponse');
       return false;
     }
@@ -585,7 +586,7 @@ export const usePollMutations = () => {
       toast.success('Réponses enregistrées !');
       return true;
     } catch (error) {
-      console.error('Error submitting responses:', error);
+      log.error('Error submitting responses:', error);
       toast.error('Erreur lors de l\'envoi des réponses');
       return false;
     } finally {
@@ -602,7 +603,7 @@ export const usePollMutations = () => {
         .eq('poll_id', pollId);
 
       if (error) {
-        console.error('Error fetching results access rules:', error);
+        log.error('Error fetching results access rules:', error);
         return [];
       }
 
@@ -615,7 +616,7 @@ export const usePollMutations = () => {
         })) || []
       );
     } catch (error) {
-      console.error('Error fetching results access rules:', error);
+      log.error('Error fetching results access rules:', error);
       return [];
     }
   }, []);
@@ -652,7 +653,7 @@ export const usePollMutations = () => {
 
       return true;
     } catch (error) {
-      console.error('Error saving results access rules:', error);
+      log.error('Error saving results access rules:', error);
       toast.error('Erreur lors de la sauvegarde des permissions');
       return false;
     } finally {
@@ -671,13 +672,13 @@ export const usePollMutations = () => {
       });
 
       if (error) {
-        console.error('Error checking results access:', error);
+        log.error('Error checking results access:', error);
         return false;
       }
 
       return data || false;
     } catch (error) {
-      console.error('Error checking results access:', error);
+      log.error('Error checking results access:', error);
       return false;
     }
   }, [user]);

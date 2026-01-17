@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import log from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 
 export type ActionType = 
@@ -148,7 +149,7 @@ export const useActivityLog = ({ guildId, limit = 50, actionTypes, page = 1 }: U
       setLogs(enrichedLogs);
       setHasMore((count || 0) > page * limit);
     } catch (err) {
-      console.error('Error fetching activity logs:', err);
+      log.error('Error fetching activity logs:', err);
       setError('Failed to load activity logs');
     } finally {
       setLoading(false);
