@@ -2,3 +2,6 @@ project_id = "nztgnodoxfxjgbgcysge"
 
 [functions.battlenet-auth]
 verify_jwt = false
+
+[functions.submit-bug-report]
+verify_jwt = false
