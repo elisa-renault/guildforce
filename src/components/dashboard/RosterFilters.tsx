@@ -16,7 +16,7 @@ interface RosterFiltersProps {
 const roleConfig: Record<Role, { icon: typeof Shield; color: string; label: { en: string; fr: string } }> = {
   tank: { icon: Shield, color: 'text-tank', label: { en: 'Tank', fr: 'Tank' } },
   healer: { icon: Heart, color: 'text-healer', label: { en: 'Healer', fr: 'Healer' } },
-  dps: { icon: Swords, color: 'text-dps', label: { en: 'DPS', fr: 'DPS' } },
+  dps: { icon: Sword, color: 'text-dps', label: { en: 'DPS', fr: 'DPS' } },
 };
 
 const validationConfig: Record<ValidationStatus, { icon: typeof Clock; color: string; bgColor: string; label: { en: string; fr: string } }> = {
@@ -31,8 +31,8 @@ const commitmentConfig: Record<CommitmentFilter, { icon: typeof UserCheck; color
   withdrawn: { icon: UserX, color: 'text-destructive', labelKey: 'withdrawn' },
 };
 
-const rangeConfig: Record<RangeFilter, { icon: typeof Sword; color: string }> = {
-  melee: { icon: Sword, color: 'text-orange-400' },
+const rangeConfig: Record<RangeFilter, { icon: typeof Swords; color: string }> = {
+  melee: { icon: Swords, color: 'text-orange-400' },
   ranged: { icon: Crosshair, color: 'text-sky-400' },
 };
 
