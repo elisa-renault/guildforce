@@ -1335,21 +1335,53 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
       return;
     }
 
+    // Get the current main character before deletion to preserve user's choice
+    const { data: currentMain } = await supabase
+      .from('wow_characters')
+      .select('name, realm_slug')
+      .eq('user_id', userId)
+      .eq('is_main', true)
+      .single();
+
+    const previousMainKey = currentMain 
+      ? `${currentMain.name.toLowerCase()}-${currentMain.realm_slug.toLowerCase()}` 
+      : null;
+
+    if (previousMainKey) {
+      log.debug(`Previous main character: ${previousMainKey}`);
+    }
+
     // Delete existing characters and guild memberships
     await supabase.from('wow_guild_memberships').delete().eq('user_id', userId);
     await supabase.from('wow_characters').delete().eq('user_id', userId);
 
-    // Insert characters
-    const insertData = characters.map((char, index) => ({
-      user_id: userId,
-      name: char.name,
-      realm: char.realm,
-      realm_slug: char.realmSlug,
-      class_id: char.classId,
-      level: char.level,
-      guild_name: null,
-      is_main: index === 0,
-    }));
+    // Insert characters - preserve previous main if it exists, otherwise default to highest level
+    const insertData = characters.map((char, index) => {
+      const charKey = `${char.name.toLowerCase()}-${char.realmSlug.toLowerCase()}`;
+      
+      // Preserve previous main if it exists in the new character list
+      const isMain = previousMainKey 
+        ? charKey === previousMainKey 
+        : index === 0;
+      
+      return {
+        user_id: userId,
+        name: char.name,
+        realm: char.realm,
+        realm_slug: char.realmSlug,
+        class_id: char.classId,
+        level: char.level,
+        guild_name: null,
+        is_main: isMain,
+      };
+    });
+
+    // Ensure at least one character is main (fallback if previous main was deleted from Battle.net)
+    const hasMain = insertData.some(c => c.is_main);
+    if (!hasMain && insertData.length > 0) {
+      insertData[0].is_main = true;
+      log.info('Previous main character no longer exists on Battle.net, defaulting to highest level');
+    }
 
     const { data: insertedChars, error: charError } = await supabase
       .from('wow_characters')
