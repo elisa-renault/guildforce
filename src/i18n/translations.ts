@@ -264,6 +264,10 @@ export interface Translations {
     confirmedPlayers: string;
     potentialPlayers: string;
     roleSummary: string;
+    // RosterFilters
+    clear: string;
+    validation: string;
+    classesCount: string;
   };
   // Profile
   profile: {
@@ -428,6 +432,10 @@ export interface Translations {
     viewProfile: string;
     siteAdministrator: string;
     forumModerator: string;
+    // ForumPost
+    edited: string;
+    report: string;
+    quoteFrom: string;
   };
   // Admin
   admin: {
@@ -699,6 +707,10 @@ export interface Translations {
     editStructureDesc: string;
     // RankingInput
     dragToRank: string;
+    // ActivePollWidget
+    activePoll: string;
+    ends: string;
+    view: string;
   };
 }
 
@@ -902,6 +914,9 @@ export const translations: Record<Language, Translations> = {
       confirmedPlayers: 'Confirmed',
       potentialPlayers: 'Potential',
       roleSummary: 'By role',
+      clear: 'Clear',
+      validation: 'Validation',
+      classesCount: 'classes',
     },
     profile: {
       title: 'My Profile',
@@ -1062,6 +1077,9 @@ export const translations: Record<Language, Translations> = {
       viewProfile: 'View profile',
       siteAdministrator: 'Site Administrator',
       forumModerator: 'Forum Moderator',
+      edited: 'edited',
+      report: 'Report',
+      quoteFrom: 'Quote from',
     },
     notifications: {
       title: 'Notifications',
@@ -1223,6 +1241,9 @@ export const translations: Record<Language, Translations> = {
       editStructure: 'Edit Structure',
       editStructureDesc: 'Questions and options. ⚠️ This will reset all existing responses.',
       dragToRank: 'Drag and drop to rank items (1 = best)',
+      activePoll: 'Active Poll',
+      ends: 'Ends',
+      view: 'View',
     },
     bugReport: {
       button: 'Report a bug',
@@ -1584,6 +1605,9 @@ export const translations: Record<Language, Translations> = {
       confirmedPlayers: 'Confirmés',
       potentialPlayers: 'Potentiels',
       roleSummary: 'Par rôle',
+      clear: 'Effacer',
+      validation: 'Validation',
+      classesCount: 'classes',
     },
     profile: {
       title: 'Mon profil',
@@ -1744,6 +1768,9 @@ export const translations: Record<Language, Translations> = {
       viewProfile: 'Voir le profil',
       siteAdministrator: 'Administrateur du site',
       forumModerator: 'Modérateur du forum',
+      edited: 'modifié',
+      report: 'Signaler',
+      quoteFrom: 'Citation de',
     },
     notifications: {
       title: 'Notifications',
@@ -1905,6 +1932,9 @@ export const translations: Record<Language, Translations> = {
       editStructure: 'Modifier la structure',
       editStructureDesc: 'Questions et options. ⚠️ Cela réinitialisera toutes les réponses existantes.',
       dragToRank: 'Glissez-déposez pour classer les éléments (1 = meilleur)',
+      activePoll: 'Sondage en cours',
+      ends: 'Fin',
+      view: 'Voir',
     },
     bugReport: {
       button: 'Signaler un bug',
