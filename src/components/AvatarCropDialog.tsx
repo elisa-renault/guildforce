@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Loader2, RotateCcw, ZoomIn, ZoomOut } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface AvatarCropDialogProps {
   open: boolean;
@@ -47,6 +48,7 @@ export const AvatarCropDialog = ({
   onCropComplete,
   loading = false,
 }: AvatarCropDialogProps) => {
+  const { t } = useLanguage();
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<Crop>();
   const [scale, setScale] = useState(1);
@@ -205,7 +207,7 @@ export const AvatarCropDialog = ({
             className="self-start"
           >
             <RotateCcw className="h-4 w-4 mr-2" />
-            Réinitialiser
+            {t.common.reset}
           </Button>
         </div>
 
@@ -216,7 +218,7 @@ export const AvatarCropDialog = ({
             onClick={() => onOpenChange(false)}
             disabled={loading}
           >
-            Annuler
+            {t.common.cancel}
           </Button>
           <Button
             type="button"
@@ -226,10 +228,10 @@ export const AvatarCropDialog = ({
             {loading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Upload...
+                {t.common.uploading}
               </>
             ) : (
-              'Confirmer'
+              t.common.confirm
             )}
           </Button>
         </DialogFooter>
