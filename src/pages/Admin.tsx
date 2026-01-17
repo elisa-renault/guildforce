@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminRoles } from '@/hooks/useAdmin';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GuildManager } from '@/components/admin/GuildManager';
@@ -40,6 +41,28 @@ export default function Admin() {
     const section = searchParams.get('section') as AdminSection;
     return section || 'dashboard';
   });
+  
+  const isMobile = useIsMobile();
+  const [mobileTabsHeight, setMobileTabsHeight] = useState<number>(48);
+  const mobileTabsRef = useRef<HTMLDivElement>(null);
+
+  // Calculate mobile tabs height for spacer
+  useLayoutEffect(() => {
+    if (!isMobile) return;
+
+    const compute = () => {
+      if (mobileTabsRef.current) {
+        setMobileTabsHeight(mobileTabsRef.current.offsetHeight);
+      }
+    };
+
+    requestAnimationFrame(compute);
+    
+    const ro = new ResizeObserver(compute);
+    if (mobileTabsRef.current) ro.observe(mobileTabsRef.current);
+
+    return () => ro.disconnect();
+  }, [isMobile]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -177,11 +200,15 @@ export default function Admin() {
           onSectionChange={handleSectionChange}
           isAdmin={isAdmin}
           isModerator={isModerator}
+          mobileTabsRef={mobileTabsRef}
         />
 
         {/* Main Content */}
         <main className="flex-1 overflow-x-hidden min-w-0">
-          {/* Header - now inside the main content area */}
+          {/* Spacer for mobile fixed tabs */}
+          {isMobile && <div style={{ height: mobileTabsHeight }} />}
+          
+          {/* Header */}
           <div className="border-b border-border/50 bg-background/80 backdrop-blur-sm">
             <div className="container max-w-6xl mx-auto px-4 py-4">
               <div className="flex items-center gap-3">
