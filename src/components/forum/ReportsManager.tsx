@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import log from '@/lib/logger';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -168,7 +169,7 @@ export const ReportsManager = () => {
 
       setReports(enrichedReports);
     } catch (error) {
-      console.error('Error fetching reports:', error);
+      log.error('Error fetching reports:', error);
       toast.error(language === 'fr' ? 'Erreur de chargement' : 'Loading error');
     } finally {
       setLoading(false);
@@ -222,7 +223,7 @@ export const ReportsManager = () => {
       setResolutionNote('');
       fetchReports();
     } catch (error) {
-      console.error('Error resolving report:', error);
+      log.error('Error resolving report:', error);
       toast.error(language === 'fr' ? 'Erreur' : 'Error');
     } finally {
       setResolving(false);

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import log from '@/lib/logger';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -57,7 +58,7 @@ const Index = () => {
         throw new Error('Failed to get auth URL');
       }
     } catch (error: any) {
-      console.error('Battle.net auth error:', error);
+      log.error('Battle.net auth error:', error);
       toast({
         title: t.auth.battlenetError,
         description: error.message,
