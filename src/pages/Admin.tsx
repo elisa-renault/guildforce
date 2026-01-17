@@ -1,30 +1,20 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useIsAdmin } from '@/hooks/useAdmin';
+import { useAdminRoles } from '@/hooks/useAdmin';
 import { supabase } from '@/integrations/supabase/client';
 import { CosmicBackground } from '@/components/CosmicBackground';
-import { GlowCard } from '@/components/GlowCard';
 import { GuildManager } from '@/components/admin/GuildManager';
 import { UserManager } from '@/components/admin/UserManager';
 import { LegalPagesEditor } from '@/components/admin/LegalPagesEditor';
 import { BugReportsManager } from '@/components/admin/BugReportsManager';
 import { DeletionRequestsManager } from '@/components/admin/DeletionRequestsManager';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Users, 
-  Shield, 
-  MessageSquare, 
-  AlertTriangle,
-  ChevronRight,
-  Crown,
-  LayoutDashboard,
-  FileText,
-  Bug,
-  Trash2
-} from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AdminSettingsSidebar, AdminSection } from '@/components/admin/AdminSettingsSidebar';
+import { AdminDashboardSection } from '@/components/admin/AdminDashboardSection';
+import { AdminPermissionsManager } from '@/components/admin/AdminPermissionsManager';
+import { AdminForumSection } from '@/components/admin/AdminForumSection';
+import { Crown, Loader2 } from 'lucide-react';
 
 interface AdminStats {
   totalUsers: number;
@@ -39,12 +29,16 @@ interface AdminStats {
 
 export default function Admin() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { language } = useLanguage();
   const { user, loading: authLoading } = useAuth();
-  const { isAdmin, loading: adminLoading } = useIsAdmin();
+  const { isAdmin, isModerator, loading: rolesLoading } = useAdminRoles();
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'guilds' | 'legal' | 'bugs' | 'deletions'>('dashboard');
+  const [activeSection, setActiveSection] = useState<AdminSection>(() => {
+    const section = searchParams.get('section') as AdminSection;
+    return section || 'dashboard';
+  });
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -53,14 +47,14 @@ export default function Admin() {
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
-    if (!adminLoading && !isAdmin && user) {
+    if (!rolesLoading && !isModerator && user) {
       navigate('/');
     }
-  }, [isAdmin, adminLoading, user, navigate]);
+  }, [isModerator, rolesLoading, user, navigate]);
 
   useEffect(() => {
     async function fetchStats() {
-      if (!isAdmin) return;
+      if (!isModerator) return;
       
       try {
         const [
@@ -100,264 +94,113 @@ export default function Admin() {
       }
     }
 
-    if (isAdmin) {
+    if (isModerator) {
       fetchStats();
     }
-  }, [isAdmin]);
+  }, [isModerator]);
 
-  if (authLoading || adminLoading) {
-    return (
-      <main className="flex-1 pt-20 pb-8 relative">
-        <CosmicBackground />
-        <div className="container max-w-6xl mx-auto px-4 relative z-10">
-          <Skeleton className="h-10 w-64 mb-8" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[...Array(6)].map((_, i) => (
-              <Skeleton key={i} className="h-32" />
-            ))}
-          </div>
-        </div>
-      </main>
-    );
-  }
-
-  if (!isAdmin) {
-    return null;
-  }
-
-  const statCards = [
-    {
-      label: language === 'fr' ? 'Utilisateurs' : 'Users',
-      value: stats?.totalUsers ?? '-',
-      icon: Users,
-      color: 'text-blue-400'
-    },
-    {
-      label: language === 'fr' ? 'Guildes' : 'Guilds',
-      value: stats?.totalGuilds ?? '-',
-      icon: Shield,
-      color: 'text-green-400'
-    },
-    {
-      label: language === 'fr' ? 'Sujets Forum' : 'Forum Topics',
-      value: stats?.totalTopics ?? '-',
-      icon: MessageSquare,
-      color: 'text-purple-400'
-    },
-    {
-      label: language === 'fr' ? 'Messages Forum' : 'Forum Posts',
-      value: stats?.totalPosts ?? '-',
-      icon: MessageSquare,
-      color: 'text-indigo-400'
-    },
-    {
-      label: language === 'fr' ? 'Signalements en attente' : 'Pending Reports',
-      value: stats?.pendingReports ?? '-',
-      icon: AlertTriangle,
-      color: stats?.pendingReports && stats.pendingReports > 0 ? 'text-amber-400' : 'text-muted-foreground'
-    },
-    {
-      label: language === 'fr' ? 'Sanctions actives' : 'Active Sanctions',
-      value: stats?.activeSanctions ?? '-',
-      icon: AlertTriangle,
-      color: stats?.activeSanctions && stats.activeSanctions > 0 ? 'text-red-400' : 'text-muted-foreground'
-    },
-    {
-      label: language === 'fr' ? 'Bugs ouverts' : 'Open Bugs',
-      value: stats?.openBugs ?? '-',
-      icon: Bug,
-      color: stats?.openBugs && stats.openBugs > 0 ? 'text-red-400' : 'text-muted-foreground'
-    },
-    {
-      label: language === 'fr' ? 'Suppressions en attente' : 'Pending Deletions',
-      value: stats?.pendingDeletions ?? '-',
-      icon: Trash2,
-      color: stats?.pendingDeletions && stats.pendingDeletions > 0 ? 'text-red-400' : 'text-muted-foreground'
-    }
-  ];
-
-  const goToTab = (tab: 'dashboard' | 'users' | 'guilds' | 'legal' | 'bugs' | 'deletions') => {
-    setActiveTab(tab);
+  const handleSectionChange = (section: AdminSection) => {
+    setActiveSection(section);
+    setSearchParams({ section });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const adminSections = [
-    {
-      title: language === 'fr' ? 'Administration Forum' : 'Forum Administration',
-      description:
-        language === 'fr'
-          ? 'Gérer les catégories, modérateurs, signalements et sanctions'
-          : 'Manage categories, moderators, reports and sanctions',
-      icon: MessageSquare,
-      onClick: () => navigate('/forum/admin'),
-      color: 'text-purple-400',
-    },
-    {
-      title: language === 'fr' ? 'Gestion des Utilisateurs' : 'User Management',
-      description:
-        language === 'fr'
-          ? 'Attribuer des rôles (Admin, Modérateur) aux utilisateurs'
-          : 'Assign roles (Admin, Moderator) to users',
-      icon: Users,
-      onClick: () => goToTab('users'),
-      color: 'text-blue-400',
-    },
-    {
-      title: language === 'fr' ? 'Gestion des Guildes' : 'Guild Management',
-      description:
-        language === 'fr'
-          ? 'Rechercher, modifier et supprimer des guildes'
-          : 'Search, edit and delete guilds',
-      icon: Shield,
-      onClick: () => goToTab('guilds'),
-      color: 'text-green-400',
-    },
-    {
-      title: language === 'fr' ? 'Pages légales' : 'Legal Pages',
-      description:
-        language === 'fr'
-          ? 'Modifier le contenu des mentions légales, confidentialité et CGU'
-          : 'Edit legal notice, privacy policy and terms of service content',
-      icon: FileText,
-      onClick: () => goToTab('legal'),
-      color: 'text-amber-400',
-    },
-    {
-      title: language === 'fr' ? 'Demandes de suppression' : 'Deletion Requests',
-      description:
-        language === 'fr'
-          ? 'Traiter les demandes de suppression de compte (RGPD)'
-          : 'Process account deletion requests (GDPR)',
-      icon: Trash2,
-      onClick: () => goToTab('deletions'),
-      color: 'text-red-400',
-    },
-    {
-      title: language === 'fr' ? 'Rapports de bugs' : 'Bug Reports',
-      description:
-        language === 'fr'
-          ? 'Consulter et gérer les signalements de bugs'
-          : 'View and manage bug reports',
-      icon: Bug,
-      onClick: () => goToTab('bugs'),
-      color: 'text-red-400',
-    },
-  ];
+  if (authLoading || rolesLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center pt-16">
+        <CosmicBackground />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!isModerator) {
+    return null;
+  }
+
+  const renderSectionContent = () => {
+    switch (activeSection) {
+      case 'dashboard':
+        return (
+          <AdminDashboardSection
+            stats={stats}
+            loading={loadingStats}
+            isAdmin={isAdmin}
+            onNavigateToSection={handleSectionChange}
+          />
+        );
+      
+      case 'users':
+        if (!isAdmin) return null;
+        return <UserManager />;
+      
+      case 'permissions':
+        if (!isAdmin) return null;
+        return <AdminPermissionsManager />;
+      
+      case 'guilds':
+        if (!isAdmin) return null;
+        return <GuildManager />;
+      
+      case 'forum':
+        return <AdminForumSection />;
+      
+      case 'legal':
+        if (!isAdmin) return null;
+        return <LegalPagesEditor />;
+      
+      case 'bugs':
+        return <BugReportsManager />;
+      
+      case 'deletions':
+        if (!isAdmin) return null;
+        return <DeletionRequestsManager />;
+      
+      default:
+        return null;
+    }
+  };
 
   return (
-    <main className="flex-1 pt-20 pb-8 relative">
+    <div className="flex-1 relative pt-16 flex flex-col">
       <CosmicBackground />
-      <div className="container max-w-6xl mx-auto px-4 relative z-10">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 rounded-lg bg-primary/20 ring-1 ring-primary/50">
-            <Crown className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-display text-foreground">
-              {language === 'fr' ? 'Administration' : 'Administration'}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {language === 'fr' ? 'Tableau de bord administrateur' : 'Admin dashboard'}
-            </p>
+
+      {/* Header */}
+      <div className="relative z-10 border-b border-border/50 bg-background/80 backdrop-blur-sm">
+        <div className="container max-w-6xl mx-auto px-4 py-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/20 ring-1 ring-primary/50">
+              <Crown className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-display text-foreground">
+                {language === 'fr' ? 'Administration' : 'Administration'}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                {isAdmin
+                  ? (language === 'fr' ? 'Tableau de bord administrateur' : 'Admin dashboard')
+                  : (language === 'fr' ? 'Tableau de bord modérateur' : 'Moderator dashboard')
+                }
+              </p>
+            </div>
           </div>
         </div>
-
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'dashboard' | 'users' | 'guilds' | 'legal' | 'bugs' | 'deletions')} className="space-y-6">
-          <TabsList className="bg-card border border-border p-1 flex-wrap h-auto gap-1">
-            <TabsTrigger value="dashboard" className="gap-2 data-[state=active]:bg-primary/20 data-[state=active]:text-foreground">
-              <LayoutDashboard className="h-4 w-4" />
-              <span>{language === 'fr' ? 'Tableau de bord' : 'Dashboard'}</span>
-            </TabsTrigger>
-            <TabsTrigger value="users" className="gap-2 data-[state=active]:bg-primary/20 data-[state=active]:text-foreground">
-              <Users className="h-4 w-4" />
-              <span>{language === 'fr' ? 'Utilisateurs' : 'Users'}</span>
-            </TabsTrigger>
-            <TabsTrigger value="guilds" className="gap-2 data-[state=active]:bg-primary/20 data-[state=active]:text-foreground">
-              <Shield className="h-4 w-4" />
-              <span>{language === 'fr' ? 'Guildes' : 'Guilds'}</span>
-            </TabsTrigger>
-            <TabsTrigger value="legal" className="gap-2 data-[state=active]:bg-primary/20 data-[state=active]:text-foreground">
-              <FileText className="h-4 w-4" />
-              <span>{language === 'fr' ? 'Pages légales' : 'Legal Pages'}</span>
-            </TabsTrigger>
-            <TabsTrigger value="bugs" className="gap-2 data-[state=active]:bg-primary/20 data-[state=active]:text-foreground">
-              <Bug className="h-4 w-4" />
-              <span>{language === 'fr' ? 'Bugs' : 'Bugs'}</span>
-            </TabsTrigger>
-            <TabsTrigger value="deletions" className="gap-2 data-[state=active]:bg-primary/20 data-[state=active]:text-foreground">
-              <Trash2 className="h-4 w-4" />
-              <span>{language === 'fr' ? 'Suppressions' : 'Deletions'}</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="dashboard" className="space-y-6">
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-              {statCards.map((stat, index) => (
-                <GlowCard key={index} className="p-4">
-                  <div className="flex flex-col">
-                    <stat.icon className={`h-5 w-5 ${stat.color} mb-2`} />
-                    <span className="text-2xl font-bold text-foreground">
-                      {loadingStats ? <Skeleton className="h-8 w-12" /> : stat.value}
-                    </span>
-                    <span className="text-xs text-muted-foreground">{stat.label}</span>
-                  </div>
-                </GlowCard>
-              ))}
-            </div>
-
-            {/* Admin Sections */}
-            <div>
-              <h2 className="text-lg font-medium text-foreground mb-4">
-                {language === 'fr' ? 'Accès rapide' : 'Quick Access'}
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {adminSections.map((section, index) => (
-                  <GlowCard 
-                    key={index} 
-                    className="p-5 cursor-pointer hover:ring-primary/50 transition-all"
-                    onClick={section.onClick}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-4">
-                        <div className={`p-2 rounded-lg bg-card ${section.color}`}>
-                          <section.icon className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-foreground">{section.title}</h3>
-                          <p className="text-sm text-muted-foreground mt-1">{section.description}</p>
-                        </div>
-                      </div>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                    </div>
-                  </GlowCard>
-                ))}
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="users">
-            <UserManager />
-          </TabsContent>
-
-          <TabsContent value="guilds">
-            <GuildManager />
-          </TabsContent>
-
-          <TabsContent value="legal">
-            <LegalPagesEditor />
-          </TabsContent>
-
-          <TabsContent value="bugs">
-            <BugReportsManager />
-          </TabsContent>
-
-          <TabsContent value="deletions">
-            <DeletionRequestsManager />
-          </TabsContent>
-        </Tabs>
       </div>
-    </main>
+
+      {/* Layout with sidebar */}
+      <div className="flex-1 flex flex-col md:flex-row relative z-10 overflow-x-hidden">
+        <AdminSettingsSidebar
+          activeSection={activeSection}
+          onSectionChange={handleSectionChange}
+          isAdmin={isAdmin}
+          isModerator={isModerator}
+        />
+
+        {/* Main Content */}
+        <main className="flex-1 p-4 md:p-6 md:max-w-5xl overflow-x-hidden min-w-0">
+          {renderSectionContent()}
+        </main>
+      </div>
+    </div>
   );
 }
