@@ -84,6 +84,7 @@ export interface Translations {
     success: string;
     error: string;
     errorMissingFields: string;
+    rateLimitError: string;
     anonymous: string;
     admin: {
       title: string;
@@ -1354,6 +1355,7 @@ export const translations: Record<Language, Translations> = {
       success: 'Report sent, thank you!',
       error: 'Error sending report',
       errorMissingFields: 'Please fill in all required fields',
+      rateLimitError: 'Too many reports submitted. Please try again later.',
       anonymous: 'Anonymous',
       admin: {
         title: 'Bug Reports',
@@ -2090,6 +2092,7 @@ export const translations: Record<Language, Translations> = {
       success: 'Signalement envoyé, merci !',
       error: 'Erreur lors de l\'envoi',
       errorMissingFields: 'Veuillez remplir tous les champs requis',
+      rateLimitError: 'Trop de signalements envoyés. Veuillez réessayer plus tard.',
       anonymous: 'Anonyme',
       admin: {
         title: 'Rapports de bugs',
