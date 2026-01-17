@@ -115,7 +115,6 @@ export function useGuildPermissions(guildId: string | null) {
         }
       }
     } catch (error) {
-      console.error('Error loading permissions:', error);
       toast({
         title: t.errors.generic,
         variant: 'destructive',
@@ -206,7 +205,6 @@ export function useGuildPermissions(guildId: string | null) {
       setPermissions(newPermissions);
       toast({ title: (t as any).permissions?.saved || 'Permissions saved' });
     } catch (error) {
-      console.error('Error saving permissions:', error);
       toast({
         title: t.errors.generic,
         variant: 'destructive',
@@ -269,7 +267,6 @@ export function useHasGuildPermission(guildId: string | null, permission: Permis
         if (error) throw error;
         setHasPermission(data || false);
       } catch (error) {
-        console.error('Error checking permission:', error);
         setHasPermission(false);
       } finally {
         setLoading(false);

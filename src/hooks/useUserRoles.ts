@@ -42,7 +42,7 @@ export function useUserRoles(userIds: string[]) {
             });
           }
         } catch (err) {
-          console.error('Error fetching user roles:', err);
+          // Error fetching roles handled silently
         }
       }
 
