@@ -7,8 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useLanguage, Language } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -20,7 +20,9 @@ import { CosmicButton } from '@/components/CosmicButton';
 import { BattleNetConnect } from '@/components/BattleNetConnect';
 import { AvatarCropDialog } from '@/components/AvatarCropDialog';
 
-import { User, Save, Globe, Loader2, Sparkles, Upload, Trash2, ExternalLink, Shield, AlertTriangle, Settings, Info } from 'lucide-react';
+import { User, Save, Globe, Loader2, Sparkles, Upload, Trash2, ExternalLink, Shield, AlertTriangle, Settings, Info, Users, EyeOff } from 'lucide-react';
+
+type BattletagVisibility = 'everyone' | 'guild_only' | 'nobody';
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -34,7 +36,7 @@ const Profile = () => {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
   const [selectedImageSrc, setSelectedImageSrc] = useState<string | null>(null);
-  const [showBattletag, setShowBattletag] = useState(true);
+  const [battletagVisibility, setBattletagVisibility] = useState<BattletagVisibility>('everyone');
   const [deletionPending, setDeletionPending] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
@@ -63,8 +65,8 @@ const Profile = () => {
   useEffect(() => {
     if (!profile) return;
     form.reset({ username: profile.username || '' });
-    // @ts-ignore - show_battletag may not be in type yet
-    setShowBattletag(profile.show_battletag !== false);
+    // @ts-ignore - battletag_visibility may not be in type yet
+    setBattletagVisibility((profile.battletag_visibility as BattletagVisibility) || 'everyone');
   }, [profile, form]);
 
   // Check for pending deletion request
@@ -119,15 +121,12 @@ const Profile = () => {
     }
   };
 
-  const handleBattletagVisibilityChange = async (checked: boolean) => {
-    setShowBattletag(checked);
+  const handleBattletagVisibilityChange = async (value: BattletagVisibility) => {
+    setBattletagVisibility(value);
     if (user) {
-      await supabase.from('profiles').update({ show_battletag: checked }).eq('id', user.id);
+      await supabase.from('profiles').update({ battletag_visibility: value }).eq('id', user.id);
       toast({ 
-        title: language === 'fr' ? 'Préférence enregistrée' : 'Preference saved',
-        description: checked 
-          ? (language === 'fr' ? 'Ton BattleTag est maintenant visible.' : 'Your BattleTag is now visible.')
-          : (language === 'fr' ? 'Ton BattleTag est maintenant masqué.' : 'Your BattleTag is now hidden.'),
+        title: t.profile.battletagVisibility.saved,
       });
     }
   };
@@ -481,25 +480,51 @@ const Profile = () => {
                 </p>
               </div>
 
-              {/* BattleTag visibility toggle */}
+              {/* BattleTag visibility */}
               {profile?.battletag && (
                 <div className="mb-4 pb-4 border-b border-border">
-                  <Label className="text-sm text-foreground flex items-center gap-2">
+                  <Label className="text-sm text-foreground flex items-center gap-2 mb-3">
                     <Shield className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
-                    {language === 'fr' ? 'Confidentialité' : 'Privacy'}
+                    {t.profile.battletagVisibility.label}
                   </Label>
-                  <div className="flex items-center justify-between py-2">
-                    <span className="text-sm text-muted-foreground">
-                      {language === 'fr' ? 'Afficher BattleTag' : 'Show BattleTag'}
-                    </span>
-                    <Switch
-                      id="show-battletag"
-                      checked={showBattletag}
-                      onCheckedChange={handleBattletagVisibilityChange}
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {language === 'fr' ? 'Sauvegardé automatiquement' : 'Saved automatically'}
+                  <RadioGroup
+                    value={battletagVisibility}
+                    onValueChange={(val) => handleBattletagVisibilityChange(val as BattletagVisibility)}
+                    className="space-y-2"
+                  >
+                    <div className="flex items-start space-x-3 p-2.5 rounded-lg hover:bg-muted/30 transition-colors">
+                      <RadioGroupItem value="everyone" id="vis-everyone" className="mt-0.5" />
+                      <Label htmlFor="vis-everyone" className="flex-1 cursor-pointer">
+                        <div className="flex items-center gap-2">
+                          <Globe className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
+                          <span className="text-sm font-medium text-foreground">{t.profile.battletagVisibility.everyone}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">{t.profile.battletagVisibility.everyoneDesc}</p>
+                      </Label>
+                    </div>
+                    <div className="flex items-start space-x-3 p-2.5 rounded-lg hover:bg-muted/30 transition-colors">
+                      <RadioGroupItem value="guild_only" id="vis-guild" className="mt-0.5" />
+                      <Label htmlFor="vis-guild" className="flex-1 cursor-pointer">
+                        <div className="flex items-center gap-2">
+                          <Users className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
+                          <span className="text-sm font-medium text-foreground">{t.profile.battletagVisibility.guildOnly}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">{t.profile.battletagVisibility.guildOnlyDesc}</p>
+                      </Label>
+                    </div>
+                    <div className="flex items-start space-x-3 p-2.5 rounded-lg hover:bg-muted/30 transition-colors">
+                      <RadioGroupItem value="nobody" id="vis-nobody" className="mt-0.5" />
+                      <Label htmlFor="vis-nobody" className="flex-1 cursor-pointer">
+                        <div className="flex items-center gap-2">
+                          <EyeOff className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
+                          <span className="text-sm font-medium text-foreground">{t.profile.battletagVisibility.nobody}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">{t.profile.battletagVisibility.nobodyDesc}</p>
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {t.common.savedAutomatically}
                   </p>
                 </div>
               )}

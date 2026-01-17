@@ -1308,6 +1308,7 @@ export type Database = {
           avatar_url: string | null
           battlenet_id: string | null
           battletag: string | null
+          battletag_visibility: string
           created_at: string
           id: string
           main_character_name: string | null
@@ -1320,6 +1321,7 @@ export type Database = {
           avatar_url?: string | null
           battlenet_id?: string | null
           battletag?: string | null
+          battletag_visibility?: string
           created_at?: string
           id: string
           main_character_name?: string | null
@@ -1332,6 +1334,7 @@ export type Database = {
           avatar_url?: string | null
           battlenet_id?: string | null
           battletag?: string | null
+          battletag_visibility?: string
           created_at?: string
           id?: string
           main_character_name?: string | null

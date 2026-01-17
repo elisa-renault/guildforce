@@ -43,6 +43,7 @@ export interface Translations {
     saveDraft: string;
     new: string;
     activityLog: string;
+    savedAutomatically: string;
   };
   // Bug Report
   bugReport: {
@@ -318,6 +319,16 @@ export interface Translations {
       };
       typeToConfirm: string;
       confirmDeletion: string;
+    };
+    battletagVisibility: {
+      label: string;
+      everyone: string;
+      everyoneDesc: string;
+      guildOnly: string;
+      guildOnlyDesc: string;
+      nobody: string;
+      nobodyDesc: string;
+      saved: string;
     };
   };
   // Guild Settings
@@ -768,6 +779,7 @@ export const translations: Record<Language, Translations> = {
       saveDraft: 'Save Draft',
       new: 'New',
       activityLog: 'Activity Log',
+      savedAutomatically: 'Saved automatically',
     },
     battlenet: {
       connect: 'Link my Battle.net account',
@@ -978,6 +990,16 @@ export const translations: Record<Language, Translations> = {
         },
         typeToConfirm: 'Type "{{username}}" to confirm',
         confirmDeletion: 'Confirm deletion',
+      },
+      battletagVisibility: {
+        label: 'BattleTag Visibility',
+        everyone: 'Everyone',
+        everyoneDesc: 'Visible on your public profile',
+        guildOnly: 'Guild members only',
+        guildOnlyDesc: 'Only members of your guilds can see it',
+        nobody: 'Nobody',
+        nobodyDesc: 'Hidden for everyone (except app administrators)',
+        saved: 'Visibility preference saved',
       },
     },
     guildSettings: {
@@ -1471,6 +1493,7 @@ export const translations: Record<Language, Translations> = {
       saveDraft: 'Enregistrer brouillon',
       new: 'Nouveau',
       activityLog: 'Journal d\'activité',
+      savedAutomatically: 'Sauvegardé automatiquement',
     },
     battlenet: {
       connect: 'Lier mon compte Battle.net',
@@ -1681,6 +1704,16 @@ export const translations: Record<Language, Translations> = {
         },
         typeToConfirm: 'Tape "{{username}}" pour confirmer',
         confirmDeletion: 'Confirmer la suppression',
+      },
+      battletagVisibility: {
+        label: 'Visibilité du BattleTag',
+        everyone: 'Tout le monde',
+        everyoneDesc: 'Visible sur ton profil public',
+        guildOnly: 'Membres de guilde uniquement',
+        guildOnlyDesc: 'Seuls les membres de tes guildes peuvent le voir',
+        nobody: 'Personne',
+        nobodyDesc: 'Masqué pour tous (sauf administrateurs de l\'app)',
+        saved: 'Préférence de visibilité enregistrée',
       },
     },
     guildSettings: {
