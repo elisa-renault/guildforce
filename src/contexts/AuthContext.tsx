@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import log from '@/lib/logger';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -39,7 +40,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       .maybeSingle();
 
     if (error) {
-      console.error('Error fetching profile:', error);
+      log.error('Error fetching profile:', error);
       setProfile(null);
       return null;
     }
@@ -59,14 +60,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         body: {},
       }).then(({ error }) => {
         if (error) {
-          console.debug('Background Battle.net sync skipped:', error.message);
+          log.debug('Background Battle.net sync skipped:', error.message);
         } else {
-          console.debug('Background Battle.net sync completed');
+          log.debug('Background Battle.net sync completed');
         }
       });
     } catch (err) {
-      // Silently ignore - this is a background operation
-      console.debug('Background sync error:', err);
+      log.debug('Background sync error:', err);
     }
   };
 
@@ -169,9 +169,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       await supabase.auth.signOut();
     } catch (error: any) {
-      // Ignore "User from sub claim in JWT does not exist" errors
-      // This happens when the user was deleted but still has a stale JWT
-      console.warn('Sign out error (ignored):', error?.message);
+      log.warn('Sign out error (ignored):', error?.message);
     }
     
     // Clear any stored session data to ensure clean state

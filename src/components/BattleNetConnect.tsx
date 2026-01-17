@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import log from '@/lib/logger';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -91,7 +92,7 @@ export const BattleNetConnect: React.FC = () => {
       if (error) throw error;
       setCharacters(data.characters || []);
     } catch (error) {
-      console.error('Error fetching characters:', error);
+      log.error('Error fetching characters:', error);
     } finally {
       setIsLoadingCharacters(false);
     }
@@ -122,7 +123,7 @@ export const BattleNetConnect: React.FC = () => {
       // Redirect to Battle.net OAuth
       window.location.href = data.authUrl;
     } catch (error) {
-      console.error('Error initiating Battle.net connection:', error);
+      log.error('Error initiating Battle.net connection:', error);
       toast.error(t.errors.generic);
       setIsLoading(false);
     }
@@ -155,7 +156,7 @@ export const BattleNetConnect: React.FC = () => {
         is_main: false,
       })) || []);
     } catch (error) {
-      console.error('Error completing Battle.net connection:', error);
+      log.error('Error completing Battle.net connection:', error);
       toast.error(t.errors.generic);
     } finally {
       setIsLoading(false);
@@ -186,7 +187,7 @@ export const BattleNetConnect: React.FC = () => {
       await refreshProfile();
       setCharacters([]);
     } catch (error) {
-      console.error('Error disconnecting Battle.net:', error);
+      log.error('Error disconnecting Battle.net:', error);
       toast.error(t.errors.generic);
     } finally {
       setIsLoading(false);
@@ -224,7 +225,7 @@ export const BattleNetConnect: React.FC = () => {
 
       toast.success(t.battlenet.mainSet);
     } catch (error) {
-      console.error('Error setting main character:', error);
+      log.error('Error setting main character:', error);
       toast.error(t.errors.generic);
     }
   };

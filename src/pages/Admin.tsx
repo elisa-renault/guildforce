@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import log from '@/lib/logger';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -112,7 +113,7 @@ export default function Admin() {
           pendingDeletions: deletionsCount || 0
         });
       } catch (error) {
-        console.error('Error fetching admin stats:', error);
+        log.error('Error fetching admin stats:', error);
       } finally {
         setLoadingStats(false);
       }
