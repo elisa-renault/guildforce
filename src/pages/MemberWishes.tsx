@@ -170,7 +170,7 @@ const MemberWishes = () => {
       .eq('choice_index', choiceIndex);
 
     if (error) {
-      toast.error(language === 'fr' ? 'Erreur lors de la validation' : 'Validation error');
+      toast.error(t.errors.generic);
       // Revert on error
       const { data } = await supabase
         .from('class_wishes')
@@ -186,11 +186,11 @@ const MemberWishes = () => {
       }
     } else {
       const statusLabel = status === 'approved' 
-        ? (language === 'fr' ? 'Approuvé' : 'Approved')
+        ? t.wishes.validation.approved
         : status === 'rejected'
-        ? (language === 'fr' ? 'Refusé' : 'Rejected')
-        : (language === 'fr' ? 'En attente' : 'Pending');
-      toast.success(`${language === 'fr' ? 'Vœu' : 'Wish'} ${statusLabel.toLowerCase()}`);
+        ? t.wishes.validation.rejected
+        : t.wishes.validation.pending;
+      toast.success(`${t.wishes.title.split(' ')[0]} ${statusLabel.toLowerCase()}`);
     }
     
     setValidatingWish(null);
@@ -276,17 +276,17 @@ const MemberWishes = () => {
       <main className="container mx-auto px-3 md:px-4 py-4 relative z-10">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-display cosmic-text">
-            {language === 'fr' ? 'Vœux de classe' : 'Class Wishes'}
+            {t.wishes.title}
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            {language === 'fr' ? 'Visualisation en lecture seule' : 'Read-only view'}
+            {t.rosters.noAccessMessage}
           </p>
         </div>
 
         {wishes.length === 0 ? (
           <GlowCard className="p-6 text-center" hoverable={false}>
             <p className="text-muted-foreground">
-              {language === 'fr' ? 'Aucun vœu enregistré' : 'No wishes registered'}
+              {t.wishes.noWishes}
             </p>
           </GlowCard>
         ) : (
