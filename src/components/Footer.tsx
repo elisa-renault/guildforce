@@ -49,7 +49,7 @@ export const Footer = () => {
           {/* Group 3: Préférences (user settings) */}
           <div className="flex items-center gap-3">
             <Select value={language} onValueChange={(value: 'fr' | 'en') => setLanguage(value)}>
-              <SelectTrigger className="w-[100px] h-7 bg-transparent border-none text-muted-foreground hover:text-foreground text-xs gap-1.5 px-2">
+              <SelectTrigger className="w-[120px] h-7 bg-transparent border-none text-muted-foreground hover:text-foreground text-xs gap-1.5 px-2">
                 <Globe className="h-3.5 w-3.5" />
                 <SelectValue />
               </SelectTrigger>
