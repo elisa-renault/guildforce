@@ -354,10 +354,10 @@ export const GuildProfileSection = ({
       
       onOfficerRankChange(newRank);
       onGuildUpdate({ ...guild, officer_rank_threshold: newRank });
-      toast({ title: language === 'fr' ? 'Rang officier mis à jour' : 'Officer rank updated' });
+      toast({ title: t.guildSettings.officerRankUpdated });
     } catch (error: any) {
       toast({
-        title: language === 'fr' ? 'Erreur lors de la mise à jour' : 'Update failed',
+        title: t.errors.generic,
         variant: 'destructive',
       });
       setLocalOfficerRank(officerRank);
@@ -460,16 +460,14 @@ export const GuildProfileSection = ({
             <div className="flex items-center gap-2 mb-1.5 md:mb-2">
               <Crown className="h-4 w-4 text-amber-400" />
               <Label className="text-xs md:text-sm font-medium">
-                {language === 'fr' ? 'Rang officier minimum' : 'Minimum officer rank'}
+                {t.permissions.officers}
               </Label>
               <span className="text-xs md:text-sm font-medium text-muted-foreground ml-auto">
                 0 → {localOfficerRank}
               </span>
             </div>
             <p className="text-[10px] md:text-xs text-muted-foreground mb-2 md:mb-3">
-              {language === 'fr' 
-                ? 'Les rangs 0 à ce rang seront considérés comme officiers.'
-                : 'Ranks 0 to this rank will be considered officers.'}
+              {t.permissions.ranksRange.replace('{{max}}', String(localOfficerRank))}
             </p>
             
             <OfficerRankSlider
