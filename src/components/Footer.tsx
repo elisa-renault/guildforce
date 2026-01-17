@@ -21,46 +21,44 @@ export const Footer = () => {
 
   return (
     <footer className="relative z-10 border-t border-border/50 bg-background/80 backdrop-blur-sm mt-auto">
-      <div className="container mx-auto px-4 py-4 flex flex-col gap-3">
-        {/* Top row: branding + actions */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Guildforce
-            </span>
-            <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded bg-primary/20 text-primary border border-primary/30">
-              Alpha
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <a
-              href="https://fr.tipeee.com/elsiabeth/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-primary/20 transition-colors"
-            >
-              <TipeeeIcon className="h-4 w-4" />
-              <Beer className="h-4 w-4" />
-              <span className="hidden sm:inline">{t.common.tipMe}</span>
-            </a>
-
-            <Select value={language} onValueChange={(value: 'fr' | 'en') => setLanguage(value)}>
-              <SelectTrigger className="w-[100px] h-8 bg-card border-border text-foreground text-sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {languages.map((lang) => (
-                  <SelectItem key={lang.code} value={lang.code}>
-                    {lang.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+      <div className="container mx-auto px-4 py-4 flex flex-col items-center gap-2">
+        {/* Row 1: Copyright + Alpha badge */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">
+            © {new Date().getFullYear()} Guildforce
+          </span>
+          <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded bg-primary/20 text-primary border border-primary/30">
+            Alpha
+          </span>
         </div>
 
-        {/* Bottom row: legal links - always visible */}
+        {/* Row 2: Tip + Language selector */}
+        <div className="flex items-center gap-3">
+          <a
+            href="https://fr.tipeee.com/elsiabeth/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-2 py-1 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-primary/20 transition-colors"
+          >
+            <TipeeeIcon className="h-4 w-4" />
+            <Beer className="h-4 w-4" />
+          </a>
+
+          <Select value={language} onValueChange={(value: 'fr' | 'en') => setLanguage(value)}>
+            <SelectTrigger className="w-[100px] h-8 bg-card border-border text-foreground text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {languages.map((lang) => (
+                <SelectItem key={lang.code} value={lang.code}>
+                  {lang.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Row 3: Legal links */}
         <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs">
           <Link to="/legal" className="text-muted-foreground hover:text-foreground transition-colors">
             {t.legal.legalNotice}
@@ -73,15 +71,16 @@ export const Footer = () => {
           <Link to="/terms" className="text-muted-foreground hover:text-foreground transition-colors">
             {t.legal.termsOfService}
           </Link>
-          <span className="text-muted-foreground/50">·</span>
-          <button
-            onClick={openCookiePreferences}
-            className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-          >
-            <Cookie className="h-3 w-3" />
-            {t.cookies.manageCookies}
-          </button>
         </div>
+
+        {/* Row 4: Cookie settings centered */}
+        <button
+          onClick={openCookiePreferences}
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+        >
+          <Cookie className="h-3 w-3" />
+          {t.cookies.manageCookies}
+        </button>
       </div>
     </footer>
   );
