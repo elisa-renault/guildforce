@@ -36,12 +36,12 @@ export const StatsCards = ({ totalPlayers, confirmedPlayers, roleStats, rangeSta
       </div>
       {/* Hide range stats on very small screens */}
       <div className="stat-card-compact dps hidden md:flex">
-        <Swords className="h-4 md:h-5 text-dps" strokeWidth={1.5} />
+        <Sword className="h-4 md:h-5 text-dps" strokeWidth={1.5} />
         <div className="text-base md:text-xl font-bold text-foreground">{roleStats.dps}</div>
         <div className="text-[9px] md:text-xs text-muted-foreground hidden sm:block">{t.dashboard.dps}</div>
       </div>
       <div className="stat-card-compact melee hidden md:flex">
-        <Sword className="h-4 md:h-5 text-orange-400" strokeWidth={1.5} />
+        <Swords className="h-4 md:h-5 text-orange-400" strokeWidth={1.5} />
         <div className="text-base md:text-xl font-bold text-foreground">{rangeStats.melee}</div>
         <div className="text-[9px] md:text-xs text-muted-foreground hidden sm:block">{t.dashboard.melee}</div>
       </div>
