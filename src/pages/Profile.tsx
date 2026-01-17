@@ -123,6 +123,12 @@ const Profile = () => {
     setShowBattletag(checked);
     if (user) {
       await supabase.from('profiles').update({ show_battletag: checked }).eq('id', user.id);
+      toast({ 
+        title: language === 'fr' ? 'Préférence enregistrée' : 'Preference saved',
+        description: checked 
+          ? (language === 'fr' ? 'Ton BattleTag est maintenant visible.' : 'Your BattleTag is now visible.')
+          : (language === 'fr' ? 'Ton BattleTag est maintenant masqué.' : 'Your BattleTag is now hidden.'),
+      });
     }
   };
 
@@ -414,7 +420,7 @@ const Profile = () => {
               </div>
             </GlowCard>
 
-            {/* Profile form */}
+            {/* Profile form - Username only */}
             <GlowCard className="p-5" hoverable={false}>
               <h2 className="text-sm font-medium text-foreground mb-4 flex items-center gap-2">
                 <User className="h-4 w-4 text-primary" strokeWidth={1.5} />
@@ -433,25 +439,29 @@ const Profile = () => {
                     </FormItem>
                   )} />
 
-                  <div>
-                    <FormLabel className="text-foreground text-sm mb-2 block">
-                      <Globe className="h-4 w-4 inline mr-2" strokeWidth={1.5} />
-                      {t.profile.language}
-                    </FormLabel>
-                    <Select value={language} onValueChange={(val) => handleLanguageChange(val as Language)}>
-                      <SelectTrigger className="cosmic-input"><SelectValue /></SelectTrigger>
-                      <SelectContent className="bg-card border-border">
-                        <SelectItem value="fr">🇫🇷 Français</SelectItem>
-                        <SelectItem value="en">🇬🇧 English</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
                   <CosmicButton type="submit" className="w-full" loading={saving} icon={<Save className="h-4 w-4" strokeWidth={1.5} />}>
-                    {t.common.save}
+                    {language === 'fr' ? 'Enregistrer le pseudo' : 'Save username'}
                   </CosmicButton>
                 </form>
               </Form>
+            </GlowCard>
+
+            {/* Language preference - separate card, instant save */}
+            <GlowCard className="p-5" hoverable={false}>
+              <h2 className="text-sm font-medium text-foreground mb-4 flex items-center gap-2">
+                <Globe className="h-4 w-4 text-primary" strokeWidth={1.5} />
+                {t.profile.language}
+              </h2>
+              <Select value={language} onValueChange={(val) => handleLanguageChange(val as Language)}>
+                <SelectTrigger className="cosmic-input"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  <SelectItem value="fr">🇫🇷 Français</SelectItem>
+                  <SelectItem value="en">🇬🇧 English</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-2">
+                {language === 'fr' ? 'Sauvegardé automatiquement' : 'Saved automatically'}
+              </p>
             </GlowCard>
           </div>
 
@@ -472,15 +482,20 @@ const Profile = () => {
 
               {/* BattleTag visibility toggle */}
               {profile?.battletag && (
-                <div className="flex items-center justify-between py-2 mb-4">
-                  <Label htmlFor="show-battletag" className="text-sm text-foreground cursor-pointer">
-                    {language === 'fr' ? 'Afficher mon BattleTag sur le profil public' : 'Show BattleTag on public profile'}
-                  </Label>
-                  <Switch
-                    id="show-battletag"
-                    checked={showBattletag}
-                    onCheckedChange={handleBattletagVisibilityChange}
-                  />
+                <div className="mb-4">
+                  <div className="flex items-center justify-between py-2">
+                    <Label htmlFor="show-battletag" className="text-sm text-foreground cursor-pointer">
+                      {language === 'fr' ? 'Afficher mon BattleTag sur le profil public' : 'Show BattleTag on public profile'}
+                    </Label>
+                    <Switch
+                      id="show-battletag"
+                      checked={showBattletag}
+                      onCheckedChange={handleBattletagVisibilityChange}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {language === 'fr' ? 'Sauvegardé automatiquement' : 'Saved automatically'}
+                  </p>
                 </div>
               )}
 
