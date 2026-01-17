@@ -15,7 +15,7 @@ import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
 const GuildPollResultsPage = () => {
   const navigate = useNavigate();
   const { regionSlug, serverSlug, guildSlug, pollId } = useParams();
-  const { language } = useLanguage();
+  const { t } = useLanguage();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [guildId, setGuildId] = useState<string | null>(null);
@@ -118,16 +118,14 @@ const GuildPollResultsPage = () => {
             <div>
               <h1 className="text-2xl font-bold">{poll.title}</h1>
               <p className="text-muted-foreground">
-                {language === 'fr' ? 'Résultats' : 'Results'}
+                {t.common.results}
               </p>
             </div>
           </div>
           <div className="bg-muted/30 border border-muted rounded-lg p-8 text-center">
             <Lock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">
-              {language === 'fr' 
-                ? 'Les résultats de ce sondage sont réservés à certains membres.' 
-                : 'Results for this poll are restricted to certain members.'}
+              {t.polls.resultsRestricted}
             </p>
           </div>
         </div>
@@ -151,7 +149,7 @@ const GuildPollResultsPage = () => {
           <div>
             <h1 className="text-2xl font-bold">{poll.title}</h1>
             <p className="text-muted-foreground">
-              {language === 'fr' ? 'Résultats' : 'Results'}
+              {t.common.results}
             </p>
           </div>
         </div>
