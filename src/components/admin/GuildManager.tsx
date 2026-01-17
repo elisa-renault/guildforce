@@ -108,7 +108,6 @@ export function GuildManager() {
       );
       fetchGuilds();
     } catch (error) {
-      console.error('Error syncing all guilds:', error);
       toast.error(language === 'fr' ? 'Erreur lors de la synchronisation' : 'Error during sync');
     } finally {
       setSyncing(false);
@@ -166,7 +165,6 @@ export function GuildManager() {
         setGuilds([]);
       }
     } catch (error) {
-      console.error('Error fetching guilds:', error);
       toast.error(language === 'fr' ? 'Erreur lors du chargement des guildes' : 'Error loading guilds');
     } finally {
       setLoading(false);
@@ -211,7 +209,6 @@ export function GuildManager() {
       setEditingGuild(null);
       fetchGuilds();
     } catch (error) {
-      console.error('Error updating guild:', error);
       toast.error(language === 'fr' ? 'Erreur lors de la modification' : 'Error updating guild');
     } finally {
       setSaving(false);
@@ -234,7 +231,6 @@ export function GuildManager() {
       setDeletingGuild(null);
       fetchGuilds();
     } catch (error) {
-      console.error('Error deleting guild:', error);
       toast.error(language === 'fr' ? 'Erreur lors de la suppression' : 'Error deleting guild');
     } finally {
       setDeleting(false);

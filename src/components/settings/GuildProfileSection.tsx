@@ -49,10 +49,7 @@ const OfficerRankSlider = ({ maxValue, maxRank, ranks, onChange, onCommit, disab
   const [localValue, setLocalValue] = useState(maxValue);
   const sortedRanks = [...ranks].sort((a, b) => a.rank_index - b.rank_index);
   
-  const allRankIndices: number[] = [];
-  for (let i = 0; i <= maxRank; i++) {
-    allRankIndices.push(i);
-  }
+  const allRankIndices = Array.from({ length: maxRank + 1 }, (_, i) => i);
 
   const getRankName = (index: number) => {
     const rank = sortedRanks.find(r => r.rank_index === index);
@@ -300,7 +297,6 @@ export const GuildProfileSection = ({
       onGuildUpdate({ ...guild, avatar_url: avatarUrl });
       toast({ title: t.guildSettings.avatarUpdated });
     } catch (error: any) {
-      console.error('Upload error:', error);
       toast({
         title: t.guildSettings.uploadError,
         description: error.message,
@@ -335,7 +331,6 @@ export const GuildProfileSection = ({
       onGuildUpdate({ ...guild, avatar_url: null });
       toast({ title: t.guildSettings.avatarRemoved });
     } catch (error: any) {
-      console.error('Remove error:', error);
       toast({
         title: t.errors.generic,
         description: error.message,
@@ -361,7 +356,6 @@ export const GuildProfileSection = ({
       onGuildUpdate({ ...guild, officer_rank_threshold: newRank });
       toast({ title: language === 'fr' ? 'Rang officier mis à jour' : 'Officer rank updated' });
     } catch (error: any) {
-      console.error('Error updating officer rank:', error);
       toast({
         title: language === 'fr' ? 'Erreur lors de la mise à jour' : 'Update failed',
         variant: 'destructive',

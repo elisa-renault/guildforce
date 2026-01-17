@@ -83,7 +83,7 @@ export const MyPermissionsCard = ({ guildId, isGM }: MyPermissionsCardProps) => 
         
         setMyPermissions(granted);
       } catch (error) {
-        console.error('Error loading my permissions:', error);
+        // Permission loading error handled silently
       } finally {
         setLoading(false);
       }

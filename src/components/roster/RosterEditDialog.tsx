@@ -129,7 +129,7 @@ export const RosterEditDialog = ({ open, onOpenChange, rosterId, guildId, onSave
         }
       }
     } catch (error) {
-      console.error('Error loading roster data:', error);
+      // Roster data loading error handled silently
     } finally {
       setLoading(false);
     }

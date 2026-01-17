@@ -9,9 +9,7 @@ const NotFound = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    console.error("404 Error: User attempted to access non-existent route:", location.pathname);
-  }, [location.pathname]);
+  // 404 errors are handled silently - no console logging in production
 
   return (
     <div className="flex-1 flex items-center justify-center p-4 relative">

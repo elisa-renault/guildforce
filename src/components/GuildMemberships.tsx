@@ -106,7 +106,7 @@ export const GuildMemberships: React.FC = () => {
       if (error) throw error;
       setMemberships(data || []);
     } catch (error) {
-      console.error('Error fetching guild memberships:', error);
+      // Guild memberships fetch error handled silently
     } finally {
       setIsLoading(false);
     }
