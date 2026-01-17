@@ -38,12 +38,12 @@ export const AdminDashboardSection = ({
   isAdmin,
   onNavigateToSection,
 }: AdminDashboardSectionProps) => {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const navigate = useNavigate();
 
   const statCards = [
     {
-      label: language === 'fr' ? 'Utilisateurs' : 'Users',
+      label: t.guild?.members ? t.dashboard?.totalPlayers?.replace('players', '') : (language === 'fr' ? 'Utilisateurs' : 'Users'),
       value: stats?.totalUsers ?? '-',
       icon: Users,
       color: 'text-blue-400'
@@ -55,13 +55,13 @@ export const AdminDashboardSection = ({
       color: 'text-green-400'
     },
     {
-      label: language === 'fr' ? 'Sujets Forum' : 'Forum Topics',
+      label: t.forum?.topics,
       value: stats?.totalTopics ?? '-',
       icon: MessageSquare,
       color: 'text-purple-400'
     },
     {
-      label: language === 'fr' ? 'Messages Forum' : 'Forum Posts',
+      label: t.forum?.posts,
       value: stats?.totalPosts ?? '-',
       icon: MessageSquare,
       color: 'text-indigo-400'
@@ -85,7 +85,7 @@ export const AdminDashboardSection = ({
       color: stats?.openBugs && stats.openBugs > 0 ? 'text-red-400' : 'text-muted-foreground'
     },
     {
-      label: language === 'fr' ? 'Suppressions en attente' : 'Pending Deletions',
+      label: t.admin?.deletionRequests,
       value: stats?.pendingDeletions ?? '-',
       icon: Trash2,
       color: stats?.pendingDeletions && stats.pendingDeletions > 0 ? 'text-red-400' : 'text-muted-foreground'
@@ -94,66 +94,50 @@ export const AdminDashboardSection = ({
 
   const adminSections = [
     {
-      title: language === 'fr' ? 'Administration Forum' : 'Forum Administration',
-      description:
-        language === 'fr'
-          ? 'Gérer les catégories, modérateurs, signalements et sanctions'
-          : 'Manage categories, moderators, reports and sanctions',
+      title: t.admin?.forumAdmin,
+      description: language === 'fr'
+        ? 'Gérer les catégories, modérateurs, signalements et sanctions'
+        : 'Manage categories, moderators, reports and sanctions',
       icon: MessageSquare,
       onClick: () => onNavigateToSection('forum'),
       color: 'text-purple-400',
       allowsModerator: true,
     },
     {
-      title: language === 'fr' ? 'Gestion des Utilisateurs' : 'User Management',
-      description:
-        language === 'fr'
-          ? 'Attribuer des rôles (Admin, Modérateur) aux utilisateurs'
-          : 'Assign roles (Admin, Moderator) to users',
+      title: t.admin?.userManagement,
+      description: t.admin?.userManagementDesc,
       icon: Users,
       onClick: () => onNavigateToSection('users'),
       color: 'text-blue-400',
       requiresAdmin: true,
     },
     {
-      title: language === 'fr' ? 'Gestion des Guildes' : 'Guild Management',
-      description:
-        language === 'fr'
-          ? 'Rechercher, modifier et supprimer des guildes'
-          : 'Search, edit and delete guilds',
+      title: t.admin?.guildManagement,
+      description: t.admin?.guildManagementDesc,
       icon: Shield,
       onClick: () => onNavigateToSection('guilds'),
       color: 'text-green-400',
       requiresAdmin: true,
     },
     {
-      title: language === 'fr' ? 'Pages légales' : 'Legal Pages',
-      description:
-        language === 'fr'
-          ? 'Modifier le contenu des mentions légales, confidentialité et CGU'
-          : 'Edit legal notice, privacy policy and terms of service content',
+      title: t.admin?.legalPages,
+      description: t.admin?.legalPagesDesc,
       icon: FileText,
       onClick: () => onNavigateToSection('legal'),
       color: 'text-amber-400',
       requiresAdmin: true,
     },
     {
-      title: language === 'fr' ? 'Demandes de suppression' : 'Deletion Requests',
-      description:
-        language === 'fr'
-          ? 'Traiter les demandes de suppression de compte (RGPD)'
-          : 'Process account deletion requests (GDPR)',
+      title: t.admin?.deletionRequests,
+      description: t.admin?.deletionRequestsDesc,
       icon: Trash2,
       onClick: () => onNavigateToSection('deletions'),
       color: 'text-red-400',
       requiresAdmin: true,
     },
     {
-      title: language === 'fr' ? 'Rapports de bugs' : 'Bug Reports',
-      description:
-        language === 'fr'
-          ? 'Consulter et gérer les signalements de bugs'
-          : 'View and manage bug reports',
+      title: t.admin?.bugReports,
+      description: t.admin?.bugReportsDesc,
       icon: Bug,
       onClick: () => onNavigateToSection('bugs'),
       color: 'text-red-400',
@@ -186,7 +170,7 @@ export const AdminDashboardSection = ({
       {/* Admin Sections */}
       <div>
         <h2 className="text-lg font-medium text-foreground mb-4">
-          {language === 'fr' ? 'Accès rapide' : 'Quick Access'}
+          {t.admin?.quickAccess}
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {visibleSections.map((section, index) => (

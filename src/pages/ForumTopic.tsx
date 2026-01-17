@@ -203,10 +203,10 @@ const ForumTopicPage = () => {
         <CosmicBackground />
         <div className="text-center">
           <p className="text-muted-foreground mb-4">
-            {language === 'fr' ? 'Sujet non trouvé' : 'Topic not found'}
+            {t.forum?.topicNotFound}
           </p>
           <CosmicButton onClick={() => navigate('/forum')}>
-            {language === 'fr' ? 'Retour au forum' : 'Back to forum'}
+            {t.forum?.backToForum}
           </CosmicButton>
         </div>
       </div>
@@ -398,7 +398,7 @@ const ForumTopicPage = () => {
         <div className="space-y-4 mb-6">
           <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
             <MessageSquare className="h-5 w-5" />
-            {language === 'fr' ? 'Réponses' : 'Replies'} ({totalCount})
+            {t.forum?.replies} ({totalCount})
           </h2>
 
           {postsLoading ? (
@@ -407,7 +407,7 @@ const ForumTopicPage = () => {
             </div>
           ) : posts.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">
-              {language === 'fr' ? 'Aucune réponse pour le moment' : 'No replies yet'}
+              {t.forum?.noReplies}
             </p>
           ) : (
             posts.map((post) => (
@@ -437,7 +437,7 @@ const ForumTopicPage = () => {
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 icon={<ChevronLeft className="h-4 w-4" />}
               >
-                {language === 'fr' ? 'Précédent' : 'Previous'}
+                {t.forum?.previous}
               </CosmicButton>
               <span className="text-sm text-muted-foreground px-4">
                 {page} / {totalPages}
@@ -448,7 +448,7 @@ const ForumTopicPage = () => {
                 disabled={page === totalPages}
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               >
-                {language === 'fr' ? 'Suivant' : 'Next'}
+                {t.common?.next}
                 <ChevronRight className="h-4 w-4 ml-1" />
               </CosmicButton>
             </div>
@@ -459,7 +459,7 @@ const ForumTopicPage = () => {
         {user && !topic.is_locked && (
           <div id="reply-editor" className="space-y-4">
             <h3 className="text-lg font-semibold text-foreground">
-              {language === 'fr' ? 'Répondre' : 'Reply'}
+              {t.forum?.reply}
             </h3>
 
             {quotedPost && (
@@ -473,7 +473,7 @@ const ForumTopicPage = () => {
                   ×
                 </Button>
                 <p className="text-xs text-muted-foreground mb-1">
-                  {language === 'fr' ? 'En réponse à' : 'Replying to'} {quotedPost.author?.username}:
+                  {t.forum?.replyingTo} {quotedPost.author?.username}:
                 </p>
                 <p className="text-sm text-muted-foreground line-clamp-2">
                   {quotedPost.content}
@@ -484,7 +484,7 @@ const ForumTopicPage = () => {
             <MarkdownEditor
               value={replyContent}
               onChange={setReplyContent}
-              placeholder={language === 'fr' ? 'Votre réponse...' : 'Your reply...'}
+              placeholder={t.forum?.writeReply}
               minHeight="120px"
             />
 
@@ -495,7 +495,7 @@ const ForumTopicPage = () => {
                 loading={submitting}
                 icon={<Send className="h-4 w-4" />}
               >
-                {language === 'fr' ? 'Publier' : 'Post'}
+                {t.forum?.postReply}
               </CosmicButton>
             </div>
           </div>
@@ -504,7 +504,7 @@ const ForumTopicPage = () => {
         {topic.is_locked && (
           <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 text-center">
             <Lock className="h-5 w-5 inline-block mr-2" />
-            {language === 'fr' ? 'Ce sujet est verrouillé' : 'This topic is locked'}
+            {t.forum?.topicLocked}
           </div>
         )}
       </main>
@@ -514,25 +514,21 @@ const ForumTopicPage = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {language === 'fr' ? 'Confirmer la suppression' : 'Confirm deletion'}
+              {t.common?.confirmDelete}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {deleteTarget?.type === 'topic'
-                ? (language === 'fr' 
-                    ? 'Êtes-vous sûr de vouloir supprimer ce sujet ? Cette action est irréversible.'
-                    : 'Are you sure you want to delete this topic? This action cannot be undone.')
-                : (language === 'fr'
-                    ? 'Êtes-vous sûr de vouloir supprimer ce message ?'
-                    : 'Are you sure you want to delete this post?')
+                ? t.forum?.confirmDeleteTopic
+                : t.forum?.confirmDeletePost
               }
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="border-border hover:bg-muted">
-              {language === 'fr' ? 'Annuler' : 'Cancel'}
+              {t.common?.cancel}
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive hover:bg-destructive/90">
-              {language === 'fr' ? 'Supprimer' : 'Delete'}
+              {t.common?.delete}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
