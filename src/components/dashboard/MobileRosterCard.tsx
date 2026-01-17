@@ -78,6 +78,15 @@ export const MobileRosterCard = ({
 
   const filledWishes = member.wishes.filter(w => w.class_id);
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't trigger card click if clicking on interactive elements
+    const target = e.target as HTMLElement;
+    if (target.closest('button')) {
+      return;
+    }
+    onClick();
+  };
+
   return (
     <div 
       className={cn(
@@ -87,7 +96,7 @@ export const MobileRosterCard = ({
           : "bg-card/50 border-border/30 hover:border-border/50",
         "cursor-pointer"
       )}
-      onClick={onClick}
+      onClick={handleCardClick}
     >
       {/* Header with name and status */}
       <div className="flex items-center justify-between mb-2">
