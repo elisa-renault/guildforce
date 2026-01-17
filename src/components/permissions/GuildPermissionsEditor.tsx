@@ -15,18 +15,13 @@ interface GuildPermissionsEditorProps {
   guildId: string;
 }
 
-interface PermissionConfig {
-  type: PermissionType;
-  labelKey: string;
-  descKey: string;
-  isSensitive?: boolean;
-}
+// Permission labels and descriptions are now in translations.ts under t.permissions
 
-const PERMISSION_CONFIGS: PermissionConfig[] = [
-  { type: 'manage_wishes', labelKey: 'manageWishes', descKey: 'manageWishesDesc' },
-  { type: 'manage_polls', labelKey: 'managePolls', descKey: 'managePollsDesc' },
-  { type: 'manage_rosters', labelKey: 'manageRosters', descKey: 'manageRostersDesc' },
-  { type: 'view_activity_log', labelKey: 'viewActivityLog', descKey: 'viewActivityLogDesc' },
+const PERMISSION_TYPES: { type: PermissionType; isSensitive?: boolean }[] = [
+  { type: 'manage_wishes' },
+  { type: 'manage_polls' },
+  { type: 'manage_rosters' },
+  { type: 'view_activity_log' },
 ];
 
 export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps) => {
@@ -43,7 +38,6 @@ export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps)
 
   const [localPermissions, setLocalPermissions] = useState<PermissionRule[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
-  const isFrench = t.common.loading === 'Chargement...';
 
   useEffect(() => {
     setLocalPermissions(permissions);
@@ -63,7 +57,7 @@ export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps)
   const handleReset = () => {
     setLocalPermissions([]);
     setHasChanges(true);
-    toast.info(isFrench ? 'Permissions réinitialisées (GM seul)' : 'Permissions reset (GM only)');
+    toast.info(t.permissions.resetToGmOnly);
   };
 
   const handleSave = async () => {
@@ -75,18 +69,26 @@ export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps)
     return localPermissions.filter(p => p.permission_type === permissionType);
   };
 
-  const getLabel = (key: string): string => {
-    const labels: Record<string, { en: string; fr: string }> = {
-      manageWishes: { en: 'Manage Wishes', fr: 'Gérer les vœux' },
-      manageWishesDesc: { en: 'Approve or reject member wishes', fr: 'Approuver ou refuser les vœux des membres' },
-      managePolls: { en: 'Manage Polls', fr: 'Gérer les sondages' },
-      managePollsDesc: { en: 'Create, edit and publish polls', fr: 'Créer, modifier et publier des sondages' },
-      manageRosters: { en: 'Manage Rosters', fr: 'Gérer les rosters' },
-      manageRostersDesc: { en: 'Create and configure rosters', fr: 'Créer et configurer les rosters' },
-      viewActivityLog: { en: 'View Activity Log', fr: 'Voir le journal' },
-      viewActivityLogDesc: { en: 'Access the guild activity history', fr: 'Accéder à l\'historique d\'activité' },
+  const getPermissionLabel = (type: PermissionType): string => {
+    const key = type.replace(/_/g, '') as keyof typeof t.permissions;
+    // Map snake_case to camelCase keys
+    const keyMap: Record<PermissionType, keyof typeof t.permissions> = {
+      manage_wishes: 'manageWishes',
+      manage_polls: 'managePolls',
+      manage_rosters: 'manageRosters',
+      view_activity_log: 'viewActivityLog',
     };
-    return labels[key]?.[isFrench ? 'fr' : 'en'] || key;
+    return (t.permissions as any)[keyMap[type]] || type;
+  };
+
+  const getPermissionDesc = (type: PermissionType): string => {
+    const keyMap: Record<PermissionType, keyof typeof t.permissions> = {
+      manage_wishes: 'manageWishesDesc',
+      manage_polls: 'managePollsDesc',
+      manage_rosters: 'manageRostersDesc',
+      view_activity_log: 'viewActivityLogDesc',
+    };
+    return (t.permissions as any)[keyMap[type]] || '';
   };
 
   // Calculate summary stats
@@ -95,9 +97,9 @@ export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps)
   const uniqueUsers = new Set(userRules.map(r => r.user_id)).size;
 
   // Permission types for individual access editor
-  const permissionTypesForEditor = PERMISSION_CONFIGS.map(c => ({
+  const permissionTypesForEditor = PERMISSION_TYPES.map(c => ({
     type: c.type,
-    label: getLabel(c.labelKey),
+    label: getPermissionLabel(c.type),
   }));
 
   if (loading) {
@@ -114,24 +116,24 @@ export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps)
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2">
           <Shield className="h-4 w-4 text-primary" />
-          <h3 className="font-display text-base">{(t as any).permissions?.title || 'Permissions'}</h3>
+          <h3 className="font-display text-base">{t.permissions.title}</h3>
           
           {/* Summary badges */}
           <div className="flex items-center gap-1.5">
             {delegatedCount > 0 ? (
               <>
                 <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                  {delegatedCount} {isFrench ? 'déléguée' : 'delegated'}{delegatedCount > 1 ? 's' : ''}
+                  {delegatedCount} {t.permissions.delegated}
                 </Badge>
                 {uniqueUsers > 0 && (
                   <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                    +{uniqueUsers} {isFrench ? 'utilisateur' : 'user'}{uniqueUsers > 1 ? 's' : ''}
+                    +{uniqueUsers} {t.permissions.users}
                   </Badge>
                 )}
               </>
             ) : (
               <Badge variant="outline" className="text-muted-foreground text-[10px] px-1.5 py-0">
-                {isFrench ? 'GM seul' : 'GM only'}
+                {t.permissions.gmOnly}
               </Badge>
             )}
           </div>
@@ -151,11 +153,11 @@ export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps)
                     className="h-7 text-xs text-muted-foreground hover:text-destructive gap-1.5"
                   >
                     <RotateCcw className="h-3 w-3" />
-                    {isFrench ? 'Réinitialiser' : 'Reset'}
+                    {t.common.reset}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p className="text-xs">{isFrench ? 'Retirer toutes les permissions déléguées' : 'Remove all delegated permissions'}</p>
+                  <p className="text-xs">{t.permissions.resetTooltip}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -177,11 +179,11 @@ export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps)
 
       {/* Permissions table */}
       <div className="border border-border/50 rounded-lg overflow-hidden bg-card/30">
-        {PERMISSION_CONFIGS.map(({ type, labelKey, descKey, isSensitive }) => (
+        {PERMISSION_TYPES.map(({ type, isSensitive }) => (
           <PermissionRow
             key={type}
-            label={getLabel(labelKey)}
-            description={getLabel(descKey)}
+            label={getPermissionLabel(type)}
+            description={getPermissionDesc(type)}
             rules={getLocalRules(type)}
             ranks={sortedRanks}
             officerRankThreshold={officerRankThreshold}
