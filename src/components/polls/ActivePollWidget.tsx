@@ -42,6 +42,8 @@ export const ActivePollWidget = forwardRef<HTMLDivElement, ActivePollWidgetProps
     navigate(`/guild/${guildSlug}/poll/${activePoll.id}/results`);
   };
 
+  const { t } = useLanguage();
+
   return (
     <div ref={ref} className="mb-6">
       <GlowCard 
@@ -52,7 +54,7 @@ export const ActivePollWidget = forwardRef<HTMLDivElement, ActivePollWidgetProps
           <div className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-primary shrink-0" />
             <span className="text-xs font-medium text-primary uppercase tracking-wide">
-              {language === 'fr' ? 'Sondage en cours' : 'Active Poll'}
+              {t.polls.activePoll}
             </span>
           </div>
           
@@ -64,14 +66,14 @@ export const ActivePollWidget = forwardRef<HTMLDivElement, ActivePollWidgetProps
             {activePoll.response_count !== undefined && (
               <div className="flex items-center gap-1">
                 <Users className="h-3 w-3 shrink-0" />
-                <span>{activePoll.response_count} {language === 'fr' ? 'réponses' : 'responses'}</span>
+                <span>{activePoll.response_count} {t.polls.responses}</span>
               </div>
             )}
             {activePoll.ends_at && (
               <div className="flex items-center gap-1">
                 <Clock className="h-3 w-3 shrink-0" />
                 <span>
-                  {language === 'fr' ? 'Fin' : 'Ends'}{' '}
+                  {t.polls.ends}{' '}
                   {formatDistanceToNow(new Date(activePoll.ends_at), { addSuffix: true, locale })}
                 </span>
               </div>
@@ -87,11 +89,11 @@ export const ActivePollWidget = forwardRef<HTMLDivElement, ActivePollWidgetProps
                 onClick={handleResultsClick}
               >
                 <BarChart3 className="h-4 w-4 sm:mr-1.5" />
-                <span className="hidden sm:inline">{language === 'fr' ? 'Résultats' : 'Results'}</span>
+                <span className="hidden sm:inline">{t.common.results}</span>
               </Button>
             )}
             <Button variant="ghost" size="sm" className="ml-auto">
-              <span className="text-sm">{language === 'fr' ? 'Voir' : 'View'}</span>
+              <span className="text-sm">{t.polls.view}</span>
               <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           </div>

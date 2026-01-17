@@ -22,7 +22,7 @@ interface PublicProfileData {
 const PublicProfile = () => {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
-  const { language } = useLanguage();
+  const { t, language } = useLanguage();
   const [profile, setProfile] = useState<PublicProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -75,15 +75,15 @@ const PublicProfile = () => {
             <User className="h-8 w-8 text-muted-foreground" />
           </div>
           <h1 className="text-xl font-display text-foreground mb-2">
-            {language === 'fr' ? 'Utilisateur introuvable' : 'User not found'}
+            {t.errors.notFound}
           </h1>
           <p className="text-muted-foreground text-sm mb-6">
-            {language === 'fr' 
+            {t.common.loading === 'Chargement...' 
               ? `L'utilisateur "${username}" n'existe pas.`
               : `The user "${username}" does not exist.`}
           </p>
           <CosmicButton onClick={() => navigate(-1)} icon={<ArrowLeft className="h-4 w-4" />}>
-            {language === 'fr' ? 'Retour' : 'Go back'}
+            {t.common.back}
           </CosmicButton>
         </GlowCard>
       </div>
@@ -121,7 +121,7 @@ const PublicProfile = () => {
             <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground border-t border-border pt-4">
               <Calendar className="h-4 w-4" />
               <span>
-                {language === 'fr' ? 'Membre depuis' : 'Member since'} {memberSince}
+                {t.common.loading === 'Chargement...' ? 'Membre depuis' : 'Member since'} {memberSince}
               </span>
             </div>
           </GlowCard>
@@ -133,7 +133,7 @@ const PublicProfile = () => {
               onClick={() => navigate(-1)} 
               icon={<ArrowLeft className="h-4 w-4" />}
             >
-              {language === 'fr' ? 'Retour' : 'Go back'}
+              {t.common.back}
             </CosmicButton>
           </div>
         </div>

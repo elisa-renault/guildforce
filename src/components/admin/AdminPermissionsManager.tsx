@@ -37,7 +37,7 @@ interface UserWithRoles {
 }
 
 export const AdminPermissionsManager = () => {
-  const { language } = useLanguage();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [usersWithRoles, setUsersWithRoles] = useState<UserWithRoles[]>([]);
@@ -99,7 +99,7 @@ export const AdminPermissionsManager = () => {
         setUsersWithRoles([]);
       }
     } catch (error) {
-      toast.error(language === 'fr' ? 'Erreur lors du chargement' : 'Error loading data');
+      toast.error(t.errors.generic);
     } finally {
       setLoading(false);
     }
@@ -176,11 +176,7 @@ export const AdminPermissionsManager = () => {
           .insert({ user_id: user.id, role });
 
         if (error) throw error;
-        toast.success(
-          language === 'fr'
-            ? `Rôle ${role} ajouté à ${user.username}`
-            : `${role} role added to ${user.username}`
-        );
+        toast.success(t.admin.roleAdded);
       } else {
         const { error } = await supabase
           .from('user_roles')
@@ -189,11 +185,7 @@ export const AdminPermissionsManager = () => {
           .eq('role', role);
 
         if (error) throw error;
-        toast.success(
-          language === 'fr'
-            ? `Rôle ${role} retiré de ${user.username}`
-            : `${role} role removed from ${user.username}`
-        );
+        toast.success(t.admin.roleRemoved);
       }
 
       // Refresh the list
@@ -201,7 +193,7 @@ export const AdminPermissionsManager = () => {
       setSearchQuery('');
       setSearchResults([]);
     } catch (error) {
-      toast.error(language === 'fr' ? 'Erreur lors de la modification' : 'Error changing role');
+      toast.error(t.errors.generic);
     } finally {
       setSaving(false);
       setConfirmDialog({ open: false, action: 'add', user: null, role: 'user' });
@@ -220,7 +212,7 @@ export const AdminPermissionsManager = () => {
     return (
       <Badge variant="default" className="bg-blue-500/20 text-blue-400 border-blue-500/30">
         <Shield className="h-3 w-3 mr-1" />
-        {language === 'fr' ? 'Modérateur' : 'Moderator'}
+        {t.admin.moderators}
       </Badge>
     );
   };
@@ -229,7 +221,7 @@ export const AdminPermissionsManager = () => {
     <div className="space-y-6">
       <GlowCard className="p-6">
         <h2 className="text-lg font-semibold text-foreground mb-4">
-          {language === 'fr' ? 'Ajouter un rôle' : 'Add Role'}
+          {t.admin.roleManagement}
         </h2>
 
         <div className="relative">
@@ -237,7 +229,7 @@ export const AdminPermissionsManager = () => {
           <Input
             id="admin-search-user"
             name="admin-search-user"
-            placeholder={language === 'fr' ? 'Rechercher un utilisateur...' : 'Search for a user...'}
+            placeholder={t.common.search}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -283,7 +275,7 @@ export const AdminPermissionsManager = () => {
                       className="text-blue-400 border-blue-400/30 hover:bg-blue-400/10"
                     >
                       <Plus className="h-3 w-3 mr-1" />
-                      {language === 'fr' ? 'Modérateur' : 'Moderator'}
+                      {t.admin.moderators}
                     </Button>
                   )}
                   {!user.roles.includes('admin') && (
@@ -306,7 +298,7 @@ export const AdminPermissionsManager = () => {
 
       <GlowCard className="p-6">
         <h2 className="text-lg font-semibold text-foreground mb-4">
-          {language === 'fr' ? 'Utilisateurs avec des rôles' : 'Users with Roles'}
+          {t.admin.users}
         </h2>
 
         {loading ? (
@@ -317,7 +309,7 @@ export const AdminPermissionsManager = () => {
           </div>
         ) : usersWithRoles.length === 0 ? (
           <p className="text-muted-foreground text-center py-8">
-            {language === 'fr' ? 'Aucun utilisateur avec des rôles spéciaux' : 'No users with special roles'}
+            {t.permissions.noRules}
           </p>
         ) : (
           <div className="space-y-2">
@@ -375,31 +367,18 @@ export const AdminPermissionsManager = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {confirmDialog.action === 'add'
-                ? (language === 'fr' ? 'Ajouter un rôle' : 'Add Role')
-                : (language === 'fr' ? 'Retirer un rôle' : 'Remove Role')
-              }
+              {confirmDialog.action === 'add' ? t.admin.roleManagement : t.common.confirmDelete}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {confirmDialog.action === 'add'
-                ? (language === 'fr'
-                    ? `Voulez-vous ajouter le rôle "${confirmDialog.role}" à ${confirmDialog.user?.username} ?`
-                    : `Do you want to add the "${confirmDialog.role}" role to ${confirmDialog.user?.username}?`)
-                : (language === 'fr'
-                    ? `Voulez-vous retirer le rôle "${confirmDialog.role}" de ${confirmDialog.user?.username} ?`
-                    : `Do you want to remove the "${confirmDialog.role}" role from ${confirmDialog.user?.username}?`)
-              }
+              {t.admin.actionIrreversible}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={saving}>
-              {language === 'fr' ? 'Annuler' : 'Cancel'}
+              {t.common.cancel}
             </AlertDialogCancel>
             <AlertDialogAction onClick={executeRoleChange} disabled={saving}>
-              {saving
-                ? (language === 'fr' ? 'En cours...' : 'Processing...')
-                : (language === 'fr' ? 'Confirmer' : 'Confirm')
-              }
+              {saving ? t.common.processing : t.common.confirm}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
