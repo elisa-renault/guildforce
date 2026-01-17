@@ -19,6 +19,7 @@ interface WishSummary {
   choice_index: number;
   class_id: string;
   spec_ids: string[];
+  validation_status: string;
 }
 
 interface RosterData {
@@ -128,7 +129,7 @@ const Overview = () => {
         // Fetch my wishes for the default roster
         const { data: wishesData } = await supabase
           .from('class_wishes')
-          .select('choice_index, class_id, spec_ids')
+          .select('choice_index, class_id, spec_ids, validation_status')
           .eq('guild_id', foundGuildId)
           .eq('user_id', user.id)
           .eq('roster_id', rostersData.id)
@@ -232,15 +233,33 @@ const Overview = () => {
                 <h2 className="font-semibold text-foreground">
                   {t.common.loading === 'Chargement...' ? 'Mon statut' : 'My Status'}
                 </h2>
-                <div className={cn(
-                  "flex items-center gap-2 px-3 py-1.5 rounded-full border shrink-0",
-                  statusConfig.bgColor
-                )}>
-                  <StatusIcon className={cn("h-4 w-4", statusConfig.color)} />
-                  <span className={cn("text-sm font-medium", statusConfig.color)}>
-                    {statusConfig.label}
-                  </span>
-                </div>
+                {/* Show first approved wish if any */}
+                {(() => {
+                  const firstApproved = myWishes.find(w => w.validation_status === 'approved');
+                  if (firstApproved) {
+                    const wowClass = getClassById(firstApproved.class_id);
+                    return (
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border bg-green-500/10 border-green-500/30 shrink-0">
+                        <CheckCircle2 className="h-4 w-4 text-green-400" />
+                        <span className="text-sm font-medium text-green-400">
+                          {language === 'fr' ? 'Vœu' : 'Wish'} #{firstApproved.choice_index + 1}
+                          {wowClass && (
+                            <span className="ml-1 opacity-80">
+                              ({wowClass.name[language]})
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border bg-muted/30 border-border/50 shrink-0">
+                      <span className="text-sm text-muted-foreground">
+                        {language === 'fr' ? 'Aucun vœu validé' : 'No wish approved'}
+                      </span>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* My Wishes Summary */}
