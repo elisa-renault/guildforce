@@ -505,6 +505,11 @@ export interface Translations {
     nextSlide: string;
     close: string;
     toggleSidebar: string;
+    goToPreviousPage: string;
+    goToNextPage: string;
+    previous: string;
+    next: string;
+    morePages: string;
   };
   // Notifications
   notifications: {
@@ -1284,6 +1289,11 @@ export const translations: Record<Language, Translations> = {
       nextSlide: 'Next slide',
       close: 'Close',
       toggleSidebar: 'Toggle Sidebar',
+      goToPreviousPage: 'Go to previous page',
+      goToNextPage: 'Go to next page',
+      previous: 'Previous',
+      next: 'Next',
+      morePages: 'More pages',
     },
   },
   fr: {
@@ -1918,6 +1928,11 @@ export const translations: Record<Language, Translations> = {
       nextSlide: 'Diapositive suivante',
       close: 'Fermer',
       toggleSidebar: 'Basculer la barre latérale',
+      goToPreviousPage: 'Aller à la page précédente',
+      goToNextPage: 'Aller à la page suivante',
+      previous: 'Précédent',
+      next: 'Suivant',
+      morePages: 'Plus de pages',
     },
   },
 };
