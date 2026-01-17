@@ -1,4 +1,4 @@
-import { Users, CheckCircle, Shield, Heart, Swords, Target, Crosshair } from 'lucide-react';
+import { Users, CheckCircle, Shield, Heart, Swords, Sword, Crosshair } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { RoleStats, RangeStats } from '@/types/guild';
 
@@ -41,7 +41,7 @@ export const StatsCards = ({ totalPlayers, confirmedPlayers, roleStats, rangeSta
         <div className="text-[9px] md:text-xs text-muted-foreground hidden sm:block">{t.dashboard.dps}</div>
       </div>
       <div className="stat-card-compact melee hidden md:flex">
-        <Target className="h-4 md:h-5 text-orange-400" strokeWidth={1.5} />
+        <Sword className="h-4 md:h-5 text-orange-400" strokeWidth={1.5} />
         <div className="text-base md:text-xl font-bold text-foreground">{rangeStats.melee}</div>
         <div className="text-[9px] md:text-xs text-muted-foreground hidden sm:block">{t.dashboard.melee}</div>
       </div>
