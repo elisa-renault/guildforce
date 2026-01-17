@@ -5,8 +5,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
-import { GuildSubNav } from '@/components/guild';
-import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Shield, Heart, Swords, Crosshair, CheckCircle, HelpCircle, XCircle, Pencil, ArrowLeft } from 'lucide-react';
 import { CosmicButton } from '@/components/CosmicButton';
@@ -16,6 +14,7 @@ import { WishValidationBadge } from '@/components/dashboard/WishValidationBadge'
 import { ValidationStatus } from '@/types/guild';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useBattletagVisibility } from '@/hooks/useBattletagVisibility';
 
 interface WishChoice {
   choice_index: number;
@@ -51,6 +50,9 @@ const MemberWishes = () => {
   const [wishes, setWishes] = useState<WishChoice[]>([]);
   const [isGM, setIsGM] = useState(false);
   const [validatingWish, setValidatingWish] = useState<number | null>(null);
+  
+  // Use the centralized hook for BattleTag visibility
+  const { canSeeBattletag, isLoading: battletagLoading } = useBattletagVisibility(memberId);
 
   // Handle back navigation - use history or fallback to roster page
   const handleBack = useCallback(() => {
@@ -228,7 +230,7 @@ const MemberWishes = () => {
             </button>
             <div>
               <h1 className="text-lg font-semibold text-foreground">{member?.username}</h1>
-              {member?.battletag && (
+              {canSeeBattletag && member?.battletag && (
                 <p className="text-xs text-muted-foreground">{member.battletag}</p>
               )}
             </div>
