@@ -1,7 +1,7 @@
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getClassById, Role } from '@/data/wowClasses';
 import { cn } from '@/lib/utils';
-import { Check, Shield, Heart, Swords } from 'lucide-react';
+import { Check, Shield, Heart, Sword } from 'lucide-react';
 
 interface SpecButtonsProps {
   classId: string;
@@ -23,7 +23,7 @@ const roleConfig: Record<Role, { icon: typeof Shield; color: string; bgSelected:
     label: 'Heal'
   },
   dps: { 
-    icon: Swords, 
+    icon: Sword, 
     color: 'text-dps', 
     bgSelected: 'bg-dps/30 border-dps',
     label: 'DPS'
