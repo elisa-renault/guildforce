@@ -33,6 +33,9 @@ const LegalPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Scroll to top on route change
+    window.scrollTo(0, 0);
+    
     const fetchPage = async () => {
       const dbSlug = pathToSlugMap[location.pathname] || 'legal-notice';
       
