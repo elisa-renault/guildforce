@@ -113,7 +113,6 @@ export const PollResponse = ({
           <Lock className="h-4 w-4" />
           {t.polls?.anonymousDesc}
         </div>
-        </div>
       )}
 
       {questions.map((question, index) => (
@@ -185,7 +184,7 @@ export const PollResponse = ({
               <Textarea
                 value={(responses[question.id] as { type: 'text'; value: string })?.value || ''}
                 onChange={(e) => updateResponse(question.id, { type: 'text', value: e.target.value })}
-                placeholder={t.polls?.anonymousDesc ? undefined : (language === 'fr' ? 'Votre réponse...' : 'Your answer...')}
+                placeholder={language === 'fr' ? 'Votre réponse...' : 'Your answer...'}
                 className="bg-background resize-none"
                 rows={3}
               />
@@ -297,8 +296,6 @@ export const PollResponse = ({
             <Send className="h-4 w-4 mr-2" />
           )}
           {alreadyResponded ? t.polls?.updateResponses : t.polls?.submitResponses}
-        </Button>
-      </div>
         </Button>
       </div>
     </div>
