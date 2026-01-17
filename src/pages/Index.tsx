@@ -86,11 +86,11 @@ const Index = () => {
             {t.home.description}
           </p>
 
-          {/* Single CTA Button */}
-          <div className="flex flex-col items-center gap-4">
+          {/* CTA Group */}
+          <div className="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-4">
             {!user && (
               <Select value={selectedRegion} onValueChange={(v) => setSelectedRegion(v as BattleNetRegion)}>
-                <SelectTrigger className="w-40 bg-card/60 border-border">
+                <SelectTrigger className="w-36 h-11 bg-card/80 border-border/50 hover:border-primary/50 transition-colors">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -102,7 +102,7 @@ const Index = () => {
                 </SelectContent>
               </Select>
             )}
-            <CosmicButton 
+            <CosmicButton
               size="lg" 
               onClick={() => user ? navigate('/guilds') : handleBattleNetLogin()}
               loading={bnetLoading}
