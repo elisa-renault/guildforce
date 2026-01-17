@@ -20,7 +20,7 @@ import { CosmicButton } from '@/components/CosmicButton';
 import { BattleNetConnect } from '@/components/BattleNetConnect';
 import { AvatarCropDialog } from '@/components/AvatarCropDialog';
 
-import { User, Save, Globe, Loader2, Sparkles, Upload, Trash2, ExternalLink, Shield, AlertTriangle } from 'lucide-react';
+import { User, Save, Globe, Loader2, Sparkles, Upload, Trash2, ExternalLink, Shield, AlertTriangle, Settings, Info } from 'lucide-react';
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -446,26 +446,9 @@ const Profile = () => {
               </Form>
             </GlowCard>
 
-            {/* Language preference - separate card, instant save */}
-            <GlowCard className="p-5" hoverable={false}>
-              <h2 className="text-sm font-medium text-foreground mb-4 flex items-center gap-2">
-                <Globe className="h-4 w-4 text-primary" strokeWidth={1.5} />
-                {t.profile.language}
-              </h2>
-              <Select value={language} onValueChange={(val) => handleLanguageChange(val as Language)}>
-                <SelectTrigger className="cosmic-input"><SelectValue /></SelectTrigger>
-                <SelectContent className="bg-card border-border">
-                  <SelectItem value="fr">🇫🇷 Français</SelectItem>
-                  <SelectItem value="en">🇬🇧 English</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground mt-2">
-                {language === 'fr' ? 'Sauvegardé automatiquement' : 'Saved automatically'}
-              </p>
-            </GlowCard>
           </div>
 
-          {/* Right column: Battle.net + Privacy + Danger Zone */}
+          {/* Right column: Battle.net + Preferences + Danger Zone */}
           <div className="space-y-4">
             {/* Battle.net connection */}
             <GlowCard className="p-5" hoverable={false}>
@@ -473,20 +456,42 @@ const Profile = () => {
               <BattleNetConnect />
             </GlowCard>
 
-            {/* Privacy section */}
+            {/* Preferences - Language + Privacy combined */}
             <GlowCard className="p-5" hoverable={false}>
               <h2 className="text-sm font-medium text-foreground mb-4 flex items-center gap-2">
-                <Shield className="h-4 w-4 text-primary" strokeWidth={1.5} />
-                {language === 'fr' ? 'Confidentialité' : 'Privacy'}
+                <Settings className="h-4 w-4 text-primary" strokeWidth={1.5} />
+                {language === 'fr' ? 'Préférences' : 'Preferences'}
               </h2>
+
+              {/* Language selector */}
+              <div className="mb-4 pb-4 border-b border-border">
+                <Label className="text-sm text-foreground flex items-center gap-2">
+                  <Globe className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
+                  {t.profile.language}
+                </Label>
+                <Select value={language} onValueChange={(val) => handleLanguageChange(val as Language)}>
+                  <SelectTrigger className="cosmic-input mt-2"><SelectValue /></SelectTrigger>
+                  <SelectContent className="bg-card border-border">
+                    <SelectItem value="fr">🇫🇷 Français</SelectItem>
+                    <SelectItem value="en">🇬🇧 English</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1.5">
+                  {language === 'fr' ? 'Sauvegardé automatiquement' : 'Saved automatically'}
+                </p>
+              </div>
 
               {/* BattleTag visibility toggle */}
               {profile?.battletag && (
-                <div className="mb-4">
+                <div className="mb-4 pb-4 border-b border-border">
+                  <Label className="text-sm text-foreground flex items-center gap-2">
+                    <Shield className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
+                    {language === 'fr' ? 'Confidentialité' : 'Privacy'}
+                  </Label>
                   <div className="flex items-center justify-between py-2">
-                    <Label htmlFor="show-battletag" className="text-sm text-foreground cursor-pointer">
-                      {language === 'fr' ? 'Afficher mon BattleTag sur le profil public' : 'Show BattleTag on public profile'}
-                    </Label>
+                    <span className="text-sm text-muted-foreground">
+                      {language === 'fr' ? 'Afficher BattleTag' : 'Show BattleTag'}
+                    </span>
                     <Switch
                       id="show-battletag"
                       checked={showBattletag}
@@ -499,39 +504,45 @@ const Profile = () => {
                 </div>
               )}
 
-              {/* Privacy info */}
-              <div className="space-y-3 text-sm">
-                <div className="p-3 rounded-lg bg-muted/30 border border-border">
-                  <p className="font-medium text-foreground mb-1">
-                    {language === 'fr' ? 'Données publiques' : 'Public data'}
-                  </p>
-                  <p className="text-muted-foreground text-xs">
-                    {language === 'fr' 
-                      ? 'Ton pseudo et avatar sont visibles sur ton profil public.'
-                      : 'Your username and avatar are visible on your public profile.'}
-                  </p>
+              {/* Privacy info - collapsible */}
+              <details className="group">
+                <summary className="text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors flex items-center gap-1.5">
+                  <Info className="h-3.5 w-3.5" strokeWidth={1.5} />
+                  {language === 'fr' ? 'En savoir plus sur tes données' : 'Learn more about your data'}
+                </summary>
+                <div className="mt-3 space-y-2 text-xs">
+                  <div className="p-2.5 rounded-lg bg-muted/30 border border-border">
+                    <p className="font-medium text-foreground">
+                      {language === 'fr' ? 'Données publiques' : 'Public data'}
+                    </p>
+                    <p className="text-muted-foreground mt-0.5">
+                      {language === 'fr' 
+                        ? 'Pseudo et avatar visibles sur ton profil public.'
+                        : 'Username and avatar visible on your public profile.'}
+                    </p>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-muted/30 border border-border">
+                    <p className="font-medium text-foreground">
+                      {language === 'fr' ? 'Données de guilde' : 'Guild data'}
+                    </p>
+                    <p className="text-muted-foreground mt-0.5">
+                      {language === 'fr' 
+                        ? 'Personnages et vœux visibles par ta guilde uniquement.'
+                        : 'Characters and wishes visible to your guild only.'}
+                    </p>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-muted/30 border border-border">
+                    <p className="font-medium text-foreground">
+                      {language === 'fr' ? 'Données privées' : 'Private data'}
+                    </p>
+                    <p className="text-muted-foreground mt-0.5">
+                      {language === 'fr' 
+                        ? 'Email et tokens Battle.net jamais partagés.'
+                        : 'Email and Battle.net tokens never shared.'}
+                    </p>
+                  </div>
                 </div>
-                <div className="p-3 rounded-lg bg-muted/30 border border-border">
-                  <p className="font-medium text-foreground mb-1">
-                    {language === 'fr' ? 'Données de guilde' : 'Guild data'}
-                  </p>
-                  <p className="text-muted-foreground text-xs">
-                    {language === 'fr' 
-                      ? 'Tes personnages WoW et vœux de classe sont visibles uniquement par les membres de ta guilde.'
-                      : 'Your WoW characters and class wishes are only visible to your guild members.'}
-                  </p>
-                </div>
-                <div className="p-3 rounded-lg bg-muted/30 border border-border">
-                  <p className="font-medium text-foreground mb-1">
-                    {language === 'fr' ? 'Données privées' : 'Private data'}
-                  </p>
-                  <p className="text-muted-foreground text-xs">
-                    {language === 'fr' 
-                      ? 'Ton email et tes tokens Battle.net ne sont jamais partagés.'
-                      : 'Your email and Battle.net tokens are never shared.'}
-                  </p>
-                </div>
-              </div>
+              </details>
             </GlowCard>
 
             {/* Danger Zone */}
