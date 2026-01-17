@@ -184,7 +184,7 @@ export const PollResponse = ({
               <Textarea
                 value={(responses[question.id] as { type: 'text'; value: string })?.value || ''}
                 onChange={(e) => updateResponse(question.id, { type: 'text', value: e.target.value })}
-                placeholder={language === 'fr' ? 'Votre réponse...' : 'Your answer...'}
+                placeholder={t.polls?.sectionDescription}
                 className="bg-background resize-none"
                 rows={3}
               />
