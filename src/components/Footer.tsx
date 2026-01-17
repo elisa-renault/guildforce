@@ -72,7 +72,7 @@ export const Footer = () => {
 
           {/* Group 4: Support (CTA) */}
           <a
-            href="https://fr.tipeee.com/elsiabeth/"
+            href="https://fr.tipeee.com/elsia/"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs text-muted-foreground hover:text-primary-foreground hover:bg-primary transition-all border border-border/50 hover:border-primary"
@@ -95,7 +95,7 @@ export const Footer = () => {
             </div>
             <div className="w-px h-4 bg-border/40" />
             <a
-              href="https://fr.tipeee.com/elsiabeth/"
+              href="https://fr.tipeee.com/elsia/"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs text-muted-foreground hover:text-primary-foreground hover:bg-primary transition-all border border-border/50 hover:border-primary"
