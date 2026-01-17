@@ -24,7 +24,7 @@ export const EditActivePollDialog = forwardRef<HTMLDivElement, EditActivePollDia
   onEditMetadata,
   onEditFull,
 }, ref) => {
-  const { language } = useLanguage();
+  const { t } = useLanguage();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -32,12 +32,10 @@ export const EditActivePollDialog = forwardRef<HTMLDivElement, EditActivePollDia
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-yellow-500" />
-            {language === 'fr' ? 'Modifier un sondage actif' : 'Edit Active Poll'}
+            {t.polls.editActivePoll}
           </DialogTitle>
           <DialogDescription>
-            {language === 'fr'
-              ? `Ce sondage a déjà reçu ${responseCount} réponse${responseCount > 1 ? 's' : ''}. Choisissez le type de modification.`
-              : `This poll already has ${responseCount} response${responseCount > 1 ? 's' : ''}. Choose the type of edit.`}
+            {t.polls.editActivePollDesc.replace('{{count}}', String(responseCount))}
           </DialogDescription>
         </DialogHeader>
 
@@ -50,13 +48,11 @@ export const EditActivePollDialog = forwardRef<HTMLDivElement, EditActivePollDia
             <div className="flex items-center gap-2">
               <Settings className="h-5 w-5 text-primary" />
               <span className="font-semibold text-foreground">
-                {language === 'fr' ? 'Modifier les paramètres' : 'Edit Settings'}
+                {t.polls.editSettings}
               </span>
             </div>
             <p className="text-sm text-muted-foreground font-normal pl-7">
-              {language === 'fr'
-                ? 'Titre, description, date de fin, roster cible. Les réponses sont conservées.'
-                : 'Title, description, end date, target roster. Responses are preserved.'}
+              {t.polls.editSettingsDesc}
             </p>
           </button>
 
@@ -68,13 +64,11 @@ export const EditActivePollDialog = forwardRef<HTMLDivElement, EditActivePollDia
             <div className="flex items-center gap-2">
               <FileEdit className="h-5 w-5 text-destructive" />
               <span className="font-semibold text-destructive">
-                {language === 'fr' ? 'Modifier la structure' : 'Edit Structure'}
+                {t.polls.editStructure}
               </span>
             </div>
             <p className="text-sm text-muted-foreground font-normal pl-7">
-              {language === 'fr'
-                ? 'Questions et options. ⚠️ Cela réinitialisera toutes les réponses existantes.'
-                : 'Questions and options. ⚠️ This will reset all existing responses.'}
+              {t.polls.editStructureDesc}
             </p>
           </button>
         </div>
