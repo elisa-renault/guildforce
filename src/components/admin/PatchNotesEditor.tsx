@@ -289,25 +289,27 @@ export const PatchNotesEditor = () => {
             </div>
             <div className="space-y-2">
               <Label>{t.patchnotes.status}</Label>
-              <Button
-                type="button"
-                variant={editingNote.status === 'published' ? 'default' : 'outline'}
-                size="sm"
-                onClick={togglePublish}
-                className="gap-1.5"
-              >
-                {editingNote.status === 'published' ? (
-                  <>
-                    <CheckCircle className="h-4 w-4" />
-                    {t.patchnotes.published}
-                  </>
-                ) : (
-                  <>
-                    <FileEdit className="h-4 w-4" />
-                    {t.patchnotes.draft}
-                  </>
-                )}
-              </Button>
+              <div>
+                <Button
+                  type="button"
+                  variant={editingNote.status === 'published' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={togglePublish}
+                  className="gap-1.5"
+                >
+                  {editingNote.status === 'published' ? (
+                    <>
+                      <CheckCircle className="h-4 w-4" />
+                      {t.patchnotes.published}
+                    </>
+                  ) : (
+                    <>
+                      <FileEdit className="h-4 w-4" />
+                      {t.patchnotes.draft}
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
 
