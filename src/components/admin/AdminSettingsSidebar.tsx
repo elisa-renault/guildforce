@@ -2,10 +2,10 @@ import { useLayoutEffect, useState, RefObject } from 'react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { LayoutDashboard, Users, Shield, FileText, Bug, Trash2, MessageSquare, Settings, BookOpen } from 'lucide-react';
+import { LayoutDashboard, Users, Shield, FileText, Bug, Trash2, MessageSquare, Settings, BookOpen, ScrollText } from 'lucide-react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
-export type AdminSection = 'dashboard' | 'users' | 'permissions' | 'guilds' | 'forum' | 'legal' | 'bugs' | 'deletions' | 'docs';
+export type AdminSection = 'dashboard' | 'users' | 'permissions' | 'guilds' | 'forum' | 'legal' | 'patchnotes' | 'bugs' | 'deletions' | 'docs';
 
 interface SectionConfig {
   id: AdminSection;
@@ -25,6 +25,7 @@ const SECTIONS: SectionConfig[] = [
   { id: 'guilds', labelEn: 'Guilds', labelFr: 'Guildes', icon: Shield, category: 'management', requiresAdmin: true },
   { id: 'forum', labelEn: 'Forum', labelFr: 'Forum', icon: MessageSquare, category: 'content', allowsModerator: true },
   { id: 'legal', labelEn: 'Legal Pages', labelFr: 'Pages légales', icon: FileText, category: 'content', requiresAdmin: true },
+  { id: 'patchnotes', labelEn: 'Patchnotes', labelFr: 'Patchnotes', icon: ScrollText, category: 'content', requiresAdmin: true },
   { id: 'bugs', labelEn: 'Bug Reports', labelFr: 'Bugs', icon: Bug, category: 'support', allowsModerator: true },
   { id: 'deletions', labelEn: 'Deletions', labelFr: 'Suppressions', icon: Trash2, category: 'support', requiresAdmin: true },
 ];

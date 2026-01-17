@@ -10,6 +10,7 @@ import { CosmicBackground } from '@/components/CosmicBackground';
 import { GuildManager } from '@/components/admin/GuildManager';
 import { UserManager } from '@/components/admin/UserManager';
 import { LegalPagesEditor } from '@/components/admin/LegalPagesEditor';
+import { PatchNotesEditor } from '@/components/admin/PatchNotesEditor';
 import { BugReportsManager } from '@/components/admin/BugReportsManager';
 import { DeletionRequestsManager } from '@/components/admin/DeletionRequestsManager';
 import { AdminSettingsSidebar, AdminSection } from '@/components/admin/AdminSettingsSidebar';
@@ -177,6 +178,10 @@ export default function Admin() {
       case 'legal':
         if (!isAdmin) return null;
         return <LegalPagesEditor />;
+      
+      case 'patchnotes':
+        if (!isAdmin) return null;
+        return <PatchNotesEditor />;
       
       case 'bugs':
         return <BugReportsManager />;
