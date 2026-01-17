@@ -43,13 +43,13 @@ export const AdminDashboardSection = ({
 
   const statCards = [
     {
-      label: t.guild?.members ? t.dashboard?.totalPlayers?.replace('players', '') : (language === 'fr' ? 'Utilisateurs' : 'Users'),
+      label: t.admin.stats.users,
       value: stats?.totalUsers ?? '-',
       icon: Users,
       color: 'text-blue-400'
     },
     {
-      label: language === 'fr' ? 'Guildes' : 'Guilds',
+      label: t.admin.stats.guilds,
       value: stats?.totalGuilds ?? '-',
       icon: Shield,
       color: 'text-green-400'
@@ -67,19 +67,19 @@ export const AdminDashboardSection = ({
       color: 'text-indigo-400'
     },
     {
-      label: language === 'fr' ? 'Signalements en attente' : 'Pending Reports',
+      label: t.admin.stats.pendingReports,
       value: stats?.pendingReports ?? '-',
       icon: AlertTriangle,
       color: stats?.pendingReports && stats.pendingReports > 0 ? 'text-amber-400' : 'text-muted-foreground'
     },
     {
-      label: language === 'fr' ? 'Sanctions actives' : 'Active Sanctions',
+      label: t.admin.stats.activeSanctions,
       value: stats?.activeSanctions ?? '-',
       icon: AlertTriangle,
       color: stats?.activeSanctions && stats.activeSanctions > 0 ? 'text-red-400' : 'text-muted-foreground'
     },
     {
-      label: language === 'fr' ? 'Bugs ouverts' : 'Open Bugs',
+      label: t.admin.stats.openBugs,
       value: stats?.openBugs ?? '-',
       icon: Bug,
       color: stats?.openBugs && stats.openBugs > 0 ? 'text-red-400' : 'text-muted-foreground'
@@ -95,9 +95,7 @@ export const AdminDashboardSection = ({
   const adminSections = [
     {
       title: t.admin?.forumAdmin,
-      description: language === 'fr'
-        ? 'Gérer les catégories, modérateurs, signalements et sanctions'
-        : 'Manage categories, moderators, reports and sanctions',
+      description: t.admin.stats.forumAdminDesc,
       icon: MessageSquare,
       onClick: () => onNavigateToSection('forum'),
       color: 'text-purple-400',
