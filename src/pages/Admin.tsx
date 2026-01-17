@@ -170,28 +170,6 @@ export default function Admin() {
     <div className="flex-1 relative pt-16 flex flex-col">
       <CosmicBackground />
 
-      {/* Header */}
-      <div className="relative z-10 border-b border-border/50 bg-background/80 backdrop-blur-sm">
-        <div className="container max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/20 ring-1 ring-primary/50">
-              <Crown className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-2xl md:text-3xl font-display text-foreground">
-                {language === 'fr' ? 'Administration' : 'Administration'}
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                {isAdmin
-                  ? (language === 'fr' ? 'Tableau de bord administrateur' : 'Admin dashboard')
-                  : (language === 'fr' ? 'Tableau de bord modérateur' : 'Moderator dashboard')
-                }
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Layout with sidebar */}
       <div className="flex-1 flex flex-col md:flex-row relative z-10 overflow-x-hidden">
         <AdminSettingsSidebar
@@ -202,8 +180,33 @@ export default function Admin() {
         />
 
         {/* Main Content */}
-        <main className="flex-1 p-4 md:p-6 md:max-w-5xl overflow-x-hidden min-w-0">
-          {renderSectionContent()}
+        <main className="flex-1 overflow-x-hidden min-w-0">
+          {/* Header - now inside the main content area */}
+          <div className="border-b border-border/50 bg-background/80 backdrop-blur-sm">
+            <div className="container max-w-6xl mx-auto px-4 py-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/20 ring-1 ring-primary/50">
+                  <Crown className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-display text-foreground">
+                    {language === 'fr' ? 'Administration' : 'Administration'}
+                  </h1>
+                  <p className="text-sm text-muted-foreground">
+                    {isAdmin
+                      ? (language === 'fr' ? 'Tableau de bord administrateur' : 'Admin dashboard')
+                      : (language === 'fr' ? 'Tableau de bord modérateur' : 'Moderator dashboard')
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Section content */}
+          <div className="p-4 md:p-6 md:max-w-5xl">
+            {renderSectionContent()}
+          </div>
         </main>
       </div>
     </div>
