@@ -16,7 +16,7 @@ import { MobileRosterCard } from './MobileRosterCard';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 
-type SortColumn = 'player' | 'status' | 'wish1' | 'wish2' | 'wish3';
+type SortColumn = 'player' | 'status' | 'wish1' | 'wish2' | 'wish3' | 'wishesCount';
 type SortDirection = 'asc' | 'desc';
 
 interface RosterTableProps {
@@ -117,6 +117,11 @@ export const RosterTable = ({
           break;
         case 'wish3':
           comparison = getWishClassName(a.wishes, 3).localeCompare(getWishClassName(b.wishes, 3));
+          break;
+        case 'wishesCount':
+          const countA = a.wishes.filter(w => w.class_id).length;
+          const countB = b.wishes.filter(w => w.class_id).length;
+          comparison = countA - countB;
           break;
       }
 
@@ -359,7 +364,8 @@ export const RosterTable = ({
           <TableHeader>
             <TableRow className="border-border/30 hover:bg-transparent">
               <SortableHeader column="player" className="w-[120px] md:w-[140px]">{t.dashboard.player}</SortableHeader>
-              <SortableHeader column="status" className="w-[100px] md:w-[120px]">{t.wishes.status}</SortableHeader>
+              <SortableHeader column="status" className="w-[90px] md:w-[100px]">{t.wishes.status}</SortableHeader>
+              <SortableHeader column="wishesCount" className="w-[60px] md:w-[70px]"><span className="hidden md:inline">{t.dashboard.wishesCount}</span><span className="md:hidden">#</span></SortableHeader>
               <SortableHeader column="wish1"><span className="hidden md:inline">{t.dashboard.firstChoice}</span><span className="md:hidden">#1</span></SortableHeader>
               <SortableHeader column="wish2"><span className="hidden md:inline">{t.dashboard.secondChoice}</span><span className="md:hidden">#2</span></SortableHeader>
               <SortableHeader column="wish3"><span className="hidden md:inline">{t.dashboard.thirdChoice}</span><span className="md:hidden">#3</span></SortableHeader>
@@ -438,6 +444,9 @@ export const RosterTable = ({
                           )}
                         </Badge>
                       )}
+                    </TableCell>
+                    <TableCell className="py-2 px-2 md:px-3 text-center">
+                      <span className="text-sm text-muted-foreground">{member.wishes.filter(w => w.class_id).length}</span>
                     </TableCell>
                     <TableCell className="py-2 px-2 md:px-3">
                       {isEditing ? renderEditWishCell(0, editWishes.length > 1) : renderWishCell(member.id, member.wishes, 1)}
