@@ -2,10 +2,10 @@ import { useLayoutEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { LayoutDashboard, Users, Shield, FileText, Bug, Trash2, MessageSquare, Settings } from 'lucide-react';
+import { LayoutDashboard, Users, Shield, FileText, Bug, Trash2, MessageSquare, Settings, BookOpen } from 'lucide-react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
-export type AdminSection = 'dashboard' | 'users' | 'permissions' | 'guilds' | 'forum' | 'legal' | 'bugs' | 'deletions';
+export type AdminSection = 'dashboard' | 'users' | 'permissions' | 'guilds' | 'forum' | 'legal' | 'bugs' | 'deletions' | 'docs';
 
 interface SectionConfig {
   id: AdminSection;
@@ -19,6 +19,7 @@ interface SectionConfig {
 
 const SECTIONS: SectionConfig[] = [
   { id: 'dashboard', labelEn: 'Dashboard', labelFr: 'Tableau de bord', icon: LayoutDashboard, category: 'overview', allowsModerator: true },
+  { id: 'docs', labelEn: 'Documentation', labelFr: 'Documentation', icon: BookOpen, category: 'overview', requiresAdmin: true },
   { id: 'users', labelEn: 'Users', labelFr: 'Utilisateurs', icon: Users, category: 'management', requiresAdmin: true },
   { id: 'permissions', labelEn: 'Permissions', labelFr: 'Permissions', icon: Settings, category: 'management', requiresAdmin: true },
   { id: 'guilds', labelEn: 'Guilds', labelFr: 'Guildes', icon: Shield, category: 'management', requiresAdmin: true },
