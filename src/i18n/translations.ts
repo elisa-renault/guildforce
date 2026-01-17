@@ -737,6 +737,27 @@ export interface Translations {
     ends: string;
     view: string;
   };
+  // Patchnotes
+  patchnotes: {
+    changelog: string;
+    changelogDesc: string;
+    newVersion: string;
+    version: string;
+    title: string;
+    content: string;
+    draft: string;
+    published: string;
+    publishedAt: string;
+    noNotes: string;
+    confirmDelete: string;
+    confirmDeleteDesc: string;
+    versionFormat: string;
+    versionExists: string;
+    saved: string;
+    deleted: string;
+    preview: string;
+    status: string;
+  };
 }
 
 export const translations: Record<Language, Translations> = {
@@ -1455,6 +1476,26 @@ export const translations: Record<Language, Translations> = {
       next: 'Next',
       morePages: 'More pages',
     },
+    patchnotes: {
+      changelog: 'Changelog',
+      changelogDesc: 'All updates and improvements to Guildforce',
+      newVersion: 'New version',
+      version: 'Version',
+      title: 'Title',
+      content: 'Content',
+      draft: 'Draft',
+      published: 'Published',
+      publishedAt: 'Published on',
+      noNotes: 'No updates yet',
+      confirmDelete: 'Delete this version?',
+      confirmDeleteDesc: 'This action cannot be undone. Delete version',
+      versionFormat: 'Format: X.Y.Z (e.g., 1.0.0)',
+      versionExists: 'This version already exists',
+      saved: 'Version saved',
+      deleted: 'Version deleted',
+      preview: 'Preview',
+      status: 'Status',
+    },
   },
   fr: {
     common: {
@@ -2170,6 +2211,26 @@ export const translations: Record<Language, Translations> = {
       previous: 'Précédent',
       next: 'Suivant',
       morePages: 'Plus de pages',
+    },
+    patchnotes: {
+      changelog: 'Historique des versions',
+      changelogDesc: 'Toutes les mises à jour et améliorations de Guildforce',
+      newVersion: 'Nouvelle version',
+      version: 'Version',
+      title: 'Titre',
+      content: 'Contenu',
+      draft: 'Brouillon',
+      published: 'Publié',
+      publishedAt: 'Publié le',
+      noNotes: 'Aucune mise à jour',
+      confirmDelete: 'Supprimer cette version ?',
+      confirmDeleteDesc: 'Cette action est irréversible. Supprimer la version',
+      versionFormat: 'Format : X.Y.Z (ex: 1.0.0)',
+      versionExists: 'Cette version existe déjà',
+      saved: 'Version enregistrée',
+      deleted: 'Version supprimée',
+      preview: 'Aperçu',
+      status: 'Statut',
     },
   },
 };
