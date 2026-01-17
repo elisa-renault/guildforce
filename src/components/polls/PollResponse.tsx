@@ -278,11 +278,11 @@ export const PollResponse = ({
         </GlowCard>
       ))}
 
-      <div className="flex items-center justify-end gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3">
         {alreadyResponded && (
-          <div className="flex items-center gap-2 text-green-400 text-sm mr-auto">
-            <CheckCircle className="h-4 w-4" />
-            {language === 'fr' ? 'Vous avez déjà répondu' : 'You already responded'}
+          <div className="flex items-center gap-2 text-green-400 text-sm sm:mr-auto">
+            <CheckCircle className="h-4 w-4 shrink-0" />
+            <span>{language === 'fr' ? 'Vous avez déjà répondu' : 'You already responded'}</span>
           </div>
         )}
         
@@ -290,6 +290,7 @@ export const PollResponse = ({
           onClick={handleSubmit}
           disabled={!isComplete || saving}
           size="lg"
+          className="w-full sm:w-auto"
         >
           {saving ? (
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
