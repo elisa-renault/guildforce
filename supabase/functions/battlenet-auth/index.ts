@@ -892,26 +892,31 @@ Deno.serve(async (req) => {
 
     // Scheduled sync for all users with valid tokens (called by cron)
     if (path === 'scheduled-sync' && req.method === 'POST') {
-      // Verify this is a legitimate cron call via secret header or apikey
+      // Verify this is a legitimate cron call via secret header or service role key
       const cronSecret = req.headers.get('x-cron-secret');
       const expectedSecret = Deno.env.get('CRON_SECRET');
-      const apiKey = req.headers.get('apikey');
       
       // Allow calls with:
-      // 1. Valid cron secret header
-      // 2. Service role authorization
-      // 3. Valid apikey (for pg_net calls from cron)
+      // 1. Valid cron secret header (for pg_cron scheduled jobs)
+      // 2. Exact service role authorization (for admin/manual triggers)
       const authHeader = req.headers.get('Authorization');
-      const isServiceRole = authHeader?.includes(SUPABASE_SERVICE_ROLE_KEY.substring(0, 20));
-      const hasValidApiKey = apiKey && apiKey.length > 20;
+      const isServiceRole = authHeader === `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`;
+      const hasValidCronSecret = cronSecret && expectedSecret && cronSecret === expectedSecret;
       
-      if (!isServiceRole && cronSecret !== expectedSecret && !hasValidApiKey) {
-        log.error('Unauthorized scheduled sync attempt');
+      if (!isServiceRole && !hasValidCronSecret) {
+        log.error('Unauthorized scheduled sync attempt', { 
+          hasAuthHeader: !!authHeader, 
+          hasCronSecret: !!cronSecret 
+        });
         return new Response(JSON.stringify({ error: 'Unauthorized' }), {
           status: 401,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
+      
+      log.info('Scheduled sync authorized', { 
+        method: isServiceRole ? 'service_role' : 'cron_secret' 
+      });
 
       log.info('Starting scheduled sync for all users AND all guilds...');
 
