@@ -242,7 +242,6 @@ const GuildMembers = () => {
             .order('rank_index', { ascending: true });
 
           if (wowError) {
-            console.error('Error loading WoW members:', wowError);
             return;
           }
 
@@ -283,7 +282,7 @@ const GuildMembers = () => {
           setMembers(memberList);
         }
       } catch (error) {
-        console.error('Error loading guild members:', error);
+        // Guild members loading error handled silently
       } finally {
         setLoading(false);
       }

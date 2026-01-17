@@ -49,10 +49,7 @@ const RankSlider = ({ maxValue, maxRank, ranks, officerRankThreshold, onChange }
   
   const minRank = 0;
   
-  const allRankIndices: number[] = [];
-  for (let i = minRank; i <= maxRank; i++) {
-    allRankIndices.push(i);
-  }
+  const allRankIndices = Array.from({ length: maxRank + 1 }, (_, i) => i);
 
   const getRankName = (index: number) => {
     const rank = sortedRanks.find(r => r.rank_index === index);

@@ -130,7 +130,7 @@ const ForumAdmin = () => {
       setModerators(mods || []);
       setUsers(allUsers || []);
     } catch (error) {
-      console.error('Error loading admin data:', error);
+      // Error logged silently in production
       toast.error(language === 'fr' ? 'Erreur de chargement' : 'Loading error');
     } finally {
       setLoading(false);
@@ -211,7 +211,6 @@ const ForumAdmin = () => {
       setCategoryDialogOpen(false);
       loadData();
     } catch (error) {
-      console.error('Error saving category:', error);
       toast.error(language === 'fr' ? 'Erreur' : 'Error');
     }
   };
@@ -224,7 +223,6 @@ const ForumAdmin = () => {
       setDeleteTarget(null);
       loadData();
     } catch (error) {
-      console.error('Error deleting category:', error);
       toast.error(language === 'fr' ? 'Erreur' : 'Error');
     }
   };
@@ -244,7 +242,6 @@ const ForumAdmin = () => {
       await reorderCategories(newCategories.map(c => c.id));
       toast.success(language === 'fr' ? 'Ordre mis à jour' : 'Order updated');
     } catch (error) {
-      console.error('Error reordering categories:', error);
       toast.error(language === 'fr' ? 'Erreur' : 'Error');
       loadData(); // Revert on error
     }
@@ -259,7 +256,6 @@ const ForumAdmin = () => {
       setSelectedUserId('');
       loadData();
     } catch (error) {
-      console.error('Error adding moderator:', error);
       toast.error(language === 'fr' ? 'Erreur' : 'Error');
     }
   };
@@ -272,7 +268,6 @@ const ForumAdmin = () => {
       setDeleteTarget(null);
       loadData();
     } catch (error) {
-      console.error('Error removing moderator:', error);
       toast.error(language === 'fr' ? 'Erreur' : 'Error');
     }
   };
@@ -288,7 +283,6 @@ const ForumAdmin = () => {
       }
       loadData();
     } catch (error) {
-      console.error('Error toggling role:', error);
       toast.error(language === 'fr' ? 'Erreur' : 'Error');
     }
   };
