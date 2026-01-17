@@ -68,7 +68,6 @@ export const ReportDialog = ({
       setReason('spam');
       setDetails('');
     } catch (error) {
-      console.error('Error submitting report:', error);
       toast.error(language === 'fr' ? 'Erreur lors du signalement' : 'Error submitting report');
     } finally {
       setSubmitting(false);

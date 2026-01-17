@@ -103,7 +103,6 @@ const BugReportButton = React.forwardRef<HTMLButtonElement, React.ComponentProps
         resetForm();
         setIsOpen(false);
       } catch (error) {
-        console.error('Error submitting bug report:', error);
         toast.error(t.bugReport.error);
       } finally {
         setIsSubmitting(false);

@@ -83,7 +83,6 @@ export const SanctionDialog = ({
       setReason('');
       onSuccess?.();
     } catch (error) {
-      console.error('Error applying sanction:', error);
       toast.error(language === 'fr' ? 'Erreur lors de l\'application de la sanction' : 'Error applying sanction');
     } finally {
       setLoading(false);

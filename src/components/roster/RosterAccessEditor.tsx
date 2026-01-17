@@ -41,13 +41,7 @@ const RankSlider = ({ maxValue, maxRank, ranks, onChange }: RankSliderProps) => 
   const sortedRanks = [...ranks].sort((a, b) => a.rank_index - b.rank_index);
   
   // Always start from 0 (GM)
-  const minRank = 0;
-  
-  // Generate all rank indices from 0 to maxRank
-  const allRankIndices: number[] = [];
-  for (let i = minRank; i <= maxRank; i++) {
-    allRankIndices.push(i);
-  }
+  const allRankIndices = Array.from({ length: maxRank + 1 }, (_, i) => i);
 
   const getRankName = (index: number) => {
     const rank = sortedRanks.find(r => r.rank_index === index);

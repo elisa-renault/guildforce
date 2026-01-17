@@ -99,7 +99,6 @@ export const AdminPermissionsManager = () => {
         setUsersWithRoles([]);
       }
     } catch (error) {
-      console.error('Error fetching users with roles:', error);
       toast.error(language === 'fr' ? 'Erreur lors du chargement' : 'Error loading data');
     } finally {
       setLoading(false);
@@ -149,7 +148,7 @@ export const AdminPermissionsManager = () => {
         setSearchResults(results);
       }
     } catch (error) {
-      console.error('Error searching users:', error);
+      // Search error handled silently
     } finally {
       setSearching(false);
     }
@@ -202,7 +201,6 @@ export const AdminPermissionsManager = () => {
       setSearchQuery('');
       setSearchResults([]);
     } catch (error) {
-      console.error('Error changing role:', error);
       toast.error(language === 'fr' ? 'Erreur lors de la modification' : 'Error changing role');
     } finally {
       setSaving(false);

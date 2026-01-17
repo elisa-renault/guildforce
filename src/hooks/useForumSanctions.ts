@@ -60,7 +60,6 @@ export function useCurrentUserSanction() {
           setSanction(null);
         }
       } catch (error) {
-        console.error('Error checking sanction:', error);
         setSanction(null);
       } finally {
         setLoading(false);

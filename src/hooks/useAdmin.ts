@@ -40,13 +40,11 @@ export function useIsAdmin() {
           .maybeSingle();
 
         if (error) {
-          console.error('Error checking admin status:', error);
           setIsAdmin(false);
         } else {
           setIsAdmin(!!data);
         }
       } catch (err) {
-        console.error('Error checking admin status:', err);
         setIsAdmin(false);
       } finally {
         setLoading(false);
@@ -83,7 +81,6 @@ export function useAdminRoles() {
           .in('role', ['admin', 'moderator']);
 
         if (error) {
-          console.error('Error checking roles:', error);
           setIsAdmin(false);
           setIsModerator(false);
         } else {
@@ -92,7 +89,6 @@ export function useAdminRoles() {
           setIsModerator(roles.includes('admin') || roles.includes('moderator'));
         }
       } catch (err) {
-        console.error('Error checking roles:', err);
         setIsAdmin(false);
         setIsModerator(false);
       } finally {
@@ -128,13 +124,11 @@ export function useIsModerator() {
           .in('role', ['admin', 'moderator']);
 
         if (error) {
-          console.error('Error checking moderator status:', error);
           setIsModerator(false);
         } else {
           setIsModerator(data && data.length > 0);
         }
       } catch (err) {
-        console.error('Error checking moderator status:', err);
         setIsModerator(false);
       } finally {
         setLoading(false);
