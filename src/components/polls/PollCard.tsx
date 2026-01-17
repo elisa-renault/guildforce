@@ -50,9 +50,9 @@ export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
   };
 
   const statusLabels = {
-    draft: language === 'fr' ? 'Brouillon' : 'Draft',
-    active: language === 'fr' ? 'Actif' : 'Active',
-    closed: language === 'fr' ? 'Clôturé' : 'Closed',
+    draft: t.polls?.status?.draft || 'Draft',
+    active: t.polls?.status?.active || 'Active',
+    closed: t.polls?.status?.closed || 'Closed',
   };
 
   const handleViewResults = () => {
@@ -67,17 +67,12 @@ export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
     navigate(`/guild/${guildSlug}/polls/${poll.id}/edit`);
   };
 
-  // Handle click on the card itself - navigate to poll view for voting
   const handleCardClick = (e: React.MouseEvent) => {
-    // Don't navigate if clicking on buttons or dialogs
     const target = e.target as HTMLElement;
     if (target.closest('button') || target.closest('[role="dialog"]')) {
       return;
     }
     
-    // For active polls, go to vote/respond view
-    // For closed polls, go to results
-    // For drafts (GM only), go to edit
     if (poll.status === 'active') {
       handleRespond();
     } else if (poll.status === 'closed') {
@@ -94,7 +89,6 @@ export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
       onClick={handleCardClick}
     >
       <div className="flex flex-col gap-3">
-        {/* Header: Title + badges */}
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="text-lg font-semibold text-foreground truncate max-w-full">
             {poll.title}
@@ -105,7 +99,7 @@ export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
           {poll.is_anonymous && (
             <Badge variant="outline" className="bg-purple-500/20 text-purple-400 border-purple-500/30">
               <Lock className="h-3 w-3 mr-1" />
-              <span className="hidden sm:inline">{language === 'fr' ? 'Anonyme' : 'Anonymous'}</span>
+              <span className="hidden sm:inline">{t.polls?.anonymous}</span>
             </Badge>
           )}
         </div>
@@ -116,7 +110,6 @@ export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
           </p>
         )}
 
-        {/* Metadata row */}
         <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
           {poll.creator && (
             <div className="flex items-center gap-1.5">
@@ -146,9 +139,7 @@ export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
           {poll.response_count !== undefined && (
             <div className="flex items-center gap-1">
               <Users className="h-3.5 w-3.5" />
-              <span>
-                {poll.response_count} {language === 'fr' ? 'réponses' : 'responses'}
-              </span>
+              <span>{poll.response_count} {t.polls?.responses}</span>
             </div>
           )}
 
@@ -159,12 +150,11 @@ export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
           )}
         </div>
 
-        {/* Action buttons - wrap on mobile */}
         <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/30" onClick={(e) => e.stopPropagation()}>
           {poll.status === 'active' && !isGM && (
             <Button size="sm" onClick={handleRespond}>
               <Edit className="h-4 w-4 sm:mr-1.5" />
-              <span className="hidden sm:inline">{language === 'fr' ? 'Répondre' : 'Respond'}</span>
+              <span className="hidden sm:inline">{t.polls?.respond}</span>
             </Button>
           )}
 
@@ -174,7 +164,7 @@ export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
                 <>
                   <Button size="sm" variant="outline" onClick={handleEdit}>
                     <Edit className="h-4 w-4 sm:mr-1.5" />
-                    <span className="hidden sm:inline">{language === 'fr' ? 'Éditer' : 'Edit'}</span>
+                    <span className="hidden sm:inline">{t.common.edit}</span>
                   </Button>
                   <Button 
                     size="sm" 
@@ -182,7 +172,7 @@ export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
                     className="bg-green-600 hover:bg-green-700"
                   >
                     <Play className="h-4 w-4 sm:mr-1.5" />
-                    <span className="hidden sm:inline">{language === 'fr' ? 'Publier' : 'Publish'}</span>
+                    <span className="hidden sm:inline">{t.common.publish}</span>
                   </Button>
                 </>
               )}
@@ -191,11 +181,11 @@ export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
                 <>
                   <Button size="sm" variant="outline" onClick={() => setEditDialogOpen(true)}>
                     <Settings className="h-4 w-4 sm:mr-1.5" />
-                    <span className="hidden sm:inline">{language === 'fr' ? 'Modifier' : 'Edit'}</span>
+                    <span className="hidden sm:inline">{t.common.edit}</span>
                   </Button>
                   <Button size="sm" variant="outline" onClick={handleViewResults}>
                     <BarChart3 className="h-4 w-4 sm:mr-1.5" />
-                    <span className="hidden sm:inline">{language === 'fr' ? 'Résultats' : 'Results'}</span>
+                    <span className="hidden sm:inline">{t.common.results}</span>
                   </Button>
                   <Button 
                     size="sm" 
@@ -204,7 +194,7 @@ export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
                     className="border-red-500/30 text-red-400 hover:bg-red-500/10"
                   >
                     <Lock className="h-4 w-4 sm:mr-1.5" />
-                    <span className="hidden sm:inline">{language === 'fr' ? 'Clôturer' : 'Close'}</span>
+                    <span className="hidden sm:inline">{t.common.close}</span>
                   </Button>
                 </>
               )}
@@ -212,7 +202,7 @@ export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
               {poll.status === 'closed' && (
                 <Button size="sm" variant="outline" onClick={handleViewResults}>
                   <Eye className="h-4 w-4 sm:mr-1.5" />
-                  <span className="hidden sm:inline">{language === 'fr' ? 'Voir résultats' : 'View Results'}</span>
+                  <span className="hidden sm:inline">{t.polls?.viewResults}</span>
                 </Button>
               )}
 
