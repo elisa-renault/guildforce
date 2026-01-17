@@ -108,7 +108,7 @@ export const Footer = () => {
           {/* Row 2: Préférences (Langue + Cookies) */}
           <div className="flex items-center justify-center gap-3">
             <Select value={language} onValueChange={(value: 'fr' | 'en') => setLanguage(value)}>
-              <SelectTrigger className="w-[105px] h-7 bg-transparent border-border/50 text-muted-foreground text-xs rounded-full px-2.5 gap-1.5">
+              <SelectTrigger className="w-[115px] h-7 bg-transparent border-border/50 text-muted-foreground text-xs rounded-full px-2.5 gap-1.5">
                 <Globe className="h-3.5 w-3.5" />
                 <SelectValue />
               </SelectTrigger>
