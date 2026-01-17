@@ -17,7 +17,7 @@ import type { ResponseValue } from '@/types/poll';
 const GuildPollView = () => {
   const navigate = useNavigate();
   const { regionSlug, serverSlug, guildSlug, pollId } = useParams();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
@@ -109,14 +109,14 @@ const GuildPollView = () => {
   const handleSubmit = async (responses: { questionId: string; value: ResponseValue }[]) => {
     try {
       await submitAllResponses(responses);
-      toast({ title: language === 'fr' ? 'Réponses enregistrées !' : 'Responses submitted!' });
+      toast({ title: t.polls?.submitResponses ? t.polls.submitResponses.replace('Envoyer mes réponses', 'Réponses enregistrées !').replace('Submit my responses', 'Responses submitted!') : 'Responses submitted!' });
       setHasResponded(true);
       setShowResults(true);
       setIsEditing(false);
       refetch();
       refetchResults();
     } catch (error: any) {
-      toast({ title: language === 'fr' ? 'Erreur' : 'Error', description: error.message, variant: 'destructive' });
+      toast({ title: t.polls?.error || 'Error', description: error.message, variant: 'destructive' });
     }
   };
 
@@ -133,7 +133,7 @@ const GuildPollView = () => {
     return (
       <div className="flex-1 flex items-center justify-center">
         <CosmicBackground />
-        <p className="text-muted-foreground">{language === 'fr' ? 'Sondage introuvable' : 'Poll not found'}</p>
+        <p className="text-muted-foreground">{t.polls?.notFound}</p>
       </div>
     );
   }
@@ -169,10 +169,7 @@ const GuildPollView = () => {
               onClick={() => setShowResults(!showResults)}
             >
               <BarChart3 className="h-4 w-4 mr-2" />
-              {showResults 
-                ? (language === 'fr' ? 'Masquer résultats' : 'Hide Results') 
-                : (language === 'fr' ? 'Voir résultats' : 'View Results')
-              }
+              {showResults ? t.polls?.hideResults : t.polls?.viewResults}
             </Button>
           )}
         </div>
@@ -185,10 +182,10 @@ const GuildPollView = () => {
             </span>
           )}
           {poll.ends_at && (
-            <span className={isClosed ? 'text-destructive' : ''}>
+          <span className={isClosed ? 'text-destructive' : ''}>
               {isClosed 
-                ? (language === 'fr' ? 'Clôturé' : 'Closed') 
-                : `${language === 'fr' ? 'Termine le' : 'Ends'}: ${new Date(poll.ends_at).toLocaleDateString()}`
+                ? t.polls?.closed 
+                : `${t.polls?.endsOn}: ${new Date(poll.ends_at).toLocaleDateString()}`
               }
             </span>
           )}
@@ -199,8 +196,8 @@ const GuildPollView = () => {
           <div className="space-y-6">
             {hasResponded && !isClosed && (
               <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 flex items-center justify-between">
-                <p className="text-primary">
-                  {language === 'fr' ? 'Vous avez déjà répondu à ce sondage' : 'You have already responded to this poll'}
+              <p className="text-primary">
+                  {t.polls?.alreadyResponded}
                 </p>
                 <Button
                   variant="outline"
@@ -208,7 +205,7 @@ const GuildPollView = () => {
                   onClick={() => setIsEditing(true)}
                 >
                   <Edit className="h-4 w-4 mr-2" />
-                  {language === 'fr' ? 'Modifier' : 'Edit'}
+                  {t.common.edit}
                 </Button>
               </div>
             )}
@@ -222,8 +219,8 @@ const GuildPollView = () => {
           <div className="space-y-6">
             <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 flex items-center justify-between">
               <p className="text-primary">
-                {language === 'fr' ? 'Vous avez déjà répondu à ce sondage' : 'You have already responded to this poll'}
-              </p>
+                  {t.polls?.alreadyResponded}
+                </p>
               {!isClosed && (
                 <Button
                   variant="outline"
@@ -231,16 +228,14 @@ const GuildPollView = () => {
                   onClick={() => setIsEditing(true)}
                 >
                   <Edit className="h-4 w-4 mr-2" />
-                  {language === 'fr' ? 'Modifier' : 'Edit'}
+                  {t.common.edit}
                 </Button>
               )}
             </div>
             <div className="bg-muted/30 border border-muted rounded-lg p-8 text-center">
               <Lock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">
-                {language === 'fr' 
-                  ? 'Les résultats de ce sondage sont réservés à certains membres.' 
-                  : 'Results for this poll are restricted to certain members.'}
+                {t.polls?.resultsRestricted}
               </p>
             </div>
           </div>

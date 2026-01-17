@@ -515,6 +515,43 @@ export interface Translations {
     marketingDesc: string;
     manageCookies: string;
   };
+  // Polls
+  polls: {
+    new: string;
+    edit: string;
+    confirmReset: string;
+    resetDescription: string;
+    resetAndSave: string;
+    settingsOnlyMode: string;
+    settingsOnlyDesc: string;
+    fullEditMode: string;
+    fullEditDesc: string;
+    alreadyResponded: string;
+    updateResponses: string;
+    submitResponses: string;
+    notFound: string;
+    anonymous: string;
+    anonymousDesc: string;
+    respond: string;
+    viewResults: string;
+    hideResults: string;
+    closed: string;
+    endsOn: string;
+    responses: string;
+    resultsRestricted: string;
+    unstableConnection: string;
+    unstableConnectionDesc: string;
+    saved: string;
+    draftSaved: string;
+    published: string;
+    updated: string;
+    error: string;
+    status: {
+      draft: string;
+      active: string;
+      closed: string;
+    };
+  };
 }
 
 export const translations: Record<Language, Translations> = {
@@ -956,6 +993,42 @@ export const translations: Record<Language, Translations> = {
       marketing: 'Marketing cookies',
       marketingDesc: 'Used to display personalized ads based on your interests.',
       manageCookies: 'Cookie settings',
+    },
+    polls: {
+      new: 'New Poll',
+      edit: 'Edit Poll',
+      confirmReset: 'Confirm Reset',
+      resetDescription: 'This action will permanently delete all existing responses. This action cannot be undone.',
+      resetAndSave: 'Reset and Save',
+      settingsOnlyMode: 'Settings only mode',
+      settingsOnlyDesc: 'Questions cannot be modified. Existing responses will be preserved.',
+      fullEditMode: 'Full edit mode',
+      fullEditDesc: 'Warning: saving will reset all existing responses.',
+      alreadyResponded: 'You have already responded to this poll',
+      updateResponses: 'Update my responses',
+      submitResponses: 'Submit my responses',
+      notFound: 'Poll not found',
+      anonymous: 'Anonymous',
+      anonymousDesc: 'This poll is anonymous. Your responses will not be associated with your name.',
+      respond: 'Respond',
+      viewResults: 'View Results',
+      hideResults: 'Hide Results',
+      closed: 'Closed',
+      endsOn: 'Ends',
+      responses: 'responses',
+      resultsRestricted: 'Results for this poll are restricted to certain members.',
+      unstableConnection: 'Unstable connection',
+      unstableConnectionDesc: "Some poll data couldn't be loaded. Check your connection and retry (you won't be redirected automatically).",
+      saved: 'Poll saved',
+      draftSaved: 'Draft saved',
+      published: 'Poll published!',
+      updated: 'Poll updated',
+      error: 'Error',
+      status: {
+        draft: 'Draft',
+        active: 'Active',
+        closed: 'Closed',
+      },
     },
     bugReport: {
       button: 'Report a bug',
@@ -1460,6 +1533,42 @@ export const translations: Record<Language, Translations> = {
       marketing: 'Cookies marketing',
       marketingDesc: 'Utilisés pour afficher des publicités personnalisées selon vos centres d\'intérêt.',
       manageCookies: 'Gérer les cookies',
+    },
+    polls: {
+      new: 'Nouveau sondage',
+      edit: 'Modifier le sondage',
+      confirmReset: 'Confirmer la réinitialisation',
+      resetDescription: 'Cette action supprimera définitivement toutes les réponses existantes. Cette action est irréversible.',
+      resetAndSave: 'Réinitialiser et enregistrer',
+      settingsOnlyMode: 'Mode paramètres uniquement',
+      settingsOnlyDesc: 'Les questions ne peuvent pas être modifiées. Les réponses existantes seront conservées.',
+      fullEditMode: 'Mode édition complète',
+      fullEditDesc: 'Attention : enregistrer réinitialisera toutes les réponses existantes.',
+      alreadyResponded: 'Vous avez déjà répondu à ce sondage',
+      updateResponses: 'Modifier mes réponses',
+      submitResponses: 'Envoyer mes réponses',
+      notFound: 'Sondage introuvable',
+      anonymous: 'Anonyme',
+      anonymousDesc: 'Ce sondage est anonyme. Vos réponses ne seront pas associées à votre nom.',
+      respond: 'Répondre',
+      viewResults: 'Voir résultats',
+      hideResults: 'Masquer résultats',
+      closed: 'Clôturé',
+      endsOn: 'Termine le',
+      responses: 'réponses',
+      resultsRestricted: 'Les résultats de ce sondage sont réservés à certains membres.',
+      unstableConnection: 'Connexion instable',
+      unstableConnectionDesc: "Impossible de charger certaines données du sondage. Vérifie ta connexion et réessaie (la page ne te redirige plus automatiquement).",
+      saved: 'Sondage enregistré',
+      draftSaved: 'Brouillon enregistré',
+      published: 'Sondage publié !',
+      updated: 'Sondage mis à jour',
+      error: 'Erreur',
+      status: {
+        draft: 'Brouillon',
+        active: 'Actif',
+        closed: 'Clôturé',
+      },
     },
     bugReport: {
       button: 'Signaler un bug',
