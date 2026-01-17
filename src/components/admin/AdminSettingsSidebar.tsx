@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useState, RefObject } from 'react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -41,6 +41,7 @@ interface AdminSettingsSidebarProps {
   onSectionChange: (section: AdminSection) => void;
   isAdmin: boolean;
   isModerator: boolean;
+  mobileTabsRef?: RefObject<HTMLDivElement>;
 }
 
 export const AdminSettingsSidebar = ({
@@ -48,12 +49,11 @@ export const AdminSettingsSidebar = ({
   onSectionChange,
   isAdmin,
   isModerator,
+  mobileTabsRef,
 }: AdminSettingsSidebarProps) => {
   const { language } = useLanguage();
   const isMobile = useIsMobile();
   const [tabsTop, setTabsTop] = useState<number>(64);
-  const [tabsHeight, setTabsHeight] = useState<number>(48);
-  const tabsRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
     if (!isMobile) return;
@@ -62,20 +62,14 @@ export const AdminSettingsSidebar = ({
       const globalNav = document.querySelector<HTMLElement>('[data-global-nav]');
       const globalH = globalNav?.offsetHeight ?? 64;
       setTabsTop(globalH);
-      
-      if (tabsRef.current) {
-        setTabsHeight(tabsRef.current.offsetHeight);
-      }
     };
 
-    // Use requestAnimationFrame for accurate measurement after paint
     requestAnimationFrame(compute);
     window.addEventListener('resize', compute);
 
     const ro = new ResizeObserver(compute);
     const globalNavEl = document.querySelector<HTMLElement>('[data-global-nav]');
     if (globalNavEl) ro.observe(globalNavEl);
-    if (tabsRef.current) ro.observe(tabsRef.current);
 
     return () => {
       ro.disconnect();
@@ -99,43 +93,39 @@ export const AdminSettingsSidebar = ({
     return acc;
   }, {} as Record<string, SectionConfig[]>);
 
-  // Mobile: fixed horizontal tabs
+  // Mobile: fixed horizontal tabs only (spacer is handled by parent)
   if (isMobile) {
     return (
-      <>
-        <div 
-          ref={tabsRef}
-          className="fixed left-0 right-0 z-30 border-b border-border/50 bg-background/95 backdrop-blur-sm px-3" 
-          style={{ top: tabsTop }}
-        >
-          <ScrollArea className="w-full">
-            <div className="flex items-center gap-0.5 py-1.5">
-              {visibleSections.map((section) => {
-                const Icon = section.icon;
-                const isActive = activeSection === section.id;
-                return (
-                  <button
-                    key={section.id}
-                    onClick={() => onSectionChange(section.id)}
-                    className={cn(
-                      "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0",
-                      isActive
-                        ? "bg-primary/20 text-foreground ring-1 ring-primary/50"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                    )}
-                  >
-                    <Icon className="h-3.5 w-3.5" />
-                    <span>{language === 'fr' ? section.labelFr : section.labelEn}</span>
-                  </button>
-                );
-              })}
-            </div>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
-        </div>
-        {/* Spacer with dynamic height */}
-        <div style={{ height: tabsHeight }} />
-      </>
+      <div 
+        ref={mobileTabsRef}
+        className="fixed left-0 right-0 z-30 border-b border-border/50 bg-background/95 backdrop-blur-sm px-3" 
+        style={{ top: tabsTop }}
+      >
+        <ScrollArea className="w-full">
+          <div className="flex items-center gap-0.5 py-1.5">
+            {visibleSections.map((section) => {
+              const Icon = section.icon;
+              const isActive = activeSection === section.id;
+              return (
+                <button
+                  key={section.id}
+                  onClick={() => onSectionChange(section.id)}
+                  className={cn(
+                    "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0",
+                    isActive
+                      ? "bg-primary/20 text-foreground ring-1 ring-primary/50"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  )}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  <span>{language === 'fr' ? section.labelFr : section.labelEn}</span>
+                </button>
+              );
+            })}
+          </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
+      </div>
     );
   }
 
