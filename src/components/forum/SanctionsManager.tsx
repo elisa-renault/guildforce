@@ -21,7 +21,7 @@ import { fr, enUS } from 'date-fns/locale';
 import { toast } from 'sonner';
 
 export const SanctionsManager = () => {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const locale = language === 'fr' ? fr : enUS;
   const { fetchActiveSanctions, revokeSanction } = useForumSanctionActions();
   
@@ -190,21 +190,21 @@ export const SanctionsManager = () => {
         <AlertDialogContent className="bg-card border-border">
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {language === 'fr' ? 'Révoquer la sanction ?' : 'Revoke sanction?'}
+              {t.forum.moderation?.revokeSanction || (language === 'fr' ? 'Révoquer la sanction ?' : 'Revoke sanction?')}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {language === 'fr' 
-                ? `Êtes-vous sûr de vouloir révoquer la sanction de ${confirmRevoke?.profiles?.username} ?`
-                : `Are you sure you want to revoke the sanction for ${confirmRevoke?.profiles?.username}?`
-              }
+              {(t.forum.moderation?.revokeSanctionConfirm || (language === 'fr' 
+                ? 'Êtes-vous sûr de vouloir révoquer la sanction de {{username}} ?'
+                : 'Are you sure you want to revoke the sanction for {{username}}?'))
+                .replace('{{username}}', confirmRevoke?.profiles?.username || '')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>
-              {language === 'fr' ? 'Annuler' : 'Cancel'}
+              {t.common.cancel}
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleRevoke}>
-              {language === 'fr' ? 'Révoquer' : 'Revoke'}
+              {t.forum.moderation?.revoke || (language === 'fr' ? 'Révoquer' : 'Revoke')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

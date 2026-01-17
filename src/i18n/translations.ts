@@ -29,6 +29,20 @@ export interface Translations {
     tipMe: string;
     all: string;
     refresh: string;
+    confirm: string;
+    add: string;
+    reset: string;
+    results: string;
+    publish: string;
+    close: string;
+    processing: string;
+    upload: string;
+    uploading: string;
+    confirmDelete: string;
+    admin: string;
+    saveDraft: string;
+    new: string;
+    activityLog: string;
   };
   // Bug Report
   bugReport: {
@@ -274,6 +288,21 @@ export interface Translations {
     avatarHint: string;
     profileInfo: string;
     accountConnection: string;
+    deletion: {
+      pending: string;
+      cancelRequest: string;
+      requestDeletion: string;
+      confirmTitle: string;
+      confirmDescription: string;
+      dataList: {
+        profile: string;
+        characters: string;
+        wishes: string;
+        forumPosts: string;
+      };
+      typeToConfirm: string;
+      confirmDeletion: string;
+    };
   };
   // Guild Settings
   guildSettings: {
@@ -376,6 +405,20 @@ export interface Translations {
       general: string;
       bugs: string;
     };
+    empty: {
+      noCategories: string;
+      beingSetUp: string;
+    };
+    moderation: {
+      sanction: string;
+      revokeSanction: string;
+      revokeSanctionConfirm: string;
+      revoke: string;
+    };
+    createTopic: string;
+    contentPlaceholder: string;
+    confirmDeleteTopic: string;
+    confirmDeletePost: string;
   };
   // Notifications
   notifications: {
@@ -502,6 +545,20 @@ export const translations: Record<Language, Translations> = {
       tipMe: 'Buy me a drink',
       all: 'All',
       refresh: 'Refresh',
+      confirm: 'Confirm',
+      add: 'Add',
+      reset: 'Reset',
+      results: 'Results',
+      publish: 'Publish',
+      close: 'Close',
+      processing: 'Processing...',
+      upload: 'Upload',
+      uploading: 'Uploading...',
+      confirmDelete: 'Confirm deletion',
+      admin: 'Admin',
+      saveDraft: 'Save Draft',
+      new: 'New',
+      activityLog: 'Activity Log',
     },
     battlenet: {
       connect: 'Link my Battle.net account',
@@ -683,6 +740,21 @@ export const translations: Record<Language, Translations> = {
       avatarHint: 'JPG, PNG or GIF. Max 2MB.',
       profileInfo: 'Profile Information',
       accountConnection: 'Account Connection',
+      deletion: {
+        pending: 'A deletion request is pending processing.',
+        cancelRequest: 'Cancel request',
+        requestDeletion: 'Request account deletion',
+        confirmTitle: 'Delete your account?',
+        confirmDescription: 'This action is irreversible. All your data will be permanently deleted:',
+        dataList: {
+          profile: 'Your profile and avatar',
+          characters: 'Your WoW characters',
+          wishes: 'Your class wishes',
+          forumPosts: 'Your forum posts',
+        },
+        typeToConfirm: 'Type "{{username}}" to confirm',
+        confirmDeletion: 'Confirm deletion',
+      },
     },
     guildSettings: {
       title: 'Guild Settings',
@@ -782,6 +854,20 @@ export const translations: Record<Language, Translations> = {
         general: 'General discussions about Guildforce and the game',
         bugs: 'Report bugs and technical issues',
       },
+      empty: {
+        noCategories: 'No categories',
+        beingSetUp: 'The forum is being set up.',
+      },
+      moderation: {
+        sanction: 'Sanction',
+        revokeSanction: 'Revoke sanction?',
+        revokeSanctionConfirm: 'Are you sure you want to revoke the sanction for {{username}}?',
+        revoke: 'Revoke',
+      },
+      createTopic: 'Create topic',
+      contentPlaceholder: 'Your message content...',
+      confirmDeleteTopic: 'Are you sure you want to delete this topic? This action cannot be undone.',
+      confirmDeletePost: 'Are you sure you want to delete this post?',
     },
     notifications: {
       title: 'Notifications',
@@ -963,6 +1049,20 @@ export const translations: Record<Language, Translations> = {
       tipMe: 'Me payer un coup',
       all: 'Tous',
       refresh: 'Actualiser',
+      confirm: 'Confirmer',
+      add: 'Ajouter',
+      reset: 'Réinitialiser',
+      results: 'Résultats',
+      publish: 'Publier',
+      close: 'Clôturer',
+      processing: 'En cours...',
+      upload: 'Télécharger',
+      uploading: 'Envoi en cours...',
+      confirmDelete: 'Confirmer la suppression',
+      admin: 'Admin',
+      saveDraft: 'Enregistrer brouillon',
+      new: 'Nouveau',
+      activityLog: 'Journal d\'activité',
     },
     battlenet: {
       connect: 'Lier mon compte Battle.net',
@@ -1144,6 +1244,21 @@ export const translations: Record<Language, Translations> = {
       avatarHint: 'JPG, PNG ou GIF. Max 2Mo.',
       profileInfo: 'Informations du profil',
       accountConnection: 'Connexion du compte',
+      deletion: {
+        pending: 'Une demande de suppression est en cours de traitement.',
+        cancelRequest: 'Annuler la demande',
+        requestDeletion: 'Demander la suppression de mon compte',
+        confirmTitle: 'Supprimer ton compte ?',
+        confirmDescription: 'Cette action est irréversible. Toutes tes données seront définitivement supprimées :',
+        dataList: {
+          profile: 'Ton profil et avatar',
+          characters: 'Tes personnages WoW',
+          wishes: 'Tes vœux de classe',
+          forumPosts: 'Tes messages sur le forum',
+        },
+        typeToConfirm: 'Tape "{{username}}" pour confirmer',
+        confirmDeletion: 'Confirmer la suppression',
+      },
     },
     guildSettings: {
       title: 'Paramètres de guilde',
@@ -1243,6 +1358,20 @@ export const translations: Record<Language, Translations> = {
         general: 'Discussions générales sur Guildforce et le jeu',
         bugs: 'Signaler des bugs et problèmes techniques',
       },
+      empty: {
+        noCategories: 'Aucune catégorie',
+        beingSetUp: 'Le forum est en cours de configuration.',
+      },
+      moderation: {
+        sanction: 'Sanctionner',
+        revokeSanction: 'Révoquer la sanction ?',
+        revokeSanctionConfirm: 'Êtes-vous sûr de vouloir révoquer la sanction de {{username}} ?',
+        revoke: 'Révoquer',
+      },
+      createTopic: 'Créer le sujet',
+      contentPlaceholder: 'Contenu de votre message...',
+      confirmDeleteTopic: 'Êtes-vous sûr de vouloir supprimer ce sujet ? Cette action est irréversible.',
+      confirmDeletePost: 'Êtes-vous sûr de vouloir supprimer ce message ?',
     },
     notifications: {
       title: 'Notifications',

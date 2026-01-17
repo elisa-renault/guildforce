@@ -174,7 +174,7 @@ export const IndividualAccessEditor = ({
             disabled={!selectedUserId}
             className="h-8 text-xs"
           >
-            {isFrench ? 'Ajouter' : 'Add'}
+            {t.common.add}
           </Button>
           <Button
             variant="ghost"
@@ -182,7 +182,7 @@ export const IndividualAccessEditor = ({
             onClick={() => { setShowAddUser(false); setSelectedUserId(''); }}
             className="h-8 text-xs"
           >
-            {isFrench ? 'Annuler' : 'Cancel'}
+            {t.common.cancel}
           </Button>
         </div>
       )}
