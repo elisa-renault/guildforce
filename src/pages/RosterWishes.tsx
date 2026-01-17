@@ -622,6 +622,7 @@ const RosterWishes = () => {
         <RosterTable
           members={filteredMembers}
           currentUserId={user?.id}
+          selectedRosterId={selectedRosterId}
           expandedRows={expandedRows}
           editingUserId={editingUserId}
           editWishes={editWishes}
