@@ -69,7 +69,7 @@ interface Guild {
 const ITEMS_PER_PAGE = 10;
 
 export function GuildManager() {
-  const { language } = useLanguage();
+  const { t } = useLanguage();
   const [guilds, setGuilds] = useState<Guild[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -99,16 +99,14 @@ export function GuildManager() {
       if (error) throw error;
       
       const users = data?.users || {};
-      const guilds = data?.guilds || {};
+      const guildsData = data?.guilds || {};
       
       toast.success(
-        language === 'fr' 
-          ? `Sync terminée : ${users.synced || 0} utilisateurs, ${guilds.synced || 0} guildes (${guilds.skipped || 0} ignorées)` 
-          : `Sync complete: ${users.synced || 0} users, ${guilds.synced || 0} guilds (${guilds.skipped || 0} skipped)`
+        `${t.admin.syncComplete}: ${users.synced || 0} ${t.admin.users.toLowerCase()}, ${guildsData.synced || 0} ${t.admin.guildManagement.toLowerCase()} (${guildsData.skipped || 0} skipped)`
       );
       fetchGuilds();
     } catch (error) {
-      toast.error(language === 'fr' ? 'Erreur lors de la synchronisation' : 'Error during sync');
+      toast.error(t.admin.syncError);
     } finally {
       setSyncing(false);
     }
@@ -165,7 +163,7 @@ export function GuildManager() {
         setGuilds([]);
       }
     } catch (error) {
-      toast.error(language === 'fr' ? 'Erreur lors du chargement des guildes' : 'Error loading guilds');
+      toast.error(t.admin.loadingError);
     } finally {
       setLoading(false);
     }
@@ -205,11 +203,11 @@ export function GuildManager() {
       
       if (error) throw error;
       
-      toast.success(language === 'fr' ? 'Guilde modifiée' : 'Guild updated');
+      toast.success(t.admin.guildUpdated);
       setEditingGuild(null);
       fetchGuilds();
     } catch (error) {
-      toast.error(language === 'fr' ? 'Erreur lors de la modification' : 'Error updating guild');
+      toast.error(t.admin.guildUpdateError);
     } finally {
       setSaving(false);
     }
@@ -227,11 +225,11 @@ export function GuildManager() {
       
       if (error) throw error;
       
-      toast.success(language === 'fr' ? 'Guilde supprimée' : 'Guild deleted');
+      toast.success(t.admin.guildDeleted);
       setDeletingGuild(null);
       fetchGuilds();
     } catch (error) {
-      toast.error(language === 'fr' ? 'Erreur lors de la suppression' : 'Error deleting guild');
+      toast.error(t.admin.guildDeleteError);
     } finally {
       setDeleting(false);
     }
@@ -254,7 +252,7 @@ export function GuildManager() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder={language === 'fr' ? 'Rechercher une guilde...' : 'Search guilds...'}
+            placeholder={t.admin.searchGuilds}
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
             className="pl-10"
@@ -271,7 +269,7 @@ export function GuildManager() {
           ) : (
             <RefreshCw className="h-4 w-4" />
           )}
-          {language === 'fr' ? 'Sync Battle.net' : 'Sync Battle.net'}
+          {t.admin.syncBattlenet}
         </Button>
       </div>
 
@@ -281,14 +279,14 @@ export function GuildManager() {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[50px]"></TableHead>
-              <TableHead>{language === 'fr' ? 'Nom' : 'Name'}</TableHead>
-              <TableHead>{language === 'fr' ? 'Serveur' : 'Server'}</TableHead>
-              <TableHead>{language === 'fr' ? 'Région' : 'Region'}</TableHead>
-              <TableHead>{language === 'fr' ? 'Faction' : 'Faction'}</TableHead>
+              <TableHead>{t.admin.name}</TableHead>
+              <TableHead>{t.admin.server}</TableHead>
+              <TableHead>{t.admin.region}</TableHead>
+              <TableHead>{t.admin.faction}</TableHead>
               <TableHead className="text-center">
                 <Users className="h-4 w-4 inline" />
               </TableHead>
-              <TableHead className="text-right">{language === 'fr' ? 'Actions' : 'Actions'}</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -303,7 +301,7 @@ export function GuildManager() {
             ) : guilds.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                  {language === 'fr' ? 'Aucune guilde trouvée' : 'No guilds found'}
+                  {t.admin.noGuildsFound}
                 </TableCell>
               </TableRow>
             ) : (
@@ -335,7 +333,7 @@ export function GuildManager() {
                         size="icon"
                         className="h-8 w-8"
                         onClick={() => window.open(`/guild/${guild.region.toLowerCase()}/${toSlug(guild.server)}/${toSlug(guild.name)}`, '_blank')}
-                        title={language === 'fr' ? 'Voir la guilde' : 'View guild'}
+                        title={t.admin.viewGuild}
                       >
                         <ExternalLink className="h-4 w-4" />
                       </Button>
@@ -344,7 +342,7 @@ export function GuildManager() {
                         size="icon"
                         className="h-8 w-8"
                         onClick={() => openEditDialog(guild)}
-                        title={language === 'fr' ? 'Modifier' : 'Edit'}
+                        title={t.common.edit}
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -353,7 +351,7 @@ export function GuildManager() {
                         size="icon"
                         className="h-8 w-8 text-destructive hover:text-destructive"
                         onClick={() => setDeletingGuild(guild)}
-                        title={language === 'fr' ? 'Supprimer' : 'Delete'}
+                        title={t.common.delete}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -370,10 +368,7 @@ export function GuildManager() {
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <span className="text-sm text-muted-foreground">
-            {language === 'fr' 
-              ? `${totalCount} guilde${totalCount > 1 ? 's' : ''} au total`
-              : `${totalCount} guild${totalCount > 1 ? 's' : ''} total`
-            }
+            {totalCount} {t.admin.totalGuilds}
           </span>
           <div className="flex items-center gap-2">
             <Button
@@ -404,18 +399,15 @@ export function GuildManager() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {language === 'fr' ? 'Modifier la guilde' : 'Edit Guild'}
+              {t.admin.editGuild}
             </DialogTitle>
             <DialogDescription>
-              {language === 'fr' 
-                ? 'Modifiez les informations de la guilde.'
-                : 'Update guild information.'
-              }
+              {t.admin.editGuildInfo}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">{language === 'fr' ? 'Nom' : 'Name'}</Label>
+              <Label htmlFor="name">{t.admin.name}</Label>
               <Input
                 id="name"
                 value={editForm.name}
@@ -423,7 +415,7 @@ export function GuildManager() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="server">{language === 'fr' ? 'Serveur' : 'Server'}</Label>
+              <Label htmlFor="server">{t.admin.server}</Label>
               <Input
                 id="server"
                 value={editForm.server}
@@ -431,7 +423,7 @@ export function GuildManager() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="faction">Faction</Label>
+              <Label htmlFor="faction">{t.admin.faction}</Label>
               <Select
                 value={editForm.faction}
                 onValueChange={(v) => setEditForm(f => ({ ...f, faction: v }))}
@@ -448,13 +440,10 @@ export function GuildManager() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingGuild(null)}>
-              {language === 'fr' ? 'Annuler' : 'Cancel'}
+              {t.common.cancel}
             </Button>
             <Button onClick={handleSaveEdit} disabled={saving}>
-              {saving 
-                ? (language === 'fr' ? 'Enregistrement...' : 'Saving...') 
-                : (language === 'fr' ? 'Enregistrer' : 'Save')
-              }
+              {saving ? t.admin.saving : t.common.save}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -465,28 +454,22 @@ export function GuildManager() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {language === 'fr' ? 'Supprimer la guilde ?' : 'Delete guild?'}
+              {t.admin.deleteGuild}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {language === 'fr' 
-                ? `Êtes-vous sûr de vouloir supprimer "${deletingGuild?.name}" ? Cette action est irréversible et supprimera toutes les données associées (membres, vœux, sondages, etc.).`
-                : `Are you sure you want to delete "${deletingGuild?.name}"? This action is irreversible and will delete all associated data (members, wishes, polls, etc.).`
-              }
+              {t.admin.confirmDeleteGuild} "{deletingGuild?.name}"? {t.admin.deleteGuildWarning}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>
-              {language === 'fr' ? 'Annuler' : 'Cancel'}
+              {t.common.cancel}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={deleting}
             >
-              {deleting 
-                ? (language === 'fr' ? 'Suppression...' : 'Deleting...') 
-                : (language === 'fr' ? 'Supprimer' : 'Delete')
-              }
+              {deleting ? t.admin.deleting : t.common.delete}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
