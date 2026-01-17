@@ -557,6 +557,16 @@ export interface Translations {
     viewActivityLogDesc: string;
     manageMembers: string;
     manageMembersDesc: string;
+    delegated: string;
+    users: string;
+    gmOnly: string;
+    resetToGmOnly: string;
+    resetTooltip: string;
+    myPermissions: string;
+    guildMaster: string;
+    guildMasterDesc: string;
+    noPermissions: string;
+    grantedByGm: string;
   };
   // Guild Navigation
   guildNav: {
@@ -1045,6 +1055,17 @@ export const translations: Record<Language, Translations> = {
       viewActivityLogDesc: 'Access the guild activity history',
       manageMembers: 'Manage Members',
       manageMembersDesc: 'Edit member commitment status',
+      // New keys for GuildPermissionsEditor and MyPermissionsCard
+      delegated: 'delegated',
+      users: 'user(s)',
+      gmOnly: 'GM only',
+      resetToGmOnly: 'Permissions reset (GM only)',
+      resetTooltip: 'Remove all delegated permissions',
+      myPermissions: 'My permissions',
+      guildMaster: 'Guild Master',
+      guildMasterDesc: 'You have access to all guild management features.',
+      noPermissions: "You don't have any specific permissions granted by the GM.",
+      grantedByGm: 'These permissions were granted to you by the guild GM.',
     },
     guildNav: {
       dashboard: 'Dashboard',
@@ -1669,6 +1690,16 @@ export const translations: Record<Language, Translations> = {
       viewActivityLogDesc: 'Accéder à l\'historique d\'activité de la guilde',
       manageMembers: 'Gérer les membres',
       manageMembersDesc: 'Modifier le statut d\'engagement des membres',
+      delegated: 'déléguée(s)',
+      users: 'utilisateur(s)',
+      gmOnly: 'GM seul',
+      resetToGmOnly: 'Permissions réinitialisées (GM seul)',
+      resetTooltip: 'Retirer toutes les permissions déléguées',
+      myPermissions: 'Mes permissions',
+      guildMaster: 'Maître de Guilde',
+      guildMasterDesc: 'Vous avez accès à toutes les fonctionnalités de gestion de la guilde.',
+      noPermissions: 'Vous n\'avez pas de permissions spécifiques accordées par le GM.',
+      grantedByGm: 'Ces permissions vous ont été accordées par le GM de la guilde.',
     },
     guildNav: {
       dashboard: 'Tableau de bord',
