@@ -29,7 +29,7 @@ export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
   onDelete,
 }, ref) => {
   const navigate = useNavigate();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const locale = language === 'fr' ? fr : enUS;
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
