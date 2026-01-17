@@ -29,7 +29,7 @@ export const UserContextMenu = ({
 }: UserContextMenuProps) => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
-  const { language } = useLanguage();
+  const { t } = useLanguage();
   const [sanctionDialogOpen, setSanctionDialogOpen] = useState(false);
 
   const isOwnProfile = currentUser?.id === targetUser.id;
@@ -49,7 +49,7 @@ export const UserContextMenu = ({
             className="cursor-pointer"
           >
             <User className="h-4 w-4 mr-2" />
-            {language === 'fr' ? 'Voir le profil' : 'View profile'}
+            {t.forum.viewProfile}
           </DropdownMenuItem>
 
           {canSanction && (
@@ -60,7 +60,7 @@ export const UserContextMenu = ({
                 className="cursor-pointer text-destructive focus:text-destructive"
               >
                 <Ban className="h-4 w-4 mr-2" />
-                {language === 'fr' ? 'Sanctionner' : 'Sanction'}
+                {t.forum.moderation.sanction}
               </DropdownMenuItem>
             </>
           )}

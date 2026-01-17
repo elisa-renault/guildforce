@@ -80,7 +80,7 @@ export const GlobalNav = () => {
           aria-current={isActive('/admin') ? 'page' : undefined}
         >
           <Crown className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
-          <span>{language === 'fr' ? 'Admin' : 'Admin'}</span>
+          <span>{t.common.admin}</span>
         </button>
       )}
     </>

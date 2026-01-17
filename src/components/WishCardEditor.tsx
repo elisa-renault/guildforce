@@ -67,9 +67,9 @@ export const WishCardEditor = forwardRef<HTMLDivElement, WishCardEditorProps>(
     }
   };
 
-  const classPlaceholder = language === 'fr' ? 'Classe' : 'Class';
-  const specPlaceholder = language === 'fr' ? 'Spécs' : 'Specs';
-  const commentPlaceholder = language === 'fr' ? 'Note...' : 'Note...';
+  const classPlaceholder = t.wishes.selectClass;
+  const specPlaceholder = t.wishes.selectSpecs;
+  const commentPlaceholder = t.wishes.commentPlaceholder;
 
   return (
     <div ref={ref} className="flex flex-col lg:flex-row gap-2 lg:gap-3 flex-1">

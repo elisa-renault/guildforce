@@ -37,10 +37,10 @@ const ForumCategory = () => {
         <CosmicBackground />
         <div className="text-center">
           <p className="text-muted-foreground mb-4">
-            {language === 'fr' ? 'Catégorie non trouvée' : 'Category not found'}
+            {t.forum.categoryNotFound}
           </p>
           <CosmicButton onClick={() => navigate('/forum')}>
-            {language === 'fr' ? 'Retour au forum' : 'Back to forum'}
+            {t.forum.backToForum}
           </CosmicButton>
         </div>
       </div>
@@ -85,7 +85,7 @@ const ForumCategory = () => {
               icon={<Plus className="h-4 w-4" />}
               className="w-full sm:w-auto sm:self-end"
             >
-              {language === 'fr' ? 'Nouveau sujet' : 'New topic'}
+              {t.forum.newTopic}
             </CosmicButton>
           )}
         </div>
@@ -109,7 +109,7 @@ const ForumCategory = () => {
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   icon={<ChevronLeft className="h-4 w-4" />}
                 >
-                  {language === 'fr' ? 'Précédent' : 'Previous'}
+                  {t.forum.previous}
                 </CosmicButton>
                 <span className="text-sm text-muted-foreground px-4">
                   {page} / {totalPages}
@@ -120,7 +120,7 @@ const ForumCategory = () => {
                   disabled={page === totalPages}
                   onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                 >
-                  {language === 'fr' ? 'Suivant' : 'Next'}
+                  {t.common.next}
                   <ChevronRight className="h-4 w-4 ml-1" />
                 </CosmicButton>
               </div>
