@@ -11,7 +11,7 @@ interface RoleBadgeProps {
 }
 
 export const UserRoleBadge = ({ roles, size = 'sm' }: RoleBadgeProps) => {
-  const { language } = useLanguage();
+  const { t } = useLanguage();
   
   const isAdmin = roles.includes('admin');
   const isModerator = roles.includes('moderator');
@@ -31,7 +31,7 @@ export const UserRoleBadge = ({ roles, size = 'sm' }: RoleBadgeProps) => {
           </Badge>
         </TooltipTrigger>
         <TooltipContent>
-          <p>{language === 'fr' ? 'Administrateur du site' : 'Site Administrator'}</p>
+          <p>{t.forum.siteAdministrator}</p>
         </TooltipContent>
       </Tooltip>
     );
@@ -50,7 +50,7 @@ export const UserRoleBadge = ({ roles, size = 'sm' }: RoleBadgeProps) => {
           </Badge>
         </TooltipTrigger>
         <TooltipContent>
-          <p>{language === 'fr' ? 'Modérateur du forum' : 'Forum Moderator'}</p>
+          <p>{t.forum.forumModerator}</p>
         </TooltipContent>
       </Tooltip>
     );

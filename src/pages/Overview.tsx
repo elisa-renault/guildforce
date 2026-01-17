@@ -173,21 +173,21 @@ const Overview = () => {
     switch (status) {
       case 'confirmed':
         return {
-          label: t.common.loading === 'Chargement...' ? 'Confirmé' : 'Confirmed',
+          label: t.wishes.commitment.confirmed,
           color: 'text-green-400',
           bgColor: 'bg-green-500/10 border-green-500/30',
           icon: CheckCircle2,
         };
       case 'withdrawn':
         return {
-          label: t.common.loading === 'Chargement...' ? 'Retrait' : 'Withdrawn',
+          label: t.wishes.commitment.withdrawn,
           color: 'text-red-400',
           bgColor: 'bg-red-500/10 border-red-500/30',
           icon: Shield,
         };
       default:
         return {
-          label: t.common.loading === 'Chargement...' ? 'Indécis' : 'Undecided',
+          label: t.wishes.commitment.undecided,
           color: 'text-yellow-400',
           bgColor: 'bg-yellow-500/10 border-yellow-500/30',
           icon: Heart,
@@ -217,7 +217,7 @@ const Overview = () => {
         {/* Welcome Section */}
         <div className="text-center mb-8 px-2">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-display cosmic-text mb-2 break-words">
-            {t.common.loading === 'Chargement...' ? 'Bienvenue' : 'Welcome'}, {user?.user_metadata?.username || 'Aventurier'}
+            {t.guildNav.welcome}, {user?.user_metadata?.username || 'Aventurier'}
           </h1>
           <p className="text-muted-foreground text-sm sm:text-base">
             {guild?.name} • {guild?.server ? guild.server.charAt(0).toUpperCase() + guild.server.slice(1).toLowerCase() : ''}
@@ -230,9 +230,9 @@ const Overview = () => {
             {/* My Status Card */}
             <GlowCard className="p-4 overflow-hidden">
               <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-                <h2 className="font-semibold text-foreground">
-                  {t.common.loading === 'Chargement...' ? 'Mon statut' : 'My Status'}
-                </h2>
+              <h2 className="font-semibold text-foreground">
+                {t.guildNav.myStatus}
+              </h2>
                 {/* Show first approved wish if any */}
                 {(() => {
                   const firstApproved = myWishes.find(w => w.validation_status === 'approved');
@@ -242,7 +242,7 @@ const Overview = () => {
                       <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border bg-green-500/10 border-green-500/30 shrink-0">
                         <CheckCircle2 className="h-4 w-4 text-green-400" />
                         <span className="text-sm font-medium text-green-400">
-                          {language === 'fr' ? 'Vœu' : 'Wish'} #{firstApproved.choice_index + 1}
+                          {t.wishes.choice} #{firstApproved.choice_index + 1}
                           {wowClass && (
                             <span className="ml-1 opacity-80">
                               ({wowClass.name[language]})
@@ -255,7 +255,7 @@ const Overview = () => {
                   return (
                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border bg-muted/30 border-border/50 shrink-0">
                       <span className="text-sm text-muted-foreground">
-                        {language === 'fr' ? 'Aucun vœu validé' : 'No wish approved'}
+                        {t.guildNav.noWishApproved}
                       </span>
                     </div>
                   );
@@ -265,7 +265,7 @@ const Overview = () => {
               {/* My Wishes Summary */}
               <div className="space-y-2">
                 <h3 className="text-sm text-muted-foreground mb-3">
-                  {t.common.loading === 'Chargement...' ? 'Mes vœux' : 'My Wishes'}
+                  {t.guildNav.myWishes}
                 </h3>
                 {myWishes.length > 0 ? (
                   <div className="space-y-2">
@@ -294,9 +294,7 @@ const Overview = () => {
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground italic">
-                    {t.common.loading === 'Chargement...' 
-                      ? "Vous n'avez pas encore défini vos vœux" 
-                      : "You haven't set your wishes yet"}
+                    {t.guildNav.noWishesYet}
                   </p>
                 )}
               </div>
@@ -316,7 +314,7 @@ const Overview = () => {
             {/* Mini Stats */}
             <GlowCard className="p-4">
               <h2 className="font-semibold text-foreground mb-3">
-                {t.common.loading === 'Chargement...' ? 'Aperçu guilde' : 'Guild Overview'}
+                {t.guildNav.guildOverview}
               </h2>
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-center gap-3">
@@ -326,7 +324,7 @@ const Overview = () => {
                   <div>
                     <p className="text-2xl font-bold text-foreground">{totalMembers}</p>
                     <p className="text-xs text-muted-foreground">
-                      {t.common.loading === 'Chargement...' ? 'Membres' : 'Members'}
+                      {t.guild.members}
                     </p>
                   </div>
                 </div>
@@ -337,7 +335,7 @@ const Overview = () => {
                   <div>
                     <p className="text-2xl font-bold text-foreground">{confirmedMembers}</p>
                     <p className="text-xs text-muted-foreground">
-                      {t.common.loading === 'Chargement...' ? 'Confirmés' : 'Confirmed'}
+                      {t.dashboard.confirmedPlayers}
                     </p>
                   </div>
                 </div>
@@ -358,7 +356,7 @@ const Overview = () => {
             {/* Quick Actions */}
             <GlowCard className="p-4">
               <h2 className="font-semibold text-foreground mb-3">
-                {t.common.loading === 'Chargement...' ? 'Accès rapide' : 'Quick Access'}
+                {t.guildNav.quickAccess}
               </h2>
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -367,7 +365,7 @@ const Overview = () => {
                 >
                   <Swords className="h-4 w-4 text-primary" />
                   <span className="text-sm">
-                    {t.common.loading === 'Chargement...' ? 'Table de vœux' : 'Wishes Table'}
+                    {t.guildNav.wishesTable}
                   </span>
                 </button>
                 <button
@@ -376,7 +374,7 @@ const Overview = () => {
                 >
                   <Users className="h-4 w-4 text-primary" />
                   <span className="text-sm">
-                    {t.common.loading === 'Chargement...' ? 'Membres' : 'Members'}
+                    {t.guild.members}
                   </span>
                 </button>
               </div>

@@ -424,6 +424,10 @@ export interface Translations {
     replyingTo: string;
     noReplies: string;
     previous: string;
+    categoryNotFound: string;
+    viewProfile: string;
+    siteAdministrator: string;
+    forumModerator: string;
   };
   // Admin
   admin: {
@@ -498,6 +502,18 @@ export interface Translations {
     icon: string;
     saving: string;
     deleting: string;
+    // Admin dashboard
+    administration: string;
+    adminDashboard: string;
+    moderatorDashboard: string;
+    stats: {
+      users: string;
+      guilds: string;
+      pendingReports: string;
+      activeSanctions: string;
+      openBugs: string;
+      forumAdminDesc: string;
+    };
   };
   // Accessibility
   accessibility: {
@@ -591,6 +607,13 @@ export interface Translations {
     polls: string;
     settings: string;
     activity: string;
+    welcome: string;
+    myStatus: string;
+    guildOverview: string;
+    quickAccess: string;
+    wishesTable: string;
+    noWishApproved: string;
+    noWishesYet: string;
   };
   // Errors
   errors: {
@@ -1035,6 +1058,10 @@ export const translations: Record<Language, Translations> = {
       replyingTo: 'Replying to',
       noReplies: 'No replies yet',
       previous: 'Previous',
+      categoryNotFound: 'Category not found',
+      viewProfile: 'View profile',
+      siteAdministrator: 'Site Administrator',
+      forumModerator: 'Forum Moderator',
     },
     notifications: {
       title: 'Notifications',
@@ -1111,6 +1138,13 @@ export const translations: Record<Language, Translations> = {
       polls: 'Polls',
       settings: 'Settings',
       activity: 'Activity',
+      welcome: 'Welcome',
+      myStatus: 'My Status',
+      guildOverview: 'Guild Overview',
+      quickAccess: 'Quick Access',
+      wishesTable: 'Wishes Table',
+      noWishApproved: 'No wish approved',
+      noWishesYet: "You haven't set your wishes yet",
     },
     errors: {
       generic: 'Something went wrong. Please try again.',
@@ -1326,6 +1360,18 @@ export const translations: Record<Language, Translations> = {
       icon: 'Icon (emoji)',
       saving: 'Saving...',
       deleting: 'Deleting...',
+      // Admin dashboard
+      administration: 'Administration',
+      adminDashboard: 'Admin dashboard',
+      moderatorDashboard: 'Moderator dashboard',
+      stats: {
+        users: 'Users',
+        guilds: 'Guilds',
+        pendingReports: 'Pending Reports',
+        activeSanctions: 'Active Sanctions',
+        openBugs: 'Open Bugs',
+        forumAdminDesc: 'Manage categories, moderators, reports and sanctions',
+      },
     },
     accessibility: {
       previousSlide: 'Previous slide',
@@ -1694,6 +1740,10 @@ export const translations: Record<Language, Translations> = {
       replyingTo: 'En réponse à',
       noReplies: 'Aucune réponse pour le moment',
       previous: 'Précédent',
+      categoryNotFound: 'Catégorie non trouvée',
+      viewProfile: 'Voir le profil',
+      siteAdministrator: 'Administrateur du site',
+      forumModerator: 'Modérateur du forum',
     },
     notifications: {
       title: 'Notifications',
@@ -1770,6 +1820,13 @@ export const translations: Record<Language, Translations> = {
       polls: 'Sondages',
       settings: 'Paramètres',
       activity: 'Activité',
+      welcome: 'Bienvenue',
+      myStatus: 'Mon statut',
+      guildOverview: 'Aperçu guilde',
+      quickAccess: 'Accès rapide',
+      wishesTable: 'Table de vœux',
+      noWishApproved: 'Aucun vœu validé',
+      noWishesYet: "Vous n'avez pas encore défini vos vœux",
     },
     errors: {
       generic: 'Une erreur est survenue. Veuillez réessayer.',
@@ -1985,6 +2042,18 @@ export const translations: Record<Language, Translations> = {
       icon: 'Icône (emoji)',
       saving: 'Enregistrement...',
       deleting: 'Suppression...',
+      // Admin dashboard
+      administration: 'Administration',
+      adminDashboard: 'Tableau de bord administrateur',
+      moderatorDashboard: 'Tableau de bord modérateur',
+      stats: {
+        users: 'Utilisateurs',
+        guilds: 'Guildes',
+        pendingReports: 'Signalements en attente',
+        activeSanctions: 'Sanctions actives',
+        openBugs: 'Bugs ouverts',
+        forumAdminDesc: 'Gérer les catégories, modérateurs, signalements et sanctions',
+      },
     },
     accessibility: {
       previousSlide: 'Diapositive précédente',

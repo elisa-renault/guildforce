@@ -147,12 +147,12 @@ export const MobileRosterCard = ({
           ))
         ) : (
           <div className="text-xs text-muted-foreground/50 py-2">
-            {language === 'fr' ? 'Aucun vœu' : 'No wishes'}
+            {t.wishes.noWishes}
           </div>
         )}
         {filledWishes.length > 3 && (
           <div className="text-xs text-muted-foreground pt-1">
-            +{filledWishes.length - 3} {language === 'fr' ? 'vœux' : 'wishes'}
+            +{filledWishes.length - 3} {t.wishes.specs}
           </div>
         )}
       </div>
