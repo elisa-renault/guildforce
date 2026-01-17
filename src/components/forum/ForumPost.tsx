@@ -107,7 +107,7 @@ export const ForumPost = ({
             <Clock className="h-3 w-3" />
             <span>{formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale })}</span>
             {post.is_edited && (
-              <span className="italic">({language === 'fr' ? 'modifié' : 'edited'})</span>
+              <span className="italic">({t.forum.edited})</span>
             )}
           </div>
           <div className="flex items-center gap-1">
@@ -117,7 +117,7 @@ export const ForumPost = ({
                 size="sm"
                 onClick={() => onQuote?.(post)}
                 className="h-7 px-2"
-                title={language === 'fr' ? 'Citer' : 'Quote'}
+                title={t.forum.quote}
               >
                 <Quote className="h-4 w-4" />
               </Button>
@@ -128,7 +128,7 @@ export const ForumPost = ({
                 size="sm"
                 onClick={() => setIsEditing(true)}
                 className="h-7 px-2"
-                title={language === 'fr' ? 'Modifier' : 'Edit'}
+                title={t.common.edit}
               >
                 <Edit3 className="h-4 w-4" />
               </Button>
@@ -139,7 +139,7 @@ export const ForumPost = ({
                 size="sm"
                 onClick={() => onDelete?.(post.id)}
                 className="h-7 px-2 text-destructive hover:text-destructive"
-                title={language === 'fr' ? 'Supprimer' : 'Delete'}
+                title={t.common.delete}
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -151,7 +151,7 @@ export const ForumPost = ({
                 size="sm"
                 onClick={() => setReportDialogOpen(true)}
                 className="h-7 px-2 text-muted-foreground hover:text-destructive"
-                title={language === 'fr' ? 'Signaler' : 'Report'}
+                title={t.forum.report}
               >
                 <Flag className="h-4 w-4" />
               </Button>
@@ -163,7 +163,7 @@ export const ForumPost = ({
         {post.quoted_post && (
           <div className="mb-3 p-3 rounded-lg bg-muted/30 border-l-2 border-primary/50">
             <p className="text-xs text-muted-foreground mb-1">
-              {language === 'fr' ? 'Citation de' : 'Quote from'} {post.quoted_post.author?.username || 'Inconnu'}:
+              {t.forum.quoteFrom} {post.quoted_post.author?.username || t.forum.unknownUser}:
             </p>
             <p className="text-sm text-muted-foreground line-clamp-3">
               {post.quoted_post.content}
