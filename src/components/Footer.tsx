@@ -44,6 +44,9 @@ export const Footer = () => {
             <Link to="/terms" className="text-muted-foreground hover:text-foreground transition-colors">
               {t.legal.termsOfService}
             </Link>
+            <Link to="/changelog" className="text-muted-foreground hover:text-foreground transition-colors">
+              {t.patchnotes.changelog}
+            </Link>
           </div>
 
           {/* Group 3: Préférences (user settings) */}
@@ -141,6 +144,10 @@ export const Footer = () => {
             <span className="text-muted-foreground/30">•</span>
             <Link to="/terms" className="text-muted-foreground hover:text-foreground transition-colors">
               {t.legal.termsOfService}
+            </Link>
+            <span className="text-muted-foreground/30">•</span>
+            <Link to="/changelog" className="text-muted-foreground hover:text-foreground transition-colors">
+              {t.patchnotes.changelog}
             </Link>
           </div>
 
