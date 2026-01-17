@@ -507,7 +507,8 @@ export const RosterTable = ({
                         
                         return (
                           <TableRow key={`extra-${rowIdx}`} className="border-border/10 bg-primary/[0.03]">
-                            <TableCell colSpan={2} className="py-2 px-2 md:px-3">
+                            {/* colSpan=3 covers: Player + Status + WishesCount */}
+                            <TableCell colSpan={3} className="py-2 px-2 md:px-3">
                               <span className="text-xs text-muted-foreground">
                                 {t.dashboard.additionalWishes} ({startIdx + 1}-{Math.min(startIdx + 3, editWishes.length)})
                               </span>
