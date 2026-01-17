@@ -180,7 +180,6 @@ const GuildPollNew = () => {
           }
         }
       } catch (error: any) {
-        console.error('Error loading poll editor data:', error);
         toast({
           title: language === 'fr' ? 'Connexion instable' : 'Unstable connection',
           description: language === 'fr'
