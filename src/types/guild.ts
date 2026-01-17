@@ -64,10 +64,18 @@ export interface RangeStats {
 /**
  * Filter state for roster view
  */
+export type CommitmentFilter = 'confirmed' | 'undecided' | 'withdrawn';
+export type RangeFilter = 'melee' | 'ranged';
+
 export interface RosterFilters {
   roleFilters: string[];
   classFilters: string[];
   validationFilters: ValidationStatus[];
   searchQuery: string;
   filterMode: 'and' | 'or';
+  // Extended filters
+  commitmentFilters: CommitmentFilter[];
+  minWishes: number | null;
+  rangeFilters: RangeFilter[];
+  hasComment: boolean | null;
 }

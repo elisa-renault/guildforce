@@ -268,6 +268,17 @@ export interface Translations {
     clear: string;
     validation: string;
     classesCount: string;
+    // Extended filters
+    commitment: string;
+    allCommitments: string;
+    minWishes: string;
+    minWishesPlaceholder: string;
+    range: string;
+    allRanges: string;
+    withComment: string;
+    withoutComment: string;
+    allComments: string;
+    wishesMin: string;
   };
   // Profile
   profile: {
@@ -917,6 +928,17 @@ export const translations: Record<Language, Translations> = {
       clear: 'Clear',
       validation: 'Validation',
       classesCount: 'classes',
+      // Extended filters
+      commitment: 'Commitment',
+      allCommitments: 'All commitments',
+      minWishes: 'Min. wishes',
+      minWishesPlaceholder: 'Minimum wishes',
+      range: 'Range',
+      allRanges: 'All ranges',
+      withComment: 'With comment',
+      withoutComment: 'Without comment',
+      allComments: 'All comments',
+      wishesMin: '≥{{count}} wishes',
     },
     profile: {
       title: 'My Profile',
@@ -1608,6 +1630,17 @@ export const translations: Record<Language, Translations> = {
       clear: 'Effacer',
       validation: 'Validation',
       classesCount: 'classes',
+      // Extended filters
+      commitment: 'Engagement',
+      allCommitments: 'Tous engagements',
+      minWishes: 'Vœux min.',
+      minWishesPlaceholder: 'Nombre minimum de vœux',
+      range: 'Portée',
+      allRanges: 'Toutes portées',
+      withComment: 'Avec commentaire',
+      withoutComment: 'Sans commentaire',
+      allComments: 'Tous commentaires',
+      wishesMin: '≥{{count}} vœux',
     },
     profile: {
       title: 'Mon profil',
