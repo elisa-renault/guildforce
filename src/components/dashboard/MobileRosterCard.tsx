@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { CosmicButton } from '@/components/CosmicButton';
-import { CheckCircle, HelpCircle, XCircle, Pencil, Shield, Heart, Swords, Crosshair, MessageSquare } from 'lucide-react';
+import { CheckCircle, HelpCircle, XCircle, Pencil, Shield, Heart, Sword, Swords, Crosshair, MessageSquare } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getClassById, getSpecById } from '@/data/wowClasses';
 import { MemberWish, WishChoice, ValidationStatus } from '@/types/guild';
@@ -19,7 +19,7 @@ interface MobileRosterCardProps {
 const roleConfig: Record<string, { icon: typeof Shield; color: string }> = {
   tank: { icon: Shield, color: 'text-tank' },
   healer: { icon: Heart, color: 'text-healer' },
-  dps: { icon: Swords, color: 'text-dps' },
+  dps: { icon: Sword, color: 'text-dps' },
 };
 
 export const MobileRosterCard = ({
