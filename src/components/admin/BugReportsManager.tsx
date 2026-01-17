@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import log from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -104,7 +105,7 @@ export function BugReportsManager() {
       if (error) throw error;
       setReports(data || []);
     } catch (error) {
-      console.error('Error fetching bug reports:', error);
+      log.error('Error fetching bug reports:', error);
       toast.error(t.bugReport.admin.fetchError);
     } finally {
       setLoading(false);
@@ -138,7 +139,7 @@ export function BugReportsManager() {
       setResolutionNote('');
       fetchReports();
     } catch (error) {
-      console.error('Error updating status:', error);
+      log.error('Error updating status:', error);
       toast.error(t.bugReport.admin.updateError);
     } finally {
       setUpdatingStatus(false);
@@ -158,7 +159,7 @@ export function BugReportsManager() {
       setSelectedReport(null);
       fetchReports();
     } catch (error) {
-      console.error('Error deleting report:', error);
+      log.error('Error deleting report:', error);
       toast.error(t.bugReport.admin.deleteError);
     }
   };

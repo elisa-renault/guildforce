@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import log from '@/lib/logger';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -63,7 +64,7 @@ export const GuildBattleNetSection = ({
       onResyncComplete?.();
       toast({ title: t.guildSettings.resyncSuccess });
     } catch (error: any) {
-      console.error('Resync error:', error);
+      log.error('Resync error:', error);
       toast({
         title: t.guildSettings.resyncError,
         variant: 'destructive',

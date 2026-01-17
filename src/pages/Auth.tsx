@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import log from '@/lib/logger';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -132,7 +133,7 @@ const Auth = () => {
         }
       }
     } catch (error: any) {
-      console.error('Battle.net callback error:', error);
+      log.error('Battle.net callback error:', error);
       toast({
         title: t.auth.battlenetError,
         description: error.message,
@@ -169,7 +170,7 @@ const Auth = () => {
         throw new Error('Failed to get auth URL');
       }
     } catch (error: any) {
-      console.error('Battle.net auth error:', error);
+      log.error('Battle.net auth error:', error);
       toast({
         title: t.auth.battlenetError,
         description: error.message,
