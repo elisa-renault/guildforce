@@ -548,10 +548,10 @@ const Profile = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="w-full text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
+                      className="w-full text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30 whitespace-normal text-left h-auto py-2"
                     >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      {language === 'fr' ? 'Demander la suppression de mon compte' : 'Request account deletion'}
+                      <Trash2 className="h-4 w-4 mr-2 shrink-0" />
+                      <span>{language === 'fr' ? 'Demander la suppression de mon compte' : 'Request account deletion'}</span>
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent className="bg-card border-border">
