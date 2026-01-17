@@ -1795,7 +1795,7 @@ async function autoJoinGuilds(
               guild_id: guildId,
               user_id: userId,
               role,
-              status: 'confirmed',
+              status: 'potential',
             });
           
           if (insertError) {
