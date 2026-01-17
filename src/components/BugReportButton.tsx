@@ -29,7 +29,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { getRecentLogs, getErrorCount, getBrowserInfo } from '@/lib/logCapture';
+import { getRecentLogs, getErrorCount, getBrowserInfo, sanitizeUrl } from '@/lib/logCapture';
 
 const BugReportButton = React.forwardRef<HTMLButtonElement, React.ComponentPropsWithoutRef<typeof Button>>(
   (props, ref) => {
@@ -79,19 +79,25 @@ const BugReportButton = React.forwardRef<HTMLButtonElement, React.ComponentProps
       setIsSubmitting(true);
       
       try {
+        // Sanitize URL to remove sensitive query parameters
+        const sanitizedUrl = sanitizeUrl(window.location.href);
+        
+        // Get sanitized logs (already capped to 50 entries, sensitive data redacted)
+        const sanitizedLogs = getRecentLogs();
+        
         const reportData = {
           reporter_id: user?.id || null,
           title: title.trim(),
           description: description.trim(),
           category,
           priority,
-          current_url: window.location.href,
-          console_logs: JSON.parse(JSON.stringify(getRecentLogs())),
+          current_url: sanitizedUrl,
+          console_logs: JSON.parse(JSON.stringify(sanitizedLogs)),
           browser_info: JSON.parse(JSON.stringify(getBrowserInfo())),
+          // Only include minimal user context - no sensitive data like battletag
           user_context: user ? JSON.parse(JSON.stringify({
             userId: user.id,
-            username: profile?.username,
-            battletag: profile?.battletag
+            username: profile?.username
           })) : { anonymous: true }
         };
 
