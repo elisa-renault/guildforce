@@ -31,7 +31,7 @@ export const PollSectionEditor = ({
   onRemove,
   canRemove,
 }: PollSectionEditorProps) => {
-  const { language } = useLanguage();
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(true);
 
   const handleAddQuestion = () => {
@@ -70,13 +70,13 @@ export const PollSectionEditor = ({
                 <Input
                   value={section.title}
                   onChange={(e) => onChange({ ...section, title: e.target.value })}
-                  placeholder={language === 'fr' ? 'Titre de la section...' : 'Section title...'}
+                  placeholder={t.polls.sectionTitle}
                   className="bg-background font-medium"
                 />
                 <Textarea
                   value={section.description}
                   onChange={(e) => onChange({ ...section, description: e.target.value })}
-                  placeholder={language === 'fr' ? 'Description (optionnelle)...' : 'Description (optional)...'}
+                  placeholder={t.polls.sectionDescription}
                   className="bg-background resize-none text-sm"
                   rows={2}
                 />
@@ -121,7 +121,7 @@ export const PollSectionEditor = ({
                 className="text-primary w-full border border-dashed border-primary/30 hover:border-primary/50"
               >
                 <Plus className="h-4 w-4 mr-1" />
-                {language === 'fr' ? 'Ajouter une question à cette section' : 'Add question to this section'}
+                {t.polls.addQuestionToSection}
               </Button>
             </CollapsibleContent>
           </div>

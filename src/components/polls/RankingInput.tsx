@@ -72,7 +72,7 @@ const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(({ id, index,
 SortableItem.displayName = 'SortableItem';
 
 export const RankingInput = forwardRef<HTMLDivElement, RankingInputProps>(({ items, onChange }, ref) => {
-  const { language } = useLanguage();
+  const { t } = useLanguage();
   
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -99,9 +99,7 @@ export const RankingInput = forwardRef<HTMLDivElement, RankingInputProps>(({ ite
   return (
     <div ref={ref} className="space-y-2">
       <p className="text-xs text-muted-foreground mb-3">
-        {language === 'fr' 
-          ? 'Glissez-déposez pour classer les éléments (1 = meilleur)' 
-          : 'Drag and drop to rank items (1 = best)'}
+        {t.polls.dragToRank}
       </p>
       <DndContext
         sensors={sensors}

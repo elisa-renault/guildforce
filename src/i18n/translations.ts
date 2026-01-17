@@ -572,6 +572,17 @@ export interface Translations {
     guildMasterDesc: string;
     noPermissions: string;
     grantedByGm: string;
+    // PermissionRow & IndividualAccessEditor
+    officers: string;
+    allMembers: string;
+    custom: string;
+    ranksRange: string;
+    maxRank: string;
+    sensitivePermission: string;
+    noIndividualAccess: string;
+    addSpecificUsers: string;
+    individualAccess: string;
+    selectMember: string;
   };
   // Guild Navigation
   guildNav: {
@@ -652,6 +663,19 @@ export interface Translations {
       active: string;
       closed: string;
     };
+    // PollSectionEditor
+    sectionTitle: string;
+    sectionDescription: string;
+    addQuestionToSection: string;
+    // EditActivePollDialog
+    editActivePoll: string;
+    editActivePollDesc: string;
+    editSettings: string;
+    editSettingsDesc: string;
+    editStructure: string;
+    editStructureDesc: string;
+    // RankingInput
+    dragToRank: string;
   };
 }
 
@@ -1060,7 +1084,6 @@ export const translations: Record<Language, Translations> = {
       viewActivityLogDesc: 'Access the guild activity history',
       manageMembers: 'Manage Members',
       manageMembersDesc: 'Edit member commitment status',
-      // New keys for GuildPermissionsEditor and MyPermissionsCard
       delegated: 'delegated',
       users: 'user(s)',
       gmOnly: 'GM only',
@@ -1071,6 +1094,16 @@ export const translations: Record<Language, Translations> = {
       guildMasterDesc: 'You have access to all guild management features.',
       noPermissions: "You don't have any specific permissions granted by the GM.",
       grantedByGm: 'These permissions were granted to you by the guild GM.',
+      officers: 'Officers',
+      allMembers: 'All members',
+      custom: 'Custom...',
+      ranksRange: 'Ranks 0-{{max}}',
+      maxRank: 'Maximum rank',
+      sensitivePermission: 'Sensitive permission',
+      noIndividualAccess: 'No individual access defined',
+      addSpecificUsers: 'Add specific users to give them additional permissions',
+      individualAccess: 'Individual access',
+      selectMember: 'Select a member...',
     },
     guildNav: {
       dashboard: 'Dashboard',
@@ -1146,6 +1179,16 @@ export const translations: Record<Language, Translations> = {
         active: 'Active',
         closed: 'Closed',
       },
+      sectionTitle: 'Section title...',
+      sectionDescription: 'Description (optional)...',
+      addQuestionToSection: 'Add question to this section',
+      editActivePoll: 'Edit Active Poll',
+      editActivePollDesc: 'This poll already has {{count}} response(s). Choose the type of edit.',
+      editSettings: 'Edit Settings',
+      editSettingsDesc: 'Title, description, end date, target roster. Responses are preserved.',
+      editStructure: 'Edit Structure',
+      editStructureDesc: 'Questions and options. ⚠️ This will reset all existing responses.',
+      dragToRank: 'Drag and drop to rank items (1 = best)',
     },
     bugReport: {
       button: 'Report a bug',
@@ -1710,6 +1753,16 @@ export const translations: Record<Language, Translations> = {
       guildMasterDesc: 'Vous avez accès à toutes les fonctionnalités de gestion de la guilde.',
       noPermissions: 'Vous n\'avez pas de permissions spécifiques accordées par le GM.',
       grantedByGm: 'Ces permissions vous ont été accordées par le GM de la guilde.',
+      officers: 'Officiers',
+      allMembers: 'Tous les membres',
+      custom: 'Personnalisé...',
+      ranksRange: 'Rangs 0-{{max}}',
+      maxRank: 'Rang maximum',
+      sensitivePermission: 'Permission sensible',
+      noIndividualAccess: 'Aucun accès individuel défini',
+      addSpecificUsers: 'Ajoutez des utilisateurs spécifiques pour leur donner des permissions supplémentaires',
+      individualAccess: 'Accès individuels',
+      selectMember: 'Sélectionner un membre...',
     },
     guildNav: {
       dashboard: 'Tableau de bord',
@@ -1785,6 +1838,16 @@ export const translations: Record<Language, Translations> = {
         active: 'Actif',
         closed: 'Clôturé',
       },
+      sectionTitle: 'Titre de la section...',
+      sectionDescription: 'Description (optionnelle)...',
+      addQuestionToSection: 'Ajouter une question à cette section',
+      editActivePoll: 'Modifier un sondage actif',
+      editActivePollDesc: 'Ce sondage a déjà reçu {{count}} réponse(s). Choisissez le type de modification.',
+      editSettings: 'Modifier les paramètres',
+      editSettingsDesc: 'Titre, description, date de fin, roster cible. Les réponses sont conservées.',
+      editStructure: 'Modifier la structure',
+      editStructureDesc: 'Questions et options. ⚠️ Cela réinitialisera toutes les réponses existantes.',
+      dragToRank: 'Glissez-déposez pour classer les éléments (1 = meilleur)',
     },
     bugReport: {
       button: 'Signaler un bug',
