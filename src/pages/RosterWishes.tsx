@@ -45,6 +45,10 @@ const RosterWishes = () => {
     validationFilters: [],
     searchQuery: '',
     filterMode: 'or',
+    commitmentFilters: [],
+    minWishes: null,
+    rangeFilters: [],
+    hasComment: null,
   });
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
@@ -472,6 +476,42 @@ const RosterWishes = () => {
     }
 
     const isAndMode = filters.filterMode === 'and';
+
+    // Filter by commitment
+    if (filters.commitmentFilters.length > 0) {
+      // Map DB status to CommitmentFilter
+      const statusMap: Record<string, 'confirmed' | 'undecided' | 'withdrawn'> = {
+        'confirmed': 'confirmed',
+        'potential': 'undecided',
+        'withdrawn': 'withdrawn',
+      };
+      const memberCommitment = statusMap[m.status] || 'undecided';
+      if (!filters.commitmentFilters.includes(memberCommitment)) return false;
+    }
+
+    // Filter by minimum wishes
+    if (filters.minWishes !== null) {
+      const wishCount = m.wishes.filter(w => w.class_id).length;
+      if (wishCount < filters.minWishes) return false;
+    }
+
+    // Filter by range (melee/ranged)
+    if (filters.rangeFilters.length > 0) {
+      const hasRange = m.wishes.some(w => {
+        if (!w.spec_ids?.length) return false;
+        return w.spec_ids.some(specId => {
+          const spec = getSpecById(specId);
+          return spec && filters.rangeFilters.includes(spec.range);
+        });
+      });
+      if (!hasRange) return false;
+    }
+
+    // Filter by comment
+    if (filters.hasComment !== null) {
+      const hasAnyComment = m.wishes.some(w => w.comment?.trim());
+      if (filters.hasComment !== hasAnyComment) return false;
+    }
 
     if (filters.roleFilters.length > 0) {
       const matchingWishes = m.wishes.filter(w => {
