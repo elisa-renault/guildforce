@@ -32,6 +32,7 @@ import ForumTopic from "./pages/ForumTopic";
 import ForumAdmin from "./pages/ForumAdmin";
 import Admin from "./pages/Admin";
 import LegalPage from "./pages/LegalPage";
+import Changelog from "./pages/Changelog";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -58,6 +59,7 @@ const App = () => (
                   <Route path="/legal" element={<LegalPage />} />
                   <Route path="/privacy" element={<LegalPage />} />
                   <Route path="/terms" element={<LegalPage />} />
+                  <Route path="/changelog" element={<Changelog />} />
                   <Route path="/forum/category/:categorySlug" element={<ForumCategory />} />
                   <Route path="/forum/category/:categorySlug/new" element={<ForumNewTopic />} />
                   <Route path="/forum/topic/:topicId" element={<ForumTopic />} />
