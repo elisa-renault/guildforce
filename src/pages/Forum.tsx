@@ -12,7 +12,7 @@ import { Loader2, Plus, MessageSquare, Settings } from 'lucide-react';
 
 const Forum = () => {
   const navigate = useNavigate();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const { user } = useAuth();
   const { categories, loading, error } = useForumCategories();
   const { isAdmin } = useIsAdmin();
@@ -69,12 +69,10 @@ const Forum = () => {
           <div className="text-center py-16">
             <MessageSquare className="h-16 w-16 mx-auto mb-4 text-muted-foreground/30" />
             <h2 className="text-xl font-semibold text-foreground mb-2">
-              {language === 'fr' ? 'Aucune catégorie' : 'No categories'}
+              {t.forum.empty?.noCategories || (language === 'fr' ? 'Aucune catégorie' : 'No categories')}
             </h2>
             <p className="text-muted-foreground">
-              {language === 'fr' 
-                ? 'Le forum est en cours de configuration.'
-                : 'The forum is being set up.'}
+              {t.forum.empty?.beingSetUp || (language === 'fr' ? 'Le forum est en cours de configuration.' : 'The forum is being set up.')}
             </p>
           </div>
         )}

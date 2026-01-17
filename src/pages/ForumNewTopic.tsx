@@ -150,14 +150,14 @@ const ForumNewTopic = () => {
               variant="outline"
               onClick={() => navigate(`/forum/category/${categorySlug}`)}
             >
-              {language === 'fr' ? 'Annuler' : 'Cancel'}
+              {t.common.cancel}
             </CosmicButton>
             <CosmicButton
               onClick={handleCreateTopic}
               disabled={!title.trim() || !content.trim() || creating}
               loading={creating}
             >
-              {language === 'fr' ? 'Créer le sujet' : 'Create topic'}
+              {t.forum.createTopic || (language === 'fr' ? 'Créer le sujet' : 'Create topic')}
             </CosmicButton>
           </div>
         </div>
