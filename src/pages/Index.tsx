@@ -90,7 +90,7 @@ const Index = () => {
           <div className="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-4">
             {!user && (
               <Select value={selectedRegion} onValueChange={(v) => setSelectedRegion(v as BattleNetRegion)}>
-                <SelectTrigger className="w-36 h-11 bg-card/80 border-border/50 hover:border-primary/50 transition-colors">
+                <SelectTrigger className="w-36 h-14 bg-card/80 border-border/50 hover:border-primary/50 transition-colors">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -103,7 +103,8 @@ const Index = () => {
               </Select>
             )}
             <CosmicButton
-              size="lg" 
+              size="lg"
+              className="h-14"
               onClick={() => user ? navigate('/guilds') : handleBattleNetLogin()}
               loading={bnetLoading}
               icon={user ? <Shield className="h-5 w-5" strokeWidth={1.5} /> : <BattleNetIcon className="h-7 w-7" />}
