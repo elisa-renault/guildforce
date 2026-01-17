@@ -444,6 +444,67 @@ export interface Translations {
     noCategories: string;
     noModerators: string;
     accessRestricted: string;
+    // ForumAdmin specific
+    loadingError: string;
+    backToForum: string;
+    reports: string;
+    categories: string;
+    moderators: string;
+    users: string;
+    sanctions: string;
+    nameAndSlugRequired: string;
+    categoryUpdated: string;
+    categoryCreated: string;
+    categoryDeleted: string;
+    orderUpdated: string;
+    moderatorAdded: string;
+    moderatorRemoved: string;
+    roleRemoved: string;
+    roleAdded: string;
+    editCategory: string;
+    newCategory: string;
+    addModerator: string;
+    selectUser: string;
+    confirmDeletion: string;
+    actionIrreversible: string;
+    you: string;
+    user: string;
+    roleManagement: string;
+    adminRoleDesc: string;
+    modRoleDesc: string;
+    global: string;
+    // GuildManager specific
+    searchGuilds: string;
+    syncBattlenet: string;
+    syncComplete: string;
+    syncError: string;
+    noGuildsFound: string;
+    totalGuilds: string;
+    viewGuild: string;
+    editGuild: string;
+    deleteGuild: string;
+    guildUpdated: string;
+    guildUpdateError: string;
+    guildDeleted: string;
+    guildDeleteError: string;
+    editGuildInfo: string;
+    confirmDeleteGuild: string;
+    deleteGuildWarning: string;
+    name: string;
+    server: string;
+    region: string;
+    faction: string;
+    order: string;
+    icon: string;
+    saving: string;
+    deleting: string;
+  };
+  // Accessibility
+  accessibility: {
+    previousSlide: string;
+    nextSlide: string;
+    close: string;
+    toggleSidebar: string;
   };
   // Notifications
   notifications: {
@@ -1142,6 +1203,66 @@ export const translations: Record<Language, Translations> = {
       noCategories: 'No categories',
       noModerators: 'No moderators',
       accessRestricted: 'Admin access only',
+      // ForumAdmin specific
+      loadingError: 'Loading error',
+      backToForum: 'Back to forum',
+      reports: 'Reports',
+      categories: 'Categories',
+      moderators: 'Moderators',
+      users: 'Users',
+      sanctions: 'Sanctions',
+      nameAndSlugRequired: 'Name and slug required',
+      categoryUpdated: 'Category updated',
+      categoryCreated: 'Category created',
+      categoryDeleted: 'Category deleted',
+      orderUpdated: 'Order updated',
+      moderatorAdded: 'Moderator added',
+      moderatorRemoved: 'Moderator removed',
+      roleRemoved: 'Role removed',
+      roleAdded: 'Role added',
+      editCategory: 'Edit Category',
+      newCategory: 'New Category',
+      addModerator: 'Add Moderator',
+      selectUser: 'Select...',
+      confirmDeletion: 'Confirm Deletion',
+      actionIrreversible: 'This action cannot be undone.',
+      you: 'You',
+      user: 'User',
+      roleManagement: 'Role Management',
+      adminRoleDesc: 'Full access: manage categories, moderators, and all user roles',
+      modRoleDesc: 'Forum moderation: pin, lock, and delete topics/posts',
+      global: 'Global',
+      // GuildManager specific
+      searchGuilds: 'Search guilds...',
+      syncBattlenet: 'Sync Battle.net',
+      syncComplete: 'Sync complete',
+      syncError: 'Error during sync',
+      noGuildsFound: 'No guilds found',
+      totalGuilds: 'guilds total',
+      viewGuild: 'View guild',
+      editGuild: 'Edit Guild',
+      deleteGuild: 'Delete guild?',
+      guildUpdated: 'Guild updated',
+      guildUpdateError: 'Error updating guild',
+      guildDeleted: 'Guild deleted',
+      guildDeleteError: 'Error deleting guild',
+      editGuildInfo: 'Update guild information.',
+      confirmDeleteGuild: 'Are you sure you want to delete',
+      deleteGuildWarning: 'This action is irreversible and will delete all associated data (members, wishes, polls, etc.).',
+      name: 'Name',
+      server: 'Server',
+      region: 'Region',
+      faction: 'Faction',
+      order: 'Order',
+      icon: 'Icon (emoji)',
+      saving: 'Saving...',
+      deleting: 'Deleting...',
+    },
+    accessibility: {
+      previousSlide: 'Previous slide',
+      nextSlide: 'Next slide',
+      close: 'Close',
+      toggleSidebar: 'Toggle Sidebar',
     },
   },
   fr: {
@@ -1706,6 +1827,66 @@ export const translations: Record<Language, Translations> = {
       noCategories: 'Aucune catégorie',
       noModerators: 'Aucun modérateur',
       accessRestricted: 'Accès réservé aux administrateurs',
+      // ForumAdmin specific
+      loadingError: 'Erreur de chargement',
+      backToForum: 'Retour au forum',
+      reports: 'Signalements',
+      categories: 'Catégories',
+      moderators: 'Modérateurs',
+      users: 'Utilisateurs',
+      sanctions: 'Sanctions',
+      nameAndSlugRequired: 'Nom et slug requis',
+      categoryUpdated: 'Catégorie mise à jour',
+      categoryCreated: 'Catégorie créée',
+      categoryDeleted: 'Catégorie supprimée',
+      orderUpdated: 'Ordre mis à jour',
+      moderatorAdded: 'Modérateur ajouté',
+      moderatorRemoved: 'Modérateur retiré',
+      roleRemoved: 'Rôle retiré',
+      roleAdded: 'Rôle ajouté',
+      editCategory: 'Modifier la catégorie',
+      newCategory: 'Nouvelle catégorie',
+      addModerator: 'Ajouter un modérateur',
+      selectUser: 'Sélectionner...',
+      confirmDeletion: 'Confirmer la suppression',
+      actionIrreversible: 'Cette action est irréversible.',
+      you: 'Vous',
+      user: 'Utilisateur',
+      roleManagement: 'Gestion des rôles',
+      adminRoleDesc: 'Accès total : gestion des catégories, modérateurs, et tous les rôles utilisateurs',
+      modRoleDesc: 'Modération du forum : épingler, verrouiller et supprimer les sujets/messages',
+      global: 'Global',
+      // GuildManager specific
+      searchGuilds: 'Rechercher une guilde...',
+      syncBattlenet: 'Sync Battle.net',
+      syncComplete: 'Sync terminée',
+      syncError: 'Erreur lors de la synchronisation',
+      noGuildsFound: 'Aucune guilde trouvée',
+      totalGuilds: 'guildes au total',
+      viewGuild: 'Voir la guilde',
+      editGuild: 'Modifier la guilde',
+      deleteGuild: 'Supprimer la guilde ?',
+      guildUpdated: 'Guilde modifiée',
+      guildUpdateError: 'Erreur lors de la modification',
+      guildDeleted: 'Guilde supprimée',
+      guildDeleteError: 'Erreur lors de la suppression',
+      editGuildInfo: 'Modifiez les informations de la guilde.',
+      confirmDeleteGuild: 'Êtes-vous sûr de vouloir supprimer',
+      deleteGuildWarning: 'Cette action est irréversible et supprimera toutes les données associées (membres, vœux, sondages, etc.).',
+      name: 'Nom',
+      server: 'Serveur',
+      region: 'Région',
+      faction: 'Faction',
+      order: 'Ordre',
+      icon: 'Icône (emoji)',
+      saving: 'Enregistrement...',
+      deleting: 'Suppression...',
+    },
+    accessibility: {
+      previousSlide: 'Diapositive précédente',
+      nextSlide: 'Diapositive suivante',
+      close: 'Fermer',
+      toggleSidebar: 'Basculer la barre latérale',
     },
   },
 };

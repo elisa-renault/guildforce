@@ -77,7 +77,7 @@ interface UserWithRoles {
 
 const ForumAdmin = () => {
   const navigate = useNavigate();
-  const { language, t } = useLanguage();
+  const { t } = useLanguage();
   const { user } = useAuth();
   const { isAdmin, loading: adminLoading } = useIsAdmin();
   const {
@@ -130,8 +130,7 @@ const ForumAdmin = () => {
       setModerators(mods || []);
       setUsers(allUsers || []);
     } catch (error) {
-      // Error logged silently in production
-      toast.error(language === 'fr' ? 'Erreur de chargement' : 'Loading error');
+      toast.error(t.admin.loadingError);
     } finally {
       setLoading(false);
     }
@@ -159,10 +158,10 @@ const ForumAdmin = () => {
         <div className="text-center">
           <Shield className="h-12 w-12 text-destructive mx-auto mb-4" />
           <p className="text-muted-foreground mb-4">
-            {language === 'fr' ? 'Accès réservé aux administrateurs' : 'Admin access only'}
+            {t.admin.accessRestricted}
           </p>
           <CosmicButton onClick={() => navigate('/forum')}>
-            {language === 'fr' ? 'Retour au forum' : 'Back to forum'}
+            {t.admin.backToForum}
           </CosmicButton>
         </div>
       </div>
@@ -196,22 +195,22 @@ const ForumAdmin = () => {
 
   const handleSaveCategory = async () => {
     if (!categoryForm.name || !categoryForm.slug) {
-      toast.error(language === 'fr' ? 'Nom et slug requis' : 'Name and slug required');
+      toast.error(t.admin.nameAndSlugRequired);
       return;
     }
 
     try {
       if (editingCategory) {
         await updateCategory(editingCategory.id, categoryForm);
-        toast.success(language === 'fr' ? 'Catégorie mise à jour' : 'Category updated');
+        toast.success(t.admin.categoryUpdated);
       } else {
         await createCategory({ ...categoryForm, is_global: true });
-        toast.success(language === 'fr' ? 'Catégorie créée' : 'Category created');
+        toast.success(t.admin.categoryCreated);
       }
       setCategoryDialogOpen(false);
       loadData();
     } catch (error) {
-      toast.error(language === 'fr' ? 'Erreur' : 'Error');
+      toast.error(t.errors.generic);
     }
   };
 
@@ -219,11 +218,11 @@ const ForumAdmin = () => {
     if (!deleteTarget || deleteTarget.type !== 'category') return;
     try {
       await deleteCategory(deleteTarget.id);
-      toast.success(language === 'fr' ? 'Catégorie supprimée' : 'Category deleted');
+      toast.success(t.admin.categoryDeleted);
       setDeleteTarget(null);
       loadData();
     } catch (error) {
-      toast.error(language === 'fr' ? 'Erreur' : 'Error');
+      toast.error(t.errors.generic);
     }
   };
 
@@ -240,9 +239,9 @@ const ForumAdmin = () => {
 
     try {
       await reorderCategories(newCategories.map(c => c.id));
-      toast.success(language === 'fr' ? 'Ordre mis à jour' : 'Order updated');
+      toast.success(t.admin.orderUpdated);
     } catch (error) {
-      toast.error(language === 'fr' ? 'Erreur' : 'Error');
+      toast.error(t.errors.generic);
       loadData(); // Revert on error
     }
   };
@@ -251,12 +250,12 @@ const ForumAdmin = () => {
     if (!selectedUserId) return;
     try {
       await addModerator(selectedUserId, { isGlobalMod: true });
-      toast.success(language === 'fr' ? 'Modérateur ajouté' : 'Moderator added');
+      toast.success(t.admin.moderatorAdded);
       setModDialogOpen(false);
       setSelectedUserId('');
       loadData();
     } catch (error) {
-      toast.error(language === 'fr' ? 'Erreur' : 'Error');
+      toast.error(t.errors.generic);
     }
   };
 
@@ -264,11 +263,11 @@ const ForumAdmin = () => {
     if (!deleteTarget || deleteTarget.type !== 'moderator') return;
     try {
       await removeModerator(deleteTarget.id);
-      toast.success(language === 'fr' ? 'Modérateur retiré' : 'Moderator removed');
+      toast.success(t.admin.moderatorRemoved);
       setDeleteTarget(null);
       loadData();
     } catch (error) {
-      toast.error(language === 'fr' ? 'Erreur' : 'Error');
+      toast.error(t.errors.generic);
     }
   };
 
@@ -276,14 +275,14 @@ const ForumAdmin = () => {
     try {
       if (hasRole) {
         await removeRole(userId, role);
-        toast.success(language === 'fr' ? 'Rôle retiré' : 'Role removed');
+        toast.success(t.admin.roleRemoved);
       } else {
         await addRole(userId, role);
-        toast.success(language === 'fr' ? 'Rôle ajouté' : 'Role added');
+        toast.success(t.admin.roleAdded);
       }
       loadData();
     } catch (error) {
-      toast.error(language === 'fr' ? 'Erreur' : 'Error');
+      toast.error(t.errors.generic);
     }
   };
 
@@ -307,7 +306,7 @@ const ForumAdmin = () => {
           <div className="flex items-center gap-2">
             <Settings className="h-6 w-6 text-primary" />
             <h1 className="font-display text-2xl text-foreground">
-              {language === 'fr' ? 'Administration du Forum' : 'Forum Administration'}
+              {t.admin.forumAdmin}
             </h1>
           </div>
         </div>
@@ -316,23 +315,23 @@ const ForumAdmin = () => {
           <TabsList className="bg-card border border-border">
             <TabsTrigger value="reports" className="data-[state=active]:bg-primary/20">
               <Flag className="h-4 w-4 mr-2" />
-              {language === 'fr' ? 'Signalements' : 'Reports'}
+              {t.admin.reports}
             </TabsTrigger>
             <TabsTrigger value="categories" className="data-[state=active]:bg-primary/20">
               <MessageSquare className="h-4 w-4 mr-2" />
-              {language === 'fr' ? 'Catégories' : 'Categories'}
+              {t.admin.categories}
             </TabsTrigger>
             <TabsTrigger value="moderators" className="data-[state=active]:bg-primary/20">
               <Shield className="h-4 w-4 mr-2" />
-              {language === 'fr' ? 'Modérateurs' : 'Moderators'}
+              {t.admin.moderators}
             </TabsTrigger>
             <TabsTrigger value="users" className="data-[state=active]:bg-primary/20">
               <Users className="h-4 w-4 mr-2" />
-              {language === 'fr' ? 'Utilisateurs' : 'Users'}
+              {t.admin.users}
             </TabsTrigger>
             <TabsTrigger value="sanctions" className="data-[state=active]:bg-primary/20">
               <Ban className="h-4 w-4 mr-2" />
-              {language === 'fr' ? 'Sanctions' : 'Sanctions'}
+              {t.admin.sanctions}
             </TabsTrigger>
           </TabsList>
 
@@ -346,11 +345,11 @@ const ForumAdmin = () => {
             <Card className="bg-card/50 border-border">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-lg">
-                  {language === 'fr' ? 'Catégories du forum' : 'Forum Categories'}
+                  {t.admin.forumCategories}
                 </CardTitle>
                 <Button onClick={() => handleOpenCategoryDialog()} size="sm">
                   <Plus className="h-4 w-4 mr-2" />
-                  {language === 'fr' ? 'Ajouter' : 'Add'}
+                  {t.common.add}
                 </Button>
               </CardHeader>
               <CardContent>
@@ -391,7 +390,7 @@ const ForumAdmin = () => {
                         </div>
                         {cat.is_global && (
                           <Badge variant="outline" className="text-xs">
-                            Global
+                            {t.admin.global}
                           </Badge>
                         )}
                       </div>
@@ -416,7 +415,7 @@ const ForumAdmin = () => {
                   ))}
                   {categories.length === 0 && (
                     <p className="text-center text-muted-foreground py-8">
-                      {language === 'fr' ? 'Aucune catégorie' : 'No categories'}
+                      {t.admin.noCategories}
                     </p>
                   )}
                 </div>
@@ -429,11 +428,11 @@ const ForumAdmin = () => {
             <Card className="bg-card/50 border-border">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-lg">
-                  {language === 'fr' ? 'Modérateurs du forum' : 'Forum Moderators'}
+                  {t.admin.forumModerators}
                 </CardTitle>
                 <Button onClick={() => setModDialogOpen(true)} size="sm">
                   <Plus className="h-4 w-4 mr-2" />
-                  {language === 'fr' ? 'Ajouter' : 'Add'}
+                  {t.common.add}
                 </Button>
               </CardHeader>
               <CardContent>
@@ -455,7 +454,7 @@ const ForumAdmin = () => {
                           <div className="flex gap-2">
                             {mod.is_global_mod && (
                               <Badge variant="secondary" className="text-xs">
-                                {language === 'fr' ? 'Global' : 'Global'}
+                                {t.admin.global}
                               </Badge>
                             )}
                           </div>
@@ -473,7 +472,7 @@ const ForumAdmin = () => {
                   ))}
                   {moderators.length === 0 && (
                     <p className="text-center text-muted-foreground py-8">
-                      {language === 'fr' ? 'Aucun modérateur' : 'No moderators'}
+                      {t.admin.noModerators}
                     </p>
                   )}
                 </div>
@@ -486,7 +485,7 @@ const ForumAdmin = () => {
             <Card className="bg-card/50 border-border">
               <CardHeader>
                 <CardTitle className="text-lg">
-                  {language === 'fr' ? 'Gestion des rôles' : 'Role Management'}
+                  {t.admin.roleManagement}
                 </CardTitle>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30">
@@ -494,9 +493,7 @@ const ForumAdmin = () => {
                       <Badge variant="destructive" className="text-xs">Admin</Badge>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {language === 'fr' 
-                        ? 'Accès total : gestion des catégories, modérateurs, et tous les rôles utilisateurs'
-                        : 'Full access: manage categories, moderators, and all user roles'}
+                      {t.admin.adminRoleDesc}
                     </p>
                   </div>
                   <div className="p-3 rounded-lg bg-primary/10 border border-primary/30">
@@ -507,9 +504,7 @@ const ForumAdmin = () => {
                       </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {language === 'fr' 
-                        ? 'Modération du forum : épingler, verrouiller et supprimer les sujets/messages'
-                        : 'Forum moderation: pin, lock, and delete topics/posts'}
+                      {t.admin.modRoleDesc}
                     </p>
                   </div>
                 </div>
@@ -533,7 +528,7 @@ const ForumAdmin = () => {
                             <p className="font-medium text-foreground">{u.username}</p>
                             {u.id === user?.id && (
                               <Badge variant="outline" className="text-xs">
-                                {language === 'fr' ? 'Vous' : 'You'}
+                                {t.admin.you}
                               </Badge>
                             )}
                           </div>
@@ -551,7 +546,7 @@ const ForumAdmin = () => {
                             )}
                             {u.roles.length === 0 && (
                               <span className="text-xs text-muted-foreground">
-                                {language === 'fr' ? 'Utilisateur' : 'User'}
+                                {t.admin.user}
                               </span>
                             )}
                           </div>
@@ -597,14 +592,12 @@ const ForumAdmin = () => {
         <DialogContent className="bg-card border-border">
           <DialogHeader>
             <DialogTitle>
-              {editingCategory
-                ? (language === 'fr' ? 'Modifier la catégorie' : 'Edit Category')
-                : (language === 'fr' ? 'Nouvelle catégorie' : 'New Category')}
+              {editingCategory ? t.admin.editCategory : t.admin.newCategory}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="category-name">{language === 'fr' ? 'Nom' : 'Name'}</Label>
+              <Label htmlFor="category-name">{t.admin.name}</Label>
               <Input
                 id="category-name"
                 name="category-name"
@@ -638,7 +631,7 @@ const ForumAdmin = () => {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="category-icon">{language === 'fr' ? 'Icône (emoji)' : 'Icon (emoji)'}</Label>
+                <Label htmlFor="category-icon">{t.admin.icon}</Label>
                 <Input
                   id="category-icon"
                   name="category-icon"
@@ -649,7 +642,7 @@ const ForumAdmin = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="category-order">{language === 'fr' ? 'Ordre' : 'Order'}</Label>
+                <Label htmlFor="category-order">{t.admin.order}</Label>
                 <Input
                   id="category-order"
                   name="category-order"
@@ -677,15 +670,15 @@ const ForumAdmin = () => {
         <DialogContent className="bg-card border-border">
           <DialogHeader>
             <DialogTitle>
-              {language === 'fr' ? 'Ajouter un modérateur' : 'Add Moderator'}
+              {t.admin.addModerator}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>{language === 'fr' ? 'Utilisateur' : 'User'}</Label>
+              <Label>{t.admin.user}</Label>
               <Select value={selectedUserId} onValueChange={setSelectedUserId}>
                 <SelectTrigger className="bg-muted/50 border-border">
-                  <SelectValue placeholder={language === 'fr' ? 'Sélectionner...' : 'Select...'} />
+                  <SelectValue placeholder={t.admin.selectUser} />
                 </SelectTrigger>
                 <SelectContent className="bg-card border-border">
                   {nonModeratorUsers.map((u) => (
@@ -702,7 +695,7 @@ const ForumAdmin = () => {
               {t.common.cancel}
             </Button>
             <Button onClick={handleAddModerator} disabled={!selectedUserId}>
-              {language === 'fr' ? 'Ajouter' : 'Add'}
+              {t.common.add}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -713,12 +706,10 @@ const ForumAdmin = () => {
         <AlertDialogContent className="bg-card border-border">
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {language === 'fr' ? 'Confirmer la suppression' : 'Confirm Deletion'}
+              {t.admin.confirmDeletion}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {language === 'fr'
-                ? 'Cette action est irréversible.'
-                : 'This action cannot be undone.'}
+              {t.admin.actionIrreversible}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
