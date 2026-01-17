@@ -1,11 +1,11 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { CheckCircle, HelpCircle, XCircle, Pencil, X, Save, Shield, Heart, Swords, Crosshair, MessageSquare, Plus, Trash2 } from 'lucide-react';
+import { CheckCircle, HelpCircle, XCircle, Pencil, X, Save, Shield, Heart, Swords, Crosshair, MessageSquare, Plus, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getClassById, getSpecById } from '@/data/wowClasses';
 import { MemberWish, WishData, WishChoice, ValidationStatus } from '@/types/guild';
@@ -15,6 +15,9 @@ import { CommitmentToggle, CommitmentStatus } from '@/components/CommitmentToggl
 import { MobileRosterCard } from './MobileRosterCard';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
+
+type SortColumn = 'player' | 'status' | 'wish1' | 'wish2' | 'wish3';
+type SortDirection = 'asc' | 'desc';
 
 interface RosterTableProps {
   members: MemberWish[];
@@ -69,6 +72,76 @@ export const RosterTable = ({
   const { regionSlug, serverSlug, guildSlug } = useParams();
   const isMobile = useIsMobile();
   const [validatingWish, setValidatingWish] = useState<string | null>(null);
+  const [sortColumn, setSortColumn] = useState<SortColumn | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  // Helper to get class name for sorting
+  const getWishClassName = (wishes: WishChoice[], choiceIndex: number): string => {
+    const wish = wishes.find(w => w.choice_index === choiceIndex);
+    if (!wish) return '';
+    const cls = getClassById(wish.class_id);
+    return cls ? cls.name[language].toLowerCase() : '';
+  };
+
+  // Sort members
+  const sortedMembers = useMemo(() => {
+    if (!sortColumn) return members;
+
+    return [...members].sort((a, b) => {
+      let comparison = 0;
+
+      switch (sortColumn) {
+        case 'player':
+          comparison = a.username.toLowerCase().localeCompare(b.username.toLowerCase());
+          break;
+        case 'status':
+          const statusOrder = { confirmed: 0, potential: 1, withdrawn: 2 };
+          comparison = (statusOrder[a.status as keyof typeof statusOrder] ?? 1) - (statusOrder[b.status as keyof typeof statusOrder] ?? 1);
+          break;
+        case 'wish1':
+          comparison = getWishClassName(a.wishes, 1).localeCompare(getWishClassName(b.wishes, 1));
+          break;
+        case 'wish2':
+          comparison = getWishClassName(a.wishes, 2).localeCompare(getWishClassName(b.wishes, 2));
+          break;
+        case 'wish3':
+          comparison = getWishClassName(a.wishes, 3).localeCompare(getWishClassName(b.wishes, 3));
+          break;
+      }
+
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }, [members, sortColumn, sortDirection, language]);
+
+  const SortIcon = ({ column }: { column: SortColumn }) => {
+    if (sortColumn !== column) {
+      return <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />;
+    }
+    return sortDirection === 'asc' 
+      ? <ArrowUp className="h-3 w-3 text-primary" />
+      : <ArrowDown className="h-3 w-3 text-primary" />;
+  };
+
+  const SortableHeader = ({ column, children, className }: { column: SortColumn; children: React.ReactNode; className?: string }) => (
+    <TableHead 
+      className={cn("text-muted-foreground text-xs py-2 px-2 md:px-3 cursor-pointer hover:text-foreground transition-colors select-none", className)}
+      onClick={() => handleSort(column)}
+    >
+      <div className="flex items-center gap-1">
+        {children}
+        <SortIcon column={column} />
+      </div>
+    </TableHead>
+  );
 
   const handleValidation = async (memberId: string, choiceIndex: number, status: ValidationStatus) => {
     if (!onValidateWish) return;
@@ -274,16 +347,16 @@ export const RosterTable = ({
         <Table className="table-fixed">
           <TableHeader>
             <TableRow className="border-border/30 hover:bg-transparent">
-              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3 w-[120px] md:w-[140px]">{t.dashboard.player}</TableHead>
-              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3 w-[100px] md:w-[120px]">{t.wishes.status}</TableHead>
-              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3"><span className="hidden md:inline">{t.dashboard.firstChoice}</span><span className="md:hidden">#1</span></TableHead>
-              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3"><span className="hidden md:inline">{t.dashboard.secondChoice}</span><span className="md:hidden">#2</span></TableHead>
-              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3"><span className="hidden md:inline">{t.dashboard.thirdChoice}</span><span className="md:hidden">#3</span></TableHead>
+              <SortableHeader column="player" className="w-[120px] md:w-[140px]">{t.dashboard.player}</SortableHeader>
+              <SortableHeader column="status" className="w-[100px] md:w-[120px]">{t.wishes.status}</SortableHeader>
+              <SortableHeader column="wish1"><span className="hidden md:inline">{t.dashboard.firstChoice}</span><span className="md:hidden">#1</span></SortableHeader>
+              <SortableHeader column="wish2"><span className="hidden md:inline">{t.dashboard.secondChoice}</span><span className="md:hidden">#2</span></SortableHeader>
+              <SortableHeader column="wish3"><span className="hidden md:inline">{t.dashboard.thirdChoice}</span><span className="md:hidden">#3</span></SortableHeader>
               <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3 w-[100px] md:w-[120px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {members.map((member) => {
+            {sortedMembers.map((member) => {
               const isOwnRow = member.id === currentUserId;
               const isEditing = editingUserId === member.id;
               const extraWishes = getExtraWishesCount(member.wishes);
