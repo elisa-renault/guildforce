@@ -14,6 +14,7 @@ import { AdminSettingsSidebar, AdminSection } from '@/components/admin/AdminSett
 import { AdminDashboardSection } from '@/components/admin/AdminDashboardSection';
 import { AdminPermissionsManager } from '@/components/admin/AdminPermissionsManager';
 import { AdminForumSection } from '@/components/admin/AdminForumSection';
+import { AdminDocumentation } from '@/components/admin/AdminDocumentation';
 import { Crown, Loader2 } from 'lucide-react';
 
 interface AdminStats {
@@ -129,6 +130,10 @@ export default function Admin() {
             onNavigateToSection={handleSectionChange}
           />
         );
+      
+      case 'docs':
+        if (!isAdmin) return null;
+        return <AdminDocumentation />;
       
       case 'users':
         if (!isAdmin) return null;
