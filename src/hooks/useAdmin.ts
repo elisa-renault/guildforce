@@ -59,6 +59,53 @@ export function useIsAdmin() {
   return { isAdmin, loading };
 }
 
+// Combined hook to check both admin and moderator status in a single query
+export function useAdminRoles() {
+  const { user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isModerator, setIsModerator] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function checkRoles() {
+      if (!user) {
+        setIsAdmin(false);
+        setIsModerator(false);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .in('role', ['admin', 'moderator']);
+
+        if (error) {
+          console.error('Error checking roles:', error);
+          setIsAdmin(false);
+          setIsModerator(false);
+        } else {
+          const roles = (data || []).map(r => r.role);
+          setIsAdmin(roles.includes('admin'));
+          setIsModerator(roles.includes('admin') || roles.includes('moderator'));
+        }
+      } catch (err) {
+        console.error('Error checking roles:', err);
+        setIsAdmin(false);
+        setIsModerator(false);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    checkRoles();
+  }, [user]);
+
+  return { isAdmin, isModerator, loading };
+}
+
 export function useIsModerator() {
   const { user } = useAuth();
   const [isModerator, setIsModerator] = useState(false);
