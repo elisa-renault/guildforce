@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useIsAdmin } from '@/hooks/useAdmin';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
@@ -10,12 +12,14 @@ import { User, ArrowLeft, Loader2, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 
+type BattletagVisibility = 'everyone' | 'guild_only' | 'nobody';
+
 interface PublicProfileData {
   id: string;
   username: string;
   avatar_url: string | null;
   battletag: string | null;
-  show_battletag: boolean | null;
+  battletag_visibility: BattletagVisibility;
   created_at: string;
 }
 
@@ -23,9 +27,13 @@ const PublicProfile = () => {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
   const { t, language } = useLanguage();
+  const { user } = useAuth();
+  const { isAdmin, loading: adminLoading } = useIsAdmin();
   const [profile, setProfile] = useState<PublicProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [isGuildCoMember, setIsGuildCoMember] = useState(false);
+  const [guildCheckDone, setGuildCheckDone] = useState(false);
 
   useEffect(() => {
     async function fetchProfile() {
@@ -38,14 +46,17 @@ const PublicProfile = () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('id, username, avatar_url, battletag, show_battletag, created_at')
+          .select('id, username, avatar_url, battletag, battletag_visibility, created_at')
           .ilike('username', username)
           .single();
 
         if (error || !data) {
           setNotFound(true);
         } else {
-          setProfile(data);
+          setProfile({
+            ...data,
+            battletag_visibility: (data.battletag_visibility as BattletagVisibility) || 'everyone',
+          });
         }
       } catch {
         setNotFound(true);
@@ -57,7 +68,61 @@ const PublicProfile = () => {
     fetchProfile();
   }, [username]);
 
-  if (loading) {
+  // Check if current user shares a guild with the profile owner
+  useEffect(() => {
+    async function checkGuildCoMember() {
+      if (!user || !profile) {
+        setGuildCheckDone(true);
+        return;
+      }
+
+      // If viewing own profile, always show
+      if (user.id === profile.id) {
+        setIsGuildCoMember(true);
+        setGuildCheckDone(true);
+        return;
+      }
+
+      try {
+        // Use the RPC function to check if they share a guild
+        const { data } = await supabase.rpc('shares_wow_guild', {
+          p_current_user_id: user.id,
+          p_target_user_id: profile.id,
+        });
+
+        setIsGuildCoMember(!!data);
+      } catch {
+        setIsGuildCoMember(false);
+      } finally {
+        setGuildCheckDone(true);
+      }
+    }
+
+    checkGuildCoMember();
+  }, [user, profile]);
+
+  const canSeeBattletag = useMemo(() => {
+    if (!profile?.battletag) return false;
+
+    // Admins always see the BattleTag
+    if (isAdmin) return true;
+
+    // User viewing their own profile
+    if (user?.id === profile.id) return true;
+
+    switch (profile.battletag_visibility) {
+      case 'everyone':
+        return true;
+      case 'guild_only':
+        return isGuildCoMember;
+      case 'nobody':
+        return false;
+      default:
+        return true; // Fallback for old data
+    }
+  }, [profile, isAdmin, isGuildCoMember, user]);
+
+  if (loading || adminLoading || !guildCheckDone) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <CosmicBackground />
@@ -78,7 +143,7 @@ const PublicProfile = () => {
             {t.errors.notFound}
           </h1>
           <p className="text-muted-foreground text-sm mb-6">
-            {t.common.loading === 'Chargement...' 
+            {language === 'fr' 
               ? `L'utilisateur "${username}" n'existe pas.`
               : `The user "${username}" does not exist.`}
           </p>
@@ -112,7 +177,7 @@ const PublicProfile = () => {
               
               <h1 className="text-2xl font-display text-foreground">{profile.username}</h1>
               
-              {profile.battletag && profile.show_battletag !== false && (
+              {canSeeBattletag && profile.battletag && (
                 <p className="text-sm text-muted-foreground mt-1">{profile.battletag}</p>
               )}
             </div>
@@ -121,7 +186,7 @@ const PublicProfile = () => {
             <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground border-t border-border pt-4">
               <Calendar className="h-4 w-4" />
               <span>
-                {t.common.loading === 'Chargement...' ? 'Membre depuis' : 'Member since'} {memberSince}
+                {language === 'fr' ? 'Membre depuis' : 'Member since'} {memberSince}
               </span>
             </div>
           </GlowCard>
