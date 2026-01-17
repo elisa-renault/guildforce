@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Role } from '@/data/wowClasses';
-import { Shield, Heart, Swords } from 'lucide-react';
+import { Shield, Heart, Sword } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface RoleBadgeProps {
@@ -12,7 +12,7 @@ interface RoleBadgeProps {
 const roleConfig: Record<Role, { icon: React.ElementType; color: string }> = {
   tank: { icon: Shield, color: 'bg-tank/20 text-tank border-tank/50' },
   healer: { icon: Heart, color: 'bg-healer/20 text-healer border-healer/50' },
-  dps: { icon: Swords, color: 'bg-dps/20 text-dps border-dps/50' },
+  dps: { icon: Sword, color: 'bg-dps/20 text-dps border-dps/50' },
 };
 
 export const RoleBadge = ({ role, size = 'md' }: RoleBadgeProps) => {
