@@ -36,7 +36,6 @@ const MiniRankSlider = ({
   const [isDragging, setIsDragging] = useState(false);
   const sortedRanks = [...ranks].sort((a, b) => a.rank_index - b.rank_index);
   const { t } = useLanguage();
-  const isFrench = t.common.loading === 'Chargement...';
   
   const allRankIndices = Array.from({ length: maxRank + 1 }, (_, i) => i);
 
@@ -197,7 +196,6 @@ export const PermissionRow = ({
   isSensitive = false,
 }: PermissionRowProps) => {
   const { t } = useLanguage();
-  const isFrench = t.common.loading === 'Chargement...';
   const [customPopoverOpen, setCustomPopoverOpen] = useState(false);
   
   // Get rank rules (ignoring user rules for the dropdown)
@@ -237,10 +235,10 @@ export const PermissionRow = ({
   
   const getLevelLabel = (level: AccessLevel): string => {
     switch (level) {
-      case 'gm_only': return isFrench ? 'GM seul' : 'GM only';
-      case 'officers': return isFrench ? 'Officiers' : 'Officers';
-      case 'all': return isFrench ? 'Tous les membres' : 'All members';
-      case 'custom': return isFrench ? `Rangs 0-${customRankValue}` : `Ranks 0-${customRankValue}`;
+      case 'gm_only': return t.permissions.gmOnly;
+      case 'officers': return t.permissions.officers;
+      case 'all': return t.permissions.allMembers;
+      case 'custom': return t.permissions.ranksRange.replace('{{max}}', String(customRankValue));
     }
   };
 
@@ -258,9 +256,7 @@ export const PermissionRow = ({
                   </TooltipTrigger>
                   <TooltipContent side="top">
                     <p className="text-xs max-w-[200px]">
-                      {isFrench 
-                        ? 'Permission sensible'
-                        : 'Sensitive permission'}
+                      {t.permissions.sensitivePermission}
                     </p>
                   </TooltipContent>
                 </Tooltip>
@@ -296,7 +292,7 @@ export const PermissionRow = ({
             </PopoverTrigger>
             <PopoverContent className="w-64 p-3" align="end">
               <div className="space-y-3">
-                <div className="text-xs font-medium">{isFrench ? 'Rang maximum' : 'Maximum rank'}</div>
+                <div className="text-xs font-medium">{t.permissions.maxRank}</div>
                 <MiniRankSlider 
                   maxValue={customRankValue}
                   maxRank={maxRankIndex}
@@ -310,7 +306,7 @@ export const PermissionRow = ({
                     className="flex-1 text-xs h-7"
                     onClick={() => { handleLevelChange('gm_only'); setCustomPopoverOpen(false); }}
                   >
-                    {isFrench ? 'GM seul' : 'GM only'}
+                    {t.permissions.gmOnly}
                   </Button>
                   <Button 
                     variant="ghost" 
@@ -318,7 +314,7 @@ export const PermissionRow = ({
                     className="flex-1 text-xs h-7"
                     onClick={() => { handleLevelChange('officers'); setCustomPopoverOpen(false); }}
                   >
-                    {isFrench ? 'Officiers' : 'Officers'}
+                    {t.permissions.officers}
                   </Button>
                 </div>
               </div>
@@ -334,16 +330,16 @@ export const PermissionRow = ({
             </SelectTrigger>
             <SelectContent className="bg-card border-border">
               <SelectItem value="gm_only" className="text-xs">
-                {isFrench ? 'GM seul' : 'GM only'}
+                {t.permissions.gmOnly}
               </SelectItem>
               <SelectItem value="officers" className="text-xs">
-                {isFrench ? 'Officiers' : 'Officers'}
+                {t.permissions.officers}
               </SelectItem>
               <SelectItem value="all" className="text-xs">
-                {isFrench ? 'Tous les membres' : 'All members'}
+                {t.permissions.allMembers}
               </SelectItem>
               <SelectItem value="custom" className="text-xs">
-                {isFrench ? 'Personnalisé...' : 'Custom...'}
+                {t.permissions.custom}
               </SelectItem>
             </SelectContent>
           </Select>
