@@ -1,0 +1,411 @@
+import { useState, useEffect } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { supabase } from '@/integrations/supabase/client';
+import { GlowCard } from '@/components/GlowCard';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
+import { Search, Shield, ShieldCheck, User, X, Plus } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+
+type AppRole = 'admin' | 'moderator' | 'user';
+
+interface UserWithRoles {
+  id: string;
+  username: string;
+  avatar_url: string | null;
+  roles: AppRole[];
+}
+
+export const AdminPermissionsManager = () => {
+  const { language } = useLanguage();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [usersWithRoles, setUsersWithRoles] = useState<UserWithRoles[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<UserWithRoles[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    action: 'add' | 'remove';
+    user: UserWithRoles | null;
+    role: AppRole;
+  }>({ open: false, action: 'add', user: null, role: 'user' });
+
+  const fetchUsersWithRoles = async () => {
+    setLoading(true);
+    try {
+      // Get all users with admin or moderator roles
+      const { data: rolesData, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id, role')
+        .in('role', ['admin', 'moderator']);
+
+      if (rolesError) throw rolesError;
+
+      // Group roles by user
+      const userRolesMap = new Map<string, AppRole[]>();
+      rolesData?.forEach(r => {
+        const existing = userRolesMap.get(r.user_id) || [];
+        existing.push(r.role as AppRole);
+        userRolesMap.set(r.user_id, existing);
+      });
+
+      // Get profiles for these users
+      const userIds = Array.from(userRolesMap.keys());
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, username, avatar_url')
+          .in('id', userIds);
+
+        const usersWithRolesData: UserWithRoles[] = (profiles || []).map(p => ({
+          id: p.id,
+          username: p.username,
+          avatar_url: p.avatar_url,
+          roles: userRolesMap.get(p.id) || [],
+        }));
+
+        // Sort: admins first, then moderators
+        usersWithRolesData.sort((a, b) => {
+          const aIsAdmin = a.roles.includes('admin');
+          const bIsAdmin = b.roles.includes('admin');
+          if (aIsAdmin && !bIsAdmin) return -1;
+          if (!aIsAdmin && bIsAdmin) return 1;
+          return a.username.localeCompare(b.username);
+        });
+
+        setUsersWithRoles(usersWithRolesData);
+      } else {
+        setUsersWithRoles([]);
+      }
+    } catch (error) {
+      console.error('Error fetching users with roles:', error);
+      toast.error(language === 'fr' ? 'Erreur lors du chargement' : 'Error loading data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsersWithRoles();
+  }, []);
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setSearching(true);
+    try {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, username, avatar_url')
+        .ilike('username', `%${searchQuery}%`)
+        .limit(10);
+
+      if (profiles) {
+        // Get roles for found users
+        const userIds = profiles.map(p => p.id);
+        const { data: rolesData } = await supabase
+          .from('user_roles')
+          .select('user_id, role')
+          .in('user_id', userIds);
+
+        const userRolesMap = new Map<string, AppRole[]>();
+        rolesData?.forEach(r => {
+          const existing = userRolesMap.get(r.user_id) || [];
+          existing.push(r.role as AppRole);
+          userRolesMap.set(r.user_id, existing);
+        });
+
+        const results: UserWithRoles[] = profiles.map(p => ({
+          id: p.id,
+          username: p.username,
+          avatar_url: p.avatar_url,
+          roles: userRolesMap.get(p.id) || [],
+        }));
+
+        setSearchResults(results);
+      }
+    } catch (error) {
+      console.error('Error searching users:', error);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(handleSearch, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const confirmRoleChange = (user: UserWithRoles, role: AppRole, action: 'add' | 'remove') => {
+    setConfirmDialog({ open: true, action, user, role });
+  };
+
+  const executeRoleChange = async () => {
+    if (!confirmDialog.user) return;
+
+    setSaving(true);
+    try {
+      const { user, role, action } = confirmDialog;
+
+      if (action === 'add') {
+        const { error } = await supabase
+          .from('user_roles')
+          .insert({ user_id: user.id, role });
+
+        if (error) throw error;
+        toast.success(
+          language === 'fr'
+            ? `Rôle ${role} ajouté à ${user.username}`
+            : `${role} role added to ${user.username}`
+        );
+      } else {
+        const { error } = await supabase
+          .from('user_roles')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('role', role);
+
+        if (error) throw error;
+        toast.success(
+          language === 'fr'
+            ? `Rôle ${role} retiré de ${user.username}`
+            : `${role} role removed from ${user.username}`
+        );
+      }
+
+      // Refresh the list
+      await fetchUsersWithRoles();
+      setSearchQuery('');
+      setSearchResults([]);
+    } catch (error) {
+      console.error('Error changing role:', error);
+      toast.error(language === 'fr' ? 'Erreur lors de la modification' : 'Error changing role');
+    } finally {
+      setSaving(false);
+      setConfirmDialog({ open: false, action: 'add', user: null, role: 'user' });
+    }
+  };
+
+  const getRoleBadge = (role: AppRole) => {
+    if (role === 'admin') {
+      return (
+        <Badge variant="default" className="bg-red-500/20 text-red-400 border-red-500/30">
+          <ShieldCheck className="h-3 w-3 mr-1" />
+          Admin
+        </Badge>
+      );
+    }
+    return (
+      <Badge variant="default" className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+        <Shield className="h-3 w-3 mr-1" />
+        {language === 'fr' ? 'Modérateur' : 'Moderator'}
+      </Badge>
+    );
+  };
+
+  return (
+    <div className="space-y-6">
+      <GlowCard className="p-6">
+        <h2 className="text-lg font-semibold text-foreground mb-4">
+          {language === 'fr' ? 'Ajouter un rôle' : 'Add Role'}
+        </h2>
+
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            id="admin-search-user"
+            name="admin-search-user"
+            placeholder={language === 'fr' ? 'Rechercher un utilisateur...' : 'Search for a user...'}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
+        {searching && (
+          <div className="mt-4 space-y-2">
+            {[...Array(3)].map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full" />
+            ))}
+          </div>
+        )}
+
+        {!searching && searchResults.length > 0 && (
+          <div className="mt-4 space-y-2">
+            {searchResults.map((user) => (
+              <div
+                key={user.id}
+                className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50"
+              >
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.avatar_url || undefined} />
+                    <AvatarFallback>
+                      <User className="h-4 w-4" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="font-medium text-foreground">{user.username}</span>
+                  <div className="flex gap-1">
+                    {user.roles.map((role) => (
+                      <span key={role}>{getRoleBadge(role)}</span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {!user.roles.includes('moderator') && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => confirmRoleChange(user, 'moderator', 'add')}
+                      className="text-blue-400 border-blue-400/30 hover:bg-blue-400/10"
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      {language === 'fr' ? 'Modérateur' : 'Moderator'}
+                    </Button>
+                  )}
+                  {!user.roles.includes('admin') && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => confirmRoleChange(user, 'admin', 'add')}
+                      className="text-red-400 border-red-400/30 hover:bg-red-400/10"
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Admin
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </GlowCard>
+
+      <GlowCard className="p-6">
+        <h2 className="text-lg font-semibold text-foreground mb-4">
+          {language === 'fr' ? 'Utilisateurs avec des rôles' : 'Users with Roles'}
+        </h2>
+
+        {loading ? (
+          <div className="space-y-3">
+            {[...Array(5)].map((_, i) => (
+              <Skeleton key={i} className="h-14 w-full" />
+            ))}
+          </div>
+        ) : usersWithRoles.length === 0 ? (
+          <p className="text-muted-foreground text-center py-8">
+            {language === 'fr' ? 'Aucun utilisateur avec des rôles spéciaux' : 'No users with special roles'}
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {usersWithRoles.map((user) => (
+              <div
+                key={user.id}
+                className="flex items-center justify-between p-4 rounded-lg bg-muted/30 border border-border/50"
+              >
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={user.avatar_url || undefined} />
+                    <AvatarFallback>
+                      <User className="h-5 w-5" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <span className="font-medium text-foreground">{user.username}</span>
+                    <div className="flex gap-1 mt-1">
+                      {user.roles.map((role) => (
+                        <span key={role}>{getRoleBadge(role)}</span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {user.roles.includes('moderator') && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => confirmRoleChange(user, 'moderator', 'remove')}
+                      className="text-muted-foreground hover:text-destructive"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {user.roles.includes('admin') && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => confirmRoleChange(user, 'admin', 'remove')}
+                      className="text-muted-foreground hover:text-destructive"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </GlowCard>
+
+      <AlertDialog open={confirmDialog.open} onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, open }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmDialog.action === 'add'
+                ? (language === 'fr' ? 'Ajouter un rôle' : 'Add Role')
+                : (language === 'fr' ? 'Retirer un rôle' : 'Remove Role')
+              }
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDialog.action === 'add'
+                ? (language === 'fr'
+                    ? `Voulez-vous ajouter le rôle "${confirmDialog.role}" à ${confirmDialog.user?.username} ?`
+                    : `Do you want to add the "${confirmDialog.role}" role to ${confirmDialog.user?.username}?`)
+                : (language === 'fr'
+                    ? `Voulez-vous retirer le rôle "${confirmDialog.role}" de ${confirmDialog.user?.username} ?`
+                    : `Do you want to remove the "${confirmDialog.role}" role from ${confirmDialog.user?.username}?`)
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={saving}>
+              {language === 'fr' ? 'Annuler' : 'Cancel'}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={executeRoleChange} disabled={saving}>
+              {saving
+                ? (language === 'fr' ? 'En cours...' : 'Processing...')
+                : (language === 'fr' ? 'Confirmer' : 'Confirm')
+              }
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+};
