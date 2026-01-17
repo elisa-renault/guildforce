@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -52,6 +52,8 @@ export const AdminSettingsSidebar = ({
   const { language } = useLanguage();
   const isMobile = useIsMobile();
   const [tabsTop, setTabsTop] = useState<number>(64);
+  const [tabsHeight, setTabsHeight] = useState<number>(48);
+  const tabsRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
     if (!isMobile) return;
@@ -60,14 +62,20 @@ export const AdminSettingsSidebar = ({
       const globalNav = document.querySelector<HTMLElement>('[data-global-nav]');
       const globalH = globalNav?.offsetHeight ?? 64;
       setTabsTop(globalH);
+      
+      if (tabsRef.current) {
+        setTabsHeight(tabsRef.current.offsetHeight);
+      }
     };
 
-    compute();
+    // Use requestAnimationFrame for accurate measurement after paint
+    requestAnimationFrame(compute);
     window.addEventListener('resize', compute);
 
     const ro = new ResizeObserver(compute);
     const globalNavEl = document.querySelector<HTMLElement>('[data-global-nav]');
     if (globalNavEl) ro.observe(globalNavEl);
+    if (tabsRef.current) ro.observe(tabsRef.current);
 
     return () => {
       ro.disconnect();
@@ -96,6 +104,7 @@ export const AdminSettingsSidebar = ({
     return (
       <>
         <div 
+          ref={tabsRef}
           className="fixed left-0 right-0 z-30 border-b border-border/50 bg-background/95 backdrop-blur-sm px-3" 
           style={{ top: tabsTop }}
         >
@@ -124,8 +133,8 @@ export const AdminSettingsSidebar = ({
             <ScrollBar orientation="horizontal" />
           </ScrollArea>
         </div>
-        {/* Spacer */}
-        <div className="h-10" />
+        {/* Spacer with dynamic height */}
+        <div style={{ height: tabsHeight }} />
       </>
     );
   }
