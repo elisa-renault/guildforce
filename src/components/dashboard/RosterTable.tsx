@@ -498,33 +498,46 @@ export const RosterTable = ({
                     </TableCell>
                   </TableRow>
                   
-                  {/* Additional wishes rows when editing */}
+                  {/* Additional wishes rows when editing - dynamic generation for up to 13 wishes */}
                   {isEditing && editWishes.length > 3 && (
-                    <TableRow className="border-border/10 bg-primary/[0.03]">
-                      <TableCell colSpan={2} className="py-2 px-2 md:px-3">
-                        <span className="text-xs text-muted-foreground">
-                          {language === 'fr' ? 'Vœux supplémentaires' : 'Additional wishes'}
-                        </span>
-                      </TableCell>
-                      {editWishes.slice(3, 6).map((_, idx) => (
-                        <TableCell key={idx + 3} className="py-2 px-2 md:px-3">
-                          {renderEditWishCell(idx + 3, editWishes.length > 1)}
-                        </TableCell>
-                      ))}
-                      <TableCell className="py-2 px-2 md:px-3" />
-                    </TableRow>
+                    <>
+                      {Array.from({ length: Math.ceil((editWishes.length - 3) / 3) }).map((_, rowIdx) => {
+                        const startIdx = 3 + rowIdx * 3;
+                        const rowWishes = editWishes.slice(startIdx, startIdx + 3);
+                        
+                        return (
+                          <TableRow key={`extra-${rowIdx}`} className="border-border/10 bg-primary/[0.03]">
+                            <TableCell colSpan={2} className="py-2 px-2 md:px-3">
+                              <span className="text-xs text-muted-foreground">
+                                {t.dashboard.additionalWishes} ({startIdx + 1}-{Math.min(startIdx + 3, editWishes.length)})
+                              </span>
+                            </TableCell>
+                            {rowWishes.map((_, idx) => (
+                              <TableCell key={startIdx + idx} className="py-2 px-2 md:px-3">
+                                {renderEditWishCell(startIdx + idx, editWishes.length > 1)}
+                              </TableCell>
+                            ))}
+                            {/* Empty cells to maintain table alignment */}
+                            {Array.from({ length: 3 - rowWishes.length }).map((_, i) => (
+                              <TableCell key={`empty-${i}`} className="py-2 px-2 md:px-3" />
+                            ))}
+                            <TableCell className="py-2 px-2 md:px-3" />
+                          </TableRow>
+                        );
+                      })}
+                    </>
                   )}
                   
                   {/* Add wish button row when editing */}
                   {isEditing && editWishes.length < maxWishes && (
                     <TableRow className="border-border/10 bg-primary/[0.02]">
-                      <TableCell colSpan={6} className="py-2 px-2 md:px-3">
+                      <TableCell colSpan={7} className="py-2 px-2 md:px-3">
                         <button
                           onClick={onAddWish}
                           className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
                         >
                           <Plus className="h-3.5 w-3.5" />
-                          {language === 'fr' ? 'Ajouter un vœu' : 'Add a wish'}
+                          {t.dashboard.addWish}
                         </button>
                       </TableCell>
                     </TableRow>
