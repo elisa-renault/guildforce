@@ -281,6 +281,8 @@ export interface Translations {
     allComments: string;
     wishesMin: string;
     wishesCount: string;
+    additionalWishes: string;
+    addWish: string;
   };
   // Profile
   profile: {
@@ -953,6 +955,8 @@ export const translations: Record<Language, Translations> = {
       allComments: 'All comments',
       wishesMin: '≥{{count}} wishes',
       wishesCount: 'Wishes',
+      additionalWishes: 'Additional wishes',
+      addWish: 'Add a wish',
     },
     profile: {
       title: 'My Profile',
@@ -1667,6 +1671,8 @@ export const translations: Record<Language, Translations> = {
       allComments: 'Tous commentaires',
       wishesMin: '≥{{count}} vœux',
       wishesCount: 'Vœux',
+      additionalWishes: 'Vœux supplémentaires',
+      addWish: 'Ajouter un vœu',
     },
     profile: {
       title: 'Mon profil',
