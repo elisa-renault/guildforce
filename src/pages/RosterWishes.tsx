@@ -5,13 +5,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
-import { getClassById, getSpecById, getRolesFromSpecs, Role, wowClasses } from '@/data/wowClasses';
+import { getSpecById, getRolesFromSpecs, Role, wowClasses } from '@/data/wowClasses';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
 import { GuildSubNav } from '@/components/guild';
-import { StatsCards, RosterFilters, RosterTable, RosterAnalytics } from '@/components/dashboard';
+import { RosterFilters, RosterTable, RosterAnalytics } from '@/components/dashboard';
 import { RosterSelector, RosterEditDialog } from '@/components/roster';
-import { MemberWish, WishData, RoleStats, RangeStats, RosterFilters as RosterFiltersType, ValidationStatus } from '@/types/guild';
+import { MemberWish, WishData, RosterFilters as RosterFiltersType, ValidationStatus } from '@/types/guild';
 import { Loader2, Sparkles, Settings, TableIcon, BarChart3 } from 'lucide-react';
 import { toSlug, getGuildWishesPath } from '@/lib/guildSlug';
 import { CommitmentStatus } from '@/components/CommitmentToggle';
@@ -567,21 +567,6 @@ const RosterWishes = () => {
   });
 
   // Calculate stats
-  const totalPlayers = members.length;
-  const confirmedPlayers = members.filter(m => m.status === 'confirmed').length;
-  const roleStats: RoleStats = { tank: 0, healer: 0, dps: 0 };
-  const rangeStats: RangeStats = { melee: 0, ranged: 0 };
-  members.forEach(m => {
-    const wish = m.wishes.find(w => w.choice_index === 1);
-    if (wish && wish.spec_ids.length > 0) {
-      // Only count the first spec of the first wish
-      const firstSpec = getSpecById(wish.spec_ids[0]);
-      if (firstSpec) {
-        roleStats[firstSpec.role]++;
-        rangeStats[firstSpec.range]++;
-      }
-    }
-  });
 
   if (loading) {
     return (
@@ -661,13 +646,6 @@ const RosterWishes = () => {
           </TabsList>
 
           <TabsContent value="table" className="space-y-4">
-            <StatsCards
-              totalPlayers={totalPlayers}
-              confirmedPlayers={confirmedPlayers}
-              roleStats={roleStats}
-              rangeStats={rangeStats}
-            />
-
             <RosterFilters
               filters={filters}
               onFiltersChange={setFilters}
