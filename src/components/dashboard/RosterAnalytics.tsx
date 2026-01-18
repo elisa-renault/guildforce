@@ -184,8 +184,8 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
           maxCount: 0,
         } as SpecStat;
       })
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 10);
+      .filter(s => s.count > 0)
+      .sort((a, b) => b.count - a.count);
 
     // Set maxCount for progress bar scaling
     const maxCount = sorted.length > 0 ? sorted[0].count : 1;
@@ -519,9 +519,14 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
 
           {/* Top Specs with medals and progress bars */}
           <GlowCard className="p-4 md:p-6">
-            <h3 className="text-lg font-semibold mb-4">{t.dashboard.topSpecs}</h3>
+            <h3 className="text-lg font-semibold mb-4">
+              {t.dashboard.topSpecs} 
+              {specStats.length > 0 && (
+                <span className="text-muted-foreground text-sm font-normal ml-2">({specStats.length})</span>
+              )}
+            </h3>
             {specStats.length > 0 ? (
-              <div className="space-y-2">
+              <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
                 {specStats.map((stat, index) => (
                   <div 
                     key={stat.id} 
