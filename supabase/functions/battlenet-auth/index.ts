@@ -1499,12 +1499,16 @@ async function fetchAndStoreCharacters(
     }
 
     // Get the current main character before deletion to preserve user's choice
-    const { data: currentMain } = await supabase
+    const { data: currentMain, error: mainError } = await supabase
       .from('wow_characters')
       .select('name, realm_slug')
       .eq('user_id', userId)
       .eq('is_main', true)
-      .single();
+      .maybeSingle();
+    
+    if (mainError) {
+      log.info(`Note: No current main character found (new user or first sync)`);
+    }
 
     const previousMainKey = currentMain 
       ? `${currentMain.name.toLowerCase()}-${currentMain.realm_slug.toLowerCase()}` 
