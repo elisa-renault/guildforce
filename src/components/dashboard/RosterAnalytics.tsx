@@ -5,6 +5,7 @@ import { MemberWish } from '@/types/guild';
 import { GlowCard } from '@/components/GlowCard';
 import { Badge } from '@/components/ui/badge';
 import { Shield, Heart, Sword, Swords, Crosshair, AlertTriangle, TrendingUp, Users, Filter } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import {
   Select,
   SelectContent,
@@ -361,38 +362,67 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
           )}
         </GlowCard>
 
-        {/* Roles by Priority */}
+        {/* Roles by Priority - PieChart */}
         <GlowCard className="p-4 md:p-6">
           <h3 className="text-lg font-semibold mb-4">{t.dashboard.rolesByPriority}</h3>
           {(() => {
-            const maxRoleTotal = Math.max(...rolesByPriority.map(s => s.wish1 + s.other), 1);
+            const pieData = rolesByPriority.map(stat => ({
+              name: getRoleName(stat.role),
+              value: stat.wish1 + stat.other,
+              role: stat.role,
+              color: roleColorMap[stat.role],
+            })).filter(d => d.value > 0);
+
+            const totalRoles = pieData.reduce((sum, d) => sum + d.value, 0);
+
+            if (totalRoles === 0) {
+              return <p className="text-sm text-muted-foreground">{t.dashboard.noData}</p>;
+            }
+
             return (
-              <div className="space-y-4">
-                {rolesByPriority.map(stat => {
-                  const total = stat.wish1 + stat.other;
-                  return (
-                    <div key={stat.role} className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          {getRoleIcon(stat.role)}
-                          <span className="text-sm font-medium">{getRoleName(stat.role)}</span>
-                        </div>
-                        <span className="text-sm text-muted-foreground">
-                          {total}
-                        </span>
-                      </div>
-                      <div className="h-2 rounded-full overflow-hidden bg-muted/30">
-                        <div
-                          className="h-full transition-all duration-300 rounded-full"
-                          style={{ 
-                            width: `${(total / maxRoleTotal) * 100}%`,
-                            backgroundColor: roleColorMap[stat.role]
-                          }}
-                        />
-                      </div>
+              <div className="flex flex-col md:flex-row items-center gap-4">
+                <div className="w-40 h-40">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={pieData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={35}
+                        outerRadius={65}
+                        paddingAngle={2}
+                        dataKey="value"
+                      >
+                        {pieData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'hsl(var(--card))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px',
+                        }}
+                        formatter={(value: number) => [value, '']}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {pieData.map(stat => (
+                    <div key={stat.role} className="flex items-center gap-2">
+                      <div 
+                        className="w-3 h-3 rounded-full" 
+                        style={{ backgroundColor: stat.color }}
+                      />
+                      <span className="text-sm">{getRoleIcon(stat.role)}</span>
+                      <span className="text-sm font-medium">{stat.name}</span>
+                      <span className="text-sm text-muted-foreground ml-auto">
+                        {stat.value} ({Math.round((stat.value / totalRoles) * 100)}%)
+                      </span>
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
               </div>
             );
           })()}
