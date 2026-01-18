@@ -10,7 +10,8 @@ import { GlowCard } from '@/components/GlowCard';
 import { GuildSubNav } from '@/components/guild';
 import { ActivePollWidget } from '@/components/polls';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Sparkles, Users, CheckCircle2, Shield, Heart, Swords } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Loader2, Sparkles, Users, CheckCircle2, Shield, Heart, Swords, ChevronDown } from 'lucide-react';
 import { toSlug, getGuildWishesPath } from '@/lib/guildSlug';
 import { CommitmentStatus } from '@/components/CommitmentToggle';
 import { cn } from '@/lib/utils';
@@ -268,7 +269,8 @@ const Overview = () => {
                 </h3>
                 {myWishes.length > 0 ? (
                   <div className="space-y-2">
-                    {myWishes.map((wish, index) => {
+                    {/* First 3 wishes - always visible */}
+                    {myWishes.slice(0, 3).map((wish, index) => {
                       const wowClass = getClassById(wish.class_id);
                       const specs = wish.spec_ids.map(id => getSpecById(id)).filter(Boolean);
                       
@@ -292,6 +294,43 @@ const Overview = () => {
                         </div>
                       );
                     })}
+                    
+                    {/* Wishes 4+ - collapsible */}
+                    {myWishes.length > 3 && (
+                      <Collapsible>
+                        <CollapsibleTrigger className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors w-full py-1 group">
+                          <ChevronDown className="h-3 w-3 transition-transform group-data-[state=open]:rotate-180" />
+                          <span>{language === 'fr' ? `+${myWishes.length - 3} autres vœux` : `+${myWishes.length - 3} more wishes`}</span>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="space-y-2 pt-2">
+                          {myWishes.slice(3).map((wish, index) => {
+                            const wowClass = getClassById(wish.class_id);
+                            const specs = wish.spec_ids.map(id => getSpecById(id)).filter(Boolean);
+                            const realIndex = index + 3;
+                            
+                            return (
+                              <div key={realIndex} className="flex items-center gap-3 p-2 rounded-lg bg-muted/30">
+                                <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">
+                                  {realIndex + 1}
+                                </div>
+                                {wowClass && (
+                                  <span className={cn("text-sm font-medium", `text-${wowClass.color}`)}>
+                                    {wowClass.name[language]}
+                                  </span>
+                                )}
+                                <div className="flex gap-1 ml-auto flex-wrap justify-end">
+                                  {specs.map((spec) => (
+                                    <Badge key={spec!.id} variant="outline" className="text-xs px-1.5 py-0.5">
+                                      {spec!.name[language]}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </CollapsibleContent>
+                      </Collapsible>
+                    )}
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground italic">
