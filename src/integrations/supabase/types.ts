@@ -1676,6 +1676,10 @@ export type Database = {
         }
         Returns: string
       }
+      set_main_character: {
+        Args: { p_character_id: string }
+        Returns: undefined
+      }
       shares_wow_guild: {
         Args: { p_current_user_id: string; p_target_user_id: string }
         Returns: boolean
