@@ -35,7 +35,7 @@ import LegalPage from "./pages/LegalPage";
 import Changelog from "./pages/Changelog";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient(); // Rebuild trigger
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
