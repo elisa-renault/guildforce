@@ -57,6 +57,7 @@ export type Database = {
           access_token: string | null
           created_at: string
           expires_at: string | null
+          region: string | null
           updated_at: string
           user_id: string
         }
@@ -64,6 +65,7 @@ export type Database = {
           access_token?: string | null
           created_at?: string
           expires_at?: string | null
+          region?: string | null
           updated_at?: string
           user_id: string
         }
@@ -71,6 +73,7 @@ export type Database = {
           access_token?: string | null
           created_at?: string
           expires_at?: string | null
+          region?: string | null
           updated_at?: string
           user_id?: string
         }
