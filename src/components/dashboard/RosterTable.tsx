@@ -131,11 +131,11 @@ export const RosterTable = ({
 
   const SortIcon = ({ column }: { column: SortColumn }) => {
     if (sortColumn !== column) {
-      return <ArrowUpDown className="h-3 w-3 text-muted-foreground/50" />;
+      return <ArrowUpDown className="h-4 w-4 text-muted-foreground/50" />;
     }
     return sortDirection === 'asc' 
-      ? <ArrowUp className="h-3 w-3 text-primary" />
-      : <ArrowDown className="h-3 w-3 text-primary" />;
+      ? <ArrowUp className="h-4 w-4 text-primary" />
+      : <ArrowDown className="h-4 w-4 text-primary" />;
   };
 
   const SortableHeader = ({ column, children, className }: { column: SortColumn; children: React.ReactNode; className?: string }) => (
