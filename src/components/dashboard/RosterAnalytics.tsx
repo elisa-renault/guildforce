@@ -352,27 +352,35 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
         {/* Roles by Priority */}
         <GlowCard className="p-4 md:p-6">
           <h3 className="text-lg font-semibold mb-4">{t.dashboard.rolesByPriority}</h3>
-          <div className="space-y-4">
-            {rolesByPriority.map(stat => (
-              <div key={stat.role} className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {getRoleIcon(stat.role)}
-                    <span className="text-sm font-medium">{getRoleName(stat.role)}</span>
-                  </div>
-                  <span className="text-sm text-muted-foreground">
-                    {stat.wish1 + stat.other}
-                  </span>
-                </div>
-                <div className="h-2 rounded-full overflow-hidden bg-muted/30">
-                  <div
-                    className="h-full bg-primary transition-all duration-300 rounded-full"
-                    style={{ width: '100%' }}
-                  />
-                </div>
+          {(() => {
+            const maxRoleTotal = Math.max(...rolesByPriority.map(s => s.wish1 + s.other), 1);
+            return (
+              <div className="space-y-4">
+                {rolesByPriority.map(stat => {
+                  const total = stat.wish1 + stat.other;
+                  return (
+                    <div key={stat.role} className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {getRoleIcon(stat.role)}
+                          <span className="text-sm font-medium">{getRoleName(stat.role)}</span>
+                        </div>
+                        <span className="text-sm text-muted-foreground">
+                          {total}
+                        </span>
+                      </div>
+                      <div className="h-2 rounded-full overflow-hidden bg-muted/30">
+                        <div
+                          className="h-full bg-primary transition-all duration-300 rounded-full"
+                          style={{ width: `${(total / maxRoleTotal) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            ))}
-          </div>
+            );
+          })()}
         </GlowCard>
 
         {/* Missing Classes */}
