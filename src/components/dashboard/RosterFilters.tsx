@@ -1,17 +1,29 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Search, ChevronDown, Check, Shield, Heart, Swords, X, Clock, CheckCircle2, XCircle, UserCheck, UserMinus, UserX, Sword, Crosshair, MessageSquare, Hash, ListFilter } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { 
+  Search, ChevronDown, Check, Shield, Heart, Swords, X, Clock, CheckCircle2, 
+  XCircle, UserCheck, UserMinus, UserX, Sword, Crosshair, MessageSquare, 
+  Hash, RotateCcw, Users, Target, Sparkles
+} from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { wowClasses, Role } from '@/data/wowClasses';
 import { RosterFilters as RosterFiltersType, ValidationStatus, CommitmentFilter, RangeFilter } from '@/types/guild';
 import { cn } from '@/lib/utils';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 
 interface RosterFiltersProps {
   filters: RosterFiltersType;
   onFiltersChange: (filters: RosterFiltersType) => void;
+}
+
+// Preset filter configurations
+interface FilterPreset {
+  labelKey: string;
+  icon: typeof Shield;
+  filters: Partial<RosterFiltersType>;
 }
 
 const roleConfig: Record<Role, { icon: typeof Shield; color: string; label: { en: string; fr: string } }> = {
@@ -37,18 +49,60 @@ const rangeConfig: Record<RangeFilter, { icon: typeof Swords; color: string }> =
   ranged: { icon: Crosshair, color: 'text-sky-400' },
 };
 
+// Default/empty filter state
+const defaultFilters: RosterFiltersType = {
+  roleFilters: [],
+  classFilters: [],
+  validationFilters: [],
+  searchQuery: '',
+  filterMode: 'and',
+  commitmentFilters: [],
+  minWishes: null,
+  rangeFilters: [],
+  hasComment: null,
+  maxWishIndex: null,
+};
+
 export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) => {
   const { t, language } = useLanguage();
-  const [roleOpen, setRoleOpen] = useState(false);
-  const [classOpen, setClassOpen] = useState(false);
-  const [validationOpen, setValidationOpen] = useState(false);
-  const [commitmentOpen, setCommitmentOpen] = useState(false);
-  const [minWishesOpen, setMinWishesOpen] = useState(false);
-  const [rangeOpen, setRangeOpen] = useState(false);
-  const [commentOpen, setCommentOpen] = useState(false);
+  const [playersOpen, setPlayersOpen] = useState(false);
+  const [wishesOpen, setWishesOpen] = useState(false);
+  const [specsOpen, setSpecsOpen] = useState(false);
+
+  // Define presets with translations
+  const presets: FilterPreset[] = useMemo(() => [
+    {
+      labelKey: language === 'fr' ? 'Tanks confirmés' : 'Confirmed Tanks',
+      icon: Shield,
+      filters: { roleFilters: ['tank'], commitmentFilters: ['confirmed'], maxWishIndex: 1 }
+    },
+    {
+      labelKey: language === 'fr' ? 'Healers confirmés' : 'Confirmed Healers',
+      icon: Heart,
+      filters: { roleFilters: ['healer'], commitmentFilters: ['confirmed'], maxWishIndex: 1 }
+    },
+    {
+      labelKey: language === 'fr' ? 'En attente' : 'Pending validation',
+      icon: Clock,
+      filters: { validationFilters: ['pending'] }
+    },
+    {
+      labelKey: language === 'fr' ? 'Sans vœux' : 'No wishes',
+      icon: XCircle,
+      filters: { minWishes: 0 }
+    },
+  ], [language]);
 
   const updateFilter = <K extends keyof RosterFiltersType>(key: K, value: RosterFiltersType[K]) => {
     onFiltersChange({ ...filters, [key]: value });
+  };
+
+  const applyPreset = (preset: FilterPreset) => {
+    onFiltersChange({ ...defaultFilters, ...preset.filters });
+  };
+
+  const resetAllFilters = () => {
+    onFiltersChange(defaultFilters);
   };
 
   const toggleRole = (role: string) => {
@@ -96,543 +150,547 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
     }
   };
 
-  const selectedClasses = wowClasses.filter(c => filters.classFilters.includes(c.id));
-  const hasRoleFilters = filters.roleFilters.length > 0;
-  const hasClassFilters = filters.classFilters.length > 0;
-  const hasValidationFilters = filters.validationFilters.length > 0;
-  const hasCommitmentFilters = filters.commitmentFilters.length > 0;
-  const hasMinWishes = filters.minWishes !== null;
-  const hasRangeFilters = filters.rangeFilters.length > 0;
-  const hasCommentFilter = filters.hasComment !== null;
-  const hasMaxWishIndex = filters.maxWishIndex !== null;
-  const hasAnyFilters = hasRoleFilters || hasClassFilters || hasValidationFilters || hasCommitmentFilters || hasMinWishes || hasRangeFilters || hasCommentFilter || hasMaxWishIndex;
+  // Count active filters per group
+  const playersFilterCount = filters.commitmentFilters.length;
+  const wishesFilterCount = 
+    (filters.maxWishIndex !== null ? 1 : 0) +
+    (filters.minWishes !== null ? 1 : 0) +
+    filters.validationFilters.length +
+    (filters.hasComment !== null ? 1 : 0);
+  const specsFilterCount = 
+    filters.roleFilters.length +
+    filters.rangeFilters.length +
+    filters.classFilters.length;
+
+  const hasPlayersFilters = playersFilterCount > 0;
+  const hasWishesFilters = wishesFilterCount > 0;
+  const hasSpecsFilters = specsFilterCount > 0;
+  const hasSearchQuery = filters.searchQuery.length > 0;
+  const hasAnyFilters = hasPlayersFilters || hasWishesFilters || hasSpecsFilters;
+
+  // Generate active filter pills for display
+  const activePills = useMemo(() => {
+    const pills: { key: string; label: string; color?: string; onRemove: () => void }[] = [];
+
+    // Commitment pills
+    filters.commitmentFilters.forEach(c => {
+      const config = commitmentConfig[c];
+      pills.push({
+        key: `commitment-${c}`,
+        label: t.wishes.commitment[config.labelKey],
+        color: config.color,
+        onRemove: () => toggleCommitment(c),
+      });
+    });
+
+    // Wish range pill
+    if (filters.maxWishIndex !== null) {
+      const label = filters.maxWishIndex === 1 
+        ? t.dashboard.wishRange1 
+        : t.dashboard.wishRangeN.replace('{{n}}', filters.maxWishIndex.toString());
+      pills.push({
+        key: 'maxWishIndex',
+        label,
+        onRemove: () => updateFilter('maxWishIndex', null),
+      });
+    }
+
+    // Min wishes pill
+    if (filters.minWishes !== null) {
+      pills.push({
+        key: 'minWishes',
+        label: `≥${filters.minWishes} ${language === 'fr' ? 'vœux' : 'wishes'}`,
+        onRemove: () => updateFilter('minWishes', null),
+      });
+    }
+
+    // Validation pills
+    filters.validationFilters.forEach(v => {
+      const config = validationConfig[v];
+      pills.push({
+        key: `validation-${v}`,
+        label: config.label[language],
+        color: config.color,
+        onRemove: () => toggleValidation(v),
+      });
+    });
+
+    // Comment pill
+    if (filters.hasComment !== null) {
+      pills.push({
+        key: 'comment',
+        label: filters.hasComment ? t.dashboard.withComment : t.dashboard.withoutComment,
+        onRemove: () => updateFilter('hasComment', null),
+      });
+    }
+
+    // Role pills
+    filters.roleFilters.forEach(r => {
+      const config = roleConfig[r as Role];
+      if (config) {
+        pills.push({
+          key: `role-${r}`,
+          label: config.label[language],
+          color: config.color,
+          onRemove: () => toggleRole(r),
+        });
+      }
+    });
+
+    // Range pills
+    filters.rangeFilters.forEach(r => {
+      const config = rangeConfig[r];
+      pills.push({
+        key: `range-${r}`,
+        label: t.dashboard[r],
+        color: config.color,
+        onRemove: () => toggleRange(r),
+      });
+    });
+
+    // Class pills
+    filters.classFilters.forEach(classId => {
+      const cls = wowClasses.find(c => c.id === classId);
+      if (cls) {
+        pills.push({
+          key: `class-${classId}`,
+          label: cls.name[language],
+          color: `hsl(var(--class-${classId}))`,
+          onRemove: () => toggleClass(classId),
+        });
+      }
+    });
+
+    return pills;
+  }, [filters, language, t]);
 
   return (
-    <div className="flex flex-col gap-2 mb-4">
-      {/* Search - full width on mobile */}
-      <div className="relative w-full md:max-w-[200px]">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
-        <Input
-          placeholder={t.common.search}
-          value={filters.searchQuery}
-          onChange={(e) => updateFilter('searchQuery', e.target.value)}
-          className="h-9 md:h-8 pl-8 text-sm cosmic-input"
-        />
+    <div className="flex flex-col gap-3 mb-4">
+      {/* Row 1: Search + Presets */}
+      <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+        {/* Search */}
+        <div className="relative w-full sm:w-[200px] flex-shrink-0">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
+          <Input
+            placeholder={t.common.search}
+            value={filters.searchQuery}
+            onChange={(e) => updateFilter('searchQuery', e.target.value)}
+            className="h-9 pl-8 text-sm cosmic-input"
+          />
+        </div>
+
+        {/* Presets */}
+        <div className="flex gap-1.5 items-center overflow-x-auto pb-1 -mx-1 px-1 sm:mx-0 sm:px-0">
+          <Sparkles className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0 hidden sm:block" />
+          {presets.map((preset, idx) => {
+            const Icon = preset.icon;
+            return (
+              <Button
+                key={idx}
+                variant="ghost"
+                size="sm"
+                onClick={() => applyPreset(preset)}
+                className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground flex-shrink-0 whitespace-nowrap"
+              >
+                <Icon className="h-3 w-3" />
+                {preset.labelKey}
+              </Button>
+            );
+          })}
+        </div>
       </div>
-      
-      {/* Filters row - horizontal scroll on mobile */}
-      <div className="flex gap-2 items-center overflow-x-auto pb-1 -mx-3 px-3 md:mx-0 md:px-0 md:overflow-visible md:flex-wrap">
 
-      {/* Commitment Filter */}
-      <Popover open={commitmentOpen} onOpenChange={setCommitmentOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            className={cn(
-              "h-9 md:h-8 min-w-[130px] md:min-w-[150px] justify-between gap-2 text-sm flex-shrink-0 whitespace-nowrap",
-              hasCommitmentFilters 
-                ? "border-border/60" 
-                : "border-border/40 text-muted-foreground"
-            )}
-          >
-            {hasCommitmentFilters ? (
-              <span className="flex items-center gap-1.5">
-                {filters.commitmentFilters.map((commitment) => {
-                  const config = commitmentConfig[commitment];
-                  const Icon = config.icon;
-                  return (
-                    <span key={commitment} className="flex items-center gap-1">
-                      <Icon className={cn("h-4 w-4", config.color)} />
-                      <span className={cn("hidden md:inline", config.color)}>
-                        {t.wishes.commitment[config.labelKey]}
-                      </span>
-                    </span>
-                  );
-                })}
-              </span>
-            ) : (
-              <span>{t.dashboard.allCommitments}</span>
-            )}
-            <ChevronDown className="h-3.5 w-3.5 opacity-50 flex-shrink-0" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-48 p-1.5 bg-card border-border z-50" align="start">
-          <div className="flex flex-col gap-0.5">
-            {hasCommitmentFilters && (
-              <button
-                onClick={() => updateFilter('commitmentFilters', [])}
-                className="flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left hover:bg-primary/10 text-muted-foreground"
-              >
-                <X className="h-3.5 w-3.5 flex-shrink-0" />
-                <span>{t.dashboard.clear}</span>
-              </button>
-            )}
-            {(Object.keys(commitmentConfig) as CommitmentFilter[]).map((commitment) => {
-              const config = commitmentConfig[commitment];
-              const Icon = config.icon;
-              const isSelected = filters.commitmentFilters.includes(commitment);
-              
-              return (
+      {/* Row 2: Filter Groups + Reset */}
+      <div className="flex gap-2 items-center flex-wrap">
+        {/* Players Group */}
+        <Popover open={playersOpen} onOpenChange={setPlayersOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className={cn(
+                "h-9 gap-2 text-sm",
+                hasPlayersFilters 
+                  ? "border-primary/50 bg-primary/5" 
+                  : "border-border/40 text-muted-foreground"
+              )}
+            >
+              <Users className="h-4 w-4" />
+              <span>{language === 'fr' ? 'Joueurs' : 'Players'}</span>
+              {hasPlayersFilters && (
+                <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-xs">
+                  {playersFilterCount}
+                </Badge>
+              )}
+              <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 p-3 bg-card border-border z-50" align="start">
+            <div className="space-y-3">
+              <div>
+                <h4 className="text-sm font-medium mb-2">{t.dashboard.commitment}</h4>
+                <div className="flex flex-col gap-1">
+                  {(Object.keys(commitmentConfig) as CommitmentFilter[]).map((commitment) => {
+                    const config = commitmentConfig[commitment];
+                    const Icon = config.icon;
+                    const isSelected = filters.commitmentFilters.includes(commitment);
+                    
+                    return (
+                      <button
+                        key={commitment}
+                        onClick={() => toggleCommitment(commitment)}
+                        className={cn(
+                          "flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left",
+                          isSelected ? "bg-primary/20" : "hover:bg-primary/10"
+                        )}
+                      >
+                        <div className={cn("w-4 h-4 flex items-center justify-center", isSelected && "text-primary")}>
+                          {isSelected && <Check className="h-3.5 w-3.5" />}
+                        </div>
+                        <Icon className={cn("h-4 w-4", config.color)} />
+                        <span className={config.color}>{t.wishes.commitment[config.labelKey]}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              {hasPlayersFilters && (
                 <button
-                  key={commitment}
-                  onClick={() => toggleCommitment(commitment)}
-                  className={cn(
-                    "flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left",
-                    isSelected ? "bg-primary/20" : "hover:bg-primary/10"
-                  )}
+                  onClick={() => updateFilter('commitmentFilters', [])}
+                  className="flex items-center gap-2 px-2 py-1.5 rounded text-sm text-muted-foreground hover:text-foreground hover:bg-primary/10 w-full"
                 >
-                  {isSelected && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
-                  <Icon className={cn("h-4 w-4", config.color)} />
-                  <span className={config.color}>{t.wishes.commitment[config.labelKey]}</span>
+                  <X className="h-3.5 w-3.5" />
+                  {t.dashboard.clear}
                 </button>
-              );
-            })}
-          </div>
-        </PopoverContent>
-      </Popover>
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
 
-      {/* Role Filter */}
-      <Popover open={roleOpen} onOpenChange={setRoleOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            className={cn(
-              "h-9 md:h-8 min-w-[120px] md:min-w-[140px] justify-between gap-2 text-sm flex-shrink-0 whitespace-nowrap",
-              hasRoleFilters 
-                ? "border-border/60" 
-                : "border-border/40 text-muted-foreground"
-            )}
-          >
-            {hasRoleFilters ? (
-              <span className="flex items-center gap-1.5">
-                {filters.roleFilters.map((role) => {
-                  const config = roleConfig[role as Role];
-                  if (!config) return null;
-                  const Icon = config.icon;
-                  return (
-                    <span key={role} className="flex items-center gap-1">
-                      <Icon className={cn("h-4 w-4", config.color)} />
-                      <span className="hidden md:inline">{config.label[language]}</span>
-                    </span>
-                  );
-                })}
-              </span>
-            ) : (
-              <span>{t.dashboard.allRoles}</span>
-            )}
-            <ChevronDown className="h-3.5 w-3.5 opacity-50 flex-shrink-0" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-44 p-1.5 bg-card border-border z-50" align="start">
-          <div className="flex flex-col gap-0.5">
-            {hasRoleFilters && (
-              <button
-                onClick={() => updateFilter('roleFilters', [])}
-                className="flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left hover:bg-primary/10 text-muted-foreground"
-              >
-                <X className="h-3.5 w-3.5 flex-shrink-0" />
-                <span>{t.dashboard.clear}</span>
-              </button>
-            )}
-            {(Object.keys(roleConfig) as Role[]).map((role) => {
-              const config = roleConfig[role];
-              const Icon = config.icon;
-              const isSelected = filters.roleFilters.includes(role);
-              
-              return (
-                <button
-                  key={role}
-                  onClick={() => toggleRole(role)}
-                  className={cn(
-                    "flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left",
-                    isSelected ? "bg-primary/20" : "hover:bg-primary/10"
-                  )}
-                >
-                  {isSelected && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
-                  <Icon className={cn("h-4 w-4", config.color)} />
-                  <span>{config.label[language]}</span>
-                </button>
-              );
-            })}
-          </div>
-        </PopoverContent>
-      </Popover>
-
-      {/* Class Filter */}
-      <Popover open={classOpen} onOpenChange={setClassOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            className={cn(
-              "h-9 md:h-8 min-w-[130px] md:min-w-[200px] justify-between gap-2 text-sm flex-shrink-0 whitespace-nowrap",
-              hasClassFilters 
-                ? "border-border/60" 
-                : "border-border/40 text-muted-foreground"
-            )}
-          >
-            {hasClassFilters ? (
-              <span className="flex items-center gap-1.5">
-                {selectedClasses.length <= 2 ? (
-                  selectedClasses.map((cls) => (
-                    <span 
-                      key={cls.id} 
-                      style={{ color: `hsl(var(--class-${cls.id}))` }}
-                      className="truncate max-w-[60px] md:max-w-none"
+        {/* Wishes Group */}
+        <Popover open={wishesOpen} onOpenChange={setWishesOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className={cn(
+                "h-9 gap-2 text-sm",
+                hasWishesFilters 
+                  ? "border-primary/50 bg-primary/5" 
+                  : "border-border/40 text-muted-foreground"
+              )}
+            >
+              <Hash className="h-4 w-4" />
+              <span>{language === 'fr' ? 'Vœux' : 'Wishes'}</span>
+              {hasWishesFilters && (
+                <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-xs">
+                  {wishesFilterCount}
+                </Badge>
+              )}
+              <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-72 p-3 bg-card border-border z-50" align="start">
+            <div className="space-y-4">
+              {/* Wish Range */}
+              <div>
+                <h4 className="text-sm font-medium mb-2">{t.dashboard.wishRangeFilter}</h4>
+                <div className="flex flex-wrap gap-1.5">
+                  <Button
+                    variant={filters.maxWishIndex === null ? "default" : "outline"}
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() => updateFilter('maxWishIndex', null)}
+                  >
+                    {t.dashboard.allWishes}
+                  </Button>
+                  {[1, 3, 5].map(n => (
+                    <Button
+                      key={n}
+                      variant={filters.maxWishIndex === n ? "default" : "outline"}
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => updateFilter('maxWishIndex', n)}
                     >
-                      {cls.name[language]}
-                    </span>
-                  ))
-                ) : (
-                  <span>
-                    {selectedClasses.length} {t.dashboard.classesCount}
-                  </span>
-                )}
-              </span>
-            ) : (
-              <span>{t.dashboard.allClasses}</span>
-            )}
-            <ChevronDown className="h-3.5 w-3.5 opacity-50 flex-shrink-0" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-56 p-1.5 bg-card border-border z-50" align="start">
-          <div className="flex flex-col gap-0.5 max-h-[320px] overflow-y-auto">
-            {hasClassFilters && (
-              <button
-                onClick={() => updateFilter('classFilters', [])}
-                className="flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left hover:bg-primary/10 text-muted-foreground"
-              >
-                <X className="h-3.5 w-3.5 flex-shrink-0" />
-                <span>{t.dashboard.clear}</span>
-              </button>
-            )}
-            {wowClasses.map((cls) => {
-              const isSelected = filters.classFilters.includes(cls.id);
-              
-              return (
-                <button
-                  key={cls.id}
-                  onClick={() => toggleClass(cls.id)}
-                  className={cn(
-                    "flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left",
-                    isSelected ? "bg-primary/20" : "hover:bg-primary/10"
-                  )}
-                  style={{ color: `hsl(var(--class-${cls.id}))` }}
-                >
-                  {isSelected && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
-                  <span>{cls.name[language]}</span>
-                </button>
-              );
-            })}
-          </div>
-        </PopoverContent>
-      </Popover>
+                      {n === 1 ? t.dashboard.wishRange1 : t.dashboard.wishRangeN.replace('{{n}}', n.toString())}
+                    </Button>
+                  ))}
+                </div>
+              </div>
 
-      {/* Validation Filter */}
-      <Popover open={validationOpen} onOpenChange={setValidationOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            className={cn(
-              "h-9 md:h-8 min-w-[110px] md:min-w-[140px] justify-between gap-2 text-sm flex-shrink-0 whitespace-nowrap",
-              hasValidationFilters 
-                ? "border-border/60" 
-                : "border-border/40 text-muted-foreground"
-            )}
-          >
-            {hasValidationFilters ? (
-              <span className="flex items-center gap-1.5">
-                {filters.validationFilters.map((status) => {
-                  const config = validationConfig[status];
-                  const Icon = config.icon;
-                  return (
-                    <span key={status} className="flex items-center gap-1">
-                      <Icon className={cn("h-4 w-4", config.color)} />
-                      <span className={cn("hidden md:inline", config.color)}>{config.label[language]}</span>
-                    </span>
-                  );
-                })}
-              </span>
-            ) : (
-              <span>{t.dashboard.validation}</span>
-            )}
-            <ChevronDown className="h-3.5 w-3.5 opacity-50 flex-shrink-0" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-48 p-1.5 bg-card border-border z-50" align="start">
-          <div className="flex flex-col gap-0.5">
-            {hasValidationFilters && (
-              <button
-                onClick={() => updateFilter('validationFilters', [])}
-                className="flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left hover:bg-primary/10 text-muted-foreground"
-              >
-                <X className="h-3.5 w-3.5 flex-shrink-0" />
-                <span>{t.dashboard.clear}</span>
-              </button>
-            )}
-            {(Object.keys(validationConfig) as ValidationStatus[]).map((status) => {
-              const config = validationConfig[status];
-              const Icon = config.icon;
-              const isSelected = filters.validationFilters.includes(status);
-              
-              return (
-                <button
-                  key={status}
-                  onClick={() => toggleValidation(status)}
-                  className={cn(
-                    "flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left",
-                    isSelected ? "bg-primary/20" : "hover:bg-primary/10"
-                  )}
-                >
-                  {isSelected && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
-                  <Icon className={cn("h-4 w-4", config.color)} />
-                  <span className={config.color}>{config.label[language]}</span>
-                </button>
-              );
-            })}
-          </div>
-        </PopoverContent>
-      </Popover>
+              <Separator />
 
-      {/* Min Wishes Filter */}
-      <Popover open={minWishesOpen} onOpenChange={setMinWishesOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            className={cn(
-              "h-9 md:h-8 min-w-[100px] md:min-w-[120px] justify-between gap-2 text-sm flex-shrink-0 whitespace-nowrap",
-              hasMinWishes 
-                ? "border-border/60" 
-                : "border-border/40 text-muted-foreground"
-            )}
-          >
-            {hasMinWishes ? (
-              <span className="flex items-center gap-1.5">
-                <Hash className="h-4 w-4" />
-                <span>≥{filters.minWishes}</span>
-              </span>
-            ) : (
-              <span>{t.dashboard.minWishes}</span>
-            )}
-            <ChevronDown className="h-3.5 w-3.5 opacity-50 flex-shrink-0" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-36 p-1.5 bg-card border-border z-50" align="start">
-          <div className="flex flex-col gap-0.5 max-h-[320px] overflow-y-auto">
-            {hasMinWishes && (
-              <button
-                onClick={() => updateFilter('minWishes', null)}
-                className="flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left hover:bg-primary/10 text-muted-foreground"
-              >
-                <X className="h-3.5 w-3.5 flex-shrink-0" />
-                <span>{t.dashboard.clear}</span>
-              </button>
-            )}
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map((count) => {
-              const isSelected = filters.minWishes === count;
-              
-              return (
-                <button
-                  key={count}
-                  onClick={() => {
-                    updateFilter('minWishes', count);
-                    setMinWishesOpen(false);
-                  }}
-                  className={cn(
-                    "flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left",
-                    isSelected ? "bg-primary/20" : "hover:bg-primary/10"
-                  )}
-                >
-                  {isSelected && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
-                  <span>≥{count}</span>
-                </button>
-              );
-            })}
-          </div>
-        </PopoverContent>
-      </Popover>
+              {/* Min Wishes */}
+              <div>
+                <h4 className="text-sm font-medium mb-2">{t.dashboard.minWishes}</h4>
+                <div className="flex flex-wrap gap-1.5">
+                  {[null, 1, 2, 3, 5].map(n => (
+                    <Button
+                      key={n ?? 'any'}
+                      variant={filters.minWishes === n ? "default" : "outline"}
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => updateFilter('minWishes', n)}
+                    >
+                      {n === null ? t.common.all : `≥${n}`}
+                    </Button>
+                  ))}
+                </div>
+              </div>
 
-      {/* Range Filter */}
-      <Popover open={rangeOpen} onOpenChange={setRangeOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            className={cn(
-              "h-9 md:h-8 min-w-[100px] md:min-w-[130px] justify-between gap-2 text-sm flex-shrink-0 whitespace-nowrap",
-              hasRangeFilters 
-                ? "border-border/60" 
-                : "border-border/40 text-muted-foreground"
-            )}
-          >
-            {hasRangeFilters ? (
-              <span className="flex items-center gap-1.5">
-                {filters.rangeFilters.map((range) => {
-                  const config = rangeConfig[range];
-                  const Icon = config.icon;
-                  return (
-                    <span key={range} className="flex items-center gap-1">
-                      <Icon className={cn("h-4 w-4", config.color)} />
-                      <span className={cn("hidden md:inline", config.color)}>
+              <Separator />
+
+              {/* Validation */}
+              <div>
+                <h4 className="text-sm font-medium mb-2">{t.dashboard.validation}</h4>
+                <div className="flex flex-col gap-1">
+                  {(Object.keys(validationConfig) as ValidationStatus[]).map((status) => {
+                    const config = validationConfig[status];
+                    const Icon = config.icon;
+                    const isSelected = filters.validationFilters.includes(status);
+                    
+                    return (
+                      <button
+                        key={status}
+                        onClick={() => toggleValidation(status)}
+                        className={cn(
+                          "flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left",
+                          isSelected ? "bg-primary/20" : "hover:bg-primary/10"
+                        )}
+                      >
+                        <div className={cn("w-4 h-4 flex items-center justify-center", isSelected && "text-primary")}>
+                          {isSelected && <Check className="h-3.5 w-3.5" />}
+                        </div>
+                        <Icon className={cn("h-4 w-4", config.color)} />
+                        <span className={config.color}>{config.label[language]}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Comments */}
+              <div>
+                <h4 className="text-sm font-medium mb-2">{t.dashboard.comments}</h4>
+                <div className="flex gap-1.5">
+                  <Button
+                    variant={filters.hasComment === null ? "default" : "outline"}
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() => updateFilter('hasComment', null)}
+                  >
+                    {t.common.all}
+                  </Button>
+                  <Button
+                    variant={filters.hasComment === true ? "default" : "outline"}
+                    size="sm"
+                    className="h-7 text-xs gap-1"
+                    onClick={() => updateFilter('hasComment', true)}
+                  >
+                    <MessageSquare className="h-3 w-3" />
+                    {t.dashboard.withComment}
+                  </Button>
+                  <Button
+                    variant={filters.hasComment === false ? "default" : "outline"}
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() => updateFilter('hasComment', false)}
+                  >
+                    {t.dashboard.withoutComment}
+                  </Button>
+                </div>
+              </div>
+
+              {hasWishesFilters && (
+                <>
+                  <Separator />
+                  <button
+                    onClick={() => {
+                      updateFilter('maxWishIndex', null);
+                      updateFilter('minWishes', null);
+                      updateFilter('validationFilters', []);
+                      updateFilter('hasComment', null);
+                    }}
+                    className="flex items-center gap-2 px-2 py-1.5 rounded text-sm text-muted-foreground hover:text-foreground hover:bg-primary/10 w-full"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    {t.dashboard.clear}
+                  </button>
+                </>
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        {/* Specs Group */}
+        <Popover open={specsOpen} onOpenChange={setSpecsOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className={cn(
+                "h-9 gap-2 text-sm",
+                hasSpecsFilters 
+                  ? "border-primary/50 bg-primary/5" 
+                  : "border-border/40 text-muted-foreground"
+              )}
+            >
+              <Target className="h-4 w-4" />
+              <span>{language === 'fr' ? 'Spécialités' : 'Specs'}</span>
+              {hasSpecsFilters && (
+                <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-xs">
+                  {specsFilterCount}
+                </Badge>
+              )}
+              <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-72 p-3 bg-card border-border z-50" align="start">
+            <div className="space-y-4">
+              {/* Roles */}
+              <div>
+                <h4 className="text-sm font-medium mb-2">{language === 'fr' ? 'Rôles' : 'Roles'}</h4>
+                <div className="flex gap-1.5">
+                  {(Object.keys(roleConfig) as Role[]).map((role) => {
+                    const config = roleConfig[role];
+                    const Icon = config.icon;
+                    const isSelected = filters.roleFilters.includes(role);
+                    
+                    return (
+                      <Button
+                        key={role}
+                        variant={isSelected ? "default" : "outline"}
+                        size="sm"
+                        className={cn("h-8 gap-1.5", !isSelected && config.color)}
+                        onClick={() => toggleRole(role)}
+                      >
+                        <Icon className="h-4 w-4" />
+                        {config.label[language]}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Range */}
+              <div>
+                <h4 className="text-sm font-medium mb-2">{t.dashboard.range}</h4>
+                <div className="flex gap-1.5">
+                  {(['melee', 'ranged'] as RangeFilter[]).map((range) => {
+                    const config = rangeConfig[range];
+                    const Icon = config.icon;
+                    const isSelected = filters.rangeFilters.includes(range);
+                    
+                    return (
+                      <Button
+                        key={range}
+                        variant={isSelected ? "default" : "outline"}
+                        size="sm"
+                        className={cn("h-8 gap-1.5", !isSelected && config.color)}
+                        onClick={() => toggleRange(range)}
+                      >
+                        <Icon className="h-4 w-4" />
                         {t.dashboard[range]}
-                      </span>
-                    </span>
-                  );
-                })}
-              </span>
-            ) : (
-              <span>{t.dashboard.allRanges}</span>
-            )}
-            <ChevronDown className="h-3.5 w-3.5 opacity-50 flex-shrink-0" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-44 p-1.5 bg-card border-border z-50" align="start">
-          <div className="flex flex-col gap-0.5">
-            {hasRangeFilters && (
-              <button
-                onClick={() => updateFilter('rangeFilters', [])}
-                className="flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left hover:bg-primary/10 text-muted-foreground"
-              >
-                <X className="h-3.5 w-3.5 flex-shrink-0" />
-                <span>{t.dashboard.clear}</span>
-              </button>
-            )}
-            {(['melee', 'ranged'] as RangeFilter[]).map((range) => {
-              const config = rangeConfig[range];
-              const Icon = config.icon;
-              const isSelected = filters.rangeFilters.includes(range);
-              
-              return (
-                <button
-                  key={range}
-                  onClick={() => toggleRange(range)}
-                  className={cn(
-                    "flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left",
-                    isSelected ? "bg-primary/20" : "hover:bg-primary/10"
-                  )}
-                >
-                  {isSelected && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
-                  <Icon className={cn("h-4 w-4", config.color)} />
-                  <span className={config.color}>{t.dashboard[range]}</span>
-                </button>
-              );
-            })}
-          </div>
-        </PopoverContent>
-      </Popover>
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
 
-      {/* Comment Filter */}
-      <Popover open={commentOpen} onOpenChange={setCommentOpen}>
-        <PopoverTrigger asChild>
+              <Separator />
+
+              {/* Classes */}
+              <div>
+                <h4 className="text-sm font-medium mb-2">{language === 'fr' ? 'Classes' : 'Classes'}</h4>
+                <div className="flex flex-wrap gap-1 max-h-[200px] overflow-y-auto">
+                  {wowClasses.map((cls) => {
+                    const isSelected = filters.classFilters.includes(cls.id);
+                    
+                    return (
+                      <button
+                        key={cls.id}
+                        onClick={() => toggleClass(cls.id)}
+                        className={cn(
+                          "px-2 py-1 rounded text-xs transition-colors whitespace-nowrap",
+                          isSelected 
+                            ? "bg-primary/30 ring-1 ring-primary/50" 
+                            : "hover:bg-primary/10"
+                        )}
+                        style={{ color: `hsl(var(--class-${cls.id}))` }}
+                      >
+                        {cls.name[language]}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {hasSpecsFilters && (
+                <>
+                  <Separator />
+                  <button
+                    onClick={() => {
+                      updateFilter('roleFilters', []);
+                      updateFilter('rangeFilters', []);
+                      updateFilter('classFilters', []);
+                    }}
+                    className="flex items-center gap-2 px-2 py-1.5 rounded text-sm text-muted-foreground hover:text-foreground hover:bg-primary/10 w-full"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    {t.dashboard.clear}
+                  </button>
+                </>
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        {/* Reset Button */}
+        {hasAnyFilters && (
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className={cn(
-              "h-9 md:h-8 min-w-[120px] md:min-w-[150px] justify-between gap-2 text-sm flex-shrink-0 whitespace-nowrap",
-              hasCommentFilter 
-                ? "border-border/60" 
-                : "border-border/40 text-muted-foreground"
-            )}
+            onClick={resetAllFilters}
+            className="h-9 gap-1.5 text-muted-foreground hover:text-foreground"
           >
-            {hasCommentFilter ? (
-              <span className="flex items-center gap-1.5">
-                <MessageSquare className="h-4 w-4" />
-                <span>
-                  {filters.hasComment ? t.dashboard.withComment : t.dashboard.withoutComment}
-                </span>
-              </span>
-            ) : (
-              <span>{t.dashboard.allComments}</span>
-            )}
-            <ChevronDown className="h-3.5 w-3.5 opacity-50 flex-shrink-0" />
+            <RotateCcw className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">{t.common.reset}</span>
           </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-48 p-1.5 bg-card border-border z-50" align="start">
-          <div className="flex flex-col gap-0.5">
-            {hasCommentFilter && (
-              <button
-                onClick={() => updateFilter('hasComment', null)}
-                className="flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left hover:bg-primary/10 text-muted-foreground"
-              >
-                <X className="h-3.5 w-3.5 flex-shrink-0" />
-                <span>{t.dashboard.clear}</span>
-              </button>
-            )}
-            <button
-              onClick={() => {
-                updateFilter('hasComment', true);
-                setCommentOpen(false);
-              }}
-              className={cn(
-                "flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left",
-                filters.hasComment === true ? "bg-primary/20" : "hover:bg-primary/10"
-              )}
-            >
-              {filters.hasComment === true && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
-              <MessageSquare className="h-4 w-4 text-healer" />
-              <span>{t.dashboard.withComment}</span>
-            </button>
-            <button
-              onClick={() => {
-                updateFilter('hasComment', false);
-                setCommentOpen(false);
-              }}
-              className={cn(
-                "flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left",
-                filters.hasComment === false ? "bg-primary/20" : "hover:bg-primary/10"
-              )}
-            >
-              {filters.hasComment === false && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
-              <MessageSquare className="h-4 w-4 text-muted-foreground" />
-              <span>{t.dashboard.withoutComment}</span>
-            </button>
-          </div>
-        </PopoverContent>
-      </Popover>
-
-      {/* Wish Range Filter */}
-      <Select
-        value={filters.maxWishIndex?.toString() ?? 'all'}
-        onValueChange={(value) => updateFilter('maxWishIndex', value === 'all' ? null : parseInt(value))}
-      >
-        <SelectTrigger
-          className={cn(
-            "h-9 md:h-8 w-auto min-w-[140px] md:min-w-[160px] gap-2 text-sm flex-shrink-0",
-            hasMaxWishIndex
-              ? "border-border/60"
-              : "border-border/40 text-muted-foreground"
-          )}
-        >
-          <ListFilter className="h-3.5 w-3.5 flex-shrink-0" />
-          <SelectValue placeholder={t.dashboard.wishRangeFilter} />
-        </SelectTrigger>
-        <SelectContent className="bg-card border-border z-50">
-          <SelectItem value="all">{t.dashboard.allWishes}</SelectItem>
-          <SelectItem value="1">{t.dashboard.wishRange1}</SelectItem>
-          {[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map((n) => (
-            <SelectItem key={n} value={n.toString()}>
-              {t.dashboard.wishRangeN.replace('{{n}}', n.toString())}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      {/* AND/OR Toggle - only show when multiple filters are selected */}
-      {hasAnyFilters && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => updateFilter('filterMode', filters.filterMode === 'and' ? 'or' : 'and')}
-          className="h-9 md:h-8 px-2 text-xs font-mono text-muted-foreground hover:text-foreground flex-shrink-0"
-        >
-          {filters.filterMode === 'and' ? 'ET' : 'OU'}
-        </Button>
-      )}
+        )}
       </div>
+
+      {/* Row 3: Active Filter Pills */}
+      {activePills.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-muted-foreground">
+            {language === 'fr' ? 'Actifs :' : 'Active:'}
+          </span>
+          {activePills.map((pill) => (
+            <Badge
+              key={pill.key}
+              variant="secondary"
+              className="h-6 gap-1 pl-2 pr-1 cursor-pointer hover:bg-secondary/80"
+              style={pill.color?.startsWith('hsl') ? { color: pill.color } : undefined}
+              onClick={pill.onRemove}
+            >
+              <span className={cn("text-xs", pill.color && !pill.color.startsWith('hsl') && pill.color)}>
+                {pill.label}
+              </span>
+              <X className="h-3 w-3 opacity-60 hover:opacity-100" />
+            </Badge>
+          ))}
+          <button
+            onClick={resetAllFilters}
+            className="text-xs text-muted-foreground hover:text-foreground underline"
+          >
+            {language === 'fr' ? 'Tout effacer' : 'Clear all'}
+          </button>
+        </div>
+      )}
     </div>
   );
 };
