@@ -468,10 +468,9 @@ export const RosterTable = ({
                                     size="sm" 
                                     onClick={onSaveEditing}
                                     loading={saving}
+                                    icon={!saving ? <Save className="h-4 w-4" strokeWidth={1.5} /> : undefined}
                                     className="h-8 px-2"
-                                  >
-                                    <Save className="h-4 w-4" strokeWidth={1.5} />
-                                  </CosmicButton>
+                                  />
                                 </TooltipTrigger>
                                 <TooltipContent side="left">
                                   {t.common.save}
