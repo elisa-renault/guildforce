@@ -38,14 +38,6 @@ const BATTLENET_DYNAMIC_NAMESPACES: Record<BattleNetRegion, string> = {
   tw: 'dynamic-tw',
 };
 
-// OAuth URLs per region (for client credentials)
-const BATTLENET_OAUTH_URLS: Record<BattleNetRegion, string> = {
-  eu: 'https://oauth.battle.net',
-  us: 'https://oauth.battle.net',
-  kr: 'https://oauth.battle.net',
-  tw: 'https://oauth.battle.net',
-};
-
 const BATTLENET_LOCALES: Record<BattleNetRegion, string> = {
   eu: 'en_GB',
   us: 'en_US',
