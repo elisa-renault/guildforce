@@ -178,28 +178,34 @@ export const BattleNetConnect: React.FC = () => {
   };
 
   const handleDisconnect = async () => {
-    if (!session?.access_token) return;
+    if (!session?.access_token || !profile?.id) return;
 
     setIsLoading(true);
     try {
-      const { error } = await supabase
+      // 1. Clear battlenet_id from profile (only this column exists in profiles)
+      const { error: profileError } = await supabase
         .from('profiles')
-        .update({
-          battlenet_id: null,
-          battlenet_token: null,
-          battlenet_token_expires_at: null,
-        })
-        .eq('id', profile?.id);
+        .update({ battlenet_id: null })
+        .eq('id', profile.id);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
 
-      // Delete guild memberships first (due to foreign key), then characters
-      await supabase.from('wow_guild_memberships').delete().eq('user_id', profile?.id);
-      await supabase.from('wow_characters').delete().eq('user_id', profile?.id);
+      // 2. Delete tokens from battlenet_tokens table
+      await supabase
+        .from('battlenet_tokens')
+        .delete()
+        .eq('user_id', profile.id);
+
+      // 3. Delete guild memberships first (due to foreign key constraints)
+      await supabase.from('wow_guild_memberships').delete().eq('user_id', profile.id);
+
+      // 4. Delete characters
+      await supabase.from('wow_characters').delete().eq('user_id', profile.id);
 
       toast.success(t.battlenet.disconnected);
       await refreshProfile();
       setCharacters([]);
+      setConnectedRegion(null);
     } catch (error) {
       log.error('Error disconnecting Battle.net:', error);
       toast.error(t.errors.generic);
