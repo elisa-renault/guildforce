@@ -52,7 +52,6 @@ const RosterWishes = () => {
     hasComment: null,
     maxWishIndex: null,
   });
-  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [editWishes, setEditWishes] = useState<WishData[]>([
     { classId: '', specIds: [], comment: '' },
@@ -280,15 +279,6 @@ const RosterWishes = () => {
     }
   }, [guildId, selectedRosterId]);
 
-  const toggleRow = (memberId: string) => {
-    const newExpanded = new Set(expandedRows);
-    if (newExpanded.has(memberId)) {
-      newExpanded.delete(memberId);
-    } else {
-      newExpanded.add(memberId);
-    }
-    setExpandedRows(newExpanded);
-  };
 
   const startEditing = (member: MemberWish) => {
     if (member.id !== user?.id) return;
@@ -328,11 +318,6 @@ const RosterWishes = () => {
     };
     setEditStatus(statusMap[member.status] || 'undecided');
     setEditingUserId(member.id);
-
-    // Expand the row if not already
-    const newExpanded = new Set(expandedRows);
-    newExpanded.add(member.id);
-    setExpandedRows(newExpanded);
   };
 
   const addWish = () => {
@@ -352,9 +337,6 @@ const RosterWishes = () => {
     setEditWishes(updated);
   };
 
-  const cancelEditing = () => {
-    setEditingUserId(null);
-  };
 
   const updateEditWish = (index: number, field: keyof WishData, value: any) => {
     const updated = [...editWishes];
@@ -668,16 +650,13 @@ const RosterWishes = () => {
               members={filteredMembers}
               currentUserId={user?.id}
               selectedRosterId={selectedRosterId}
-              expandedRows={expandedRows}
               editingUserId={editingUserId}
               editWishes={editWishes}
               editStatus={editStatus}
               saving={saving}
               maxWishes={MAX_WISHES}
               isGM={canManageWishes}
-              onToggleRow={toggleRow}
               onStartEditing={startEditing}
-              onCancelEditing={cancelEditing}
               onUpdateEditWish={updateEditWish}
               onEditStatusChange={setEditStatus}
               onSaveEditing={saveEditing}
