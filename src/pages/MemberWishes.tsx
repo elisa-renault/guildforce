@@ -278,11 +278,11 @@ const MemberWishes = () => {
       <main className="container mx-auto px-3 md:px-4 py-4 relative z-10">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-display cosmic-text">
-            {t.wishes.title}
+            {user?.id === memberId 
+              ? t.wishes.title 
+              : `${t.wishes.wishesOf} ${member?.username || ''}`
+            }
           </h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            {t.rosters.noAccessMessage}
-          </p>
         </div>
 
         {wishes.length === 0 ? (

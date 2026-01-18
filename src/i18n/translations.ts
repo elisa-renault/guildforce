@@ -199,6 +199,7 @@ export interface Translations {
   // Wishes
   wishes: {
     title: string;
+    wishesOf: string;
     subtitle: string;
     choice: string;
     choiceNumber: string;
@@ -912,6 +913,7 @@ export const translations: Record<Language, Translations> = {
     },
     wishes: {
       title: 'My Class Wishes',
+      wishesOf: 'Wishes of',
       subtitle: 'Select up to 3 classes you want to play next expansion',
       choice: 'Choice',
       choiceNumber: 'Choice #{{number}}',
@@ -1665,6 +1667,7 @@ export const translations: Record<Language, Translations> = {
     },
     wishes: {
       title: 'Mes vœux de classe',
+      wishesOf: 'Vœux de',
       subtitle: 'Sélectionnez jusqu\'à 3 classes que vous souhaitez jouer',
       choice: 'Choix',
       choiceNumber: 'Choix n°{{number}}',
