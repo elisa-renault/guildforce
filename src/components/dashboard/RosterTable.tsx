@@ -457,28 +457,27 @@ export const RosterTable = ({
                     <TableCell className="py-2 px-2 md:px-3">
                       {isEditing ? renderEditWishCell(2, editWishes.length > 1) : renderWishCell(member.id, member.wishes, 3)}
                     </TableCell>
-                    <TableCell className="py-1 px-1">
+                    <TableCell className="py-1 pl-0 pr-1">
                       {isOwnRow && (
-                        <div className="flex gap-1 justify-end">
+                        <div className="flex justify-end">
                           {isEditing ? (
-                            <>
-                              <CosmicButton 
-                                size="sm" 
-                                variant="outline" 
-                                onClick={onCancelEditing}
-                                className="h-8 px-2"
-                              >
-                                <X className="h-4 w-4" strokeWidth={1.5} />
-                              </CosmicButton>
-                              <CosmicButton 
-                                size="sm" 
-                                onClick={onSaveEditing}
-                                loading={saving}
-                                className="h-8 px-3"
-                              >
-                                <Save className="h-4 w-4" strokeWidth={1.5} />
-                              </CosmicButton>
-                            </>
+                            <TooltipProvider delayDuration={200}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <CosmicButton 
+                                    size="sm" 
+                                    onClick={onSaveEditing}
+                                    loading={saving}
+                                    className="h-8 px-2"
+                                  >
+                                    <Save className="h-4 w-4" strokeWidth={1.5} />
+                                  </CosmicButton>
+                                </TooltipTrigger>
+                                <TooltipContent side="left">
+                                  {t.common.save}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           ) : (
                             <TooltipProvider delayDuration={200}>
                               <Tooltip>
