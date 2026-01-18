@@ -44,10 +44,10 @@ export const BattleNetConnect: React.FC = () => {
   const isConnected = !!profile?.battlenet_id;
 
   useEffect(() => {
-    if (isConnected) {
+    if (isConnected && session?.access_token) {
       fetchCharacters();
     }
-  }, [isConnected]);
+  }, [isConnected, session?.access_token]);
 
   // Handle OAuth callback
   useEffect(() => {
@@ -143,18 +143,11 @@ export const BattleNetConnect: React.FC = () => {
       if (error) throw error;
 
       toast.success(`${t.battlenet.connected} : ${data.battletag}`);
-      
+
+      // Refresh profile + refetch characters from the database to ensure we use real IDs
+      // (the callback response does not guarantee a characters payload)
       await refreshProfile();
-      setCharacters(data.characters?.map((c: any) => ({
-        id: crypto.randomUUID(),
-        name: c.name,
-        realm: c.realm,
-        realm_slug: c.realmSlug,
-        class_id: c.classId,
-        level: c.level,
-        guild_name: c.guildName || null,
-        is_main: false,
-      })) || []);
+      await fetchCharacters();
     } catch (error) {
       log.error('Error completing Battle.net connection:', error);
       toast.error(t.errors.generic);
