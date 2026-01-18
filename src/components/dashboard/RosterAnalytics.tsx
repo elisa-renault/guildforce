@@ -4,7 +4,7 @@ import { wowClasses, getClassById, getSpecById, Role, RangeType } from '@/data/w
 import { MemberWish } from '@/types/guild';
 import { GlowCard } from '@/components/GlowCard';
 import { Badge } from '@/components/ui/badge';
-import { Shield, Heart, Sword, Swords, Crosshair, AlertTriangle, Users, Filter, Medal, Award, Trophy, CheckCircle2 } from 'lucide-react';
+import { Shield, Heart, Sword, Swords, Crosshair, AlertTriangle, Users, Filter, CheckCircle2 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import {
   Select,
@@ -284,18 +284,12 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     }
   };
 
-  // Medal icon for top 3
-  const getMedalIcon = (index: number) => {
-    switch (index) {
-      case 0:
-        return <Trophy className="h-3.5 w-3.5 text-amber-400 fill-amber-400/20" />;
-      case 1:
-        return <Medal className="h-3.5 w-3.5 text-slate-300" />;
-      case 2:
-        return <Award className="h-3.5 w-3.5 text-amber-600" />;
-      default:
-        return <span className="text-[10px] text-muted-foreground w-3.5 text-center">{index + 1}</span>;
-    }
+  // Rank number with colors for top 3
+  const getRankDisplay = (index: number) => {
+    const rank = index + 1;
+    const colors = ['text-amber-400', 'text-slate-300', 'text-amber-600'];
+    const colorClass = index < 3 ? colors[index] : 'text-muted-foreground';
+    return <span className={`text-xs font-bold ${colorClass}`}>{rank}</span>;
   };
 
   // Generate wish range label for selector
@@ -489,7 +483,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                 {specStats.map((stat, index) => (
                   <div key={stat.id} className="flex items-center gap-1.5 group">
                     <div className="w-4 flex justify-center">
-                      {getMedalIcon(index)}
+                      {getRankDisplay(index)}
                     </div>
                     <span style={{ color: classColorMap[stat.classColor] || 'inherit' }}>
                       {getRoleIcon(stat.role, "h-3 w-3")}
