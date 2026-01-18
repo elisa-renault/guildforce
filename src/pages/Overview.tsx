@@ -133,8 +133,7 @@ const Overview = () => {
           .eq('guild_id', foundGuildId)
           .eq('user_id', user.id)
           .eq('roster_id', rostersData.id)
-          .order('choice_index')
-          .limit(3);
+          .order('choice_index');
 
         if (wishesData) {
           setMyWishes(wishesData);
