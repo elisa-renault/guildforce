@@ -28,19 +28,11 @@ const Auth = () => {
   const {
     t
   } = useLanguage();
-  const {
-    user,
-    signIn,
-    signUp
-  } = useAuth();
-  const {
-    toast
-  } = useToast();
+  const { user, signIn } = useAuth();
+  const { toast } = useToast();
   const [bnetLoading, setBnetLoading] = useState(false);
-  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [discordPseudo, setDiscordPseudo] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState<BattleNetRegion>('eu');
   const [emailFormOpen, setEmailFormOpen] = useState(false);
@@ -183,24 +175,11 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      if (isLogin) {
-        const {
-          error
-        } = await signIn(email, password);
-        if (error) throw error;
-      } else {
-        const {
-          error
-        } = await signUp(email, password, discordPseudo, 'fr');
-        if (error) throw error;
-        toast({
-          title: 'Compte créé',
-          description: 'Vérifiez votre email'
-        });
-      }
+      const { error } = await signIn(email, password);
+      if (error) throw error;
     } catch (error: any) {
       toast({
-        title: 'Erreur',
+        title: t.common.error,
         description: error.message,
         variant: 'destructive'
       });
@@ -318,18 +297,13 @@ const Auth = () => {
                       <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required className="bg-card/60 border-border" />
                     </div>
 
-                    {!isLogin && <div className="space-y-2">
-                        <Label htmlFor="pseudo">{t.auth.pseudo}</Label>
-                        <Input id="pseudo" type="text" value={discordPseudo} onChange={e => setDiscordPseudo(e.target.value)} placeholder={t.auth.pseudoPlaceholder} required className="bg-card/60 border-border" />
-                      </div>}
-
                     <Button type="submit" variant="secondary" className="w-full" disabled={loading}>
-                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : isLogin ? t.common.login : t.common.signup}
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t.common.login}
                     </Button>
 
-                    <button type="button" onClick={() => setIsLogin(!isLogin)} className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors">
-                      {isLogin ? t.auth.noAccount : t.auth.hasAccount}
-                    </button>
+                    <p className="text-xs text-center text-muted-foreground">
+                      {t.auth.existingAccountsOnly}
+                    </p>
                   </form>
                 </CollapsibleContent>
               </Collapsible>
