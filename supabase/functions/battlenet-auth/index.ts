@@ -822,22 +822,24 @@ Deno.serve(async (req) => {
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
       
       const token = authHeader.replace('Bearer ', '');
-      const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+      const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
 
-      if (userError || !user) {
-        log.error('Failed to get user:', userError);
+      if (claimsError || !claimsData?.claims) {
+        log.error('Failed to validate token:', claimsError);
         return new Response(JSON.stringify({ error: 'Unauthorized' }), {
           status: 401,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
+      
+      const userId = claimsData.claims.sub as string;
 
       // Check if this Battle.net account is already linked to another user
       const { data: existingLink } = await supabase
         .from('profiles')
         .select('id')
         .eq('battlenet_id', String(userInfo.id))
-        .neq('id', user.id)
+        .neq('id', userId)
         .maybeSingle();
 
       if (existingLink) {
@@ -854,11 +856,11 @@ Deno.serve(async (req) => {
       const { data: existingProfileRow } = await supabase
         .from('profiles')
         .select('id, username, preferred_language')
-        .eq('id', user.id)
+        .eq('id', userId)
         .maybeSingle();
 
       const upsertPayload: any = {
-        id: user.id,
+        id: userId,
         battlenet_id: String(userInfo.id),
         battletag: userInfo.battletag,
         username: existingProfileRow?.username || battletagName,
@@ -881,7 +883,7 @@ Deno.serve(async (req) => {
       const { error: tokenError } = await supabase
         .from('battlenet_tokens')
         .upsert({
-          user_id: user.id,
+          user_id: userId,
           access_token: tokenData.access_token,
           expires_at: expiresAt,
           region: region,
@@ -893,7 +895,7 @@ Deno.serve(async (req) => {
       }
 
       // Fetch and store WoW characters
-      await fetchAndStoreCharacters(supabase, tokenData.access_token, user.id, region);
+      await fetchAndStoreCharacters(supabase, tokenData.access_token, userId, region);
 
       return new Response(JSON.stringify({
         success: true,
@@ -915,19 +917,21 @@ Deno.serve(async (req) => {
 
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
       const token = authHeader.replace('Bearer ', '');
-      const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+      const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
 
-      if (userError || !user) {
+      if (claimsError || !claimsData?.claims) {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), {
           status: 401,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
+      
+      const userId = claimsData.claims.sub as string;
 
       const { data: characters, error } = await supabase
         .from('wow_characters')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .order('level', { ascending: false });
 
       if (error) {
@@ -954,22 +958,24 @@ Deno.serve(async (req) => {
 
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
       const token = authHeader.replace('Bearer ', '');
-      const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+      const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
 
-      if (userError || !user) {
+      if (claimsError || !claimsData?.claims) {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), {
           status: 401,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
+      
+      const userId = claimsData.claims.sub as string;
 
-      log.info(`Resync requested for user ${sanitizePII(user.id, 'id')}`);
+      log.info(`Resync requested for user ${sanitizePII(userId, 'id')}`);
 
       // Get stored Battle.net token
       const { data: tokenData, error: tokenError } = await supabase
         .from('battlenet_tokens')
         .select('access_token, expires_at')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .maybeSingle();
 
       if (tokenError || !tokenData) {
@@ -993,17 +999,17 @@ Deno.serve(async (req) => {
       const { data: tokenInfo } = await supabase
         .from('battlenet_tokens')
         .select('region')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .maybeSingle();
 
       const preferredRegion = getValidRegion(tokenInfo?.region);
       log.info(`Resync using preferred region: ${preferredRegion.toUpperCase()}`);
 
       // Re-fetch characters and guilds with multi-region fallback
-      const syncResult = await fetchAndStoreCharacters(supabase, tokenData.access_token, user.id, preferredRegion);
+      const syncResult = await fetchAndStoreCharacters(supabase, tokenData.access_token, userId, preferredRegion);
 
       if (!syncResult.success) {
-        log.error(`Resync failed for user ${sanitizePII(user.id, 'id')}: ${syncResult.error}`);
+        log.error(`Resync failed for user ${sanitizePII(userId, 'id')}: ${syncResult.error}`);
         return new Response(JSON.stringify({ 
           success: false, 
           error: syncResult.error || 'Failed to sync characters',
@@ -1014,7 +1020,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      log.info(`Resync completed for user ${sanitizePII(user.id, 'id')} (detected region: ${syncResult.detectedRegion?.toUpperCase()})`);
+      log.info(`Resync completed for user ${sanitizePII(userId, 'id')} (detected region: ${syncResult.detectedRegion?.toUpperCase()})`);
 
       return new Response(JSON.stringify({ 
         success: true, 
