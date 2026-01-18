@@ -235,13 +235,32 @@ export const BattleNetConnect: React.FC = () => {
 
     setIsResyncing(true);
     try {
-      const { error } = await supabase.functions.invoke('battlenet-auth/resync', {
+      const { data, error } = await supabase.functions.invoke('battlenet-auth/resync', {
         method: 'POST',
       });
 
       if (error) throw error;
+      
+      // Check if backend returned an error (403, SYNC_FAILED, etc.)
+      if (data && data.success === false) {
+        const errorMsg = data.error || t.battlenet.resyncError;
+        log.error('Resync failed:', errorMsg);
+        toast.error(errorMsg);
+        return;
+      }
 
-      toast.success(t.battlenet.resyncSuccess);
+      // Update UI with detected region if it changed
+      if (data?.detectedRegion) {
+        setConnectedRegion(data.detectedRegion as BattleNetRegion);
+        if (data.detectedRegion !== connectedRegion) {
+          toast.success(`${t.battlenet.resyncSuccess} (${REGION_LABELS[data.detectedRegion as BattleNetRegion]})`);
+        } else {
+          toast.success(t.battlenet.resyncSuccess);
+        }
+      } else {
+        toast.success(t.battlenet.resyncSuccess);
+      }
+      
       await Promise.all([fetchCharacters(), refreshProfile()]);
     } catch (error) {
       log.error('Error resyncing characters:', error);
