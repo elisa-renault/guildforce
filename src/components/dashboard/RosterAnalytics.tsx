@@ -80,10 +80,32 @@ interface RoleByPriority {
   other: number;
 }
 
+type CommitmentFilter = 'all' | 'confirmed' | 'potential' | 'withdrawn';
+type RoleFilter = 'all' | 'tank' | 'healer' | 'dps';
+type RangeFilter = 'all' | 'melee' | 'ranged';
+
 export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   const { t, language } = useLanguage();
   const [maxWishIndex, setMaxWishIndex] = useState<number>(13);
   const [hoveredClass, setHoveredClass] = useState<string | null>(null);
+  const [commitmentFilter, setCommitmentFilter] = useState<CommitmentFilter>('all');
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
+  const [rangeFilter, setRangeFilter] = useState<RangeFilter>('all');
+
+  // Pre-filter members based on commitment
+  const filteredMembers = useMemo(() => {
+    if (commitmentFilter === 'all') return members;
+    return members.filter(m => m.status === commitmentFilter);
+  }, [members, commitmentFilter]);
+
+  // Check if spec matches role and range filters
+  const specMatchesFilters = (specId: string): boolean => {
+    const spec = getSpecById(specId);
+    if (!spec) return false;
+    if (roleFilter !== 'all' && spec.role !== roleFilter) return false;
+    if (rangeFilter !== 'all' && spec.range !== rangeFilter) return false;
+    return true;
+  };
 
   // Calculate class distribution based on filter with player names
   const classStats = useMemo(() => {
@@ -92,13 +114,20 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
       stats[c.id] = { wish1: 0, total: 0, players: new Set() };
     });
 
-    members.forEach(m => {
+    filteredMembers.forEach(m => {
       m.wishes.forEach(w => {
         if (w.class_id && stats[w.class_id] && w.choice_index <= maxWishIndex) {
-          stats[w.class_id].total++;
-          stats[w.class_id].players.add(m.username);
-          if (w.choice_index === 1) {
-            stats[w.class_id].wish1++;
+          // Check if any spec in this wish matches the role/range filters
+          const hasMatchingSpec = !w.spec_ids?.length || 
+            (roleFilter === 'all' && rangeFilter === 'all') ||
+            w.spec_ids.some(specId => specMatchesFilters(specId));
+          
+          if (hasMatchingSpec) {
+            stats[w.class_id].total++;
+            stats[w.class_id].players.add(m.username);
+            if (w.choice_index === 1) {
+              stats[w.class_id].wish1++;
+            }
           }
         }
       });
@@ -117,7 +146,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
         } as ClassStat;
       })
       .sort((a, b) => b.total - a.total);
-  }, [members, language, maxWishIndex]);
+  }, [filteredMembers, language, maxWishIndex, roleFilter, rangeFilter]);
 
   // Calculate max for bar scaling
   const maxClassTotal = useMemo(() => {
@@ -128,11 +157,13 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   const specStats = useMemo(() => {
     const stats: Record<string, number> = {};
 
-    members.forEach(m => {
+    filteredMembers.forEach(m => {
       m.wishes.forEach(w => {
         if (w.spec_ids?.length && w.choice_index <= maxWishIndex) {
           w.spec_ids.forEach(specId => {
-            stats[specId] = (stats[specId] || 0) + 1;
+            if (specMatchesFilters(specId)) {
+              stats[specId] = (stats[specId] || 0) + 1;
+            }
           });
         }
       });
@@ -159,7 +190,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     // Set maxCount for progress bar scaling
     const maxCount = sorted.length > 0 ? sorted[0].count : 1;
     return sorted.map(s => ({ ...s, maxCount }));
-  }, [members, language, maxWishIndex]);
+  }, [filteredMembers, language, maxWishIndex, roleFilter, rangeFilter]);
 
   // Calculate roles by priority based on filter
   const rolesByPriority = useMemo(() => {
@@ -169,12 +200,12 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
       dps: { wish1: 0, other: 0 },
     };
 
-    members.forEach(m => {
+    filteredMembers.forEach(m => {
       m.wishes.forEach(w => {
         if (w.spec_ids?.length && w.choice_index <= maxWishIndex) {
           w.spec_ids.forEach(specId => {
             const spec = getSpecById(specId);
-            if (spec) {
+            if (spec && specMatchesFilters(specId)) {
               if (w.choice_index === 1) {
                 stats[spec.role].wish1++;
               } else {
@@ -191,18 +222,18 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
       { role: 'healer' as Role, ...stats.healer },
       { role: 'dps' as Role, ...stats.dps },
     ] as RoleByPriority[];
-  }, [members, maxWishIndex]);
+  }, [filteredMembers, maxWishIndex, roleFilter, rangeFilter]);
 
   // Calculate range distribution based on filter
   const rangeStats = useMemo(() => {
     const stats = { melee: 0, ranged: 0 };
 
-    members.forEach(m => {
+    filteredMembers.forEach(m => {
       m.wishes.forEach(w => {
         if (w.spec_ids?.length && w.choice_index <= maxWishIndex) {
           w.spec_ids.forEach(specId => {
             const spec = getSpecById(specId);
-            if (spec) {
+            if (spec && specMatchesFilters(specId)) {
               stats[spec.range]++;
             }
           });
@@ -211,7 +242,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     });
 
     return stats;
-  }, [members, maxWishIndex]);
+  }, [filteredMembers, maxWishIndex, roleFilter, rangeFilter]);
 
   // Missing classes (no one has this class in any wish)
   const missingClasses = useMemo(() => {
@@ -269,14 +300,15 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   return (
     <TooltipProvider>
       <div className="space-y-6">
-        {/* Wish range filter */}
-        <div className="flex items-center gap-3">
+        {/* Filters */}
+        <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Filter className="h-4 w-4" />
-            <span>{t.dashboard.wishRangeFilter}</span>
           </div>
+          
+          {/* Wish range filter */}
           <Select value={String(maxWishIndex)} onValueChange={(v) => setMaxWishIndex(Number(v))}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[160px]">
               <SelectValue>{getWishRangeLabel(maxWishIndex)}</SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -289,6 +321,83 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
               <SelectItem value="13">{getWishRangeLabel(13)}</SelectItem>
             </SelectContent>
           </Select>
+
+          {/* Commitment filter */}
+          <Select value={commitmentFilter} onValueChange={(v) => setCommitmentFilter(v as CommitmentFilter)}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue>
+                {commitmentFilter === 'all' ? t.dashboard.allCommitments : 
+                 commitmentFilter === 'confirmed' ? t.wishes.commitment.confirmed :
+                 commitmentFilter === 'potential' ? t.wishes.commitment.undecided :
+                 t.wishes.commitment.withdrawn}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t.dashboard.allCommitments}</SelectItem>
+              <SelectItem value="confirmed">{t.wishes.commitment.confirmed}</SelectItem>
+              <SelectItem value="potential">{t.wishes.commitment.undecided}</SelectItem>
+              <SelectItem value="withdrawn">{t.wishes.commitment.withdrawn}</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Role filter */}
+          <Select value={roleFilter} onValueChange={(v) => setRoleFilter(v as RoleFilter)}>
+            <SelectTrigger className="w-[130px]">
+              <SelectValue>
+                {roleFilter === 'all' ? t.dashboard.allRoles :
+                 roleFilter === 'tank' ? t.dashboard.tank :
+                 roleFilter === 'healer' ? t.dashboard.healer :
+                 t.dashboard.dps}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t.dashboard.allRoles}</SelectItem>
+              <SelectItem value="tank">
+                <span className="flex items-center gap-2">
+                  <Shield className="h-3.5 w-3.5" />
+                  {t.dashboard.tank}
+                </span>
+              </SelectItem>
+              <SelectItem value="healer">
+                <span className="flex items-center gap-2">
+                  <Heart className="h-3.5 w-3.5" />
+                  {t.dashboard.healer}
+                </span>
+              </SelectItem>
+              <SelectItem value="dps">
+                <span className="flex items-center gap-2">
+                  <Sword className="h-3.5 w-3.5" />
+                  {t.dashboard.dps}
+                </span>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Range filter */}
+          <Select value={rangeFilter} onValueChange={(v) => setRangeFilter(v as RangeFilter)}>
+            <SelectTrigger className="w-[130px]">
+              <SelectValue>
+                {rangeFilter === 'all' ? t.dashboard.allRanges :
+                 rangeFilter === 'melee' ? t.dashboard.melee :
+                 t.dashboard.ranged}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t.dashboard.allRanges}</SelectItem>
+              <SelectItem value="melee">
+                <span className="flex items-center gap-2">
+                  <Swords className="h-3.5 w-3.5" />
+                  {t.dashboard.melee}
+                </span>
+              </SelectItem>
+              <SelectItem value="ranged">
+                <span className="flex items-center gap-2">
+                  <Crosshair className="h-3.5 w-3.5" />
+                  {t.dashboard.ranged}
+                </span>
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Summary stats */}
@@ -299,7 +408,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                 <Users className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{members.length}</p>
+                <p className="text-2xl font-bold">{filteredMembers.length}</p>
                 <p className="text-xs text-muted-foreground">{t.dashboard.totalPlayers}</p>
               </div>
             </div>
