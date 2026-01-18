@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -7,25 +7,39 @@ import {
   BreadcrumbSeparator,
   BreadcrumbPage,
 } from '@/components/ui/breadcrumb';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getRouteMeta } from '@/routes';
+import type { RouteLabelKey } from '@/routes';
 
 export interface BreadcrumbItem {
-  label: string;
+  label?: string;
+  labelKey?: RouteLabelKey;
   href?: string;
 }
 
 interface BreadcrumbsProps {
-  items: BreadcrumbItem[];
+  items?: BreadcrumbItem[];
   className?: string;
 }
 
 export const Breadcrumbs = ({ items, className }: BreadcrumbsProps) => {
-  if (items.length === 0) return null;
+  const location = useLocation();
+  const { t } = useLanguage();
+  const routeBreadcrumbs = getRouteMeta(location.pathname)?.breadcrumb ?? [];
+  const resolvedItems = (items ?? routeBreadcrumbs)
+    .map((item) => ({
+      ...item,
+      label: item.label ?? (item.labelKey ? t.routeMeta[item.labelKey] : ''),
+    }))
+    .filter((item) => item.label);
+
+  if (resolvedItems.length === 0) return null;
 
   return (
     <Breadcrumb className={className}>
       <BreadcrumbList>
-        {items.map((item, index) => {
-          const isLast = index === items.length - 1;
+        {resolvedItems.map((item, index) => {
+          const isLast = index === resolvedItems.length - 1;
 
           return (
             <BreadcrumbItem key={index}>
