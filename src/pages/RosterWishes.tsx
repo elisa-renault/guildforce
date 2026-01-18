@@ -499,7 +499,12 @@ const RosterWishes = () => {
     // Filter by minimum wishes (based on wishesToConsider)
     if (filters.minWishes !== null) {
       const wishCount = wishesToConsider.filter(w => w.class_id).length;
-      if (wishCount < filters.minWishes) return false;
+      // Special case: minWishes === 0 means "exactly 0 wishes" (no wishes)
+      if (filters.minWishes === 0) {
+        if (wishCount !== 0) return false;
+      } else {
+        if (wishCount < filters.minWishes) return false;
+      }
     }
 
     // Filter by range (melee/ranged) - based on wishesToConsider
