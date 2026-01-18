@@ -3,6 +3,10 @@
  * Centralizes common OAuth logic for Auth, GuildList, and BattleNetConnect
  */
 
+// =============================================================================
+// TYPES AND CONSTANTS
+// =============================================================================
+
 export type BattleNetRegion = 'eu' | 'us' | 'kr' | 'tw';
 
 export const REGION_LABELS: Record<BattleNetRegion, string> = {
@@ -11,6 +15,12 @@ export const REGION_LABELS: Record<BattleNetRegion, string> = {
   kr: 'Korea',
   tw: 'Taiwan',
 };
+
+export const ALL_REGIONS: BattleNetRegion[] = ['eu', 'us', 'kr', 'tw'];
+
+// =============================================================================
+// OAUTH STATE MANAGEMENT
+// =============================================================================
 
 interface OAuthState {
   state: string;
@@ -100,4 +110,21 @@ export function getOAuthCallbackParams(): { code: string; state: string } | null
 export function getRedirectUri(path?: string): string {
   const base = window.location.origin;
   return path ? `${base}${path}` : `${base}${window.location.pathname}`;
+}
+
+/**
+ * Generate a secure OAuth state value
+ */
+export function generateOAuthState(): string {
+  return crypto.randomUUID();
+}
+
+/**
+ * Get valid region, defaulting to 'eu' if invalid
+ */
+export function getValidRegion(region: string | undefined | null): BattleNetRegion {
+  if (region && ALL_REGIONS.includes(region.toLowerCase() as BattleNetRegion)) {
+    return region.toLowerCase() as BattleNetRegion;
+  }
+  return 'eu';
 }
