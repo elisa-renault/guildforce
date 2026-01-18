@@ -52,7 +52,11 @@ const MemberWishes = () => {
   const [validatingWish, setValidatingWish] = useState<number | null>(null);
   
   // Use the centralized hook for BattleTag visibility
-  const { canSeeBattletag, isLoading: battletagLoading } = useBattletagVisibility(memberId);
+  // skipSelfCheck: true ensures user sees what OTHERS would see on their member page
+  const { canSeeBattletag, isLoading: battletagLoading } = useBattletagVisibility(
+    memberId,
+    { skipSelfCheck: true }
+  );
 
   // Handle back navigation - use history or fallback to roster page
   const handleBack = useCallback(() => {
