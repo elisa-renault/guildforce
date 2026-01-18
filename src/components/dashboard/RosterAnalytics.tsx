@@ -13,6 +13,23 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+// Color mapping from Tailwind class to CSS variable
+const classColorMap: Record<string, string> = {
+  'class-warrior': 'hsl(var(--class-warrior))',
+  'class-paladin': 'hsl(var(--class-paladin))',
+  'class-hunter': 'hsl(var(--class-hunter))',
+  'class-rogue': 'hsl(var(--class-rogue))',
+  'class-priest': 'hsl(var(--class-priest))',
+  'class-death-knight': 'hsl(var(--class-death-knight))',
+  'class-shaman': 'hsl(var(--class-shaman))',
+  'class-mage': 'hsl(var(--class-mage))',
+  'class-warlock': 'hsl(var(--class-warlock))',
+  'class-monk': 'hsl(var(--class-monk))',
+  'class-druid': 'hsl(var(--class-druid))',
+  'class-demon-hunter': 'hsl(var(--class-demon-hunter))',
+  'class-evoker': 'hsl(var(--class-evoker))',
+};
+
 interface RosterAnalyticsProps {
   members: MemberWish[];
 }
@@ -286,13 +303,19 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
           <div className="space-y-2.5">
             {representedClasses.map(stat => (
               <div key={stat.id} className="flex items-center gap-3">
-                <div className={`w-28 text-sm font-medium text-${stat.color} truncate`}>
+                <div 
+                  className="w-28 text-sm font-medium truncate"
+                  style={{ color: classColorMap[stat.color] || 'inherit' }}
+                >
                   {stat.name}
                 </div>
                 <div className="flex-1 h-5 bg-muted/30 rounded-full overflow-hidden relative">
                   <div
-                    className={`absolute inset-y-0 left-0 bg-${stat.color} transition-all duration-300`}
-                    style={{ width: `${(stat.total / maxClassTotal) * 100}%` }}
+                    className="absolute inset-y-0 left-0 transition-all duration-300 rounded-full"
+                    style={{ 
+                      width: `${(stat.total / maxClassTotal) * 100}%`,
+                      backgroundColor: classColorMap[stat.color] || 'hsl(var(--primary))'
+                    }}
                   />
                 </div>
                 <div className="w-10 text-right text-sm text-muted-foreground tabular-nums">
@@ -341,9 +364,9 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                     {stat.wish1 + stat.other}
                   </span>
                 </div>
-                <div className="flex h-2 rounded-full overflow-hidden bg-muted/30">
+                <div className="h-2 rounded-full overflow-hidden bg-muted/30">
                   <div
-                    className="bg-primary transition-all duration-300"
+                    className="h-full bg-primary transition-all duration-300 rounded-full"
                     style={{ width: '100%' }}
                   />
                 </div>
