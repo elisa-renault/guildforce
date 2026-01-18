@@ -46,6 +46,35 @@ export interface Translations {
     savedAutomatically: string;
     error: string;
   };
+  routeMeta: {
+    home: string;
+    auth: string;
+    guilds: string;
+    profile: string;
+    publicProfile: string;
+    forum: string;
+    forumAdmin: string;
+    admin: string;
+    legal: string;
+    privacy: string;
+    terms: string;
+    changelog: string;
+    forumCategory: string;
+    forumNewTopic: string;
+    forumTopic: string;
+    guildOverview: string;
+    guildRoster: string;
+    guildWishes: string;
+    guildSettings: string;
+    guildMemberWishes: string;
+    guildPolls: string;
+    guildPollNew: string;
+    guildPollEdit: string;
+    guildPollView: string;
+    guildPollResults: string;
+    guildMembers: string;
+    notFound: string;
+  };
   // Bug Report
   bugReport: {
     button: string;
@@ -833,6 +862,35 @@ export const translations: Record<Language, Translations> = {
       savedAutomatically: 'Saved automatically',
       error: 'Error',
     },
+    routeMeta: {
+      home: 'Home',
+      auth: 'Authentication',
+      guilds: 'Guilds',
+      profile: 'Profile',
+      publicProfile: 'Public profile',
+      forum: 'Forum',
+      forumAdmin: 'Forum admin',
+      admin: 'Administration',
+      legal: 'Legal notice',
+      privacy: 'Privacy',
+      terms: 'Terms of service',
+      changelog: 'Changelog',
+      forumCategory: 'Forum category',
+      forumNewTopic: 'New topic',
+      forumTopic: 'Forum topic',
+      guildOverview: 'Guild overview',
+      guildRoster: 'Roster',
+      guildWishes: 'Wishes',
+      guildSettings: 'Guild settings',
+      guildMemberWishes: 'Member wishes',
+      guildPolls: 'Polls',
+      guildPollNew: 'New poll',
+      guildPollEdit: 'Edit poll',
+      guildPollView: 'Poll',
+      guildPollResults: 'Poll results',
+      guildMembers: 'Members',
+      notFound: 'Not found',
+    },
     battlenet: {
       connect: 'Link my Battle.net account',
       connected: 'Connected to Battle.net',
@@ -1596,6 +1654,35 @@ export const translations: Record<Language, Translations> = {
       activityLog: 'Journal d\'activité',
       savedAutomatically: 'Sauvegardé automatiquement',
       error: 'Erreur',
+    },
+    routeMeta: {
+      home: 'Accueil',
+      auth: 'Authentification',
+      guilds: 'Guildes',
+      profile: 'Profil',
+      publicProfile: 'Profil public',
+      forum: 'Forum',
+      forumAdmin: 'Administration du forum',
+      admin: 'Administration',
+      legal: 'Mentions légales',
+      privacy: 'Confidentialité',
+      terms: 'Conditions d\'utilisation',
+      changelog: 'Changelog',
+      forumCategory: 'Catégorie du forum',
+      forumNewTopic: 'Nouveau sujet',
+      forumTopic: 'Sujet du forum',
+      guildOverview: 'Aperçu de guilde',
+      guildRoster: 'Roster',
+      guildWishes: 'Souhaits',
+      guildSettings: 'Paramètres de guilde',
+      guildMemberWishes: 'Souhaits du membre',
+      guildPolls: 'Sondages',
+      guildPollNew: 'Nouveau sondage',
+      guildPollEdit: 'Modifier sondage',
+      guildPollView: 'Sondage',
+      guildPollResults: 'Résultats du sondage',
+      guildMembers: 'Membres',
+      notFound: 'Introuvable',
     },
     battlenet: {
       connect: 'Lier mon compte Battle.net',
