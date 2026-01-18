@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { CheckCircle, HelpCircle, XCircle, Pencil, X, Save, Shield, Heart, Sword, Swords, Crosshair, MessageSquare, Plus, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { CheckCircle, HelpCircle, XCircle, Pencil, Save, Shield, Heart, Sword, Swords, Crosshair, MessageSquare, Plus, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getClassById, getSpecById } from '@/data/wowClasses';
 import { MemberWish, WishData, WishChoice, ValidationStatus } from '@/types/guild';
@@ -23,16 +23,13 @@ interface RosterTableProps {
   members: MemberWish[];
   currentUserId: string | undefined;
   selectedRosterId?: string | null;
-  expandedRows: Set<string>;
   editingUserId: string | null;
   editWishes: WishData[];
   editStatus: CommitmentStatus;
   saving: boolean;
   maxWishes: number;
   isGM?: boolean;
-  onToggleRow: (memberId: string) => void;
   onStartEditing: (member: MemberWish) => void;
-  onCancelEditing: () => void;
   onUpdateEditWish: (index: number, field: keyof WishData, value: any) => void;
   onEditStatusChange: (status: CommitmentStatus) => void;
   onSaveEditing: () => void;
@@ -60,7 +57,6 @@ export const RosterTable = ({
   maxWishes,
   isGM = false,
   onStartEditing,
-  onCancelEditing,
   onUpdateEditWish,
   onEditStatusChange,
   onSaveEditing,
