@@ -15,15 +15,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
-type BattleNetRegion = 'eu' | 'us' | 'kr' | 'tw';
-
-const REGION_LABELS: Record<BattleNetRegion, string> = {
-  eu: 'Europe',
-  us: 'Americas',
-  kr: 'Korea',
-  tw: 'Taiwan',
-};
+import {
+  type BattleNetRegion,
+  REGION_LABELS,
+  ALL_REGIONS,
+  getRedirectUri,
+  generateOAuthState,
+} from '@/lib/battlenetOAuth';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -36,16 +34,14 @@ const Index = () => {
   const handleBattleNetLogin = async () => {
     setBnetLoading(true);
     try {
-      const redirectUri = `${window.location.origin}/auth`;
-      const state = crypto.randomUUID();
+      const redirectUri = getRedirectUri('/auth');
+      const state = generateOAuthState();
 
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/battlenet-auth/auth-url`,
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ redirectUri, state, mode: 'login', region: selectedRegion }),
         }
       );
@@ -95,7 +91,7 @@ const Index = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {(Object.keys(REGION_LABELS) as BattleNetRegion[]).map((r) => (
+                  {ALL_REGIONS.map((r) => (
                     <SelectItem key={r} value={r}>
                       {REGION_LABELS[r]}
                     </SelectItem>

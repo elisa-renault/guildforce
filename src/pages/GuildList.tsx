@@ -14,15 +14,18 @@ import { Label } from '@/components/ui/label';
 import { BattleNetIcon } from '@/components/BattleNetIcon';
 import { getGuildPath, getGuildSettingsPath } from '@/lib/guildSlug';
 import { toast } from 'sonner';
-
-type BattleNetRegion = 'eu' | 'us' | 'kr' | 'tw';
-
-const REGION_LABELS: Record<BattleNetRegion, string> = {
-  eu: 'Europe',
-  us: 'Americas',
-  kr: 'Korea',
-  tw: 'Taiwan',
-};
+import {
+  type BattleNetRegion,
+  REGION_LABELS,
+  ALL_REGIONS,
+  parseOAuthState,
+  validateOAuthState,
+  getStoredOAuthParams,
+  storeOAuthParams,
+  cleanupOAuthParams,
+  getRedirectUri,
+  generateOAuthState,
+} from '@/lib/battlenetOAuth';
 
 interface GuildWithMembership {
   id: string;
@@ -145,35 +148,25 @@ const GuildList = () => {
   };
 
   // Handle OAuth callback (return from Battle.net)
-  // Important: don't rely on AuthContext timing; Supabase client session is persisted and may be available
-  // before our context state updates.
   useEffect(() => {
     if (authLoading) return;
 
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
     const stateParam = urlParams.get('state');
-    const storedState = localStorage.getItem('battlenet_state');
-    const storedRegion = (localStorage.getItem('battlenet_region') as BattleNetRegion) || 'eu';
 
     if (!code || !stateParam) return;
 
-    // Parse the state JSON to extract the actual state value
-    let stateMatches = false;
-    try {
-      const parsedState = JSON.parse(stateParam);
-      stateMatches = storedState ? parsedState.state === storedState : true;
-    } catch {
-      stateMatches = storedState ? stateParam === storedState : true;
-    }
+    const { state: storedState, region: storedRegion } = getStoredOAuthParams();
+    const parsedState = parseOAuthState(stateParam);
+    const stateMatches = validateOAuthState(parsedState, storedState);
 
-    if (stateMatches || !storedState) {
+    if (stateMatches) {
       handleOAuthCallback(code, storedRegion);
-      window.history.replaceState({}, document.title, window.location.pathname);
-      localStorage.removeItem('battlenet_state');
-      localStorage.removeItem('battlenet_region');
+      cleanupOAuthParams();
     } else {
       toast.error(t.errors.generic);
+      cleanupOAuthParams();
     }
   }, [authLoading]);
 
@@ -186,7 +179,7 @@ const GuildList = () => {
         return;
       }
 
-      const redirectUri = `${window.location.origin}${window.location.pathname}`;
+      const redirectUri = getRedirectUri();
 
       const { data, error } = await supabase.functions.invoke('battlenet-auth/callback', {
         body: { code, redirectUri, region },
@@ -217,11 +210,10 @@ const GuildList = () => {
 
     setIsConnecting(true);
     try {
-      const state = crypto.randomUUID();
-      localStorage.setItem('battlenet_state', state);
-      localStorage.setItem('battlenet_region', selectedRegion);
+      const state = generateOAuthState();
+      storeOAuthParams(state, selectedRegion);
 
-      const redirectUri = `${window.location.origin}${window.location.pathname}`;
+      const redirectUri = getRedirectUri();
 
       const { data, error } = await supabase.functions.invoke('battlenet-auth/auth-url', {
         body: { redirectUri, state, region: selectedRegion },
@@ -281,7 +273,7 @@ const GuildList = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="cosmic-glass border-border/50">
-                  {(Object.keys(REGION_LABELS) as BattleNetRegion[]).map((region) => (
+                  {ALL_REGIONS.map((region) => (
                     <SelectItem key={region} value={region}>
                       {REGION_LABELS[region]}
                     </SelectItem>
@@ -350,7 +342,6 @@ const GuildList = () => {
                       <span className="uppercase">{guild.region}</span>
                     </div>
                   </div>
-
 
                   {/* Members - hidden on mobile */}
                   <div className="hidden md:flex items-center gap-1.5 text-sm text-muted-foreground min-w-[60px]">
