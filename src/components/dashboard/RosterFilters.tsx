@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Search, ChevronDown, Check, Shield, Heart, Swords, X, Clock, CheckCircle2, 
   XCircle, UserCheck, UserMinus, UserX, Sword, Crosshair, MessageSquare, 
-  Hash, RotateCcw, Users, Target, Sparkles
+  Hash, RotateCcw, Users, Target
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { wowClasses, Role } from '@/data/wowClasses';
@@ -19,12 +19,6 @@ interface RosterFiltersProps {
   onFiltersChange: (filters: RosterFiltersType) => void;
 }
 
-// Preset filter configurations
-interface FilterPreset {
-  labelKey: string;
-  icon: typeof Shield;
-  filters: Partial<RosterFiltersType>;
-}
 
 const roleConfig: Record<Role, { icon: typeof Shield; color: string; label: { en: string; fr: string } }> = {
   tank: { icon: Shield, color: 'text-tank', label: { en: 'Tank', fr: 'Tank' } },
@@ -69,36 +63,8 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
   const [wishesOpen, setWishesOpen] = useState(false);
   const [specsOpen, setSpecsOpen] = useState(false);
 
-  // Define presets with translations
-  const presets: FilterPreset[] = useMemo(() => [
-    {
-      labelKey: language === 'fr' ? 'Tanks confirmés' : 'Confirmed Tanks',
-      icon: Shield,
-      filters: { roleFilters: ['tank'], commitmentFilters: ['confirmed'], maxWishIndex: 1 }
-    },
-    {
-      labelKey: language === 'fr' ? 'Healers confirmés' : 'Confirmed Healers',
-      icon: Heart,
-      filters: { roleFilters: ['healer'], commitmentFilters: ['confirmed'], maxWishIndex: 1 }
-    },
-    {
-      labelKey: language === 'fr' ? 'En attente' : 'Pending validation',
-      icon: Clock,
-      filters: { validationFilters: ['pending'] }
-    },
-    {
-      labelKey: language === 'fr' ? 'Sans vœux' : 'No wishes',
-      icon: XCircle,
-      filters: { minWishes: 0 }
-    },
-  ], [language]);
-
   const updateFilter = <K extends keyof RosterFiltersType>(key: K, value: RosterFiltersType[K]) => {
     onFiltersChange({ ...filters, [key]: value });
-  };
-
-  const applyPreset = (preset: FilterPreset) => {
-    onFiltersChange({ ...defaultFilters, ...preset.filters });
   };
 
   const resetAllFilters = () => {
@@ -266,8 +232,8 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
 
   return (
     <div className="flex flex-col gap-3 mb-4">
-      {/* Row 1: Search + Presets */}
-      <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+      {/* Row 1: Search + Filter Groups + Reset */}
+      <div className="flex gap-2 items-center flex-wrap">
         {/* Search */}
         <div className="relative w-full sm:w-[200px] flex-shrink-0">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
@@ -278,30 +244,6 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
             className="h-9 pl-8 text-sm cosmic-input"
           />
         </div>
-
-        {/* Presets */}
-        <div className="flex gap-1.5 items-center overflow-x-auto pb-1 -mx-1 px-1 sm:mx-0 sm:px-0">
-          <Sparkles className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0 hidden sm:block" />
-          {presets.map((preset, idx) => {
-            const Icon = preset.icon;
-            return (
-              <Button
-                key={idx}
-                variant="ghost"
-                size="sm"
-                onClick={() => applyPreset(preset)}
-                className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground flex-shrink-0 whitespace-nowrap"
-              >
-                <Icon className="h-3 w-3" />
-                {preset.labelKey}
-              </Button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Row 2: Filter Groups + Reset */}
-      <div className="flex gap-2 items-center flex-wrap">
         {/* Players Group */}
         <Popover open={playersOpen} onOpenChange={setPlayersOpen}>
           <PopoverTrigger asChild>
