@@ -107,7 +107,7 @@ export const BattleNetConnect: React.FC = () => {
     setIsLoadingCharacters(true);
     try {
       const { data, error } = await supabase.functions.invoke('battlenet-auth/characters', {
-        method: 'GET',
+        headers: { Authorization: `Bearer ${session.access_token}` },
       });
 
       if (error) throw error;
