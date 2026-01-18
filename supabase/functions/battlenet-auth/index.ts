@@ -862,22 +862,15 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Get user's region from their profile or default to EU
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('battlenet_id')
-        .eq('id', user.id)
-        .single();
-
-      // Check wow_guild_memberships for region hint
-      const { data: membership } = await supabase
-        .from('wow_guild_memberships')
-        .select('guild_region')
+      // Get user's region from battlenet_tokens (stored during OAuth callback)
+      const { data: tokenInfo } = await supabase
+        .from('battlenet_tokens')
+        .select('region')
         .eq('user_id', user.id)
-        .limit(1)
         .maybeSingle();
 
-      const region = getValidRegion(membership?.guild_region);
+      const region = getValidRegion(tokenInfo?.region);
+      log.info(`Resync using region from battlenet_tokens: ${region.toUpperCase()}`);
 
       // Re-fetch characters and guilds
       await fetchAndStoreCharacters(supabase, tokenData.access_token, user.id, region);
@@ -1295,7 +1288,15 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
     const characters: CharacterData[] = [];
 
     if (!wowProfile.wow_accounts || wowProfile.wow_accounts.length === 0) {
-      log.info('No wow_accounts found in response');
+      // Enhanced diagnostic logging for empty wow_accounts
+      log.info(`No wow_accounts found in response for user ${sanitizePII(userId, 'id')} (region: ${region.toUpperCase()})`);
+      log.info(`Response structure: ${JSON.stringify({
+        hasWowAccounts: 'wow_accounts' in wowProfile,
+        wowAccountsLength: wowProfile.wow_accounts?.length ?? 'undefined',
+        topLevelKeys: Object.keys(wowProfile),
+        hasCollections: !!wowProfile.collections,
+        profileId: wowProfile.id ?? 'none',
+      })}`);
       return;
     }
 
