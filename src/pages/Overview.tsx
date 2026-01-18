@@ -3,13 +3,13 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { getClassById, getRolesFromSpecs } from '@/data/wowClasses';
+import { getClassById, getSpecById } from '@/data/wowClasses';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
 import { GlowCard } from '@/components/GlowCard';
 import { GuildSubNav } from '@/components/guild';
 import { ActivePollWidget } from '@/components/polls';
-import { RoleBadge } from '@/components/RoleBadge';
+import { Badge } from '@/components/ui/badge';
 import { Loader2, Sparkles, Users, CheckCircle2, Shield, Heart, Swords } from 'lucide-react';
 import { toSlug, getGuildWishesPath } from '@/lib/guildSlug';
 import { CommitmentStatus } from '@/components/CommitmentToggle';
@@ -271,7 +271,7 @@ const Overview = () => {
                   <div className="space-y-2">
                     {myWishes.map((wish, index) => {
                       const wowClass = getClassById(wish.class_id);
-                      const roles = getRolesFromSpecs(wish.spec_ids);
+                      const specs = wish.spec_ids.map(id => getSpecById(id)).filter(Boolean);
                       
                       return (
                         <div key={index} className="flex items-center gap-3 p-2 rounded-lg bg-muted/30">
@@ -283,9 +283,11 @@ const Overview = () => {
                               {wowClass.name[language]}
                             </span>
                           )}
-                          <div className="flex gap-1 ml-auto">
-                            {roles.map((role, i) => (
-                              <RoleBadge key={i} role={role} size="sm" />
+                          <div className="flex gap-1 ml-auto flex-wrap justify-end">
+                            {specs.map((spec) => (
+                              <Badge key={spec!.id} variant="outline" className="text-xs px-1.5 py-0.5">
+                                {spec!.name[language]}
+                              </Badge>
                             ))}
                           </div>
                         </div>
