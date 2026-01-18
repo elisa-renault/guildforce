@@ -6,15 +6,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { CosmicButton } from './CosmicButton';
 import { GlowCard } from './GlowCard';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { AlertCircle, CheckCircle, Loader2, RefreshCw, Unlink } from 'lucide-react';
+import { CheckCircle, Loader2, RefreshCw, Unlink } from 'lucide-react';
 import { toast } from 'sonner';
 import { getClassNameFromBattleNet } from '@/data/battlenetClasses';
 import { BattleNetIcon } from './BattleNetIcon';
-import { formatDistanceToNow } from 'date-fns';
-import { fr, enUS } from 'date-fns/locale';
 
 type BattleNetRegion = 'eu' | 'us' | 'kr' | 'tw';
 
@@ -38,37 +35,32 @@ interface WoWCharacter {
 
 export const BattleNetConnect: React.FC = () => {
   const { profile, session, refreshProfile } = useAuth();
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
-  const [isResyncing, setIsResyncing] = useState(false);
   const [characters, setCharacters] = useState<WoWCharacter[]>([]);
   const [isLoadingCharacters, setIsLoadingCharacters] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState<BattleNetRegion>('eu');
   const [connectedRegion, setConnectedRegion] = useState<BattleNetRegion | null>(null);
-  const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
 
   const isConnected = !!profile?.battlenet_id;
 
-  // Fetch connected region and last sync time from battlenet_tokens
+  // Fetch connected region from battlenet_tokens
   useEffect(() => {
-    const fetchTokenInfo = async () => {
+    const fetchConnectedRegion = async () => {
       if (!isConnected || !profile?.id) return;
       
       const { data } = await supabase
         .from('battlenet_tokens')
-        .select('region, updated_at')
+        .select('region')
         .eq('user_id', profile.id)
         .maybeSingle();
       
       if (data?.region) {
         setConnectedRegion(data.region as BattleNetRegion);
       }
-      if (data?.updated_at) {
-        setLastSyncTime(data.updated_at);
-      }
     };
     
-    fetchTokenInfo();
+    fetchConnectedRegion();
   }, [isConnected, profile?.id]);
 
   useEffect(() => {
@@ -237,53 +229,8 @@ export const BattleNetConnect: React.FC = () => {
     }
   };
 
-  const handleResync = async () => {
-    if (!session?.access_token) return;
-
-    setIsResyncing(true);
-    try {
-      const { error } = await supabase.functions.invoke('battlenet-auth/resync', {
-        method: 'POST',
-      });
-
-      if (error) throw error;
-
-      toast.success(t.battlenet.resyncSuccess);
-      
-      // Refresh data
-      await Promise.all([refreshProfile(), fetchCharacters()]);
-      
-      // Update last sync time
-      const { data } = await supabase
-        .from('battlenet_tokens')
-        .select('updated_at')
-        .eq('user_id', profile?.id)
-        .maybeSingle();
-      
-      if (data?.updated_at) {
-        setLastSyncTime(data.updated_at);
-      }
-    } catch (error) {
-      log.error('Error resyncing characters:', error);
-      toast.error(t.errors.generic);
-    } finally {
-      setIsResyncing(false);
-    }
-  };
-
   const getClassName = (classId: number) => {
     return getClassNameFromBattleNet(classId);
-  };
-
-  const formatLastSync = (dateStr: string) => {
-    try {
-      return formatDistanceToNow(new Date(dateStr), {
-        addSuffix: true,
-        locale: language === 'fr' ? fr : enUS,
-      });
-    } catch {
-      return dateStr;
-    }
   };
 
   return (
@@ -393,71 +340,9 @@ export const BattleNetConnect: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="space-y-4">
-              {/* No characters message */}
-              <div className="text-center py-4">
-                <AlertCircle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
-                <p className="text-sm font-medium text-foreground">
-                  {t.battlenet.noCharacters}
-                </p>
-              </div>
-
-              {/* Diagnostic panel */}
-              <div className="bg-muted/30 rounded-lg p-4 space-y-3 border border-border/50">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                  <AlertCircle className="w-3 h-3" />
-                  {t.battlenet.diagnostic.title}
-                </p>
-                
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">{t.battlenet.diagnostic.regionLabel}:</span>
-                  </div>
-                  <div>
-                    <Badge variant="outline" className="text-xs">
-                      {connectedRegion ? REGION_LABELS[connectedRegion] : '-'}
-                    </Badge>
-                  </div>
-                  
-                  <div>
-                    <span className="text-muted-foreground">{t.battlenet.diagnostic.lastSync}:</span>
-                  </div>
-                  <div>
-                    <span className="text-xs text-foreground">
-                      {lastSyncTime ? formatLastSync(lastSyncTime) : '-'}
-                    </span>
-                  </div>
-                </div>
-
-                <p className="text-xs text-muted-foreground mt-2">
-                  {t.battlenet.diagnostic.hint}
-                </p>
-                <p className="text-xs text-amber-500">
-                  {t.battlenet.diagnostic.wrongRegion}
-                </p>
-
-                {/* Resync button */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleResync}
-                  disabled={isResyncing}
-                  className="w-full mt-2"
-                >
-                  {isResyncing ? (
-                    <>
-                      <Loader2 className="w-3 h-3 mr-2 animate-spin" />
-                      {t.battlenet.resyncing}
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw className="w-3 h-3 mr-2" />
-                      {t.battlenet.resync}
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
+            <p className="text-sm text-muted-foreground text-center py-4">
+              {t.battlenet.noCharacters}
+            </p>
           )}
 
           <div className="flex gap-2 pt-2 border-t border-border/50">
