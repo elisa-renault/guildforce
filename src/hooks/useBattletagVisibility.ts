@@ -5,6 +5,10 @@ import { supabase } from '@/integrations/supabase/client';
 
 type BattletagVisibility = 'everyone' | 'guild_only' | 'nobody';
 
+interface UseBattletagVisibilityOptions {
+  skipSelfCheck?: boolean; // If true, don't auto-show for own profile (useful for public profile page)
+}
+
 interface UseBattletagVisibilityResult {
   canSeeBattletag: boolean;
   isLoading: boolean;
@@ -20,8 +24,14 @@ interface UseBattletagVisibilityResult {
  * - 'everyone': visible to all
  * - 'guild_only': visible only to guild co-members
  * - 'nobody': visible only to admins
+ * 
+ * Options:
+ * - skipSelfCheck: If true, don't auto-show for own profile (for public profile page)
  */
-export function useBattletagVisibility(targetUserId: string | undefined): UseBattletagVisibilityResult {
+export function useBattletagVisibility(
+  targetUserId: string | undefined,
+  options?: UseBattletagVisibilityOptions
+): UseBattletagVisibilityResult {
   const { user } = useAuth();
   const { isAdmin, loading: adminLoading } = useIsAdmin();
   const [canSeeBattletag, setCanSeeBattletag] = useState(false);
@@ -38,8 +48,8 @@ export function useBattletagVisibility(targetUserId: string | undefined): UseBat
       // Wait for admin check to complete
       if (adminLoading) return;
 
-      // Users can always see their own BattleTag
-      if (user?.id === targetUserId) {
+      // Users can always see their own BattleTag (unless skipSelfCheck for public profile)
+      if (user?.id === targetUserId && !options?.skipSelfCheck) {
         setCanSeeBattletag(true);
         setIsLoading(false);
         return;
