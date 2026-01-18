@@ -369,7 +369,7 @@ export const RosterTable = ({
               <SortableHeader column="wish1"><span className="hidden md:inline">{t.dashboard.firstChoice}</span><span className="md:hidden">#1</span></SortableHeader>
               <SortableHeader column="wish2"><span className="hidden md:inline">{t.dashboard.secondChoice}</span><span className="md:hidden">#2</span></SortableHeader>
               <SortableHeader column="wish3"><span className="hidden md:inline">{t.dashboard.thirdChoice}</span><span className="md:hidden">#3</span></SortableHeader>
-              <TableHead className="text-muted-foreground text-xs py-2 px-1 w-10"></TableHead>
+              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3 w-[50px] md:w-[80px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -484,13 +484,14 @@ export const RosterTable = ({
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <CosmicButton 
-                                    size="icon" 
+                                    size="sm" 
                                     variant="outline" 
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       onStartEditing(member);
                                     }}
                                     icon={<Pencil className="h-3.5 w-3.5" strokeWidth={1.5} />}
+                                    className="h-8 px-2"
                                   />
                                 </TooltipTrigger>
                                 <TooltipContent side="left">
