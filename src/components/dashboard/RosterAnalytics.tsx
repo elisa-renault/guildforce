@@ -421,7 +421,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
         <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-6">
           {/* Range Pie - 1 column */}
           <GlowCard className="p-3">
-            <h4 className="text-sm font-semibold mb-2 flex items-center justify-center gap-1">
+            <h4 className="text-sm font-semibold mb-2 flex items-center gap-1">
               <Swords className="h-3.5 w-3.5 text-blue-500" />
               <span className="text-muted-foreground">/</span>
               <Crosshair className="h-3.5 w-3.5 text-purple-500" />
@@ -471,7 +471,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
 
           {/* Roles Pie - 1 column */}
           <GlowCard className="p-3">
-            <h4 className="text-sm font-semibold mb-2 text-center">{t.dashboard.rolesByPriority}</h4>
+            <h4 className="text-sm font-semibold mb-2">{t.dashboard.rolesByPriority}</h4>
             {totalRoles > 0 ? (
               <div className="flex flex-col items-center gap-2">
                 <div className="w-24 h-24">
@@ -513,7 +513,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
 
           {/* Class Distribution - 2 columns */}
           <GlowCard className="p-3 lg:col-span-2">
-            <h3 className="text-sm font-semibold mb-2">{t.dashboard.classDistribution}</h3>
+            <h4 className="text-sm font-semibold mb-2">{t.dashboard.classDistribution}</h4>
             <div className="max-h-[200px] overflow-y-auto pr-1 space-y-1">
               {representedClasses.map((stat) => (
                 <UITooltip key={stat.id} delayDuration={100}>
@@ -568,7 +568,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
 
           {/* Spec Popularity - 2 columns */}
           <GlowCard className="p-3 lg:col-span-2">
-            <h3 className="text-sm font-semibold mb-2">{t.dashboard.topSpecs}</h3>
+            <h4 className="text-sm font-semibold mb-2">{t.dashboard.topSpecs}</h4>
             {specStats.length > 0 ? (
               <div className="max-h-[200px] overflow-y-auto pr-1 space-y-1">
                 {specStats.map((stat, index) => (
