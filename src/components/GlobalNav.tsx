@@ -7,6 +7,7 @@ import { Shield, User, LogOut, MessageSquare, Menu, Crown } from 'lucide-react';
 import { CosmicButton } from '@/components/CosmicButton';
 import { NotificationBell } from '@/components/forum/NotificationBell';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { getRouteMeta } from '@/routes';
 
 export const GlobalNav = () => {
   const navigate = useNavigate();
@@ -15,9 +16,9 @@ export const GlobalNav = () => {
   const { user, signOut } = useAuth();
   const { isAdmin } = useIsAdmin();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const routeMeta = getRouteMeta(location.pathname);
 
-  // Don't show nav on auth page
-  if (location.pathname === '/auth') return null;
+  if (routeMeta?.hideGlobalNav) return null;
 
   const isActive = (path: string) => location.pathname === path;
   const startsWithPath = (path: string) => location.pathname.startsWith(path);
