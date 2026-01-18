@@ -44,6 +44,7 @@ export interface Translations {
     new: string;
     activityLog: string;
     savedAutomatically: string;
+    error: string;
   };
   // Bug Report
   bugReport: {
@@ -169,6 +170,7 @@ export interface Translations {
     bnetNote: string;
     accountCreated: string;
     welcomeBack: string;
+    existingAccountsOnly: string;
   };
   // Guild
   guild: {
@@ -826,6 +828,7 @@ export const translations: Record<Language, Translations> = {
       new: 'New',
       activityLog: 'Activity Log',
       savedAutomatically: 'Saved automatically',
+      error: 'Error',
     },
     battlenet: {
       connect: 'Link my Battle.net account',
@@ -891,6 +894,7 @@ export const translations: Record<Language, Translations> = {
       bnetNote: 'Your characters and guilds will be automatically imported from Battle.net',
       accountCreated: 'Account created!',
       welcomeBack: 'Welcome back!',
+      existingAccountsOnly: 'Login only — account creation requires Battle.net',
     },
     guild: {
       create: 'Create Guild',
@@ -1585,6 +1589,7 @@ export const translations: Record<Language, Translations> = {
       new: 'Nouveau',
       activityLog: 'Journal d\'activité',
       savedAutomatically: 'Sauvegardé automatiquement',
+      error: 'Erreur',
     },
     battlenet: {
       connect: 'Lier mon compte Battle.net',
@@ -1650,6 +1655,7 @@ export const translations: Record<Language, Translations> = {
       bnetNote: 'Tes personnages et guildes seront automatiquement importés depuis Battle.net',
       accountCreated: 'Compte créé !',
       welcomeBack: 'Bon retour !',
+      existingAccountsOnly: 'Connexion uniquement — la création de compte nécessite Battle.net',
     },
     guild: {
       create: 'Créer une guilde',
