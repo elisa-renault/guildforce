@@ -137,6 +137,7 @@ interface TokenResponse {
   token_type: string;
   expires_in: number;
   scope: string;
+  refresh_token?: string; // Available when offline_access scope is requested
 }
 
 interface WowProfileFetchResult {
@@ -519,7 +520,7 @@ Deno.serve(async (req) => {
       authUrl.searchParams.set('client_id', BATTLENET_CLIENT_ID);
       authUrl.searchParams.set('redirect_uri', redirectUri);
       authUrl.searchParams.set('response_type', 'code');
-      authUrl.searchParams.set('scope', 'wow.profile openid');
+      authUrl.searchParams.set('scope', 'wow.profile openid offline_access');
       authUrl.searchParams.set('state', JSON.stringify({ state, mode, region }));
 
       log.debug(`Generated auth URL for redirect (region: ${region})`);
@@ -716,12 +717,13 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Store Battle.net token in separate secure table (with region for diagnostics)
+      // Store Battle.net token in separate secure table (with region and refresh_token)
       const { error: tokenError } = await supabase
         .from('battlenet_tokens')
         .upsert({
           user_id: userId,
           access_token: tokenData.access_token,
+          refresh_token: tokenData.refresh_token || null,
           expires_at: expiresAt,
           region: region,
         }, { onConflict: 'user_id' });
@@ -879,12 +881,13 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Store Battle.net token in separate secure table (with region for diagnostics)
+      // Store Battle.net token in separate secure table (with region and refresh_token)
       const { error: tokenError } = await supabase
         .from('battlenet_tokens')
         .upsert({
           user_id: userId,
           access_token: tokenData.access_token,
+          refresh_token: tokenData.refresh_token || null,
           expires_at: expiresAt,
           region: region,
         }, { onConflict: 'user_id' });
