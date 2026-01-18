@@ -567,6 +567,26 @@ export interface Translations {
     adminRoleDesc: string;
     modRoleDesc: string;
     global: string;
+    // UserManager specific
+    searchUsersLabel: string;
+    searchUsersPlaceholder: string;
+    tableUser: string;
+    tableBattleTag: string;
+    tableCreatedAt: string;
+    tableUpdatedAt: string;
+    tableLanguage: string;
+    tableMainCharacter: string;
+    tableRoles: string;
+    tableActions: string;
+    noUsersFound: string;
+    totalUsersCount: string;
+    loadingUsersError: string;
+    cannotRemoveOwnAdmin: string;
+    roleRemovedWithName: string;
+    roleAddedWithName: string;
+    roleUpdateError: string;
+    adminLabel: string;
+    modLabel: string;
     // GuildManager specific
     searchGuilds: string;
     syncBattlenet: string;
@@ -1541,6 +1561,26 @@ export const translations: Record<Language, Translations> = {
       adminRoleDesc: 'Full access: manage categories, moderators, and all user roles',
       modRoleDesc: 'Forum moderation: pin, lock, and delete topics/posts',
       global: 'Global',
+      // UserManager specific
+      searchUsersLabel: 'Search by name or battletag',
+      searchUsersPlaceholder: 'Search by name or battletag...',
+      tableUser: 'User',
+      tableBattleTag: 'BattleTag',
+      tableCreatedAt: 'Created',
+      tableUpdatedAt: 'Last update',
+      tableLanguage: 'Language',
+      tableMainCharacter: 'Main character',
+      tableRoles: 'Roles',
+      tableActions: 'Actions',
+      noUsersFound: 'No users found',
+      totalUsersCount: '{count} user(s) total',
+      loadingUsersError: 'Error loading users',
+      cannotRemoveOwnAdmin: 'You cannot remove your own admin role',
+      roleRemovedWithName: 'Role removed: {role}',
+      roleAddedWithName: 'Role assigned: {role}',
+      roleUpdateError: 'Error updating role',
+      adminLabel: 'Admin',
+      modLabel: 'Mod',
       // GuildManager specific
       searchGuilds: 'Search guilds...',
       syncBattlenet: 'Sync Battle.net',
@@ -2334,6 +2374,26 @@ export const translations: Record<Language, Translations> = {
       adminRoleDesc: 'Accès total : gestion des catégories, modérateurs, et tous les rôles utilisateurs',
       modRoleDesc: 'Modération du forum : épingler, verrouiller et supprimer les sujets/messages',
       global: 'Global',
+      // UserManager specific
+      searchUsersLabel: 'Rechercher par nom ou battletag',
+      searchUsersPlaceholder: 'Rechercher par nom ou battletag...',
+      tableUser: 'Utilisateur',
+      tableBattleTag: 'BattleTag',
+      tableCreatedAt: 'Créé le',
+      tableUpdatedAt: 'Dernière maj',
+      tableLanguage: 'Langue',
+      tableMainCharacter: 'Perso principal',
+      tableRoles: 'Rôles',
+      tableActions: 'Actions',
+      noUsersFound: 'Aucun utilisateur trouvé',
+      totalUsersCount: '{count} utilisateur(s) au total',
+      loadingUsersError: 'Erreur lors du chargement des utilisateurs',
+      cannotRemoveOwnAdmin: 'Vous ne pouvez pas retirer votre propre rôle admin',
+      roleRemovedWithName: 'Rôle retiré : {role}',
+      roleAddedWithName: 'Rôle attribué : {role}',
+      roleUpdateError: 'Erreur lors de la modification du rôle',
+      adminLabel: 'Admin',
+      modLabel: 'Mod',
       // GuildManager specific
       searchGuilds: 'Rechercher une guilde...',
       syncBattlenet: 'Sync Battle.net',

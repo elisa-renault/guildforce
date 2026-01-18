@@ -35,13 +35,16 @@ interface UserWithRoles {
   avatar_url: string | null;
   battletag: string | null;
   created_at: string;
+  updated_at: string;
+  preferred_language: string;
+  main_character_name: string | null;
   roles: AppRole[];
 }
 
 const ITEMS_PER_PAGE = 15;
 
 export function UserManager() {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<UserWithRoles[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,7 +71,7 @@ export function UserManager() {
       // Get paginated data
       let query = supabase
         .from('profiles')
-        .select('id, username, avatar_url, battletag, created_at')
+        .select('id, username, avatar_url, battletag, created_at, updated_at, preferred_language, main_character_name')
         .order('created_at', { ascending: false })
         .range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1);
       
@@ -104,7 +107,7 @@ export function UserManager() {
       }
     } catch (error) {
       log.error('Error fetching users:', error);
-      toast.error(language === 'fr' ? 'Erreur lors du chargement des utilisateurs' : 'Error loading users');
+      toast.error(t.admin.loadingUsersError);
     } finally {
       setLoading(false);
     }
@@ -122,10 +125,7 @@ export function UserManager() {
   const toggleRole = async (userId: string, role: AppRole) => {
     // Prevent removing own admin role
     if (userId === currentUser?.id && role === 'admin') {
-      toast.error(language === 'fr' 
-        ? 'Vous ne pouvez pas retirer votre propre rôle admin' 
-        : 'You cannot remove your own admin role'
-      );
+      toast.error(t.admin.cannotRemoveOwnAdmin);
       return;
     }
 
@@ -151,10 +151,7 @@ export function UserManager() {
             : u
         ));
         
-        toast.success(language === 'fr' 
-          ? `Rôle ${role} retiré` 
-          : `${role} role removed`
-        );
+        toast.success(t.admin.roleRemovedWithName.replace('{role}', role));
       } else {
         // Add role
         const { error } = await supabase
@@ -169,14 +166,11 @@ export function UserManager() {
             : u
         ));
         
-        toast.success(language === 'fr' 
-          ? `Rôle ${role} attribué` 
-          : `${role} role assigned`
-        );
+        toast.success(t.admin.roleAddedWithName.replace('{role}', role));
       }
     } catch (error) {
       log.error('Error toggling role:', error);
-      toast.error(language === 'fr' ? 'Erreur lors de la modification du rôle' : 'Error updating role');
+      toast.error(t.admin.roleUpdateError);
     } finally {
       setTogglingRole(null);
     }
@@ -184,12 +178,19 @@ export function UserManager() {
 
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US', {
+  const formatDateTime = (dateStr: string) => {
+    return new Date(dateStr).toLocaleString(language === 'fr' ? 'fr-FR' : 'en-US', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
+  };
+
+  const formatLanguage = (lang?: string) => {
+    if (!lang) return '-';
+    return lang.toUpperCase();
   };
 
   return (
@@ -197,13 +198,13 @@ export function UserManager() {
       {/* Search */}
       <div className="relative">
         <label htmlFor="user-search" className="sr-only">
-          {language === 'fr' ? 'Rechercher par nom ou battletag' : 'Search by name or battletag'}
+          {t.admin.searchUsersLabel}
         </label>
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           id="user-search"
           name="user-search"
-          placeholder={language === 'fr' ? 'Rechercher par nom ou battletag...' : 'Search by name or battletag...'}
+          placeholder={t.admin.searchUsersPlaceholder}
           value={searchQuery}
           onChange={(e) => handleSearch(e.target.value)}
           className="pl-10"
@@ -212,30 +213,34 @@ export function UserManager() {
 
       {/* Table */}
       <GlowCard className="overflow-hidden">
-        <Table>
+        <div className="overflow-x-auto">
+          <Table className="min-w-[980px]">
           <TableHeader>
             <TableRow>
               <TableHead className="w-[50px]"></TableHead>
-              <TableHead>{language === 'fr' ? 'Utilisateur' : 'User'}</TableHead>
-              <TableHead>{language === 'fr' ? 'BattleTag' : 'BattleTag'}</TableHead>
-              <TableHead>{language === 'fr' ? 'Inscription' : 'Joined'}</TableHead>
-              <TableHead>{language === 'fr' ? 'Rôles' : 'Roles'}</TableHead>
-              <TableHead className="text-right">{language === 'fr' ? 'Actions' : 'Actions'}</TableHead>
+              <TableHead>{t.admin.tableUser}</TableHead>
+              <TableHead>{t.admin.tableBattleTag}</TableHead>
+              <TableHead className="hidden xl:table-cell">{t.admin.tableCreatedAt}</TableHead>
+              <TableHead className="hidden xl:table-cell">{t.admin.tableUpdatedAt}</TableHead>
+              <TableHead className="hidden lg:table-cell">{t.admin.tableLanguage}</TableHead>
+              <TableHead className="hidden 2xl:table-cell">{t.admin.tableMainCharacter}</TableHead>
+              <TableHead>{t.admin.tableRoles}</TableHead>
+              <TableHead className="text-right">{t.admin.tableActions}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               [...Array(5)].map((_, i) => (
                 <TableRow key={i}>
-                  <TableCell colSpan={6} className="h-14">
+                  <TableCell colSpan={9} className="h-14">
                     <div className="animate-pulse bg-muted/30 h-4 rounded w-full" />
                   </TableCell>
                 </TableRow>
               ))
             ) : users.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                  {language === 'fr' ? 'Aucun utilisateur trouvé' : 'No users found'}
+                <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                  {t.admin.noUsersFound}
                 </TableCell>
               </TableRow>
             ) : (
@@ -254,7 +259,7 @@ export function UserManager() {
                       {user.username}
                       {user.id === currentUser?.id && (
                         <Badge variant="outline" className="text-xs">
-                          {language === 'fr' ? 'Vous' : 'You'}
+                          {t.common.you}
                         </Badge>
                       )}
                     </div>
@@ -262,21 +267,30 @@ export function UserManager() {
                   <TableCell className="text-muted-foreground">
                     {user.battletag || '-'}
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
-                    {formatDate(user.created_at)}
+                  <TableCell className="hidden xl:table-cell text-muted-foreground text-sm">
+                    {formatDateTime(user.created_at)}
+                  </TableCell>
+                  <TableCell className="hidden xl:table-cell text-muted-foreground text-sm">
+                    {formatDateTime(user.updated_at)}
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell text-muted-foreground text-sm">
+                    {formatLanguage(user.preferred_language)}
+                  </TableCell>
+                  <TableCell className="hidden 2xl:table-cell text-muted-foreground text-sm">
+                    {user.main_character_name || '-'}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
                       {user.roles.includes('admin') && (
                         <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 gap-1">
                           <Crown className="h-3 w-3" />
-                          Admin
+                          {t.admin.adminLabel}
                         </Badge>
                       )}
                       {user.roles.includes('moderator') && (
                         <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 gap-1">
                           <ShieldCheck className="h-3 w-3" />
-                          Mod
+                          {t.admin.modLabel}
                         </Badge>
                       )}
                       {user.roles.length === 0 && (
@@ -298,7 +312,7 @@ export function UserManager() {
                         ) : (
                           <ShieldCheck className="h-3 w-3" />
                         )}
-                        Mod
+                        {t.admin.modLabel}
                       </Button>
                       <Button
                         variant={user.roles.includes('admin') ? 'secondary' : 'outline'}
@@ -312,7 +326,7 @@ export function UserManager() {
                         ) : (
                           <Crown className="h-3 w-3" />
                         )}
-                        Admin
+                        {t.admin.adminLabel}
                       </Button>
                     </div>
                   </TableCell>
@@ -320,17 +334,15 @@ export function UserManager() {
               ))
             )}
           </TableBody>
-        </Table>
+          </Table>
+        </div>
       </GlowCard>
 
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <span className="text-sm text-muted-foreground">
-            {language === 'fr' 
-              ? `${totalCount} utilisateur${totalCount > 1 ? 's' : ''} au total`
-              : `${totalCount} user${totalCount > 1 ? 's' : ''} total`
-            }
+            {t.admin.totalUsersCount.replace('{count}', totalCount.toString())}
           </span>
           <div className="flex items-center gap-2">
             <Button
