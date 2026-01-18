@@ -35,6 +35,9 @@ interface UserWithRoles {
   avatar_url: string | null;
   battletag: string | null;
   created_at: string;
+  updated_at: string;
+  preferred_language: string;
+  main_character_name: string | null;
   roles: AppRole[];
 }
 
@@ -68,7 +71,7 @@ export function UserManager() {
       // Get paginated data
       let query = supabase
         .from('profiles')
-        .select('id, username, avatar_url, battletag, created_at')
+        .select('id, username, avatar_url, battletag, created_at, updated_at, preferred_language, main_character_name')
         .order('created_at', { ascending: false })
         .range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1);
       
@@ -184,12 +187,19 @@ export function UserManager() {
 
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US', {
+  const formatDateTime = (dateStr: string) => {
+    return new Date(dateStr).toLocaleString(language === 'fr' ? 'fr-FR' : 'en-US', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
+  };
+
+  const formatLanguage = (lang?: string) => {
+    if (!lang) return '-';
+    return lang.toUpperCase();
   };
 
   return (
@@ -218,7 +228,10 @@ export function UserManager() {
               <TableHead className="w-[50px]"></TableHead>
               <TableHead>{language === 'fr' ? 'Utilisateur' : 'User'}</TableHead>
               <TableHead>{language === 'fr' ? 'BattleTag' : 'BattleTag'}</TableHead>
-              <TableHead>{language === 'fr' ? 'Inscription' : 'Joined'}</TableHead>
+              <TableHead>{language === 'fr' ? 'Créé le' : 'Created'}</TableHead>
+              <TableHead>{language === 'fr' ? 'Dernière maj' : 'Last update'}</TableHead>
+              <TableHead>{language === 'fr' ? 'Langue' : 'Language'}</TableHead>
+              <TableHead>{language === 'fr' ? 'Perso principal' : 'Main character'}</TableHead>
               <TableHead>{language === 'fr' ? 'Rôles' : 'Roles'}</TableHead>
               <TableHead className="text-right">{language === 'fr' ? 'Actions' : 'Actions'}</TableHead>
             </TableRow>
@@ -227,14 +240,14 @@ export function UserManager() {
             {loading ? (
               [...Array(5)].map((_, i) => (
                 <TableRow key={i}>
-                  <TableCell colSpan={6} className="h-14">
+                  <TableCell colSpan={9} className="h-14">
                     <div className="animate-pulse bg-muted/30 h-4 rounded w-full" />
                   </TableCell>
                 </TableRow>
               ))
             ) : users.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                   {language === 'fr' ? 'Aucun utilisateur trouvé' : 'No users found'}
                 </TableCell>
               </TableRow>
@@ -263,7 +276,16 @@ export function UserManager() {
                     {user.battletag || '-'}
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm">
-                    {formatDate(user.created_at)}
+                    {formatDateTime(user.created_at)}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-sm">
+                    {formatDateTime(user.updated_at)}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-sm">
+                    {formatLanguage(user.preferred_language)}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-sm">
+                    {user.main_character_name || '-'}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
