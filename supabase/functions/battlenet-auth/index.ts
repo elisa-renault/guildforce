@@ -1518,7 +1518,22 @@ async function fetchAndStoreCharacters(
       log.debug(`Previous main character: ${previousMainKey}`);
     }
 
-    // Delete existing characters and guild memberships
+    // Clear matched references in guild_roster_cache before deleting characters
+    // (FK constraint: guild_roster_cache.matched_character_id -> wow_characters.id)
+    const { data: userCharIds } = await supabase
+      .from('wow_characters')
+      .select('id')
+      .eq('user_id', userId);
+    
+    if (userCharIds && userCharIds.length > 0) {
+      const charIds = userCharIds.map((c: { id: string }) => c.id);
+      await supabase
+        .from('guild_roster_cache')
+        .update({ matched_character_id: null, matched_user_id: null })
+        .in('matched_character_id', charIds);
+    }
+
+    // Delete existing guild memberships and characters (in correct order for FK)
     await supabase.from('wow_guild_memberships').delete().eq('user_id', userId);
     await supabase.from('wow_characters').delete().eq('user_id', userId);
 
