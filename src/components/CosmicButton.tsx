@@ -5,7 +5,7 @@ import { Loader2 } from 'lucide-react';
 interface CosmicButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children?: ReactNode;
   variant?: 'default' | 'outline';
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'icon';
   loading?: boolean;
   icon?: ReactNode;
 }
@@ -31,6 +31,7 @@ export const CosmicButton = forwardRef<HTMLButtonElement, CosmicButtonProps>(({
     sm: 'px-4 py-2 text-sm rounded',
     md: 'px-6 py-3 text-base rounded',
     lg: 'px-8 py-4 text-lg rounded',
+    icon: 'h-8 w-8 p-0 rounded',
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
