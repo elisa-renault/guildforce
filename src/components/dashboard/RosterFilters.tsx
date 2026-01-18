@@ -325,7 +325,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
               <ChevronDown className="h-3.5 w-3.5 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-64 p-3 bg-card border-border z-50" align="start">
+          <PopoverContent className="w-auto min-w-40 p-3 bg-card border-border z-50" align="start">
             <div className="space-y-3">
               <div>
                 <h4 className="text-sm font-medium mb-2">{t.dashboard.commitment}</h4>
