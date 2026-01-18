@@ -422,7 +422,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
           {/* Class Distribution - 1 column */}
           <GlowCard className="p-3">
             <h3 className="text-sm font-semibold mb-2">{t.dashboard.classDistribution}</h3>
-            <div className="columns-1 sm:columns-2 gap-x-4 space-y-1">
+            <div className="max-h-[200px] overflow-y-auto pr-1 space-y-1">
               {representedClasses.map((stat) => (
                 <UITooltip key={stat.id} delayDuration={100}>
                   <TooltipTrigger asChild>
