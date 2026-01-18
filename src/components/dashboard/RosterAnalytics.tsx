@@ -316,7 +316,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
           
           {/* Wish range filter */}
           <Select value={String(maxWishIndex)} onValueChange={(v) => setMaxWishIndex(Number(v))}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-[150px]">
               <SelectValue>{getWishRangeLabel(maxWishIndex)}</SelectValue>
             </SelectTrigger>
             <SelectContent>
