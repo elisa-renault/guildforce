@@ -474,7 +474,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
               {/* Comments */}
               <div>
                 <h4 className="text-sm font-medium mb-2">{t.dashboard.comments}</h4>
-                <div className="flex gap-1.5">
+                <div className="flex flex-wrap gap-1.5">
                   <Button
                     variant={filters.hasComment === null ? "default" : "outline"}
                     size="sm"
