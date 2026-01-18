@@ -508,14 +508,6 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                             />
                           ))}
                         </Pie>
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: 'hsl(var(--card))',
-                            border: '1px solid hsl(var(--border))',
-                            borderRadius: '8px',
-                          }}
-                          formatter={(value: number) => [value, '']}
-                        />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
@@ -585,14 +577,6 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                             />
                           ))}
                         </Pie>
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: 'hsl(var(--card))',
-                            border: '1px solid hsl(var(--border))',
-                            borderRadius: '8px',
-                          }}
-                          formatter={(value: number) => [value, '']}
-                        />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
