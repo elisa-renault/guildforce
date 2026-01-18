@@ -429,13 +429,10 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                       }}
                     />
                     
-                    {/* Medal or rank number */}
-                    <div className="w-6 flex justify-center z-10">
-                      {index < 3 ? (
-                        getMedalIcon(index)
-                      ) : (
-                        <span className="text-xs text-muted-foreground">{index + 1}.</span>
-                      )}
+                    {/* Medal and rank number */}
+                    <div className="w-8 flex items-center gap-1 z-10">
+                      {index < 3 && getMedalIcon(index)}
+                      <span className="text-xs text-muted-foreground">{index + 1}.</span>
                     </div>
                     
                     {/* Role icon */}
