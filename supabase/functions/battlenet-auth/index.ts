@@ -139,6 +139,17 @@ interface TokenResponse {
   scope: string;
 }
 
+interface WowProfileFetchResult {
+  success: boolean;
+  profile?: WoWProfile;
+  workingRegion?: BattleNetRegion;
+  error?: {
+    status: number;
+    message: string;
+    attemptedRegions: BattleNetRegion[];
+  };
+}
+
 interface WoWCharacter {
   name: string;
   id: number;
@@ -232,6 +243,122 @@ function generateSecurePassword(): string {
     password += chars[array[i] % chars.length];
   }
   return password;
+}
+
+// ============================================================================
+// WOW PROFILE MULTI-REGION FALLBACK
+// ============================================================================
+
+/**
+ * All available Battle.net regions for fallback attempts
+ */
+const ALL_REGIONS: BattleNetRegion[] = ['eu', 'us', 'kr', 'tw'];
+
+/**
+ * Fetches WoW profile with automatic region fallback.
+ * If the preferred region fails with 403/404, tries other regions.
+ * This helps users who selected the wrong region during OAuth.
+ * 
+ * @param accessToken - Battle.net OAuth access token
+ * @param preferredRegion - The region the user originally selected
+ * @returns Result with profile data and working region, or error details
+ */
+async function fetchWowProfileWithRegionFallback(
+  accessToken: string,
+  preferredRegion: BattleNetRegion
+): Promise<WowProfileFetchResult> {
+  const attemptedRegions: BattleNetRegion[] = [];
+  
+  // Try preferred region first, then others
+  const regionsToTry = [
+    preferredRegion,
+    ...ALL_REGIONS.filter(r => r !== preferredRegion)
+  ];
+  
+  for (const region of regionsToTry) {
+    attemptedRegions.push(region);
+    
+    const apiUrl = BATTLENET_API_URLS[region];
+    const namespace = BATTLENET_NAMESPACES[region];
+    const locale = BATTLENET_LOCALES[region];
+    
+    log.info(`Trying WoW profile fetch for region: ${region.toUpperCase()}`);
+    
+    try {
+      const wowProfileResponse = await fetch(
+        `${apiUrl}/profile/user/wow?namespace=${namespace}&locale=${locale}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+          },
+        }
+      );
+      
+      if (wowProfileResponse.ok) {
+        const profile = await wowProfileResponse.json();
+        
+        // Check if profile has actual content (wow_accounts with characters)
+        if (profile.wow_accounts && profile.wow_accounts.length > 0) {
+          const hasCharacters = profile.wow_accounts.some(
+            (acc: any) => acc.characters && acc.characters.length > 0
+          );
+          
+          if (hasCharacters) {
+            log.info(`✓ Found WoW profile with characters on region: ${region.toUpperCase()}`);
+            if (region !== preferredRegion) {
+              log.info(`Auto-detected correct region: ${region.toUpperCase()} (was ${preferredRegion.toUpperCase()})`);
+            }
+            return { success: true, profile, workingRegion: region };
+          } else {
+            log.debug(`Region ${region.toUpperCase()}: wow_accounts found but no characters`);
+          }
+        } else {
+          log.debug(`Region ${region.toUpperCase()}: empty or missing wow_accounts`);
+        }
+        
+        // If this is the preferred region and it returned OK (just no chars),
+        // store the empty profile but continue trying other regions
+        if (region === preferredRegion && profile) {
+          // Continue to try other regions before giving up
+          continue;
+        }
+      } else {
+        const status = wowProfileResponse.status;
+        const errorText = await wowProfileResponse.text().catch(() => 'Unable to read body');
+        
+        log.info(
+          `Region ${region.toUpperCase()} failed: ${status} - ${errorText.slice(0, 200)}`
+        );
+        
+        // 401 = invalid token, no point trying other regions
+        if (status === 401) {
+          return {
+            success: false,
+            error: {
+              status: 401,
+              message: 'Invalid or expired Battle.net token',
+              attemptedRegions,
+            },
+          };
+        }
+        
+        // 403/404 = try next region
+        // Other errors = try next region too
+      }
+    } catch (err) {
+      log.error(`Region ${region.toUpperCase()} fetch error:`, err);
+    }
+  }
+  
+  // No region worked - return error with details
+  return {
+    success: false,
+    error: {
+      status: 403,
+      message: 'Access denied by Battle.net on all regions. Check WoW license and wow.profile scope.',
+      attemptedRegions,
+    },
+  };
 }
 
 // ============================================================================
@@ -433,7 +560,7 @@ Deno.serve(async (req) => {
       }
 
       const tokenData: TokenResponse = await tokenResponse.json();
-      log.debug('Token obtained successfully');
+      log.info(`Token obtained successfully, scope: ${tokenData.scope}`);
 
       // Get user info (BattleTag)
       const userInfoResponse = await fetch(`${BATTLENET_OAUTH_URL}/userinfo`, {
@@ -869,17 +996,30 @@ Deno.serve(async (req) => {
         .eq('user_id', user.id)
         .maybeSingle();
 
-      const region = getValidRegion(tokenInfo?.region);
-      log.info(`Resync using region from battlenet_tokens: ${region.toUpperCase()}`);
+      const preferredRegion = getValidRegion(tokenInfo?.region);
+      log.info(`Resync using preferred region: ${preferredRegion.toUpperCase()}`);
 
-      // Re-fetch characters and guilds
-      await fetchAndStoreCharacters(supabase, tokenData.access_token, user.id, region);
+      // Re-fetch characters and guilds with multi-region fallback
+      const syncResult = await fetchAndStoreCharacters(supabase, tokenData.access_token, user.id, preferredRegion);
 
-      log.info(`Resync completed for user ${sanitizePII(user.id, 'id')}`);
+      if (!syncResult.success) {
+        log.error(`Resync failed for user ${sanitizePII(user.id, 'id')}: ${syncResult.error}`);
+        return new Response(JSON.stringify({ 
+          success: false, 
+          error: syncResult.error || 'Failed to sync characters',
+          errorCode: 'SYNC_FAILED'
+        }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      log.info(`Resync completed for user ${sanitizePII(user.id, 'id')} (detected region: ${syncResult.detectedRegion?.toUpperCase()})`);
 
       return new Response(JSON.stringify({ 
         success: true, 
-        message: 'Battle.net data synchronized successfully'
+        message: 'Battle.net data synchronized successfully',
+        detectedRegion: syncResult.detectedRegion,
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -1253,42 +1393,62 @@ async function storeFullRosterForGuild(
 /**
  * Fetches WoW characters from Battle.net API and stores them in the database.
  * Also fetches guild memberships and triggers auto-join for app guilds.
+ * Uses multi-region fallback to find the correct region automatically.
  * 
  * @param supabase - Supabase client with service role key
  * @param accessToken - Battle.net OAuth access token
  * @param userId - Supabase user ID to associate characters with
- * @param region - Battle.net region (eu, us, kr, tw)
+ * @param preferredRegion - Battle.net region the user selected (will try others if this fails)
+ * @returns Object with success status, detected region, and error details if any
  */
-async function fetchAndStoreCharacters(supabase: any, accessToken: string, userId: string, region: BattleNetRegion = 'eu') {
+async function fetchAndStoreCharacters(
+  supabase: any, 
+  accessToken: string, 
+  userId: string, 
+  preferredRegion: BattleNetRegion = 'eu'
+): Promise<{ success: boolean; detectedRegion?: BattleNetRegion; error?: string }> {
   try {
+    log.info(`Starting character sync for user ${sanitizePII(userId, 'id')} (preferred region: ${preferredRegion.toUpperCase()})`);
+    
+    // Use multi-region fallback to find the correct region
+    const profileResult = await fetchWowProfileWithRegionFallback(accessToken, preferredRegion);
+    
+    if (!profileResult.success || !profileResult.profile) {
+      const errorMsg = profileResult.error?.message || 'Unknown error fetching WoW profile';
+      log.error(`WoW profile fetch failed: ${errorMsg}`, {
+        attemptedRegions: profileResult.error?.attemptedRegions,
+        status: profileResult.error?.status,
+      });
+      return { 
+        success: false, 
+        error: errorMsg 
+      };
+    }
+    
+    const wowProfile = profileResult.profile;
+    const detectedRegion = profileResult.workingRegion || preferredRegion;
+    
+    // Update battlenet_tokens with detected region if different from preferred
+    if (detectedRegion !== preferredRegion) {
+      log.info(`Updating stored region from ${preferredRegion.toUpperCase()} to ${detectedRegion.toUpperCase()}`);
+      await supabase
+        .from('battlenet_tokens')
+        .update({ region: detectedRegion })
+        .eq('user_id', userId);
+    }
+    
+    // Use the detected region for subsequent API calls
+    const region = detectedRegion;
     const apiUrl = BATTLENET_API_URLS[region];
     const namespace = BATTLENET_NAMESPACES[region];
     const locale = BATTLENET_LOCALES[region];
-    
-    log.info(`Fetching WoW profile from Battle.net API (${region.toUpperCase()})...`);
-    
-    const wowProfileResponse = await fetch(
-      `${apiUrl}/profile/user/wow?namespace=${namespace}&locale=${locale}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-        },
-      }
-    );
 
-    if (!wowProfileResponse.ok) {
-      const errorText = await wowProfileResponse.text();
-      log.error('WoW profile fetch failed:', wowProfileResponse.status, errorText);
-      return;
-    }
-
-    const wowProfile = await wowProfileResponse.json();
     log.debug('WoW Profile raw response keys:', Object.keys(wowProfile));
 
     const characters: CharacterData[] = [];
 
     if (!wowProfile.wow_accounts || wowProfile.wow_accounts.length === 0) {
-      // Enhanced diagnostic logging for empty wow_accounts
+      // This shouldn't happen if fallback worked, but log for diagnostics
       log.info(`No wow_accounts found in response for user ${sanitizePII(userId, 'id')} (region: ${region.toUpperCase()})`);
       log.info(`Response structure: ${JSON.stringify({
         hasWowAccounts: 'wow_accounts' in wowProfile,
@@ -1297,7 +1457,7 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
         hasCollections: !!wowProfile.collections,
         profileId: wowProfile.id ?? 'none',
       })}`);
-      return;
+      return { success: true, detectedRegion: region }; // Not an error, just no chars
     }
 
     log.debug(`Found ${wowProfile.wow_accounts.length} WoW account(s)`);
@@ -1335,7 +1495,7 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
 
     if (characters.length === 0) {
       log.info('No characters to save');
-      return;
+      return { success: true, detectedRegion: region };
     }
 
     // Get the current main character before deletion to preserve user's choice
@@ -1393,7 +1553,7 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
 
     if (charError) {
       log.error('Failed to insert characters:', charError);
-      return;
+      return { success: false, detectedRegion: region, error: 'Failed to insert characters' };
     }
 
     log.info(`Successfully saved ${characters.length} characters to database`);
@@ -1576,8 +1736,10 @@ async function fetchAndStoreCharacters(supabase: any, accessToken: string, userI
       await autoJoinGuilds(supabase, userId, guildMemberships, region);
     }
 
+    return { success: true, detectedRegion: region };
   } catch (error) {
     log.error('Error fetching characters:', error);
+    return { success: false, error: String(error) };
   }
 }
 
