@@ -457,9 +457,9 @@ export const RosterTable = ({
                     <TableCell className="py-2 px-2 md:px-3">
                       {isEditing ? renderEditWishCell(2, editWishes.length > 1) : renderWishCell(member.id, member.wishes, 3)}
                     </TableCell>
-                    <TableCell className="py-2 px-2 md:px-3">
+                    <TableCell className="py-1 px-1">
                       {isOwnRow && (
-                        <div className="flex gap-1.5 justify-end">
+                        <div className="flex gap-1 justify-end">
                           {isEditing ? (
                             <>
                               <CosmicButton 
