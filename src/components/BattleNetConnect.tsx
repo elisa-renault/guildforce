@@ -40,8 +40,28 @@ export const BattleNetConnect: React.FC = () => {
   const [characters, setCharacters] = useState<WoWCharacter[]>([]);
   const [isLoadingCharacters, setIsLoadingCharacters] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState<BattleNetRegion>('eu');
+  const [connectedRegion, setConnectedRegion] = useState<BattleNetRegion | null>(null);
 
   const isConnected = !!profile?.battlenet_id;
+
+  // Fetch connected region from battlenet_tokens
+  useEffect(() => {
+    const fetchConnectedRegion = async () => {
+      if (!isConnected || !profile?.id) return;
+      
+      const { data } = await supabase
+        .from('battlenet_tokens')
+        .select('region')
+        .eq('user_id', profile.id)
+        .maybeSingle();
+      
+      if (data?.region) {
+        setConnectedRegion(data.region as BattleNetRegion);
+      }
+    };
+    
+    fetchConnectedRegion();
+  }, [isConnected, profile?.id]);
 
   useEffect(() => {
     if (isConnected && session?.access_token) {
@@ -219,10 +239,17 @@ export const BattleNetConnect: React.FC = () => {
         <BattleNetIcon className="w-6 h-6 text-primary" />
         <h3 className="text-lg font-semibold text-foreground">Battle.net</h3>
         {isConnected && (
-          <Badge variant="secondary" className="ml-auto">
-            <CheckCircle className="w-3 h-3 mr-1" />
-            {profile?.battletag}
-          </Badge>
+          <div className="ml-auto flex items-center gap-2">
+            {connectedRegion && (
+              <Badge variant="outline" className="text-xs">
+                {REGION_LABELS[connectedRegion]}
+              </Badge>
+            )}
+            <Badge variant="secondary">
+              <CheckCircle className="w-3 h-3 mr-1" />
+              {profile?.battletag}
+            </Badge>
+          </div>
         )}
       </div>
 

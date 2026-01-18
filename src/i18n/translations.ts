@@ -126,6 +126,7 @@ export interface Translations {
     connecting: string;
     region: string;
     selectRegion: string;
+    connectedTo: string;
   };
   // Home page
   home: {
@@ -836,6 +837,7 @@ export const translations: Record<Language, Translations> = {
       connecting: 'Connecting with Battle.net...',
       region: 'Region',
       selectRegion: 'Select your region',
+      connectedTo: 'Connected to',
     },
     home: {
       title: 'Guildforce',
@@ -1590,6 +1592,7 @@ export const translations: Record<Language, Translations> = {
       connecting: 'Connexion avec Battle.net...',
       region: 'Région',
       selectRegion: 'Sélectionnez votre région',
+      connectedTo: 'Connecté sur',
     },
     home: {
       title: 'Guildforce',
