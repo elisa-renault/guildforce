@@ -132,6 +132,9 @@ export interface Translations {
     resync: string;
     resyncSuccess: string;
     resyncError: string;
+    errorNoLicense: string;
+    errorParentalControls: string;
+    errorTokenExpired: string;
   };
   // Home page
   home: {
@@ -849,6 +852,9 @@ export const translations: Record<Language, Translations> = {
       resync: 'Resync characters',
       resyncSuccess: 'Characters synced successfully',
       resyncError: 'Sync failed. Please try again.',
+      errorNoLicense: 'Active WoW license required. Please verify your subscription at battle.net.',
+      errorParentalControls: 'Access blocked by parental controls. Please check your Battle.net account settings.',
+      errorTokenExpired: 'Battle.net session expired. Please reconnect your account.',
     },
     home: {
       title: 'Guildforce',
@@ -1610,6 +1616,9 @@ export const translations: Record<Language, Translations> = {
       resync: 'Resynchroniser',
       resyncSuccess: 'Personnages synchronisés',
       resyncError: 'Échec de la synchronisation. Réessayez.',
+      errorNoLicense: 'Licence WoW active requise. Vérifiez votre abonnement sur battle.net.',
+      errorParentalControls: 'Accès bloqué par le contrôle parental. Vérifiez les paramètres de votre compte Battle.net.',
+      errorTokenExpired: 'Session Battle.net expirée. Veuillez reconnecter votre compte.',
     },
     home: {
       title: 'Guildforce',
