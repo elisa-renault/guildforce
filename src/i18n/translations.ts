@@ -295,6 +295,11 @@ export interface Translations {
     otherWishes: string;
     missingClasses: string;
     allClassesRepresented: string;
+    // Wish range filter
+    wishRangeFilter: string;
+    wishRange1: string;
+    wishRangeN: string;
+    allWishes: string;
   };
   // Profile
   profile: {
@@ -1001,6 +1006,11 @@ export const translations: Record<Language, Translations> = {
       otherWishes: 'Other wishes',
       missingClasses: 'Missing Classes',
       allClassesRepresented: 'All classes are represented',
+      // Wish range filter
+      wishRangeFilter: 'Consider wishes',
+      wishRange1: 'Wish 1 only',
+      wishRangeN: 'Wishes 1-{{n}}',
+      allWishes: 'All wishes',
     },
     profile: {
       title: 'My Profile',
@@ -1749,6 +1759,11 @@ export const translations: Record<Language, Translations> = {
       otherWishes: 'Autres vœux',
       missingClasses: 'Classes manquantes',
       allClassesRepresented: 'Toutes les classes sont représentées',
+      // Wish range filter
+      wishRangeFilter: 'Vœux pris en compte',
+      wishRange1: 'Vœu 1 uniquement',
+      wishRangeN: 'Vœux 1-{{n}}',
+      allWishes: 'Tous les vœux',
     },
     profile: {
       title: 'Mon profil',

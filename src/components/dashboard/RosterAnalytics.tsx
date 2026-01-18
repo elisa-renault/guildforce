@@ -1,10 +1,17 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { wowClasses, getClassById, getSpecById, Role, RangeType } from '@/data/wowClasses';
 import { MemberWish } from '@/types/guild';
 import { GlowCard } from '@/components/GlowCard';
 import { Badge } from '@/components/ui/badge';
-import { Shield, Heart, Sword, Swords, Crosshair, AlertTriangle, TrendingUp, Users } from 'lucide-react';
+import { Shield, Heart, Sword, Swords, Crosshair, AlertTriangle, TrendingUp, Users, Filter } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface RosterAnalyticsProps {
   members: MemberWish[];
@@ -36,8 +43,9 @@ interface RoleByPriority {
 
 export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   const { t, language } = useLanguage();
+  const [maxWishIndex, setMaxWishIndex] = useState<number>(13);
 
-  // Calculate class distribution
+  // Calculate class distribution based on filter
   const classStats = useMemo(() => {
     const stats: Record<string, { wish1: number; total: number }> = {};
     wowClasses.forEach(c => {
@@ -46,7 +54,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
 
     members.forEach(m => {
       m.wishes.forEach(w => {
-        if (w.class_id && stats[w.class_id]) {
+        if (w.class_id && stats[w.class_id] && w.choice_index <= maxWishIndex) {
           stats[w.class_id].total++;
           if (w.choice_index === 1) {
             stats[w.class_id].wish1++;
@@ -67,20 +75,20 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
         } as ClassStat;
       })
       .sort((a, b) => b.total - a.total);
-  }, [members, language]);
+  }, [members, language, maxWishIndex]);
 
   // Calculate max for bar scaling
   const maxClassTotal = useMemo(() => {
     return Math.max(...classStats.map(s => s.total), 1);
   }, [classStats]);
 
-  // Calculate spec distribution (top 10)
+  // Calculate spec distribution (top 10) based on filter
   const specStats = useMemo(() => {
     const stats: Record<string, number> = {};
 
     members.forEach(m => {
       m.wishes.forEach(w => {
-        if (w.spec_ids?.length) {
+        if (w.spec_ids?.length && w.choice_index <= maxWishIndex) {
           w.spec_ids.forEach(specId => {
             stats[specId] = (stats[specId] || 0) + 1;
           });
@@ -104,9 +112,9 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
       })
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
-  }, [members, language]);
+  }, [members, language, maxWishIndex]);
 
-  // Calculate roles by priority
+  // Calculate roles by priority based on filter
   const rolesByPriority = useMemo(() => {
     const stats: Record<Role, { wish1: number; other: number }> = {
       tank: { wish1: 0, other: 0 },
@@ -116,7 +124,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
 
     members.forEach(m => {
       m.wishes.forEach(w => {
-        if (w.spec_ids?.length) {
+        if (w.spec_ids?.length && w.choice_index <= maxWishIndex) {
           w.spec_ids.forEach(specId => {
             const spec = getSpecById(specId);
             if (spec) {
@@ -136,15 +144,15 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
       { role: 'healer' as Role, ...stats.healer },
       { role: 'dps' as Role, ...stats.dps },
     ] as RoleByPriority[];
-  }, [members]);
+  }, [members, maxWishIndex]);
 
-  // Calculate range distribution
+  // Calculate range distribution based on filter (using wish 1 within the filtered range)
   const rangeStats = useMemo(() => {
     const stats = { melee: 0, ranged: 0 };
 
     members.forEach(m => {
       const wish1 = m.wishes.find(w => w.choice_index === 1);
-      if (wish1?.spec_ids?.length) {
+      if (wish1?.spec_ids?.length && wish1.choice_index <= maxWishIndex) {
         const spec = getSpecById(wish1.spec_ids[0]);
         if (spec) {
           stats[spec.range]++;
@@ -153,7 +161,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     });
 
     return stats;
-  }, [members]);
+  }, [members, maxWishIndex]);
 
   // Missing classes (no one has this class as their primary wish)
   const missingClasses = useMemo(() => {
@@ -187,8 +195,37 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     }
   };
 
+  // Generate legend text for "other wishes"
+  const getOtherWishesLabel = () => {
+    if (maxWishIndex === 1) return null;
+    if (maxWishIndex === 13) return t.dashboard.otherWishes;
+    return t.dashboard.wishRangeN.replace('{{n}}', String(maxWishIndex)).replace('1-', '2-');
+  };
+
   return (
     <div className="space-y-6">
+      {/* Wish range filter */}
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Filter className="h-4 w-4" />
+          <span>{t.dashboard.wishRangeFilter}</span>
+        </div>
+        <Select value={String(maxWishIndex)} onValueChange={(v) => setMaxWishIndex(Number(v))}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="1">{t.dashboard.wishRange1}</SelectItem>
+            {[2, 3, 4, 5, 6].map(n => (
+              <SelectItem key={n} value={String(n)}>
+                {t.dashboard.wishRangeN.replace('{{n}}', String(n))}
+              </SelectItem>
+            ))}
+            <SelectItem value="13">{t.dashboard.allWishes}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       {/* Summary stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <GlowCard className="p-4">
@@ -249,10 +286,12 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                 </div>
                 <div className="flex-1 h-5 bg-muted/30 rounded-full overflow-hidden relative">
                   {/* Total bar (semi-transparent) */}
-                  <div
-                    className={`absolute inset-y-0 left-0 bg-${stat.color}/30 transition-all duration-300`}
-                    style={{ width: `${(stat.total / maxClassTotal) * 100}%` }}
-                  />
+                  {maxWishIndex > 1 && (
+                    <div
+                      className={`absolute inset-y-0 left-0 bg-${stat.color}/30 transition-all duration-300`}
+                      style={{ width: `${(stat.total / maxClassTotal) * 100}%` }}
+                    />
+                  )}
                   {/* Wish 1 bar (opaque) */}
                   <div
                     className={`absolute inset-y-0 left-0 bg-${stat.color} transition-all duration-300`}
@@ -260,21 +299,23 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                   />
                 </div>
                 <div className="w-14 text-right text-sm text-muted-foreground tabular-nums">
-                  {stat.wish1} / {stat.total}
+                  {maxWishIndex === 1 ? stat.wish1 : `${stat.wish1} / ${stat.total}`}
                 </div>
               </div>
             ))}
           </div>
-          <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded bg-primary" />
-              {t.dashboard.wish1}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded bg-primary/30" />
-              {t.dashboard.otherWishes}
-            </span>
-          </div>
+          {maxWishIndex > 1 && (
+            <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded bg-primary" />
+                {t.dashboard.wish1}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded bg-primary/30" />
+                {getOtherWishesLabel()}
+              </span>
+            </div>
+          )}
         </GlowCard>
 
         {/* Top Specs */}
@@ -312,7 +353,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                     <span className="text-sm font-medium">{getRoleName(stat.role)}</span>
                   </div>
                   <span className="text-sm text-muted-foreground">
-                    {stat.wish1} + {stat.other}
+                    {maxWishIndex === 1 ? stat.wish1 : `${stat.wish1} + ${stat.other}`}
                   </span>
                 </div>
                 <div className="flex h-2 rounded-full overflow-hidden bg-muted/30">
@@ -320,24 +361,28 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                     className="bg-primary transition-all duration-300"
                     style={{ width: `${(stat.wish1 / (stat.wish1 + stat.other || 1)) * 100}%` }}
                   />
-                  <div
-                    className="bg-primary/40 transition-all duration-300"
-                    style={{ width: `${(stat.other / (stat.wish1 + stat.other || 1)) * 100}%` }}
-                  />
+                  {maxWishIndex > 1 && (
+                    <div
+                      className="bg-primary/40 transition-all duration-300"
+                      style={{ width: `${(stat.other / (stat.wish1 + stat.other || 1)) * 100}%` }}
+                    />
+                  )}
                 </div>
               </div>
             ))}
           </div>
-          <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded bg-primary" />
-              {t.dashboard.wish1}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded bg-primary/40" />
-              {t.dashboard.otherWishes}
-            </span>
-          </div>
+          {maxWishIndex > 1 && (
+            <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded bg-primary" />
+                {t.dashboard.wish1}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded bg-primary/40" />
+                {getOtherWishesLabel()}
+              </span>
+            </div>
+          )}
         </GlowCard>
 
         {/* Missing Classes */}
