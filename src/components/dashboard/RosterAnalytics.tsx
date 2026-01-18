@@ -198,12 +198,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     }
   };
 
-  // Generate legend text for "other wishes"
-  const getOtherWishesLabel = () => {
-    if (maxWishIndex === 1) return null;
-    if (maxWishIndex === 13) return t.dashboard.otherWishes;
-    return language === 'fr' ? `Vœux 2-${maxWishIndex}` : `Wishes 2-${maxWishIndex}`;
-  };
+  // Generate wish range label for selector
 
   // Generate wish range label for selector
   const getWishRangeLabel = (n: number) => {
@@ -295,17 +290,9 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                   {stat.name}
                 </div>
                 <div className="flex-1 h-5 bg-muted/30 rounded-full overflow-hidden relative">
-                  {/* Total bar (semi-transparent) */}
-                  {maxWishIndex > 1 && (
-                    <div
-                      className={`absolute inset-y-0 left-0 bg-${stat.color}/30 transition-all duration-300`}
-                      style={{ width: `${(stat.total / maxClassTotal) * 100}%` }}
-                    />
-                  )}
-                  {/* Wish 1 bar (opaque) */}
                   <div
                     className={`absolute inset-y-0 left-0 bg-${stat.color} transition-all duration-300`}
-                    style={{ width: `${(stat.wish1 / maxClassTotal) * 100}%` }}
+                    style={{ width: `${(stat.total / maxClassTotal) * 100}%` }}
                   />
                 </div>
                 <div className="w-10 text-right text-sm text-muted-foreground tabular-nums">
@@ -314,18 +301,6 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
               </div>
             ))}
           </div>
-          {maxWishIndex > 1 && (
-            <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded bg-primary" />
-                {t.dashboard.wish1}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded bg-primary/30" />
-                {getOtherWishesLabel()}
-              </span>
-            </div>
-          )}
         </GlowCard>
 
         {/* Top Specs */}
@@ -369,30 +344,12 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                 <div className="flex h-2 rounded-full overflow-hidden bg-muted/30">
                   <div
                     className="bg-primary transition-all duration-300"
-                    style={{ width: `${(stat.wish1 / (stat.wish1 + stat.other || 1)) * 100}%` }}
+                    style={{ width: '100%' }}
                   />
-                  {maxWishIndex > 1 && (
-                    <div
-                      className="bg-primary/40 transition-all duration-300"
-                      style={{ width: `${(stat.other / (stat.wish1 + stat.other || 1)) * 100}%` }}
-                    />
-                  )}
                 </div>
               </div>
             ))}
           </div>
-          {maxWishIndex > 1 && (
-            <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded bg-primary" />
-                {t.dashboard.wish1}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded bg-primary/40" />
-                {getOtherWishesLabel()}
-              </span>
-            </div>
-          )}
         </GlowCard>
 
         {/* Missing Classes */}
