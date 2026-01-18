@@ -9,6 +9,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { GlobalNav } from "@/components/GlobalNav";
 import { Footer } from "@/components/Footer";
 import { StickyBottomBar } from "@/components/StickyBottomBar";
+import { LoadingScreen } from "@/components/ui/loading-screen";
 import "@/lib/logCapture";
 import { appRoutes } from "./routes";
 
@@ -24,7 +25,7 @@ const App = () => (
             <BrowserRouter>
               <GlobalNav />
               <div className="flex-1 flex flex-col relative z-10 pb-4 md:pb-0">
-                <Suspense fallback={null}>
+                <Suspense fallback={<LoadingScreen message="Chargement..." />}>
                   <Routes>
                     {appRoutes.map((route) => (
                       <Route key={route.path} path={route.path} element={route.element} />
