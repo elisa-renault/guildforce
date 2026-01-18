@@ -9,12 +9,13 @@ import { getClassById, getSpecById, getRolesFromSpecs, Role, wowClasses } from '
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
 import { GuildSubNav } from '@/components/guild';
-import { StatsCards, RosterFilters, RosterTable } from '@/components/dashboard';
+import { StatsCards, RosterFilters, RosterTable, RosterAnalytics } from '@/components/dashboard';
 import { RosterSelector, RosterEditDialog } from '@/components/roster';
 import { MemberWish, WishData, RoleStats, RangeStats, RosterFilters as RosterFiltersType, ValidationStatus } from '@/types/guild';
-import { Loader2, Sparkles, Settings } from 'lucide-react';
+import { Loader2, Sparkles, Settings, TableIcon, BarChart3 } from 'lucide-react';
 import { toSlug, getGuildWishesPath } from '@/lib/guildSlug';
 import { CommitmentStatus } from '@/components/CommitmentToggle';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Max wishes = number of WoW classes
 const MAX_WISHES = wowClasses.length;
@@ -647,40 +648,59 @@ const RosterWishes = () => {
           </div>
         )}
 
-        <StatsCards
-          totalPlayers={totalPlayers}
-          confirmedPlayers={confirmedPlayers}
-          roleStats={roleStats}
-          rangeStats={rangeStats}
-        />
+        <Tabs defaultValue="table" className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="table" className="gap-2">
+              <TableIcon className="h-4 w-4" />
+              {t.dashboard.table}
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="gap-2">
+              <BarChart3 className="h-4 w-4" />
+              {t.dashboard.analytics}
+            </TabsTrigger>
+          </TabsList>
 
-        <RosterFilters
-          filters={filters}
-          onFiltersChange={setFilters}
-        />
+          <TabsContent value="table" className="space-y-4">
+            <StatsCards
+              totalPlayers={totalPlayers}
+              confirmedPlayers={confirmedPlayers}
+              roleStats={roleStats}
+              rangeStats={rangeStats}
+            />
 
-        <RosterTable
-          members={filteredMembers}
-          currentUserId={user?.id}
-          selectedRosterId={selectedRosterId}
-          expandedRows={expandedRows}
-          editingUserId={editingUserId}
-          editWishes={editWishes}
-          editStatus={editStatus}
-          saving={saving}
-          maxWishes={MAX_WISHES}
-          isGM={canManageWishes}
-          onToggleRow={toggleRow}
-          onStartEditing={startEditing}
-          onCancelEditing={cancelEditing}
-          onUpdateEditWish={updateEditWish}
-          onEditStatusChange={setEditStatus}
-          onSaveEditing={saveEditing}
-          onAddWish={addWish}
-          onRemoveWish={removeWish}
-          onClearWish={clearWish}
-          onValidateWish={validateWish}
-        />
+            <RosterFilters
+              filters={filters}
+              onFiltersChange={setFilters}
+            />
+
+            <RosterTable
+              members={filteredMembers}
+              currentUserId={user?.id}
+              selectedRosterId={selectedRosterId}
+              expandedRows={expandedRows}
+              editingUserId={editingUserId}
+              editWishes={editWishes}
+              editStatus={editStatus}
+              saving={saving}
+              maxWishes={MAX_WISHES}
+              isGM={canManageWishes}
+              onToggleRow={toggleRow}
+              onStartEditing={startEditing}
+              onCancelEditing={cancelEditing}
+              onUpdateEditWish={updateEditWish}
+              onEditStatusChange={setEditStatus}
+              onSaveEditing={saveEditing}
+              onAddWish={addWish}
+              onRemoveWish={removeWish}
+              onClearWish={clearWish}
+              onValidateWish={validateWish}
+            />
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <RosterAnalytics members={members} />
+          </TabsContent>
+        </Tabs>
       </main>
 
       {/* Roster Settings Dialog */}
