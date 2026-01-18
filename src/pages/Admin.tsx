@@ -234,7 +234,7 @@ export default function Admin() {
           </div>
 
           {/* Section content */}
-          <div className="p-4 md:p-6 md:max-w-5xl">
+          <div className="w-full p-4 md:p-6 md:max-w-6xl lg:max-w-7xl">
             {renderSectionContent()}
           </div>
         </main>
