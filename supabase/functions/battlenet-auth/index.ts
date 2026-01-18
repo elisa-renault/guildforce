@@ -589,13 +589,14 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Store Battle.net token in separate secure table
+      // Store Battle.net token in separate secure table (with region for diagnostics)
       const { error: tokenError } = await supabase
         .from('battlenet_tokens')
         .upsert({
           user_id: userId,
           access_token: tokenData.access_token,
           expires_at: expiresAt,
+          region: region,
         }, { onConflict: 'user_id' });
 
       if (tokenError) {
@@ -749,13 +750,14 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Store Battle.net token in separate secure table
+      // Store Battle.net token in separate secure table (with region for diagnostics)
       const { error: tokenError } = await supabase
         .from('battlenet_tokens')
         .upsert({
           user_id: user.id,
           access_token: tokenData.access_token,
           expires_at: expiresAt,
+          region: region,
         }, { onConflict: 'user_id' });
 
       if (tokenError) {
