@@ -8,7 +8,7 @@ import { GlowCard } from './GlowCard';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { CheckCircle, Loader2, RefreshCw, Unlink } from 'lucide-react';
+import { CheckCircle, Loader2, RefreshCw, RotateCcw, Unlink } from 'lucide-react';
 import { toast } from 'sonner';
 import { getClassNameFromBattleNet } from '@/data/battlenetClasses';
 import { BattleNetIcon } from './BattleNetIcon';
@@ -37,6 +37,7 @@ export const BattleNetConnect: React.FC = () => {
   const { profile, session, refreshProfile } = useAuth();
   const { t } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
+  const [isResyncing, setIsResyncing] = useState(false);
   const [characters, setCharacters] = useState<WoWCharacter[]>([]);
   const [isLoadingCharacters, setIsLoadingCharacters] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState<BattleNetRegion>('eu');
@@ -229,6 +230,27 @@ export const BattleNetConnect: React.FC = () => {
     }
   };
 
+  const handleResync = async () => {
+    if (!session?.access_token) return;
+
+    setIsResyncing(true);
+    try {
+      const { error } = await supabase.functions.invoke('battlenet-auth/resync', {
+        method: 'POST',
+      });
+
+      if (error) throw error;
+
+      toast.success(t.battlenet.resyncSuccess);
+      await Promise.all([fetchCharacters(), refreshProfile()]);
+    } catch (error) {
+      log.error('Error resyncing characters:', error);
+      toast.error(t.battlenet.resyncError);
+    } finally {
+      setIsResyncing(false);
+    }
+  };
+
   const getClassName = (classId: number) => {
     return getClassNameFromBattleNet(classId);
   };
@@ -340,12 +362,17 @@ export const BattleNetConnect: React.FC = () => {
               </div>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              {t.battlenet.noCharacters}
-            </p>
+            <div className="text-center py-4 space-y-2">
+              <p className="text-sm text-muted-foreground">
+                {t.battlenet.noCharacters}
+              </p>
+              <p className="text-xs text-muted-foreground/80">
+                {t.battlenet.noCharactersHint}
+              </p>
+            </div>
           )}
 
-          <div className="flex gap-2 pt-2 border-t border-border/50">
+          <div className="flex justify-between items-center pt-2 border-t border-border/50">
             <button
               onClick={handleDisconnect}
               disabled={isLoading}
@@ -353,6 +380,18 @@ export const BattleNetConnect: React.FC = () => {
             >
               <Unlink className="w-3 h-3" />
               {t.battlenet.disconnect}
+            </button>
+            <button
+              onClick={handleResync}
+              disabled={isResyncing}
+              className="text-sm text-primary hover:underline flex items-center gap-1"
+            >
+              {isResyncing ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <RotateCcw className="w-3 h-3" />
+              )}
+              {t.battlenet.resync}
             </button>
           </div>
         </div>
