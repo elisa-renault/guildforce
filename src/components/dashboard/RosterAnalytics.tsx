@@ -33,8 +33,8 @@ const classColorMap: Record<string, string> = {
 // Role color mapping for distinctive visualization
 const roleColorMap: Record<Role, string> = {
   tank: 'hsl(210, 70%, 50%)',    // Blue
-  healer: 'hsl(330, 70%, 55%)',  // Pink/Magenta
-  dps: 'hsl(25, 90%, 55%)',      // Orange
+  healer: 'hsl(142, 70%, 45%)',  // Green
+  dps: 'hsl(0, 70%, 55%)',       // Red
 };
 
 interface RosterAnalyticsProps {
