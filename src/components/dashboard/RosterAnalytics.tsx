@@ -421,11 +421,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
         <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-6">
           {/* Range Pie - 1 column */}
           <GlowCard className="p-3">
-            <h4 className="text-sm font-semibold mb-2 flex items-center gap-1">
-              <Swords className="h-3.5 w-3.5 text-blue-500" />
-              <span className="text-muted-foreground">/</span>
-              <Crosshair className="h-3.5 w-3.5 text-purple-500" />
-            </h4>
+            <h4 className="text-sm font-semibold mb-2">{t.dashboard.range}</h4>
             {totalRange > 0 ? (
               <div className="flex flex-col items-center gap-2">
                 <div className="w-24 h-24">
