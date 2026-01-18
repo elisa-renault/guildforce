@@ -418,17 +418,17 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
           </div>
         </div>
 
-        {/* Main Grid: 3 columns on desktop */}
-        <div className="grid gap-3 lg:grid-cols-3">
+        {/* Main Grid: 4 columns on desktop */}
+        <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
           {/* Class Distribution - 2 columns */}
-          <GlowCard className="lg:col-span-2 p-3">
+          <GlowCard className="md:col-span-2 p-3">
             <h3 className="text-sm font-semibold mb-2">{t.dashboard.classDistribution}</h3>
             <div className="columns-1 sm:columns-2 gap-x-4 space-y-1">
               {representedClasses.map((stat) => (
                 <UITooltip key={stat.id} delayDuration={100}>
                   <TooltipTrigger asChild>
                     <div 
-                      className="flex items-center gap-2 cursor-pointer group"
+                      className="flex items-center gap-2 cursor-pointer group break-inside-avoid"
                       onMouseEnter={() => setHoveredClass(stat.id)}
                       onMouseLeave={() => setHoveredClass(null)}
                     >
@@ -502,103 +502,98 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
               <p className="text-xs text-muted-foreground">{t.dashboard.noData}</p>
             )}
           </GlowCard>
+
+          {/* Roles Pie - 1 column */}
+          <GlowCard className="p-3">
+            <h4 className="text-sm font-semibold mb-2 text-center">{t.dashboard.rolesByPriority}</h4>
+            {totalRoles > 0 ? (
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-20 h-20">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={rolePieData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={18}
+                        outerRadius={38}
+                        dataKey="value"
+                        stroke="none"
+                      >
+                        {rolePieData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  {rolePieData.map(stat => (
+                    <div key={stat.role} className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: stat.color }} />
+                      <span style={{ color: stat.color }}>{getRoleIcon(stat.role, "h-3 w-3")}</span>
+                      <span className="text-xs">{stat.name}</span>
+                      <span className="text-xs text-muted-foreground ml-auto tabular-nums">
+                        {stat.value} ({Math.round((stat.value / totalRoles) * 100)}%)
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground text-center">{t.dashboard.noData}</p>
+            )}
+          </GlowCard>
         </div>
 
-        {/* Pie Charts - Side by side in one card */}
+        {/* Range Pie - Separate compact card */}
         <GlowCard className="p-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Roles Pie */}
-            <div>
-              <h4 className="text-sm font-semibold mb-2 text-center">{t.dashboard.rolesByPriority}</h4>
-              {totalRoles > 0 ? (
-                <div className="flex items-center justify-center gap-3">
-                  <div className="w-20 h-20">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={rolePieData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={18}
-                          outerRadius={38}
-                          dataKey="value"
-                          stroke="none"
-                        >
-                          {rolePieData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                      </PieChart>
-                    </ResponsiveContainer>
+          <h4 className="text-sm font-semibold mb-2 flex items-center gap-1">
+            <Swords className="h-3.5 w-3.5 text-blue-500" />
+            <span className="text-muted-foreground">/</span>
+            <Crosshair className="h-3.5 w-3.5 text-purple-500" />
+          </h4>
+          {totalRange > 0 ? (
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={rangePieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={14}
+                      outerRadius={30}
+                      dataKey="value"
+                      stroke="none"
+                    >
+                      {rangePieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="flex gap-4">
+                {rangePieData.map(stat => (
+                  <div key={stat.key} className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: stat.color }} />
+                    {stat.key === 'melee' ? (
+                      <Swords className="h-3 w-3" style={{ color: stat.color }} />
+                    ) : (
+                      <Crosshair className="h-3 w-3" style={{ color: stat.color }} />
+                    )}
+                    <span className="text-xs">{stat.name}</span>
+                    <span className="text-xs text-muted-foreground tabular-nums">
+                      {stat.value} ({Math.round((stat.value / totalRange) * 100)}%)
+                    </span>
                   </div>
-                  <div className="flex flex-col gap-0.5">
-                    {rolePieData.map(stat => (
-                      <div key={stat.role} className="flex items-center gap-1.5">
-                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: stat.color }} />
-                        <span style={{ color: stat.color }}>{getRoleIcon(stat.role, "h-3 w-3")}</span>
-                        <span className="text-xs">{stat.name}</span>
-                        <span className="text-xs text-muted-foreground ml-auto tabular-nums">
-                          {stat.value}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <p className="text-xs text-muted-foreground text-center">{t.dashboard.noData}</p>
-              )}
+                ))}
+              </div>
             </div>
-
-            {/* Range Pie */}
-            <div>
-              <h4 className="text-sm font-semibold mb-2 text-center flex items-center justify-center gap-1">
-                <Swords className="h-3.5 w-3.5 text-blue-500" />
-                <span className="text-muted-foreground">/</span>
-                <Crosshair className="h-3.5 w-3.5 text-purple-500" />
-              </h4>
-              {totalRange > 0 ? (
-                <div className="flex items-center justify-center gap-3">
-                  <div className="w-20 h-20">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={rangePieData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={18}
-                          outerRadius={38}
-                          dataKey="value"
-                          stroke="none"
-                        >
-                          {rangePieData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="flex flex-col gap-0.5">
-                    {rangePieData.map(stat => (
-                      <div key={stat.key} className="flex items-center gap-1.5">
-                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: stat.color }} />
-                        {stat.key === 'melee' ? (
-                          <Swords className="h-3 w-3" style={{ color: stat.color }} />
-                        ) : (
-                          <Crosshair className="h-3 w-3" style={{ color: stat.color }} />
-                        )}
-                        <span className="text-xs">{stat.name}</span>
-                        <span className="text-xs text-muted-foreground ml-auto tabular-nums">
-                          {stat.value} ({Math.round((stat.value / totalRange) * 100)}%)
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <p className="text-xs text-muted-foreground text-center">{t.dashboard.noData}</p>
-              )}
-            </div>
-          </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">{t.dashboard.noData}</p>
+          )}
         </GlowCard>
 
         {/* Missing/All Classes Alert - Compact */}
