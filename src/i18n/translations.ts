@@ -120,6 +120,7 @@ export interface Translations {
     connectDescription: string;
     yourCharacters: string;
     noCharacters: string;
+    noCharactersHint: string;
     main: string;
     mainSet: string;
     refresh: string;
@@ -127,6 +128,9 @@ export interface Translations {
     region: string;
     selectRegion: string;
     connectedTo: string;
+    resync: string;
+    resyncSuccess: string;
+    resyncError: string;
   };
   // Home page
   home: {
@@ -831,6 +835,7 @@ export const translations: Record<Language, Translations> = {
       connectDescription: 'Connect your Battle.net account to automatically import your WoW characters.',
       yourCharacters: 'Your characters',
       noCharacters: 'No characters found',
+      noCharactersHint: 'Check that your WoW license is active and that you selected the correct region. If the issue persists, try reconnecting your Battle.net account.',
       main: 'Main',
       mainSet: 'Main character set',
       refresh: 'Refresh',
@@ -838,6 +843,9 @@ export const translations: Record<Language, Translations> = {
       region: 'Region',
       selectRegion: 'Select your region',
       connectedTo: 'Connected to',
+      resync: 'Resync characters',
+      resyncSuccess: 'Characters synced successfully',
+      resyncError: 'Sync failed. Please try again.',
     },
     home: {
       title: 'Guildforce',
@@ -1586,6 +1594,7 @@ export const translations: Record<Language, Translations> = {
       connectDescription: 'Connectez votre compte Battle.net pour importer automatiquement vos personnages WoW.',
       yourCharacters: 'Vos personnages',
       noCharacters: 'Aucun personnage trouvé',
+      noCharactersHint: 'Vérifiez que votre licence WoW est active et que vous avez sélectionné la bonne région. Si le problème persiste, essayez de reconnecter votre compte Battle.net.',
       main: 'Principal',
       mainSet: 'Personnage principal défini',
       refresh: 'Actualiser',
@@ -1593,6 +1602,9 @@ export const translations: Record<Language, Translations> = {
       region: 'Région',
       selectRegion: 'Sélectionnez votre région',
       connectedTo: 'Connecté sur',
+      resync: 'Resynchroniser',
+      resyncSuccess: 'Personnages synchronisés',
+      resyncError: 'Échec de la synchronisation. Réessayez.',
     },
     home: {
       title: 'Guildforce',
