@@ -284,6 +284,17 @@ export interface Translations {
     wishesCount: string;
     additionalWishes: string;
     addWish: string;
+    // Analytics tabs and sections
+    table: string;
+    analytics: string;
+    classDistribution: string;
+    specDistribution: string;
+    topSpecs: string;
+    rolesByPriority: string;
+    wish1: string;
+    otherWishes: string;
+    missingClasses: string;
+    allClassesRepresented: string;
   };
   // Profile
   profile: {
@@ -979,6 +990,17 @@ export const translations: Record<Language, Translations> = {
       wishesCount: 'Wishes',
       additionalWishes: 'Additional wishes',
       addWish: 'Add a wish',
+      // Analytics tabs and sections
+      table: 'Table',
+      analytics: 'Analytics',
+      classDistribution: 'Class Distribution',
+      specDistribution: 'Spec Distribution',
+      topSpecs: 'Top Specializations',
+      rolesByPriority: 'Roles by Priority',
+      wish1: 'Wish 1',
+      otherWishes: 'Other wishes',
+      missingClasses: 'Missing Classes',
+      allClassesRepresented: 'All classes are represented',
     },
     profile: {
       title: 'My Profile',
@@ -1716,6 +1738,17 @@ export const translations: Record<Language, Translations> = {
       wishesCount: 'Vœux',
       additionalWishes: 'Vœux supplémentaires',
       addWish: 'Ajouter un vœu',
+      // Analytics tabs and sections
+      table: 'Table',
+      analytics: 'Analytique',
+      classDistribution: 'Distribution des classes',
+      specDistribution: 'Distribution des specs',
+      topSpecs: 'Top spécialisations',
+      rolesByPriority: 'Rôles par priorité',
+      wish1: 'Vœu 1',
+      otherWishes: 'Autres vœux',
+      missingClasses: 'Classes manquantes',
+      allClassesRepresented: 'Toutes les classes sont représentées',
     },
     profile: {
       title: 'Mon profil',
