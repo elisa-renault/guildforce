@@ -9,7 +9,6 @@ import { getRecentLogs } from './logCapture';
 const isDev = import.meta.env.DEV;
 
 // Original console methods (saved before logCapture patches them)
-const originalConsoleLog = console.log.bind(console);
 const originalConsoleInfo = console.info.bind(console);
 const originalConsoleWarn = console.warn.bind(console);
 const originalConsoleError = console.error.bind(console);
