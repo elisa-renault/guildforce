@@ -261,6 +261,7 @@ export interface Translations {
     thirdChoice: string;
     addWish: string;
     removeWish: string;
+    noRosterSelected: string;
     commitment: {
       title: string;
       confirmed: string;
@@ -1014,6 +1015,7 @@ export const translations: Record<Language, Translations> = {
       thirdChoice: 'Third choice',
       addWish: 'Add a wish',
       removeWish: 'Remove',
+      noRosterSelected: 'No roster selected. Please select a roster first.',
       commitment: {
         title: 'Mythic raid commitment',
         confirmed: 'Confirmed',
@@ -1807,6 +1809,7 @@ export const translations: Record<Language, Translations> = {
       thirdChoice: 'Troisième choix',
       addWish: 'Ajouter un vœu',
       removeWish: 'Supprimer',
+      noRosterSelected: 'Aucun roster sélectionné. Veuillez d\'abord sélectionner un roster.',
       commitment: {
         title: 'Engagement pour le raid mythique',
         confirmed: 'Confirmé',
