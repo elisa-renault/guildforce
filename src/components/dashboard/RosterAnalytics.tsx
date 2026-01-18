@@ -419,8 +419,8 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
 
         {/* Main Grid: 4 columns on desktop */}
         <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-          {/* Class Distribution - 2 columns */}
-          <GlowCard className="md:col-span-2 p-3">
+          {/* Class Distribution - 1 column */}
+          <GlowCard className="p-3">
             <h3 className="text-sm font-semibold mb-2">{t.dashboard.classDistribution}</h3>
             <div className="columns-1 sm:columns-2 gap-x-4 space-y-1">
               {representedClasses.map((stat) => (
