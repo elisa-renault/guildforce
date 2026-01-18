@@ -202,7 +202,14 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   const getOtherWishesLabel = () => {
     if (maxWishIndex === 1) return null;
     if (maxWishIndex === 13) return t.dashboard.otherWishes;
-    return t.dashboard.wishRangeN.replace('{{n}}', String(maxWishIndex)).replace('1-', '2-');
+    return language === 'fr' ? `Vœux 2-${maxWishIndex}` : `Wishes 2-${maxWishIndex}`;
+  };
+
+  // Generate wish range label for selector
+  const getWishRangeLabel = (n: number) => {
+    if (n === 1) return t.dashboard.wishRange1;
+    if (n === 13) return t.dashboard.allWishes;
+    return language === 'fr' ? `Vœux 1-${n}` : `Wishes 1-${n}`;
   };
 
   return (
@@ -215,16 +222,16 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
         </div>
         <Select value={String(maxWishIndex)} onValueChange={(v) => setMaxWishIndex(Number(v))}>
           <SelectTrigger className="w-[180px]">
-            <SelectValue />
+            <SelectValue>{getWishRangeLabel(maxWishIndex)}</SelectValue>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="1">{t.dashboard.wishRange1}</SelectItem>
+            <SelectItem value="1">{getWishRangeLabel(1)}</SelectItem>
             {[2, 3, 4, 5, 6].map(n => (
               <SelectItem key={n} value={String(n)}>
-                {t.dashboard.wishRangeN.replace('{{n}}', String(n))}
+                {getWishRangeLabel(n)}
               </SelectItem>
             ))}
-            <SelectItem value="13">{t.dashboard.allWishes}</SelectItem>
+            <SelectItem value="13">{getWishRangeLabel(13)}</SelectItem>
           </SelectContent>
         </Select>
       </div>
