@@ -635,9 +635,12 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
                   <Separator />
                   <button
                     onClick={() => {
-                      updateFilter('roleFilters', []);
-                      updateFilter('rangeFilters', []);
-                      updateFilter('classFilters', []);
+                      onFiltersChange({
+                        ...filters,
+                        roleFilters: [],
+                        rangeFilters: [],
+                        classFilters: [],
+                      });
                     }}
                     className="flex items-center gap-2 px-2 py-1.5 rounded text-sm text-muted-foreground hover:text-foreground hover:bg-primary/10 w-full"
                   >
