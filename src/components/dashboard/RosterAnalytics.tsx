@@ -161,7 +161,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     return Math.max(...classStats.map(s => s.total), 1);
   }, [classStats]);
 
-  // Calculate spec distribution (top 8) based on filter
+  // Calculate spec distribution (all specs) based on filter
   const specStats = useMemo(() => {
     const stats: Record<string, number> = {};
 
@@ -193,8 +193,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
         } as SpecStat;
       })
       .filter(s => s.count > 0)
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 8);
+      .sort((a, b) => b.count - a.count);
 
     const maxCount = sorted.length > 0 ? sorted[0].count : 1;
     return sorted.map(s => ({ ...s, maxCount }));
@@ -475,11 +474,11 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
             </div>
           </GlowCard>
 
-          {/* Top Specs - 1 column */}
+          {/* Spec Popularity - 1 column */}
           <GlowCard className="p-3">
             <h3 className="text-sm font-semibold mb-2">{t.dashboard.topSpecs}</h3>
             {specStats.length > 0 ? (
-              <div className="space-y-1">
+              <div className="max-h-[200px] overflow-y-auto pr-1 space-y-1">
                 {specStats.map((stat, index) => (
                   <div key={stat.id} className="flex items-center gap-1.5 group">
                     <div className="w-4 flex justify-center">
