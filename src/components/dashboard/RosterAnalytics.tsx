@@ -4,8 +4,8 @@ import { wowClasses, getClassById, getSpecById, Role, RangeType } from '@/data/w
 import { MemberWish } from '@/types/guild';
 import { GlowCard } from '@/components/GlowCard';
 import { Badge } from '@/components/ui/badge';
-import { Shield, Heart, Sword, Swords, Crosshair, AlertTriangle, TrendingUp, Users, Filter, Medal, Award, Trophy } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { Shield, Heart, Sword, Swords, Crosshair, AlertTriangle, Users, Filter, Medal, Award, Trophy, CheckCircle2 } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import {
   Select,
   SelectContent,
@@ -39,15 +39,15 @@ const classColorMap: Record<string, string> = {
 
 // Role color mapping for distinctive visualization
 const roleColorMap: Record<Role, string> = {
-  tank: 'hsl(210, 70%, 50%)',    // Blue
-  healer: 'hsl(142, 70%, 45%)',  // Green
-  dps: 'hsl(0, 70%, 55%)',       // Red
+  tank: 'hsl(210, 70%, 50%)',
+  healer: 'hsl(142, 70%, 45%)',
+  dps: 'hsl(0, 70%, 55%)',
 };
 
 // Range color mapping
 const rangeColorMap: Record<RangeType, string> = {
-  melee: 'hsl(210, 70%, 55%)',   // Blue
-  ranged: 'hsl(280, 70%, 55%)',  // Purple
+  melee: 'hsl(210, 70%, 55%)',
+  ranged: 'hsl(280, 70%, 55%)',
 };
 
 interface RosterAnalyticsProps {
@@ -95,7 +95,6 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   // Pre-filter members based on commitment and exclude those with 0 wishes
   const filteredMembers = useMemo(() => {
     let filtered = members.filter(m => {
-      // Exclude members with no wishes
       const hasWishes = m.wishes && m.wishes.length > 0 && m.wishes.some(w => w.class_id);
       if (!hasWishes) return false;
       return true;
@@ -127,7 +126,6 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     filteredMembers.forEach(m => {
       m.wishes.forEach(w => {
         if (w.class_id && stats[w.class_id] && w.choice_index <= maxWishIndex) {
-          // Check if any spec in this wish matches the role/range filters
           const hasMatchingSpec = !w.spec_ids?.length || 
             (roleFilter === 'all' && rangeFilter === 'all') ||
             w.spec_ids.some(specId => specMatchesFilters(specId));
@@ -163,7 +161,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     return Math.max(...classStats.map(s => s.total), 1);
   }, [classStats]);
 
-  // Calculate spec distribution (top 10) based on filter
+  // Calculate spec distribution (top 8) based on filter
   const specStats = useMemo(() => {
     const stats: Record<string, number> = {};
 
@@ -195,9 +193,9 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
         } as SpecStat;
       })
       .filter(s => s.count > 0)
-      .sort((a, b) => b.count - a.count);
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 8);
 
-    // Set maxCount for progress bar scaling
     const maxCount = sorted.length > 0 ? sorted[0].count : 1;
     return sorted.map(s => ({ ...s, maxCount }));
   }, [filteredMembers, language, maxWishIndex, roleFilter, rangeFilter]);
@@ -264,14 +262,14 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     return classStats.filter(s => s.total > 0);
   }, [classStats]);
 
-  const getRoleIcon = (role: Role) => {
+  const getRoleIcon = (role: Role, size: string = "h-3.5 w-3.5") => {
     switch (role) {
       case 'tank':
-        return <Shield className="h-4 w-4" />;
+        return <Shield className={size} />;
       case 'healer':
-        return <Heart className="h-4 w-4" />;
+        return <Heart className={size} />;
       case 'dps':
-        return <Sword className="h-4 w-4" />;
+        return <Sword className={size} />;
     }
   };
 
@@ -290,13 +288,13 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   const getMedalIcon = (index: number) => {
     switch (index) {
       case 0:
-        return <Trophy className="h-4 w-4 text-amber-400 fill-amber-400/20" />;
+        return <Trophy className="h-3.5 w-3.5 text-amber-400 fill-amber-400/20" />;
       case 1:
-        return <Medal className="h-4 w-4 text-slate-300" />;
+        return <Medal className="h-3.5 w-3.5 text-slate-300" />;
       case 2:
-        return <Award className="h-4 w-4 text-amber-600" />;
+        return <Award className="h-3.5 w-3.5 text-amber-600" />;
       default:
-        return null;
+        return <span className="text-[10px] text-muted-foreground w-3.5 text-center">{index + 1}</span>;
     }
   };
 
@@ -307,32 +305,51 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     return language === 'fr' ? `Vœux 1-${n}` : `Wishes 1-${n}`;
   };
 
+  // Calculate totals for KPI bar
+  const totalTanks = rolesByPriority.find(r => r.role === 'tank');
+  const totalHealers = rolesByPriority.find(r => r.role === 'healer');
+  const totalDps = rolesByPriority.find(r => r.role === 'dps');
+
+  // Pie chart data
+  const rolePieData = rolesByPriority.map(stat => ({
+    name: getRoleName(stat.role),
+    value: stat.wish1 + stat.other,
+    role: stat.role,
+    color: roleColorMap[stat.role],
+  })).filter(d => d.value > 0);
+
+  const totalRoles = rolePieData.reduce((sum, d) => sum + d.value, 0);
+  const totalRange = rangeStats.melee + rangeStats.ranged;
+
+  const rangePieData = [
+    { name: t.dashboard.melee, value: rangeStats.melee, color: rangeColorMap.melee, key: 'melee' },
+    { name: t.dashboard.ranged, value: rangeStats.ranged, color: rangeColorMap.ranged, key: 'ranged' },
+  ].filter(d => d.value > 0);
+
   return (
     <TooltipProvider>
-      <div className="space-y-6">
-        {/* Filters */}
-        <div className="flex flex-wrap items-center gap-2">
-          <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
+      <div className="space-y-3">
+        {/* Compact Filter Bar + KPIs */}
+        <div className="flex flex-wrap items-center gap-2 p-2.5 bg-card/50 rounded-lg border border-border/50">
+          <Filter className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           
-          {/* Wish range filter */}
           <Select value={String(maxWishIndex)} onValueChange={(v) => setMaxWishIndex(Number(v))}>
-            <SelectTrigger className="w-[170px]">
+            <SelectTrigger className="h-7 w-[110px] text-xs">
               <SelectValue>{getWishRangeLabel(maxWishIndex)}</SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="1">{getWishRangeLabel(1)}</SelectItem>
+              <SelectItem value="1" className="text-xs">{getWishRangeLabel(1)}</SelectItem>
               {[2, 3, 4, 5, 6].map(n => (
-                <SelectItem key={n} value={String(n)}>
+                <SelectItem key={n} value={String(n)} className="text-xs">
                   {getWishRangeLabel(n)}
                 </SelectItem>
               ))}
-              <SelectItem value="13">{getWishRangeLabel(13)}</SelectItem>
+              <SelectItem value="13" className="text-xs">{getWishRangeLabel(13)}</SelectItem>
             </SelectContent>
           </Select>
 
-          {/* Commitment filter */}
           <Select value={commitmentFilter} onValueChange={(v) => setCommitmentFilter(v as CommitmentFilter)}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="h-7 w-[100px] text-xs">
               <SelectValue>
                 {commitmentFilter === 'all' ? t.dashboard.allCommitments : 
                  commitmentFilter === 'confirmed' ? t.wishes.commitment.confirmed :
@@ -341,16 +358,15 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t.dashboard.allCommitments}</SelectItem>
-              <SelectItem value="confirmed">{t.wishes.commitment.confirmed}</SelectItem>
-              <SelectItem value="potential">{t.wishes.commitment.undecided}</SelectItem>
-              <SelectItem value="withdrawn">{t.wishes.commitment.withdrawn}</SelectItem>
+              <SelectItem value="all" className="text-xs">{t.dashboard.allCommitments}</SelectItem>
+              <SelectItem value="confirmed" className="text-xs">{t.wishes.commitment.confirmed}</SelectItem>
+              <SelectItem value="potential" className="text-xs">{t.wishes.commitment.undecided}</SelectItem>
+              <SelectItem value="withdrawn" className="text-xs">{t.wishes.commitment.withdrawn}</SelectItem>
             </SelectContent>
           </Select>
 
-          {/* Role filter */}
           <Select value={roleFilter} onValueChange={(v) => setRoleFilter(v as RoleFilter)}>
-            <SelectTrigger className="w-[150px]">
+            <SelectTrigger className="h-7 w-[90px] text-xs">
               <SelectValue>
                 {roleFilter === 'all' ? t.dashboard.allRoles :
                  roleFilter === 'tank' ? t.dashboard.tank :
@@ -359,31 +375,15 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t.dashboard.allRoles}</SelectItem>
-              <SelectItem value="tank">
-                <span className="flex items-center gap-2">
-                  <Shield className="h-3.5 w-3.5" />
-                  {t.dashboard.tank}
-                </span>
-              </SelectItem>
-              <SelectItem value="healer">
-                <span className="flex items-center gap-2">
-                  <Heart className="h-3.5 w-3.5" />
-                  {t.dashboard.healer}
-                </span>
-              </SelectItem>
-              <SelectItem value="dps">
-                <span className="flex items-center gap-2">
-                  <Sword className="h-3.5 w-3.5" />
-                  {t.dashboard.dps}
-                </span>
-              </SelectItem>
+              <SelectItem value="all" className="text-xs">{t.dashboard.allRoles}</SelectItem>
+              <SelectItem value="tank" className="text-xs">{t.dashboard.tank}</SelectItem>
+              <SelectItem value="healer" className="text-xs">{t.dashboard.healer}</SelectItem>
+              <SelectItem value="dps" className="text-xs">{t.dashboard.dps}</SelectItem>
             </SelectContent>
           </Select>
 
-          {/* Range filter */}
           <Select value={rangeFilter} onValueChange={(v) => setRangeFilter(v as RangeFilter)}>
-            <SelectTrigger className="w-[155px]">
+            <SelectTrigger className="h-7 w-[90px] text-xs">
               <SelectValue>
                 {rangeFilter === 'all' ? t.dashboard.allRanges :
                  rangeFilter === 'melee' ? t.dashboard.melee :
@@ -391,131 +391,87 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t.dashboard.allRanges}</SelectItem>
-              <SelectItem value="melee">
-                <span className="flex items-center gap-2">
-                  <Swords className="h-3.5 w-3.5" />
-                  {t.dashboard.melee}
-                </span>
-              </SelectItem>
-              <SelectItem value="ranged">
-                <span className="flex items-center gap-2">
-                  <Crosshair className="h-3.5 w-3.5" />
-                  {t.dashboard.ranged}
-                </span>
-              </SelectItem>
+              <SelectItem value="all" className="text-xs">{t.dashboard.allRanges}</SelectItem>
+              <SelectItem value="melee" className="text-xs">{t.dashboard.melee}</SelectItem>
+              <SelectItem value="ranged" className="text-xs">{t.dashboard.ranged}</SelectItem>
             </SelectContent>
           </Select>
+
+          {/* Inline KPIs */}
+          <div className="flex items-center gap-3 ml-auto">
+            <div className="flex items-center gap-1.5">
+              <Users className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs font-medium">{filteredMembers.length}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+              <span className="text-xs font-medium">{representedClasses.length}/13</span>
+            </div>
+            <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-border/50">
+              <div className="flex items-center gap-0.5" style={{ color: roleColorMap.tank }}>
+                <Shield className="h-3 w-3" />
+                <span className="text-xs font-medium">{(totalTanks?.wish1 || 0) + (totalTanks?.other || 0)}</span>
+              </div>
+              <div className="flex items-center gap-0.5" style={{ color: roleColorMap.healer }}>
+                <Heart className="h-3 w-3" />
+                <span className="text-xs font-medium">{(totalHealers?.wish1 || 0) + (totalHealers?.other || 0)}</span>
+              </div>
+              <div className="flex items-center gap-0.5" style={{ color: roleColorMap.dps }}>
+                <Sword className="h-3 w-3" />
+                <span className="text-xs font-medium">{(totalDps?.wish1 || 0) + (totalDps?.other || 0)}</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Summary stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <GlowCard className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/20">
-                <Users className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{filteredMembers.length}</p>
-                <p className="text-xs text-muted-foreground">{t.dashboard.totalPlayers}</p>
-              </div>
-            </div>
-          </GlowCard>
-          <GlowCard className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-500/20">
-                <TrendingUp className="h-5 w-5 text-green-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{representedClasses.length}/{wowClasses.length}</p>
-                <p className="text-xs text-muted-foreground">{t.dashboard.classesCount}</p>
-              </div>
-            </div>
-          </GlowCard>
-          <GlowCard className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/20">
-                <Swords className="h-5 w-5 text-blue-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{rangeStats.melee}</p>
-                <p className="text-xs text-muted-foreground">{t.dashboard.melee}</p>
-              </div>
-            </div>
-          </GlowCard>
-          <GlowCard className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-purple-500/20">
-                <Crosshair className="h-5 w-5 text-purple-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{rangeStats.ranged}</p>
-                <p className="text-xs text-muted-foreground">{t.dashboard.ranged}</p>
-              </div>
-            </div>
-          </GlowCard>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Class Distribution with hover tooltips */}
-          <GlowCard className="p-4 md:p-6">
-            <h3 className="text-lg font-semibold mb-4">{t.dashboard.classDistribution}</h3>
-            <div className="space-y-2.5">
-              {representedClasses.map((stat, index) => (
+        {/* Main Grid: 3 columns on desktop */}
+        <div className="grid gap-3 lg:grid-cols-3">
+          {/* Class Distribution - 2 columns */}
+          <GlowCard className="lg:col-span-2 p-3">
+            <h3 className="text-sm font-semibold mb-2">{t.dashboard.classDistribution}</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
+              {representedClasses.map((stat) => (
                 <UITooltip key={stat.id} delayDuration={100}>
                   <TooltipTrigger asChild>
                     <div 
-                      className="flex items-center gap-3 cursor-pointer group"
+                      className="flex items-center gap-2 cursor-pointer group"
                       onMouseEnter={() => setHoveredClass(stat.id)}
                       onMouseLeave={() => setHoveredClass(null)}
-                      style={{
-                        animationDelay: `${index * 50}ms`,
-                      }}
                     >
                       <div 
-                        className="w-28 text-sm font-medium truncate transition-all duration-200 group-hover:scale-105"
+                        className="w-20 text-xs font-medium truncate transition-all duration-200"
                         style={{ color: classColorMap[stat.color] || 'inherit' }}
                       >
                         {stat.name}
                       </div>
-                      <div className="flex-1 h-5 bg-muted/30 rounded-full overflow-hidden relative">
+                      <div className="flex-1 h-3.5 bg-muted/30 rounded-full overflow-hidden relative">
                         <div
-                          className="absolute inset-y-0 left-0 rounded-full transition-all duration-500 ease-out"
+                          className="absolute inset-y-0 left-0 rounded-full transition-all duration-300"
                           style={{ 
                             width: `${(stat.total / maxClassTotal) * 100}%`,
                             backgroundColor: classColorMap[stat.color] || 'hsl(var(--primary))',
                             opacity: hoveredClass === stat.id ? 1 : 0.85,
-                            boxShadow: hoveredClass === stat.id 
-                              ? `0 0 12px ${classColorMap[stat.color] || 'hsl(var(--primary))'}` 
-                              : 'none'
                           }}
                         />
                       </div>
-                      <div className="w-10 text-right text-sm text-muted-foreground tabular-nums group-hover:text-foreground transition-colors">
+                      <div className="w-6 text-right text-xs text-muted-foreground tabular-nums">
                         {stat.total}
                       </div>
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent 
-                    sideOffset={8}
-                    collisionPadding={16}
-                    className="max-w-[200px]"
-                  >
-                    <p className="font-semibold mb-1" style={{ color: classColorMap[stat.color] }}>
+                  <TooltipContent sideOffset={8} className="max-w-[180px]">
+                    <p className="font-semibold text-xs mb-1" style={{ color: classColorMap[stat.color] }}>
                       {stat.name}
                     </p>
-                    <p className="text-xs text-muted-foreground mb-2">
-                      {stat.players.length} {language === 'fr' ? 'joueur(s)' : 'player(s)'}
-                    </p>
                     <div className="flex flex-wrap gap-1">
-                      {stat.players.slice(0, 8).map(p => (
-                        <Badge key={p} variant="secondary" className="text-xs">
+                      {stat.players.slice(0, 6).map(p => (
+                        <Badge key={p} variant="secondary" className="text-[10px] px-1.5 py-0">
                           {p}
                         </Badge>
                       ))}
-                      {stat.players.length > 8 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{stat.players.length - 8}
+                      {stat.players.length > 6 && (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                          +{stat.players.length - 6}
                         </Badge>
                       )}
                     </div>
@@ -525,244 +481,160 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
             </div>
           </GlowCard>
 
-          {/* Top Specs with medals and progress bars */}
-          <GlowCard className="p-4 md:p-6">
-            <h3 className="text-lg font-semibold mb-4">
-              {t.dashboard.topSpecs} 
-              {specStats.length > 0 && (
-                <span className="text-muted-foreground text-sm font-normal ml-2">({specStats.length})</span>
-              )}
-            </h3>
+          {/* Top Specs - 1 column */}
+          <GlowCard className="p-3">
+            <h3 className="text-sm font-semibold mb-2">{t.dashboard.topSpecs}</h3>
             {specStats.length > 0 ? (
-              <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
+              <div className="space-y-1">
                 {specStats.map((stat, index) => (
-                  <div 
-                    key={stat.id} 
-                    className="flex items-center gap-2 group relative"
-                    style={{
-                      animationDelay: `${index * 50}ms`,
-                    }}
-                  >
-                    {/* Progress bar background */}
-                    <div 
-                      className="absolute inset-0 rounded-md opacity-10 transition-opacity group-hover:opacity-20"
-                      style={{ 
-                        background: `linear-gradient(90deg, ${classColorMap[stat.classColor]} 0%, transparent ${(stat.count / stat.maxCount) * 100}%)`
-                      }}
-                    />
-                    
-                    {/* Rank number */}
-                    <div className="w-6 flex justify-center z-10">
-                      <span className="text-xs text-muted-foreground">{index + 1}.</span>
+                  <div key={stat.id} className="flex items-center gap-1.5 group">
+                    <div className="w-4 flex justify-center">
+                      {getMedalIcon(index)}
                     </div>
-                    
-                    {/* Role icon */}
-                    <span 
-                      className="z-10 transition-transform group-hover:scale-110"
-                      style={{ color: classColorMap[stat.classColor] || 'inherit' }}
-                    >
-                      {getRoleIcon(stat.role)}
+                    <span style={{ color: classColorMap[stat.classColor] || 'inherit' }}>
+                      {getRoleIcon(stat.role, "h-3 w-3")}
                     </span>
-                    
-                    {/* Spec name */}
                     <span 
-                      className="flex-1 text-sm font-medium z-10 transition-colors group-hover:brightness-125"
+                      className="flex-1 text-xs font-medium truncate"
                       style={{ color: classColorMap[stat.classColor] || 'inherit' }}
                     >
                       {stat.specName}
                     </span>
-                    
-                    {/* Count badge */}
-                    <Badge 
-                      variant="outline" 
-                      className="text-xs z-10 transition-all group-hover:bg-card"
-                    >
-                      {stat.count}
-                    </Badge>
+                    <span className="text-xs text-muted-foreground tabular-nums">{stat.count}</span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">{t.dashboard.noData}</p>
+              <p className="text-xs text-muted-foreground">{t.dashboard.noData}</p>
             )}
-          </GlowCard>
-
-          {/* Roles by Priority - PieChart */}
-          <GlowCard className="p-4 md:p-6">
-            <h3 className="text-lg font-semibold mb-4">{t.dashboard.rolesByPriority}</h3>
-            {(() => {
-              const pieData = rolesByPriority.map(stat => ({
-                name: getRoleName(stat.role),
-                value: stat.wish1 + stat.other,
-                role: stat.role,
-                color: roleColorMap[stat.role],
-              })).filter(d => d.value > 0);
-
-              const totalRoles = pieData.reduce((sum, d) => sum + d.value, 0);
-
-              if (totalRoles === 0) {
-                return <p className="text-sm text-muted-foreground">{t.dashboard.noData}</p>;
-              }
-
-              return (
-                <div className="flex flex-col md:flex-row items-center gap-4">
-                  <div className="w-40 h-40">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={pieData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={35}
-                          outerRadius={65}
-                          paddingAngle={2}
-                          dataKey="value"
-                          animationBegin={0}
-                          animationDuration={800}
-                        >
-                        {pieData.map((entry, index) => (
-                            <Cell 
-                              key={`cell-${index}`} 
-                              fill={entry.color}
-                              stroke="none"
-                              className="transition-all duration-200 hover:opacity-80"
-                              style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}
-                            />
-                          ))}
-                        </Pie>
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    {pieData.map(stat => (
-                      <div key={stat.role} className="flex items-center gap-2 group cursor-default">
-                        <div 
-                          className="w-3 h-3 rounded-full transition-transform group-hover:scale-125" 
-                          style={{ backgroundColor: stat.color }}
-                        />
-                        <span className="text-sm transition-transform group-hover:scale-105">{getRoleIcon(stat.role)}</span>
-                        <span className="text-sm font-medium">{stat.name}</span>
-                        <span className="text-sm text-muted-foreground ml-auto">
-                          {stat.value} ({Math.round((stat.value / totalRoles) * 100)}%)
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })()}
-          </GlowCard>
-
-          {/* Range Distribution - PieChart */}
-          <GlowCard className="p-4 md:p-6">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Swords className="h-5 w-5 text-blue-500" />
-              <span className="mx-1">/</span>
-              <Crosshair className="h-5 w-5 text-purple-500" />
-              <span className="ml-2">{t.dashboard.melee} / {t.dashboard.ranged}</span>
-            </h3>
-            {(() => {
-              const total = rangeStats.melee + rangeStats.ranged;
-              
-              if (total === 0) {
-                return <p className="text-sm text-muted-foreground">{t.dashboard.noData}</p>;
-              }
-
-              const pieData = [
-                { name: t.dashboard.melee, value: rangeStats.melee, color: rangeColorMap.melee, icon: <Swords className="h-4 w-4" /> },
-                { name: t.dashboard.ranged, value: rangeStats.ranged, color: rangeColorMap.ranged, icon: <Crosshair className="h-4 w-4" /> },
-              ].filter(d => d.value > 0);
-
-              return (
-                <div className="flex flex-col md:flex-row items-center gap-4">
-                  <div className="w-40 h-40">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={pieData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={35}
-                          outerRadius={65}
-                          paddingAngle={2}
-                          dataKey="value"
-                          animationBegin={200}
-                          animationDuration={800}
-                        >
-                          {pieData.map((entry, index) => (
-                            <Cell 
-                              key={`cell-${index}`} 
-                              fill={entry.color}
-                              stroke="none"
-                              className="transition-all duration-200 hover:opacity-80"
-                              style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}
-                            />
-                          ))}
-                        </Pie>
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="flex flex-col gap-3">
-                    {pieData.map(stat => (
-                      <div key={stat.name} className="flex items-center gap-2 group cursor-default">
-                        <div 
-                          className="w-3 h-3 rounded-full transition-transform group-hover:scale-125" 
-                          style={{ backgroundColor: stat.color }}
-                        />
-                        <span className="text-sm transition-transform group-hover:scale-105" style={{ color: stat.color }}>
-                          {stat.icon}
-                        </span>
-                        <span className="text-sm font-medium">{stat.name}</span>
-                        <span className="text-sm text-muted-foreground ml-auto">
-                          {stat.value} ({Math.round((stat.value / total) * 100)}%)
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })()}
           </GlowCard>
         </div>
 
-        {/* Missing Classes - Full width for emphasis */}
-        {missingClasses.length > 0 && (
-          <GlowCard className="p-4 md:p-6">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-amber-500 animate-pulse" />
-              {t.dashboard.missingClasses}
-              <span className="text-sm font-normal text-muted-foreground ml-2">
-                ({missingClasses.length})
-              </span>
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {missingClasses.map((stat, index) => {
-                const color = classColorMap[stat.color] || 'inherit';
-                return (
+        {/* Pie Charts - Side by side in one card */}
+        <GlowCard className="p-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Roles Pie */}
+            <div>
+              <h4 className="text-sm font-semibold mb-2 text-center">{t.dashboard.rolesByPriority}</h4>
+              {totalRoles > 0 ? (
+                <div className="flex items-center justify-center gap-3">
+                  <div className="w-20 h-20">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={rolePieData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={18}
+                          outerRadius={38}
+                          dataKey="value"
+                          stroke="none"
+                        >
+                          {rolePieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    {rolePieData.map(stat => (
+                      <div key={stat.role} className="flex items-center gap-1.5">
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: stat.color }} />
+                        <span style={{ color: stat.color }}>{getRoleIcon(stat.role, "h-3 w-3")}</span>
+                        <span className="text-xs">{stat.name}</span>
+                        <span className="text-xs text-muted-foreground ml-auto tabular-nums">
+                          {stat.value}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground text-center">{t.dashboard.noData}</p>
+              )}
+            </div>
+
+            {/* Range Pie */}
+            <div>
+              <h4 className="text-sm font-semibold mb-2 text-center flex items-center justify-center gap-1">
+                <Swords className="h-3.5 w-3.5 text-blue-500" />
+                <span className="text-muted-foreground">/</span>
+                <Crosshair className="h-3.5 w-3.5 text-purple-500" />
+              </h4>
+              {totalRange > 0 ? (
+                <div className="flex items-center justify-center gap-3">
+                  <div className="w-20 h-20">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={rangePieData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={18}
+                          outerRadius={38}
+                          dataKey="value"
+                          stroke="none"
+                        >
+                          {rangePieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    {rangePieData.map(stat => (
+                      <div key={stat.key} className="flex items-center gap-1.5">
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: stat.color }} />
+                        {stat.key === 'melee' ? (
+                          <Swords className="h-3 w-3" style={{ color: stat.color }} />
+                        ) : (
+                          <Crosshair className="h-3 w-3" style={{ color: stat.color }} />
+                        )}
+                        <span className="text-xs">{stat.name}</span>
+                        <span className="text-xs text-muted-foreground ml-auto tabular-nums">
+                          {stat.value} ({Math.round((stat.value / totalRange) * 100)}%)
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground text-center">{t.dashboard.noData}</p>
+              )}
+            </div>
+          </div>
+        </GlowCard>
+
+        {/* Missing/All Classes Alert - Compact */}
+        {missingClasses.length > 0 ? (
+          <div className="flex items-start gap-2 p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+            <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <span className="text-xs font-medium text-amber-500">{t.dashboard.missingClasses}:</span>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {missingClasses.map(stat => (
                   <Badge
                     key={stat.id}
                     variant="outline"
-                    className="transition-all hover:scale-105 cursor-default"
+                    className="text-[10px] px-1.5 py-0"
                     style={{ 
-                      color,
-                      borderColor: color !== 'inherit' ? color : undefined,
-                      animationDelay: `${index * 50}ms`,
+                      color: classColorMap[stat.color],
+                      borderColor: classColorMap[stat.color],
                     }}
                   >
                     {stat.name}
                   </Badge>
-                );
-              })}
+                ))}
+              </div>
             </div>
-          </GlowCard>
-        )}
-
-        {missingClasses.length === 0 && (
-          <GlowCard className="p-4 md:p-6">
-            <p className="text-sm text-green-500 flex items-center gap-2">
-              ✓ {t.dashboard.allClassesRepresented}
-            </p>
-          </GlowCard>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 p-2 bg-green-500/10 border border-green-500/30 rounded-lg">
+            <CheckCircle2 className="h-4 w-4 text-green-500" />
+            <span className="text-xs text-green-500">{t.dashboard.allClassesRepresented}</span>
+          </div>
         )}
       </div>
     </TooltipProvider>
