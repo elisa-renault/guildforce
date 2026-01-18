@@ -155,14 +155,14 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     return stats;
   }, [members]);
 
-  // Missing classes
+  // Missing classes (no one has this class as their primary wish)
   const missingClasses = useMemo(() => {
-    return classStats.filter(s => s.total === 0);
+    return classStats.filter(s => s.wish1 === 0);
   }, [classStats]);
 
-  // Classes with at least one wish
+  // Classes with at least one primary wish
   const representedClasses = useMemo(() => {
-    return classStats.filter(s => s.total > 0);
+    return classStats.filter(s => s.wish1 > 0);
   }, [classStats]);
 
   const getRoleIcon = (role: Role) => {
