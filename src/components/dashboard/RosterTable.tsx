@@ -491,7 +491,7 @@ export const RosterTable = ({
                                       onStartEditing(member);
                                     }}
                                     icon={<Pencil className="h-3.5 w-3.5" strokeWidth={1.5} />}
-                                    className="h-8 px-2"
+                                    className="h-8 w-8 p-0"
                                   />
                                 </TooltipTrigger>
                                 <TooltipContent side="left">
