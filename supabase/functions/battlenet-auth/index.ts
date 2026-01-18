@@ -1639,14 +1639,18 @@ async function fetchAndStoreCharacters(
       log.info('Previous main character no longer exists on Battle.net, defaulting to highest level');
     }
 
+    // Use upsert to handle race conditions (parallel syncs)
     const { data: insertedChars, error: charError } = await supabase
       .from('wow_characters')
-      .insert(insertData)
+      .upsert(insertData, { 
+        onConflict: 'user_id,name,realm_slug',
+        ignoreDuplicates: false 
+      })
       .select('id, name, realm_slug');
 
     if (charError) {
-      log.error('Failed to insert characters:', charError);
-      return { success: false, detectedRegion: region, error: 'Failed to insert characters' };
+      log.error('Failed to upsert characters:', charError);
+      return { success: false, detectedRegion: region, error: 'Failed to save characters' };
     }
 
     log.info(`Successfully saved ${characters.length} characters to database`);
