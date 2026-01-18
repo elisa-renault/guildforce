@@ -231,6 +231,71 @@ interface GuildInfo {
 // ============================================================================
 
 /**
+ * Configuration for retry with exponential backoff
+ */
+interface RetryConfig {
+  maxAttempts?: number;       // Max number of attempts (default: 3)
+  initialDelayMs?: number;    // Initial delay in ms (default: 1000)
+  multiplier?: number;        // Delay multiplier (default: 2)
+  retryableStatuses?: number[]; // HTTP statuses to retry (default: [429, 500, 502, 503, 504])
+}
+
+/**
+ * Wraps a fetch call with exponential backoff retry logic.
+ * Useful for handling transient Blizzard API failures.
+ * 
+ * @param fetchFn - Async function that performs the fetch
+ * @param config - Retry configuration
+ * @returns Response from successful fetch or last failed attempt
+ */
+async function retryWithBackoff<T>(
+  fetchFn: () => Promise<Response>,
+  config: RetryConfig = {}
+): Promise<Response> {
+  const {
+    maxAttempts = 3,
+    initialDelayMs = 1000,
+    multiplier = 2,
+    retryableStatuses = [429, 500, 502, 503, 504],
+  } = config;
+
+  let lastResponse: Response | null = null;
+  let delay = initialDelayMs;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const response = await fetchFn();
+      lastResponse = response;
+
+      // Success or non-retryable error
+      if (response.ok || !retryableStatuses.includes(response.status)) {
+        return response;
+      }
+
+      // Retryable error - log and wait
+      if (attempt < maxAttempts) {
+        log.info(`Blizzard API retry ${attempt}/${maxAttempts} after ${response.status}, waiting ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        delay *= multiplier;
+      }
+    } catch (error) {
+      // Network error - retry
+      log.error(`Blizzard API network error on attempt ${attempt}/${maxAttempts}:`, error);
+      
+      if (attempt < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, delay));
+        delay *= multiplier;
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  // Return last response (even if failed) so caller can handle it
+  return lastResponse!;
+}
+
+/**
  * Generates a cryptographically secure random password
  * Used for creating Supabase accounts for Battle.net-first users
  * @returns A 32-character secure password
@@ -286,13 +351,17 @@ async function fetchWowProfileWithRegionFallback(
     log.info(`Trying WoW profile fetch for region: ${region.toUpperCase()}`);
     
     try {
-      const wowProfileResponse = await fetch(
-        `${apiUrl}/profile/user/wow?namespace=${namespace}&locale=${locale}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-          },
-        }
+      // Use retryWithBackoff for transient Blizzard API failures
+      const wowProfileResponse = await retryWithBackoff(
+        () => fetch(
+          `${apiUrl}/profile/user/wow?namespace=${namespace}&locale=${locale}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+            },
+          }
+        ),
+        { maxAttempts: 3, initialDelayMs: 1000, multiplier: 2 }
       );
       
       if (wowProfileResponse.ok) {
@@ -460,9 +529,13 @@ async function fetchPublicGuildRoster(
       const rosterUrl = `${apiUrl}/data/wow/guild/${serverSlug}/${encodeURIComponent(guildSlug)}/roster?namespace=${namespace}&locale=${locale}`;
       log.debug(`Fetching public roster from: ${rosterUrl}`);
 
-      const rosterResponse = await fetch(rosterUrl, {
-        headers: { 'Authorization': `Bearer ${clientToken}` },
-      });
+      // Use retryWithBackoff for transient Blizzard API failures
+      const rosterResponse = await retryWithBackoff(
+        () => fetch(rosterUrl, {
+          headers: { 'Authorization': `Bearer ${clientToken}` },
+        }),
+        { maxAttempts: 3, initialDelayMs: 1000, multiplier: 2 }
+      );
 
       if (!rosterResponse.ok) {
         const body = await rosterResponse.text();
