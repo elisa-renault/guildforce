@@ -92,10 +92,20 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
   const [rangeFilter, setRangeFilter] = useState<RangeFilter>('all');
 
-  // Pre-filter members based on commitment
+  // Pre-filter members based on commitment and exclude those with 0 wishes
   const filteredMembers = useMemo(() => {
-    if (commitmentFilter === 'all') return members;
-    return members.filter(m => m.status === commitmentFilter);
+    let filtered = members.filter(m => {
+      // Exclude members with no wishes
+      const hasWishes = m.wishes && m.wishes.length > 0 && m.wishes.some(w => w.class_id);
+      if (!hasWishes) return false;
+      return true;
+    });
+    
+    if (commitmentFilter !== 'all') {
+      filtered = filtered.filter(m => m.status === commitmentFilter);
+    }
+    
+    return filtered;
   }, [members, commitmentFilter]);
 
   // Check if spec matches role and range filters
