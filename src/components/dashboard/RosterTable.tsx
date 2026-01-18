@@ -364,7 +364,7 @@ export const RosterTable = ({
           <TableHeader>
             <TableRow className="border-border/30 hover:bg-transparent">
               <SortableHeader column="player" className="w-[120px] md:w-[140px]">{t.dashboard.player}</SortableHeader>
-              <SortableHeader column="status" className="w-[90px] md:w-[100px]">{t.wishes.status}</SortableHeader>
+              <SortableHeader column="status" className="w-[110px] md:w-[130px]">{t.wishes.status}</SortableHeader>
               <SortableHeader column="wishesCount" className="w-[60px] md:w-[70px]"><span className="hidden md:inline">{t.dashboard.wishesCount}</span><span className="md:hidden">#</span></SortableHeader>
               <SortableHeader column="wish1"><span className="hidden md:inline">{t.dashboard.firstChoice}</span><span className="md:hidden">#1</span></SortableHeader>
               <SortableHeader column="wish2"><span className="hidden md:inline">{t.dashboard.secondChoice}</span><span className="md:hidden">#2</span></SortableHeader>
