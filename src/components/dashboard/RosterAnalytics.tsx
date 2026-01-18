@@ -469,6 +469,48 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
             )}
           </GlowCard>
 
+          {/* Roles Pie - 1 column */}
+          <GlowCard className="p-3">
+            <h4 className="text-sm font-semibold mb-2 text-center">{t.dashboard.rolesByPriority}</h4>
+            {totalRoles > 0 ? (
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-20 h-20">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={rolePieData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={18}
+                        outerRadius={38}
+                        dataKey="value"
+                        stroke="none"
+                      >
+                        {rolePieData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  {rolePieData.map(stat => (
+                    <div key={stat.role} className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: stat.color }} />
+                      <span style={{ color: stat.color }}>{getRoleIcon(stat.role, "h-3 w-3")}</span>
+                      <span className="text-xs">{stat.name}</span>
+                      <span className="text-xs text-muted-foreground ml-auto tabular-nums">
+                        {stat.value} ({Math.round((stat.value / totalRoles) * 100)}%)
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground text-center">{t.dashboard.noData}</p>
+            )}
+          </GlowCard>
+
           {/* Class Distribution - 1 column */}
           <GlowCard className="p-3">
             <h3 className="text-sm font-semibold mb-2">{t.dashboard.classDistribution}</h3>
@@ -549,48 +591,6 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
               </div>
             ) : (
               <p className="text-xs text-muted-foreground">{t.dashboard.noData}</p>
-            )}
-          </GlowCard>
-
-          {/* Roles Pie - 1 column */}
-          <GlowCard className="p-3">
-            <h4 className="text-sm font-semibold mb-2 text-center">{t.dashboard.rolesByPriority}</h4>
-            {totalRoles > 0 ? (
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-20 h-20">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={rolePieData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={18}
-                        outerRadius={38}
-                        dataKey="value"
-                        stroke="none"
-                      >
-                        {rolePieData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="flex flex-col gap-0.5">
-                  {rolePieData.map(stat => (
-                    <div key={stat.role} className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: stat.color }} />
-                      <span style={{ color: stat.color }}>{getRoleIcon(stat.role, "h-3 w-3")}</span>
-                      <span className="text-xs">{stat.name}</span>
-                      <span className="text-xs text-muted-foreground ml-auto tabular-nums">
-                        {stat.value} ({Math.round((stat.value / totalRoles) * 100)}%)
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground text-center">{t.dashboard.noData}</p>
             )}
           </GlowCard>
         </div>
