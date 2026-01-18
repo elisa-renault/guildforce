@@ -187,13 +187,14 @@ export const BattleNetConnect: React.FC = () => {
     }
   };
 
-  const setMainCharacter = async (characterId: string) => {
+  const setMainCharacter = async (character: Pick<WoWCharacter, 'name' | 'realm_slug'>) => {
     if (!profile?.id) return;
 
     try {
-      // Atomic update in DB to avoid race conditions with background sync
-      const { error } = await supabase.rpc('set_main_character', {
-        p_character_id: characterId,
+      // Use a stable identity (name + realm_slug) because background sync can recreate rows with new UUIDs
+      const { error } = await supabase.rpc('set_main_character_by_key', {
+        p_name: character.name,
+        p_realm_slug: character.realm_slug,
       });
 
       if (error) throw error;
@@ -287,7 +288,7 @@ export const BattleNetConnect: React.FC = () => {
                         ? 'border-primary bg-primary/10' 
                         : 'border-border/50 bg-background/30 hover:bg-background/50'
                     }`}
-                    onClick={() => setMainCharacter(char.id)}
+                    onClick={() => setMainCharacter({ name: char.name, realm_slug: char.realm_slug })}
                   >
                     <div className="flex items-center gap-3">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center bg-wow-${getClassName(char.class_id)}/20`}>
