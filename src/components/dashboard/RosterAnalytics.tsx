@@ -334,7 +334,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
           <Filter className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           
           <Select value={String(maxWishIndex)} onValueChange={(v) => setMaxWishIndex(Number(v))}>
-            <SelectTrigger className="h-7 w-[110px] text-xs">
+            <SelectTrigger className="h-7 w-auto min-w-[100px] text-xs">
               <SelectValue>{getWishRangeLabel(maxWishIndex)}</SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -349,7 +349,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
           </Select>
 
           <Select value={commitmentFilter} onValueChange={(v) => setCommitmentFilter(v as CommitmentFilter)}>
-            <SelectTrigger className="h-7 w-[100px] text-xs">
+            <SelectTrigger className="h-7 w-auto min-w-[90px] text-xs">
               <SelectValue>
                 {commitmentFilter === 'all' ? t.dashboard.allCommitments : 
                  commitmentFilter === 'confirmed' ? t.wishes.commitment.confirmed :
@@ -366,7 +366,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
           </Select>
 
           <Select value={roleFilter} onValueChange={(v) => setRoleFilter(v as RoleFilter)}>
-            <SelectTrigger className="h-7 w-[90px] text-xs">
+            <SelectTrigger className="h-7 w-auto min-w-[80px] text-xs">
               <SelectValue>
                 {roleFilter === 'all' ? t.dashboard.allRoles :
                  roleFilter === 'tank' ? t.dashboard.tank :
@@ -383,7 +383,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
           </Select>
 
           <Select value={rangeFilter} onValueChange={(v) => setRangeFilter(v as RangeFilter)}>
-            <SelectTrigger className="h-7 w-[90px] text-xs">
+            <SelectTrigger className="h-7 w-auto min-w-[80px] text-xs">
               <SelectValue>
                 {rangeFilter === 'all' ? t.dashboard.allRanges :
                  rangeFilter === 'melee' ? t.dashboard.melee :
