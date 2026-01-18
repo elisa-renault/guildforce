@@ -195,33 +195,18 @@ export const BattleNetConnect: React.FC = () => {
   };
 
   const setMainCharacter = async (characterId: string) => {
+    if (!profile?.id) return;
+
     try {
-      // First, unset all as main
-      await supabase
-        .from('wow_characters')
-        .update({ is_main: false })
-        .eq('user_id', profile?.id);
+      // Atomic update in DB to avoid race conditions with background sync
+      const { error } = await supabase.rpc('set_main_character', {
+        p_character_id: characterId,
+      });
 
-      // Set the selected one as main
-      await supabase
-        .from('wow_characters')
-        .update({ is_main: true })
-        .eq('id', characterId);
+      if (error) throw error;
 
-      // Update local state
-      setCharacters(chars => 
-        chars.map(c => ({ ...c, is_main: c.id === characterId }))
-      );
-
-      // Update profile with main character name
-      const mainChar = characters.find(c => c.id === characterId);
-      if (mainChar) {
-        await supabase
-          .from('profiles')
-          .update({ main_character_name: `${mainChar.name}-${mainChar.realm}` })
-          .eq('id', profile?.id);
-        await refreshProfile();
-      }
+      // Refresh UI state from source of truth
+      await Promise.all([fetchCharacters(), refreshProfile()]);
 
       toast.success(t.battlenet.mainSet);
     } catch (error) {
