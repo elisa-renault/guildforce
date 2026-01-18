@@ -28,7 +28,11 @@ const PublicProfile = () => {
   const [notFound, setNotFound] = useState(false);
   
   // Use the centralized hook for BattleTag visibility
-  const { canSeeBattletag, isLoading: battletagLoading } = useBattletagVisibility(profile?.id);
+  // skipSelfCheck: true ensures user sees what OTHERS would see on their public profile
+  const { canSeeBattletag, isLoading: battletagLoading } = useBattletagVisibility(
+    profile?.id,
+    { skipSelfCheck: true }
+  );
 
   useEffect(() => {
     async function fetchProfile() {
