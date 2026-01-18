@@ -419,6 +419,56 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
 
         {/* Main Grid: 4 columns on desktop */}
         <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+          {/* Range Pie - 1 column */}
+          <GlowCard className="p-3">
+            <h4 className="text-sm font-semibold mb-2 flex items-center gap-1">
+              <Swords className="h-3.5 w-3.5 text-blue-500" />
+              <span className="text-muted-foreground">/</span>
+              <Crosshair className="h-3.5 w-3.5 text-purple-500" />
+            </h4>
+            {totalRange > 0 ? (
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-20 h-20">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={rangePieData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={18}
+                        outerRadius={38}
+                        dataKey="value"
+                        stroke="none"
+                      >
+                        {rangePieData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  {rangePieData.map(stat => (
+                    <div key={stat.key} className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: stat.color }} />
+                      {stat.key === 'melee' ? (
+                        <Swords className="h-3 w-3" style={{ color: stat.color }} />
+                      ) : (
+                        <Crosshair className="h-3 w-3" style={{ color: stat.color }} />
+                      )}
+                      <span className="text-xs">{stat.name}</span>
+                      <span className="text-xs text-muted-foreground ml-auto tabular-nums">
+                        {stat.value} ({Math.round((stat.value / totalRange) * 100)}%)
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground text-center">{t.dashboard.noData}</p>
+            )}
+          </GlowCard>
+
           {/* Class Distribution - 1 column */}
           <GlowCard className="p-3">
             <h3 className="text-sm font-semibold mb-2">{t.dashboard.classDistribution}</h3>
@@ -544,56 +594,6 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
             )}
           </GlowCard>
         </div>
-
-        {/* Range Pie - Separate compact card */}
-        <GlowCard className="p-3">
-          <h4 className="text-sm font-semibold mb-2 flex items-center gap-1">
-            <Swords className="h-3.5 w-3.5 text-blue-500" />
-            <span className="text-muted-foreground">/</span>
-            <Crosshair className="h-3.5 w-3.5 text-purple-500" />
-          </h4>
-          {totalRange > 0 ? (
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={rangePieData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={14}
-                      outerRadius={30}
-                      dataKey="value"
-                      stroke="none"
-                    >
-                      {rangePieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="flex gap-4">
-                {rangePieData.map(stat => (
-                  <div key={stat.key} className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: stat.color }} />
-                    {stat.key === 'melee' ? (
-                      <Swords className="h-3 w-3" style={{ color: stat.color }} />
-                    ) : (
-                      <Crosshair className="h-3 w-3" style={{ color: stat.color }} />
-                    )}
-                    <span className="text-xs">{stat.name}</span>
-                    <span className="text-xs text-muted-foreground tabular-nums">
-                      {stat.value} ({Math.round((stat.value / totalRange) * 100)}%)
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <p className="text-xs text-muted-foreground">{t.dashboard.noData}</p>
-          )}
-        </GlowCard>
 
         {/* Missing/All Classes Alert - Compact */}
         {missingClasses.length > 0 ? (
