@@ -8,7 +8,7 @@ import { GlowCard } from './GlowCard';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { CheckCircle, Loader2, RefreshCw, RotateCcw, Unlink } from 'lucide-react';
+import { CheckCircle, Loader2, RotateCcw, Unlink } from 'lucide-react';
 import { toast } from 'sonner';
 import { getClassNameFromBattleNet } from '@/data/battlenetClasses';
 import { BattleNetIcon } from './BattleNetIcon';
@@ -343,18 +343,9 @@ export const BattleNetConnect: React.FC = () => {
             </div>
           ) : characters.length > 0 ? (
             <div className="space-y-2">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-muted-foreground">
-                  {t.battlenet.yourCharacters} ({characters.length})
-                </p>
-                <button
-                  onClick={fetchCharacters}
-                  className="text-sm text-primary hover:underline flex items-center gap-1"
-                >
-                  <RefreshCw className="w-3 h-3" />
-                  {t.battlenet.refresh}
-                </button>
-              </div>
+              <p className="text-sm text-muted-foreground mb-2">
+                {t.battlenet.yourCharacters} ({characters.length})
+              </p>
               <div className="max-h-64 overflow-y-auto space-y-2 pr-2">
                 {[...characters].sort((a, b) => (b.is_main ? 1 : 0) - (a.is_main ? 1 : 0)).slice(0, 20).map((char) => (
                   <div
