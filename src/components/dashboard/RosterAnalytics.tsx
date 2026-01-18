@@ -301,14 +301,12 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     <TooltipProvider>
       <div className="space-y-6">
         {/* Filters */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Filter className="h-4 w-4" />
-          </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
           
           {/* Wish range filter */}
           <Select value={String(maxWishIndex)} onValueChange={(v) => setMaxWishIndex(Number(v))}>
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className="w-[140px]">
               <SelectValue>{getWishRangeLabel(maxWishIndex)}</SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -324,7 +322,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
 
           {/* Commitment filter */}
           <Select value={commitmentFilter} onValueChange={(v) => setCommitmentFilter(v as CommitmentFilter)}>
-            <SelectTrigger className="w-[150px]">
+            <SelectTrigger className="w-[140px]">
               <SelectValue>
                 {commitmentFilter === 'all' ? t.dashboard.allCommitments : 
                  commitmentFilter === 'confirmed' ? t.wishes.commitment.confirmed :
@@ -342,7 +340,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
 
           {/* Role filter */}
           <Select value={roleFilter} onValueChange={(v) => setRoleFilter(v as RoleFilter)}>
-            <SelectTrigger className="w-[130px]">
+            <SelectTrigger className="w-[150px]">
               <SelectValue>
                 {roleFilter === 'all' ? t.dashboard.allRoles :
                  roleFilter === 'tank' ? t.dashboard.tank :
@@ -375,7 +373,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
 
           {/* Range filter */}
           <Select value={rangeFilter} onValueChange={(v) => setRangeFilter(v as RangeFilter)}>
-            <SelectTrigger className="w-[130px]">
+            <SelectTrigger className="w-[155px]">
               <SelectValue>
                 {rangeFilter === 'all' ? t.dashboard.allRanges :
                  rangeFilter === 'melee' ? t.dashboard.melee :
