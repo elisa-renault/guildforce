@@ -380,7 +380,14 @@ const { data: allGuilds } = await supabase
   };
 
   const saveWishes = async () => {
-    if (!user || !guildId || !selectedRosterId) return;
+    if (!user || !guildId) {
+      toast({ title: t.errors.generic, description: 'Session expired', variant: 'destructive' });
+      return;
+    }
+    if (!selectedRosterId) {
+      toast({ title: t.errors.generic, description: t.wishes.noRosterSelected, variant: 'destructive' });
+      return;
+    }
     setSaving(true);
 
     try {
