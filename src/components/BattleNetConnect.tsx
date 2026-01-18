@@ -107,6 +107,7 @@ export const BattleNetConnect: React.FC = () => {
     setIsLoadingCharacters(true);
     try {
       const { data, error } = await supabase.functions.invoke('battlenet-auth/characters', {
+        method: 'GET',
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
 
@@ -158,6 +159,7 @@ export const BattleNetConnect: React.FC = () => {
       const redirectUri = `${window.location.origin}${window.location.pathname}`;
 
       const { data, error } = await supabase.functions.invoke('battlenet-auth/callback', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
         body: { code, redirectUri, region },
       });
 
