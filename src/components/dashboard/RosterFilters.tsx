@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Search, ChevronDown, Check, Shield, Heart, Swords, X, Clock, CheckCircle2, XCircle, UserCheck, UserMinus, UserX, Sword, Crosshair, MessageSquare, Hash } from 'lucide-react';
+import { Search, ChevronDown, Check, Shield, Heart, Swords, X, Clock, CheckCircle2, XCircle, UserCheck, UserMinus, UserX, Sword, Crosshair, MessageSquare, Hash, ListFilter } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { wowClasses, Role } from '@/data/wowClasses';
 import { RosterFilters as RosterFiltersType, ValidationStatus, CommitmentFilter, RangeFilter } from '@/types/guild';
 import { cn } from '@/lib/utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface RosterFiltersProps {
   filters: RosterFiltersType;
@@ -103,7 +104,8 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
   const hasMinWishes = filters.minWishes !== null;
   const hasRangeFilters = filters.rangeFilters.length > 0;
   const hasCommentFilter = filters.hasComment !== null;
-  const hasAnyFilters = hasRoleFilters || hasClassFilters || hasValidationFilters || hasCommitmentFilters || hasMinWishes || hasRangeFilters || hasCommentFilter;
+  const hasMaxWishIndex = filters.maxWishIndex !== null;
+  const hasAnyFilters = hasRoleFilters || hasClassFilters || hasValidationFilters || hasCommitmentFilters || hasMinWishes || hasRangeFilters || hasCommentFilter || hasMaxWishIndex;
 
   return (
     <div className="flex flex-col gap-2 mb-4">
@@ -591,6 +593,33 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
           </div>
         </PopoverContent>
       </Popover>
+
+      {/* Wish Range Filter */}
+      <Select
+        value={filters.maxWishIndex?.toString() ?? 'all'}
+        onValueChange={(value) => updateFilter('maxWishIndex', value === 'all' ? null : parseInt(value))}
+      >
+        <SelectTrigger
+          className={cn(
+            "h-9 md:h-8 w-auto min-w-[140px] md:min-w-[160px] gap-2 text-sm flex-shrink-0",
+            hasMaxWishIndex
+              ? "border-border/60"
+              : "border-border/40 text-muted-foreground"
+          )}
+        >
+          <ListFilter className="h-3.5 w-3.5 flex-shrink-0" />
+          <SelectValue placeholder={t.dashboard.wishRangeFilter} />
+        </SelectTrigger>
+        <SelectContent className="bg-card border-border z-50">
+          <SelectItem value="all">{t.dashboard.allWishes}</SelectItem>
+          <SelectItem value="1">{t.dashboard.wishRange1}</SelectItem>
+          {[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map((n) => (
+            <SelectItem key={n} value={n.toString()}>
+              {t.dashboard.wishRangeN.replace('{{n}}', n.toString())}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
       {/* AND/OR Toggle - only show when multiple filters are selected */}
       {hasAnyFilters && (

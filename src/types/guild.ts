@@ -78,4 +78,5 @@ export interface RosterFilters {
   minWishes: number | null;
   rangeFilters: RangeFilter[];
   hasComment: boolean | null;
+  maxWishIndex: number | null; // null = all wishes, 1-13 = limit to first N
 }

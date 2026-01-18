@@ -50,6 +50,7 @@ const RosterWishes = () => {
     minWishes: null,
     rangeFilters: [],
     hasComment: null,
+    maxWishIndex: null,
   });
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
@@ -478,6 +479,11 @@ const RosterWishes = () => {
 
     const isAndMode = filters.filterMode === 'and';
 
+    // Limit wishes to first N if maxWishIndex is set
+    const wishesToConsider = filters.maxWishIndex
+      ? m.wishes.filter(w => w.choice_index <= filters.maxWishIndex!)
+      : m.wishes;
+
     // Filter by commitment
     if (filters.commitmentFilters.length > 0) {
       // Map DB status to CommitmentFilter
@@ -490,15 +496,15 @@ const RosterWishes = () => {
       if (!filters.commitmentFilters.includes(memberCommitment)) return false;
     }
 
-    // Filter by minimum wishes
+    // Filter by minimum wishes (based on wishesToConsider)
     if (filters.minWishes !== null) {
-      const wishCount = m.wishes.filter(w => w.class_id).length;
+      const wishCount = wishesToConsider.filter(w => w.class_id).length;
       if (wishCount < filters.minWishes) return false;
     }
 
-    // Filter by range (melee/ranged)
+    // Filter by range (melee/ranged) - based on wishesToConsider
     if (filters.rangeFilters.length > 0) {
-      const hasRange = m.wishes.some(w => {
+      const hasRange = wishesToConsider.some(w => {
         if (!w.spec_ids?.length) return false;
         return w.spec_ids.some(specId => {
           const spec = getSpecById(specId);
@@ -508,14 +514,15 @@ const RosterWishes = () => {
       if (!hasRange) return false;
     }
 
-    // Filter by comment
+    // Filter by comment - based on wishesToConsider
     if (filters.hasComment !== null) {
-      const hasAnyComment = m.wishes.some(w => w.comment?.trim());
+      const hasAnyComment = wishesToConsider.some(w => w.comment?.trim());
       if (filters.hasComment !== hasAnyComment) return false;
     }
 
+    // Filter by role - based on wishesToConsider
     if (filters.roleFilters.length > 0) {
-      const matchingWishes = m.wishes.filter(w => {
+      const matchingWishes = wishesToConsider.filter(w => {
         const roles = getRolesFromSpecs(w.spec_ids);
         return filters.roleFilters.some(rf => roles.includes(rf as Role));
       });
@@ -523,7 +530,7 @@ const RosterWishes = () => {
       if (isAndMode) {
         // AND: all selected roles must be present across wishes
         const allRolesPresent = filters.roleFilters.every(rf =>
-          m.wishes.some(w => getRolesFromSpecs(w.spec_ids).includes(rf as Role))
+          wishesToConsider.some(w => getRolesFromSpecs(w.spec_ids).includes(rf as Role))
         );
         if (!allRolesPresent) return false;
       } else {
@@ -532,31 +539,32 @@ const RosterWishes = () => {
       }
     }
 
+    // Filter by class - based on wishesToConsider
     if (filters.classFilters.length > 0) {
       if (isAndMode) {
         // AND: all selected classes must be present
         const allClassesPresent = filters.classFilters.every(cf =>
-          m.wishes.some(w => w.class_id === cf)
+          wishesToConsider.some(w => w.class_id === cf)
         );
         if (!allClassesPresent) return false;
       } else {
         // OR: at least one class must match
-        const hasClass = m.wishes.some(w => filters.classFilters.includes(w.class_id));
+        const hasClass = wishesToConsider.some(w => filters.classFilters.includes(w.class_id));
         if (!hasClass) return false;
       }
     }
 
-    // Filter by validation status
+    // Filter by validation status - based on wishesToConsider
     if (filters.validationFilters.length > 0) {
       if (isAndMode) {
         // AND: all selected validation statuses must be present
         const allStatusesPresent = filters.validationFilters.every(vs =>
-          m.wishes.some(w => (w.validation_status || 'pending') === vs)
+          wishesToConsider.some(w => (w.validation_status || 'pending') === vs)
         );
         if (!allStatusesPresent) return false;
       } else {
         // OR: at least one validation status must match
-        const hasStatus = m.wishes.some(w =>
+        const hasStatus = wishesToConsider.some(w =>
           filters.validationFilters.includes((w.validation_status || 'pending') as ValidationStatus)
         );
         if (!hasStatus) return false;
