@@ -308,8 +308,8 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                     style={{ width: `${(stat.wish1 / maxClassTotal) * 100}%` }}
                   />
                 </div>
-                <div className="w-14 text-right text-sm text-muted-foreground tabular-nums">
-                  {maxWishIndex === 1 ? stat.wish1 : `${stat.wish1} / ${stat.total}`}
+                <div className="w-10 text-right text-sm text-muted-foreground tabular-nums">
+                  {stat.total}
                 </div>
               </div>
             ))}
@@ -363,7 +363,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                     <span className="text-sm font-medium">{getRoleName(stat.role)}</span>
                   </div>
                   <span className="text-sm text-muted-foreground">
-                    {maxWishIndex === 1 ? stat.wish1 : `${stat.wish1} + ${stat.other}`}
+                    {stat.wish1 + stat.other}
                   </span>
                 </div>
                 <div className="flex h-2 rounded-full overflow-hidden bg-muted/30">
