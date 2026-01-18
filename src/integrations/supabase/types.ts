@@ -1680,6 +1680,10 @@ export type Database = {
         Args: { p_character_id: string }
         Returns: undefined
       }
+      set_main_character_by_key: {
+        Args: { p_name: string; p_realm_slug: string }
+        Returns: undefined
+      }
       shares_wow_guild: {
         Args: { p_current_user_id: string; p_target_user_id: string }
         Returns: boolean
