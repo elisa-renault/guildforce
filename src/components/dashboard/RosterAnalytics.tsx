@@ -501,10 +501,11 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                           animationBegin={0}
                           animationDuration={800}
                         >
-                          {pieData.map((entry, index) => (
+                        {pieData.map((entry, index) => (
                             <Cell 
                               key={`cell-${index}`} 
                               fill={entry.color}
+                              stroke="none"
                               className="transition-all duration-200 hover:opacity-80"
                               style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}
                             />
@@ -581,6 +582,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                             <Cell 
                               key={`cell-${index}`} 
                               fill={entry.color}
+                              stroke="none"
                               className="transition-all duration-200 hover:opacity-80"
                               style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}
                             />
