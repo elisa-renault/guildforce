@@ -417,26 +417,26 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
           </div>
         </div>
 
-        {/* Main Grid: 4 columns on desktop */}
-        <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+        {/* Main Grid: 6 columns - pie charts smaller, bar charts larger */}
+        <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-6">
           {/* Range Pie - 1 column */}
           <GlowCard className="p-3">
-            <h4 className="text-sm font-semibold mb-2 flex items-center gap-1">
+            <h4 className="text-sm font-semibold mb-2 flex items-center justify-center gap-1">
               <Swords className="h-3.5 w-3.5 text-blue-500" />
               <span className="text-muted-foreground">/</span>
               <Crosshair className="h-3.5 w-3.5 text-purple-500" />
             </h4>
             {totalRange > 0 ? (
-              <div className="flex items-center gap-3">
-                <div className="w-28 h-28 flex-shrink-0">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-24 h-24">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={rangePieData}
                         cx="50%"
                         cy="50%"
-                        innerRadius={28}
-                        outerRadius={52}
+                        innerRadius={22}
+                        outerRadius={44}
                         dataKey="value"
                         stroke="none"
                       >
@@ -473,16 +473,16 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
           <GlowCard className="p-3">
             <h4 className="text-sm font-semibold mb-2 text-center">{t.dashboard.rolesByPriority}</h4>
             {totalRoles > 0 ? (
-              <div className="flex items-center gap-3">
-                <div className="w-28 h-28 flex-shrink-0">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-24 h-24">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={rolePieData}
                         cx="50%"
                         cy="50%"
-                        innerRadius={28}
-                        outerRadius={52}
+                        innerRadius={22}
+                        outerRadius={44}
                         dataKey="value"
                         stroke="none"
                       >
@@ -511,8 +511,8 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
             )}
           </GlowCard>
 
-          {/* Class Distribution - 1 column */}
-          <GlowCard className="p-3">
+          {/* Class Distribution - 2 columns */}
+          <GlowCard className="p-3 lg:col-span-2">
             <h3 className="text-sm font-semibold mb-2">{t.dashboard.classDistribution}</h3>
             <div className="max-h-[200px] overflow-y-auto pr-1 space-y-1">
               {representedClasses.map((stat) => (
@@ -566,8 +566,8 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
             </div>
           </GlowCard>
 
-          {/* Spec Popularity - 1 column */}
-          <GlowCard className="p-3">
+          {/* Spec Popularity - 2 columns */}
+          <GlowCard className="p-3 lg:col-span-2">
             <h3 className="text-sm font-semibold mb-2">{t.dashboard.topSpecs}</h3>
             {specStats.length > 0 ? (
               <div className="max-h-[200px] overflow-y-auto pr-1 space-y-1">
