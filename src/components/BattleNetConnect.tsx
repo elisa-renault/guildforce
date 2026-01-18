@@ -12,15 +12,19 @@ import { CheckCircle, Loader2, RotateCcw, Unlink } from 'lucide-react';
 import { toast } from 'sonner';
 import { getClassNameFromBattleNet } from '@/data/battlenetClasses';
 import { BattleNetIcon } from './BattleNetIcon';
-
-type BattleNetRegion = 'eu' | 'us' | 'kr' | 'tw';
-
-const REGION_LABELS: Record<BattleNetRegion, string> = {
-  eu: 'Europe',
-  us: 'Americas',
-  kr: 'Korea',
-  tw: 'Taiwan',
-};
+import {
+  type BattleNetRegion,
+  REGION_LABELS,
+  ALL_REGIONS,
+  parseOAuthState,
+  validateOAuthState,
+  getStoredOAuthParams,
+  storeOAuthParams,
+  cleanupOAuthParams,
+  getRedirectUri,
+  generateOAuthState,
+  getValidRegion,
+} from '@/lib/battlenetOAuth';
 
 interface WoWCharacter {
   id: string;
@@ -57,7 +61,7 @@ export const BattleNetConnect: React.FC = () => {
         .maybeSingle();
       
       if (data?.region) {
-        setConnectedRegion(data.region as BattleNetRegion);
+        setConnectedRegion(getValidRegion(data.region));
       }
     };
     
@@ -75,28 +79,16 @@ export const BattleNetConnect: React.FC = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
     const stateParam = urlParams.get('state');
-    // Use localStorage instead of sessionStorage for better persistence across redirects
-    const storedState = localStorage.getItem('battlenet_state');
-    const storedRegion = localStorage.getItem('battlenet_region') as BattleNetRegion || 'eu';
 
     if (code && stateParam) {
-      // Parse the state JSON to extract the actual state value
-      let stateMatches = false;
-      try {
-        const parsedState = JSON.parse(stateParam);
-        stateMatches = storedState ? parsedState.state === storedState : true;
-      } catch {
-        // If not JSON, try direct comparison (fallback)
-        stateMatches = storedState ? stateParam === storedState : true;
-      }
+      const { state: storedState, region: storedRegion } = getStoredOAuthParams();
+      const parsedState = parseOAuthState(stateParam);
+      const stateMatches = validateOAuthState(parsedState, storedState);
 
       // Process callback if code exists (state validation is best-effort due to cross-domain issues)
-      if (stateMatches || !storedState) {
+      if (stateMatches) {
         handleOAuthCallback(code, storedRegion);
-        // Clean up URL
-        window.history.replaceState({}, document.title, window.location.pathname);
-        localStorage.removeItem('battlenet_state');
-        localStorage.removeItem('battlenet_region');
+        cleanupOAuthParams();
       }
     }
   }, []);
@@ -128,13 +120,10 @@ export const BattleNetConnect: React.FC = () => {
 
     setIsLoading(true);
     try {
-      // Generate a random state for CSRF protection
-      const state = crypto.randomUUID();
-      // Use localStorage for better persistence across external redirects
-      localStorage.setItem('battlenet_state', state);
-      localStorage.setItem('battlenet_region', selectedRegion);
+      const state = generateOAuthState();
+      storeOAuthParams(state, selectedRegion);
 
-      const redirectUri = `${window.location.origin}${window.location.pathname}`;
+      const redirectUri = getRedirectUri();
 
       const { data, error } = await supabase.functions.invoke('battlenet-auth/auth-url', {
         body: { redirectUri, state, region: selectedRegion },
@@ -156,7 +145,7 @@ export const BattleNetConnect: React.FC = () => {
 
     setIsLoading(true);
     try {
-      const redirectUri = `${window.location.origin}${window.location.pathname}`;
+      const redirectUri = getRedirectUri();
 
       const { data, error } = await supabase.functions.invoke('battlenet-auth/callback', {
         headers: { Authorization: `Bearer ${session.access_token}` },
@@ -168,7 +157,6 @@ export const BattleNetConnect: React.FC = () => {
       toast.success(`${t.battlenet.connected} : ${data.battletag}`);
 
       // Refresh profile + refetch characters from the database to ensure we use real IDs
-      // (the callback response does not guarantee a characters payload)
       await refreshProfile();
       await fetchCharacters();
     } catch (error) {
@@ -251,7 +239,18 @@ export const BattleNetConnect: React.FC = () => {
       
       // Check if backend returned an error (403, SYNC_FAILED, etc.)
       if (data && data.success === false) {
-        const errorMsg = data.error || t.battlenet.resyncError;
+        const errorCode = data.errorCode;
+        let errorMsg = data.error || t.battlenet.resyncError;
+        
+        // Use specific error messages based on errorCode
+        if (errorCode === 'NO_LICENSE') {
+          errorMsg = t.battlenet.errorNoLicense || errorMsg;
+        } else if (errorCode === 'PARENTAL_CONTROLS') {
+          errorMsg = t.battlenet.errorParentalControls || errorMsg;
+        } else if (errorCode === 'TOKEN_EXPIRED') {
+          errorMsg = t.battlenet.errorTokenExpired || errorMsg;
+        }
+        
         log.error('Resync failed:', errorMsg);
         toast.error(errorMsg);
         return;
@@ -259,9 +258,10 @@ export const BattleNetConnect: React.FC = () => {
 
       // Update UI with detected region if it changed
       if (data?.detectedRegion) {
-        setConnectedRegion(data.detectedRegion as BattleNetRegion);
-        if (data.detectedRegion !== connectedRegion) {
-          toast.success(`${t.battlenet.resyncSuccess} (${REGION_LABELS[data.detectedRegion as BattleNetRegion]})`);
+        const newRegion = getValidRegion(data.detectedRegion);
+        setConnectedRegion(newRegion);
+        if (newRegion !== connectedRegion) {
+          toast.success(`${t.battlenet.resyncSuccess} (${REGION_LABELS[newRegion]})`);
         } else {
           toast.success(t.battlenet.resyncSuccess);
         }
@@ -316,7 +316,7 @@ export const BattleNetConnect: React.FC = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {(Object.keys(REGION_LABELS) as BattleNetRegion[]).map((region) => (
+                {ALL_REGIONS.map((region) => (
                   <SelectItem key={region} value={region}>
                     {REGION_LABELS[region]}
                   </SelectItem>
