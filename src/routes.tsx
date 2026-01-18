@@ -1,9 +1,25 @@
 import { lazy } from "react";
 import type { ReactNode } from "react";
+import { matchPath } from "react-router-dom";
+import type { Translations } from "@/i18n/translations";
+
+export type RouteLabelKey = keyof Translations["routeMeta"];
+
+export type RouteBreadcrumb = Array<{
+  label?: string;
+  labelKey?: RouteLabelKey;
+  href?: string;
+}>;
 
 type AppRoute = {
   path: string;
   element: ReactNode;
+  title?: RouteLabelKey;
+  requiresAuth?: boolean;
+  breadcrumb?: RouteBreadcrumb;
+  navLabel?: RouteLabelKey;
+  showInNav?: boolean;
+  hideGlobalNav?: boolean;
 };
 
 const Index = lazy(() => import("./pages/Index"));
@@ -32,31 +48,189 @@ const Changelog = lazy(() => import("./pages/Changelog"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 export const appRoutes: AppRoute[] = [
-  { path: "/", element: <Index /> },
-  { path: "/auth", element: <Auth /> },
-  { path: "/guilds", element: <GuildList /> },
-  { path: "/profile", element: <Profile /> },
-  { path: "/u/:username", element: <PublicProfile /> },
-  { path: "/forum", element: <Forum /> },
-  { path: "/forum/admin", element: <ForumAdmin /> },
-  { path: "/admin", element: <Admin /> },
-  { path: "/legal", element: <LegalPage /> },
-  { path: "/privacy", element: <LegalPage /> },
-  { path: "/terms", element: <LegalPage /> },
-  { path: "/changelog", element: <Changelog /> },
-  { path: "/forum/category/:categorySlug", element: <ForumCategory /> },
-  { path: "/forum/category/:categorySlug/new", element: <ForumNewTopic /> },
-  { path: "/forum/topic/:topicId", element: <ForumTopic /> },
-  { path: "/guild/:regionSlug/:serverSlug/:guildSlug", element: <Overview /> },
-  { path: "/guild/:regionSlug/:serverSlug/:guildSlug/roster", element: <RosterWishes /> },
-  { path: "/guild/:regionSlug/:serverSlug/:guildSlug/wishes", element: <Wishes /> },
-  { path: "/guild/:regionSlug/:serverSlug/:guildSlug/settings", element: <GuildSettings /> },
-  { path: "/guild/:regionSlug/:serverSlug/:guildSlug/member/:memberId", element: <MemberWishes /> },
-  { path: "/guild/:regionSlug/:serverSlug/:guildSlug/polls", element: <GuildPolls /> },
-  { path: "/guild/:regionSlug/:serverSlug/:guildSlug/polls/new", element: <GuildPollNew /> },
-  { path: "/guild/:regionSlug/:serverSlug/:guildSlug/polls/:pollId/edit", element: <GuildPollNew /> },
-  { path: "/guild/:regionSlug/:serverSlug/:guildSlug/poll/:pollId", element: <GuildPollView /> },
-  { path: "/guild/:regionSlug/:serverSlug/:guildSlug/poll/:pollId/results", element: <GuildPollResults /> },
-  { path: "/guild/:regionSlug/:serverSlug/:guildSlug/members", element: <GuildMembers /> },
-  { path: "*", element: <NotFound /> },
+  {
+    path: "/",
+    element: <Index />,
+    title: "home",
+    breadcrumb: [{ labelKey: "home", href: "/" }],
+  },
+  {
+    path: "/auth",
+    element: <Auth />,
+    title: "auth",
+    hideGlobalNav: true,
+  },
+  {
+    path: "/guilds",
+    element: <GuildList />,
+    title: "guilds",
+    requiresAuth: true,
+    navLabel: "guilds",
+    showInNav: true,
+    breadcrumb: [{ labelKey: "guilds", href: "/guilds" }],
+  },
+  {
+    path: "/profile",
+    element: <Profile />,
+    title: "profile",
+    requiresAuth: true,
+    navLabel: "profile",
+    showInNav: true,
+    breadcrumb: [{ labelKey: "profile", href: "/profile" }],
+  },
+  {
+    path: "/u/:username",
+    element: <PublicProfile />,
+    title: "publicProfile",
+  },
+  {
+    path: "/forum",
+    element: <Forum />,
+    title: "forum",
+    requiresAuth: true,
+    navLabel: "forum",
+    showInNav: true,
+    breadcrumb: [{ labelKey: "forum", href: "/forum" }],
+  },
+  {
+    path: "/forum/admin",
+    element: <ForumAdmin />,
+    title: "forumAdmin",
+    requiresAuth: true,
+  },
+  {
+    path: "/admin",
+    element: <Admin />,
+    title: "admin",
+    requiresAuth: true,
+    navLabel: "admin",
+    showInNav: true,
+  },
+  {
+    path: "/legal",
+    element: <LegalPage />,
+    title: "legal",
+  },
+  {
+    path: "/privacy",
+    element: <LegalPage />,
+    title: "privacy",
+  },
+  {
+    path: "/terms",
+    element: <LegalPage />,
+    title: "terms",
+  },
+  {
+    path: "/changelog",
+    element: <Changelog />,
+    title: "changelog",
+  },
+  {
+    path: "/forum/category/:categorySlug",
+    element: <ForumCategory />,
+    title: "forumCategory",
+    requiresAuth: true,
+  },
+  {
+    path: "/forum/category/:categorySlug/new",
+    element: <ForumNewTopic />,
+    title: "forumNewTopic",
+    requiresAuth: true,
+  },
+  {
+    path: "/forum/topic/:topicId",
+    element: <ForumTopic />,
+    title: "forumTopic",
+    requiresAuth: true,
+  },
+  {
+    path: "/guild/:regionSlug/:serverSlug/:guildSlug",
+    element: <Overview />,
+    title: "guildOverview",
+    requiresAuth: true,
+  },
+  {
+    path: "/guild/:regionSlug/:serverSlug/:guildSlug/roster",
+    element: <RosterWishes />,
+    title: "guildRoster",
+    requiresAuth: true,
+  },
+  {
+    path: "/guild/:regionSlug/:serverSlug/:guildSlug/wishes",
+    element: <Wishes />,
+    title: "guildWishes",
+    requiresAuth: true,
+  },
+  {
+    path: "/guild/:regionSlug/:serverSlug/:guildSlug/settings",
+    element: <GuildSettings />,
+    title: "guildSettings",
+    requiresAuth: true,
+  },
+  {
+    path: "/guild/:regionSlug/:serverSlug/:guildSlug/member/:memberId",
+    element: <MemberWishes />,
+    title: "guildMemberWishes",
+    requiresAuth: true,
+  },
+  {
+    path: "/guild/:regionSlug/:serverSlug/:guildSlug/polls",
+    element: <GuildPolls />,
+    title: "guildPolls",
+    requiresAuth: true,
+  },
+  {
+    path: "/guild/:regionSlug/:serverSlug/:guildSlug/polls/new",
+    element: <GuildPollNew />,
+    title: "guildPollNew",
+    requiresAuth: true,
+  },
+  {
+    path: "/guild/:regionSlug/:serverSlug/:guildSlug/polls/:pollId/edit",
+    element: <GuildPollNew />,
+    title: "guildPollEdit",
+    requiresAuth: true,
+  },
+  {
+    path: "/guild/:regionSlug/:serverSlug/:guildSlug/poll/:pollId",
+    element: <GuildPollView />,
+    title: "guildPollView",
+    requiresAuth: true,
+  },
+  {
+    path: "/guild/:regionSlug/:serverSlug/:guildSlug/poll/:pollId/results",
+    element: <GuildPollResults />,
+    title: "guildPollResults",
+    requiresAuth: true,
+  },
+  {
+    path: "/guild/:regionSlug/:serverSlug/:guildSlug/members",
+    element: <GuildMembers />,
+    title: "guildMembers",
+    requiresAuth: true,
+  },
+  { path: "*", element: <NotFound />, title: "notFound" },
 ];
+
+export const getRouteMeta = (pathname: string) => {
+  const matches = appRoutes
+    .map((route) => ({
+      route,
+      match: matchPath(
+        { path: route.path, end: route.path !== "*" },
+        pathname,
+      ),
+    }))
+    .filter((entry) => entry.match);
+
+  if (matches.length === 0) {
+    return undefined;
+  }
+
+  return matches.sort((a, b) => {
+    const aLength = a.match?.pathnameBase.length ?? 0;
+    const bLength = b.match?.pathnameBase.length ?? 0;
+    return bLength - aLength;
+  })[0].route;
+};
