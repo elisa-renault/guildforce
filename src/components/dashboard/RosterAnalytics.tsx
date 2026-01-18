@@ -427,16 +427,16 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
               <Crosshair className="h-3.5 w-3.5 text-purple-500" />
             </h4>
             {totalRange > 0 ? (
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-20 h-20">
+              <div className="flex items-center gap-3">
+                <div className="w-28 h-28 flex-shrink-0">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={rangePieData}
                         cx="50%"
                         cy="50%"
-                        innerRadius={18}
-                        outerRadius={38}
+                        innerRadius={28}
+                        outerRadius={52}
                         dataKey="value"
                         stroke="none"
                       >
@@ -473,16 +473,16 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
           <GlowCard className="p-3">
             <h4 className="text-sm font-semibold mb-2 text-center">{t.dashboard.rolesByPriority}</h4>
             {totalRoles > 0 ? (
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-20 h-20">
+              <div className="flex items-center gap-3">
+                <div className="w-28 h-28 flex-shrink-0">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={rolePieData}
                         cx="50%"
                         cy="50%"
-                        innerRadius={18}
-                        outerRadius={38}
+                        innerRadius={28}
+                        outerRadius={52}
                         dataKey="value"
                         stroke="none"
                       >
