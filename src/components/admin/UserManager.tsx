@@ -222,21 +222,21 @@ export function UserManager() {
 
       {/* Table */}
       <GlowCard className="overflow-hidden">
-        <Table>
-          <TableHeader>
+        <Table className="text-xs md:text-sm">
+          <TableHeader className="[&_th]:h-10 [&_th]:px-2 sm:[&_th]:px-3">
             <TableRow>
-              <TableHead className="w-[50px]"></TableHead>
+              <TableHead className="w-[44px]"></TableHead>
               <TableHead>{language === 'fr' ? 'Utilisateur' : 'User'}</TableHead>
-              <TableHead>{language === 'fr' ? 'BattleTag' : 'BattleTag'}</TableHead>
-              <TableHead>{language === 'fr' ? 'Créé le' : 'Created'}</TableHead>
-              <TableHead>{language === 'fr' ? 'Dernière maj' : 'Last update'}</TableHead>
-              <TableHead>{language === 'fr' ? 'Langue' : 'Language'}</TableHead>
-              <TableHead>{language === 'fr' ? 'Perso principal' : 'Main character'}</TableHead>
+              <TableHead className="hidden sm:table-cell">{language === 'fr' ? 'BattleTag' : 'BattleTag'}</TableHead>
+              <TableHead className="hidden lg:table-cell">{language === 'fr' ? 'Créé le' : 'Created'}</TableHead>
+              <TableHead className="hidden lg:table-cell">{language === 'fr' ? 'Dernière maj' : 'Last update'}</TableHead>
+              <TableHead className="hidden md:table-cell">{language === 'fr' ? 'Langue' : 'Language'}</TableHead>
+              <TableHead className="hidden md:table-cell">{language === 'fr' ? 'Perso principal' : 'Main character'}</TableHead>
               <TableHead>{language === 'fr' ? 'Rôles' : 'Roles'}</TableHead>
               <TableHead className="text-right">{language === 'fr' ? 'Actions' : 'Actions'}</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody className="[&_td]:px-2 [&_td]:py-2 sm:[&_td]:px-3 md:[&_td]:py-3">
             {loading ? (
               [...Array(5)].map((_, i) => (
                 <TableRow key={i}>
@@ -255,7 +255,7 @@ export function UserManager() {
               users.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell>
-                    <Avatar className="h-8 w-8">
+                    <Avatar className="h-7 w-7 md:h-8 md:w-8">
                       <AvatarImage src={user.avatar_url || undefined} />
                       <AvatarFallback className="bg-primary/20 text-primary text-xs">
                         <User className="h-4 w-4" />
@@ -272,19 +272,19 @@ export function UserManager() {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
+                  <TableCell className="hidden sm:table-cell text-muted-foreground">
                     {user.battletag || '-'}
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
+                  <TableCell className="hidden lg:table-cell text-muted-foreground text-xs md:text-sm">
                     {formatDateTime(user.created_at)}
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
+                  <TableCell className="hidden lg:table-cell text-muted-foreground text-xs md:text-sm">
                     {formatDateTime(user.updated_at)}
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
+                  <TableCell className="hidden md:table-cell text-muted-foreground text-xs md:text-sm">
                     {formatLanguage(user.preferred_language)}
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
+                  <TableCell className="hidden md:table-cell text-muted-foreground text-xs md:text-sm">
                     {user.main_character_name || '-'}
                   </TableCell>
                   <TableCell>
