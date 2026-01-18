@@ -146,18 +146,21 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     ] as RoleByPriority[];
   }, [members, maxWishIndex]);
 
-  // Calculate range distribution based on filter (using wish 1 within the filtered range)
+  // Calculate range distribution based on filter
   const rangeStats = useMemo(() => {
     const stats = { melee: 0, ranged: 0 };
 
     members.forEach(m => {
-      const wish1 = m.wishes.find(w => w.choice_index === 1);
-      if (wish1?.spec_ids?.length && wish1.choice_index <= maxWishIndex) {
-        const spec = getSpecById(wish1.spec_ids[0]);
-        if (spec) {
-          stats[spec.range]++;
+      m.wishes.forEach(w => {
+        if (w.spec_ids?.length && w.choice_index <= maxWishIndex) {
+          w.spec_ids.forEach(specId => {
+            const spec = getSpecById(specId);
+            if (spec) {
+              stats[spec.range]++;
+            }
+          });
         }
-      }
+      });
     });
 
     return stats;
