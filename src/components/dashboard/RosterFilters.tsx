@@ -506,10 +506,13 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
                   <Separator />
                   <button
                     onClick={() => {
-                      updateFilter('maxWishIndex', null);
-                      updateFilter('minWishes', null);
-                      updateFilter('validationFilters', []);
-                      updateFilter('hasComment', null);
+                      onFiltersChange({
+                        ...filters,
+                        maxWishIndex: null,
+                        minWishes: null,
+                        validationFilters: [],
+                        hasComment: null,
+                      });
                     }}
                     className="flex items-center gap-2 px-2 py-1.5 rounded text-sm text-muted-foreground hover:text-foreground hover:bg-primary/10 w-full"
                   >
