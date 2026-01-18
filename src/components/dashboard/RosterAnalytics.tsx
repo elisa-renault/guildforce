@@ -30,6 +30,13 @@ const classColorMap: Record<string, string> = {
   'class-evoker': 'hsl(var(--class-evoker))',
 };
 
+// Role color mapping for distinctive visualization
+const roleColorMap: Record<Role, string> = {
+  tank: 'hsl(210, 70%, 50%)',    // Blue
+  healer: 'hsl(330, 70%, 55%)',  // Pink/Magenta
+  dps: 'hsl(25, 90%, 55%)',      // Orange
+};
+
 interface RosterAnalyticsProps {
   members: MemberWish[];
 }
@@ -334,8 +341,13 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
               {specStats.map((stat, index) => (
                 <div key={stat.id} className="flex items-center gap-2">
                   <span className="w-5 text-xs text-muted-foreground">{index + 1}.</span>
-                  <span className={`text-${stat.classColor}`}>{getRoleIcon(stat.role)}</span>
-                  <span className={`flex-1 text-sm font-medium text-${stat.classColor}`}>
+                  <span style={{ color: classColorMap[stat.classColor] || 'inherit' }}>
+                    {getRoleIcon(stat.role)}
+                  </span>
+                  <span 
+                    className="flex-1 text-sm font-medium"
+                    style={{ color: classColorMap[stat.classColor] || 'inherit' }}
+                  >
                     {stat.specName}
                   </span>
                   <Badge variant="outline" className="text-xs">
@@ -371,8 +383,11 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                       </div>
                       <div className="h-2 rounded-full overflow-hidden bg-muted/30">
                         <div
-                          className="h-full bg-primary transition-all duration-300 rounded-full"
-                          style={{ width: `${(total / maxRoleTotal) * 100}%` }}
+                          className="h-full transition-all duration-300 rounded-full"
+                          style={{ 
+                            width: `${(total / maxRoleTotal) * 100}%`,
+                            backgroundColor: roleColorMap[stat.role]
+                          }}
                         />
                       </div>
                     </div>
@@ -391,15 +406,22 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
           </h3>
           {missingClasses.length > 0 ? (
             <div className="flex flex-wrap gap-2">
-              {missingClasses.map(stat => (
-                <Badge
-                  key={stat.id}
-                  variant="outline"
-                  className={`text-${stat.color} border-${stat.color}/30`}
-                >
-                  {stat.name}
-                </Badge>
-              ))}
+              {missingClasses.map(stat => {
+                const color = classColorMap[stat.color] || 'inherit';
+                return (
+                  <Badge
+                    key={stat.id}
+                    variant="outline"
+                    style={{ 
+                      color,
+                      borderColor: color !== 'inherit' ? color : undefined,
+                      opacity: 0.9
+                    }}
+                  >
+                    {stat.name}
+                  </Badge>
+                );
+              })}
             </div>
           ) : (
             <p className="text-sm text-green-500 flex items-center gap-2">
