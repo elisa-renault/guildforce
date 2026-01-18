@@ -322,7 +322,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
 
           {/* Commitment filter */}
           <Select value={commitmentFilter} onValueChange={(v) => setCommitmentFilter(v as CommitmentFilter)}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-[180px]">
               <SelectValue>
                 {commitmentFilter === 'all' ? t.dashboard.allCommitments : 
                  commitmentFilter === 'confirmed' ? t.wishes.commitment.confirmed :
