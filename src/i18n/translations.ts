@@ -127,6 +127,16 @@ export interface Translations {
     region: string;
     selectRegion: string;
     connectedTo: string;
+    resync: string;
+    resyncing: string;
+    resyncSuccess: string;
+    diagnostic: {
+      title: string;
+      regionLabel: string;
+      lastSync: string;
+      hint: string;
+      wrongRegion: string;
+    };
   };
   // Home page
   home: {
@@ -838,6 +848,16 @@ export const translations: Record<Language, Translations> = {
       region: 'Region',
       selectRegion: 'Select your region',
       connectedTo: 'Connected to',
+      resync: 'Resync characters',
+      resyncing: 'Syncing...',
+      resyncSuccess: 'Characters synced successfully',
+      diagnostic: {
+        title: 'Diagnostic',
+        regionLabel: 'Connected region',
+        lastSync: 'Last sync',
+        hint: 'If you don\'t see your characters, verify the region above matches your Battle.net account.',
+        wrongRegion: 'Wrong region? Unlink and reconnect with the correct one.',
+      },
     },
     home: {
       title: 'Guildforce',
@@ -1593,6 +1613,16 @@ export const translations: Record<Language, Translations> = {
       region: 'Région',
       selectRegion: 'Sélectionnez votre région',
       connectedTo: 'Connecté sur',
+      resync: 'Resynchroniser les personnages',
+      resyncing: 'Synchronisation...',
+      resyncSuccess: 'Personnages synchronisés avec succès',
+      diagnostic: {
+        title: 'Diagnostic',
+        regionLabel: 'Région connectée',
+        lastSync: 'Dernière synchro',
+        hint: 'Si vous ne voyez pas vos personnages, vérifiez que la région ci-dessus correspond à votre compte Battle.net.',
+        wrongRegion: 'Mauvaise région ? Déliez et reconnectez avec la bonne.',
+      },
     },
     home: {
       title: 'Guildforce',
