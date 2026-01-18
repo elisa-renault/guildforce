@@ -380,9 +380,10 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                     </div>
                   </TooltipTrigger>
                   <TooltipContent 
-                    side="top" 
-                    align="center"
+                    side="bottom" 
+                    align="start"
                     sideOffset={8}
+                    avoidCollisions={true}
                     className="max-w-xs z-50"
                   >
                     <p className="font-semibold mb-1" style={{ color: classColorMap[stat.color] }}>
