@@ -97,12 +97,13 @@ export const RosterTable = ({
     return [...members].sort((a, b) => {
       let comparison = 0;
 
+      const statusOrder = { confirmed: 0, potential: 1, withdrawn: 2 };
+      
       switch (sortColumn) {
         case 'player':
           comparison = a.username.toLowerCase().localeCompare(b.username.toLowerCase());
           break;
         case 'status':
-          const statusOrder = { confirmed: 0, potential: 1, withdrawn: 2 };
           comparison = (statusOrder[a.status as keyof typeof statusOrder] ?? 1) - (statusOrder[b.status as keyof typeof statusOrder] ?? 1);
           break;
         case 'wish1':
@@ -119,6 +120,13 @@ export const RosterTable = ({
           const countB = b.wishes.filter(w => w.class_id).length;
           comparison = countA - countB;
           break;
+      }
+
+      // Secondary sort by engagement status when primary comparison is equal
+      if (comparison === 0 && sortColumn !== 'status') {
+        const statusA = statusOrder[a.status as keyof typeof statusOrder] ?? 1;
+        const statusB = statusOrder[b.status as keyof typeof statusOrder] ?? 1;
+        comparison = statusA - statusB;
       }
 
       return sortDirection === 'asc' ? comparison : -comparison;
