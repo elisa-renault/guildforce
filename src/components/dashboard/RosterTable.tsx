@@ -70,8 +70,8 @@ export const RosterTable = ({
   const { regionSlug, serverSlug, guildSlug } = useParams();
   const isMobile = useIsMobile();
   const [validatingWish, setValidatingWish] = useState<string | null>(null);
-  const [sortColumn, setSortColumn] = useState<SortColumn | null>(null);
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [sortColumn, setSortColumn] = useState<SortColumn | null>('wishesCount');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
