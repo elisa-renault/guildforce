@@ -83,6 +83,10 @@ export function UserManager() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
+      // Determine if we can sort server-side (only for db columns, not computed like region/roles)
+      const dbSortableKeys: SortKey[] = ['username', 'battletag', 'created_at', 'updated_at', 'preferred_language', 'main_character_name'];
+      const canSortServerSide = dbSortableKeys.includes(sortKey);
+
       // Get total count
       let countQuery = supabase
         .from('profiles')
@@ -95,73 +99,100 @@ export function UserManager() {
       const { count } = await countQuery;
       setTotalCount(count || 0);
 
-      // Get paginated data
-      const orderKeyMap: Record<SortKey, string | null> = {
-        username: 'username',
-        battletag: 'battletag',
-        created_at: 'created_at',
-        updated_at: 'updated_at',
-        preferred_language: 'preferred_language',
-        main_character_name: 'main_character_name',
-        region: null,
-        roles: null
-      };
-
+      // Build query
       let query = supabase
         .from('profiles')
         .select('id, username, avatar_url, battletag, created_at, updated_at, preferred_language, main_character_name');
       
-      const orderKey = orderKeyMap[sortKey] ?? 'created_at';
-      query = query.order(orderKey, { ascending: sortDirection === 'asc' });
-      
-      query = query
-        .range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1);
-      
       if (searchQuery) {
         query = query.or(`username.ilike.%${searchQuery}%,battletag.ilike.%${searchQuery}%`);
+      }
+
+      // For server-sortable columns, apply order + pagination server-side
+      if (canSortServerSide) {
+        query = query.order(sortKey, { ascending: sortDirection === 'asc' });
+        query = query.range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1);
+      } else {
+        // For computed columns (region, roles), we need all data to sort properly
+        query = query.order('created_at', { ascending: false });
       }
 
       const { data: profiles, error } = await query;
       
       if (error) throw error;
       
-      // Get roles for all fetched users
-      if (profiles && profiles.length > 0) {
-        const userIds = profiles.map(p => p.id);
-
-        const [{ data: roles }, { data: regions }] = await Promise.all([
-          supabase
-            .from('user_roles')
-            .select('user_id, role')
-            .in('user_id', userIds),
-          supabase
-            .from('battlenet_tokens')
-            .select('user_id, region')
-            .in('user_id', userIds)
-        ]);
-        
-        const roleMap = new Map<string, AppRole[]>();
-        roles?.forEach(r => {
-          const existing = roleMap.get(r.user_id) || [];
-          existing.push(r.role as AppRole);
-          roleMap.set(r.user_id, existing);
-        });
-
-        const regionMap = new Map<string, string>();
-        regions?.forEach(r => {
-          if (r.region) {
-            regionMap.set(r.user_id, r.region);
-          }
-        });
-
-        setUsers(profiles.map(p => ({
-          ...p,
-          roles: roleMap.get(p.id) || [],
-          region: regionMap.get(p.id) || null
-        })));
-      } else {
+      if (!profiles || profiles.length === 0) {
         setUsers([]);
+        setLoading(false);
+        return;
       }
+
+      // Get roles and regions for all fetched users
+      const userIds = profiles.map(p => p.id);
+
+      const [{ data: roles }, { data: regions }] = await Promise.all([
+        supabase
+          .from('user_roles')
+          .select('user_id, role')
+          .in('user_id', userIds),
+        supabase
+          .from('battlenet_tokens')
+          .select('user_id, region')
+          .in('user_id', userIds)
+      ]);
+      
+      const roleMap = new Map<string, AppRole[]>();
+      roles?.forEach(r => {
+        const existing = roleMap.get(r.user_id) || [];
+        existing.push(r.role as AppRole);
+        roleMap.set(r.user_id, existing);
+      });
+
+      const regionMap = new Map<string, string>();
+      regions?.forEach(r => {
+        if (r.region) {
+          regionMap.set(r.user_id, r.region);
+        }
+      });
+
+      let usersWithData = profiles.map(p => ({
+        ...p,
+        roles: roleMap.get(p.id) || [],
+        region: regionMap.get(p.id) || null
+      }));
+
+      // For computed columns, sort client-side then paginate
+      if (!canSortServerSide) {
+        const direction = sortDirection === 'asc' ? 1 : -1;
+        usersWithData.sort((a, b) => {
+          let aValue = '';
+          let bValue = '';
+          
+          if (sortKey === 'region') {
+            aValue = (a.region || '').toLowerCase();
+            bValue = (b.region || '').toLowerCase();
+          } else if (sortKey === 'roles') {
+            // Sort by highest role: admin > moderator > user
+            const getRolePriority = (userRoles: AppRole[]) => {
+              if (userRoles.includes('admin')) return 'a';
+              if (userRoles.includes('moderator')) return 'b';
+              return 'c';
+            };
+            aValue = getRolePriority(a.roles);
+            bValue = getRolePriority(b.roles);
+          }
+          
+          if (aValue < bValue) return -direction;
+          if (aValue > bValue) return direction;
+          return 0;
+        });
+        
+        // Apply client-side pagination
+        const start = (currentPage - 1) * ITEMS_PER_PAGE;
+        usersWithData = usersWithData.slice(start, start + ITEMS_PER_PAGE);
+      }
+
+      setUsers(usersWithData);
     } catch (error) {
       log.error('Error fetching users:', error);
       toast.error(language === 'fr' ? 'Erreur lors du chargement des utilisateurs' : 'Error loading users');
@@ -295,41 +326,8 @@ export function UserManager() {
     return '';
   };
 
-  const sortedUsers = useMemo(() => {
-    const direction = sortDirection === 'asc' ? 1 : -1;
-    const sorted = [...users];
-    sorted.sort((a, b) => {
-      let aValue = '';
-      let bValue = '';
-
-      switch (sortKey) {
-        case 'created_at':
-        case 'updated_at':
-          return direction * (new Date(a[sortKey]).getTime() - new Date(b[sortKey]).getTime());
-        case 'region':
-          aValue = formatRegion(a.region);
-          bValue = formatRegion(b.region);
-          break;
-        case 'roles':
-          aValue = getRolesLabel(a.roles);
-          bValue = getRolesLabel(b.roles);
-          break;
-        case 'main_character_name':
-          aValue = formatMainCharacter(a.main_character_name).toLowerCase();
-          bValue = formatMainCharacter(b.main_character_name).toLowerCase();
-          break;
-        default:
-          aValue = (a[sortKey] ?? '').toString().toLowerCase();
-          bValue = (b[sortKey] ?? '').toString().toLowerCase();
-      }
-
-      if (aValue < bValue) return -direction;
-      if (aValue > bValue) return direction;
-      return 0;
-    });
-
-    return sorted;
-  }, [users, sortDirection, sortKey]);
+  // Sorting is now handled in fetchUsers (server-side for db columns, client-side for computed columns)
+  // No need for additional client-side sorting here
 
   const sortIcon = (key: SortKey) => {
     if (key !== sortKey) {
@@ -474,7 +472,7 @@ export function UserManager() {
                 </TableCell>
               </TableRow>
             ) : (
-              sortedUsers.map((user) => (
+              users.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell>
                     <Avatar className="h-7 w-7 md:h-8 md:w-8">
