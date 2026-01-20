@@ -146,7 +146,10 @@ function toGuildSlug(guildName: string): string {
  * Some guild names appear to require keeping accents (e.g. Exöde).
  */
 function toGuildSlugUnicode(guildName: string): string {
+  // Blizzard endpoints can be sensitive to unicode normalization.
+  // Normalize to NFC (composed) so accents like "Á" are encoded consistently.
   return guildName
+    .normalize('NFC')
     .toLowerCase()
     .trim()
     .replace(/\s+/g, '-');
@@ -1821,18 +1824,13 @@ async function fetchAndStoreCharacters(
     // Fetch roster for each guild to get member ranks
     for (const [guildKey, guildInfo] of guildsToCheck) {
       try {
-        const guildSlug = toGuildSlug(guildInfo.name);
-        const rosterUrl = `${apiUrl}/data/wow/guild/${guildInfo.realmSlug}/${encodeURIComponent(guildSlug)}/roster?namespace=${namespace}&locale=${locale}`;
-        
-        log.debug(`Fetching roster for guild: ${sanitizePII(guildInfo.name, 'name')}`);
-        
-        const rosterResponse = await fetch(rosterUrl, {
-          headers: { 'Authorization': `Bearer ${accessToken}` },
-        });
+        // Use public roster fetch with robust fallback (normalized + unicode slugs, multiple namespaces)
+        // to avoid 404s on guild names with accents.
+        const rosterResult = await fetchPublicGuildRoster(region, guildInfo.realmSlug, guildInfo.name);
 
-        if (!rosterResponse.ok) {
-          log.debug(`Failed to fetch roster for ${guildInfo.name}: ${rosterResponse.status}`);
-          
+        if (!rosterResult) {
+          log.debug(`Failed to fetch roster for ${guildInfo.name}: public roster fetch returned null`);
+
           for (const charId of guildInfo.characterIds) {
             guildMemberships.push({
               characterId: charId,
@@ -1847,12 +1845,12 @@ async function fetchAndStoreCharacters(
           continue;
         }
 
-        const roster = await rosterResponse.json();
-        log.debug(`Roster has ${roster.members?.length || 0} members`);
+        const rosterMembers = rosterResult.members || [];
+        log.debug(`Roster has ${rosterMembers.length} members`);
 
         // Prefer guild faction coming from the roster payload (more reliable than character data,
         // especially with modern cross-faction guild setups)
-        const rosterGuildFaction = roster.guild?.faction?.type || guildInfo.faction || 'UNKNOWN';
+        const rosterGuildFaction = rosterResult.faction || guildInfo.faction || 'UNKNOWN';
 
         // Store full roster for this guild (for GMs to see all members)
         await storeFullRoster(
@@ -1861,14 +1859,14 @@ async function fetchAndStoreCharacters(
           guildInfo.realmSlug,
           rosterGuildFaction,
           region,
-          roster.members || []
+          rosterMembers
         );
 
         for (const charId of guildInfo.characterIds) {
           const insertedChar = insertedChars?.find((ic: any) => ic.id === charId);
           if (!insertedChar) continue;
 
-          const rosterMember = roster.members?.find(
+          const rosterMember = rosterMembers.find(
             (m: any) => m.character?.name?.toLowerCase() === insertedChar.name.toLowerCase()
           );
 
