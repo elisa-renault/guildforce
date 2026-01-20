@@ -1117,20 +1117,39 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Scheduled sync for all users with valid tokens (called by cron)
+    // Scheduled sync for all users with valid tokens (called by cron or admin)
     if (path === 'scheduled-sync' && req.method === 'POST') {
-      // Verify this is a legitimate cron call via secret header or service role key
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      
+      // Verify this is a legitimate cron call via secret header, service role key, or admin user
       const cronSecret = req.headers.get('x-cron-secret');
       const expectedSecret = Deno.env.get('CRON_SECRET');
+      const authHeader = req.headers.get('Authorization');
       
       // Allow calls with:
       // 1. Valid cron secret header (for pg_cron scheduled jobs)
       // 2. Exact service role authorization (for admin/manual triggers)
-      const authHeader = req.headers.get('Authorization');
+      // 3. Authenticated admin user (for admin dashboard manual sync)
       const isServiceRole = authHeader === `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`;
       const hasValidCronSecret = cronSecret && expectedSecret && cronSecret === expectedSecret;
       
-      if (!isServiceRole && !hasValidCronSecret) {
+      let isAdminUser = false;
+      if (!isServiceRole && !hasValidCronSecret && authHeader?.startsWith('Bearer ')) {
+        // Check if it's an authenticated admin user
+        const token = authHeader.replace('Bearer ', '');
+        const { data: { user } } = await supabase.auth.getUser(token);
+        if (user) {
+          const { data: roles } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', user.id)
+            .eq('role', 'admin')
+            .maybeSingle();
+          isAdminUser = !!roles;
+        }
+      }
+      
+      if (!isServiceRole && !hasValidCronSecret && !isAdminUser) {
         log.error('Unauthorized scheduled sync attempt', { 
           hasAuthHeader: !!authHeader, 
           hasCronSecret: !!cronSecret 
@@ -1142,12 +1161,10 @@ Deno.serve(async (req) => {
       }
       
       log.info('Scheduled sync authorized', { 
-        method: isServiceRole ? 'service_role' : 'cron_secret' 
+        method: isServiceRole ? 'service_role' : (hasValidCronSecret ? 'cron_secret' : 'admin_user')
       });
 
       log.info('Starting scheduled sync for all users AND all guilds...');
-
-      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
       // =====================================================================
       // PHASE 1: Sync all users with valid tokens (existing behavior)
