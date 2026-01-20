@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
-import { getSpecById, getRolesFromSpecs, Role, wowClasses } from '@/data/wowClasses';
+import { getClassById, getSpecById, getRolesFromSpecs, Role, wowClasses } from '@/data/wowClasses';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
 import { GuildSubNav } from '@/components/guild';
@@ -350,6 +350,19 @@ const RosterWishes = () => {
 
   const saveEditing = async () => {
     if (!user || !guildId || !editingUserId || !selectedRosterId) return;
+    
+    // Validation: each class must have at least one spec
+    const invalidWish = editWishes.find(w => w.classId && w.specIds.length === 0);
+    if (invalidWish) {
+      const cls = getClassById(invalidWish.classId);
+      toast({
+        title: t.wishes.specRequired,
+        description: t.wishes.specRequiredDesc.replace('{class}', cls?.name[language] || ''),
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setSaving(true);
 
     try {
