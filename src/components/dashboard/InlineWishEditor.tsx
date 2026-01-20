@@ -49,11 +49,15 @@ export const InlineWishEditor = ({ wish, choiceIndex, onChange, usedClassIds = [
 
   const handleSpecToggle = (specId: string) => {
     if (wish.specIds.includes(specId)) {
+      // Prevent deselecting if it's the last spec
+      if (wish.specIds.length <= 1) return;
       onChange('specIds', wish.specIds.filter(id => id !== specId));
     } else {
       onChange('specIds', [...wish.specIds, specId]);
     }
   };
+  
+  const hasSpecError = wish.classId && wish.specIds.length === 0;
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -122,7 +126,8 @@ export const InlineWishEditor = ({ wish, choiceIndex, onChange, usedClassIds = [
                   "h-6 flex-1 justify-between gap-1 text-[10px] bg-background/50 hover:bg-muted/50",
                   selectedSpecs.length > 0
                     ? "border-border/60"
-                    : "border-dashed border-muted-foreground/30 text-muted-foreground"
+                    : "border-dashed border-muted-foreground/30 text-muted-foreground",
+                  hasSpecError && "border-destructive/60 animate-pulse"
                 )}
               >
                 {selectedSpecs.length > 0 ? (
@@ -164,11 +169,13 @@ export const InlineWishEditor = ({ wish, choiceIndex, onChange, usedClassIds = [
                     <button
                       key={spec.id}
                       onClick={() => handleSpecToggle(spec.id)}
+                      disabled={isSelected && wish.specIds.length <= 1}
                       className={cn(
                         "w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-colors text-left",
                         isSelected 
                           ? "bg-primary/20" 
-                          : "hover:bg-primary/10"
+                          : "hover:bg-primary/10",
+                        isSelected && wish.specIds.length <= 1 && "opacity-60 cursor-not-allowed"
                       )}
                     >
                       <Icon className={cn("h-3.5 w-3.5", config.color)} />
