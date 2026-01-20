@@ -117,9 +117,9 @@ const RankSlider = ({ maxValue, maxRank, ranks, onChange }: RankSliderProps) => 
   const trackRightOffset = 10;
 
   return (
-    <div className="py-4 select-none">
-      {/* Track container */}
-      <div className="relative h-8 flex items-center">
+      <div className="py-4 select-none overflow-hidden">
+        {/* Track container */}
+        <div className="relative h-8 flex items-center overflow-hidden">
         {/* Background track - starts and ends at tick centers */}
         <div 
           className="absolute top-1/2 -translate-y-1/2 h-1 bg-border rounded-full"
