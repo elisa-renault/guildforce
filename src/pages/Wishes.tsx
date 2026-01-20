@@ -1,6 +1,7 @@
 import React, { useState, useEffect, forwardRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage, Language } from '@/contexts/LanguageContext';
+import { getClassById } from '@/data/wowClasses';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -156,7 +157,7 @@ const Wishes = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { regionSlug, serverSlug, guildSlug } = useParams();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { user } = useAuth();
   const { toast } = useToast();
   const requestedRosterId = new URLSearchParams(location.search).get('rosterId');
@@ -386,6 +387,18 @@ const { data: allGuilds } = await supabase
     }
     if (!selectedRosterId) {
       toast({ title: t.errors.generic, description: t.wishes.noRosterSelected, variant: 'destructive' });
+      return;
+    }
+    
+    // Validate: each wish with a class must have at least one spec
+    const invalidWish = wishes.find(w => w.classId && w.specIds.length === 0);
+    if (invalidWish) {
+      const cls = getClassById(invalidWish.classId);
+      toast({
+        title: t.wishes.specRequired,
+        description: t.wishes.specRequiredDesc.replace('{class}', cls?.name[language] || ''),
+        variant: 'destructive'
+      });
       return;
     }
     setSaving(true);
