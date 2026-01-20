@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import log from '@/lib/logger';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { BattleNetRegion, REGION_LABELS } from '@/lib/battlenetOAuth';
 import { GlowCard } from '@/components/GlowCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +19,9 @@ import {
 } from '@/components/ui/table';
 import { 
   Search, 
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
   ChevronLeft,
   ChevronRight,
   User,
@@ -28,6 +32,16 @@ import {
 import { toast } from 'sonner';
 
 type AppRole = 'admin' | 'moderator' | 'user';
+type SortDirection = 'asc' | 'desc';
+type SortKey =
+  | 'username'
+  | 'battletag'
+  | 'created_at'
+  | 'updated_at'
+  | 'preferred_language'
+  | 'main_character_name'
+  | 'region'
+  | 'roles';
 
 interface UserWithRoles {
   id: string;
@@ -39,6 +53,7 @@ interface UserWithRoles {
   preferred_language: string;
   main_character_name: string | null;
   roles: AppRole[];
+  region: string | null;
 }
 
 const ITEMS_PER_PAGE = 15;
@@ -52,6 +67,18 @@ export function UserManager() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [togglingRole, setTogglingRole] = useState<{ userId: string; role: AppRole } | null>(null);
+  const [sortKey, setSortKey] = useState<SortKey>('created_at');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  const getNextSortDirection = (key: SortKey) => {
+    if (key === sortKey) {
+      return sortDirection === 'asc' ? 'desc' : 'asc';
+    }
+    if (key === 'created_at' || key === 'updated_at') {
+      return 'desc';
+    }
+    return 'asc';
+  };
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -69,10 +96,25 @@ export function UserManager() {
       setTotalCount(count || 0);
 
       // Get paginated data
+      const orderKeyMap: Record<SortKey, string | null> = {
+        username: 'username',
+        battletag: 'battletag',
+        created_at: 'created_at',
+        updated_at: 'updated_at',
+        preferred_language: 'preferred_language',
+        main_character_name: 'main_character_name',
+        region: null,
+        roles: null
+      };
+
       let query = supabase
         .from('profiles')
-        .select('id, username, avatar_url, battletag, created_at, updated_at, preferred_language, main_character_name')
-        .order('created_at', { ascending: false })
+        .select('id, username, avatar_url, battletag, created_at, updated_at, preferred_language, main_character_name');
+      
+      const orderKey = orderKeyMap[sortKey] ?? 'created_at';
+      query = query.order(orderKey, { ascending: sortDirection === 'asc' });
+      
+      query = query
         .range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1);
       
       if (searchQuery) {
@@ -86,10 +128,17 @@ export function UserManager() {
       // Get roles for all fetched users
       if (profiles && profiles.length > 0) {
         const userIds = profiles.map(p => p.id);
-        const { data: roles } = await supabase
-          .from('user_roles')
-          .select('user_id, role')
-          .in('user_id', userIds);
+
+        const [{ data: roles }, { data: regions }] = await Promise.all([
+          supabase
+            .from('user_roles')
+            .select('user_id, role')
+            .in('user_id', userIds),
+          supabase
+            .from('battlenet_tokens')
+            .select('user_id, region')
+            .in('user_id', userIds)
+        ]);
         
         const roleMap = new Map<string, AppRole[]>();
         roles?.forEach(r => {
@@ -98,9 +147,17 @@ export function UserManager() {
           roleMap.set(r.user_id, existing);
         });
 
+        const regionMap = new Map<string, string>();
+        regions?.forEach(r => {
+          if (r.region) {
+            regionMap.set(r.user_id, r.region);
+          }
+        });
+
         setUsers(profiles.map(p => ({
           ...p,
-          roles: roleMap.get(p.id) || []
+          roles: roleMap.get(p.id) || [],
+          region: regionMap.get(p.id) || null
         })));
       } else {
         setUsers([]);
@@ -115,10 +172,17 @@ export function UserManager() {
 
   useEffect(() => {
     fetchUsers();
-  }, [currentPage, searchQuery]);
+  }, [currentPage, searchQuery, sortDirection, sortKey]);
 
   const handleSearch = (value: string) => {
     setSearchQuery(value);
+    setCurrentPage(1);
+  };
+
+  const handleSort = (key: SortKey) => {
+    const nextDirection = getNextSortDirection(key);
+    setSortKey(key);
+    setSortDirection(nextDirection);
     setCurrentPage(1);
   };
 
@@ -202,6 +266,83 @@ export function UserManager() {
     return lang.toUpperCase();
   };
 
+  const formatRegion = (region?: string | null) => {
+    if (!region) return '-';
+    const normalized = region.toLowerCase() as BattleNetRegion;
+    return REGION_LABELS[normalized] || region.toUpperCase();
+  };
+
+  const formatServerName = (serverSlug: string) => {
+    return serverSlug
+      .split('-')
+      .filter(Boolean)
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
+  const formatMainCharacter = (value: string | null) => {
+    if (!value) return '-';
+    if (!value.includes('-')) return value;
+    const [name, ...serverParts] = value.split('-');
+    if (serverParts.length === 0) return value;
+    const server = formatServerName(serverParts.join('-'));
+    return `${name} — ${server}`;
+  };
+
+  const getRolesLabel = (roles: AppRole[]) => {
+    if (roles.includes('admin')) return 'admin';
+    if (roles.includes('moderator')) return 'moderator';
+    return '';
+  };
+
+  const sortedUsers = useMemo(() => {
+    const direction = sortDirection === 'asc' ? 1 : -1;
+    const sorted = [...users];
+    sorted.sort((a, b) => {
+      let aValue = '';
+      let bValue = '';
+
+      switch (sortKey) {
+        case 'created_at':
+        case 'updated_at':
+          return direction * (new Date(a[sortKey]).getTime() - new Date(b[sortKey]).getTime());
+        case 'region':
+          aValue = formatRegion(a.region);
+          bValue = formatRegion(b.region);
+          break;
+        case 'roles':
+          aValue = getRolesLabel(a.roles);
+          bValue = getRolesLabel(b.roles);
+          break;
+        case 'main_character_name':
+          aValue = formatMainCharacter(a.main_character_name).toLowerCase();
+          bValue = formatMainCharacter(b.main_character_name).toLowerCase();
+          break;
+        default:
+          aValue = (a[sortKey] ?? '').toString().toLowerCase();
+          bValue = (b[sortKey] ?? '').toString().toLowerCase();
+      }
+
+      if (aValue < bValue) return -direction;
+      if (aValue > bValue) return direction;
+      return 0;
+    });
+
+    return sorted;
+  }, [users, sortDirection, sortKey]);
+
+  const sortIcon = (key: SortKey) => {
+    if (key !== sortKey) {
+      return <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />;
+    }
+    return sortDirection === 'asc'
+      ? <ArrowUp className="h-3.5 w-3.5 text-primary" />
+      : <ArrowDown className="h-3.5 w-3.5 text-primary" />;
+  };
+
+  const headerButtonClass =
+    'inline-flex items-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground';
+
   return (
     <div className="space-y-4">
       {/* Search */}
@@ -221,18 +362,99 @@ export function UserManager() {
       </div>
 
       {/* Table */}
-      <GlowCard className="overflow-hidden">
-        <Table className="text-xs md:text-sm">
+      <GlowCard className="overflow-x-auto">
+        <Table className="w-full min-w-[960px] text-xs md:text-sm lg:min-w-[1120px] xl:min-w-[1240px]">
           <TableHeader className="[&_th]:h-10 [&_th]:px-2 sm:[&_th]:px-3">
             <TableRow>
               <TableHead className="w-[44px]"></TableHead>
-              <TableHead>{language === 'fr' ? 'Utilisateur' : 'User'}</TableHead>
-              <TableHead className="hidden sm:table-cell">{language === 'fr' ? 'BattleTag' : 'BattleTag'}</TableHead>
-              <TableHead className="hidden lg:table-cell">{language === 'fr' ? 'Créé le' : 'Created'}</TableHead>
-              <TableHead className="hidden lg:table-cell">{language === 'fr' ? 'Dernière maj' : 'Last update'}</TableHead>
-              <TableHead className="hidden md:table-cell">{language === 'fr' ? 'Langue' : 'Language'}</TableHead>
-              <TableHead className="hidden md:table-cell">{language === 'fr' ? 'Perso principal' : 'Main character'}</TableHead>
-              <TableHead>{language === 'fr' ? 'Rôles' : 'Roles'}</TableHead>
+              <TableHead>
+                <button
+                  type="button"
+                  onClick={() => handleSort('username')}
+                  className={headerButtonClass}
+                  aria-sort={sortKey === 'username' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+                >
+                  {language === 'fr' ? 'Utilisateur' : 'User'}
+                  {sortIcon('username')}
+                </button>
+              </TableHead>
+              <TableHead className="hidden sm:table-cell">
+                <button
+                  type="button"
+                  onClick={() => handleSort('battletag')}
+                  className={headerButtonClass}
+                  aria-sort={sortKey === 'battletag' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+                >
+                  {language === 'fr' ? 'BattleTag' : 'BattleTag'}
+                  {sortIcon('battletag')}
+                </button>
+              </TableHead>
+              <TableHead className="hidden md:table-cell">
+                <button
+                  type="button"
+                  onClick={() => handleSort('region')}
+                  className={headerButtonClass}
+                  aria-sort={sortKey === 'region' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+                >
+                  {language === 'fr' ? 'Région' : 'Region'}
+                  {sortIcon('region')}
+                </button>
+              </TableHead>
+              <TableHead className="hidden lg:table-cell">
+                <button
+                  type="button"
+                  onClick={() => handleSort('created_at')}
+                  className={headerButtonClass}
+                  aria-sort={sortKey === 'created_at' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+                >
+                  {language === 'fr' ? 'Créé le' : 'Created'}
+                  {sortIcon('created_at')}
+                </button>
+              </TableHead>
+              <TableHead className="hidden lg:table-cell">
+                <button
+                  type="button"
+                  onClick={() => handleSort('updated_at')}
+                  className={headerButtonClass}
+                  aria-sort={sortKey === 'updated_at' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+                >
+                  {language === 'fr' ? 'Dernière maj' : 'Last update'}
+                  {sortIcon('updated_at')}
+                </button>
+              </TableHead>
+              <TableHead className="hidden md:table-cell">
+                <button
+                  type="button"
+                  onClick={() => handleSort('preferred_language')}
+                  className={headerButtonClass}
+                  aria-sort={sortKey === 'preferred_language' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+                >
+                  {language === 'fr' ? 'Langue' : 'Language'}
+                  {sortIcon('preferred_language')}
+                </button>
+              </TableHead>
+              <TableHead className="hidden md:table-cell">
+                <button
+                  type="button"
+                  onClick={() => handleSort('main_character_name')}
+                  className={headerButtonClass}
+                  aria-sort={sortKey === 'main_character_name' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+                >
+                  {language === 'fr' ? 'Perso principal' : 'Main character'}
+                  {sortIcon('main_character_name')}
+                </button>
+              </TableHead>
+              <TableHead>
+                <button
+                  type="button"
+                  onClick={() => handleSort('roles')}
+                  className={headerButtonClass}
+                  aria-sort={sortKey === 'roles' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+                >
+                  {language === 'fr' ? 'Rôles' : 'Roles'}
+                  {sortIcon('roles')}
+                </button>
+              </TableHead>
               <TableHead className="text-right">{language === 'fr' ? 'Actions' : 'Actions'}</TableHead>
             </TableRow>
           </TableHeader>
@@ -240,19 +462,19 @@ export function UserManager() {
             {loading ? (
               [...Array(5)].map((_, i) => (
                 <TableRow key={i}>
-                  <TableCell colSpan={9} className="h-14">
+                  <TableCell colSpan={10} className="h-14">
                     <div className="animate-pulse bg-muted/30 h-4 rounded w-full" />
                   </TableCell>
                 </TableRow>
               ))
             ) : users.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
                   {language === 'fr' ? 'Aucun utilisateur trouvé' : 'No users found'}
                 </TableCell>
               </TableRow>
             ) : (
-              users.map((user) => (
+              sortedUsers.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell>
                     <Avatar className="h-7 w-7 md:h-8 md:w-8">
@@ -275,6 +497,9 @@ export function UserManager() {
                   <TableCell className="hidden sm:table-cell text-muted-foreground">
                     {user.battletag || '-'}
                   </TableCell>
+                  <TableCell className="hidden md:table-cell text-muted-foreground text-xs md:text-sm">
+                    {formatRegion(user.region)}
+                  </TableCell>
                   <TableCell className="hidden lg:table-cell text-muted-foreground text-xs md:text-sm">
                     {formatDateTime(user.created_at)}
                   </TableCell>
@@ -285,7 +510,7 @@ export function UserManager() {
                     {formatLanguage(user.preferred_language)}
                   </TableCell>
                   <TableCell className="hidden md:table-cell text-muted-foreground text-xs md:text-sm">
-                    {user.main_character_name || '-'}
+                    {formatMainCharacter(user.main_character_name)}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
