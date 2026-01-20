@@ -234,7 +234,7 @@ export default function Admin() {
           </div>
 
           {/* Section content */}
-          <div className="w-full p-4 md:p-6 md:max-w-6xl lg:max-w-7xl">
+          <div className="mx-auto w-full p-4 md:p-6 md:max-w-6xl lg:max-w-7xl xl:max-w-screen-2xl 2xl:max-w-[1600px]">
             {renderSectionContent()}
           </div>
         </main>
