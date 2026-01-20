@@ -15,6 +15,7 @@ import { ValidationStatus } from '@/types/guild';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useBattletagVisibility } from '@/hooks/useBattletagVisibility';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface WishChoice {
   choice_index: number;
@@ -352,9 +353,18 @@ const MemberWishes = () => {
 
                     {/* Comment */}
                     {wish.comment ? (
-                      <div className="h-9 w-full min-w-0 rounded-md border border-border bg-card/50 flex items-center px-3 overflow-hidden">
-                        <span className="text-sm text-foreground truncate">{wish.comment}</span>
-                      </div>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="h-9 w-full min-w-0 rounded-md border border-border bg-card/50 flex items-center px-3 overflow-hidden cursor-help">
+                              <span className="text-sm text-foreground truncate">{wish.comment}</span>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs whitespace-pre-wrap">
+                            <p>{wish.comment}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     ) : (
                       <div className="h-9 w-full rounded-md border border-dashed border-muted-foreground/20 flex items-center justify-center">
                         <span className="text-xs text-muted-foreground/50">—</span>
