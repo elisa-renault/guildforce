@@ -69,14 +69,14 @@ const GuildList = () => {
     if (memberships && memberships.length > 0) {
       const guildIds = memberships.map(m => m.guild_id);
       
-      // Fetch guilds, member counts, and user's main character info
-      const [guildResult, memberCountsResult, mainCharResult] = await Promise.all([
+      // Fetch guilds, character counts from roster cache, and user's main character info
+      const [guildResult, rosterCountsResult, mainCharResult] = await Promise.all([
         supabase
           .from('guilds')
           .select('id, name, server, region, faction, owner_id, avatar_url')
           .in('id', guildIds),
         supabase
-          .from('guild_members')
+          .from('guild_roster_cache')
           .select('guild_id')
           .in('guild_id', guildIds),
         supabase
@@ -94,9 +94,9 @@ const GuildList = () => {
         return;
       }
 
-      // Count members per guild
+      // Count characters per guild from roster cache
       const memberCounts: Record<string, number> = {};
-      memberCountsResult.data?.forEach(m => {
+      rosterCountsResult.data?.forEach(m => {
         memberCounts[m.guild_id] = (memberCounts[m.guild_id] || 0) + 1;
       });
 
@@ -346,7 +346,7 @@ const GuildList = () => {
                   {/* Members - hidden on mobile */}
                   <div className="hidden md:flex items-center gap-1.5 text-sm text-muted-foreground min-w-[60px]">
                     <Users className="h-4 w-4" />
-                    <span>{guild.memberCount} {guild.memberCount === 1 ? 'membre' : 'membres'}</span>
+                    <span>{guild.memberCount} {guild.memberCount === 1 ? t.guild.member : t.guild.memberPlural}</span>
                   </div>
                   
                   {/* Role badge and settings */}

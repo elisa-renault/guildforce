@@ -216,6 +216,8 @@ export interface Translations {
     horde: string;
     alliance: string;
     members: string;
+    member: string;
+    memberPlural: string;
     noMembers: string;
     leaveGuild: string;
     deleteGuild: string;
@@ -972,6 +974,8 @@ export const translations: Record<Language, Translations> = {
       horde: 'Horde',
       alliance: 'Alliance',
       members: 'Members',
+      member: 'member',
+      memberPlural: 'members',
       noMembers: 'No members yet',
       leaveGuild: 'Leave guild',
       deleteGuild: 'Delete guild',
@@ -1766,6 +1770,8 @@ export const translations: Record<Language, Translations> = {
       horde: 'Horde',
       alliance: 'Alliance',
       members: 'Membres',
+      member: 'membre',
+      memberPlural: 'membres',
       noMembers: 'Aucun membre pour l\'instant',
       leaveGuild: 'Quitter la guilde',
       deleteGuild: 'Supprimer la guilde',
