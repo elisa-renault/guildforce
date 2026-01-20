@@ -67,10 +67,13 @@ const Auth = () => {
       const region = parsedState.region || 'eu';
       const redirectUri = getRedirectUri('/auth');
 
+      // Detect browser language for new accounts
+      const browserLanguage = navigator.language.toLowerCase().startsWith('fr') ? 'fr' : 'en';
+      
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/battlenet-auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, redirectUri, region }),
+        body: JSON.stringify({ code, redirectUri, region, browserLanguage }),
       });
 
       const data = await response.json();
