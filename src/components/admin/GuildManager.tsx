@@ -155,33 +155,21 @@ export function GuildManager() {
       
       if (error) throw error;
       
-      // Get member counts for each guild
+      // Get member counts for each guild using RPC (avoids 1000 row limit)
       if (data && data.length > 0) {
         const guildIds = data.map(g => g.id);
-        const { data: rosterData } = await supabase
-          .from('guild_roster_cache')
-          .select('guild_id, matched_user_id')
-          .in('guild_id', guildIds);
+        const { data: countsData } = await supabase
+          .rpc('get_guild_member_counts', { p_guild_ids: guildIds });
         
-        const countMap = new Map<string, number>();
-        const uniqueMap = new Map<string, Set<string>>();
-        
-        rosterData?.forEach(m => {
-          // Total character count
-          countMap.set(m.guild_id, (countMap.get(m.guild_id) || 0) + 1);
-          // Unique users count
-          if (m.matched_user_id) {
-            if (!uniqueMap.has(m.guild_id)) {
-              uniqueMap.set(m.guild_id, new Set());
-            }
-            uniqueMap.get(m.guild_id)!.add(m.matched_user_id);
-          }
+        const countMap = new Map<string, { total: number; unique: number }>();
+        countsData?.forEach((c: { guild_id: string; total_count: number; unique_users: number }) => {
+          countMap.set(c.guild_id, { total: c.total_count, unique: c.unique_users });
         });
 
         setGuilds(data.map(g => ({
           ...g,
-          member_count: countMap.get(g.id) || 0,
-          unique_members: uniqueMap.get(g.id)?.size || 0
+          member_count: countMap.get(g.id)?.total || 0,
+          unique_members: countMap.get(g.id)?.unique || 0
         })));
       } else {
         setGuilds([]);
