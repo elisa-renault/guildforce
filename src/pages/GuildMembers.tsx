@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { translations } from '@/i18n/translations';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
@@ -402,6 +403,13 @@ const GuildMembers = () => {
 
   const guildforceCount = members.filter(m => m.matched_user_id).length;
   const notOnGuildforceCount = members.filter(m => !m.matched_user_id).length;
+  
+  // Count unique Guildforce members (distinct players)
+  const uniqueGuildforceMembers = new Set(
+    members
+      .filter(m => m.matched_user_id)
+      .map(m => m.matched_user_id)
+  ).size;
 
   return (
     <div className="flex-1 relative pt-16">
@@ -739,15 +747,18 @@ const GuildMembers = () => {
         {/* Stats summary */}
         <div className="flex flex-wrap gap-2 mb-4 text-sm text-muted-foreground">
           <span>
-            {filteredMembers.length} {language === 'fr' ? 'affichés' : 'shown'}
+            {filteredMembers.length} {translations[language].guild.charactersShown}
           </span>
           <span>•</span>
           <span className="text-healer">
-            {guildforceCount} {language === 'fr' ? 'sur Guildforce' : 'on Guildforce'}
+            {uniqueGuildforceMembers} {uniqueGuildforceMembers === 1 ? translations[language].guild.uniqueMember : translations[language].guild.uniqueMembers}
+          </span>
+          <span className="text-muted-foreground/70">
+            ({guildforceCount} {translations[language].guild.characters})
           </span>
           <span>•</span>
           <span className="text-muted-foreground">
-            {notOnGuildforceCount} {language === 'fr' ? 'non inscrits' : 'not registered'}
+            {notOnGuildforceCount} {translations[language].guild.notRegistered}
           </span>
         </div>
 
