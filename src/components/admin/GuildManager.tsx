@@ -49,7 +49,10 @@ import {
   ChevronRight,
   Users,
   RefreshCw,
-  Loader2
+  Loader2,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { toSlug } from '@/lib/guildSlug';
@@ -66,6 +69,9 @@ interface Guild {
   member_count?: number;
   unique_members?: number;
 }
+
+type SortKey = 'name' | 'server' | 'region' | 'faction' | 'member_count' | 'unique_members' | 'created_at';
+type SortDirection = 'asc' | 'desc';
 
 const formatServerName = (serverSlug: string) => {
   return serverSlug
@@ -87,6 +93,8 @@ export function GuildManager() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortKey, setSortKey] = useState<SortKey>('created_at');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [totalCount, setTotalCount] = useState(0);
   
   // Edit dialog state
@@ -162,15 +170,31 @@ export function GuildManager() {
       const { count } = await countQuery;
       setTotalCount(count || 0);
 
+      // Determine if we can sort server-side (only for db columns, not computed)
+      const dbSortableKeys: SortKey[] = ['name', 'server', 'region', 'faction', 'created_at'];
+      const canSortServerSide = dbSortableKeys.includes(sortKey);
+
       // Get paginated data
       let query = supabase
         .from('guilds')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1);
+        .select('*');
+      
+      // Apply server-side sorting for db columns
+      if (canSortServerSide) {
+        query = query.order(sortKey, { ascending: sortDirection === 'asc' });
+      } else {
+        // For computed columns, we need all data - but limit to reasonable amount
+        // We'll fetch all and sort client-side, then paginate
+        query = query.order('created_at', { ascending: false });
+      }
       
       if (searchQuery) {
         query = query.or(`name.ilike.%${searchQuery}%,server.ilike.%${searchQuery}%`);
+      }
+
+      // For db-sortable columns, use server pagination
+      if (canSortServerSide) {
+        query = query.range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1);
       }
 
       const { data, error } = await query;
@@ -188,11 +212,25 @@ export function GuildManager() {
           countMap.set(c.guild_id, { total: c.total_count, unique: c.unique_users });
         });
 
-        setGuilds(data.map(g => ({
+        let guildsWithCounts = data.map(g => ({
           ...g,
           member_count: countMap.get(g.id)?.total || 0,
           unique_members: countMap.get(g.id)?.unique || 0
-        })));
+        }));
+
+        // For computed columns (member_count, unique_members), sort client-side then paginate
+        if (!canSortServerSide) {
+          guildsWithCounts.sort((a, b) => {
+            const aVal = a[sortKey as 'member_count' | 'unique_members'] || 0;
+            const bVal = b[sortKey as 'member_count' | 'unique_members'] || 0;
+            return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+          });
+          // Apply client-side pagination
+          const start = (currentPage - 1) * ITEMS_PER_PAGE;
+          guildsWithCounts = guildsWithCounts.slice(start, start + ITEMS_PER_PAGE);
+        }
+
+        setGuilds(guildsWithCounts);
       } else {
         setGuilds([]);
       }
@@ -205,11 +243,30 @@ export function GuildManager() {
 
   useEffect(() => {
     fetchGuilds();
-  }, [currentPage, searchQuery]);
+  }, [currentPage, searchQuery, sortKey, sortDirection]);
 
   const handleSearch = (value: string) => {
     setSearchQuery(value);
     setCurrentPage(1);
+  };
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDirection('asc');
+    }
+    setCurrentPage(1);
+  };
+
+  const SortIcon = ({ columnKey }: { columnKey: SortKey }) => {
+    if (sortKey !== columnKey) {
+      return <ArrowUpDown className="h-4 w-4 ml-1 opacity-50" />;
+    }
+    return sortDirection === 'asc' 
+      ? <ArrowUp className="h-4 w-4 ml-1" />
+      : <ArrowDown className="h-4 w-4 ml-1" />;
   };
 
   const openEditDialog = (guild: Guild) => {
@@ -313,14 +370,60 @@ export function GuildManager() {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[50px]"></TableHead>
-              <TableHead>{t.admin.name}</TableHead>
-              <TableHead>{t.admin.server}</TableHead>
-              <TableHead>{t.admin.region}</TableHead>
-              <TableHead>{t.admin.faction}</TableHead>
-              <TableHead className="text-center">
-                <Users className="h-4 w-4 inline" />
+              <TableHead 
+                className="cursor-pointer hover:text-foreground transition-colors"
+                onClick={() => handleSort('name')}
+              >
+                <div className="flex items-center">
+                  {t.admin.name}
+                  <SortIcon columnKey="name" />
+                </div>
               </TableHead>
-              <TableHead className="text-center">GF</TableHead>
+              <TableHead 
+                className="cursor-pointer hover:text-foreground transition-colors"
+                onClick={() => handleSort('server')}
+              >
+                <div className="flex items-center">
+                  {t.admin.server}
+                  <SortIcon columnKey="server" />
+                </div>
+              </TableHead>
+              <TableHead 
+                className="cursor-pointer hover:text-foreground transition-colors"
+                onClick={() => handleSort('region')}
+              >
+                <div className="flex items-center">
+                  {t.admin.region}
+                  <SortIcon columnKey="region" />
+                </div>
+              </TableHead>
+              <TableHead 
+                className="cursor-pointer hover:text-foreground transition-colors"
+                onClick={() => handleSort('faction')}
+              >
+                <div className="flex items-center">
+                  {t.admin.faction}
+                  <SortIcon columnKey="faction" />
+                </div>
+              </TableHead>
+              <TableHead 
+                className="text-center cursor-pointer hover:text-foreground transition-colors"
+                onClick={() => handleSort('member_count')}
+              >
+                <div className="flex items-center justify-center">
+                  <Users className="h-4 w-4" />
+                  <SortIcon columnKey="member_count" />
+                </div>
+              </TableHead>
+              <TableHead 
+                className="text-center cursor-pointer hover:text-foreground transition-colors"
+                onClick={() => handleSort('unique_members')}
+              >
+                <div className="flex items-center justify-center">
+                  GF
+                  <SortIcon columnKey="unique_members" />
+                </div>
+              </TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
