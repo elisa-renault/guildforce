@@ -12,7 +12,8 @@ import { GuildSubNav } from '@/components/guild';
 import { RosterFilters, RosterTable, RosterAnalytics } from '@/components/dashboard';
 import { RosterSelector, RosterEditDialog } from '@/components/roster';
 import { MemberWish, WishData, RosterFilters as RosterFiltersType, ValidationStatus } from '@/types/guild';
-import { Loader2, Sparkles, Settings, TableIcon, BarChart3 } from 'lucide-react';
+import { Loader2, Sparkles, Settings, TableIcon, BarChart3, Download } from 'lucide-react';
+import { exportWishesToCSV } from '@/lib/exportWishes';
 import { toSlug, getGuildWishesPath } from '@/lib/guildSlug';
 import { CommitmentStatus } from '@/components/CommitmentToggle';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -605,6 +606,22 @@ const RosterWishes = () => {
             showAccessIndicator={true}
           />
           <div className="flex gap-1.5 md:gap-2">
+            <CosmicButton 
+              size="sm" 
+              variant="outline" 
+              onClick={() => {
+                exportWishesToCSV(filteredMembers, {
+                  language,
+                  rosterName: currentRoster?.name || 'roster',
+                  guildName: guild?.name || 'guild'
+                });
+                toast({ title: t.dashboard.exportSuccess });
+              }} 
+              icon={<Download className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} 
+              className="h-7 w-7 md:h-8 md:w-auto p-0 md:px-3"
+            >
+              <span className="hidden md:inline">{t.dashboard.exportCSV}</span>
+            </CosmicButton>
             <CosmicButton size="sm" variant="outline" onClick={() => guild && navigate(getGuildWishesPath(guild.region, guild.server, guild.name))} icon={<Sparkles className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 w-7 md:h-8 md:w-auto p-0 md:px-3">
               <span className="hidden md:inline">{t.wishes.editMyWishes}</span>
             </CosmicButton>
