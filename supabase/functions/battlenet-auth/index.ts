@@ -1656,6 +1656,27 @@ async function fetchAndStoreCharacters(
 
     log.info(`Successfully saved ${characters.length} characters to database`);
 
+    // Sync profiles.main_character_name if not already set
+    const mainChar = insertData.find(c => c.is_main);
+    if (mainChar) {
+      const mainCharName = `${mainChar.name}-${mainChar.realm_slug}`;
+      
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ 
+          main_character_name: mainCharName,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId)
+        .is('main_character_name', null); // Only if not already set
+      
+      if (profileError) {
+        log.debug(`Failed to set default main character: ${profileError.message}`);
+      } else {
+        log.info(`Set default main character: ${mainChar.name}`);
+      }
+    }
+
     // Fetch detailed character info for guild memberships
     const maxLevelChars = characters.filter(c => c.level >= 70).slice(0, 20);
     log.debug(`Checking ${maxLevelChars.length} max-level characters for guild info...`);
