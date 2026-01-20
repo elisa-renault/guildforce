@@ -121,6 +121,26 @@ const log = {
 };
 
 // ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+/**
+ * Normalize a guild name to a slug suitable for Blizzard API
+ * - Converts to lowercase
+ * - Normalizes accented characters (é → e, á → a, etc.)
+ * - Replaces spaces with hyphens
+ * - Removes any remaining non-alphanumeric characters except hyphens
+ */
+function toGuildSlug(guildName: string): string {
+  return guildName
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove diacritical marks
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '');
+}
+
+// ============================================================================
 // TYPES
 // ============================================================================
 
@@ -505,10 +525,7 @@ async function fetchPublicGuildRoster(
     const locale = BATTLENET_LOCALES[region];
 
     // Build slugs for API call
-    const guildSlug = guildName
-      .toLowerCase()
-      .replace(/\s+/g, '-')
-      .replace(/[^a-z0-9-]/g, '');
+    const guildSlug = toGuildSlug(guildName);
     const serverSlug = realmSlug.toLowerCase().replace(/\s+/g, '-').replace(/'/g, '');
 
     const namespacesToTry = Array.from(
@@ -1742,7 +1759,7 @@ async function fetchAndStoreCharacters(
     // Fetch roster for each guild to get member ranks
     for (const [guildKey, guildInfo] of guildsToCheck) {
       try {
-        const guildSlug = guildInfo.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        const guildSlug = toGuildSlug(guildInfo.name);
         const rosterUrl = `${apiUrl}/data/wow/guild/${guildInfo.realmSlug}/${encodeURIComponent(guildSlug)}/roster?namespace=${namespace}&locale=${locale}`;
         
         log.debug(`Fetching roster for guild: ${sanitizePII(guildInfo.name, 'name')}`);
