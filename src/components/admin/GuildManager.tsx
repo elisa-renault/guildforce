@@ -310,6 +310,7 @@ export function GuildManager() {
               <TableHead className="text-center">
                 <Users className="h-4 w-4 inline" />
               </TableHead>
+              <TableHead className="text-center">GF</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -317,14 +318,14 @@ export function GuildManager() {
             {loading ? (
               [...Array(5)].map((_, i) => (
                 <TableRow key={i}>
-                  <TableCell colSpan={7} className="h-14">
+                  <TableCell colSpan={8} className="h-14">
                     <div className="animate-pulse bg-primary/10 h-4 rounded w-full" />
                   </TableCell>
                 </TableRow>
               ))
             ) : guilds.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                   {t.admin.noGuildsFound}
                 </TableCell>
               </TableRow>
@@ -347,11 +348,11 @@ export function GuildManager() {
                       {formatFaction(guild.faction)}
                     </span>
                   </TableCell>
-                  <TableCell className="text-center">
-                    <div className="flex flex-col">
-                      <span className="text-foreground font-medium">{guild.member_count}</span>
-                      <span className="text-muted-foreground text-xs">{guild.unique_members} on GF</span>
-                    </div>
+                  <TableCell className="text-center text-muted-foreground">
+                    {guild.member_count}
+                  </TableCell>
+                  <TableCell className="text-center text-muted-foreground">
+                    {guild.unique_members}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
