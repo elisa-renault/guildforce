@@ -218,6 +218,11 @@ export interface Translations {
     members: string;
     member: string;
     memberPlural: string;
+    charactersShown: string;
+    uniqueMember: string;
+    uniqueMembers: string;
+    characters: string;
+    notRegistered: string;
     noMembers: string;
     leaveGuild: string;
     deleteGuild: string;
@@ -976,6 +981,11 @@ export const translations: Record<Language, Translations> = {
       members: 'Members',
       member: 'member',
       memberPlural: 'members',
+      charactersShown: 'shown',
+      uniqueMember: 'unique member',
+      uniqueMembers: 'unique members',
+      characters: 'chars',
+      notRegistered: 'not registered',
       noMembers: 'No members yet',
       leaveGuild: 'Leave guild',
       deleteGuild: 'Delete guild',
@@ -1772,6 +1782,11 @@ export const translations: Record<Language, Translations> = {
       members: 'Membres',
       member: 'membre',
       memberPlural: 'membres',
+      charactersShown: 'affichés',
+      uniqueMember: 'membre unique',
+      uniqueMembers: 'membres uniques',
+      characters: 'persos',
+      notRegistered: 'non inscrits',
       noMembers: 'Aucun membre pour l\'instant',
       leaveGuild: 'Quitter la guilde',
       deleteGuild: 'Supprimer la guilde',
