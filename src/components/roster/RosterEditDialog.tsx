@@ -181,7 +181,7 @@ export const RosterEditDialog = ({ open, onOpenChange, rosterId, guildId, onSave
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card border-border max-w-lg">
+      <DialogContent className="bg-card border-border max-w-lg overflow-hidden">
         <DialogHeader>
           <DialogTitle>{t.rosters?.editRoster || 'Edit Roster'}</DialogTitle>
         </DialogHeader>
