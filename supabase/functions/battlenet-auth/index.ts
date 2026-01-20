@@ -1196,122 +1196,135 @@ Deno.serve(async (req) => {
         method: isServiceRole ? 'service_role' : (hasValidCronSecret ? 'cron_secret' : 'admin_user')
       });
 
-      log.info('Starting scheduled sync for all users AND all guilds...');
+      const jobId = crypto.randomUUID();
+      log.info(`Starting scheduled sync job ${jobId} for all users AND all guilds...`);
 
-      // =====================================================================
-      // PHASE 1: Sync all users with valid tokens (existing behavior)
-      // =====================================================================
-      const { data: validTokens, error: tokensError } = await supabase
-        .from('battlenet_tokens')
-        .select('user_id, access_token')
-        .gt('expires_at', new Date().toISOString());
+      const runScheduledSync = async () => {
+        // =====================================================================
+        // PHASE 1: Sync all users with valid tokens (existing behavior)
+        // =====================================================================
+        const { data: validTokens, error: tokensError } = await supabase
+          .from('battlenet_tokens')
+          .select('user_id, access_token')
+          .gt('expires_at', new Date().toISOString());
 
-      if (tokensError) {
-        log.error('Failed to fetch tokens:', tokensError);
-        return new Response(JSON.stringify({ error: 'Failed to fetch tokens' }), {
-          status: 500,
+        if (tokensError) {
+          log.error('Failed to fetch tokens:', tokensError);
+          throw new Error('Failed to fetch tokens');
+        }
+
+        log.info(`Phase 1: Found ${validTokens?.length || 0} users with valid tokens to sync`);
+
+        let usersSynced = 0;
+        let usersErrors = 0;
+
+        for (const tokenRecord of (validTokens || [])) {
+          try {
+            const { data: membership } = await supabase
+              .from('wow_guild_memberships')
+              .select('guild_region')
+              .eq('user_id', tokenRecord.user_id)
+              .limit(1)
+              .maybeSingle();
+
+            const region = getValidRegion(membership?.guild_region);
+
+            await fetchAndStoreCharacters(supabase, tokenRecord.access_token, tokenRecord.user_id, region);
+            usersSynced++;
+            await new Promise(resolve => setTimeout(resolve, 500));
+          } catch (err) {
+            log.error(`Error syncing user ${sanitizePII(tokenRecord.user_id, 'id')}:`, err);
+            usersErrors++;
+          }
+        }
+
+        log.info(`Phase 1 completed: ${usersSynced} users synced, ${usersErrors} errors`);
+
+        // =====================================================================
+        // PHASE 2: Sync all guilds using Game Data API (client credentials)
+        // =====================================================================
+        log.info('Phase 2: Syncing all guilds roster cache using Game Data API...');
+
+        const { data: allGuilds, error: guildsError } = await supabase
+          .from('guilds')
+          .select('id, name, server, region');
+
+        if (guildsError) {
+          log.error('Failed to fetch guilds:', guildsError);
+          // Don't throw: user sync may have succeeded; still report partial
+        }
+
+        let guildsSynced = 0;
+        let guildsSkipped = 0;
+        let guildsErrors = 0;
+
+        for (const guild of (allGuilds || [])) {
+          try {
+            const region = getValidRegion(guild.region);
+            const serverSlug = guild.server.toLowerCase().replace(/\s+/g, '-').replace(/'/g, '');
+            const rosterData = await fetchPublicGuildRoster(region, serverSlug, guild.name);
+
+            if (!rosterData) {
+              log.debug(`Failed to fetch public roster for ${sanitizePII(guild.name, 'name')}`);
+              guildsErrors++;
+              continue;
+            }
+
+            if (rosterData.faction && rosterData.faction !== 'UNKNOWN') {
+              await supabase
+                .from('guilds')
+                .update({ faction: rosterData.faction.toLowerCase() })
+                .eq('id', guild.id);
+            }
+
+            await storeFullRosterForGuild(supabase, guild.id, guild.name, rosterData.members);
+            guildsSynced++;
+
+            await new Promise(resolve => setTimeout(resolve, 200));
+          } catch (err) {
+            log.error(`Error syncing guild ${sanitizePII(guild.name, 'name')}:`, err);
+            guildsErrors++;
+          }
+        }
+
+        log.info(`Phase 2 completed: ${guildsSynced} guilds synced, ${guildsSkipped} skipped, ${guildsErrors} errors`);
+        log.info(`Scheduled sync job ${jobId} completed: ${usersSynced} users, ${guildsSynced} guilds`);
+
+        return {
+          success: true,
+          jobId,
+          users: { synced: usersSynced, errors: usersErrors, total: validTokens?.length || 0 },
+          guilds: { synced: guildsSynced, skipped: guildsSkipped, total: allGuilds?.length || 0 },
+        };
+      };
+
+      // If available, run in background so the admin UI doesn't look "stuck"
+      const canBackground = typeof (globalThis as any).EdgeRuntime?.waitUntil === 'function';
+      if (canBackground) {
+        (globalThis as any).EdgeRuntime.waitUntil(
+          runScheduledSync().catch((err) => {
+            log.error(`Scheduled sync job ${jobId} failed:`, err);
+          })
+        );
+
+        return new Response(JSON.stringify({ started: true, jobId }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
-      log.info(`Phase 1: Found ${validTokens?.length || 0} users with valid tokens to sync`);
-
-      let usersSynced = 0;
-      let usersErrors = 0;
-
-      for (const tokenRecord of (validTokens || [])) {
-        try {
-          const { data: membership } = await supabase
-            .from('wow_guild_memberships')
-            .select('guild_region')
-            .eq('user_id', tokenRecord.user_id)
-            .limit(1)
-            .maybeSingle();
-
-          const region = getValidRegion(membership?.guild_region);
-
-          await fetchAndStoreCharacters(supabase, tokenRecord.access_token, tokenRecord.user_id, region);
-          usersSynced++;
-          
-          await new Promise(resolve => setTimeout(resolve, 500));
-        } catch (err) {
-          log.error(`Error syncing user ${sanitizePII(tokenRecord.user_id, 'id')}:`, err);
-          usersErrors++;
-        }
+      // Fallback: if background execution is not supported, run inline (previous behavior)
+      try {
+        const result = await runScheduledSync();
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } catch (err) {
+        log.error(`Scheduled sync job ${jobId} failed (inline):`, err);
+        return new Response(JSON.stringify({ error: 'Scheduled sync failed', jobId }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
-
-      log.info(`Phase 1 completed: ${usersSynced} users synced, ${usersErrors} errors`);
-
-      // =====================================================================
-      // PHASE 2: Sync all guilds using Game Data API (client credentials)
-      // This uses public API access - no user tokens required!
-      // Like WoWProgress, Raider.io, etc.
-      // =====================================================================
-      log.info('Phase 2: Syncing all guilds roster cache using Game Data API...');
-
-      const { data: allGuilds, error: guildsError } = await supabase
-        .from('guilds')
-        .select('id, name, server, region');
-
-      if (guildsError) {
-        log.error('Failed to fetch guilds:', guildsError);
-      }
-
-      let guildsSynced = 0;
-      let guildsSkipped = 0;
-      let guildsErrors = 0;
-
-      for (const guild of (allGuilds || [])) {
-        try {
-          // NOTE: We intentionally do NOT skip recently-synced guilds here.
-          // Reason: faction and roster are source-of-truth from Battle.net and must stay correct.
-          // Skipping could keep wrong faction values around for hours.
-
-
-          const region = getValidRegion(guild.region);
-          
-          // Derive realm slug from server name
-          const serverSlug = guild.server.toLowerCase().replace(/\s+/g, '-').replace(/'/g, '');
-
-          // Use public Game Data API - no user token required!
-          const rosterData = await fetchPublicGuildRoster(region, serverSlug, guild.name);
-
-          if (!rosterData) {
-            log.debug(`Failed to fetch public roster for ${sanitizePII(guild.name, 'name')}`);
-            guildsErrors++;
-            continue;
-          }
-
-          // Update faction if it differs (Battle.net is source of truth)
-          if (rosterData.faction && rosterData.faction !== 'UNKNOWN') {
-            await supabase
-              .from('guilds')
-              .update({ faction: rosterData.faction.toLowerCase() })
-              .eq('id', guild.id);
-          }
-
-          // Store the full roster in cache
-          await storeFullRosterForGuild(supabase, guild.id, guild.name, rosterData.members);
-          guildsSynced++;
-
-          // Rate limit protection (Game Data API: 36,000 req/hour = 10/sec max)
-          await new Promise(resolve => setTimeout(resolve, 200));
-        } catch (err) {
-          log.error(`Error syncing guild ${sanitizePII(guild.name, 'name')}:`, err);
-          guildsErrors++;
-        }
-      }
-
-      log.info(`Phase 2 completed: ${guildsSynced} guilds synced, ${guildsSkipped} skipped, ${guildsErrors} errors`);
-      log.info(`Scheduled sync completed: ${usersSynced} users, ${guildsSynced} guilds`);
-
-      return new Response(JSON.stringify({ 
-        success: true, 
-        users: { synced: usersSynced, errors: usersErrors, total: validTokens?.length || 0 },
-        guilds: { synced: guildsSynced, skipped: guildsSkipped, total: allGuilds?.length || 0 }
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
     }
 
     return new Response(JSON.stringify({ error: 'Not found' }), {
