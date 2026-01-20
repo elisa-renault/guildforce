@@ -242,7 +242,7 @@ const Overview = () => {
                       <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border bg-green-500/10 border-green-500/30 shrink-0">
                         <CheckCircle2 className="h-4 w-4 text-green-400" />
                         <span className="text-sm font-medium text-green-400">
-                          {t.wishes.choice} #{firstApproved.choice_index + 1}
+                          {t.wishes.choice} #{firstApproved.choice_index}
                           {wowClass && (
                             <span className="ml-1 opacity-80">
                               ({wowClass.name[language]})
@@ -277,7 +277,7 @@ const Overview = () => {
                       return (
                         <div key={index} className="flex items-center gap-3 p-2 rounded-lg bg-muted/30">
                           <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">
-                            {index + 1}
+                            {wish.choice_index}
                           </div>
                           {wowClass && (
                             <span className={cn("text-sm font-medium", `text-${wowClass.color}`)}>
@@ -303,15 +303,14 @@ const Overview = () => {
                           <span>{language === 'fr' ? `+${myWishes.length - 3} autres vœux` : `+${myWishes.length - 3} more wishes`}</span>
                         </CollapsibleTrigger>
                         <CollapsibleContent className="space-y-2 pt-2">
-                          {myWishes.slice(3).map((wish, index) => {
+                          {myWishes.slice(3).map((wish) => {
                             const wowClass = getClassById(wish.class_id);
                             const specs = wish.spec_ids.map(id => getSpecById(id)).filter(Boolean);
-                            const realIndex = index + 3;
                             
                             return (
-                              <div key={realIndex} className="flex items-center gap-3 p-2 rounded-lg bg-muted/30">
+                              <div key={wish.choice_index} className="flex items-center gap-3 p-2 rounded-lg bg-muted/30">
                                 <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">
-                                  {realIndex + 1}
+                                  {wish.choice_index}
                                 </div>
                                 {wowClass && (
                                   <span className={cn("text-sm font-medium", `text-${wowClass.color}`)}>
