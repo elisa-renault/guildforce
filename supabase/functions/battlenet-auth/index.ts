@@ -597,8 +597,9 @@ Deno.serve(async (req) => {
 
     // Handle Battle.net login/signup (no existing Supabase session)
     if (path === 'login' && req.method === 'POST') {
-      const { code, redirectUri, region: requestedRegion } = await req.json();
+      const { code, redirectUri, region: requestedRegion, browserLanguage } = await req.json();
       const region = getValidRegion(requestedRegion);
+      const defaultLanguage = browserLanguage === 'fr' ? 'fr' : 'en';
 
       log.info(`Battle.net login (${region.toUpperCase()}) - exchanging code for token...`);
 
@@ -712,7 +713,7 @@ Deno.serve(async (req) => {
                 name: userInfo.battletag,
                 full_name: userInfo.battletag,
                 username: userInfo.battletag.split('#')[0],
-                preferred_language: 'fr',
+                preferred_language: defaultLanguage,
                 battlenet_id: battlenetIdStr,
               },
             });
@@ -757,7 +758,7 @@ Deno.serve(async (req) => {
           battlenet_id: battlenetIdStr,
           battletag: userInfo.battletag,
           username: existingProfileRow?.username || battletagName,
-          preferred_language: existingProfileRow?.preferred_language || 'fr',
+          preferred_language: existingProfileRow?.preferred_language || defaultLanguage,
         };
 
         const { error: profileError } = await supabase
@@ -931,7 +932,7 @@ Deno.serve(async (req) => {
         battlenet_id: String(userInfo.id),
         battletag: userInfo.battletag,
         username: existingProfileRow?.username || battletagName,
-        preferred_language: existingProfileRow?.preferred_language || 'fr',
+        preferred_language: existingProfileRow?.preferred_language || 'en',
       };
 
       const { error: profileError } = await supabase
