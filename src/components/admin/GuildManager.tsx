@@ -64,7 +64,20 @@ interface Guild {
   owner_id: string | null;
   created_at: string;
   member_count?: number;
+  unique_members?: number;
 }
+
+const formatServerName = (serverSlug: string) => {
+  return serverSlug
+    .split('-')
+    .filter(Boolean)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};
+
+const formatFaction = (faction: string) => {
+  return faction.charAt(0).toUpperCase() + faction.slice(1).toLowerCase();
+};
 
 const ITEMS_PER_PAGE = 10;
 
@@ -145,19 +158,30 @@ export function GuildManager() {
       // Get member counts for each guild
       if (data && data.length > 0) {
         const guildIds = data.map(g => g.id);
-        const { data: memberCounts } = await supabase
+        const { data: rosterData } = await supabase
           .from('guild_roster_cache')
-          .select('guild_id')
+          .select('guild_id, matched_user_id')
           .in('guild_id', guildIds);
         
         const countMap = new Map<string, number>();
-        memberCounts?.forEach(m => {
+        const uniqueMap = new Map<string, Set<string>>();
+        
+        rosterData?.forEach(m => {
+          // Total character count
           countMap.set(m.guild_id, (countMap.get(m.guild_id) || 0) + 1);
+          // Unique users count
+          if (m.matched_user_id) {
+            if (!uniqueMap.has(m.guild_id)) {
+              uniqueMap.set(m.guild_id, new Set());
+            }
+            uniqueMap.get(m.guild_id)!.add(m.matched_user_id);
+          }
         });
 
         setGuilds(data.map(g => ({
           ...g,
-          member_count: countMap.get(g.id) || 0
+          member_count: countMap.get(g.id) || 0,
+          unique_members: uniqueMap.get(g.id)?.size || 0
         })));
       } else {
         setGuilds([]);
@@ -294,7 +318,7 @@ export function GuildManager() {
               [...Array(5)].map((_, i) => (
                 <TableRow key={i}>
                   <TableCell colSpan={7} className="h-14">
-                    <div className="animate-pulse bg-muted/30 h-4 rounded w-full" />
+                    <div className="animate-pulse bg-primary/10 h-4 rounded w-full" />
                   </TableCell>
                 </TableRow>
               ))
@@ -316,15 +340,18 @@ export function GuildManager() {
                     </Avatar>
                   </TableCell>
                   <TableCell className="font-medium">{guild.name}</TableCell>
-                  <TableCell className="text-muted-foreground">{guild.server}</TableCell>
+                  <TableCell className="text-muted-foreground">{formatServerName(guild.server)}</TableCell>
                   <TableCell className="text-muted-foreground uppercase text-xs">{guild.region}</TableCell>
                   <TableCell>
                     <span className={getFactionColor(guild.faction)}>
-                      {guild.faction}
+                      {formatFaction(guild.faction)}
                     </span>
                   </TableCell>
-                  <TableCell className="text-center text-muted-foreground">
-                    {guild.member_count}
+                  <TableCell className="text-center">
+                    <div className="flex flex-col">
+                      <span className="text-foreground font-medium">{guild.member_count}</span>
+                      <span className="text-muted-foreground text-xs">{guild.unique_members} on GF</span>
+                    </div>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
