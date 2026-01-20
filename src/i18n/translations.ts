@@ -309,6 +309,7 @@ export interface Translations {
     thirdChoice: string;
     comments: string;
     exportCSV: string;
+    exportSuccess: string;
     noData: string;
     totalPlayers: string;
     confirmedPlayers: string;
@@ -1069,6 +1070,7 @@ export const translations: Record<Language, Translations> = {
       thirdChoice: '3rd Choice',
       comments: 'Comments',
       exportCSV: 'Export CSV',
+      exportSuccess: 'Export successful',
       noData: 'No data to display',
       totalPlayers: 'Total players',
       confirmedPlayers: 'Confirmed',
@@ -1870,6 +1872,7 @@ export const translations: Record<Language, Translations> = {
       thirdChoice: '3ème choix',
       comments: 'Commentaires',
       exportCSV: 'Exporter CSV',
+      exportSuccess: 'Export réussi',
       noData: 'Aucune donnée à afficher',
       totalPlayers: 'Total joueurs',
       confirmedPlayers: 'Confirmés',
