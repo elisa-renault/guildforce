@@ -101,15 +101,33 @@ export function GuildManager() {
   // Sync all state
   const [syncing, setSyncing] = useState(false);
 
+  const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number): Promise<T> => {
+    let timeoutId: number | undefined;
+    const timeoutPromise = new Promise<T>((_, reject) => {
+      timeoutId = window.setTimeout(() => reject(new Error('timeout')), timeoutMs);
+    });
+
+    try {
+      return await Promise.race([promise, timeoutPromise]);
+    } finally {
+      if (timeoutId) window.clearTimeout(timeoutId);
+    }
+  };
+
   const handleSyncAll = async () => {
     setSyncing(true);
     try {
       // Call with apikey header so the edge function accepts the request
-      const { data, error } = await supabase.functions.invoke('battlenet-auth/scheduled-sync', {
-        body: {},
-      });
+      const invokePromise = supabase.functions.invoke('battlenet-auth/scheduled-sync', { body: {} });
+      const { data, error } = await withTimeout(invokePromise, 25_000);
       
       if (error) throw error;
+
+      // New behavior: backend returns immediately and continues in background
+      if (data?.started) {
+        toast.success(`Sync lancée (job ${data.jobId}). Rafraîchis dans 1-2 min.`);
+        return;
+      }
       
       const users = data?.users || {};
       const guildsData = data?.guilds || {};
@@ -119,6 +137,10 @@ export function GuildManager() {
       );
       fetchGuilds();
     } catch (error) {
+      if (error instanceof Error && error.message === 'timeout') {
+        toast.success('Sync lancée, ça peut prendre quelques minutes (rafraîchis ensuite).');
+        return;
+      }
       toast.error(t.admin.syncError);
     } finally {
       setSyncing(false);
