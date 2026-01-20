@@ -1615,6 +1615,14 @@ export type Database = {
         Args: { p_poll_id: string; p_user_id: string }
         Returns: boolean
       }
+      get_guild_member_counts: {
+        Args: { p_guild_ids: string[] }
+        Returns: {
+          guild_id: string
+          total_count: number
+          unique_users: number
+        }[]
+      }
       get_public_profile_info: {
         Args: { _user_id: string }
         Returns: {
