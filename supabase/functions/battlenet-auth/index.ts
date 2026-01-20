@@ -1834,6 +1834,29 @@ async function fetchAndStoreCharacters(
       await autoJoinGuilds(supabase, userId, guildMemberships, region);
     }
 
+    // Re-establish matched_user_id links in guild_roster_cache for this user's characters
+    // This fixes the issue where syncing a user's characters would clear the links
+    if (insertedChars && insertedChars.length > 0) {
+      log.info(`Re-matching ${insertedChars.length} characters in guild_roster_cache...`);
+      
+      for (const char of insertedChars) {
+        const { error: matchError } = await supabase
+          .from('guild_roster_cache')
+          .update({ 
+            matched_user_id: userId, 
+            matched_character_id: char.id 
+          })
+          .ilike('character_name', char.name)
+          .ilike('character_realm_slug', char.realm_slug);
+        
+        if (matchError) {
+          log.debug(`Failed to re-match character ${char.name}: ${matchError.message}`);
+        }
+      }
+      
+      log.info('Re-matching complete');
+    }
+
     return { success: true, detectedRegion: region };
   } catch (error) {
     log.error('Error fetching characters:', error);
