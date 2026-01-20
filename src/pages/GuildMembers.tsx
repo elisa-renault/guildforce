@@ -758,7 +758,7 @@ const GuildMembers = () => {
           </span>
           <span>•</span>
           <span className="text-muted-foreground">
-            {notOnGuildforceCount} {translations[language].guild.notRegistered}
+            {notOnGuildforceCount} {translations[language].guild.charactersNotRegistered}
           </span>
         </div>
 
