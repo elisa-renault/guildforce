@@ -352,7 +352,7 @@ const MemberWishes = () => {
 
                     {/* Comment */}
                     {wish.comment ? (
-                      <div className="h-9 w-full rounded-md border border-border bg-card/50 flex items-center px-3">
+                      <div className="h-9 w-full min-w-0 rounded-md border border-border bg-card/50 flex items-center px-3 overflow-hidden">
                         <span className="text-sm text-foreground truncate">{wish.comment}</span>
                       </div>
                     ) : (
