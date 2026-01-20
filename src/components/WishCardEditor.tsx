@@ -61,11 +61,15 @@ export const WishCardEditor = forwardRef<HTMLDivElement, WishCardEditorProps>(
 
   const handleSpecToggle = (specId: string) => {
     if (wish.specIds.includes(specId)) {
+      // Prevent deselecting if it's the last spec
+      if (wish.specIds.length <= 1) return;
       onChange('specIds', wish.specIds.filter(id => id !== specId));
     } else {
       onChange('specIds', [...wish.specIds, specId]);
     }
   };
+  
+  const hasSpecError = wish.classId && wish.specIds.length === 0;
 
   const classPlaceholder = t.wishes.selectClass;
   const specPlaceholder = t.wishes.selectSpecs;
@@ -131,7 +135,8 @@ export const WishCardEditor = forwardRef<HTMLDivElement, WishCardEditorProps>(
                 "w-full lg:w-[500px] justify-between h-9 text-sm bg-card/50 hover:bg-card/80 flex-shrink-0",
                 selectedSpecs.length > 0
                   ? "border-border"
-                  : "border-dashed border-muted-foreground/40 text-muted-foreground"
+                  : "border-dashed border-muted-foreground/40 text-muted-foreground",
+                hasSpecError && "border-destructive/60 animate-pulse"
               )}
             >
               {selectedSpecs.length > 0 ? (
@@ -169,11 +174,13 @@ export const WishCardEditor = forwardRef<HTMLDivElement, WishCardEditorProps>(
                   <button
                     key={spec.id}
                     onClick={() => handleSpecToggle(spec.id)}
+                    disabled={isSelected && wish.specIds.length <= 1}
                     className={cn(
                       "w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-colors text-left",
                       isSelected 
                         ? "bg-primary/20" 
-                        : "hover:bg-primary/10"
+                        : "hover:bg-primary/10",
+                      isSelected && wish.specIds.length <= 1 && "opacity-60 cursor-not-allowed"
                     )}
                   >
                     <Icon className={cn("h-4 w-4", config.color)} />

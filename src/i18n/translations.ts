@@ -288,6 +288,8 @@ export interface Translations {
       approvedBy: string;
       rejectedBy: string;
     };
+    specRequired: string;
+    specRequiredDesc: string;
   };
   // Dashboard
   dashboard: {
@@ -1050,6 +1052,8 @@ export const translations: Record<Language, Translations> = {
         approvedBy: 'Approved by',
         rejectedBy: 'Rejected by',
       },
+      specRequired: 'Specialization required',
+      specRequiredDesc: 'Please select at least one specialization for {class}',
     },
     dashboard: {
       title: 'Roster Dashboard',
@@ -1852,6 +1856,8 @@ export const translations: Record<Language, Translations> = {
         approvedBy: 'Validé par',
         rejectedBy: 'Refusé par',
       },
+      specRequired: 'Spécialisation requise',
+      specRequiredDesc: 'Veuillez sélectionner au moins une spécialisation pour {class}',
     },
     dashboard: {
       title: 'Tableau de bord du roster',
