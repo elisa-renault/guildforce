@@ -463,7 +463,7 @@ export function UserManager() {
               [...Array(5)].map((_, i) => (
                 <TableRow key={i}>
                   <TableCell colSpan={10} className="h-14">
-                    <div className="animate-pulse bg-muted/30 h-4 rounded w-full" />
+                    <div className="animate-pulse bg-primary/10 h-4 rounded w-full" />
                   </TableCell>
                 </TableRow>
               ))
@@ -509,8 +509,19 @@ export function UserManager() {
                   <TableCell className="hidden md:table-cell text-muted-foreground text-xs md:text-sm">
                     {formatLanguage(user.preferred_language)}
                   </TableCell>
-                  <TableCell className="hidden md:table-cell text-muted-foreground text-xs md:text-sm">
-                    {formatMainCharacter(user.main_character_name)}
+                  <TableCell className="hidden md:table-cell text-xs md:text-sm">
+                    {user.main_character_name ? (
+                      <div className="flex flex-col">
+                        <span className="text-foreground font-medium">
+                          {user.main_character_name.split('-')[0]}
+                        </span>
+                        <span className="text-muted-foreground text-xs">
+                          {formatServerName(user.main_character_name.split('-').slice(1).join('-'))}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
