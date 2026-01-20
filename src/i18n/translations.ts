@@ -222,7 +222,7 @@ export interface Translations {
     uniqueMember: string;
     uniqueMembers: string;
     characters: string;
-    notRegistered: string;
+    charactersNotRegistered: string;
     noMembers: string;
     leaveGuild: string;
     deleteGuild: string;
@@ -981,11 +981,11 @@ export const translations: Record<Language, Translations> = {
       members: 'Members',
       member: 'member',
       memberPlural: 'members',
-      charactersShown: 'shown',
-      uniqueMember: 'unique member',
-      uniqueMembers: 'unique members',
-      characters: 'chars',
-      notRegistered: 'not registered',
+      charactersShown: 'characters',
+      uniqueMember: 'unique member on Guildforce',
+      uniqueMembers: 'unique members on Guildforce',
+      characters: 'characters',
+      charactersNotRegistered: 'characters not registered',
       noMembers: 'No members yet',
       leaveGuild: 'Leave guild',
       deleteGuild: 'Delete guild',
@@ -1782,11 +1782,11 @@ export const translations: Record<Language, Translations> = {
       members: 'Membres',
       member: 'membre',
       memberPlural: 'membres',
-      charactersShown: 'affichés',
-      uniqueMember: 'membre unique',
-      uniqueMembers: 'membres uniques',
-      characters: 'persos',
-      notRegistered: 'non inscrits',
+      charactersShown: 'personnages',
+      uniqueMember: 'membre unique sur Guildforce',
+      uniqueMembers: 'membres uniques sur Guildforce',
+      characters: 'personnages',
+      charactersNotRegistered: 'personnages non inscrits',
       noMembers: 'Aucun membre pour l\'instant',
       leaveGuild: 'Quitter la guilde',
       deleteGuild: 'Supprimer la guilde',
