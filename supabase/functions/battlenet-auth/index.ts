@@ -535,53 +535,73 @@ async function fetchPublicGuildRoster(
 
     const apiUrl = BATTLENET_API_URLS[region];
     const locale = BATTLENET_LOCALES[region];
-
-    // Build slugs for API call
-    const guildSlug = toGuildSlug(guildName);
     const serverSlug = realmSlug.toLowerCase().replace(/\s+/g, '-').replace(/'/g, '');
+
+    // Try multiple slug formats - some guilds need normalized, others need unicode
+    const slugsToTry = [
+      { slug: toGuildSlug(guildName), type: 'normalized' },
+      { slug: toGuildSlugUnicode(guildName), type: 'unicode' },
+    ];
 
     const namespacesToTry = Array.from(
       new Set([BATTLENET_NAMESPACES[region], BATTLENET_DYNAMIC_NAMESPACES[region]])
     );
 
-    let lastFailure: { status: number; body: string; rosterUrl: string; namespace: string } | null = null;
+    // Targeted logging for problematic guilds
+    const isTargetedGuild = ['álcool finder', 'hero al pull', 'rennosti', 'r í p', 'exöde'].includes(guildName.toLowerCase());
 
-    for (const namespace of namespacesToTry) {
-      const rosterUrl = `${apiUrl}/data/wow/guild/${serverSlug}/${encodeURIComponent(guildSlug)}/roster?namespace=${namespace}&locale=${locale}`;
-      log.debug(`Fetching public roster from: ${rosterUrl}`);
+    let lastFailure: { status: number; body: string; rosterUrl: string; namespace: string; slugType: string } | null = null;
 
-      // Use retryWithBackoff for transient Blizzard API failures
-      const rosterResponse = await retryWithBackoff(
-        () => fetch(rosterUrl, {
-          headers: { 'Authorization': `Bearer ${clientToken}` },
-        }),
-        { maxAttempts: 3, initialDelayMs: 1000, multiplier: 2 }
-      );
+    for (const { slug: guildSlug, type: slugType } of slugsToTry) {
+      for (const namespace of namespacesToTry) {
+        const rosterUrl = `${apiUrl}/data/wow/guild/${serverSlug}/${encodeURIComponent(guildSlug)}/roster?namespace=${namespace}&locale=${locale}`;
+        
+        if (isTargetedGuild) {
+          log.info(`[TARGETED] Trying ${guildName}: slugType=${slugType}, slug="${guildSlug}", url=${rosterUrl}`);
+        } else {
+          log.debug(`Fetching public roster from: ${rosterUrl}`);
+        }
 
-      if (!rosterResponse.ok) {
-        const body = await rosterResponse.text();
-        lastFailure = { status: rosterResponse.status, body, rosterUrl, namespace };
-        // Try the next namespace (some endpoints are picky)
-        continue;
+        // Use retryWithBackoff for transient Blizzard API failures
+        const rosterResponse = await retryWithBackoff(
+          () => fetch(rosterUrl, {
+            headers: { 'Authorization': `Bearer ${clientToken}` },
+          }),
+          { maxAttempts: 3, initialDelayMs: 1000, multiplier: 2 }
+        );
+
+        if (!rosterResponse.ok) {
+          const body = await rosterResponse.text();
+          lastFailure = { status: rosterResponse.status, body, rosterUrl, namespace, slugType };
+          if (isTargetedGuild) {
+            log.info(`[TARGETED] ${guildName} failed: ${rosterResponse.status} (${slugType}/${namespace}) - ${body.slice(0, 150)}`);
+          }
+          // Try the next namespace/slug combination
+          continue;
+        }
+
+        const roster = await rosterResponse.json();
+        const faction = roster.guild?.faction?.type || 'UNKNOWN';
+
+        if (isTargetedGuild) {
+          log.info(`[TARGETED] ${guildName} SUCCESS with ${slugType}/${namespace}: ${roster.members?.length || 0} members`);
+        }
+
+        return {
+          members: roster.members || [],
+          faction,
+        };
       }
-
-      const roster = await rosterResponse.json();
-      const faction = roster.guild?.faction?.type || 'UNKNOWN';
-
-      return {
-        members: roster.members || [],
-        faction,
-      };
     }
 
     if (lastFailure) {
       // Use info level so we can diagnose production issues
       log.info(
         `Public roster fetch failed for ${guildName} on ${serverSlug} (${region.toUpperCase()}) ` +
-          `[ns=${lastFailure.namespace}] ${lastFailure.status} url=${lastFailure.rosterUrl} body=${lastFailure.body?.slice(0, 200)}`
+          `[${lastFailure.slugType}/${lastFailure.namespace}] ${lastFailure.status} url=${lastFailure.rosterUrl} body=${lastFailure.body?.slice(0, 200)}`
       );
     } else {
-      log.info(`Public roster fetch failed for ${guildName} on ${serverSlug} (${region.toUpperCase()}): no namespaces tried`);
+      log.info(`Public roster fetch failed for ${guildName} on ${serverSlug} (${region.toUpperCase()}): no combinations tried`);
     }
 
     return null;
