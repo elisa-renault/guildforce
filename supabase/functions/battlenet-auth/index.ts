@@ -140,6 +140,18 @@ function toGuildSlug(guildName: string): string {
     .replace(/[^a-z0-9-]/g, '');
 }
 
+/**
+ * Alternative slug for Blizzard API: preserve unicode characters and only
+ * replace spaces with hyphens. The request is URL-encoded anyway.
+ * Some guild names appear to require keeping accents (e.g. Exöde).
+ */
+function toGuildSlugUnicode(guildName: string): string {
+  return guildName
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-');
+}
+
 // ============================================================================
 // TYPES
 // ============================================================================
