@@ -59,6 +59,24 @@ export const AdminDashboardSection = ({
       color: 'text-green-400'
     },
     {
+      label: t.admin.stats.uniqueWishUsers,
+      value: stats?.uniqueWishUsers ?? '-',
+      icon: Sparkles,
+      color: 'text-primary'
+    },
+    {
+      label: t.admin.stats.totalWishes,
+      value: stats?.totalWishes ?? '-',
+      icon: Sparkles,
+      color: 'text-primary/70'
+    },
+    {
+      label: t.admin.stats.guildsWithWishes,
+      value: stats?.guildsWithWishes ?? '-',
+      icon: Shield,
+      color: 'text-primary/50'
+    },
+    {
       label: t.forum?.topics,
       value: stats?.totalTopics ?? '-',
       icon: MessageSquare,
@@ -93,24 +111,6 @@ export const AdminDashboardSection = ({
       value: stats?.pendingDeletions ?? '-',
       icon: Trash2,
       color: stats?.pendingDeletions && stats.pendingDeletions > 0 ? 'text-red-400' : 'text-muted-foreground'
-    },
-    {
-      label: t.admin.stats.uniqueWishUsers,
-      value: stats?.uniqueWishUsers ?? '-',
-      icon: Sparkles,
-      color: 'text-primary'
-    },
-    {
-      label: t.admin.stats.totalWishes,
-      value: stats?.totalWishes ?? '-',
-      icon: Sparkles,
-      color: 'text-primary/70'
-    },
-    {
-      label: t.admin.stats.guildsWithWishes,
-      value: stats?.guildsWithWishes ?? '-',
-      icon: Shield,
-      color: 'text-primary/50'
     }
   ];
 
