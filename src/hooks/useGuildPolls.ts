@@ -140,6 +140,8 @@ export const usePoll = (pollId: string | undefined) => {
         ...q,
         options: q.options as string[],
         scale_config: q.scale_config as any,
+        condition: q.condition as any,
+        allow_other: q.allow_other ?? false,
         my_response: myResponses?.find(r => r.question_id === q.id) as GuildPollResponse | undefined,
       })) as GuildPollQuestion[];
 
@@ -209,6 +211,8 @@ export const usePollResults = (pollId: string | undefined) => {
         ...q,
         options: q.options as string[],
         scale_config: q.scale_config as any,
+        condition: q.condition as any,
+        allow_other: q.allow_other ?? false,
         responses: allResponses?.filter(r => r.question_id === q.id) as GuildPollResponse[],
       })) as GuildPollQuestion[];
 
