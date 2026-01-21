@@ -4,7 +4,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { StarDisplay } from '@/components/ui/star-rating';
-import { Lock, User, Users, Calendar, Clock, ListOrdered, Star } from 'lucide-react';
+import { Lock, User, Users, Calendar, Clock, ListOrdered, Star, GitBranch } from 'lucide-react';
+import { OTHER_OPTION_VALUE } from '@/types/poll';
 import type { GuildPollQuestion, ResponseValue, ScaleConfig } from '@/types/poll';
 import { format, parseISO } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
@@ -21,14 +22,19 @@ export const PollResults = ({
   isAnonymous,
   totalResponses,
 }: PollResultsProps) => {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
 
   const getChoiceStats = (question: GuildPollQuestion) => {
-    const stats: Record<string, { count: number; users: { id: string; username: string; avatar_url: string | null }[] }> = {};
+    const stats: Record<string, { count: number; users: { id: string; username: string; avatar_url: string | null }[]; otherTexts?: string[] }> = {};
     
     question.options.forEach((option) => {
       stats[option] = { count: 0, users: [] };
     });
+
+    // Add "Other" option if question allows it
+    if (question.allow_other) {
+      stats[OTHER_OPTION_VALUE] = { count: 0, users: [], otherTexts: [] };
+    }
 
     question.responses?.forEach((response) => {
       const value = response.response_value as ResponseValue;
@@ -38,6 +44,10 @@ export const PollResults = ({
           if (response.user) {
             stats[value.value].users.push(response.user);
           }
+          // Collect "Other" text
+          if (value.value === OTHER_OPTION_VALUE && value.other_text) {
+            stats[value.value].otherTexts?.push(value.other_text);
+          }
         }
       } else if (value.type === 'multiple_choice') {
         value.values.forEach((v) => {
@@ -45,6 +55,10 @@ export const PollResults = ({
             stats[v].count++;
             if (response.user) {
               stats[v].users.push(response.user);
+            }
+            // Collect "Other" text
+            if (v === OTHER_OPTION_VALUE && value.other_text) {
+              stats[v].otherTexts?.push(value.other_text);
             }
           }
         });
@@ -217,7 +231,17 @@ export const PollResults = ({
           <div className="space-y-4">
             <div className="flex items-start gap-2">
               <span className="text-primary font-semibold">{index + 1}.</span>
-              <p className="font-medium text-foreground">{question.question_text}</p>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="font-medium text-foreground">{question.question_text}</p>
+                  {question.condition && (
+                    <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30">
+                      <GitBranch className="h-3 w-3 mr-1" />
+                      {t.polls?.conditionalBadge}
+                    </Badge>
+                  )}
+                </div>
+              </div>
             </div>
 
             {(question.question_type === 'single_choice' || question.question_type === 'multiple_choice') && (
@@ -228,10 +252,13 @@ export const PollResults = ({
 
                   return Object.entries(stats).map(([option, data]) => {
                     const percentage = total > 0 ? (data.count / total) * 100 : 0;
+                    const isOther = option === OTHER_OPTION_VALUE;
+                    const displayLabel = isOther ? (t.polls?.otherSpecify || 'Other (specify)') : option;
+                    
                     return (
                       <div key={option} className="space-y-1">
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-foreground">{option}</span>
+                          <span className="text-foreground">{displayLabel}</span>
                           <span className="text-muted-foreground">
                             {data.count} ({percentage.toFixed(0)}%)
                           </span>

@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GripVertical, Plus, Trash2, X } from 'lucide-react';
-import type { QuestionFormData, PollQuestionType, ScaleConfig } from '@/types/poll';
+import { QuestionConditionEditor } from './QuestionConditionEditor';
+import type { QuestionFormData, PollQuestionType, ScaleConfig, QuestionCondition } from '@/types/poll';
 
 interface SortableQuestionProps {
   question: QuestionFormData;
@@ -18,6 +19,7 @@ interface SortableQuestionProps {
   canRemove: boolean;
   compact?: boolean;
   id: string;
+  previousQuestions?: { id: string; text: string; options: string[]; type: string }[];
 }
 
 export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps>(({
@@ -28,8 +30,9 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
   canRemove,
   compact = false,
   id,
+  previousQuestions = [],
 }, outerRef) => {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
 
   const {
     attributes,
@@ -66,6 +69,10 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
 
   const needsScaleConfig = question.question_type === 'scale';
 
+  // "Other" option is only for single/multiple choice (not ranking)
+  const canHaveOther = question.question_type === 'single_choice' || 
+                       question.question_type === 'multiple_choice';
+
   const handleAddOption = () => {
     onChange({
       ...question,
@@ -92,6 +99,7 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
   const handleTypeChange = (value: PollQuestionType) => {
     const needsOpts = value === 'single_choice' || value === 'multiple_choice' || value === 'ranking';
     const needsScale = value === 'scale';
+    const canOther = value === 'single_choice' || value === 'multiple_choice';
     
     onChange({ 
       ...question, 
@@ -102,6 +110,8 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
       scale_config: needsScale 
         ? (question.scale_config || { min: 1, max: 10, step: 1, min_label: '', max_label: '' })
         : null,
+      // Reset allow_other if type doesn't support it
+      allow_other: canOther ? question.allow_other : false,
     });
   };
 
@@ -110,6 +120,13 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
     onChange({
       ...question,
       scale_config: { ...currentConfig, [field]: value },
+    });
+  };
+
+  const handleConditionChange = (condition: QuestionCondition | null) => {
+    onChange({
+      ...question,
+      condition,
     });
   };
 
@@ -207,6 +224,20 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
                 <Plus className="h-4 w-4 mr-1" />
                 {language === 'fr' ? 'Ajouter une option' : 'Add option'}
               </Button>
+
+              {/* Allow Other option toggle */}
+              {canHaveOther && (
+                <div className="flex items-center gap-2 pt-2 border-t border-border/50 mt-2">
+                  <Switch
+                    id={`allow-other-${id}`}
+                    checked={question.allow_other ?? false}
+                    onCheckedChange={(checked) => onChange({ ...question, allow_other: checked })}
+                  />
+                  <Label htmlFor={`allow-other-${id}`} className="text-sm text-muted-foreground cursor-pointer">
+                    {t.polls?.allowOther}
+                  </Label>
+                </div>
+              )}
             </div>
           )}
 
@@ -277,6 +308,15 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
               {language === 'fr' ? 'Réponse obligatoire' : 'Required'}
             </Label>
           </div>
+
+          {/* Conditional question editor */}
+          {previousQuestions.length > 0 && (
+            <QuestionConditionEditor
+              condition={question.condition}
+              onChange={handleConditionChange}
+              previousQuestions={previousQuestions}
+            />
+          )}
         </div>
       </div>
     </div>

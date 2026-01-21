@@ -919,6 +919,8 @@ export type Database = {
       }
       guild_poll_questions: {
         Row: {
+          allow_other: boolean
+          condition: Json | null
           created_at: string
           display_order: number
           id: string
@@ -931,6 +933,8 @@ export type Database = {
           section_id: string | null
         }
         Insert: {
+          allow_other?: boolean
+          condition?: Json | null
           created_at?: string
           display_order?: number
           id?: string
@@ -943,6 +947,8 @@ export type Database = {
           section_id?: string | null
         }
         Update: {
+          allow_other?: boolean
+          condition?: Json | null
           created_at?: string
           display_order?: number
           id?: string
