@@ -19,7 +19,7 @@ interface SortableQuestionProps {
   canRemove: boolean;
   compact?: boolean;
   id: string;
-  previousQuestions?: { id: string; text: string; options: string[]; type: string }[];
+  previousQuestions?: { id: string; text: string; options: string[]; type: string; scaleConfig?: { min: number; max: number } | null }[];
 }
 
 export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps>(({

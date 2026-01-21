@@ -665,7 +665,7 @@ export const PollEditor = ({
                 </h3>
                 <SortableContext items={formData.questions.map((_, i) => `general-q-${i}`)} strategy={verticalListSortingStrategy}>
                   {formData.questions.map((question, index) => {
-                    // Calculate previous questions eligible for conditions
+                    // Calculate previous questions eligible for conditions (choice + numeric types)
                     const previousQuestions = formData.questions
                       .slice(0, index)
                       .map((q, i) => ({
@@ -673,8 +673,14 @@ export const PollEditor = ({
                         text: q.question_text,
                         options: q.options || [],
                         type: q.question_type,
+                        scaleConfig: q.scale_config || null,
                       }))
-                      .filter(q => q.type === 'single_choice' || q.type === 'multiple_choice');
+                      .filter(q => 
+                        q.type === 'single_choice' || 
+                        q.type === 'multiple_choice' || 
+                        q.type === 'scale' || 
+                        q.type === 'rating'
+                      );
 
                     return (
                       <SortableQuestion
@@ -741,6 +747,7 @@ export const PollEditor = ({
                                     text: q.question_text,
                                     options: q.options || [],
                                     type: q.question_type,
+                                    scaleConfig: q.scale_config || null,
                                   })),
                                   ...formData.sections
                                     .slice(0, sectionIndex)
@@ -749,14 +756,21 @@ export const PollEditor = ({
                                       text: q.question_text,
                                       options: q.options || [],
                                       type: q.question_type,
+                                      scaleConfig: q.scale_config || null,
                                     }))),
                                   ...section.questions.slice(0, qIndex).map((q, qi) => ({
                                     id: `section-${sectionIndex}-q-${qi}`,
                                     text: q.question_text,
                                     options: q.options || [],
                                     type: q.question_type,
+                                    scaleConfig: q.scale_config || null,
                                   })),
-                                ].filter(q => q.type === 'single_choice' || q.type === 'multiple_choice');
+                                ].filter(q => 
+                                  q.type === 'single_choice' || 
+                                  q.type === 'multiple_choice' || 
+                                  q.type === 'scale' || 
+                                  q.type === 'rating'
+                                );
 
                                 return (
                                   <SortableQuestion

@@ -1,16 +1,21 @@
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { X, GitBranch } from 'lucide-react';
-import type { QuestionFormData, QuestionCondition, ConditionOperator } from '@/types/poll';
+import type { QuestionCondition, ConditionOperator } from '@/types/poll';
 
 interface QuestionConditionEditorProps {
   condition: QuestionCondition | null | undefined;
   onChange: (condition: QuestionCondition | null) => void;
-  previousQuestions: { id: string; text: string; options: string[]; type: string }[];
+  previousQuestions: { id: string; text: string; options: string[]; type: string; scaleConfig?: { min: number; max: number } | null }[];
 }
+
+// Helper to determine if a question type supports conditions
+const isChoiceType = (type: string) => type === 'single_choice' || type === 'multiple_choice';
+const isNumericType = (type: string) => type === 'scale' || type === 'rating';
 
 export const QuestionConditionEditor = ({
   condition,
@@ -19,28 +24,46 @@ export const QuestionConditionEditor = ({
 }: QuestionConditionEditorProps) => {
   const { t, language } = useLanguage();
 
-  // Filter questions that can be used as condition source (choice-based)
+  // Filter questions that can be used as condition source (choice-based or numeric)
   const eligibleQuestions = previousQuestions.filter(q => 
-    q.type === 'single_choice' || q.type === 'multiple_choice'
+    isChoiceType(q.type) || isNumericType(q.type)
   );
 
   if (eligibleQuestions.length === 0) {
     return null;
   }
 
-  const operators: { value: ConditionOperator; label: string }[] = [
+  const selectedQuestion = eligibleQuestions.find(q => q.id === condition?.question_id);
+  const isSelectedNumeric = selectedQuestion && isNumericType(selectedQuestion.type);
+
+  // Operators for choice questions
+  const choiceOperators: { value: ConditionOperator; label: string }[] = [
     { value: 'equals', label: language === 'fr' ? 'est égal à' : 'equals' },
     { value: 'not_equals', label: language === 'fr' ? 'est différent de' : 'is not equal to' },
     { value: 'contains', label: language === 'fr' ? 'contient' : 'contains' },
     { value: 'not_contains', label: language === 'fr' ? 'ne contient pas' : 'does not contain' },
   ];
 
+  // Operators for numeric questions (scale/rating)
+  const numericOperators: { value: ConditionOperator; label: string }[] = [
+    { value: 'equals', label: language === 'fr' ? 'est égal à' : 'equals' },
+    { value: 'not_equals', label: language === 'fr' ? 'est différent de' : 'is not equal to' },
+    { value: 'greater_than', label: language === 'fr' ? 'est supérieur à' : 'is greater than' },
+    { value: 'less_than', label: language === 'fr' ? 'est inférieur à' : 'is less than' },
+    { value: 'greater_equals', label: language === 'fr' ? 'est supérieur ou égal à' : 'is greater than or equal to' },
+    { value: 'less_equals', label: language === 'fr' ? 'est inférieur ou égal à' : 'is less than or equal to' },
+  ];
+
+  const operators = isSelectedNumeric ? numericOperators : choiceOperators;
+
   const handleAddCondition = () => {
     if (eligibleQuestions.length > 0) {
+      const firstQ = eligibleQuestions[0];
+      const isNumeric = isNumericType(firstQ.type);
       onChange({
-        question_id: eligibleQuestions[0].id,
+        question_id: firstQ.id,
         operator: 'equals',
-        values: [],
+        values: isNumeric ? [''] : [],
       });
     }
   };
@@ -50,10 +73,18 @@ export const QuestionConditionEditor = ({
   };
 
   const handleQuestionChange = (questionId: string) => {
+    const newQuestion = eligibleQuestions.find(q => q.id === questionId);
+    const isNumeric = newQuestion && isNumericType(newQuestion.type);
+    
+    // Reset operator if switching between numeric and choice
+    const currentIsNumeric = selectedQuestion && isNumericType(selectedQuestion.type);
+    const needsOperatorReset = isNumeric !== currentIsNumeric;
+    
     onChange({
       ...condition!,
       question_id: questionId,
-      values: [], // Reset values when question changes
+      operator: needsOperatorReset ? 'equals' : condition!.operator,
+      values: isNumeric ? [''] : [], // Reset values when question changes
     });
   };
 
@@ -75,7 +106,12 @@ export const QuestionConditionEditor = ({
     });
   };
 
-  const selectedQuestion = eligibleQuestions.find(q => q.id === condition?.question_id);
+  const handleNumericValueChange = (value: string) => {
+    onChange({
+      ...condition!,
+      values: [value],
+    });
+  };
 
   if (!condition) {
     return (
@@ -91,6 +127,18 @@ export const QuestionConditionEditor = ({
       </Button>
     );
   }
+
+  // Get scale/rating range for numeric input hint
+  const getNumericRange = () => {
+    if (!selectedQuestion) return { min: 1, max: 10 };
+    if (selectedQuestion.type === 'rating') return { min: 1, max: 5 };
+    if (selectedQuestion.scaleConfig) {
+      return { min: selectedQuestion.scaleConfig.min, max: selectedQuestion.scaleConfig.max };
+    }
+    return { min: 1, max: 10 };
+  };
+
+  const numericRange = getNumericRange();
 
   return (
     <div className="space-y-3 p-3 rounded-lg border border-primary/30 bg-primary/5">
@@ -122,6 +170,11 @@ export const QuestionConditionEditor = ({
             {eligibleQuestions.map((q, idx) => (
               <SelectItem key={q.id} value={q.id}>
                 {idx + 1}. {q.text.length > 40 ? q.text.slice(0, 40) + '...' : q.text}
+                {isNumericType(q.type) && (
+                  <span className="text-muted-foreground ml-1">
+                    ({q.type === 'rating' ? '★' : '⚖️'})
+                  </span>
+                )}
               </SelectItem>
             ))}
           </SelectContent>
@@ -146,7 +199,8 @@ export const QuestionConditionEditor = ({
         </Select>
       </div>
 
-      {selectedQuestion && (
+      {/* Choice-based value selection */}
+      {selectedQuestion && isChoiceType(selectedQuestion.type) && (
         <div className="space-y-2">
           <Label className="text-xs text-muted-foreground">
             {t.polls?.conditionValues || (language === 'fr' ? 'Valeurs' : 'Values')}
@@ -168,6 +222,32 @@ export const QuestionConditionEditor = ({
           {condition.values.length === 0 && (
             <p className="text-xs text-destructive">
               {t.polls?.selectAtLeastOneValue || (language === 'fr' ? 'Sélectionnez au moins une valeur' : 'Select at least one value')}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Numeric value input for scale/rating */}
+      {selectedQuestion && isNumericType(selectedQuestion.type) && (
+        <div className="space-y-2">
+          <Label className="text-xs text-muted-foreground">
+            {language === 'fr' ? 'Valeur' : 'Value'}
+            <span className="ml-1 text-muted-foreground/70">
+              ({numericRange.min} - {numericRange.max})
+            </span>
+          </Label>
+          <Input
+            type="number"
+            min={numericRange.min}
+            max={numericRange.max}
+            value={condition.values[0] || ''}
+            onChange={(e) => handleNumericValueChange(e.target.value)}
+            placeholder={`${numericRange.min} - ${numericRange.max}`}
+            className="bg-background w-32"
+          />
+          {(!condition.values[0] || condition.values[0] === '') && (
+            <p className="text-xs text-destructive">
+              {language === 'fr' ? 'Entrez une valeur' : 'Enter a value'}
             </p>
           )}
         </div>
