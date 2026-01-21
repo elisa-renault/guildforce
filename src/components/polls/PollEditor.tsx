@@ -35,6 +35,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import type { PollFormData, QuestionFormData, SectionFormData } from '@/types/poll';
 import { PollResultsAccessEditor, type ResultsAccessRule } from './PollResultsAccessEditor';
+import { PollRespondentEditor, type RespondentAccessRule } from './PollRespondentEditor';
 
 interface Roster {
   id: string;
@@ -57,11 +58,12 @@ interface PollEditorProps {
   members?: GuildMember[];
   ranks?: GuildRank[];
   officerRankThreshold?: number;
-  onSave: (data: PollFormData, accessRules?: ResultsAccessRule[]) => Promise<void>;
-  onPublish?: (data: PollFormData, accessRules?: ResultsAccessRule[]) => Promise<void>;
+  onSave: (data: PollFormData, accessRules?: ResultsAccessRule[], respondentRules?: RespondentAccessRule[]) => Promise<void>;
+  onPublish?: (data: PollFormData, accessRules?: ResultsAccessRule[], respondentRules?: RespondentAccessRule[]) => Promise<void>;
   saving?: boolean;
   metadataOnly?: boolean;
   initialAccessRules?: ResultsAccessRule[];
+  initialRespondentRules?: RespondentAccessRule[];
 }
 
 const defaultQuestion: QuestionFormData = {
@@ -184,6 +186,7 @@ export const PollEditor = ({
   saving = false,
   metadataOnly = false,
   initialAccessRules = [],
+  initialRespondentRules = [],
 }: PollEditorProps) => {
   const { language, t } = useLanguage();
   const [openSections, setOpenSections] = useState<Record<number, boolean>>({});
@@ -194,6 +197,10 @@ export const PollEditor = ({
   // Results access state
   const [restrictResultsAccess, setRestrictResultsAccess] = useState(initialAccessRules.length > 0);
   const [resultsAccessRules, setResultsAccessRules] = useState<ResultsAccessRule[]>(initialAccessRules);
+  
+  // Respondent access state
+  const [restrictRespondentAccess, setRestrictRespondentAccess] = useState(initialRespondentRules.length > 0);
+  const [respondentAccessRules, setRespondentAccessRules] = useState<RespondentAccessRule[]>(initialRespondentRules);
   
   const [formData, setFormData] = useState<PollFormData>(initialData || {
     title: '',
@@ -248,6 +255,20 @@ export const PollEditor = ({
     setRestrictResultsAccess(initialAccessRules.length > 0);
     setResultsAccessRules(initialAccessRules);
   }, [initialAccessRules]);
+
+  // Initialize respondent rules
+  const initialRespondentRulesRef = useRef<RespondentAccessRule[] | null>(null);
+  useEffect(() => {
+    if (initialRespondentRulesRef.current !== null) {
+      const currentRulesStr = JSON.stringify(initialRespondentRulesRef.current);
+      const newRulesStr = JSON.stringify(initialRespondentRules);
+      if (currentRulesStr === newRulesStr) return;
+    }
+    
+    initialRespondentRulesRef.current = initialRespondentRules;
+    setRestrictRespondentAccess(initialRespondentRules.length > 0);
+    setRespondentAccessRules(initialRespondentRules);
+  }, [initialRespondentRules]);
 
   // Toggle section
   const toggleSection = (index: number) => {
@@ -449,13 +470,15 @@ export const PollEditor = ({
 
   const handleSave = async () => {
     const rulesToSave = restrictResultsAccess ? resultsAccessRules : [];
-    await onSave(formData, rulesToSave);
+    const respondentRulesToSave = restrictRespondentAccess ? respondentAccessRules : [];
+    await onSave(formData, rulesToSave, respondentRulesToSave);
   };
 
   const handlePublish = async () => {
     if (onPublish) {
       const rulesToSave = restrictResultsAccess ? resultsAccessRules : [];
-      await onPublish(formData, rulesToSave);
+      const respondentRulesToSave = restrictRespondentAccess ? respondentAccessRules : [];
+      await onPublish(formData, rulesToSave, respondentRulesToSave);
     }
   };
 
@@ -592,6 +615,18 @@ export const PollEditor = ({
             </div>
           </div>
         </div>
+      </GlowCard>
+
+      {/* Respondent Targeting */}
+      <GlowCard className="p-6">
+        <PollRespondentEditor
+          accessRules={respondentAccessRules}
+          members={members}
+          ranks={ranks}
+          onChange={setRespondentAccessRules}
+          restrictAccess={restrictRespondentAccess}
+          onRestrictAccessChange={setRestrictRespondentAccess}
+        />
       </GlowCard>
 
       {/* Results Access Control */}

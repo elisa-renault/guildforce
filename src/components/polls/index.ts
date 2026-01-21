@@ -1,5 +1,6 @@
 export { PollCard } from './PollCard';
 export { PollEditor } from './PollEditor';
+export { PollRespondentEditor, type RespondentAccessRule } from './PollRespondentEditor';
 export { PollQuestionEditor } from './PollQuestionEditor';
 export { PollSectionEditor } from './PollSectionEditor';
 export { PollResponse } from './PollResponse';
