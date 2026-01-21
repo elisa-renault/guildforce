@@ -96,9 +96,13 @@ const Overview = () => {
         .eq('user_id', user.id)
         .single();
 
+      // Track admin read-only mode locally to avoid stale closure
+      let adminReadOnly = false;
+
       // If not a member but is global admin, allow read-only access
       if (memberError || !memberData) {
         if (isGlobalAdmin) {
+          adminReadOnly = true;
           setIsAdminReadOnly(true);
           setCommitmentStatus('undecided');
         } else {
@@ -139,7 +143,7 @@ const Overview = () => {
         .single();
 
       // Only fetch user's wishes if they are a member (not admin read-only)
-      if (rostersData && !isAdminReadOnly) {
+      if (rostersData && !adminReadOnly) {
         setDefaultRoster(rostersData);
 
         // Fetch my wishes for the default roster
