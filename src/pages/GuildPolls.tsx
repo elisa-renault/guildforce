@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Loader2 } from 'lucide-react';
 import { useGuildPolls, usePollMutations } from '@/hooks/useGuildPolls';
+import { toast } from 'sonner';
 import { toSlug } from '@/lib/guildSlug';
 import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
 
@@ -26,7 +27,7 @@ const GuildPolls = () => {
   const fullSlug = `${regionSlug}/${serverSlug}/${guildSlug}`;
   const basePath = `/guild/${fullSlug}`;
   const { polls, loading: pollsLoading, refetch } = useGuildPolls(guildId || undefined);
-  const { publishPoll, closePoll, deletePoll, saving } = usePollMutations();
+  const { publishPoll, closePoll, deletePoll, duplicatePoll, saving } = usePollMutations();
   const { hasPermission: hasManagePolls, loading: permLoading } = useHasGuildPermission(guildId, 'manage_polls');
 
   // User can manage polls if they are GM OR have manage_polls permission
@@ -80,6 +81,14 @@ const GuildPolls = () => {
   const handleDelete = async (pollId: string) => {
     await deletePoll(pollId);
     refetch();
+  };
+
+  const handleDuplicate = async (pollId: string) => {
+    const newPollId = await duplicatePoll(pollId);
+    if (newPollId) {
+      toast.success(language === 'fr' ? 'Sondage dupliqué en brouillon' : 'Poll duplicated as draft');
+      refetch();
+    }
   };
 
   const draftPolls = polls.filter(p => p.status === 'draft');
@@ -155,6 +164,7 @@ const GuildPolls = () => {
                     isGM={canManagePolls}
                     guildSlug={fullSlug}
                     onClose={handleClose}
+                    onDuplicate={canManagePolls ? handleDuplicate : undefined}
                   />
                 ))}
                 {activePolls.length === 0 && (
@@ -174,6 +184,7 @@ const GuildPolls = () => {
                       guildSlug={fullSlug}
                       onPublish={handlePublish}
                       onDelete={handleDelete}
+                      onDuplicate={handleDuplicate}
                     />
                   ))}
                   {draftPolls.length === 0 && (
@@ -192,6 +203,7 @@ const GuildPolls = () => {
                     isGM={canManagePolls}
                     guildSlug={fullSlug}
                     onDelete={canManagePolls ? handleDelete : undefined}
+                    onDuplicate={canManagePolls ? handleDuplicate : undefined}
                   />
                 ))}
                 {closedPolls.length === 0 && (
