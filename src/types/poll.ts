@@ -21,12 +21,21 @@ export interface ScaleConfig {
 }
 
 // Condition for conditional questions
-export type ConditionOperator = 'equals' | 'not_equals' | 'contains' | 'not_contains';
+export type ConditionOperator = 
+  | 'equals' 
+  | 'not_equals' 
+  | 'contains' 
+  | 'not_contains'
+  // Numeric operators for scale/rating questions
+  | 'greater_than'
+  | 'less_than'
+  | 'greater_equals'
+  | 'less_equals';
 
 export interface QuestionCondition {
   question_id: string;        // Source question ID
   operator: ConditionOperator;
-  values: string[];           // Trigger values
+  values: string[];           // Trigger values (for choice) or numeric thresholds (for scale)
 }
 
 export interface GuildPoll {
