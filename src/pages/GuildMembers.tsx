@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useIsAdmin } from '@/hooks/useAdmin';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { translations } from '@/i18n/translations';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,7 +25,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import { Crown, Shield, Search, Users, CheckCircle2, XCircle, RefreshCw, ChevronDown, ChevronLeft, ChevronRight, Check, X, Star } from 'lucide-react';
+import { Crown, Shield, Search, Users, CheckCircle2, XCircle, RefreshCw, ChevronDown, ChevronLeft, ChevronRight, Check, X, Star, Eye } from 'lucide-react';
 import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
 import { wowClasses } from '@/data/wowClasses';
 import { BATTLENET_CLASS_MAP } from '@/data/battlenetClasses';
@@ -64,12 +65,14 @@ const GuildMembers = () => {
   const { regionSlug, serverSlug, guildSlug } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isAdmin: isGlobalAdmin, loading: adminLoading } = useIsAdmin();
   const { language } = useLanguage();
 
   const [guild, setGuild] = useState<GuildInfo | null>(null);
   const [members, setMembers] = useState<RosterMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [isGM, setIsGM] = useState(false);
+  const [isAdminReadOnly, setIsAdminReadOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [classFilters, setClassFilters] = useState<string[]>([]);
   const [rankFilters, setRankFilters] = useState<number[]>([]);
@@ -142,6 +145,8 @@ const GuildMembers = () => {
         setLoading(false);
         return;
       }
+      // Wait for admin check to complete
+      if (adminLoading) return;
 
       try {
         // Get guild info using ilike matching on slugs
@@ -165,6 +170,11 @@ const GuildMembers = () => {
           _guild_id: guildData.id,
         });
         setIsGM(!!gmCheck);
+        
+        // Check if global admin (for read-only access without membership)
+        if (isGlobalAdmin && !gmCheck) {
+          setIsAdminReadOnly(true);
+        }
 
         // First try to get from roster cache (full guild roster)
         const { data: rosterCache, error: rosterError } = await supabase
@@ -310,7 +320,7 @@ const GuildMembers = () => {
     };
 
     loadData();
-  }, [regionSlug, serverSlug, guildSlug, user, navigate]);
+  }, [regionSlug, serverSlug, guildSlug, user, navigate, adminLoading, isGlobalAdmin]);
 
   // Filter members
   const filteredMembers = useMemo(() => {
@@ -424,9 +434,17 @@ const GuildMembers = () => {
       />
 
       <main className="container mx-auto px-3 md:px-4 py-4 md:py-6">
-        <Breadcrumbs items={breadcrumbItems} className="mb-4" />
+        {/* Admin read-only banner */}
+        {isAdminReadOnly && (
+          <div className="flex items-center justify-center gap-2 mb-4 p-2 rounded-lg bg-amber-500/10 border border-amber-500/30">
+            <Eye className="h-4 w-4 text-amber-400" />
+            <span className="text-sm text-amber-400 font-medium">
+              {language === 'fr' ? 'Mode lecture admin' : 'Admin read-only mode'}
+            </span>
+          </div>
+        )}
 
-        {/* Header */}
+        <Breadcrumbs items={breadcrumbItems} className="mb-4" />
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
           <div className="flex items-center gap-3">
             <Users className="h-6 w-6 text-primary" />
