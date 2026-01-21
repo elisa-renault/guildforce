@@ -7,7 +7,7 @@ import { toSlug } from '@/lib/guildSlug';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GuildSubNav } from '@/components/guild';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { PollEditor, type ResultsAccessRule } from '@/components/polls';
+import { PollEditor, type ResultsAccessRule, type RespondentAccessRule } from '@/components/polls';
 import { usePollMutations } from '@/hooks/useGuildPolls';
 import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
 import type { PollFormData, SectionFormData, QuestionFormData } from '@/types/poll';
@@ -51,10 +51,11 @@ const GuildPollNew = () => {
   const [ranks, setRanks] = useState<GuildRank[]>([]);
   const [existingPoll, setExistingPoll] = useState<any>(null);
   const [initialAccessRules, setInitialAccessRules] = useState<ResultsAccessRule[]>([]);
+  const [initialRespondentRules, setInitialRespondentRules] = useState<RespondentAccessRule[]>([]);
   const [confirmResetDialog, setConfirmResetDialog] = useState(false);
-  const [pendingFullEditData, setPendingFullEditData] = useState<{ data: PollFormData; rules: ResultsAccessRule[] } | null>(null);
+  const [pendingFullEditData, setPendingFullEditData] = useState<{ data: PollFormData; rules: ResultsAccessRule[]; respondentRules: RespondentAccessRule[] } | null>(null);
 
-  const { createPoll, updatePoll, updatePollQuestions, publishPoll, resetPollResponses, saveResultsAccessRules, fetchResultsAccessRules, saving } = usePollMutations();
+  const { createPoll, updatePoll, updatePollQuestions, publishPoll, resetPollResponses, saveResultsAccessRules, fetchResultsAccessRules, saveRespondentRules, fetchRespondentRules, saving } = usePollMutations();
   const { hasPermission: hasManagePolls, loading: permLoading } = useHasGuildPermission(guildId, 'manage_polls');
 
   // User can manage polls if they are GM OR have manage_polls permission
@@ -176,7 +177,11 @@ const GuildPollNew = () => {
           if (!cancelled && pollData) {
             setExistingPoll(pollData);
             const rules = await fetchResultsAccessRules(pollId);
-            if (!cancelled) setInitialAccessRules(rules);
+            const respRules = await fetchRespondentRules(pollId);
+            if (!cancelled) {
+              setInitialAccessRules(rules);
+              setInitialRespondentRules(respRules);
+            }
           }
         }
       } catch (error: any) {
@@ -195,21 +200,22 @@ const GuildPollNew = () => {
     return () => {
       cancelled = true;
     };
-  }, [user, regionSlug, serverSlug, guildSlug, pollId, navigate, fetchResultsAccessRules, toast, language]);
+  }, [user, regionSlug, serverSlug, guildSlug, pollId, navigate, fetchResultsAccessRules, fetchRespondentRules, toast, language]);
 
-  const handleSave = async (data: PollFormData, accessRules?: ResultsAccessRule[]) => {
+  const handleSave = async (data: PollFormData, accessRules?: ResultsAccessRule[], respondentRules?: RespondentAccessRule[]) => {
     if (!guildId) return;
 
     try {
       if (existingPoll) {
         if (isActivePoll && editMode === 'full') {
-          setPendingFullEditData({ data, rules: accessRules || [] });
+          setPendingFullEditData({ data, rules: accessRules || [], respondentRules: respondentRules || [] });
           setConfirmResetDialog(true);
           return;
         }
         
         await updatePoll(existingPoll.id, data);
         if (accessRules) await saveResultsAccessRules(existingPoll.id, accessRules);
+        if (respondentRules) await saveRespondentRules(existingPoll.id, respondentRules);
         
         if (!isActivePoll || editMode === 'full') {
           await updatePollQuestions(existingPoll.id, data);
@@ -218,7 +224,10 @@ const GuildPollNew = () => {
         toast({ title: t.polls?.saved || 'Poll saved' });
       } else {
         const newPollId = await createPoll(guildId, data);
-        if (newPollId && accessRules) await saveResultsAccessRules(newPollId, accessRules);
+        if (newPollId) {
+          if (accessRules) await saveResultsAccessRules(newPollId, accessRules);
+          if (respondentRules) await saveRespondentRules(newPollId, respondentRules);
+        }
         toast({ title: t.polls?.draftSaved || 'Draft saved' });
       }
       navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/polls`);
@@ -235,6 +244,7 @@ const GuildPollNew = () => {
       await updatePoll(existingPoll.id, pendingFullEditData.data);
       await updatePollQuestions(existingPoll.id, pendingFullEditData.data);
       if (pendingFullEditData.rules) await saveResultsAccessRules(existingPoll.id, pendingFullEditData.rules);
+      if (pendingFullEditData.respondentRules) await saveRespondentRules(existingPoll.id, pendingFullEditData.respondentRules);
       
       toast({ title: t.polls?.updated || 'Poll updated' });
       navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/polls`);
@@ -246,7 +256,7 @@ const GuildPollNew = () => {
     }
   };
 
-  const handlePublish = async (data: PollFormData, accessRules?: ResultsAccessRule[]) => {
+  const handlePublish = async (data: PollFormData, accessRules?: ResultsAccessRule[], respondentRules?: RespondentAccessRule[]) => {
     if (!guildId) return;
 
     try {
@@ -260,6 +270,7 @@ const GuildPollNew = () => {
       
       if (pollIdToPublish) {
         if (accessRules) await saveResultsAccessRules(pollIdToPublish, accessRules);
+        if (respondentRules) await saveRespondentRules(pollIdToPublish, respondentRules);
         await publishPoll(pollIdToPublish);
         toast({ title: t.polls?.published || 'Poll published!' });
         navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/polls`);
@@ -397,6 +408,7 @@ const GuildPollNew = () => {
           officerRankThreshold={guild?.officer_rank_threshold ?? 2}
           initialData={existingPoll ? toPollFormData(existingPoll) : undefined}
           initialAccessRules={initialAccessRules}
+          initialRespondentRules={initialRespondentRules}
           onSave={handleSave}
           onPublish={isActivePoll ? undefined : handlePublish}
           saving={saving}
