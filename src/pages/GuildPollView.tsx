@@ -147,12 +147,15 @@ const GuildPollView = () => {
         {/* Header */}
         <div className="flex flex-col gap-4 mb-6">
           <div className="flex items-start gap-4">
-            <button
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
               onClick={handleBack}
-              className="w-10 h-10 shrink-0 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
+              className="w-10 h-10 shrink-0 rounded-lg bg-muted/50 hover:bg-muted"
             >
               <ArrowLeft className="h-5 w-5 text-muted-foreground" />
-            </button>
+            </Button>
             <div className="flex-1 min-w-0">
               <h1 className="text-2xl font-bold">{poll.title}</h1>
               {poll.description && (
