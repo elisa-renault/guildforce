@@ -35,23 +35,33 @@ const formDataToQuestions = (formData: PollFormData): GuildPollQuestion[] => {
   // Build a mapping from form indices to preview IDs
   const idMapping: Record<string, string> = {};
   
-  // First pass: create IDs
+  // First pass: create IDs mapping from editor format to preview format
+  // Editor uses: "general-q-0", "section-0-q-1"
+  // Preview uses: "preview-general-0", "preview-section-0-1"
   formData.questions.forEach((_, i) => {
-    idMapping[`general-${i}`] = `preview-general-${i}`;
+    idMapping[`general-q-${i}`] = `preview-general-${i}`;
   });
   formData.sections.forEach((section, si) => {
     section.questions.forEach((_, qi) => {
-      idMapping[`section-${si}-${qi}`] = `preview-section-${si}-${qi}`;
+      idMapping[`section-${si}-q-${qi}`] = `preview-section-${si}-${qi}`;
     });
   });
 
-  // Helper to transform condition
+  // Helper to transform condition - map question IDs from editor to preview format
   const transformCondition = (condition?: QuestionCondition | null): QuestionCondition | null => {
     if (!condition) return null;
-    // The condition.question_id might reference a form ID pattern, we need to map it
-    // In the editor, conditions reference the question_id which could be an index pattern
-    // For preview, just pass through as the IDs will match
-    return condition;
+    
+    // Map the question_id from editor format to preview format
+    const mappedId = idMapping[condition.question_id];
+    if (!mappedId) {
+      console.warn('Could not map condition question_id:', condition.question_id);
+      return null;
+    }
+    
+    return {
+      ...condition,
+      question_id: mappedId,
+    };
   };
 
   // General questions
