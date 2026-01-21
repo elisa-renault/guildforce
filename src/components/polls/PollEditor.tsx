@@ -664,17 +664,31 @@ export const PollEditor = ({
                   {language === 'fr' ? 'Questions générales' : 'General Questions'}
                 </h3>
                 <SortableContext items={formData.questions.map((_, i) => `general-q-${i}`)} strategy={verticalListSortingStrategy}>
-                  {formData.questions.map((question, index) => (
-                    <SortableQuestion
-                      key={`general-q-${index}`}
-                      id={`general-q-${index}`}
-                      question={question}
-                      index={index}
-                      onChange={(q) => handleQuestionChange(index, q)}
-                      onRemove={() => handleRemoveQuestion(index)}
-                      canRemove={formData.questions.length > 1 || formData.sections.some(s => s.questions.length > 0)}
-                    />
-                  ))}
+                  {formData.questions.map((question, index) => {
+                    // Calculate previous questions eligible for conditions
+                    const previousQuestions = formData.questions
+                      .slice(0, index)
+                      .map((q, i) => ({
+                        id: `general-q-${i}`,
+                        text: q.question_text,
+                        options: q.options || [],
+                        type: q.question_type,
+                      }))
+                      .filter(q => q.type === 'single_choice' || q.type === 'multiple_choice');
+
+                    return (
+                      <SortableQuestion
+                        key={`general-q-${index}`}
+                        id={`general-q-${index}`}
+                        question={question}
+                        index={index}
+                        onChange={(q) => handleQuestionChange(index, q)}
+                        onRemove={() => handleRemoveQuestion(index)}
+                        canRemove={formData.questions.length > 1 || formData.sections.some(s => s.questions.length > 0)}
+                        previousQuestions={previousQuestions}
+                      />
+                    );
+                  })}
                 </SortableContext>
               </div>
             )}
@@ -716,18 +730,48 @@ export const PollEditor = ({
                               items={section.questions.map((_, qi) => `section-${sectionIndex}-q-${qi}`)} 
                               strategy={verticalListSortingStrategy}
                             >
-                              {section.questions.map((question, qIndex) => (
-                                <SortableQuestion
-                                  key={`section-${sectionIndex}-q-${qIndex}`}
-                                  id={`section-${sectionIndex}-q-${qIndex}`}
-                                  question={question}
-                                  index={qIndex}
-                                  onChange={(q) => handleSectionQuestionChange(sectionIndex, qIndex, q)}
-                                  onRemove={() => handleRemoveSectionQuestion(sectionIndex, qIndex)}
-                                  canRemove={true}
-                                  compact
-                                />
-                              ))}
+                              {section.questions.map((question, qIndex) => {
+                                // Calculate ALL previous questions for conditions:
+                                // 1. All general questions
+                                // 2. Questions from previous sections
+                                // 3. Questions in this section before current index
+                                const allPreviousQuestions = [
+                                  ...formData.questions.map((q, i) => ({
+                                    id: `general-q-${i}`,
+                                    text: q.question_text,
+                                    options: q.options || [],
+                                    type: q.question_type,
+                                  })),
+                                  ...formData.sections
+                                    .slice(0, sectionIndex)
+                                    .flatMap((s, si) => s.questions.map((q, qi) => ({
+                                      id: `section-${si}-q-${qi}`,
+                                      text: q.question_text,
+                                      options: q.options || [],
+                                      type: q.question_type,
+                                    }))),
+                                  ...section.questions.slice(0, qIndex).map((q, qi) => ({
+                                    id: `section-${sectionIndex}-q-${qi}`,
+                                    text: q.question_text,
+                                    options: q.options || [],
+                                    type: q.question_type,
+                                  })),
+                                ].filter(q => q.type === 'single_choice' || q.type === 'multiple_choice');
+
+                                return (
+                                  <SortableQuestion
+                                    key={`section-${sectionIndex}-q-${qIndex}`}
+                                    id={`section-${sectionIndex}-q-${qIndex}`}
+                                    question={question}
+                                    index={qIndex}
+                                    onChange={(q) => handleSectionQuestionChange(sectionIndex, qIndex, q)}
+                                    onRemove={() => handleRemoveSectionQuestion(sectionIndex, qIndex)}
+                                    canRemove={true}
+                                    compact
+                                    previousQuestions={allPreviousQuestions}
+                                  />
+                                );
+                              })}
                             </SortableContext>
 
                             <Button
