@@ -820,6 +820,144 @@ export const usePollMutations = () => {
     }
   }, [user]);
 
+  const duplicatePoll = async (pollId: string): Promise<string | null> => {
+    if (!user) return null;
+    
+    setSaving(true);
+    try {
+      // Fetch the original poll
+      const { data: originalPoll, error: pollError } = await supabase
+        .from('guild_polls')
+        .select('*')
+        .eq('id', pollId)
+        .single();
+
+      if (pollError) throw pollError;
+
+      // Fetch sections
+      const { data: sections } = await supabase
+        .from('guild_poll_sections')
+        .select('*')
+        .eq('poll_id', pollId)
+        .order('display_order', { ascending: true });
+
+      // Fetch questions
+      const { data: questions } = await supabase
+        .from('guild_poll_questions')
+        .select('*')
+        .eq('poll_id', pollId)
+        .order('display_order', { ascending: true });
+
+      // Create new poll as draft
+      const { data: newPoll, error: newPollError } = await supabase
+        .from('guild_polls')
+        .insert({
+          guild_id: originalPoll.guild_id,
+          created_by: user.id,
+          title: `${originalPoll.title} (copie)`,
+          description: originalPoll.description,
+          is_anonymous: originalPoll.is_anonymous,
+          allow_multiple_responses: originalPoll.allow_multiple_responses,
+          roster_id: originalPoll.roster_id,
+          ends_at: null, // Reset end date
+          status: 'draft',
+        })
+        .select('id')
+        .single();
+
+      if (newPollError) throw newPollError;
+
+      // Map old section IDs to new ones
+      const sectionIdMap: Record<string, string> = {};
+
+      // Duplicate sections
+      if (sections && sections.length > 0) {
+        for (const section of sections) {
+          const { data: newSection, error: sectionError } = await supabase
+            .from('guild_poll_sections')
+            .insert({
+              poll_id: newPoll.id,
+              title: section.title,
+              description: section.description,
+              display_order: section.display_order,
+            })
+            .select('id')
+            .single();
+
+          if (sectionError) throw sectionError;
+          sectionIdMap[section.id] = newSection.id;
+        }
+      }
+
+      // Duplicate questions
+      if (questions && questions.length > 0) {
+        // First pass: create questions and map old IDs to new ones
+        const questionIdMap: Record<string, string> = {};
+        const questionsToInsert = [];
+
+        for (const q of questions) {
+          questionsToInsert.push({
+            poll_id: newPoll.id,
+            section_id: q.section_id ? sectionIdMap[q.section_id] : null,
+            question_text: q.question_text,
+            question_type: q.question_type,
+            is_required: q.is_required,
+            display_order: q.display_order,
+            options: q.options,
+            scale_config: q.scale_config,
+            allow_other: q.allow_other,
+            condition: null, // Will be updated in second pass
+          });
+        }
+
+        const { data: newQuestions, error: questionsError } = await supabase
+          .from('guild_poll_questions')
+          .insert(questionsToInsert)
+          .select('id, display_order');
+
+        if (questionsError) throw questionsError;
+
+        // Build mapping from old question to new question by display_order
+        const orderedOldQuestions = [...questions].sort((a, b) => a.display_order - b.display_order);
+        const orderedNewQuestions = [...(newQuestions || [])].sort((a, b) => a.display_order - b.display_order);
+
+        orderedOldQuestions.forEach((oldQ, idx) => {
+          if (orderedNewQuestions[idx]) {
+            questionIdMap[oldQ.id] = orderedNewQuestions[idx].id;
+          }
+        });
+
+        // Second pass: update conditions with new question IDs
+        for (const q of questions) {
+          if (q.condition && typeof q.condition === 'object') {
+            const condition = q.condition as { question_id?: string };
+            if (condition.question_id && questionIdMap[condition.question_id]) {
+              const newCondition = {
+                ...condition,
+                question_id: questionIdMap[condition.question_id],
+              };
+              const newQuestionId = questionIdMap[q.id];
+              if (newQuestionId) {
+                await supabase
+                  .from('guild_poll_questions')
+                  .update({ condition: newCondition })
+                  .eq('id', newQuestionId);
+              }
+            }
+          }
+        }
+      }
+
+      return newPoll.id;
+    } catch (error) {
+      log.error('Error duplicating poll:', error);
+      toast.error('Erreur lors de la duplication du sondage');
+      return null;
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return {
     saving,
     createPoll,
@@ -828,6 +966,7 @@ export const usePollMutations = () => {
     publishPoll,
     closePoll,
     deletePoll,
+    duplicatePoll,
     resetPollResponses,
     submitResponse,
     submitAllResponses,

@@ -825,6 +825,8 @@ export interface Translations {
     preview: string;
     previewNote: string;
     closePreview: string;
+    duplicate: string;
+    duplicateSuccess: string;
   };
   // Patchnotes
   patchnotes: {
@@ -1485,6 +1487,8 @@ export const translations: Record<Language, Translations> = {
       preview: 'Preview',
       previewNote: 'This is a preview. Your responses will not be saved.',
       closePreview: 'Close Preview',
+      duplicate: 'Duplicate',
+      duplicateSuccess: 'Poll duplicated as draft',
     },
     bugReport: {
       button: 'Report a bug',
@@ -2307,6 +2311,8 @@ export const translations: Record<Language, Translations> = {
       preview: 'Prévisualiser',
       previewNote: 'Ceci est une prévisualisation. Vos réponses ne seront pas enregistrées.',
       closePreview: 'Fermer la prévisualisation',
+      duplicate: 'Dupliquer',
+      duplicateSuccess: 'Sondage dupliqué en brouillon',
     },
     bugReport: {
       button: 'Signaler un bug',

@@ -5,7 +5,7 @@ import { GlowCard } from '@/components/GlowCard';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { BarChart3, Clock, Edit, Eye, Users, Lock, Trash2, Play, User, Settings } from 'lucide-react';
+import { BarChart3, Clock, Edit, Eye, Users, Lock, Trash2, Play, User, Settings, Copy } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
 import type { GuildPoll } from '@/types/poll';
@@ -18,6 +18,7 @@ interface PollCardProps {
   onPublish?: (pollId: string) => void;
   onClose?: (pollId: string) => void;
   onDelete?: (pollId: string) => void;
+  onDuplicate?: (pollId: string) => void;
 }
 
 export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
@@ -27,6 +28,7 @@ export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
   onPublish,
   onClose,
   onDelete,
+  onDuplicate,
 }, ref) => {
   const navigate = useNavigate();
   const { language, t } = useLanguage();
@@ -205,6 +207,16 @@ export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
                   <span className="hidden sm:inline">{t.polls?.viewResults}</span>
                 </Button>
               )}
+
+              {/* Duplicate button - available for all statuses */}
+              <Button 
+                size="sm" 
+                variant="ghost"
+                onClick={() => onDuplicate?.(poll.id)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
 
               {poll.status !== 'active' && (
                 <Button 
