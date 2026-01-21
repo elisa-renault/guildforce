@@ -665,6 +665,73 @@ export const usePollMutations = () => {
     }
   };
 
+  // Fetch poll respondent access rules
+  const fetchRespondentRules = useCallback(async (pollId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('poll_respondent_rules')
+        .select('*')
+        .eq('poll_id', pollId);
+
+      if (error) {
+        log.error('Error fetching respondent rules:', error);
+        return [];
+      }
+
+      return (
+        data?.map((rule) => ({
+          access_type: rule.access_type as 'rank_range' | 'user',
+          user_id: rule.user_id || undefined,
+          min_rank_index: rule.min_rank_index ?? undefined,
+          max_rank_index: rule.max_rank_index ?? undefined,
+        })) || []
+      );
+    } catch (error) {
+      log.error('Error fetching respondent rules:', error);
+      return [];
+    }
+  }, []);
+
+  // Save poll respondent access rules
+  const saveRespondentRules = async (
+    pollId: string, 
+    rules: { access_type: 'rank_range' | 'user'; user_id?: string; min_rank_index?: number; max_rank_index?: number }[]
+  ): Promise<boolean> => {
+    setSaving(true);
+    try {
+      // Delete existing rules
+      await supabase
+        .from('poll_respondent_rules')
+        .delete()
+        .eq('poll_id', pollId);
+
+      // Insert new rules if any
+      if (rules.length > 0) {
+        const rulesToInsert = rules.map(rule => ({
+          poll_id: pollId,
+          access_type: rule.access_type,
+          user_id: rule.access_type === 'user' ? rule.user_id : null,
+          min_rank_index: rule.access_type === 'rank_range' ? rule.min_rank_index : null,
+          max_rank_index: rule.access_type === 'rank_range' ? rule.max_rank_index : null,
+        }));
+
+        const { error } = await supabase
+          .from('poll_respondent_rules')
+          .insert(rulesToInsert);
+
+        if (error) throw error;
+      }
+
+      return true;
+    } catch (error) {
+      log.error('Error saving respondent rules:', error);
+      toast.error('Erreur lors de la sauvegarde du ciblage');
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // Check if current user can view results
   const checkCanViewResults = useCallback(async (pollId: string): Promise<boolean> => {
     if (!user) return false;
@@ -687,6 +754,28 @@ export const usePollMutations = () => {
     }
   }, [user]);
 
+  // Check if current user can respond to poll
+  const checkCanRespond = useCallback(async (pollId: string): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      const { data, error } = await supabase.rpc('can_respond_to_poll', {
+        p_poll_id: pollId,
+        p_user_id: user.id,
+      });
+
+      if (error) {
+        log.error('Error checking respond access:', error);
+        return false;
+      }
+
+      return data || false;
+    } catch (error) {
+      log.error('Error checking respond access:', error);
+      return false;
+    }
+  }, [user]);
+
   return {
     saving,
     createPoll,
@@ -700,6 +789,9 @@ export const usePollMutations = () => {
     submitAllResponses,
     fetchResultsAccessRules,
     saveResultsAccessRules,
+    fetchRespondentRules,
+    saveRespondentRules,
     checkCanViewResults,
+    checkCanRespond,
   };
 };
