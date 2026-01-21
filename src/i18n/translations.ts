@@ -614,6 +614,9 @@ export interface Translations {
       activeSanctions: string;
       openBugs: string;
       forumAdminDesc: string;
+      uniqueWishUsers: string;
+      totalWishes: string;
+      guildsWithWishes: string;
     };
   };
   // Accessibility
@@ -1599,6 +1602,9 @@ export const translations: Record<Language, Translations> = {
         activeSanctions: 'Active Sanctions',
         openBugs: 'Open Bugs',
         forumAdminDesc: 'Manage categories, moderators, reports and sanctions',
+        uniqueWishUsers: 'Users with wishes',
+        totalWishes: 'Total wishes',
+        guildsWithWishes: 'Guilds with wishes',
       },
     },
     accessibility: {
@@ -2403,6 +2409,9 @@ export const translations: Record<Language, Translations> = {
         activeSanctions: 'Sanctions actives',
         openBugs: 'Bugs ouverts',
         forumAdminDesc: 'Gérer les catégories, modérateurs, signalements et sanctions',
+        uniqueWishUsers: 'Utilisateurs avec vœux',
+        totalWishes: 'Total des vœux',
+        guildsWithWishes: 'Guildes avec vœux',
       },
     },
     accessibility: {

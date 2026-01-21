@@ -10,7 +10,8 @@ import {
   ChevronRight,
   FileText,
   Bug,
-  Trash2
+  Trash2,
+  Sparkles
 } from 'lucide-react';
 import { AdminSection } from './AdminSettingsSidebar';
 
@@ -23,6 +24,9 @@ interface AdminStats {
   activeSanctions: number;
   openBugs: number;
   pendingDeletions: number;
+  uniqueWishUsers: number;
+  totalWishes: number;
+  guildsWithWishes: number;
 }
 
 interface AdminDashboardSectionProps {
@@ -89,6 +93,24 @@ export const AdminDashboardSection = ({
       value: stats?.pendingDeletions ?? '-',
       icon: Trash2,
       color: stats?.pendingDeletions && stats.pendingDeletions > 0 ? 'text-red-400' : 'text-muted-foreground'
+    },
+    {
+      label: t.admin.stats.uniqueWishUsers,
+      value: stats?.uniqueWishUsers ?? '-',
+      icon: Sparkles,
+      color: 'text-primary'
+    },
+    {
+      label: t.admin.stats.totalWishes,
+      value: stats?.totalWishes ?? '-',
+      icon: Sparkles,
+      color: 'text-primary/70'
+    },
+    {
+      label: t.admin.stats.guildsWithWishes,
+      value: stats?.guildsWithWishes ?? '-',
+      icon: Shield,
+      color: 'text-primary/50'
     }
   ];
 

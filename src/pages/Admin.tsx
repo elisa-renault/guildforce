@@ -29,6 +29,9 @@ interface AdminStats {
   activeSanctions: number;
   openBugs: number;
   pendingDeletions: number;
+  uniqueWishUsers: number;
+  totalWishes: number;
+  guildsWithWishes: number;
 }
 
 export default function Admin() {
@@ -91,7 +94,10 @@ export default function Admin() {
           { count: reportsCount },
           { count: sanctionsCount },
           { count: bugsCount },
-          { count: deletionsCount }
+          { count: deletionsCount },
+          { count: totalWishesCount },
+          { data: uniqueWishUsersData },
+          { data: guildsWithWishesData }
         ] = await Promise.all([
           supabase.from('profiles').select('*', { count: 'exact', head: true }),
           supabase.from('guilds').select('*', { count: 'exact', head: true }),
@@ -100,8 +106,15 @@ export default function Admin() {
           supabase.from('forum_reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
           supabase.from('forum_user_sanctions').select('*', { count: 'exact', head: true }).eq('is_active', true),
           supabase.from('bug_reports').select('*', { count: 'exact', head: true }).eq('status', 'open'),
-          supabase.from('account_deletion_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending')
+          supabase.from('account_deletion_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+          supabase.from('class_wishes').select('*', { count: 'exact', head: true }),
+          supabase.from('class_wishes').select('user_id'),
+          supabase.from('class_wishes').select('guild_id')
         ]);
+
+        // Count unique users and unique guilds with wishes
+        const uniqueUserIds = new Set(uniqueWishUsersData?.map(w => w.user_id) || []);
+        const uniqueGuildIds = new Set(guildsWithWishesData?.map(w => w.guild_id) || []);
 
         setStats({
           totalUsers: usersCount || 0,
@@ -111,7 +124,10 @@ export default function Admin() {
           pendingReports: reportsCount || 0,
           activeSanctions: sanctionsCount || 0,
           openBugs: bugsCount || 0,
-          pendingDeletions: deletionsCount || 0
+          pendingDeletions: deletionsCount || 0,
+          uniqueWishUsers: uniqueUserIds.size,
+          totalWishes: totalWishesCount || 0,
+          guildsWithWishes: uniqueGuildIds.size,
         });
       } catch (error) {
         log.error('Error fetching admin stats:', error);
