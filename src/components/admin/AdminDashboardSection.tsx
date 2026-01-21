@@ -77,6 +77,14 @@ export const AdminDashboardSection = ({
       color: 'text-primary/50'
     },
     {
+      label: t.admin.stats.engagementRate,
+      value: stats && stats.totalUsers > 0 
+        ? `${Math.round((stats.uniqueWishUsers / stats.totalUsers) * 100)}%` 
+        : '-',
+      icon: Sparkles,
+      color: 'text-amber-400'
+    },
+    {
       label: t.forum?.topics,
       value: stats?.totalTopics ?? '-',
       icon: MessageSquare,
