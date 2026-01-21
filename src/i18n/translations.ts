@@ -617,6 +617,7 @@ export interface Translations {
       uniqueWishUsers: string;
       totalWishes: string;
       guildsWithWishes: string;
+      engagementRate: string;
     };
   };
   // Accessibility
@@ -1605,6 +1606,7 @@ export const translations: Record<Language, Translations> = {
         uniqueWishUsers: 'Users with wishes',
         totalWishes: 'Total wishes',
         guildsWithWishes: 'Guilds with wishes',
+        engagementRate: 'Engagement rate',
       },
     },
     accessibility: {
@@ -2412,6 +2414,7 @@ export const translations: Record<Language, Translations> = {
         uniqueWishUsers: 'Utilisateurs avec vœux',
         totalWishes: 'Total des vœux',
         guildsWithWishes: 'Guildes avec vœux',
+        engagementRate: "Taux d'engagement",
       },
     },
     accessibility: {
