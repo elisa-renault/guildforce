@@ -20,6 +20,15 @@ export interface ScaleConfig {
   max_label?: string;
 }
 
+// Condition for conditional questions
+export type ConditionOperator = 'equals' | 'not_equals' | 'contains' | 'not_contains';
+
+export interface QuestionCondition {
+  question_id: string;        // Source question ID
+  operator: ConditionOperator;
+  values: string[];           // Trigger values
+}
+
 export interface GuildPoll {
   id: string;
   guild_id: string;
@@ -60,6 +69,8 @@ export interface GuildPollQuestion {
   display_order: number;
   options: string[];
   scale_config: ScaleConfig | null;
+  allow_other: boolean;
+  condition: QuestionCondition | null;
   created_at: string;
   // For responses
   responses?: GuildPollResponse[];
@@ -80,9 +91,10 @@ export interface GuildPollResponse {
   };
 }
 
+// Response value types - extended with other_text for "Other" option
 export type ResponseValue = 
-  | { type: 'single_choice'; value: string }
-  | { type: 'multiple_choice'; values: string[] }
+  | { type: 'single_choice'; value: string; other_text?: string }
+  | { type: 'multiple_choice'; values: string[]; other_text?: string }
   | { type: 'text'; value: string }
   | { type: 'rating'; value: number }
   | { type: 'date'; value: string }
@@ -117,4 +129,9 @@ export interface QuestionFormData {
   is_required: boolean;
   options: string[];
   scale_config?: ScaleConfig | null;
+  allow_other?: boolean;
+  condition?: QuestionCondition | null;
 }
+
+// Special value for "Other" option
+export const OTHER_OPTION_VALUE = '__OTHER__';
