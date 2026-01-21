@@ -2,6 +2,7 @@ import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useIsAdmin } from '@/hooks/useAdmin';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,11 +13,12 @@ import { GuildSubNav } from '@/components/guild';
 import { RosterFilters, RosterTable, RosterAnalytics } from '@/components/dashboard';
 import { RosterSelector, RosterEditDialog } from '@/components/roster';
 import { MemberWish, WishData, RosterFilters as RosterFiltersType, ValidationStatus } from '@/types/guild';
-import { Loader2, Sparkles, Settings, TableIcon, BarChart3, Download } from 'lucide-react';
+import { Loader2, Sparkles, Settings, TableIcon, BarChart3, Download, Eye } from 'lucide-react';
 import { exportWishesToCSV } from '@/lib/exportWishes';
 import { toSlug, getGuildWishesPath } from '@/lib/guildSlug';
 import { CommitmentStatus } from '@/components/CommitmentToggle';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 
 // Max wishes = number of WoW classes
 const MAX_WISHES = wowClasses.length;
@@ -33,6 +35,7 @@ const RosterWishes = () => {
   const { regionSlug, serverSlug, guildSlug } = useParams();
   const { t, language } = useLanguage();
   const { user } = useAuth();
+  const { isAdmin: isGlobalAdmin, loading: adminLoading } = useIsAdmin();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [guildId, setGuildId] = useState<string | null>(null);
@@ -41,6 +44,7 @@ const RosterWishes = () => {
   const [canManageWishes, setCanManageWishes] = useState(false);
   const [isGM, setIsGM] = useState(false);
   const [hasSettingsPermission, setHasSettingsPermission] = useState(false);
+  const [isAdminReadOnly, setIsAdminReadOnly] = useState(false);
   const [filters, setFilters] = useState<RosterFiltersType>({
     roleFilters: [],
     classFilters: [],
@@ -152,31 +156,39 @@ const RosterWishes = () => {
       .eq('user_id', user.id)
       .single();
 
+    // If not a member but is global admin, allow read-only access
     if (membershipError || !membershipData) {
-      navigate('/guilds');
-      return;
+      if (isGlobalAdmin) {
+        setIsAdminReadOnly(true);
+        setIsGM(false);
+        setCanManageWishes(false);
+        setHasSettingsPermission(true);
+      } else {
+        navigate('/guilds');
+        return;
+      }
+    } else {
+      const userIsGM = membershipData.role === 'gm';
+      setIsGM(userIsGM);
+
+      // Check manage_wishes permission
+      const { data: wishPerm } = await supabase.rpc('has_guild_permission', {
+        p_guild_id: foundGuildId,
+        p_permission: 'manage_wishes',
+        p_user_id: user.id,
+      });
+      setCanManageWishes(!!userIsGM || !!wishPerm);
+
+      // Check settings permissions
+      const { data: settingsPerm } = await supabase.rpc('has_guild_permission', {
+        p_guild_id: foundGuildId,
+        p_permission: 'view_activity_log',
+        p_user_id: user.id,
+      });
+      setHasSettingsPermission(!!userIsGM || !!settingsPerm);
     }
 
-    const userIsGM = membershipData.role === 'gm';
-    setIsGM(userIsGM);
-
-    // Check manage_wishes permission
-    const { data: wishPerm } = await supabase.rpc('has_guild_permission', {
-      p_guild_id: foundGuildId,
-      p_permission: 'manage_wishes',
-      p_user_id: user.id,
-    });
-    setCanManageWishes(!!userIsGM || !!wishPerm);
-
-    // Check settings permissions
-    const { data: settingsPerm } = await supabase.rpc('has_guild_permission', {
-      p_guild_id: foundGuildId,
-      p_permission: 'view_activity_log',
-      p_user_id: user.id,
-    });
-    setHasSettingsPermission(!!userIsGM || !!settingsPerm);
-
-    // Fetch rosters and check access
+    // Fetch rosters and check access (for both members and admin read-only)
     const { data: rostersData } = await supabase
       .from('rosters')
       .select('*')
@@ -185,9 +197,17 @@ const RosterWishes = () => {
       .order('created_at', { ascending: true });
 
     if (rostersData) {
-      // Check access for each roster
+      // Check access for each roster - admins get access to all rosters
       const rostersWithAccess: RosterData[] = await Promise.all(
         rostersData.map(async (roster) => {
+          if (isGlobalAdmin) {
+            return {
+              id: roster.id,
+              name: roster.name,
+              is_default: roster.is_default,
+              hasAccess: true,
+            };
+          }
           const { data: hasAccess } = await supabase.rpc('has_roster_access', {
             p_roster_id: roster.id,
             p_user_id: user.id,
@@ -271,8 +291,10 @@ const RosterWishes = () => {
       navigate('/auth');
       return;
     }
+    // Wait for admin check to complete
+    if (adminLoading) return;
     fetchData();
-  }, [user, regionSlug, serverSlug, guildSlug, navigate]);
+  }, [user, regionSlug, serverSlug, guildSlug, navigate, adminLoading, isGlobalAdmin]);
 
   useEffect(() => {
     if (guildId && selectedRosterId) {
@@ -605,6 +627,18 @@ const RosterWishes = () => {
         />
       )}
 
+      {/* Admin read-only banner */}
+      {isAdminReadOnly && (
+        <div className="container mx-auto px-3 md:px-4 py-2">
+          <div className="flex items-center justify-center gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/30">
+            <Eye className="h-4 w-4 text-amber-400" />
+            <span className="text-sm text-amber-400 font-medium">
+              {language === 'fr' ? 'Mode lecture admin' : 'Admin read-only mode'}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Roster controls bar */}
       <div
         ref={controlsRef}
@@ -635,9 +669,12 @@ const RosterWishes = () => {
             >
               <span className="hidden md:inline">{t.dashboard.exportCSV}</span>
             </CosmicButton>
-            <CosmicButton size="sm" variant="outline" onClick={() => guild && navigate(getGuildWishesPath(guild.region, guild.server, guild.name))} icon={<Sparkles className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 w-7 md:h-8 md:w-auto p-0 md:px-3">
-              <span className="hidden md:inline">{t.wishes.editMyWishes}</span>
-            </CosmicButton>
+            {/* Hide edit my wishes button for admin read-only mode */}
+            {!isAdminReadOnly && (
+              <CosmicButton size="sm" variant="outline" onClick={() => guild && navigate(getGuildWishesPath(guild.region, guild.server, guild.name))} icon={<Sparkles className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 w-7 md:h-8 md:w-auto p-0 md:px-3">
+                <span className="hidden md:inline">{t.wishes.editMyWishes}</span>
+              </CosmicButton>
+            )}
             {isGM && selectedRosterId && (
               <CosmicButton size="sm" variant="outline" onClick={() => setRosterSettingsOpen(true)} icon={<Settings className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 w-7 md:h-8 md:w-auto p-0 md:px-3">
                 <span className="hidden md:inline">{t.dashboard.roster}</span>

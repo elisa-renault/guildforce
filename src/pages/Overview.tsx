@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useIsAdmin } from '@/hooks/useAdmin';
 import { supabase } from '@/integrations/supabase/client';
 import { getClassById, getSpecById } from '@/data/wowClasses';
 import { CosmicBackground } from '@/components/CosmicBackground';
@@ -11,7 +12,7 @@ import { GuildSubNav } from '@/components/guild';
 import { ActivePollWidget } from '@/components/polls';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Loader2, Sparkles, Users, CheckCircle2, Shield, Heart, Swords, ChevronDown } from 'lucide-react';
+import { Loader2, Sparkles, Users, CheckCircle2, Shield, Heart, Swords, ChevronDown, Eye } from 'lucide-react';
 import { toSlug, getGuildWishesPath } from '@/lib/guildSlug';
 import { CommitmentStatus } from '@/components/CommitmentToggle';
 import { cn } from '@/lib/utils';
@@ -34,6 +35,7 @@ const Overview = () => {
   const { regionSlug, serverSlug, guildSlug } = useParams();
   const { t, language } = useLanguage();
   const { user } = useAuth();
+  const { isAdmin: isGlobalAdmin, loading: adminLoading } = useIsAdmin();
   const [loading, setLoading] = useState(true);
   const [guildId, setGuildId] = useState<string | null>(null);
   const [guild, setGuild] = useState<{ name: string; server: string; region: string; faction: string; avatar_url: string | null } | null>(null);
@@ -42,6 +44,9 @@ const Overview = () => {
   const [commitmentStatus, setCommitmentStatus] = useState<CommitmentStatus>('undecided');
   const [myWishes, setMyWishes] = useState<WishSummary[]>([]);
   const [defaultRoster, setDefaultRoster] = useState<RosterData | null>(null);
+  
+  // Admin read-only mode (global admin viewing guild without membership)
+  const [isAdminReadOnly, setIsAdminReadOnly] = useState(false);
   
   // Mini stats
   const [totalMembers, setTotalMembers] = useState(0);
@@ -52,6 +57,9 @@ const Overview = () => {
       navigate('/auth');
       return;
     }
+
+    // Wait for admin check to complete
+    if (adminLoading) return;
 
     const fetchData = async () => {
       // Find guild by slugified region, server and name
@@ -88,33 +96,39 @@ const Overview = () => {
         .eq('user_id', user.id)
         .single();
 
+      // If not a member but is global admin, allow read-only access
       if (memberError || !memberData) {
-        navigate('/guilds');
-        return;
+        if (isGlobalAdmin) {
+          setIsAdminReadOnly(true);
+          setCommitmentStatus('undecided');
+        } else {
+          navigate('/guilds');
+          return;
+        }
+      } else {
+        // Map DB status to CommitmentStatus
+        const statusMap: Record<string, CommitmentStatus> = {
+          'confirmed': 'confirmed',
+          'potential': 'undecided',
+          'withdrawn': 'withdrawn',
+        };
+        setCommitmentStatus(statusMap[memberData.status] || 'undecided');
       }
 
-      // Map DB status to CommitmentStatus
-      const statusMap: Record<string, CommitmentStatus> = {
-        'confirmed': 'confirmed',
-        'potential': 'undecided',
-        'withdrawn': 'withdrawn',
-      };
-      setCommitmentStatus(statusMap[memberData.status] || 'undecided');
-
-      // Check if user is GM
+      // Check if user is GM (or global admin for settings access)
       const { data: gmCheck } = await supabase.rpc('is_guild_gm', {
         p_guild_id: foundGuildId,
         p_user_id: user.id,
       });
       setIsGM(!!gmCheck);
 
-      // Check settings permissions
+      // Check settings permissions (global admins always have view access)
       const { data: settingsPerm } = await supabase.rpc('has_guild_permission', {
         p_guild_id: foundGuildId,
         p_permission: 'view_activity_log',
         p_user_id: user.id,
       });
-      setHasSettingsPermission(!!gmCheck || !!settingsPerm);
+      setHasSettingsPermission(!!gmCheck || !!settingsPerm || isGlobalAdmin);
 
       // Get default roster
       const { data: rostersData } = await supabase
@@ -124,7 +138,8 @@ const Overview = () => {
         .eq('is_default', true)
         .single();
 
-      if (rostersData) {
+      // Only fetch user's wishes if they are a member (not admin read-only)
+      if (rostersData && !isAdminReadOnly) {
         setDefaultRoster(rostersData);
 
         // Fetch my wishes for the default roster
@@ -139,6 +154,8 @@ const Overview = () => {
         if (wishesData) {
           setMyWishes(wishesData);
         }
+      } else if (rostersData) {
+        setDefaultRoster(rostersData);
       }
 
       // Get mini stats
@@ -156,7 +173,7 @@ const Overview = () => {
     };
 
     fetchData();
-  }, [user, regionSlug, serverSlug, guildSlug, navigate]);
+  }, [user, regionSlug, serverSlug, guildSlug, navigate, adminLoading, isGlobalAdmin]);
 
   if (loading) {
     return (
@@ -214,6 +231,16 @@ const Overview = () => {
       )}
 
       <main className="container mx-auto px-3 md:px-4 py-6 relative z-10 overflow-x-hidden">
+        {/* Admin read-only banner */}
+        {isAdminReadOnly && (
+          <div className="flex items-center justify-center gap-2 mb-4 p-2 rounded-lg bg-amber-500/10 border border-amber-500/30">
+            <Eye className="h-4 w-4 text-amber-400" />
+            <span className="text-sm text-amber-400 font-medium">
+              {language === 'fr' ? 'Mode lecture admin' : 'Admin read-only mode'}
+            </span>
+          </div>
+        )}
+
         {/* Welcome Section */}
         <div className="text-center mb-8 px-2">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-display cosmic-text mb-2 break-words">
