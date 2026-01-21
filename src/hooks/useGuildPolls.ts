@@ -340,6 +340,8 @@ export const usePollMutations = () => {
             display_order: globalOrder + qIndex,
             options: q.options,
             scale_config: q.scale_config as any || null,
+            allow_other: q.allow_other ?? false,
+            condition: q.condition as any || null,
           }));
 
           const { error: questionsError } = await supabase
@@ -362,6 +364,8 @@ export const usePollMutations = () => {
           display_order: globalOrder + index,
           options: q.options,
           scale_config: q.scale_config as any || null,
+          allow_other: q.allow_other ?? false,
+          condition: q.condition as any || null,
         }));
 
         const { error: questionsError } = await supabase
@@ -544,6 +548,8 @@ export const usePollMutations = () => {
             display_order: globalOrder + qIndex,
             options: q.options,
             scale_config: q.scale_config as any || null,
+            allow_other: q.allow_other ?? false,
+            condition: q.condition as any || null,
           }));
 
           const { error: questionsError } = await supabase
@@ -565,6 +571,8 @@ export const usePollMutations = () => {
           display_order: globalOrder + index,
           options: q.options,
           scale_config: q.scale_config as any || null,
+          allow_other: q.allow_other ?? false,
+          condition: q.condition as any || null,
         }));
 
         const { error: questionsError } = await supabase
