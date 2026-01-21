@@ -15,6 +15,21 @@ export const useGuildPolls = (guildId: string | undefined) => {
     
     setLoading(true);
     try {
+      // Check if user is GM (they see all polls)
+      const { data: isGM } = await supabase.rpc('is_guild_gm', {
+        p_guild_id: guildId,
+        p_user_id: user.id,
+      });
+
+      // Check if user has manage_polls permission
+      const { data: hasManagePolls } = await supabase.rpc('has_guild_permission', {
+        p_guild_id: guildId,
+        p_user_id: user.id,
+        p_permission: 'manage_polls',
+      });
+
+      const canManagePolls = isGM || hasManagePolls;
+
       // Fetch polls with questions count in a single query
       const { data, error } = await supabase
         .from('guild_polls')
@@ -34,8 +49,37 @@ export const useGuildPolls = (guildId: string | undefined) => {
         return;
       }
 
-      // Get all question IDs from all polls in one go
-      const allQuestionIds = data.flatMap(poll => 
+      // Filter polls based on respondent targeting (only for non-managers viewing active polls)
+      let filteredData = data;
+      if (!canManagePolls) {
+        // Check can_respond for each active poll
+        const pollAccessChecks = await Promise.all(
+          data.map(async (poll) => {
+            // Draft polls are never shown to non-managers
+            if (poll.status === 'draft') {
+              return { pollId: poll.id, canAccess: false };
+            }
+            // Closed polls are always visible
+            if (poll.status === 'closed') {
+              return { pollId: poll.id, canAccess: true };
+            }
+            // For active polls, check targeting rules
+            const { data: canRespond } = await supabase.rpc('can_respond_to_poll', {
+              p_poll_id: poll.id,
+              p_user_id: user.id,
+            });
+            return { pollId: poll.id, canAccess: canRespond ?? true };
+          })
+        );
+
+        const accessiblePollIds = new Set(
+          pollAccessChecks.filter(c => c.canAccess).map(c => c.pollId)
+        );
+        filteredData = data.filter(poll => accessiblePollIds.has(poll.id));
+      }
+
+      // Get all question IDs from filtered polls
+      const allQuestionIds = filteredData.flatMap(poll => 
         (poll.questions as { id: string }[] | null)?.map(q => q.id) || []
       );
 
@@ -49,13 +93,13 @@ export const useGuildPolls = (guildId: string | undefined) => {
 
         // Count unique users per poll
         const pollUserMap: Record<string, Set<string>> = {};
-        for (const poll of data) {
+        for (const poll of filteredData) {
           pollUserMap[poll.id] = new Set();
         }
 
         // Map question_id back to poll_id
         const questionToPoll: Record<string, string> = {};
-        for (const poll of data) {
+        for (const poll of filteredData) {
           for (const q of (poll.questions as { id: string }[] | null) || []) {
             questionToPoll[q.id] = poll.id;
           }
@@ -73,7 +117,7 @@ export const useGuildPolls = (guildId: string | undefined) => {
         }
       }
 
-      const pollsWithCounts = data.map(poll => ({
+      const pollsWithCounts = filteredData.map(poll => ({
         ...poll,
         questions: undefined, // Remove questions array from the list view
         response_count: responseCounts[poll.id] || 0,
