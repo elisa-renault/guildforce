@@ -103,6 +103,32 @@ const evaluateCondition = (
   const sourceResponse = responses[condition.question_id];
   if (!sourceResponse) return false;
 
+  // Handle numeric types (scale/rating)
+  if (sourceResponse.type === 'scale' || sourceResponse.type === 'rating') {
+    const numericValue = sourceResponse.value;
+    const threshold = parseFloat(condition.values[0]);
+    
+    if (isNaN(threshold) || numericValue === 0) return false;
+
+    switch (condition.operator) {
+      case 'equals':
+        return numericValue === threshold;
+      case 'not_equals':
+        return numericValue !== threshold;
+      case 'greater_than':
+        return numericValue > threshold;
+      case 'less_than':
+        return numericValue < threshold;
+      case 'greater_equals':
+        return numericValue >= threshold;
+      case 'less_equals':
+        return numericValue <= threshold;
+      default:
+        return false;
+    }
+  }
+
+  // Handle choice types
   let selectedValues: string[] = [];
   
   if (sourceResponse.type === 'single_choice') {
