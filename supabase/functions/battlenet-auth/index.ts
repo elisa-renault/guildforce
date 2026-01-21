@@ -1938,17 +1938,57 @@ async function fetchAndStoreCharacters(
       log.info(`Re-matching ${insertedChars.length} characters in guild_roster_cache...`);
       
       for (const char of insertedChars) {
-        const { error: matchError } = await supabase
-          .from('guild_roster_cache')
-          .update({ 
-            matched_user_id: userId, 
-            matched_character_id: char.id 
-          })
-          .ilike('character_name', char.name)
-          .ilike('character_realm_slug', char.realm_slug);
-        
-        if (matchError) {
-          log.debug(`Failed to re-match character ${char.name}: ${matchError.message}`);
+        // Blizzard APIs may return strings with different Unicode normalization (NFC vs NFD).
+        // Postgres string equality/ILIKE is normalization-sensitive, so we try a few variants.
+        const rawName = (char.name || '').trim();
+        const rawRealmSlug = (char.realm_slug || '').trim();
+
+        const nameVariants = Array.from(
+          new Set([
+            rawName,
+            rawName ? rawName.normalize('NFC') : rawName,
+            rawName ? rawName.normalize('NFD') : rawName,
+          ].filter(Boolean))
+        );
+
+        const realmSlugVariants = Array.from(
+          new Set([
+            rawRealmSlug,
+            rawRealmSlug ? rawRealmSlug.normalize('NFC') : rawRealmSlug,
+            rawRealmSlug ? rawRealmSlug.normalize('NFD') : rawRealmSlug,
+          ].filter(Boolean))
+        );
+
+        let matched = false;
+        for (const nameVariant of nameVariants) {
+          for (const realmSlugVariant of realmSlugVariants) {
+            const { data: matchedRows, error: matchError } = await supabase
+              .from('guild_roster_cache')
+              .update({
+                matched_user_id: userId,
+                matched_character_id: char.id,
+              })
+              .ilike('character_name', nameVariant)
+              .ilike('character_realm_slug', realmSlugVariant)
+              .select('id');
+
+            if (matchError) {
+              log.debug(`Failed to re-match character ${char.name}: ${matchError.message}`);
+              continue;
+            }
+
+            if (matchedRows && matchedRows.length > 0) {
+              matched = true;
+              break;
+            }
+          }
+          if (matched) break;
+        }
+
+        if (!matched) {
+          log.info(
+            `No guild_roster_cache rows matched for character ${sanitizePII(char.name, 'name')} (${sanitizePII(char.realm_slug, 'name')})`
+          );
         }
       }
       
