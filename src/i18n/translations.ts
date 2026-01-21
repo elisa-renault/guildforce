@@ -812,6 +812,7 @@ export interface Translations {
     allowOther: string;
     otherSpecify: string;
     otherPlaceholder: string;
+    textResponsePlaceholder: string;
     // Conditional questions
     addCondition: string;
     conditionalQuestion: string;
@@ -1473,6 +1474,7 @@ export const translations: Record<Language, Translations> = {
       allowOther: 'Allow "Other (specify)"',
       otherSpecify: 'Other (specify)',
       otherPlaceholder: 'Please specify...',
+      textResponsePlaceholder: 'Your answer...',
       addCondition: 'Add condition',
       conditionalQuestion: 'Conditional question',
       showIf: 'Show if question',
@@ -2294,6 +2296,7 @@ export const translations: Record<Language, Translations> = {
       allowOther: 'Permettre "Autre (préciser)"',
       otherSpecify: 'Autre (préciser)',
       otherPlaceholder: 'Veuillez préciser...',
+      textResponsePlaceholder: 'Votre réponse...',
       addCondition: 'Ajouter une condition',
       conditionalQuestion: 'Question conditionnelle',
       showIf: 'Afficher si la question',

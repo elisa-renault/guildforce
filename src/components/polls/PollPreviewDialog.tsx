@@ -492,7 +492,7 @@ export const PollPreviewDialog = ({
                         <Textarea
                           value={(responses[question.id] as { type: 'text'; value: string })?.value || ''}
                           onChange={(e) => updateResponse(question.id, { type: 'text', value: e.target.value })}
-                          placeholder={t.polls?.sectionDescription}
+                          placeholder={t.polls?.textResponsePlaceholder}
                           className="bg-background resize-none"
                           rows={3}
                         />
