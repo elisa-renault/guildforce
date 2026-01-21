@@ -1349,6 +1349,37 @@ Deno.serve(async (req) => {
 // ============================================================================
 
 /**
+ * Fetches ALL wow_characters with pagination to avoid the 1000-row default limit.
+ * This ensures that all Guildforce users' characters can be matched in roster cache.
+ */
+async function fetchAllWowCharactersForMatching(supabase: any): Promise<Array<{ id: string; user_id: string; name: string; realm_slug: string }>> {
+  const pageSize = 1000;
+  const allChars: Array<{ id: string; user_id: string; name: string; realm_slug: string }> = [];
+  let from = 0;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from('wow_characters')
+      .select('id, user_id, name, realm_slug')
+      .range(from, from + pageSize - 1);
+
+    if (error) {
+      log.error('Failed to fetch wow_characters for matching:', error);
+      break;
+    }
+
+    const rows = data || [];
+    allChars.push(...rows);
+
+    if (rows.length < pageSize) break;
+    from += pageSize;
+  }
+
+  log.debug(`Fetched ${allChars.length} total wow_characters for matching`);
+  return allChars;
+}
+
+/**
  * Stores the full guild roster in guild_roster_cache table.
  * This allows showing all WoW guild members, even those not on Guildforce yet.
  * 
@@ -1390,10 +1421,8 @@ async function storeFullRoster(
     const guildId = appGuild.id;
     log.info(`Storing full roster (${rosterMembers.length} members) for guild ${sanitizePII(guildName, 'name')}`);
 
-    // Get all existing wow_characters to match Guildforce users
-    const { data: existingChars } = await supabase
-      .from('wow_characters')
-      .select('id, user_id, name, realm_slug');
+    // Get all existing wow_characters to match Guildforce users (paginated to avoid 1000-row limit)
+    const existingChars = await fetchAllWowCharactersForMatching(supabase);
 
     // Build a map for quick lookup
     const charMap = new Map<string, { id: string; user_id: string }>();
@@ -1480,10 +1509,8 @@ async function storeFullRosterForGuild(
 
     log.info(`Storing full roster (${rosterMembers.length} members) for guild ${sanitizePII(guildName, 'name')}`);
 
-    // Get all existing wow_characters to match Guildforce users
-    const { data: existingChars } = await supabase
-      .from('wow_characters')
-      .select('id, user_id, name, realm_slug');
+    // Get all existing wow_characters to match Guildforce users (paginated to avoid 1000-row limit)
+    const existingChars = await fetchAllWowCharactersForMatching(supabase);
 
     // Build a map for quick lookup
     const charMap = new Map<string, { id: string; user_id: string }>();
