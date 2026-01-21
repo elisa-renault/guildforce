@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,11 +6,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 import { GlowCard } from '@/components/GlowCard';
 import { StarRating } from '@/components/ui/star-rating';
-import { Send, Loader2, CheckCircle, Lock } from 'lucide-react';
+import { Send, Loader2, CheckCircle, Lock, GitBranch } from 'lucide-react';
 import { RankingInput } from './RankingInput';
-import type { GuildPollQuestion, ResponseValue } from '@/types/poll';
+import { OTHER_OPTION_VALUE } from '@/types/poll';
+import type { GuildPollQuestion, ResponseValue, QuestionCondition } from '@/types/poll';
 
 interface PollResponseProps {
   questions: GuildPollQuestion[];
@@ -19,6 +21,46 @@ interface PollResponseProps {
   saving?: boolean;
   alreadyResponded?: boolean;
 }
+
+// Evaluate if a condition is met based on current responses
+const evaluateCondition = (
+  condition: QuestionCondition,
+  responses: Record<string, ResponseValue>
+): boolean => {
+  const sourceResponse = responses[condition.question_id];
+  if (!sourceResponse) return false;
+
+  let selectedValues: string[] = [];
+  
+  if (sourceResponse.type === 'single_choice') {
+    // Handle "Other" option
+    selectedValues = sourceResponse.value === OTHER_OPTION_VALUE 
+      ? [OTHER_OPTION_VALUE] 
+      : [sourceResponse.value];
+  } else if (sourceResponse.type === 'multiple_choice') {
+    selectedValues = [...sourceResponse.values];
+  } else {
+    // Non-choice types can't be used as condition source
+    return false;
+  }
+
+  switch (condition.operator) {
+    case 'equals':
+      // At least one of the condition values matches a selected value
+      return condition.values.some(v => selectedValues.includes(v));
+    case 'not_equals':
+      // None of the condition values match selected values
+      return !condition.values.some(v => selectedValues.includes(v));
+    case 'contains':
+      // All condition values are in selected values
+      return condition.values.every(v => selectedValues.includes(v));
+    case 'not_contains':
+      // None of the condition values are in selected values
+      return !condition.values.some(v => selectedValues.includes(v));
+    default:
+      return false;
+  }
+};
 
 export const PollResponse = ({
   questions,
@@ -36,10 +78,10 @@ export const PollResponse = ({
       } else {
         switch (q.question_type) {
           case 'single_choice':
-            initial[q.id] = { type: 'single_choice', value: '' };
+            initial[q.id] = { type: 'single_choice', value: '', other_text: '' };
             break;
           case 'multiple_choice':
-            initial[q.id] = { type: 'multiple_choice', values: [] };
+            initial[q.id] = { type: 'multiple_choice', values: [], other_text: '' };
             break;
           case 'text':
             initial[q.id] = { type: 'text', value: '' };
@@ -68,27 +110,72 @@ export const PollResponse = ({
     return initial;
   });
 
+  // Track which questions have "Other" selected
+  const [otherTexts, setOtherTexts] = useState<Record<string, string>>(() => {
+    const initial: Record<string, string> = {};
+    questions.forEach((q) => {
+      if (q.my_response) {
+        const resp = q.my_response.response_value as any;
+        if (resp.other_text) {
+          initial[q.id] = resp.other_text;
+        }
+      }
+    });
+    return initial;
+  });
+
+  // Compute visible questions based on conditions
+  const visibleQuestions = useMemo(() => {
+    return questions.filter((q) => {
+      if (!q.condition) return true; // No condition = always visible
+      return evaluateCondition(q.condition, responses);
+    });
+  }, [questions, responses]);
+
+  const updateResponse = useCallback((questionId: string, value: ResponseValue) => {
+    setResponses((prev) => ({ ...prev, [questionId]: value }));
+  }, []);
+
+  const updateOtherText = useCallback((questionId: string, text: string) => {
+    setOtherTexts((prev) => ({ ...prev, [questionId]: text }));
+  }, []);
+
   const handleSubmit = async () => {
-    const responsesToSubmit = Object.entries(responses).map(([questionId, value]) => ({
-      questionId,
-      value,
-    }));
+    // Only submit responses for visible questions
+    const responsesToSubmit = visibleQuestions.map((q) => {
+      const response = responses[q.id];
+      // Attach other_text if applicable
+      if (q.allow_other && otherTexts[q.id]) {
+        if (response.type === 'single_choice' && response.value === OTHER_OPTION_VALUE) {
+          return { questionId: q.id, value: { ...response, other_text: otherTexts[q.id] } };
+        }
+        if (response.type === 'multiple_choice' && response.values.includes(OTHER_OPTION_VALUE)) {
+          return { questionId: q.id, value: { ...response, other_text: otherTexts[q.id] } };
+        }
+      }
+      return { questionId: q.id, value: response };
+    });
     await onSubmit(responsesToSubmit);
   };
 
-  const updateResponse = (questionId: string, value: ResponseValue) => {
-    setResponses((prev) => ({ ...prev, [questionId]: value }));
-  };
-
-  const isComplete = questions.every((q) => {
+  // Check if all visible required questions are answered
+  const isComplete = visibleQuestions.every((q) => {
     if (!q.is_required) return true;
     const response = responses[q.id];
     if (!response) return false;
     
     switch (response.type) {
       case 'single_choice':
+        // If "Other" is selected, check that other_text is filled
+        if (response.value === OTHER_OPTION_VALUE) {
+          return !!(otherTexts[q.id]?.trim());
+        }
         return !!response.value;
       case 'multiple_choice':
+        // If "Other" is in values, check that other_text is filled
+        if (response.values.includes(OTHER_OPTION_VALUE)) {
+          return response.values.length > 0 && !!(otherTexts[q.id]?.trim());
+        }
         return response.values.length > 0;
       case 'text':
         return !!response.value.trim();
@@ -106,6 +193,11 @@ export const PollResponse = ({
     }
   });
 
+  // Get index in full question list for display
+  const getQuestionDisplayIndex = (questionId: string) => {
+    return questions.findIndex(q => q.id === questionId) + 1;
+  };
+
   return (
     <div className="space-y-6">
       {isAnonymous && (
@@ -115,166 +207,240 @@ export const PollResponse = ({
         </div>
       )}
 
-      {questions.map((question, index) => (
-        <GlowCard key={question.id} className="p-5">
-          <div className="space-y-4">
-            <div className="flex items-start gap-2">
-              <span className="text-primary font-semibold">{index + 1}.</span>
-              <div className="flex-1">
-                <p className="font-medium text-foreground">
-                  {question.question_text}
-                  {question.is_required && <span className="text-destructive ml-1">*</span>}
-                </p>
-              </div>
-            </div>
-
-            {question.question_type === 'single_choice' && (
-              <RadioGroup
-                value={(responses[question.id] as { type: 'single_choice'; value: string })?.value || ''}
-                onValueChange={(value) => updateResponse(question.id, { type: 'single_choice', value })}
-                className="space-y-2 pl-5"
-              >
-                {question.options.map((option, optionIndex) => (
-                  <div key={optionIndex} className="flex items-center gap-3">
-                    <RadioGroupItem 
-                      value={option} 
-                      id={`${question.id}-${optionIndex}`}
-                      className="border-primary/50"
-                    />
-                    <Label 
-                      htmlFor={`${question.id}-${optionIndex}`} 
-                      className="cursor-pointer text-foreground"
-                    >
-                      {option}
-                    </Label>
+      {visibleQuestions.map((question) => {
+        const hasCondition = !!question.condition;
+        
+        return (
+          <GlowCard key={question.id} className="p-5">
+            <div className="space-y-4">
+              <div className="flex items-start gap-2">
+                <span className="text-primary font-semibold">{getQuestionDisplayIndex(question.id)}.</span>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-medium text-foreground">
+                      {question.question_text}
+                      {question.is_required && <span className="text-destructive ml-1">*</span>}
+                    </p>
+                    {hasCondition && (
+                      <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30">
+                        <GitBranch className="h-3 w-3 mr-1" />
+                        {t.polls?.conditionalBadge}
+                      </Badge>
+                    )}
                   </div>
-                ))}
-              </RadioGroup>
-            )}
+                </div>
+              </div>
 
-            {question.question_type === 'multiple_choice' && (
-              <div className="space-y-2 pl-5">
-                {question.options.map((option, optionIndex) => {
-                  const currentValues = (responses[question.id] as { type: 'multiple_choice'; values: string[] })?.values || [];
-                  return (
-                    <div key={optionIndex} className="flex items-center gap-3">
-                      <Checkbox
-                        id={`${question.id}-${optionIndex}`}
-                        checked={currentValues.includes(option)}
-                        onCheckedChange={(checked) => {
-                          const newValues = checked 
-                            ? [...currentValues, option]
-                            : currentValues.filter((v) => v !== option);
-                          updateResponse(question.id, { type: 'multiple_choice', values: newValues });
-                        }}
-                      />
-                      <Label 
-                        htmlFor={`${question.id}-${optionIndex}`} 
-                        className="cursor-pointer text-foreground"
-                      >
-                        {option}
-                      </Label>
+              {question.question_type === 'single_choice' && (
+                <div className="space-y-2 pl-5">
+                  <RadioGroup
+                    value={(responses[question.id] as { type: 'single_choice'; value: string })?.value || ''}
+                    onValueChange={(value) => updateResponse(question.id, { type: 'single_choice', value })}
+                    className="space-y-2"
+                  >
+                    {question.options.map((option, optionIndex) => (
+                      <div key={optionIndex} className="flex items-center gap-3">
+                        <RadioGroupItem 
+                          value={option} 
+                          id={`${question.id}-${optionIndex}`}
+                          className="border-primary/50"
+                        />
+                        <Label 
+                          htmlFor={`${question.id}-${optionIndex}`} 
+                          className="cursor-pointer text-foreground"
+                        >
+                          {option}
+                        </Label>
+                      </div>
+                    ))}
+                    {/* "Other" option */}
+                    {question.allow_other && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3">
+                          <RadioGroupItem 
+                            value={OTHER_OPTION_VALUE} 
+                            id={`${question.id}-other`}
+                            className="border-primary/50"
+                          />
+                          <Label 
+                            htmlFor={`${question.id}-other`} 
+                            className="cursor-pointer text-foreground"
+                          >
+                            {t.polls?.otherSpecify}
+                          </Label>
+                        </div>
+                        {(responses[question.id] as { type: 'single_choice'; value: string })?.value === OTHER_OPTION_VALUE && (
+                          <Input
+                            value={otherTexts[question.id] || ''}
+                            onChange={(e) => updateOtherText(question.id, e.target.value)}
+                            placeholder={t.polls?.otherPlaceholder}
+                            className="ml-7 max-w-sm bg-background"
+                            maxLength={100}
+                          />
+                        )}
+                      </div>
+                    )}
+                  </RadioGroup>
+                </div>
+              )}
+
+              {question.question_type === 'multiple_choice' && (
+                <div className="space-y-2 pl-5">
+                  {question.options.map((option, optionIndex) => {
+                    const currentValues = (responses[question.id] as { type: 'multiple_choice'; values: string[] })?.values || [];
+                    return (
+                      <div key={optionIndex} className="flex items-center gap-3">
+                        <Checkbox
+                          id={`${question.id}-${optionIndex}`}
+                          checked={currentValues.includes(option)}
+                          onCheckedChange={(checked) => {
+                            const newValues = checked 
+                              ? [...currentValues, option]
+                              : currentValues.filter((v) => v !== option);
+                            updateResponse(question.id, { type: 'multiple_choice', values: newValues });
+                          }}
+                        />
+                        <Label 
+                          htmlFor={`${question.id}-${optionIndex}`} 
+                          className="cursor-pointer text-foreground"
+                        >
+                          {option}
+                        </Label>
+                      </div>
+                    );
+                  })}
+                  {/* "Other" option */}
+                  {question.allow_other && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        <Checkbox
+                          id={`${question.id}-other`}
+                          checked={((responses[question.id] as { type: 'multiple_choice'; values: string[] })?.values || []).includes(OTHER_OPTION_VALUE)}
+                          onCheckedChange={(checked) => {
+                            const currentValues = (responses[question.id] as { type: 'multiple_choice'; values: string[] })?.values || [];
+                            const newValues = checked 
+                              ? [...currentValues, OTHER_OPTION_VALUE]
+                              : currentValues.filter((v) => v !== OTHER_OPTION_VALUE);
+                            updateResponse(question.id, { type: 'multiple_choice', values: newValues });
+                          }}
+                        />
+                        <Label 
+                          htmlFor={`${question.id}-other`} 
+                          className="cursor-pointer text-foreground"
+                        >
+                          {t.polls?.otherSpecify}
+                        </Label>
+                      </div>
+                      {((responses[question.id] as { type: 'multiple_choice'; values: string[] })?.values || []).includes(OTHER_OPTION_VALUE) && (
+                        <Input
+                          value={otherTexts[question.id] || ''}
+                          onChange={(e) => updateOtherText(question.id, e.target.value)}
+                          placeholder={t.polls?.otherPlaceholder}
+                          className="ml-7 max-w-sm bg-background"
+                          maxLength={100}
+                        />
+                      )}
                     </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {question.question_type === 'text' && (
-              <Textarea
-                value={(responses[question.id] as { type: 'text'; value: string })?.value || ''}
-                onChange={(e) => updateResponse(question.id, { type: 'text', value: e.target.value })}
-                placeholder={t.polls?.sectionDescription}
-                className="bg-background resize-none"
-                rows={3}
-              />
-            )}
-
-            {question.question_type === 'rating' && (
-              <div className="pl-5 space-y-3">
-                <div className="flex flex-col items-center gap-2">
-                  <StarRating
-                    value={(responses[question.id] as { type: 'rating'; value: number })?.value ?? 0}
-                    onChange={(value) => updateResponse(question.id, { type: 'rating', value })}
-                    max={5}
-                    allowHalf={true}
-                    size="lg"
-                  />
-                  <div className="text-center">
-                    <span className="text-lg font-semibold text-primary">
-                      {(responses[question.id] as { type: 'rating'; value: number })?.value ?? 0}
-                    </span>
-                    <span className="text-muted-foreground"> / 5</span>
-                  </div>
+                  )}
                 </div>
-              </div>
-            )}
+              )}
 
-            {question.question_type === 'date' && (
-              <Input
-                type="date"
-                value={(responses[question.id] as { type: 'date'; value: string })?.value || ''}
-                onChange={(e) => updateResponse(question.id, { type: 'date', value: e.target.value })}
-                className="bg-background max-w-xs"
-              />
-            )}
-
-            {question.question_type === 'time' && (
-              <Input
-                type="time"
-                value={(responses[question.id] as { type: 'time'; value: string })?.value || ''}
-                onChange={(e) => updateResponse(question.id, { type: 'time', value: e.target.value })}
-                className="bg-background max-w-xs"
-              />
-            )}
-
-            {question.question_type === 'datetime' && (
-              <Input
-                type="datetime-local"
-                value={(responses[question.id] as { type: 'datetime'; value: string })?.value || ''}
-                onChange={(e) => updateResponse(question.id, { type: 'datetime', value: e.target.value })}
-                className="bg-background max-w-xs"
-              />
-            )}
-
-            {question.question_type === 'scale' && (
-              <div className="pl-5 space-y-3">
-                {question.scale_config?.min_label || question.scale_config?.max_label ? (
-                  <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
-                    {question.scale_config?.min_label && <span>{question.scale_config.min_label}</span>}
-                    <span>—</span>
-                    {question.scale_config?.max_label && <span>{question.scale_config.max_label}</span>}
-                  </div>
-                ) : null}
-                <div className="flex flex-col items-center gap-2">
-                  <StarRating
-                    value={(responses[question.id] as { type: 'scale'; value: number })?.value ?? 0}
-                    onChange={(value) => updateResponse(question.id, { type: 'scale', value })}
-                    max={question.scale_config?.max || 5}
-                    allowHalf={true}
-                    size="lg"
-                  />
-                  <div className="text-center">
-                    <span className="text-lg font-semibold text-primary">
-                      {(responses[question.id] as { type: 'scale'; value: number })?.value ?? 0}
-                    </span>
-                    <span className="text-muted-foreground"> / {question.scale_config?.max || 5}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {question.question_type === 'ranking' && (
-              <div className="pl-5">
-                <RankingInput
-                  items={(responses[question.id] as { type: 'ranking'; values: string[] })?.values || question.options}
-                  onChange={(newItems) => updateResponse(question.id, { type: 'ranking', values: newItems })}
+              {question.question_type === 'text' && (
+                <Textarea
+                  value={(responses[question.id] as { type: 'text'; value: string })?.value || ''}
+                  onChange={(e) => updateResponse(question.id, { type: 'text', value: e.target.value })}
+                  placeholder={t.polls?.sectionDescription}
+                  className="bg-background resize-none"
+                  rows={3}
                 />
-              </div>
-            )}
-          </div>
-        </GlowCard>
-      ))}
+              )}
+
+              {question.question_type === 'rating' && (
+                <div className="pl-5 space-y-3">
+                  <div className="flex flex-col items-center gap-2">
+                    <StarRating
+                      value={(responses[question.id] as { type: 'rating'; value: number })?.value ?? 0}
+                      onChange={(value) => updateResponse(question.id, { type: 'rating', value })}
+                      max={5}
+                      allowHalf={true}
+                      size="lg"
+                    />
+                    <div className="text-center">
+                      <span className="text-lg font-semibold text-primary">
+                        {(responses[question.id] as { type: 'rating'; value: number })?.value ?? 0}
+                      </span>
+                      <span className="text-muted-foreground"> / 5</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {question.question_type === 'date' && (
+                <Input
+                  type="date"
+                  value={(responses[question.id] as { type: 'date'; value: string })?.value || ''}
+                  onChange={(e) => updateResponse(question.id, { type: 'date', value: e.target.value })}
+                  className="bg-background max-w-xs"
+                />
+              )}
+
+              {question.question_type === 'time' && (
+                <Input
+                  type="time"
+                  value={(responses[question.id] as { type: 'time'; value: string })?.value || ''}
+                  onChange={(e) => updateResponse(question.id, { type: 'time', value: e.target.value })}
+                  className="bg-background max-w-xs"
+                />
+              )}
+
+              {question.question_type === 'datetime' && (
+                <Input
+                  type="datetime-local"
+                  value={(responses[question.id] as { type: 'datetime'; value: string })?.value || ''}
+                  onChange={(e) => updateResponse(question.id, { type: 'datetime', value: e.target.value })}
+                  className="bg-background max-w-xs"
+                />
+              )}
+
+              {question.question_type === 'scale' && (
+                <div className="pl-5 space-y-3">
+                  {question.scale_config?.min_label || question.scale_config?.max_label ? (
+                    <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+                      {question.scale_config?.min_label && <span>{question.scale_config.min_label}</span>}
+                      <span>—</span>
+                      {question.scale_config?.max_label && <span>{question.scale_config.max_label}</span>}
+                    </div>
+                  ) : null}
+                  <div className="flex flex-col items-center gap-2">
+                    <StarRating
+                      value={(responses[question.id] as { type: 'scale'; value: number })?.value ?? 0}
+                      onChange={(value) => updateResponse(question.id, { type: 'scale', value })}
+                      max={question.scale_config?.max || 5}
+                      allowHalf={true}
+                      size="lg"
+                    />
+                    <div className="text-center">
+                      <span className="text-lg font-semibold text-primary">
+                        {(responses[question.id] as { type: 'scale'; value: number })?.value ?? 0}
+                      </span>
+                      <span className="text-muted-foreground"> / {question.scale_config?.max || 5}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {question.question_type === 'ranking' && (
+                <div className="pl-5">
+                  <RankingInput
+                    items={(responses[question.id] as { type: 'ranking'; values: string[] })?.values || question.options}
+                    onChange={(newItems) => updateResponse(question.id, { type: 'ranking', values: newItems })}
+                  />
+                </div>
+              )}
+            </div>
+          </GlowCard>
+        );
+      })}
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3">
         {alreadyResponded && (

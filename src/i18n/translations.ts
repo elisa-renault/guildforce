@@ -808,6 +808,18 @@ export interface Translations {
     activePoll: string;
     ends: string;
     view: string;
+    // Other option
+    allowOther: string;
+    otherSpecify: string;
+    otherPlaceholder: string;
+    // Conditional questions
+    addCondition: string;
+    conditionalQuestion: string;
+    showIf: string;
+    conditionOperator: string;
+    conditionValues: string;
+    selectAtLeastOneValue: string;
+    conditionalBadge: string;
   };
   // Patchnotes
   patchnotes: {
@@ -1454,6 +1466,16 @@ export const translations: Record<Language, Translations> = {
       activePoll: 'Active Poll',
       ends: 'Ends',
       view: 'View',
+      allowOther: 'Allow "Other (specify)"',
+      otherSpecify: 'Other (specify)',
+      otherPlaceholder: 'Please specify...',
+      addCondition: 'Add condition',
+      conditionalQuestion: 'Conditional question',
+      showIf: 'Show if question',
+      conditionOperator: 'Operator',
+      conditionValues: 'Values',
+      selectAtLeastOneValue: 'Select at least one value',
+      conditionalBadge: 'Conditional',
     },
     bugReport: {
       button: 'Report a bug',
@@ -2262,6 +2284,16 @@ export const translations: Record<Language, Translations> = {
       activePoll: 'Sondage en cours',
       ends: 'Fin',
       view: 'Voir',
+      allowOther: 'Permettre "Autre (préciser)"',
+      otherSpecify: 'Autre (préciser)',
+      otherPlaceholder: 'Veuillez préciser...',
+      addCondition: 'Ajouter une condition',
+      conditionalQuestion: 'Question conditionnelle',
+      showIf: 'Afficher si la question',
+      conditionOperator: 'Opérateur',
+      conditionValues: 'Valeurs',
+      selectAtLeastOneValue: 'Sélectionnez au moins une valeur',
+      conditionalBadge: 'Conditionnel',
     },
     bugReport: {
       button: 'Signaler un bug',

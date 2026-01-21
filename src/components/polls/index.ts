@@ -9,3 +9,4 @@ export { RankingInput } from './RankingInput';
 export { EditActivePollDialog } from './EditActivePollDialog';
 export { SortableQuestion } from './SortableQuestion';
 export { PollResultsAccessEditor, type ResultsAccessRule } from './PollResultsAccessEditor';
+export { QuestionConditionEditor } from './QuestionConditionEditor';
