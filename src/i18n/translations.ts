@@ -820,6 +820,10 @@ export interface Translations {
     conditionValues: string;
     selectAtLeastOneValue: string;
     conditionalBadge: string;
+    // Preview
+    preview: string;
+    previewNote: string;
+    closePreview: string;
   };
   // Patchnotes
   patchnotes: {
@@ -1476,6 +1480,9 @@ export const translations: Record<Language, Translations> = {
       conditionValues: 'Values',
       selectAtLeastOneValue: 'Select at least one value',
       conditionalBadge: 'Conditional',
+      preview: 'Preview',
+      previewNote: 'This is a preview. Your responses will not be saved.',
+      closePreview: 'Close Preview',
     },
     bugReport: {
       button: 'Report a bug',
@@ -2294,6 +2301,9 @@ export const translations: Record<Language, Translations> = {
       conditionValues: 'Valeurs',
       selectAtLeastOneValue: 'Sélectionnez au moins une valeur',
       conditionalBadge: 'Conditionnel',
+      preview: 'Prévisualiser',
+      previewNote: 'Ceci est une prévisualisation. Vos réponses ne seront pas enregistrées.',
+      closePreview: 'Fermer la prévisualisation',
     },
     bugReport: {
       button: 'Signaler un bug',
