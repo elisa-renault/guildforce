@@ -9,7 +9,8 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GlowCard } from '@/components/GlowCard';
 import { SortableQuestion } from './SortableQuestion';
-import { Plus, Save, Play, Loader2, Layers, GripVertical, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
+import { PollPreviewDialog } from './PollPreviewDialog';
+import { Plus, Save, Play, Loader2, Layers, GripVertical, Trash2, ChevronUp, ChevronDown, Eye } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   DndContext,
@@ -184,10 +185,11 @@ export const PollEditor = ({
   metadataOnly = false,
   initialAccessRules = [],
 }: PollEditorProps) => {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const [openSections, setOpenSections] = useState<Record<number, boolean>>({});
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const [overId, setOverId] = useState<UniqueIdentifier | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
   
   // Results access state
   const [restrictResultsAccess, setRestrictResultsAccess] = useState(initialAccessRules.length > 0);
@@ -777,6 +779,16 @@ export const PollEditor = ({
         )}
 
         <div className="flex items-center justify-end gap-3">
+          {/* Preview button */}
+          <Button
+            variant="outline"
+            onClick={() => setPreviewOpen(true)}
+            disabled={!hasQuestions}
+          >
+            <Eye className="h-4 w-4 mr-2" />
+            {t.polls?.preview || 'Preview'}
+          </Button>
+
           <Button
             variant={onPublish ? "outline" : "default"}
             onClick={handleSave}
@@ -808,6 +820,13 @@ export const PollEditor = ({
           )}
         </div>
       </div>
+
+      {/* Preview Dialog */}
+      <PollPreviewDialog
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        formData={formData}
+      />
     </div>
   );
 };
