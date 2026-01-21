@@ -338,6 +338,8 @@ const GuildPollNew = () => {
         is_required: !!q.is_required,
         options: Array.isArray(q.options) ? q.options : [],
         scale_config: q.scale_config ?? null,
+        allow_other: q.allow_other ?? false,
+        condition: q.condition ?? null,
       };
 
       if (qForm.section_id && sectionsById.has(qForm.section_id)) {
