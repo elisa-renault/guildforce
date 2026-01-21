@@ -5,7 +5,8 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GripVertical, Plus, Trash2, X } from 'lucide-react';
-import type { QuestionFormData, PollQuestionType, ScaleConfig } from '@/types/poll';
+import { QuestionConditionEditor } from './QuestionConditionEditor';
+import type { QuestionFormData, PollQuestionType, ScaleConfig, QuestionCondition } from '@/types/poll';
 
 interface PollQuestionEditorProps {
   question: QuestionFormData;
@@ -14,6 +15,7 @@ interface PollQuestionEditorProps {
   onRemove: () => void;
   canRemove: boolean;
   compact?: boolean;
+  previousQuestions?: { id: string; text: string; options: string[]; type: string }[];
 }
 
 export const PollQuestionEditor = ({
@@ -23,8 +25,9 @@ export const PollQuestionEditor = ({
   onRemove,
   canRemove,
   compact = false,
+  previousQuestions = [],
 }: PollQuestionEditorProps) => {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
 
   const questionTypes: { value: PollQuestionType; label: string }[] = [
     { value: 'single_choice', label: language === 'fr' ? 'Choix unique' : 'Single choice' },
@@ -43,6 +46,10 @@ export const PollQuestionEditor = ({
                        question.question_type === 'ranking';
 
   const needsScaleConfig = question.question_type === 'scale';
+
+  // "Other" option is only for single/multiple choice (not ranking)
+  const canHaveOther = question.question_type === 'single_choice' || 
+                       question.question_type === 'multiple_choice';
 
   const handleAddOption = () => {
     onChange({
@@ -70,6 +77,7 @@ export const PollQuestionEditor = ({
   const handleTypeChange = (value: PollQuestionType) => {
     const needsOpts = value === 'single_choice' || value === 'multiple_choice' || value === 'ranking';
     const needsScale = value === 'scale';
+    const canOther = value === 'single_choice' || value === 'multiple_choice';
     
     onChange({ 
       ...question, 
@@ -80,6 +88,8 @@ export const PollQuestionEditor = ({
       scale_config: needsScale 
         ? (question.scale_config || { min: 1, max: 10, step: 1, min_label: '', max_label: '' })
         : null,
+      // Reset allow_other if type doesn't support it
+      allow_other: canOther ? question.allow_other : false,
     });
   };
 
@@ -88,6 +98,13 @@ export const PollQuestionEditor = ({
     onChange({
       ...question,
       scale_config: { ...currentConfig, [field]: value },
+    });
+  };
+
+  const handleConditionChange = (condition: QuestionCondition | null) => {
+    onChange({
+      ...question,
+      condition,
     });
   };
 
@@ -177,6 +194,20 @@ export const PollQuestionEditor = ({
                 <Plus className="h-4 w-4 mr-1" />
                 {language === 'fr' ? 'Ajouter une option' : 'Add option'}
               </Button>
+
+              {/* Allow Other option toggle */}
+              {canHaveOther && (
+                <div className="flex items-center gap-2 pt-2 border-t border-border/50 mt-2">
+                  <Switch
+                    id={`allow-other-${index}`}
+                    checked={question.allow_other ?? false}
+                    onCheckedChange={(checked) => onChange({ ...question, allow_other: checked })}
+                  />
+                  <Label htmlFor={`allow-other-${index}`} className="text-sm text-muted-foreground cursor-pointer">
+                    {t.polls?.allowOther}
+                  </Label>
+                </div>
+              )}
             </div>
           )}
 
@@ -247,6 +278,15 @@ export const PollQuestionEditor = ({
               {language === 'fr' ? 'Réponse obligatoire' : 'Required'}
             </Label>
           </div>
+
+          {/* Conditional question editor */}
+          {previousQuestions.length > 0 && (
+            <QuestionConditionEditor
+              condition={question.condition}
+              onChange={handleConditionChange}
+              previousQuestions={previousQuestions}
+            />
+          )}
         </div>
       </div>
     </div>
