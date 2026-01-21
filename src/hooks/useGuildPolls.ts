@@ -316,19 +316,26 @@ export const usePollMutations = () => {
       let globalOrder = 0;
 
       // Map section questions
+      // IMPORTANT: the condition editor often references questions using the editor IDs
+      // (ex: "general-q-0") while existing questions have UUIDs.
+      // We map BOTH so condition remapping works in all cases.
       for (let sIndex = 0; sIndex < data.sections.length; sIndex++) {
         const section = data.sections[sIndex];
         section.questions.forEach((q, qIndex) => {
-          const tempId = q.id || `section-${sIndex}-q-${qIndex}`;
-          tempIdToDisplayOrder[tempId] = globalOrder + qIndex;
+          const editorId = `section-${sIndex}-q-${qIndex}`;
+          const displayOrder = globalOrder + qIndex;
+          tempIdToDisplayOrder[editorId] = displayOrder;
+          if (q.id) tempIdToDisplayOrder[q.id] = displayOrder;
         });
         globalOrder += section.questions.length;
       }
 
       // Map general questions
       data.questions.forEach((q, qIndex) => {
-        const tempId = q.id || `general-q-${qIndex}`;
-        tempIdToDisplayOrder[tempId] = globalOrder + qIndex;
+        const editorId = `general-q-${qIndex}`;
+        const displayOrder = globalOrder + qIndex;
+        tempIdToDisplayOrder[editorId] = displayOrder;
+        if (q.id) tempIdToDisplayOrder[q.id] = displayOrder;
       });
 
       // Reset globalOrder for actual insertion
@@ -415,16 +422,24 @@ export const usePollMutations = () => {
 
       // Now update questions that have conditions with real UUIDs
       const allQuestions = [
-        ...data.sections.flatMap((s, sIndex) => 
-          s.questions.map((q, qIndex) => ({ 
-            ...q, 
-            tempId: q.id || `section-${sIndex}-q-${qIndex}` 
-          }))
+        ...data.sections.flatMap((s, sIndex) =>
+          s.questions.map((q, qIndex) => {
+            const editorId = `section-${sIndex}-q-${qIndex}`;
+            return {
+              ...q,
+              editorId,
+              tempId: q.id || editorId,
+            };
+          })
         ),
-        ...data.questions.map((q, qIndex) => ({ 
-          ...q, 
-          tempId: q.id || `general-q-${qIndex}` 
-        })),
+        ...data.questions.map((q, qIndex) => {
+          const editorId = `general-q-${qIndex}`;
+          return {
+            ...q,
+            editorId,
+            tempId: q.id || editorId,
+          };
+        }),
       ];
 
       for (const q of allQuestions) {
@@ -432,22 +447,25 @@ export const usePollMutations = () => {
           // Find the display_order of the source question
           const sourceDisplayOrder = tempIdToDisplayOrder[q.condition.question_id];
           const sourceUuid = displayOrderToUuid[sourceDisplayOrder];
-          
+
           if (sourceUuid) {
             // Find this question's UUID
-            const thisDisplayOrder = tempIdToDisplayOrder[q.tempId];
+            const thisDisplayOrder =
+              tempIdToDisplayOrder[(q as any).tempId] ?? tempIdToDisplayOrder[(q as any).editorId];
             const thisUuid = displayOrderToUuid[thisDisplayOrder];
-            
+
             if (thisUuid) {
               const updatedCondition = {
                 ...q.condition,
                 question_id: sourceUuid,
               };
-              
-              await supabase
+
+              const { error: condError } = await supabase
                 .from('guild_poll_questions')
                 .update({ condition: updatedCondition })
                 .eq('id', thisUuid);
+
+              if (condError) throw condError;
             }
           }
         }
@@ -602,19 +620,24 @@ export const usePollMutations = () => {
       let globalOrder = 0;
 
       // Map section questions
+      // IMPORTANT: map BOTH editor IDs and UUIDs so remapping works when editing existing polls.
       for (let sIndex = 0; sIndex < data.sections.length; sIndex++) {
         const section = data.sections[sIndex];
         section.questions.forEach((q, qIndex) => {
-          const tempId = q.id || `section-${sIndex}-q-${qIndex}`;
-          tempIdToDisplayOrder[tempId] = globalOrder + qIndex;
+          const editorId = `section-${sIndex}-q-${qIndex}`;
+          const displayOrder = globalOrder + qIndex;
+          tempIdToDisplayOrder[editorId] = displayOrder;
+          if (q.id) tempIdToDisplayOrder[q.id] = displayOrder;
         });
         globalOrder += section.questions.length;
       }
 
       // Map general questions
       data.questions.forEach((q, qIndex) => {
-        const tempId = q.id || `general-q-${qIndex}`;
-        tempIdToDisplayOrder[tempId] = globalOrder + qIndex;
+        const editorId = `general-q-${qIndex}`;
+        const displayOrder = globalOrder + qIndex;
+        tempIdToDisplayOrder[editorId] = displayOrder;
+        if (q.id) tempIdToDisplayOrder[q.id] = displayOrder;
       });
 
       // Reset globalOrder for actual insertion
@@ -697,16 +720,24 @@ export const usePollMutations = () => {
 
       // Now update questions that have conditions with real UUIDs
       const allQuestions = [
-        ...data.sections.flatMap((s, sIndex) => 
-          s.questions.map((q, qIndex) => ({ 
-            ...q, 
-            tempId: q.id || `section-${sIndex}-q-${qIndex}` 
-          }))
+        ...data.sections.flatMap((s, sIndex) =>
+          s.questions.map((q, qIndex) => {
+            const editorId = `section-${sIndex}-q-${qIndex}`;
+            return {
+              ...q,
+              editorId,
+              tempId: q.id || editorId,
+            };
+          })
         ),
-        ...data.questions.map((q, qIndex) => ({ 
-          ...q, 
-          tempId: q.id || `general-q-${qIndex}` 
-        })),
+        ...data.questions.map((q, qIndex) => {
+          const editorId = `general-q-${qIndex}`;
+          return {
+            ...q,
+            editorId,
+            tempId: q.id || editorId,
+          };
+        }),
       ];
 
       for (const q of allQuestions) {
@@ -714,22 +745,25 @@ export const usePollMutations = () => {
           // Find the display_order of the source question
           const sourceDisplayOrder = tempIdToDisplayOrder[q.condition.question_id];
           const sourceUuid = displayOrderToUuid[sourceDisplayOrder];
-          
+
           if (sourceUuid) {
             // Find this question's UUID
-            const thisDisplayOrder = tempIdToDisplayOrder[q.tempId];
+            const thisDisplayOrder =
+              tempIdToDisplayOrder[(q as any).tempId] ?? tempIdToDisplayOrder[(q as any).editorId];
             const thisUuid = displayOrderToUuid[thisDisplayOrder];
-            
+
             if (thisUuid) {
               const updatedCondition = {
                 ...q.condition,
                 question_id: sourceUuid,
               };
-              
-              await supabase
+
+              const { error: condError } = await supabase
                 .from('guild_poll_questions')
                 .update({ condition: updatedCondition })
                 .eq('id', thisUuid);
+
+              if (condError) throw condError;
             }
           }
         }
