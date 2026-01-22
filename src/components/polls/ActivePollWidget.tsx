@@ -90,7 +90,7 @@ export const ActivePollWidget = forwardRef<HTMLDivElement, ActivePollWidgetProps
                 <span className="hidden sm:inline">{t.common.results}</span>
               </Button>
             )}
-            <Button variant="ghost" size="sm" className="ml-auto">
+            <Button variant="ghost" size="sm" className="ml-auto" onClick={handleClick}>
               <span className="text-sm">{t.polls.view}</span>
               <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
