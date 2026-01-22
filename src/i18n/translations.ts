@@ -452,6 +452,7 @@ export interface Translations {
   // Forum
   forum: {
     title: string;
+    subtitle: string;
     categories: string;
     topics: string;
     posts: string;
@@ -1234,6 +1235,7 @@ export const translations: Record<Language, Translations> = {
     },
     forum: {
       title: 'Forum',
+      subtitle: 'Community discussions and updates',
       categories: 'Categories',
       topics: 'Topics',
       posts: 'Posts',
@@ -2545,6 +2547,7 @@ export const translations: Record<Language, Translations> = {
     },
     forum: {
       title: 'Forum',
+      subtitle: 'Discussions et actualités de la communauté',
       categories: 'Catégories',
       topics: 'Sujets',
       posts: 'Messages',
@@ -3367,7 +3370,7 @@ export const translations: Record<Language, Translations> = {
       pages_PublicProfile_131: 'Membre depuis',
       pages_RosterWishes_636: 'Mode lecture admin',
       components_AvatarCropDialog_crop_preview_alt: 'Aper?u du recadrage',
-      components_AvatarCropDialog_title: 'Recadrer l\\'avatar',
+      components_AvatarCropDialog_title: "Recadrer l'avatar",
       components_BattleNetConnect_title: 'Battle.net',
       components_BugReportButton_url_label: 'URL:',
       components_Footer_brand: 'Guildforce',
@@ -3397,7 +3400,7 @@ export const translations: Record<Language, Translations> = {
       components_polls_SortableQuestion_max_label: 'Max',
       components_polls_SortableQuestion_min_label: 'Min',
       components_settings_GuildBattleNetSection_title: 'Battle.net',
-      components_ui_breadcrumb_label: 'Fil d\\'Ariane',
+      components_ui_breadcrumb_label: "Fil d'Ariane",
       components_ui_breadcrumb_more: 'Plus',
       components_ui_pagination_label: 'Pagination',
       hooks_useGuildPolls_close_error: 'Error closing the poll',
@@ -3429,7 +3432,7 @@ export const translations: Record<Language, Translations> = {
       pages_ForumAdmin_description_label: 'Description',
       pages_ForumAdmin_slug_label: 'Slug',
       pages_ForumNewTopic_115: 'Dans {{categoryName}}',
-      pages_PublicProfile_user_not_found: 'L\\'utilisateur "{{username}}" n\\'existe pas.',
+      pages_PublicProfile_user_not_found: "L'utilisateur \"{{username}}\" n'existe pas.",
       pages_Wishes_drag_reorder: 'Glisser pour r?organiser',
       pages_Wishes_move_down: 'Descendre',
       pages_Wishes_move_up: 'Monter',
