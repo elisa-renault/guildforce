@@ -607,15 +607,19 @@ export const usePollMutations = () => {
     setSaving(true);
     try {
       // Delete existing questions and sections
-      await supabase
+      const { error: deleteQuestionsError } = await supabase
         .from('guild_poll_questions')
         .delete()
         .eq('poll_id', pollId);
 
-      await supabase
+      if (deleteQuestionsError) throw deleteQuestionsError;
+
+      const { error: deleteSectionsError } = await supabase
         .from('guild_poll_sections')
         .delete()
         .eq('poll_id', pollId);
+
+      if (deleteSectionsError) throw deleteSectionsError;
 
       // Build a mapping from temp IDs (editor format) to display_order
       const tempIdToDisplayOrder: Record<string, number> = {};
