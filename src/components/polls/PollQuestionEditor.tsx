@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { GripVertical, Plus, Trash2, X } from 'lucide-react';
+import { GripVertical, Plus, Trash2, X, ArrowUp, ArrowDown } from 'lucide-react';
 import { QuestionConditionEditor } from './QuestionConditionEditor';
 import type { QuestionFormData, PollQuestionType, ScaleConfig, QuestionCondition } from '@/types/poll';
 
@@ -68,6 +68,17 @@ export const PollQuestionEditor = ({
   const handleOptionChange = (optionIndex: number, value: string) => {
     const newOptions = [...question.options];
     newOptions[optionIndex] = value;
+    onChange({
+      ...question,
+      options: newOptions,
+    });
+  };
+
+  const handleMoveOption = (fromIndex: number, toIndex: number) => {
+    if (toIndex < 0 || toIndex >= question.options.length) return;
+    const newOptions = [...question.options];
+    const [moved] = newOptions.splice(fromIndex, 1);
+    newOptions.splice(toIndex, 0, moved);
     onChange({
       ...question,
       options: newOptions,
@@ -163,26 +174,50 @@ export const PollQuestionEditor = ({
                   : (t.auto.components_polls_PollQuestionEditor_163)}
               </Label>
               {question.options.map((option, optionIndex) => (
-                <div key={optionIndex} className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-full border border-primary/30 flex items-center justify-center text-xs text-muted-foreground">
-                    {String.fromCharCode(65 + optionIndex)}
+                <div key={optionIndex} className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <div className="flex items-center gap-2 sm:flex-1">
+                    <div className="w-5 h-5 rounded-full border border-primary/30 flex items-center justify-center text-xs text-muted-foreground">
+                      {String.fromCharCode(65 + optionIndex)}
+                    </div>
+                    <Input
+                      value={option}
+                      onChange={(e) => handleOptionChange(optionIndex, e.target.value)}
+                      placeholder={`${t.auto.components_polls_PollQuestionEditor_173} ${optionIndex + 1} *`}
+                      className={`flex-1 min-w-0 bg-background ${!option.trim() ? 'border-destructive/50' : ''}`}
+                    />
                   </div>
-                  <Input
-                    value={option}
-                    onChange={(e) => handleOptionChange(optionIndex, e.target.value)}
-                    placeholder={`${t.auto.components_polls_PollQuestionEditor_173} ${optionIndex + 1} *`}
-                    className={`flex-1 bg-background ${!option.trim() ? 'border-destructive/50' : ''}`}
-                  />
-                  {question.options.length > 2 && (
+                  <div className="flex items-center gap-1 justify-end">
                     <Button
+                      type="button"
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleRemoveOption(optionIndex)}
-                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={() => handleMoveOption(optionIndex, optionIndex - 1)}
+                      disabled={optionIndex === 0}
+                      className="h-8 w-8 text-muted-foreground hover:text-primary"
                     >
-                      <X className="h-4 w-4" />
+                      <ArrowUp className="h-4 w-4" />
                     </Button>
-                  )}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleMoveOption(optionIndex, optionIndex + 1)}
+                      disabled={optionIndex === question.options.length - 1}
+                      className="h-8 w-8 text-muted-foreground hover:text-primary"
+                    >
+                      <ArrowDown className="h-4 w-4" />
+                    </Button>
+                    {question.options.length > 2 && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemoveOption(optionIndex)}
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               ))}
               <Button
