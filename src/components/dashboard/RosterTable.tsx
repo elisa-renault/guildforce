@@ -94,10 +94,11 @@ export const RosterTable = ({
   const sortedMembers = useMemo(() => {
     if (!sortColumn) return members;
 
+    // Status priority: confirmed (0) > potential/undecided (1) > withdrawn (2)
+    const statusOrder = { confirmed: 0, potential: 1, withdrawn: 2 };
+
     return [...members].sort((a, b) => {
       let comparison = 0;
-
-      const statusOrder = { confirmed: 0, potential: 1, withdrawn: 2 };
       
       switch (sortColumn) {
         case 'player':
@@ -122,14 +123,17 @@ export const RosterTable = ({
           break;
       }
 
-      // Secondary sort by engagement status when primary comparison is equal
-      if (comparison === 0 && sortColumn !== 'status') {
+      // Apply sort direction to primary comparison
+      const primaryResult = sortDirection === 'asc' ? comparison : -comparison;
+
+      // Secondary sort by engagement status (always: confirmed → potential → withdrawn)
+      if (primaryResult === 0 && sortColumn !== 'status') {
         const statusA = statusOrder[a.status as keyof typeof statusOrder] ?? 1;
         const statusB = statusOrder[b.status as keyof typeof statusOrder] ?? 1;
-        comparison = statusA - statusB;
+        return statusA - statusB;
       }
 
-      return sortDirection === 'asc' ? comparison : -comparison;
+      return primaryResult;
     });
   }, [members, sortColumn, sortDirection, language]);
 
