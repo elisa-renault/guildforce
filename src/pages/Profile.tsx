@@ -42,84 +42,12 @@ const Profile = () => {
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [requestingDeletion, setRequestingDeletion] = useState(false);
 
-  const ui = language === 'fr'
-    ? {
-        setupSuccessTitle: 'Bienvenue !',
-        setupSuccessDesc: 'Ton profil a ete configure.',
-        updateSuccessDesc: 'Profil mis a jour avec succes !',
-        requestDeletionTitle: 'Demande enregistree',
-        requestDeletionDesc: 'Ta demande de suppression a ete enregistree. Un administrateur la traitera sous 30 jours.',
-        cancelDeletionTitle: 'Demande annulee',
-        cancelDeletionDesc: 'Ta demande de suppression a ete annulee.',
-        selectImageError: 'Veuillez selectionner un fichier image',
-        imageSizeError: "L'image doit faire moins de 5 Mo",
-        avatarUpdated: 'Avatar mis a jour !',
-        avatarRemoved: 'Avatar supprime',
-        profileNotFound: 'Profil introuvable.',
-        reconnectHint: 'Deconnecte-toi puis reconnecte-toi via Battle.net pour finaliser la liaison.',
-        backToLogin: 'Revenir a la connexion',
-        welcomeTitle: 'Bienvenue sur Guildforce !',
-        welcomeSubtitle: 'Choisis ton pseudo pour etre identifie par ta guilde',
-        connectedAs: 'Connecte en tant que {{battletag}}',
-        usernamePlaceholder: 'Ton pseudo sur le site',
-        usernameHint: "C'est le nom qui sera affiche dans ta guilde",
-        getStarted: "C'est parti !",
-        viewPublicProfile: 'Voir mon profil public',
-        avatarAlt: 'Avatar',
-        saveUsername: 'Enregistrer le pseudo',
-        preferencesTitle: 'Preferences',
-        privacyTitle: 'En savoir plus sur tes donnees',
-        privacyPublicTitle: 'Donnees publiques',
-        privacyPublicDesc: 'Pseudo et avatar visibles sur ton profil public.',
-        privacyGuildTitle: 'Donnees de guilde',
-        privacyGuildDesc: 'Personnages et voeux visibles par ta guilde uniquement.',
-        privacyPrivateTitle: 'Donnees privees',
-        privacyPrivateDesc: 'Email et tokens Battle.net jamais partages.',
-        dangerZoneTitle: 'Zone de danger',
-        languageFr: 'Francais',
-        languageEn: 'Anglais',
-      }
-    : {
-        setupSuccessTitle: 'Welcome!',
-        setupSuccessDesc: 'Your profile has been set up.',
-        updateSuccessDesc: 'Profile updated successfully!',
-        requestDeletionTitle: 'Request recorded',
-        requestDeletionDesc: 'Your deletion request has been recorded. An admin will process it within 30 days.',
-        cancelDeletionTitle: 'Request cancelled',
-        cancelDeletionDesc: 'Your deletion request has been cancelled.',
-        selectImageError: 'Please select an image file',
-        imageSizeError: 'Image must be under 5 MB',
-        avatarUpdated: 'Avatar updated!',
-        avatarRemoved: 'Avatar removed',
-        profileNotFound: 'Profile not found.',
-        reconnectHint: 'Sign out and sign back in via Battle.net to finish the link.',
-        backToLogin: 'Back to login',
-        welcomeTitle: 'Welcome to Guildforce!',
-        welcomeSubtitle: 'Choose your username so your guild can identify you',
-        connectedAs: 'Connected as {{battletag}}',
-        usernamePlaceholder: 'Your username on the site',
-        usernameHint: 'This name will be shown to your guild',
-        getStarted: "Let's get started!",
-        viewPublicProfile: 'View public profile',
-        avatarAlt: 'Avatar',
-        saveUsername: 'Save username',
-        preferencesTitle: 'Preferences',
-        privacyTitle: 'Learn more about your data',
-        privacyPublicTitle: 'Public data',
-        privacyPublicDesc: 'Username and avatar are visible on your public profile.',
-        privacyGuildTitle: 'Guild data',
-        privacyGuildDesc: 'Characters and wishes are visible to your guild only.',
-        privacyPrivateTitle: 'Private data',
-        privacyPrivateDesc: 'Email and Battle.net tokens are never shared.',
-        dangerZoneTitle: 'Danger zone',
-        languageFr: 'French',
-        languageEn: 'English',
-      };
+  const ui = t.profile.ui;
 
   const languageLabels = { fr: ui.languageFr, en: ui.languageEn };
 
   const profileSchema = z.object({
-    username: z.string().min(2, 'Le pseudo doit contenir au moins 2 caractères').max(30, 'Le pseudo ne peut pas dépasser 30 caractères'),
+    username: z.string().min(2, t.profile.validation.usernameMin).max(30, t.profile.validation.usernameMax),
   });
 
   const form = useForm({
