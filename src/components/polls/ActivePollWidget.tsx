@@ -4,9 +4,9 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useGuildPolls } from '@/hooks/useGuildPolls';
 import { GlowCard } from '@/components/GlowCard';
 import { Button } from '@/components/ui/button';
-import { BarChart3, ChevronRight, Users, Clock, Loader2 } from 'lucide-react';
+import { BarChart3, ChevronRight, Users, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { fr, enUS } from 'date-fns/locale';
+import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
 
 interface ActivePollWidgetProps {
   guildId: string;
@@ -17,8 +17,8 @@ interface ActivePollWidgetProps {
 export const ActivePollWidget = forwardRef<HTMLDivElement, ActivePollWidgetProps>(
   ({ guildId, guildSlug, isGM = false }, ref) => {
   const navigate = useNavigate();
-  const { language } = useLanguage();
-  const locale = language === 'fr' ? fr : enUS;
+  const { t, language } = useLanguage();
+  const locale = DATE_LOCALE_BY_LANGUAGE[language];
   
   const { polls, loading } = useGuildPolls(guildId);
   
@@ -41,8 +41,6 @@ export const ActivePollWidget = forwardRef<HTMLDivElement, ActivePollWidgetProps
     e.stopPropagation();
     navigate(`/guild/${guildSlug}/poll/${activePoll.id}/results`);
   };
-
-  const { t } = useLanguage();
 
   return (
     <div ref={ref} className="mb-6">

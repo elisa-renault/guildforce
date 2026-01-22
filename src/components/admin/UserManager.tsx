@@ -59,7 +59,7 @@ interface UserWithRoles {
 const ITEMS_PER_PAGE = 15;
 
 export function UserManager() {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<UserWithRoles[]>([]);
   const [loading, setLoading] = useState(true);
@@ -195,7 +195,7 @@ export function UserManager() {
       setUsers(usersWithData);
     } catch (error) {
       log.error('Error fetching users:', error);
-      toast.error(language === 'fr' ? 'Erreur lors du chargement des utilisateurs' : 'Error loading users');
+      toast.error(t.auto.components_admin_UserManager_198);
     } finally {
       setLoading(false);
     }
@@ -220,9 +220,7 @@ export function UserManager() {
   const toggleRole = async (userId: string, role: AppRole) => {
     // Prevent removing own admin role
     if (userId === currentUser?.id && role === 'admin') {
-      toast.error(language === 'fr' 
-        ? 'Vous ne pouvez pas retirer votre propre rôle admin' 
-        : 'You cannot remove your own admin role'
+      toast.error(t.auto.components_admin_UserManager_223
       );
       return;
     }
@@ -249,9 +247,9 @@ export function UserManager() {
             : u
         ));
         
-        toast.success(language === 'fr' 
-          ? `Rôle ${role} retiré` 
-          : `${role} role removed`
+        const removedTemplate = t.auto?.components_admin_UserManager_role_removed;
+        toast.success(
+          removedTemplate ? removedTemplate.replace('{{role}}', role) : role
         );
       } else {
         // Add role
@@ -267,14 +265,14 @@ export function UserManager() {
             : u
         ));
         
-        toast.success(language === 'fr' 
-          ? `Rôle ${role} attribué` 
-          : `${role} role assigned`
+        const assignedTemplate = t.auto?.components_admin_UserManager_role_assigned;
+        toast.success(
+          assignedTemplate ? assignedTemplate.replace('{{role}}', role) : role
         );
       }
     } catch (error) {
       log.error('Error toggling role:', error);
-      toast.error(language === 'fr' ? 'Erreur lors de la modification du rôle' : 'Error updating role');
+      toast.error(t.auto.components_admin_UserManager_277);
     } finally {
       setTogglingRole(null);
     }
@@ -283,7 +281,7 @@ export function UserManager() {
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
   const formatDateTime = (dateStr: string) => {
-    return new Date(dateStr).toLocaleString(language === 'fr' ? 'fr-FR' : 'en-US', {
+    return new Date(dateStr).toLocaleString(t.auto.components_admin_UserManager_286, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -346,13 +344,13 @@ export function UserManager() {
       {/* Search */}
       <div className="relative">
         <label htmlFor="user-search" className="sr-only">
-          {language === 'fr' ? 'Rechercher par nom ou battletag' : 'Search by name or battletag'}
+          {t.auto.components_admin_UserManager_349}
         </label>
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           id="user-search"
           name="user-search"
-          placeholder={language === 'fr' ? 'Rechercher par nom ou battletag...' : 'Search by name or battletag...'}
+          placeholder={t.auto.components_admin_UserManager_355}
           value={searchQuery}
           onChange={(e) => handleSearch(e.target.value)}
           className="pl-10"
@@ -372,7 +370,7 @@ export function UserManager() {
                   className={headerButtonClass}
                   aria-sort={sortKey === 'username' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                 >
-                  {language === 'fr' ? 'Utilisateur' : 'User'}
+                  {t.auto.components_admin_UserManager_375}
                   {sortIcon('username')}
                 </button>
               </TableHead>
@@ -383,7 +381,7 @@ export function UserManager() {
                   className={headerButtonClass}
                   aria-sort={sortKey === 'battletag' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                 >
-                  {language === 'fr' ? 'BattleTag' : 'BattleTag'}
+                  {t.auto.components_admin_UserManager_386}
                   {sortIcon('battletag')}
                 </button>
               </TableHead>
@@ -394,7 +392,7 @@ export function UserManager() {
                   className={headerButtonClass}
                   aria-sort={sortKey === 'region' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                 >
-                  {language === 'fr' ? 'Région' : 'Region'}
+                  {t.auto.components_admin_UserManager_397}
                   {sortIcon('region')}
                 </button>
               </TableHead>
@@ -405,7 +403,7 @@ export function UserManager() {
                   className={headerButtonClass}
                   aria-sort={sortKey === 'created_at' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                 >
-                  {language === 'fr' ? 'Créé le' : 'Created'}
+                  {t.auto.components_admin_UserManager_408}
                   {sortIcon('created_at')}
                 </button>
               </TableHead>
@@ -416,7 +414,7 @@ export function UserManager() {
                   className={headerButtonClass}
                   aria-sort={sortKey === 'updated_at' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                 >
-                  {language === 'fr' ? 'Dernière maj' : 'Last update'}
+                  {t.auto.components_admin_UserManager_419}
                   {sortIcon('updated_at')}
                 </button>
               </TableHead>
@@ -427,7 +425,7 @@ export function UserManager() {
                   className={headerButtonClass}
                   aria-sort={sortKey === 'preferred_language' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                 >
-                  {language === 'fr' ? 'Langue' : 'Language'}
+                  {t.auto.components_admin_UserManager_430}
                   {sortIcon('preferred_language')}
                 </button>
               </TableHead>
@@ -438,7 +436,7 @@ export function UserManager() {
                   className={headerButtonClass}
                   aria-sort={sortKey === 'main_character_name' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                 >
-                  {language === 'fr' ? 'Perso principal' : 'Main character'}
+                  {t.auto.components_admin_UserManager_441}
                   {sortIcon('main_character_name')}
                 </button>
               </TableHead>
@@ -449,11 +447,11 @@ export function UserManager() {
                   className={headerButtonClass}
                   aria-sort={sortKey === 'roles' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                 >
-                  {language === 'fr' ? 'Rôles' : 'Roles'}
+                  {t.auto.components_admin_UserManager_452}
                   {sortIcon('roles')}
                 </button>
               </TableHead>
-              <TableHead className="text-right">{language === 'fr' ? 'Actions' : 'Actions'}</TableHead>
+              <TableHead className="text-right">{t.auto.components_admin_UserManager_456}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody className="[&_td]:px-2 [&_td]:py-2 sm:[&_td]:px-3 md:[&_td]:py-3">
@@ -468,7 +466,7 @@ export function UserManager() {
             ) : users.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
-                  {language === 'fr' ? 'Aucun utilisateur trouvé' : 'No users found'}
+                  {t.auto.components_admin_UserManager_471}
                 </TableCell>
               </TableRow>
             ) : (
@@ -487,7 +485,7 @@ export function UserManager() {
                       {user.username}
                       {user.id === currentUser?.id && (
                         <Badge variant="outline" className="text-xs">
-                          {language === 'fr' ? 'Vous' : 'You'}
+                          {t.auto.components_admin_UserManager_490}
                         </Badge>
                       )}
                     </div>
@@ -568,7 +566,7 @@ export function UserManager() {
                         ) : (
                           <Crown className="h-3 w-3" />
                         )}
-                        Admin
+                        {t.common.admin}
                       </Button>
                     </div>
                   </TableCell>
@@ -583,10 +581,9 @@ export function UserManager() {
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <span className="text-sm text-muted-foreground">
-            {language === 'fr' 
-              ? `${totalCount} utilisateur${totalCount > 1 ? 's' : ''} au total`
-              : `${totalCount} user${totalCount > 1 ? 's' : ''} total`
-            }
+            {totalCount > 1
+              ? (t.auto?.components_admin_UserManager_total_users_plural || '{{count}} users').replace('{{count}}', String(totalCount))
+              : (t.auto?.components_admin_UserManager_total_users_single || '{{count}} user').replace('{{count}}', String(totalCount))}
           </span>
           <div className="flex items-center gap-2">
             <Button

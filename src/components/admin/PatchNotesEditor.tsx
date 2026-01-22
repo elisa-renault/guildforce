@@ -245,6 +245,8 @@ export const PatchNotesEditor = () => {
   if (editingNote) {
     const currentTitle = editLang === 'fr' ? editingNote.title_fr : editingNote.title_en;
     const currentContent = editLang === 'fr' ? editingNote.content_fr : editingNote.content_en;
+    const langLabelFr = t.auto?.components_admin_PatchNotesEditor_language_fr || 'FR';
+    const langLabelEn = t.auto?.components_admin_PatchNotesEditor_language_en || 'EN';
 
     return (
       <div className="space-y-4">
@@ -282,7 +284,7 @@ export const PatchNotesEditor = () => {
                 name="version"
                 value={editingNote.version}
                 onChange={(e) => setEditingNote({ ...editingNote, version: e.target.value })}
-                placeholder="1.0.0"
+                placeholder={t.auto.components_admin_PatchNotesEditor_version_placeholder}
                 className="font-mono"
               />
               <p className="text-xs text-muted-foreground">{t.patchnotes.versionFormat}</p>
@@ -316,8 +318,8 @@ export const PatchNotesEditor = () => {
           {/* Language tabs */}
           <Tabs value={editLang} onValueChange={(v) => setEditLang(v as 'fr' | 'en')}>
             <TabsList className="mb-4">
-              <TabsTrigger value="fr">Français</TabsTrigger>
-              <TabsTrigger value="en">English</TabsTrigger>
+              <TabsTrigger value="fr">{langLabelFr}</TabsTrigger>
+              <TabsTrigger value="en">{langLabelEn}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="fr" className="space-y-4">
@@ -328,7 +330,7 @@ export const PatchNotesEditor = () => {
                   name="title_fr"
                   value={editingNote.title_fr}
                   onChange={(e) => setEditingNote({ ...editingNote, title_fr: e.target.value })}
-                  placeholder="Titre de la version"
+                  placeholder={t.auto.components_admin_PatchNotesEditor_title_fr_placeholder}
                 />
               </div>
               {previewMode ? (
@@ -341,7 +343,7 @@ export const PatchNotesEditor = () => {
                   <MarkdownEditor
                     value={editingNote.content_fr}
                     onChange={(v) => setEditingNote({ ...editingNote, content_fr: v })}
-                    placeholder="Décrivez les changements..."
+                    placeholder={t.auto.components_admin_PatchNotesEditor_content_fr_placeholder}
                   />
                 </div>
               )}
@@ -355,7 +357,7 @@ export const PatchNotesEditor = () => {
                   name="title_en"
                   value={editingNote.title_en}
                   onChange={(e) => setEditingNote({ ...editingNote, title_en: e.target.value })}
-                  placeholder="Version title"
+                  placeholder={t.auto.components_admin_PatchNotesEditor_title_en_placeholder}
                 />
               </div>
               {previewMode ? (
@@ -368,7 +370,7 @@ export const PatchNotesEditor = () => {
                   <MarkdownEditor
                     value={editingNote.content_en}
                     onChange={(v) => setEditingNote({ ...editingNote, content_en: v })}
-                    placeholder="Describe the changes..."
+                    placeholder={t.auto.components_admin_PatchNotesEditor_content_en_placeholder}
                   />
                 </div>
               )}
@@ -440,7 +442,7 @@ export const PatchNotesEditor = () => {
                     )}
                   </div>
                   <p className="text-sm text-foreground truncate">
-                    {language === 'fr' ? note.title_fr : note.title_en}
+                    {note[`title_${language}` as 'title_fr' | 'title_en']}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                     <Calendar className="h-3 w-3" />

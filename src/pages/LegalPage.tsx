@@ -57,9 +57,10 @@ const LegalPage = () => {
     fetchPage();
   }, [location.pathname, navigate]);
 
-  const title = page ? (language === 'fr' ? page.title_fr : page.title_en) : '';
-  const content = page ? (language === 'fr' ? page.content_fr : page.content_en) : '';
-  const updatedAt = page?.updated_at ? new Date(page.updated_at).toLocaleDateString(language === 'fr' ? 'fr-FR' : 'en-US') : '';
+  const title = page ? page[`title_${language}` as 'title_fr' | 'title_en'] : '';
+  const content = page ? page[`content_${language}` as 'content_fr' | 'content_en'] : '';
+  const localeCode = ({ fr: 'fr-FR', en: 'en-US' } as const)[language];
+  const updatedAt = page?.updated_at ? new Date(page.updated_at).toLocaleDateString(localeCode) : '';
 
   return (
     <div className="flex-1 flex flex-col pt-16 relative">

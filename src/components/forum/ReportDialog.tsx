@@ -39,7 +39,7 @@ export const ReportDialog = ({
   targetType,
   targetId,
 }: ReportDialogProps) => {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const { user } = useAuth();
   const [reason, setReason] = useState<ReportReason>('spam');
   const [details, setDetails] = useState('');
@@ -60,15 +60,13 @@ export const ReportDialog = ({
       if (error) throw error;
 
       toast.success(
-        language === 'fr'
-          ? 'Signalement envoyé, merci !'
-          : 'Report submitted, thank you!'
+        t.auto.components_forum_ReportDialog_63
       );
       onOpenChange(false);
       setReason('spam');
       setDetails('');
     } catch (error) {
-      toast.error(language === 'fr' ? 'Erreur lors du signalement' : 'Error submitting report');
+      toast.error(t.auto.components_forum_ReportDialog_71);
     } finally {
       setSubmitting(false);
     }
@@ -80,13 +78,13 @@ export const ReportDialog = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-foreground">
             <Flag className="h-5 w-5 text-destructive" />
-            {language === 'fr' ? 'Signaler ce contenu' : 'Report this content'}
+            {t.auto.components_forum_ReportDialog_83}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label>{language === 'fr' ? 'Raison du signalement' : 'Reason for report'}</Label>
+            <Label>{t.auto.components_forum_ReportDialog_89}</Label>
             <RadioGroup value={reason} onValueChange={(v) => setReason(v as ReportReason)}>
               {(Object.entries(REPORT_REASONS) as [ReportReason, { fr: string; en: string }][]).map(
                 ([key, labels]) => (
@@ -103,16 +101,14 @@ export const ReportDialog = ({
 
           <div className="space-y-2">
             <Label htmlFor="details">
-              {language === 'fr' ? 'Détails (optionnel)' : 'Details (optional)'}
+              {t.auto.components_forum_ReportDialog_106}
             </Label>
             <Textarea
               id="details"
               value={details}
               onChange={(e) => setDetails(e.target.value)}
               placeholder={
-                language === 'fr'
-                  ? 'Décrivez le problème...'
-                  : 'Describe the issue...'
+                t.auto.components_forum_ReportDialog_113
               }
               className="min-h-[80px] bg-background/50"
             />
@@ -125,7 +121,7 @@ export const ReportDialog = ({
             onClick={() => onOpenChange(false)}
             disabled={submitting}
           >
-            {language === 'fr' ? 'Annuler' : 'Cancel'}
+            {t.auto.components_forum_ReportDialog_128}
           </Button>
           <Button
             onClick={handleSubmit}
@@ -135,12 +131,12 @@ export const ReportDialog = ({
             {submitting ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                {language === 'fr' ? 'Envoi...' : 'Sending...'}
+                {t.auto.components_forum_ReportDialog_138}
               </>
             ) : (
               <>
                 <Flag className="h-4 w-4 mr-2" />
-                {language === 'fr' ? 'Signaler' : 'Report'}
+                {t.auto.components_forum_ReportDialog_143}
               </>
             )}
           </Button>

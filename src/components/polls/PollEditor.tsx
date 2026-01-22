@@ -109,7 +109,7 @@ const SortableSectionHeader = ({
   onChange: (section: SectionFormData) => void;
   canRemove: boolean;
 }) => {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const id = `section-header-${sectionIndex}`;
   
   const {
@@ -136,20 +136,20 @@ const SortableSectionHeader = ({
           {...listeners}
         >
           <GripVertical className="h-5 w-5" />
-          <span className="text-sm font-medium text-primary">S{sectionIndex + 1}</span>
+          <span className="text-sm font-medium text-primary">{t.auto.components_polls_PollEditor_section_label.replace('{{index}}', String(sectionIndex + 1))}</span>
         </div>
 
         <div className="flex-1 space-y-2">
           <Input
             value={section.title}
             onChange={(e) => onChange({ ...section, title: e.target.value })}
-            placeholder={language === 'fr' ? 'Titre de la section...' : 'Section title...'}
+            placeholder={t.auto.components_polls_PollEditor_146}
             className="bg-background font-medium"
           />
           <Textarea
             value={section.description}
             onChange={(e) => onChange({ ...section, description: e.target.value })}
-            placeholder={language === 'fr' ? 'Description (optionnelle)...' : 'Description (optional)...'}
+            placeholder={t.auto.components_polls_PollEditor_152}
             className="bg-background resize-none text-sm"
             rows={2}
           />
@@ -524,34 +524,32 @@ export const PollEditor = ({
     <div className="space-y-6">
       <GlowCard className="p-6">
         <h2 className="text-lg font-semibold mb-4">
-          {language === 'fr' ? 'Informations générales' : 'General Information'}
+          {t.auto.components_polls_PollEditor_527}
         </h2>
 
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="title">
-              {language === 'fr' ? 'Titre du sondage' : 'Poll Title'} *
+              {t.auto.components_polls_PollEditor_533} *
             </Label>
             <Input
               id="title"
               value={formData.title}
               onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
-              placeholder={language === 'fr' ? 'Ex: Retour sur la saison 3' : 'Ex: Season 3 Feedback'}
+              placeholder={t.auto.components_polls_PollEditor_539}
               className="bg-background"
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="description">
-              {language === 'fr' ? 'Description (optionnelle)' : 'Description (optional)'}
+              {t.auto.components_polls_PollEditor_546}
             </Label>
             <Textarea
               id="description"
               value={formData.description}
               onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-              placeholder={language === 'fr' 
-                ? 'Expliquez le but du sondage...' 
-                : 'Explain the purpose of this poll...'}
+              placeholder={t.auto.components_polls_PollEditor_552}
               className="bg-background resize-none"
               rows={3}
             />
@@ -560,7 +558,7 @@ export const PollEditor = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>
-                {language === 'fr' ? 'Roster ciblé' : 'Target Roster'}
+                {t.auto.components_polls_PollEditor_563}
               </Label>
               <Select
                 value={formData.roster_id || 'all'}
@@ -574,7 +572,7 @@ export const PollEditor = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">
-                    {language === 'fr' ? 'Tous les membres' : 'All members'}
+                    {t.auto.components_polls_PollEditor_577}
                   </SelectItem>
                   {rosters.map((roster) => (
                     <SelectItem key={roster.id} value={roster.id}>
@@ -587,7 +585,7 @@ export const PollEditor = ({
 
             <div className="space-y-2">
               <Label htmlFor="ends_at">
-                {language === 'fr' ? 'Date de clôture (optionnelle)' : 'End Date (optional)'}
+                {t.auto.components_polls_PollEditor_590}
               </Label>
               <Input
                 id="ends_at"
@@ -610,7 +608,7 @@ export const PollEditor = ({
                 onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, is_anonymous: checked }))}
               />
               <Label htmlFor="anonymous" className="cursor-pointer">
-                {language === 'fr' ? 'Réponses anonymes' : 'Anonymous responses'}
+                {t.auto.components_polls_PollEditor_613}
               </Label>
             </div>
           </div>
@@ -646,17 +644,17 @@ export const PollEditor = ({
       <GlowCard className={`p-6 ${metadataOnly ? 'opacity-60 pointer-events-none' : ''}`}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">
-            {language === 'fr' ? 'Questions' : 'Questions'}
+            {t.auto.components_polls_PollEditor_649}
           </h2>
           {!metadataOnly && (
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={handleAddSection}>
                 <Layers className="h-4 w-4 mr-1" />
-                {language === 'fr' ? 'Section' : 'Section'}
+                {t.auto.components_polls_PollEditor_655}
               </Button>
               <Button variant="outline" size="sm" onClick={handleAddQuestion}>
                 <Plus className="h-4 w-4 mr-1" />
-                {language === 'fr' ? 'Question' : 'Question'}
+                {t.auto.components_polls_PollEditor_659}
               </Button>
             </div>
           )}
@@ -664,9 +662,7 @@ export const PollEditor = ({
 
         {metadataOnly && (
           <p className="text-sm text-muted-foreground mb-4">
-            {language === 'fr' 
-              ? 'Les questions ne peuvent pas être modifiées en mode paramètres.'
-              : 'Questions cannot be modified in settings mode.'}
+            {t.auto.components_polls_PollEditor_667}
           </p>
         )}
 
@@ -680,9 +676,7 @@ export const PollEditor = ({
           <div className="space-y-4">
             {formData.questions.length === 0 && formData.sections.length === 0 && (
               <p className="text-muted-foreground text-sm text-center py-4">
-                {language === 'fr' 
-                  ? 'Ajoutez des questions ou des sections pour commencer' 
-                  : 'Add questions or sections to get started'}
+                {t.auto.components_polls_PollEditor_683}
               </p>
             )}
 
@@ -696,7 +690,7 @@ export const PollEditor = ({
                 }`}
               >
                 <h3 className="text-sm font-medium text-muted-foreground">
-                  {language === 'fr' ? 'Questions générales' : 'General Questions'}
+                  {t.auto.components_polls_PollEditor_699}
                 </h3>
                 <SortableContext items={formData.questions.map((_, i) => `general-q-${i}`)} strategy={verticalListSortingStrategy}>
                   {formData.questions.map((question, index) => {
@@ -830,7 +824,7 @@ export const PollEditor = ({
                               className="text-primary w-full border border-dashed border-primary/30 hover:border-primary/50"
                             >
                               <Plus className="h-4 w-4 mr-1" />
-                              {language === 'fr' ? 'Ajouter une question' : 'Add question'}
+                              {t.auto.components_polls_PollEditor_833}
                             </Button>
                           </div>
                         </CollapsibleContent>
@@ -849,7 +843,7 @@ export const PollEditor = ({
                   <div className="border border-primary rounded-lg p-3 bg-card shadow-xl max-w-md pointer-events-none">
                     <div className="flex items-center gap-2 text-sm">
                       <GripVertical className="h-4 w-4 text-primary" />
-                      <span className="truncate">{getActiveQuestion()?.question_text || (language === 'fr' ? 'Question...' : 'Question...')}</span>
+                      <span className="truncate">{getActiveQuestion()?.question_text || (t.auto.components_polls_PollEditor_852)}</span>
                     </div>
                   </div>
                 )}
@@ -865,9 +859,7 @@ export const PollEditor = ({
         {/* Validation feedback */}
         {!isValid && formData.title.trim() && (
           <div className="mb-2 text-sm text-muted-foreground">
-            {language === 'fr'
-              ? 'Remplis toutes les options de réponse (A, B, …) pour pouvoir publier.'
-              : 'Fill in all answer options (A, B, …) to publish.'}
+            {t.auto.components_polls_PollEditor_868}
           </div>
         )}
 
@@ -893,8 +885,8 @@ export const PollEditor = ({
               <Save className="h-4 w-4 mr-2" />
             )}
             {onPublish 
-              ? (language === 'fr' ? 'Enregistrer brouillon' : 'Save Draft')
-              : (language === 'fr' ? 'Enregistrer' : 'Save')
+              ? (t.auto.components_polls_PollEditor_896)
+              : (t.auto.components_polls_PollEditor_897)
             }
           </Button>
 
@@ -908,7 +900,7 @@ export const PollEditor = ({
               ) : (
                 <Play className="h-4 w-4 mr-2" />
               )}
-              {language === 'fr' ? 'Publier le sondage' : 'Publish Poll'}
+              {t.auto.components_polls_PollEditor_911}
             </Button>
           )}
         </div>

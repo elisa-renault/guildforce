@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { BarChart3, Clock, Edit, Eye, Users, Lock, Trash2, Play, User, Settings, Copy } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { fr, enUS } from 'date-fns/locale';
+import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
 import type { GuildPoll } from '@/types/poll';
 import { EditActivePollDialog } from './EditActivePollDialog';
 
@@ -32,7 +32,7 @@ export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
 }, ref) => {
   const navigate = useNavigate();
   const { language, t } = useLanguage();
-  const locale = language === 'fr' ? fr : enUS;
+  const locale = DATE_LOCALE_BY_LANGUAGE[language];
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const handleEditMetadata = () => {

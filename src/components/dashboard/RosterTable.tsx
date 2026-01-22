@@ -416,7 +416,7 @@ export const RosterTable = ({
                                 </Badge>
                               </TooltipTrigger>
                               <TooltipContent side="top" className="text-xs">
-                                {extraWishes + 3} {language === 'fr' ? 'vœux au total' : 'wishes total'}
+                                {extraWishes + 3} {t.auto.components_dashboard_RosterTable_419}
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>

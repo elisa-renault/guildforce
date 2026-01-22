@@ -4,7 +4,7 @@ import { ForumTopic, REACTION_TYPES } from '@/types/forum';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Pin, Lock, MessageSquare, Eye, Clock, User } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { fr, enUS } from 'date-fns/locale';
+import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
 
 interface ForumTopicListProps {
   topics: ForumTopic[];
@@ -14,7 +14,7 @@ interface ForumTopicListProps {
 export const ForumTopicList = ({ topics, basePath = '/forum' }: ForumTopicListProps) => {
   const navigate = useNavigate();
   const { language, t } = useLanguage();
-  const locale = language === 'fr' ? fr : enUS;
+  const locale = DATE_LOCALE_BY_LANGUAGE[language];
 
   if (topics.length === 0) {
     return (
@@ -91,7 +91,7 @@ export const ForumTopicList = ({ topics, basePath = '/forum' }: ForumTopicListPr
               </div>
               {/* Reactions preview */}
               {topReactions.length > 0 && (
-                <div className="flex items-center gap-0.5" title="Reactions">
+                <div className="flex items-center gap-0.5" title={t.auto.components_forum_ForumTopicList_reactions_title}>
                   {topReactions.map(([type, count]) => (
                     <span key={type} className="text-xs">
                       {REACTION_TYPES[type as keyof typeof REACTION_TYPES]}

@@ -49,7 +49,7 @@ export const SanctionDialog = ({
   targetUser,
   onSuccess,
 }: SanctionDialogProps) => {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const { applySanction } = useForumSanctionActions();
   
   const [sanctionType, setSanctionType] = useState<SanctionType>('timeout');
@@ -59,7 +59,7 @@ export const SanctionDialog = ({
 
   const handleSubmit = async () => {
     if (!reason.trim()) {
-      toast.error(language === 'fr' ? 'Une raison est requise' : 'A reason is required');
+      toast.error(t.auto.components_forum_SanctionDialog_62);
       return;
     }
 
@@ -69,9 +69,7 @@ export const SanctionDialog = ({
       await applySanction(targetUser.id, sanctionType, reason, durationHours);
       
       toast.success(
-        language === 'fr' 
-          ? `Sanction appliquée à ${targetUser.username}` 
-          : `Sanction applied to ${targetUser.username}`,
+        t.auto.components_forum_SanctionDialog_applied.replace('{{username}}', targetUser.username),
         {
           style: { background: 'hsl(var(--card))', borderColor: 'hsl(var(--primary) / 0.3)' },
         }
@@ -83,7 +81,7 @@ export const SanctionDialog = ({
       setReason('');
       onSuccess?.();
     } catch (error) {
-      toast.error(language === 'fr' ? 'Erreur lors de l\'application de la sanction' : 'Error applying sanction');
+      toast.error(t.auto.components_forum_SanctionDialog_86);
     } finally {
       setLoading(false);
     }
@@ -95,7 +93,7 @@ export const SanctionDialog = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Ban className="h-5 w-5 text-destructive" />
-            {language === 'fr' ? 'Appliquer une sanction' : 'Apply Sanction'}
+            {t.auto.components_forum_SanctionDialog_98}
           </DialogTitle>
         </DialogHeader>
 
@@ -114,14 +112,14 @@ export const SanctionDialog = ({
             <div>
               <p className="font-medium text-foreground">{targetUser.username}</p>
               <p className="text-xs text-muted-foreground">
-                {language === 'fr' ? 'Utilisateur ciblé' : 'Target user'}
+                {t.auto.components_forum_SanctionDialog_117}
               </p>
             </div>
           </div>
 
           {/* Sanction type */}
           <div className="space-y-2">
-            <Label>{language === 'fr' ? 'Type de sanction' : 'Sanction type'}</Label>
+            <Label>{t.auto.components_forum_SanctionDialog_124}</Label>
             <Select value={sanctionType} onValueChange={(v) => setSanctionType(v as SanctionType)}>
               <SelectTrigger className="bg-muted/50 border-border">
                 <SelectValue />
@@ -130,13 +128,13 @@ export const SanctionDialog = ({
                 <SelectItem value="timeout">
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4" />
-                    {language === 'fr' ? 'Timeout (suspension temporaire)' : 'Timeout (temporary suspension)'}
+                    {t.auto.components_forum_SanctionDialog_133}
                   </div>
                 </SelectItem>
                 <SelectItem value="ban">
                   <div className="flex items-center gap-2">
                     <Ban className="h-4 w-4" />
-                    {language === 'fr' ? 'Bannissement' : 'Ban'}
+                    {t.auto.components_forum_SanctionDialog_139}
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -145,7 +143,7 @@ export const SanctionDialog = ({
 
           {/* Duration */}
           <div className="space-y-2">
-            <Label>{language === 'fr' ? 'Durée' : 'Duration'}</Label>
+            <Label>{t.auto.components_forum_SanctionDialog_148}</Label>
             <Select value={duration} onValueChange={setDuration}>
               <SelectTrigger className="bg-muted/50 border-border">
                 <SelectValue />
@@ -162,13 +160,13 @@ export const SanctionDialog = ({
 
           {/* Reason */}
           <div className="space-y-2">
-            <Label htmlFor="sanction-reason">{language === 'fr' ? 'Raison' : 'Reason'}</Label>
+            <Label htmlFor="sanction-reason">{t.auto.components_forum_SanctionDialog_165}</Label>
             <Textarea
               id="sanction-reason"
               name="sanction-reason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder={language === 'fr' ? 'Décrivez la raison de cette sanction...' : 'Describe the reason for this sanction...'}
+              placeholder={t.auto.components_forum_SanctionDialog_171}
               className="bg-muted/50 border-border min-h-[100px]"
             />
           </div>
@@ -176,7 +174,7 @@ export const SanctionDialog = ({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-            {language === 'fr' ? 'Annuler' : 'Cancel'}
+            {t.auto.components_forum_SanctionDialog_179}
           </Button>
           <Button 
             onClick={handleSubmit} 
@@ -188,7 +186,7 @@ export const SanctionDialog = ({
             ) : (
               <Ban className="h-4 w-4 mr-2" />
             )}
-            {language === 'fr' ? 'Appliquer' : 'Apply'}
+            {t.auto.components_forum_SanctionDialog_191}
           </Button>
         </DialogFooter>
       </DialogContent>

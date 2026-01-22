@@ -85,7 +85,10 @@ export default function Changelog() {
           </GlowCard>
         ) : (
           <div className="space-y-6">
-            {notes.map((note) => (
+            {notes.map((note) => {
+              const title = note[`title_${language}` as 'title_fr' | 'title_en'];
+              const content = note[`content_${language}` as 'content_fr' | 'content_en'];
+              return (
               <GlowCard key={note.id} className="p-6">
                 {/* Version header */}
                 <div className="flex items-center gap-3 flex-wrap mb-4">
@@ -109,7 +112,7 @@ export default function Changelog() {
 
                 {/* Title */}
                 <h2 className="text-lg font-semibold text-foreground mb-4">
-                  {language === 'fr' ? note.title_fr : note.title_en}
+                  {title}
                 </h2>
 
                 {/* Content */}
@@ -155,11 +158,12 @@ export default function Changelog() {
                       em: ({ children }) => <em className="italic">{children}</em>,
                     }}
                   >
-                    {language === 'fr' ? note.content_fr : note.content_en}
+                    {content}
                   </ReactMarkdown>
                 </div>
               </GlowCard>
-            ))}
+            );
+            })}
           </div>
         )}
       </div>

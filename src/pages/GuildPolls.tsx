@@ -17,7 +17,7 @@ import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
 const GuildPolls = () => {
   const { regionSlug, serverSlug, guildSlug } = useParams();
   const navigate = useNavigate();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const { user } = useAuth();
   const [guildId, setGuildId] = useState<string | null>(null);
   const [guild, setGuild] = useState<{ name: string; server: string; region: string; avatar_url: string | null } | null>(null);
@@ -86,7 +86,7 @@ const GuildPolls = () => {
   const handleDuplicate = async (pollId: string) => {
     const newPollId = await duplicatePoll(pollId);
     if (newPollId) {
-      toast.success(language === 'fr' ? 'Sondage dupliqué en brouillon' : 'Poll duplicated as draft');
+      toast.success(t.auto.pages_GuildPolls_89);
       refetch();
     }
   };
@@ -121,13 +121,13 @@ const GuildPolls = () => {
         <div className="max-w-4xl mx-auto">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
             <h1 className="text-xl md:text-2xl font-bold">
-              {language === 'fr' ? 'Sondages' : 'Polls'}
+              {t.auto.pages_GuildPolls_124}
             </h1>
 
             {canManagePolls && (
               <Button onClick={() => navigate(`${basePath}/polls/new`)} size="sm" className="md:size-default">
                 <Plus className="h-4 w-4 md:mr-2" />
-                <span className="hidden sm:inline">{language === 'fr' ? 'Nouveau sondage' : 'New Poll'}</span>
+                <span className="hidden sm:inline">{t.auto.pages_GuildPolls_130}</span>
               </Button>
             )}
           </div>
@@ -138,21 +138,21 @@ const GuildPolls = () => {
             </div>
           ) : polls.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              {language === 'fr' ? 'Aucun sondage pour le moment.' : 'No polls yet.'}
+              {t.auto.pages_GuildPolls_141}
             </div>
           ) : (
             <Tabs defaultValue="active">
               <TabsList className="mb-6">
                 <TabsTrigger value="active">
-                  {language === 'fr' ? 'Actifs' : 'Active'} ({activePolls.length})
+                  {t.auto.pages_GuildPolls_147} ({activePolls.length})
                 </TabsTrigger>
                 {canManagePolls && (
                   <TabsTrigger value="draft">
-                    {language === 'fr' ? 'Brouillons' : 'Drafts'} ({draftPolls.length})
+                    {t.auto.pages_GuildPolls_151} ({draftPolls.length})
                   </TabsTrigger>
                 )}
                 <TabsTrigger value="closed">
-                  {language === 'fr' ? 'Clôturés' : 'Closed'} ({closedPolls.length})
+                  {t.auto.pages_GuildPolls_155} ({closedPolls.length})
                 </TabsTrigger>
               </TabsList>
 
@@ -169,7 +169,7 @@ const GuildPolls = () => {
                 ))}
                 {activePolls.length === 0 && (
                   <p className="text-center py-8 text-muted-foreground">
-                    {language === 'fr' ? 'Aucun sondage actif' : 'No active polls'}
+                    {t.auto.pages_GuildPolls_172}
                   </p>
                 )}
               </TabsContent>
@@ -189,7 +189,7 @@ const GuildPolls = () => {
                   ))}
                   {draftPolls.length === 0 && (
                     <p className="text-center py-8 text-muted-foreground">
-                      {language === 'fr' ? 'Aucun brouillon' : 'No drafts'}
+                      {t.auto.pages_GuildPolls_192}
                     </p>
                   )}
                 </TabsContent>
@@ -208,7 +208,7 @@ const GuildPolls = () => {
                 ))}
                 {closedPolls.length === 0 && (
                   <p className="text-center py-8 text-muted-foreground">
-                    {language === 'fr' ? 'Aucun sondage clôturé' : 'No closed polls'}
+                    {t.auto.pages_GuildPolls_211}
                   </p>
                 )}
               </TabsContent>

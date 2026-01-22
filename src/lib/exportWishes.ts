@@ -1,6 +1,6 @@
 import { MemberWish, ValidationStatus } from '@/types/guild';
 import { getClassById, getSpecById, getRolesFromSpecs } from '@/data/wowClasses';
-import { Language } from '@/i18n/translations';
+import { Language, Translations } from '@/i18n/translations';
 
 // Localized class names
 const classNames: Record<string, Record<Language, string>> = {
@@ -98,6 +98,7 @@ const validationNames: Record<ValidationStatus, Record<Language, string>> = {
 
 interface ExportOptions {
   language: Language;
+  t: Translations;
   rosterName: string;
   guildName: string;
 }
@@ -129,8 +130,7 @@ function escapeCSV(value: string): string {
 }
 
 export function exportWishesToCSV(members: MemberWish[], options: ExportOptions): void {
-  const { language, rosterName, guildName } = options;
-  const isFr = language === 'fr';
+  const { language, rosterName, guildName, t } = options;
 
   // Find max wishes count
   const maxWishes = Math.max(...members.map(m => m.wishes.length), 0);
@@ -140,18 +140,19 @@ export function exportWishesToCSV(members: MemberWish[], options: ExportOptions)
 
   // Build headers
   const headers: string[] = [
-    isFr ? 'Joueur' : 'Player',
-    isFr ? 'Engagement' : 'Commitment',
+    t.auto?.export_player || 'Player',
+    t.auto?.export_commitment || 'Commitment',
   ];
 
   for (let i = 1; i <= maxWishes; i++) {
-    const wishLabel = isFr ? `Vœu ${i}` : `Wish ${i}`;
+    const wishTemplate = t.auto?.export_wish_label || 'Wish {{index}}';
+    const wishLabel = wishTemplate.replace('{{index}}', String(i));
     headers.push(
-      `${wishLabel} - ${isFr ? 'Classe' : 'Class'}`,
-      `${wishLabel} - ${isFr ? 'Spécialisations' : 'Specs'}`,
-      `${wishLabel} - ${isFr ? 'Rôles' : 'Roles'}`,
-      `${wishLabel} - ${isFr ? 'Commentaire' : 'Comment'}`,
-      `${wishLabel} - ${isFr ? 'Validation' : 'Validation'}`
+      `${wishLabel} - ${t.auto?.export_class || 'Class'}`,
+      `${wishLabel} - ${t.auto?.export_specs || 'Specs'}`,
+      `${wishLabel} - ${t.auto?.export_roles || 'Roles'}`,
+      `${wishLabel} - ${t.auto?.export_comment || 'Comment'}`,
+      `${wishLabel} - ${t.auto?.export_validation || 'Validation'}`
     );
   }
 
@@ -195,7 +196,8 @@ export function exportWishesToCSV(members: MemberWish[], options: ExportOptions)
   const date = new Date().toISOString().split('T')[0];
   const safeGuildName = guildName.replace(/[^a-zA-Z0-9-_]/g, '-');
   const safeRosterName = rosterName.replace(/[^a-zA-Z0-9-_]/g, '-');
-  const filename = `${safeGuildName}-${safeRosterName}-${isFr ? 'voeux' : 'wishes'}-${date}.csv`;
+  const filenameSuffix = t.auto?.export_filename_suffix || 'wishes';
+  const filename = `${safeGuildName}-${safeRosterName}-${filenameSuffix}-${date}.csv`;
 
   link.href = url;
   link.download = filename;

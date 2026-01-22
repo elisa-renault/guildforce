@@ -255,7 +255,7 @@ const BugReportButton = React.forwardRef<HTMLButtonElement, React.ComponentProps
                 </CollapsibleTrigger>
                 <CollapsibleContent className="mt-2 space-y-2 rounded-md border border-border bg-muted/30 p-3 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">URL:</span>
+                    <span className="text-muted-foreground">{t.auto.components_BugReportButton_url_label}</span>
                     <span className="truncate max-w-[200px]">{window.location.pathname}</span>
                   </div>
                   <div className="flex justify-between">

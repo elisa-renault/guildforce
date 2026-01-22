@@ -76,7 +76,7 @@ export const GuildBattleNetSection = ({
 
   return (
     <GlowCard className="p-6">
-      <h2 className="font-display text-lg mb-4">Battle.net</h2>
+      <h2 className="font-display text-lg mb-4">{t.auto.components_settings_GuildBattleNetSection_title}</h2>
       
       <div className="space-y-4">
         <CosmicButton

@@ -26,7 +26,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { fr, enUS } from 'date-fns/locale';
+import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
 import {
   Bug,
   AlertTriangle,
@@ -80,7 +80,7 @@ export function BugReportsManager() {
   const [resolutionNote, setResolutionNote] = useState('');
   const [updatingStatus, setUpdatingStatus] = useState(false);
 
-  const dateLocale = language === 'fr' ? fr : enUS;
+  const dateLocale = DATE_LOCALE_BY_LANGUAGE[language];
 
   const fetchReports = useCallback(async () => {
     setLoading(true);
@@ -359,10 +359,12 @@ export function BugReportsManager() {
               <Bug className="h-5 w-5" />
               {selectedReport?.title}
             </DialogTitle>
-            <DialogDescription className="flex items-center gap-2 flex-wrap">
-              {selectedReport && getStatusBadge(selectedReport.status)}
-              {selectedReport && getPriorityBadge(selectedReport.priority)}
-              <Badge variant="outline">{selectedReport && getCategoryLabel(selectedReport.category)}</Badge>
+            <DialogDescription asChild className="text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 flex-wrap">
+                {selectedReport && getStatusBadge(selectedReport.status)}
+                {selectedReport && getPriorityBadge(selectedReport.priority)}
+                <Badge variant="outline">{selectedReport && getCategoryLabel(selectedReport.category)}</Badge>
+              </div>
             </DialogDescription>
           </DialogHeader>
 
@@ -387,7 +389,7 @@ export function BugReportsManager() {
                   </div>
                   {selectedReport.current_url && (
                     <div className="col-span-2">
-                      <Label className="text-muted-foreground">URL</Label>
+                      <Label className="text-muted-foreground">{t.auto.components_admin_BugReportsManager_url_label}</Label>
                       <p className="mt-1 truncate text-xs font-mono">{selectedReport.current_url}</p>
                     </div>
                   )}

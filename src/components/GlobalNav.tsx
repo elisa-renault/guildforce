@@ -95,7 +95,7 @@ export const GlobalNav = () => {
           <button 
             onClick={() => navigate('/')}
             className="font-display text-lg text-foreground hover:text-primary-foreground hover:drop-shadow-[0_0_12px_hsl(292,63%,50%)] transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded px-1"
-            aria-label="Accueil Guildforce"
+            aria-label={t.auto.components_GlobalNav_home_aria_label}
           >
             Guildforce
           </button>
@@ -106,13 +106,13 @@ export const GlobalNav = () => {
 
         {/* Center navigation - Desktop only */}
         {user && (
-          <nav className="hidden md:flex items-center gap-1" role="navigation" aria-label="Navigation principale">
+          <nav className="hidden md:flex items-center gap-1" role="navigation" aria-label={t.auto.components_GlobalNav_nav_aria_label}>
             <NavLinks />
           </nav>
         )}
 
         {/* Right side - notifications, auth, and mobile menu */}
-        <div className="flex items-center gap-1" role="group" aria-label="Authentification">
+        <div className="flex items-center gap-1" role="group" aria-label={t.auto.components_GlobalNav_auth_aria_label}>
           {user && <NotificationBell />}
           {user ? (
             <>
@@ -130,7 +130,7 @@ export const GlobalNav = () => {
                 <SheetTrigger asChild>
                   <button 
                     className={`md:hidden ${navButtonBase} ${navButtonInactive} p-2`}
-                    aria-label="Menu"
+                    aria-label={t.auto.components_GlobalNav_menu_aria_label}
                   >
                     <Menu className="h-5 w-5" strokeWidth={1.5} />
                   </button>
@@ -138,7 +138,7 @@ export const GlobalNav = () => {
                 <SheetContent side="right" className="w-[280px] bg-background border-border/50 p-0">
                   <div className="flex flex-col h-full">
                     <div className="p-4 border-b border-border/30">
-                      <span className="font-display text-lg text-foreground">Menu</span>
+                      <span className="font-display text-lg text-foreground">{t.auto.components_GlobalNav_menu_label}</span>
                     </div>
                     <nav className="flex flex-col gap-1 p-4">
                       <NavLinks mobile />

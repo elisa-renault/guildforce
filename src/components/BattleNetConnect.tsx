@@ -286,7 +286,7 @@ export const BattleNetConnect: React.FC = () => {
     <GlowCard className="p-6">
       <div className="flex items-center gap-3 mb-4">
         <BattleNetIcon className="w-6 h-6 text-primary" />
-        <h3 className="text-lg font-semibold text-foreground">Battle.net</h3>
+        <h3 className="text-lg font-semibold text-foreground">{t.auto.components_BattleNetConnect_title}</h3>
         {isConnected && (
           <div className="ml-auto flex items-center gap-2">
             {connectedRegion && (
