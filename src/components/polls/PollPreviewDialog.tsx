@@ -110,13 +110,15 @@ const formDataToQuestions = (formData: PollFormData): GuildPollQuestion[] => {
 // Evaluate if a condition is met based on current responses
 const evaluateCondition = (
   condition: QuestionCondition,
-  responses: Record<string, ResponseValue>
+  responses: Record<string, ResponseValue>,
+  touched: Record<string, boolean>
 ): boolean => {
   const sourceResponse = responses[condition.question_id];
   if (!sourceResponse) return false;
 
   // Handle numeric types (scale/rating)
   if (sourceResponse.type === 'scale' || sourceResponse.type === 'rating') {
+    if (!touched[condition.question_id]) return false;
     const numericValue = sourceResponse.value;
     const threshold = parseFloat(condition.values[0]);
     
@@ -152,6 +154,8 @@ const evaluateCondition = (
   } else {
     return false;
   }
+
+  if (selectedValues.length === 0) return false;
 
   switch (condition.operator) {
     case 'equals':
@@ -213,6 +217,7 @@ export const PollPreviewDialog = ({
     });
     return initial;
   });
+  const [touchedQuestions, setTouchedQuestions] = useState<Record<string, boolean>>({});
 
   const [otherTexts, setOtherTexts] = useState<Record<string, string>>({});
 
@@ -253,6 +258,7 @@ export const PollPreviewDialog = ({
       });
       setResponses(initial);
       setOtherTexts({});
+      setTouchedQuestions({});
     }
   }, [open, questions]);
 
@@ -260,12 +266,13 @@ export const PollPreviewDialog = ({
   const visibleQuestions = useMemo(() => {
     return questions.filter((q) => {
       if (!q.condition) return true;
-      return evaluateCondition(q.condition, responses);
+      return evaluateCondition(q.condition, responses, touchedQuestions);
     });
-  }, [questions, responses]);
+  }, [questions, responses, touchedQuestions]);
 
   const updateResponse = useCallback((questionId: string, value: ResponseValue) => {
     setResponses((prev) => ({ ...prev, [questionId]: value }));
+    setTouchedQuestions((prev) => ({ ...prev, [questionId]: true }));
   }, []);
 
   const updateOtherText = useCallback((questionId: string, text: string) => {

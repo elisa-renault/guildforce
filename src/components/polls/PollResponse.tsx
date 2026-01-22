@@ -27,13 +27,15 @@ interface PollResponseProps {
 // Evaluate if a condition is met based on current responses
 const evaluateCondition = (
   condition: QuestionCondition,
-  responses: Record<string, ResponseValue>
+  responses: Record<string, ResponseValue>,
+  touched: Record<string, boolean>
 ): boolean => {
   const sourceResponse = responses[condition.question_id];
   if (!sourceResponse) return false;
 
   // Handle numeric types (scale/rating)
   if (sourceResponse.type === 'scale' || sourceResponse.type === 'rating') {
+    if (!touched[condition.question_id]) return false;
     const numericValue = sourceResponse.value;
     const threshold = parseFloat(condition.values[0]);
     
@@ -71,6 +73,8 @@ const evaluateCondition = (
     // Non-supported types
     return false;
   }
+
+  if (selectedValues.length === 0) return false;
 
   switch (condition.operator) {
     case 'equals':
@@ -137,6 +141,15 @@ export const PollResponse = ({
     });
     return initial;
   });
+  const [touchedQuestions, setTouchedQuestions] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    questions.forEach((q) => {
+      if (q.my_response) {
+        initial[q.id] = true;
+      }
+    });
+    return initial;
+  });
 
   // Track which questions have "Other" selected
   const [otherTexts, setOtherTexts] = useState<Record<string, string>>(() => {
@@ -156,12 +169,13 @@ export const PollResponse = ({
   const visibleQuestions = useMemo(() => {
     return questions.filter((q) => {
       if (!q.condition) return true; // No condition = always visible
-      return evaluateCondition(q.condition, responses);
+      return evaluateCondition(q.condition, responses, touchedQuestions);
     });
-  }, [questions, responses]);
+  }, [questions, responses, touchedQuestions]);
 
   const updateResponse = useCallback((questionId: string, value: ResponseValue) => {
     setResponses((prev) => ({ ...prev, [questionId]: value }));
+    setTouchedQuestions((prev) => ({ ...prev, [questionId]: true }));
   }, []);
 
   const updateOtherText = useCallback((questionId: string, text: string) => {
@@ -209,7 +223,7 @@ export const PollResponse = ({
         return !!response.value.trim();
       case 'rating':
       case 'scale':
-        return response.value >= 0;
+        return !!touchedQuestions[q.id];
       case 'date':
       case 'time':
       case 'datetime':
