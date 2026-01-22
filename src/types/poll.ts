@@ -16,6 +16,7 @@ export interface ScaleConfig {
   min: number;
   max: number;
   step: number;
+  display?: 'stars' | 'slider';
   min_label?: string;
   max_label?: string;
 }

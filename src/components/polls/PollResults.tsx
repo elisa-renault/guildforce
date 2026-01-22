@@ -10,6 +10,7 @@ import type { GuildPollQuestion, ResponseValue, ScaleConfig } from '@/types/poll
 import { format, parseISO } from 'date-fns';
 import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
 import { cn } from '@/lib/utils';
+import { clampScaleValue, formatScaleValue, getScaleConfig, getScaleSteps, roundToStep } from '@/lib/pollScale';
 
 interface PollResultsProps {
   questions: GuildPollQuestion[];
@@ -95,8 +96,8 @@ export const PollResults = ({
   };
 
   const getScaleStats = (question: GuildPollQuestion) => {
-    const config = question.scale_config as ScaleConfig | null;
-    const max = config?.max ?? 5;
+    const config = getScaleConfig(question.scale_config as ScaleConfig | null);
+    const { min, max, step } = config;
 
     const responses = question.responses?.map((r) => {
       const value = r.response_value as ResponseValue;
@@ -106,20 +107,23 @@ export const PollResults = ({
       };
     }) || [];
 
-    if (responses.length === 0) return { average: 0, distribution: {}, config, individualRatings: [] };
-
-    const values = responses.map(r => r.value).filter(v => v >= 0 && v <= max);
-    const average = values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
-    const distribution: Record<number, number> = {};
-    for (let i = 0; i <= max; i++) {
-      distribution[i] = 0;
-    }
-    values.forEach((v) => {
-      const rounded = Math.round(v);
-      if (distribution[rounded] !== undefined) distribution[rounded]++;
+    const steps = getScaleSteps(min, max, step);
+    const distribution: Record<string, number> = {};
+    steps.forEach((value) => {
+      distribution[formatScaleValue(value, step)] = 0;
     });
 
-    return { average, distribution, config, individualRatings: responses };
+    if (responses.length === 0) return { average: 0, distribution, config, individualRatings: [], steps };
+
+    const values = responses.map(r => r.value).filter(v => v >= min && v <= max);
+    const average = values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+    values.forEach((v) => {
+      const rounded = roundToStep(v, step, min);
+      const key = formatScaleValue(rounded, step);
+      if (distribution[key] !== undefined) distribution[key]++;
+    });
+
+    return { average, distribution, config, individualRatings: responses, steps };
   };
 
   const getRankingStats = (question: GuildPollQuestion) => {
@@ -477,23 +481,50 @@ export const PollResults = ({
             {question.question_type === 'scale' && (
               <div className="pl-5 space-y-4">
                 {(() => {
-                  const { average, distribution, config, individualRatings } = getScaleStats(question);
+                  const { average, distribution, config, individualRatings, steps } = getScaleStats(question);
                   const total = question.responses?.length || 0;
-                  const max = config?.max ?? 5;
+                  const min = config.min;
+                  const max = config.max;
+                  const step = config.step;
+                  const display = config.display;
+                  const maxStars = Math.max(1, Math.round(max - min));
+                  const clampedAverage = clampScaleValue(average, min, max);
+                  const starAverage = clampedAverage - min;
+                  const formattedAverage = formatScaleValue(average, step);
+                  const formattedMax = formatScaleValue(max, step);
+                  const formattedMin = formatScaleValue(min, step);
+                  const progressValue = max > min ? ((clampedAverage - min) / (max - min)) * 100 : 0;
 
                   return (
                     <>
-                      <div className="flex items-center gap-4">
-                        <StarDisplay value={average} max={max} size="lg" />
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-2xl font-bold text-primary">
-                            {average.toFixed(1)}
-                          </span>
-                          <span className="text-muted-foreground">
-                            / {max} ({total} {total === 1 ? 'vote' : 'votes'})
-                          </span>
+                      {display === 'stars' ? (
+                        <div className="flex items-center gap-4">
+                          <StarDisplay value={starAverage} max={maxStars} size="lg" />
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-2xl font-bold text-primary">
+                              {formattedAverage}
+                            </span>
+                            <span className="text-muted-foreground">
+                              / {formattedMax} ({total} {total === 1 ? 'vote' : 'votes'})
+                            </span>
+                          </div>
                         </div>
-                      </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-2xl font-bold text-primary">
+                              {formattedAverage}
+                            </span>
+                            <span className="text-muted-foreground">
+                              / {formattedMax} ({total} {total === 1 ? 'vote' : 'votes'})
+                            </span>
+                          </div>
+                          <Progress value={progressValue} className="h-2 bg-muted/40" />
+                          <div className="text-xs text-muted-foreground">
+                            {formattedMin} {'->'} {formattedMax}
+                          </div>
+                        </div>
+                      )}
                       {(config?.min_label || config?.max_label) && (
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           {config?.min_label && <span>{config.min_label}</span>}
@@ -502,22 +533,21 @@ export const PollResults = ({
                         </div>
                       )}
                       <div className="space-y-1">
-                        {Array.from({ length: max + 1 }, (_, i) => max - i).map((value) => {
-                          const count = distribution[value] || 0;
+                        {[...steps].sort((a, b) => b - a).map((value) => {
+                          const label = formatScaleValue(value, step);
+                          const count = distribution[label] || 0;
                           const percentage = total > 0 ? (count / total) * 100 : 0;
                           return (
-                            <div key={value} className="flex items-center gap-2">
-                              <div className="w-20 flex items-center justify-end gap-0.5">
-                                {Array.from({ length: max }, (_, i) => (
-                                  <Star
-                                    key={i}
-                                    className={cn(
-                                      'h-3 w-3 stroke-[1.5]',
-                                      i < value ? 'fill-amber-500 text-amber-500' : 'text-muted-foreground/30'
-                                    )}
-                                  />
-                                ))}
-                              </div>
+                            <div key={label} className="flex items-center gap-2">
+                              {display === 'stars' ? (
+                                <div className="w-20 flex items-center justify-end gap-0.5">
+                                  <StarDisplay value={value - min} max={maxStars} size="sm" />
+                                </div>
+                              ) : (
+                                <div className="w-20 text-xs text-muted-foreground text-right">
+                                  {label}
+                                </div>
+                              )}
                               <Progress value={percentage} className="h-2 flex-1 bg-muted/40" />
                               <span className="w-8 text-xs text-muted-foreground text-right">
                                 {count}
@@ -548,8 +578,12 @@ export const PollResults = ({
                                     <span className="text-sm font-medium truncate">{rating.user.username}</span>
                                   </div>
                                 )}
-                                <StarDisplay value={rating.value} max={max} size="sm" />
-                                <span className="text-sm text-muted-foreground">{rating.value}</span>
+                                {display === 'stars' ? (
+                                  <StarDisplay value={rating.value - min} max={maxStars} size="sm" />
+                                ) : null}
+                                <span className="text-sm text-muted-foreground">
+                                  {formatScaleValue(rating.value, step)}
+                                </span>
                               </div>
                             ))}
                           </div>

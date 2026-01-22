@@ -814,6 +814,9 @@ export interface Translations {
     otherSpecify: string;
     otherPlaceholder: string;
     textResponsePlaceholder: string;
+    scaleDisplay: string;
+    scaleDisplayStars: string;
+    scaleDisplaySlider: string;
     // Conditional questions
     addCondition: string;
     conditionalQuestion: string;
@@ -1480,6 +1483,9 @@ export const translations: Record<Language, Translations> = {
       otherSpecify: 'Other (specify)',
       otherPlaceholder: 'Please specify...',
       textResponsePlaceholder: 'Your answer...',
+      scaleDisplay: 'Display',
+      scaleDisplayStars: 'Stars',
+      scaleDisplaySlider: 'Slider',
       addCondition: 'Add condition',
       conditionalQuestion: 'Conditional question',
       showIf: 'Show if question',
@@ -2792,6 +2798,9 @@ export const translations: Record<Language, Translations> = {
       otherSpecify: 'Autre (préciser)',
       otherPlaceholder: 'Veuillez préciser...',
       textResponsePlaceholder: 'Votre réponse...',
+      scaleDisplay: 'Affichage',
+      scaleDisplayStars: 'Etoiles',
+      scaleDisplaySlider: 'Curseur',
       addCondition: 'Ajouter une condition',
       conditionalQuestion: 'Question conditionnelle',
       showIf: 'Afficher si la question',
@@ -3369,7 +3378,7 @@ export const translations: Record<Language, Translations> = {
       pages_Profile_651: 'Confirmer la suppression',
       pages_PublicProfile_131: 'Membre depuis',
       pages_RosterWishes_636: 'Mode lecture admin',
-      components_AvatarCropDialog_crop_preview_alt: 'Aper?u du recadrage',
+      components_AvatarCropDialog_crop_preview_alt: 'Aperçu du recadrage',
       components_AvatarCropDialog_title: "Recadrer l'avatar",
       components_BattleNetConnect_title: 'Battle.net',
       components_BugReportButton_url_label: 'URL:',
@@ -3381,18 +3390,18 @@ export const translations: Record<Language, Translations> = {
       components_GlobalNav_nav_aria_label: 'Navigation principale',
       components_admin_BugReportsManager_url_label: 'URL',
       components_admin_GuildManager_actions: 'Actions',
-      components_admin_GuildManager_sync_job: 'Sync lanc?e (job {{jobId}}). Rafra?chis dans 1-2 min.',
-      components_admin_GuildManager_sync_started: 'Sync lanc?e, ?a peut prendre quelques minutes (rafra?chis ensuite).',
+      components_admin_GuildManager_sync_job: 'Sync lancée (job {{jobId}}). Rafraîchis dans 1-2 min.',
+      components_admin_GuildManager_sync_started: 'Sync lancée, ça peut prendre quelques minutes (rafraîchis ensuite).',
       components_admin_PatchNotesEditor_content_en_placeholder: 'Describe the changes...',
-      components_admin_PatchNotesEditor_content_fr_placeholder: 'D?crivez les changements...',
+      components_admin_PatchNotesEditor_content_fr_placeholder: 'Décrivez les changements...',
       components_admin_PatchNotesEditor_title_en_placeholder: 'Version title',
       components_admin_PatchNotesEditor_title_fr_placeholder: 'Titre de la version',
       components_admin_PatchNotesEditor_version_placeholder: '1.0.0',
-      components_forum_ForumTopicList_reactions_title: 'R?actions',
-      components_forum_NotificationBell_mention: '{{username}} vous a mentionn? dans "{{topicTitle}}"',
-      components_forum_NotificationBell_post_reply: '{{username}} a r?pondu dans "{{topicTitle}}"',
-      components_forum_NotificationBell_topic_reply: '{{username}} a r?pondu ? votre sujet "{{topicTitle}}"',
-      components_forum_SanctionDialog_applied: 'Sanction appliqu?e ? {{username}}',
+      components_forum_ForumTopicList_reactions_title: 'Réactions',
+      components_forum_NotificationBell_mention: '{{username}} vous a mentionné dans "{{topicTitle}}"',
+      components_forum_NotificationBell_post_reply: '{{username}} a répondu dans "{{topicTitle}}"',
+      components_forum_NotificationBell_topic_reply: '{{username}} a répondu à votre sujet "{{topicTitle}}"',
+      components_forum_SanctionDialog_applied: 'Sanction appliquée à {{username}}',
       components_polls_PollQuestionEditor_max_label: 'Max',
       components_polls_PollQuestionEditor_min_label: 'Min',
       components_polls_PollResults_response_plural: 'responses',
