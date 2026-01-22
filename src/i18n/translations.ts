@@ -400,6 +400,46 @@ export interface Translations {
       nobodyDesc: string;
       saved: string;
     };
+    validation: {
+      usernameMin: string;
+      usernameMax: string;
+    };
+    ui: {
+      setupSuccessTitle: string;
+      setupSuccessDesc: string;
+      updateSuccessDesc: string;
+      requestDeletionTitle: string;
+      requestDeletionDesc: string;
+      cancelDeletionTitle: string;
+      cancelDeletionDesc: string;
+      selectImageError: string;
+      imageSizeError: string;
+      avatarUpdated: string;
+      avatarRemoved: string;
+      profileNotFound: string;
+      reconnectHint: string;
+      backToLogin: string;
+      welcomeTitle: string;
+      welcomeSubtitle: string;
+      connectedAs: string;
+      usernamePlaceholder: string;
+      usernameHint: string;
+      getStarted: string;
+      viewPublicProfile: string;
+      avatarAlt: string;
+      saveUsername: string;
+      preferencesTitle: string;
+      privacyTitle: string;
+      privacyPublicTitle: string;
+      privacyPublicDesc: string;
+      privacyGuildTitle: string;
+      privacyGuildDesc: string;
+      privacyPrivateTitle: string;
+      privacyPrivateDesc: string;
+      dangerZoneTitle: string;
+      languageFr: string;
+      languageEn: string;
+    };
   };
   // Guild Settings
   guildSettings: {
@@ -1188,6 +1228,46 @@ export const translations: Record<Language, Translations> = {
         nobody: 'Nobody',
         nobodyDesc: 'Hidden for everyone (except app administrators)',
         saved: 'Visibility preference saved',
+      },
+      validation: {
+        usernameMin: 'Username must be at least 2 characters',
+        usernameMax: 'Username must be at most 30 characters',
+      },
+      ui: {
+        setupSuccessTitle: 'Welcome!',
+        setupSuccessDesc: 'Your profile has been set up.',
+        updateSuccessDesc: 'Profile updated successfully!',
+        requestDeletionTitle: 'Request recorded',
+        requestDeletionDesc: 'Your deletion request has been recorded. An admin will process it within 30 days.',
+        cancelDeletionTitle: 'Request cancelled',
+        cancelDeletionDesc: 'Your deletion request has been cancelled.',
+        selectImageError: 'Please select an image file',
+        imageSizeError: 'Image must be under 5 MB',
+        avatarUpdated: 'Avatar updated!',
+        avatarRemoved: 'Avatar removed',
+        profileNotFound: 'Profile not found.',
+        reconnectHint: 'Sign out and sign back in via Battle.net to finish the link.',
+        backToLogin: 'Back to login',
+        welcomeTitle: 'Welcome to Guildforce!',
+        welcomeSubtitle: 'Choose your username so your guild can identify you',
+        connectedAs: 'Connected as {{battletag}}',
+        usernamePlaceholder: 'Your username on the site',
+        usernameHint: 'This name will be shown to your guild',
+        getStarted: "Let's get started!",
+        viewPublicProfile: 'View public profile',
+        avatarAlt: 'Avatar',
+        saveUsername: 'Save username',
+        preferencesTitle: 'Preferences',
+        privacyTitle: 'Learn more about your data',
+        privacyPublicTitle: 'Public data',
+        privacyPublicDesc: 'Username and avatar are visible on your public profile.',
+        privacyGuildTitle: 'Guild data',
+        privacyGuildDesc: 'Characters and wishes are visible to your guild only.',
+        privacyPrivateTitle: 'Private data',
+        privacyPrivateDesc: 'Email and Battle.net tokens are never shared.',
+        dangerZoneTitle: 'Danger zone',
+        languageFr: 'French',
+        languageEn: 'English',
       },
     },
     guildSettings: {
@@ -2504,6 +2584,46 @@ export const translations: Record<Language, Translations> = {
         nobodyDesc: 'Masqué pour tous (sauf administrateurs de l\'app)',
         saved: 'Préférence de visibilité enregistrée',
       },
+      validation: {
+        usernameMin: 'Le pseudo doit contenir au moins 2 caractères',
+        usernameMax: 'Le pseudo ne peut pas dépasser 30 caractères',
+      },
+      ui: {
+        setupSuccessTitle: 'Bienvenue !',
+        setupSuccessDesc: 'Ton profil a été configuré.',
+        updateSuccessDesc: 'Profil mis à jour avec succès !',
+        requestDeletionTitle: 'Demande enregistrée',
+        requestDeletionDesc: 'Ta demande de suppression a été enregistrée. Un administrateur la traitera sous 30 jours.',
+        cancelDeletionTitle: 'Demande annulée',
+        cancelDeletionDesc: 'Ta demande de suppression a été annulée.',
+        selectImageError: 'Veuillez sélectionner un fichier image',
+        imageSizeError: 'L\'image doit faire moins de 5 Mo',
+        avatarUpdated: 'Avatar mis à jour !',
+        avatarRemoved: 'Avatar supprimé',
+        profileNotFound: 'Profil introuvable.',
+        reconnectHint: 'Déconnecte-toi puis reconnecte-toi via Battle.net pour finaliser la liaison.',
+        backToLogin: 'Revenir à la connexion',
+        welcomeTitle: 'Bienvenue sur Guildforce !',
+        welcomeSubtitle: 'Choisis ton pseudo pour être identifié par ta guilde',
+        connectedAs: 'Connecté en tant que {{battletag}}',
+        usernamePlaceholder: 'Ton pseudo sur le site',
+        usernameHint: 'C\'est le nom qui sera affiché dans ta guilde',
+        getStarted: 'C\'est parti !',
+        viewPublicProfile: 'Voir mon profil public',
+        avatarAlt: 'Avatar',
+        saveUsername: 'Enregistrer le pseudo',
+        preferencesTitle: 'Préférences',
+        privacyTitle: 'En savoir plus sur tes données',
+        privacyPublicTitle: 'Données publiques',
+        privacyPublicDesc: 'Pseudo et avatar visibles sur ton profil public.',
+        privacyGuildTitle: 'Données de guilde',
+        privacyGuildDesc: 'Personnages et vœux visibles par ta guilde uniquement.',
+        privacyPrivateTitle: 'Données privées',
+        privacyPrivateDesc: 'Email et tokens Battle.net jamais partagés.',
+        dangerZoneTitle: 'Zone de danger',
+        languageFr: 'Français',
+        languageEn: 'Anglais',
+      },
     },
     guildSettings: {
       title: 'Paramètres de guilde',
@@ -3449,3 +3569,52 @@ export const translations: Record<Language, Translations> = {
     },
   },
 };
+
+const collectTranslationKeys = (value: unknown, prefix = '', keys = new Set<string>()) => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    if (prefix) keys.add(prefix);
+    return keys;
+  }
+
+  for (const [key, child] of Object.entries(value)) {
+    const nextPrefix = prefix ? `${prefix}.${key}` : key;
+    if (child && typeof child === 'object' && !Array.isArray(child)) {
+      collectTranslationKeys(child, nextPrefix, keys);
+    } else {
+      keys.add(nextPrefix);
+    }
+  }
+
+  return keys;
+};
+
+const checkTranslationCompleteness = (map: Record<Language, Translations>) => {
+  const languages = Object.keys(map) as Language[];
+  if (languages.length < 2) return;
+
+  const baseLanguage = languages[0];
+  const baseKeys = collectTranslationKeys(map[baseLanguage]);
+
+  for (const language of languages.slice(1)) {
+    const languageKeys = collectTranslationKeys(map[language]);
+    const missing = [...baseKeys].filter((key) => !languageKeys.has(key));
+    const extra = [...languageKeys].filter((key) => !baseKeys.has(key));
+
+    if (missing.length || extra.length) {
+      const missingPreview = missing.slice(0, 20).join(', ');
+      const extraPreview = extra.slice(0, 20).join(', ');
+      const missingSuffix = missing.length > 20 ? ` and ${missing.length - 20} more` : '';
+      const extraSuffix = extra.length > 20 ? ` and ${extra.length - 20} more` : '';
+
+      console.warn(
+        `[i18n] Translation key mismatch for "${language}" compared to "${baseLanguage}".` +
+          (missing.length ? ` Missing: ${missingPreview}${missingSuffix}.` : '') +
+          (extra.length ? ` Extra: ${extraPreview}${extraSuffix}.` : '')
+      );
+    }
+  }
+};
+
+if (import.meta.env?.DEV) {
+  checkTranslationCompleteness(translations);
+}
