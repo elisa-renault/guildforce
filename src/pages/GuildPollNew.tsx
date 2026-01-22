@@ -309,17 +309,21 @@ const GuildPollNew = () => {
     const rawQuestions = Array.isArray(poll?.questions) ? poll.questions : [];
 
     const sectionsById = new Map<string, SectionFormData>();
+    const sectionIndexById = new Map<string, number>();
     const sections: SectionFormData[] = rawSections
       .slice()
       .sort((a: any, b: any) => (a.display_order ?? 0) - (b.display_order ?? 0))
-      .map((s: any) => {
+      .map((s: any, index: number) => {
         const section: SectionFormData = {
           id: s.id,
           title: s.title || '',
           description: s.description || '',
           questions: [],
         };
-        if (s.id) sectionsById.set(s.id, section);
+        if (s.id) {
+          sectionsById.set(s.id, section);
+          sectionIndexById.set(s.id, index);
+        }
         return section;
       });
 
@@ -328,8 +332,27 @@ const GuildPollNew = () => {
       .sort((a: any, b: any) => (a.display_order ?? 0) - (b.display_order ?? 0));
 
     const generalQuestions: QuestionFormData[] = [];
+    const questionIdToEditorId: Record<string, string> = {};
+    const sectionQuestionCounts = new Map<number, number>();
+    let generalIndex = 0;
 
     for (const q of sortedQuestions) {
+      const sectionIndex = q.section_id ? sectionIndexById.get(q.section_id) : undefined;
+      const editorId = sectionIndex !== undefined
+        ? `section-${sectionIndex}-q-${sectionQuestionCounts.get(sectionIndex) ?? 0}`
+        : `general-q-${generalIndex}`;
+
+      if (sectionIndex !== undefined) {
+        const currentCount = sectionQuestionCounts.get(sectionIndex) ?? 0;
+        sectionQuestionCounts.set(sectionIndex, currentCount + 1);
+      } else {
+        generalIndex += 1;
+      }
+
+      if (q.id) {
+        questionIdToEditorId[q.id] = editorId;
+      }
+
       const qForm: QuestionFormData = {
         id: q.id,
         section_id: q.section_id ?? null,
@@ -348,6 +371,20 @@ const GuildPollNew = () => {
         generalQuestions.push({ ...qForm, section_id: null });
       }
     }
+
+    const remapCondition = (question: QuestionFormData) => {
+      if (question.condition?.question_id && questionIdToEditorId[question.condition.question_id]) {
+        question.condition = {
+          ...question.condition,
+          question_id: questionIdToEditorId[question.condition.question_id],
+        };
+      }
+    };
+
+    sections.forEach((section) => {
+      section.questions.forEach(remapCondition);
+    });
+    generalQuestions.forEach(remapCondition);
 
     return {
       title: poll.title || '',
