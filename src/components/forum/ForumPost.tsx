@@ -12,7 +12,7 @@ import { ReportDialog } from './ReportDialog';
 import { UserContextMenu } from './UserContextMenu';
 import { Quote, Edit3, Trash2, User, Clock, Check, X, Flag } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { fr, enUS } from 'date-fns/locale';
+import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
 import ReactMarkdown from 'react-markdown';
 
 interface ForumPostProps {
@@ -36,7 +36,7 @@ export const ForumPost = ({
 }: ForumPostProps) => {
   const { user } = useAuth();
   const { language, t } = useLanguage();
-  const locale = language === 'fr' ? fr : enUS;
+  const locale = DATE_LOCALE_BY_LANGUAGE[language];
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);

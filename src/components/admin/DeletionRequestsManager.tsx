@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
-import { fr, enUS } from 'date-fns/locale';
+import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
 import { Trash2, CheckCircle, XCircle, Loader2, User, AlertTriangle } from 'lucide-react';
 
 interface DeletionRequest {
@@ -26,7 +26,7 @@ interface DeletionRequest {
 }
 
 export function DeletionRequestsManager() {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const { toast } = useToast();
   const [requests, setRequests] = useState<DeletionRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,8 +57,8 @@ export function DeletionRequestsManager() {
     } catch (error) {
       log.error('Error fetching deletion requests:', error);
       toast({
-        title: language === 'fr' ? 'Erreur' : 'Error',
-        description: language === 'fr' ? 'Impossible de charger les demandes' : 'Failed to load requests',
+        title: t.auto.components_admin_DeletionRequestsManager_60,
+        description: t.auto.components_admin_DeletionRequestsManager_61,
         variant: 'destructive'
       });
     } finally {
@@ -87,17 +87,15 @@ export function DeletionRequestsManager() {
       if (error) throw error;
 
       toast({
-        title: language === 'fr' ? 'Demande traitée' : 'Request processed',
-        description: language === 'fr' 
-          ? 'La demande a été marquée comme traitée' 
-          : 'The request has been marked as processed'
+        title: t.auto.components_admin_DeletionRequestsManager_90,
+        description: t.auto.components_admin_DeletionRequestsManager_91
       });
 
       fetchRequests();
     } catch (error) {
       log.error('Error processing request:', error);
       toast({
-        title: language === 'fr' ? 'Erreur' : 'Error',
+        title: t.auto.components_admin_DeletionRequestsManager_100,
         variant: 'destructive'
       });
     } finally {
@@ -123,12 +121,12 @@ export function DeletionRequestsManager() {
       {/* Header with count */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-medium text-foreground">
-          {language === 'fr' ? 'Demandes de suppression' : 'Deletion Requests'}
+          {t.auto.components_admin_DeletionRequestsManager_126}
         </h2>
         {pendingRequests.length > 0 && (
           <Badge variant="destructive" className="gap-1">
             <AlertTriangle className="h-3 w-3" />
-            {pendingRequests.length} {language === 'fr' ? 'en attente' : 'pending'}
+            {pendingRequests.length} {t.auto.components_admin_DeletionRequestsManager_131}
           </Badge>
         )}
       </div>
@@ -137,7 +135,7 @@ export function DeletionRequestsManager() {
       {pendingRequests.length > 0 && (
         <div className="space-y-4">
           <h3 className="text-sm font-medium text-muted-foreground">
-            {language === 'fr' ? 'En attente' : 'Pending'}
+            {t.auto.components_admin_DeletionRequestsManager_140}
           </h3>
           {pendingRequests.map((request) => (
             <GlowCard key={request.id} className="p-4" hoverable={false}>
@@ -154,9 +152,9 @@ export function DeletionRequestsManager() {
                       {request.user?.username || 'Unknown User'}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {language === 'fr' ? 'Demandé le' : 'Requested on'}{' '}
+                      {t.auto.components_admin_DeletionRequestsManager_157}{' '}
                       {format(new Date(request.requested_at), 'dd MMM yyyy HH:mm', {
-                        locale: language === 'fr' ? fr : enUS
+                        locale: DATE_LOCALE_BY_LANGUAGE[language]
                       })}
                     </p>
                   </div>
@@ -173,13 +171,11 @@ export function DeletionRequestsManager() {
                   ) : (
                     <CheckCircle className="h-4 w-4" />
                   )}
-                  {language === 'fr' ? 'Marquer traité' : 'Mark Processed'}
+                  {t.auto.components_admin_DeletionRequestsManager_176}
                 </Button>
               </div>
               <p className="text-xs text-amber-500 mt-3">
-                ⚠️ {language === 'fr' 
-                  ? 'Supprimez manuellement le compte dans Supabase Auth avant de marquer comme traité' 
-                  : 'Manually delete the account in Supabase Auth before marking as processed'}
+                ⚠️ {t.auto.components_admin_DeletionRequestsManager_180}
               </p>
             </GlowCard>
           ))}
@@ -190,7 +186,7 @@ export function DeletionRequestsManager() {
       {processedRequests.length > 0 && (
         <div className="space-y-4">
           <h3 className="text-sm font-medium text-muted-foreground">
-            {language === 'fr' ? 'Traitées' : 'Processed'}
+            {t.auto.components_admin_DeletionRequestsManager_193}
           </h3>
           {processedRequests.map((request) => (
             <GlowCard key={request.id} className="p-4 opacity-60" hoverable={false}>
@@ -208,19 +204,19 @@ export function DeletionRequestsManager() {
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {request.status === 'cancelled' 
-                        ? (language === 'fr' ? 'Annulée' : 'Cancelled')
-                        : (language === 'fr' ? 'Traitée le' : 'Processed on')
+                        ? (t.auto.components_admin_DeletionRequestsManager_211)
+                        : (t.auto.components_admin_DeletionRequestsManager_212)
                       }{' '}
                       {request.processed_at && format(new Date(request.processed_at), 'dd MMM yyyy', {
-                        locale: language === 'fr' ? fr : enUS
+                        locale: DATE_LOCALE_BY_LANGUAGE[language]
                       })}
                     </p>
                   </div>
                 </div>
                 <Badge variant={request.status === 'cancelled' ? 'secondary' : 'outline'}>
                   {request.status === 'cancelled' 
-                    ? (language === 'fr' ? 'Annulée' : 'Cancelled')
-                    : (language === 'fr' ? 'Traitée' : 'Processed')
+                    ? (t.auto.components_admin_DeletionRequestsManager_222)
+                    : (t.auto.components_admin_DeletionRequestsManager_223)
                   }
                 </Badge>
               </div>
@@ -234,7 +230,7 @@ export function DeletionRequestsManager() {
         <GlowCard className="p-8 text-center" hoverable={false}>
           <Trash2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <p className="text-muted-foreground">
-            {language === 'fr' ? 'Aucune demande de suppression' : 'No deletion requests'}
+            {t.auto.components_admin_DeletionRequestsManager_237}
           </p>
         </GlowCard>
       )}

@@ -12,7 +12,7 @@ import { Loader2, Plus, MessageSquare, Settings } from 'lucide-react';
 
 const Forum = () => {
   const navigate = useNavigate();
-  const { language, t } = useLanguage();
+  const { t } = useLanguage();
   const { user } = useAuth();
   const { categories, loading, error } = useForumCategories();
   const { isAdmin } = useIsAdmin();
@@ -39,9 +39,7 @@ const Forum = () => {
               Forum
             </h1>
             <p className="text-muted-foreground mt-1">
-              {language === 'fr' 
-                ? 'Discussions et échanges avec la communauté'
-                : 'Community discussions and exchanges'}
+              {t.forum.subtitle || 'Community discussions and updates'}
             </p>
           </div>
           {isAdmin && (
@@ -69,10 +67,10 @@ const Forum = () => {
           <div className="text-center py-16">
             <MessageSquare className="h-16 w-16 mx-auto mb-4 text-muted-foreground/30" />
             <h2 className="text-xl font-semibold text-foreground mb-2">
-              {t.forum.empty?.noCategories || (language === 'fr' ? 'Aucune catégorie' : 'No categories')}
+              {t.forum.empty?.noCategories || (t.auto.pages_Forum_72)}
             </h2>
             <p className="text-muted-foreground">
-              {t.forum.empty?.beingSetUp || (language === 'fr' ? 'Le forum est en cours de configuration.' : 'The forum is being set up.')}
+              {t.forum.empty?.beingSetUp || (t.auto.pages_Forum_75)}
             </p>
           </div>
         )}

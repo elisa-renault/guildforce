@@ -8,7 +8,7 @@ import { Lock, User, Users, Calendar, Clock, ListOrdered, Star, GitBranch } from
 import { OTHER_OPTION_VALUE } from '@/types/poll';
 import type { GuildPollQuestion, ResponseValue, ScaleConfig } from '@/types/poll';
 import { format, parseISO } from 'date-fns';
-import { fr, enUS } from 'date-fns/locale';
+import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
 import { cn } from '@/lib/utils';
 
 interface PollResultsProps {
@@ -189,7 +189,7 @@ export const PollResults = ({
 
   const formatDateValue = (value: string, type: 'date' | 'time' | 'datetime') => {
     try {
-      const locale = language === 'fr' ? fr : enUS;
+      const locale = DATE_LOCALE_BY_LANGUAGE[language];
       if (type === 'date') {
         return format(parseISO(value), 'PPP', { locale });
       } else if (type === 'time') {
@@ -207,21 +207,17 @@ export const PollResults = ({
       <div className="flex items-center gap-4 p-3 rounded-lg bg-card/50 border border-border">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Users className="h-4 w-4" />
-          <span>
-            {totalResponses}{' '}
-            {language === 'fr'
-              ? totalResponses === 1
-                ? 'réponse'
-                : 'réponses'
-              : totalResponses === 1
-                ? 'response'
-                : 'responses'}
-          </span>
+            <span>
+              {totalResponses}{' '}
+              {totalResponses === 1
+                ? t.auto.components_polls_PollResults_response_single
+                : t.auto.components_polls_PollResults_response_plural}
+            </span>
         </div>
         {isAnonymous && (
           <Badge variant="outline" className="bg-primary/15 text-primary border-primary/30">
             <Lock className="h-3 w-3 mr-1" />
-            {language === 'fr' ? 'Anonyme' : 'Anonymous'}
+            {t.auto.components_polls_PollResults_224}
           </Badge>
         )}
       </div>
@@ -327,7 +323,7 @@ export const PollResults = ({
                   return v.type === 'text' && v.value && v.value.trim().length > 0;
                 }).length === 0) && (
                   <p className="text-sm text-muted-foreground italic">
-                    {language === 'fr' ? 'Aucune réponse' : 'No responses'}
+                    {t.auto.components_polls_PollResults_330}
                   </p>
                 )}
               </div>
@@ -380,7 +376,7 @@ export const PollResults = ({
                       {!isAnonymous && individualRatings.length > 0 && (
                         <div className="space-y-2 pt-2 border-t border-border/50">
                           <p className="text-sm text-muted-foreground mb-2">
-                            {language === 'fr' ? 'Votes individuels' : 'Individual votes'}
+                            {t.auto.components_polls_PollResults_383}
                           </p>
                           <div className="grid gap-2">
                             {individualRatings.map((rating, idx) => (
@@ -422,7 +418,7 @@ export const PollResults = ({
                     <Calendar className="h-4 w-4" />
                   )}
                   <span className="text-sm">
-                    {question.responses?.length || 0} {language === 'fr' ? 'réponses' : 'responses'}
+                    {question.responses?.length || 0} {t.auto.components_polls_PollResults_425}
                   </span>
                 </div>
                 {(() => {
@@ -432,7 +428,7 @@ export const PollResults = ({
                   if (stats.length === 0) {
                     return (
                       <p className="text-sm text-muted-foreground italic">
-                        {language === 'fr' ? 'Aucune réponse' : 'No responses'}
+                        {t.auto.components_polls_PollResults_435}
                       </p>
                     );
                   }
@@ -533,7 +529,7 @@ export const PollResults = ({
                       {!isAnonymous && individualRatings.length > 0 && (
                         <div className="space-y-2 pt-2 border-t border-border/50">
                           <p className="text-sm text-muted-foreground mb-2">
-                            {language === 'fr' ? 'Votes individuels' : 'Individual votes'}
+                            {t.auto.components_polls_PollResults_536}
                           </p>
                           <div className="grid gap-2">
                             {individualRatings.map((rating, idx) => (
@@ -571,7 +567,7 @@ export const PollResults = ({
                 <div className="flex items-center gap-2 text-muted-foreground mb-2">
                   <ListOrdered className="h-4 w-4" />
                   <span className="text-sm">
-                    {question.responses?.length || 0} {language === 'fr' ? 'réponses' : 'responses'}
+                    {question.responses?.length || 0} {t.auto.components_polls_PollResults_574}
                   </span>
                 </div>
                 {(() => {
@@ -581,7 +577,7 @@ export const PollResults = ({
                   if (ranked.length === 0 || total === 0) {
                     return (
                       <p className="text-sm text-muted-foreground italic">
-                        {language === 'fr' ? 'Aucune réponse' : 'No responses'}
+                        {t.auto.components_polls_PollResults_584}
                       </p>
                     );
                   }
@@ -611,7 +607,7 @@ export const PollResults = ({
                                 className="h-1.5 flex-1 bg-muted/40" 
                               />
                               <span className="text-xs text-muted-foreground whitespace-nowrap">
-                                {language === 'fr' ? 'Score' : 'Score'}: {item.averageScore.toFixed(1)}
+                                {t.auto.components_polls_PollResults_614}: {item.averageScore.toFixed(1)}
                               </span>
                             </div>
                           </div>

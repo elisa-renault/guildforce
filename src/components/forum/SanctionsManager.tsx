@@ -17,12 +17,12 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Ban, Clock, User, Undo2, Loader2 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
-import { fr, enUS } from 'date-fns/locale';
+import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
 import { toast } from 'sonner';
 
 export const SanctionsManager = () => {
   const { language, t } = useLanguage();
-  const locale = language === 'fr' ? fr : enUS;
+  const locale = DATE_LOCALE_BY_LANGUAGE[language];
   const { fetchActiveSanctions, revokeSanction } = useForumSanctionActions();
   
   const [sanctions, setSanctions] = useState<ForumSanction[]>([]);
@@ -37,7 +37,7 @@ export const SanctionsManager = () => {
       setSanctions(data);
     } catch (error) {
       console.error('Error loading sanctions:', error);
-      toast.error(language === 'fr' ? 'Erreur de chargement' : 'Loading error');
+      toast.error(t.auto.components_forum_SanctionsManager_40);
     } finally {
       setLoading(false);
     }
@@ -54,13 +54,13 @@ export const SanctionsManager = () => {
     try {
       await revokeSanction(confirmRevoke.id);
       toast.success(
-        language === 'fr' ? 'Sanction révoquée' : 'Sanction revoked',
+        t.auto.components_forum_SanctionsManager_57,
         { style: { background: 'hsl(var(--card))', borderColor: 'hsl(var(--primary) / 0.3)' } }
       );
       loadSanctions();
     } catch (error) {
       console.error('Error revoking sanction:', error);
-      toast.error(language === 'fr' ? 'Erreur' : 'Error');
+      toast.error(t.auto.components_forum_SanctionsManager_63);
     } finally {
       setRevoking(null);
       setConfirmRevoke(null);
@@ -83,7 +83,7 @@ export const SanctionsManager = () => {
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <Ban className="h-5 w-5 text-destructive" />
-            {language === 'fr' ? 'Sanctions actives' : 'Active Sanctions'}
+            {t.auto.components_forum_SanctionsManager_86}
             {sanctions.length > 0 && (
               <Badge variant="destructive" className="ml-2">
                 {sanctions.length}
@@ -94,7 +94,7 @@ export const SanctionsManager = () => {
         <CardContent>
           {sanctions.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">
-              {language === 'fr' ? 'Aucune sanction active' : 'No active sanctions'}
+              {t.auto.components_forum_SanctionsManager_97}
             </p>
           ) : (
             <div className="space-y-3">
@@ -125,12 +125,12 @@ export const SanctionsManager = () => {
                           {sanction.sanction_type === 'ban' ? (
                             <>
                               <Ban className="h-3 w-3 mr-1" />
-                              {language === 'fr' ? 'Banni' : 'Banned'}
+                              {t.auto.components_forum_SanctionsManager_128}
                             </>
                           ) : (
                             <>
                               <Clock className="h-3 w-3 mr-1" />
-                              {language === 'fr' ? 'Timeout' : 'Timeout'}
+                              {t.auto.components_forum_SanctionsManager_133}
                             </>
                           )}
                         </Badge>
@@ -144,18 +144,18 @@ export const SanctionsManager = () => {
                       
                       <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                         <span>
-                          {language === 'fr' ? 'Par' : 'By'}: {sanction.created_by_profile?.username || 'Unknown'}
+                          {t.auto.components_forum_SanctionsManager_147}: {sanction.created_by_profile?.username || 'Unknown'}
                         </span>
                         <span>
                           {formatDistanceToNow(new Date(sanction.created_at), { addSuffix: true, locale })}
                         </span>
                         {sanction.expires_at ? (
                           <span>
-                            {language === 'fr' ? 'Expire' : 'Expires'}: {format(new Date(sanction.expires_at), 'PPp', { locale })}
+                            {t.auto.components_forum_SanctionsManager_154}: {format(new Date(sanction.expires_at), 'PPp', { locale })}
                           </span>
                         ) : (
                           <span className="text-destructive">
-                            {language === 'fr' ? 'Permanent' : 'Permanent'}
+                            {t.auto.components_forum_SanctionsManager_158}
                           </span>
                         )}
                       </div>
@@ -174,7 +174,7 @@ export const SanctionsManager = () => {
                     ) : (
                       <>
                         <Undo2 className="h-4 w-4 mr-1" />
-                        {language === 'fr' ? 'Révoquer' : 'Revoke'}
+                        {t.auto.components_forum_SanctionsManager_177}
                       </>
                     )}
                   </Button>
@@ -190,12 +190,10 @@ export const SanctionsManager = () => {
         <AlertDialogContent className="bg-card border-border">
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {t.forum.moderation?.revokeSanction || (language === 'fr' ? 'Révoquer la sanction ?' : 'Revoke sanction?')}
+              {t.forum.moderation?.revokeSanction || (t.auto.components_forum_SanctionsManager_193)}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {(t.forum.moderation?.revokeSanctionConfirm || (language === 'fr' 
-                ? 'Êtes-vous sûr de vouloir révoquer la sanction de {{username}} ?'
-                : 'Are you sure you want to revoke the sanction for {{username}}?'))
+              {(t.forum.moderation?.revokeSanctionConfirm || (t.auto.components_forum_SanctionsManager_196))
                 .replace('{{username}}', confirmRevoke?.profiles?.username || '')}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -204,7 +202,7 @@ export const SanctionsManager = () => {
               {t.common.cancel}
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleRevoke}>
-              {t.forum.moderation?.revoke || (language === 'fr' ? 'Révoquer' : 'Revoke')}
+              {t.forum.moderation?.revoke || (t.auto.components_forum_SanctionsManager_207)}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

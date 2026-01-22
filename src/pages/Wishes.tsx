@@ -93,7 +93,7 @@ const SortableWishCard = forwardRef<HTMLDivElement, SortableWishCardProps>(({ wi
               onClick={onMoveUp}
               disabled={!canMoveUp}
               className="w-5 h-5 rounded bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-              title="Move up"
+              title={t.auto.pages_Wishes_move_up}
             >
               <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
             </button>
@@ -101,7 +101,7 @@ const SortableWishCard = forwardRef<HTMLDivElement, SortableWishCardProps>(({ wi
               onClick={onMoveDown}
               disabled={!canMoveDown}
               className="w-5 h-5 rounded bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-              title="Move down"
+              title={t.auto.pages_Wishes_move_down}
             >
               <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
             </button>
@@ -110,7 +110,7 @@ const SortableWishCard = forwardRef<HTMLDivElement, SortableWishCardProps>(({ wi
             {...attributes}
             {...listeners}
             className="hidden lg:flex w-7 h-7 rounded-lg bg-muted/50 items-center justify-center cursor-grab active:cursor-grabbing hover:bg-muted transition-colors flex-shrink-0"
-            title="Drag to reorder"
+            title={t.auto.pages_Wishes_drag_reorder}
           >
             <GripVertical className="h-4 w-4 text-muted-foreground" />
           </button>
@@ -382,7 +382,7 @@ const { data: allGuilds } = await supabase
 
   const saveWishes = async () => {
     if (!user || !guildId) {
-      toast({ title: t.errors.generic, description: 'Session expired', variant: 'destructive' });
+      toast({ title: t.errors.generic, description: t.auto.pages_Wishes_session_expired, variant: 'destructive' });
       return;
     }
     if (!selectedRosterId) {

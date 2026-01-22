@@ -295,7 +295,8 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   const getWishRangeLabel = (n: number) => {
     if (n === 1) return t.dashboard.wishRange1;
     if (n === 13) return t.dashboard.allWishes;
-    return language === 'fr' ? `Vœux 1-${n}` : `Wishes 1-${n}`;
+    const template = t.auto?.components_dashboard_RosterAnalytics_wish_range;
+    return template ? template.replace('{{n}}', String(n)) : `Voeux 1-${n}`;
   };
 
   // Calculate totals for KPI bar

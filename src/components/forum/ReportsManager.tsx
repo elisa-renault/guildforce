@@ -29,7 +29,7 @@ import {
   Loader2, ExternalLink
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { fr, enUS } from 'date-fns/locale';
+import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
 import { toast } from 'sonner';
 
 interface ReportWithDetails {
@@ -71,9 +71,9 @@ interface ReportWithDetails {
 
 export const ReportsManager = () => {
   const navigate = useNavigate();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const { user } = useAuth();
-  const locale = language === 'fr' ? fr : enUS;
+  const locale = DATE_LOCALE_BY_LANGUAGE[language];
 
   const [reports, setReports] = useState<ReportWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
@@ -170,7 +170,7 @@ export const ReportsManager = () => {
       setReports(enrichedReports);
     } catch (error) {
       log.error('Error fetching reports:', error);
-      toast.error(language === 'fr' ? 'Erreur de chargement' : 'Loading error');
+      toast.error(t.auto.components_forum_ReportsManager_173);
     } finally {
       setLoading(false);
     }
@@ -215,8 +215,8 @@ export const ReportsManager = () => {
 
       toast.success(
         status === 'resolved'
-          ? (language === 'fr' ? 'Signalement résolu' : 'Report resolved')
-          : (language === 'fr' ? 'Signalement rejeté' : 'Report dismissed')
+          ? (t.auto.components_forum_ReportsManager_218)
+          : (t.auto.components_forum_ReportsManager_219)
       );
       setResolveDialogOpen(false);
       setSelectedReport(null);
@@ -224,7 +224,7 @@ export const ReportsManager = () => {
       fetchReports();
     } catch (error) {
       log.error('Error resolving report:', error);
-      toast.error(language === 'fr' ? 'Erreur' : 'Error');
+      toast.error(t.auto.components_forum_ReportsManager_227);
     } finally {
       setResolving(false);
     }
@@ -248,15 +248,15 @@ export const ReportsManager = () => {
     switch (status) {
       case 'pending':
         return <Badge variant="secondary" className="bg-amber-500/20 text-amber-400">
-          {language === 'fr' ? 'En attente' : 'Pending'}
+          {t.auto.components_forum_ReportsManager_251}
         </Badge>;
       case 'resolved':
         return <Badge variant="secondary" className="bg-green-500/20 text-green-400">
-          {language === 'fr' ? 'Résolu' : 'Resolved'}
+          {t.auto.components_forum_ReportsManager_255}
         </Badge>;
       case 'dismissed':
         return <Badge variant="secondary" className="bg-muted text-muted-foreground">
-          {language === 'fr' ? 'Rejeté' : 'Dismissed'}
+          {t.auto.components_forum_ReportsManager_259}
         </Badge>;
       default:
         return null;
@@ -270,7 +270,7 @@ export const ReportsManager = () => {
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-lg flex items-center gap-2">
           <Flag className="h-5 w-5" />
-          {language === 'fr' ? 'Signalements' : 'Reports'}
+          {t.auto.components_forum_ReportsManager_273}
           {pendingCount > 0 && (
             <Badge variant="destructive" className="ml-2">
               {pendingCount}
@@ -282,10 +282,10 @@ export const ReportsManager = () => {
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-card border-border">
-            <SelectItem value="all">{language === 'fr' ? 'Tous' : 'All'}</SelectItem>
-            <SelectItem value="pending">{language === 'fr' ? 'En attente' : 'Pending'}</SelectItem>
-            <SelectItem value="resolved">{language === 'fr' ? 'Résolus' : 'Resolved'}</SelectItem>
-            <SelectItem value="dismissed">{language === 'fr' ? 'Rejetés' : 'Dismissed'}</SelectItem>
+            <SelectItem value="all">{t.auto.components_forum_ReportsManager_285}</SelectItem>
+            <SelectItem value="pending">{t.auto.components_forum_ReportsManager_286}</SelectItem>
+            <SelectItem value="resolved">{t.auto.components_forum_ReportsManager_287}</SelectItem>
+            <SelectItem value="dismissed">{t.auto.components_forum_ReportsManager_288}</SelectItem>
           </SelectContent>
         </Select>
       </CardHeader>
@@ -296,7 +296,7 @@ export const ReportsManager = () => {
           </div>
         ) : reports.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">
-            {language === 'fr' ? 'Aucun signalement' : 'No reports'}
+            {t.auto.components_forum_ReportsManager_299}
           </p>
         ) : (
           <div className="space-y-3">
@@ -334,7 +334,7 @@ export const ReportsManager = () => {
                         {report.reporter?.username || 'Inconnu'}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        {language === 'fr' ? 'a signalé' : 'reported'}
+                        {t.auto.components_forum_ReportsManager_337}
                       </span>
                     </div>
 
@@ -344,7 +344,7 @@ export const ReportsManager = () => {
                         <div>
                           <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                             <MessageSquare className="h-3 w-3" />
-                            {language === 'fr' ? 'Message de' : 'Post by'} {report.post.author?.username || 'Inconnu'}
+                            {t.auto.components_forum_ReportsManager_347} {report.post.author?.username || 'Inconnu'}
                           </p>
                           <p className="text-sm text-foreground line-clamp-2">
                             {report.post.content}
@@ -353,7 +353,7 @@ export const ReportsManager = () => {
                       ) : report.topic ? (
                         <div>
                           <p className="text-xs text-muted-foreground mb-1">
-                            {language === 'fr' ? 'Sujet de' : 'Topic by'} {report.topic.author?.username || 'Inconnu'}
+                            {t.auto.components_forum_ReportsManager_356} {report.topic.author?.username || 'Inconnu'}
                           </p>
                           <p className="text-sm font-medium text-foreground">
                             {report.topic.title}
@@ -361,7 +361,7 @@ export const ReportsManager = () => {
                         </div>
                       ) : (
                         <p className="text-sm text-muted-foreground italic">
-                          {language === 'fr' ? 'Contenu supprimé' : 'Content deleted'}
+                          {t.auto.components_forum_ReportsManager_364}
                         </p>
                       )}
                     </div>
@@ -376,7 +376,7 @@ export const ReportsManager = () => {
                     {/* Resolution info */}
                     {report.status !== 'pending' && report.resolver && (
                       <p className="text-xs text-muted-foreground">
-                        {language === 'fr' ? 'Traité par' : 'Handled by'} {report.resolver.username}
+                        {t.auto.components_forum_ReportsManager_379} {report.resolver.username}
                         {report.resolution_note && ` : "${report.resolution_note}"`}
                       </p>
                     )}
@@ -392,7 +392,7 @@ export const ReportsManager = () => {
                       disabled={!report.post && !report.topic}
                     >
                       <Eye className="h-4 w-4 mr-1" />
-                      {language === 'fr' ? 'Voir' : 'View'}
+                      {t.auto.components_forum_ReportsManager_395}
                     </Button>
                     {report.status === 'pending' && (
                       <Button
@@ -401,7 +401,7 @@ export const ReportsManager = () => {
                         onClick={() => openResolveDialog(report)}
                         className="h-8"
                       >
-                        {language === 'fr' ? 'Traiter' : 'Handle'}
+                        {t.auto.components_forum_ReportsManager_404}
                       </Button>
                     )}
                   </div>
@@ -417,7 +417,7 @@ export const ReportsManager = () => {
         <DialogContent className="sm:max-w-md bg-card border-border">
           <DialogHeader>
             <DialogTitle>
-              {language === 'fr' ? 'Traiter le signalement' : 'Handle report'}
+              {t.auto.components_forum_ReportsManager_420}
             </DialogTitle>
           </DialogHeader>
 
@@ -425,14 +425,14 @@ export const ReportsManager = () => {
             {selectedReport && (
               <div className="p-3 rounded-lg bg-muted/30">
                 <p className="text-sm text-muted-foreground mb-1">
-                  {language === 'fr' ? 'Raison :' : 'Reason:'}{' '}
+                  {t.auto.components_forum_ReportsManager_428}{' '}
                   <span className="text-foreground">
                     {REPORT_REASONS[selectedReport.reason as ReportReason]?.[language] || selectedReport.reason}
                   </span>
                 </p>
                 {selectedReport.details && (
                   <p className="text-sm text-muted-foreground">
-                    {language === 'fr' ? 'Détails :' : 'Details:'} "{selectedReport.details}"
+                    {t.auto.components_forum_ReportsManager_435} "{selectedReport.details}"
                   </p>
                 )}
               </div>
@@ -440,14 +440,14 @@ export const ReportsManager = () => {
 
             <div className="space-y-2">
               <label htmlFor="resolution-note" className="text-sm font-medium">
-                {language === 'fr' ? 'Note de résolution (optionnel)' : 'Resolution note (optional)'}
+                {t.auto.components_forum_ReportsManager_443}
               </label>
               <Textarea
                 id="resolution-note"
                 name="resolution-note"
                 value={resolutionNote}
                 onChange={(e) => setResolutionNote(e.target.value)}
-                placeholder={language === 'fr' ? 'Action prise...' : 'Action taken...'}
+                placeholder={t.auto.components_forum_ReportsManager_450}
                 className="bg-background/50"
               />
             </div>
@@ -460,7 +460,7 @@ export const ReportsManager = () => {
               disabled={resolving}
             >
               <X className="h-4 w-4 mr-2" />
-              {language === 'fr' ? 'Rejeter' : 'Dismiss'}
+              {t.auto.components_forum_ReportsManager_463}
             </Button>
             <Button
               onClick={() => handleResolve('resolved')}
@@ -472,7 +472,7 @@ export const ReportsManager = () => {
               ) : (
                 <Check className="h-4 w-4 mr-2" />
               )}
-              {language === 'fr' ? 'Résoudre' : 'Resolve'}
+              {t.auto.components_forum_ReportsManager_475}
             </Button>
           </DialogFooter>
         </DialogContent>

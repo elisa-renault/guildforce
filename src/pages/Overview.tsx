@@ -240,7 +240,7 @@ const Overview = () => {
           <div className="flex items-center justify-center gap-2 mb-4 p-2 rounded-lg bg-amber-500/10 border border-amber-500/30">
             <Eye className="h-4 w-4 text-amber-400" />
             <span className="text-sm text-amber-400 font-medium">
-              {language === 'fr' ? 'Mode lecture admin' : 'Admin read-only mode'}
+              {t.auto.pages_Overview_243}
             </span>
           </div>
         )}
@@ -331,7 +331,9 @@ const Overview = () => {
                       <Collapsible>
                         <CollapsibleTrigger className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors w-full py-1 group">
                           <ChevronDown className="h-3 w-3 transition-transform group-data-[state=open]:rotate-180" />
-                          <span>{language === 'fr' ? `+${myWishes.length - 3} autres vœux` : `+${myWishes.length - 3} more wishes`}</span>
+                          <span>
+                            {t.auto.pages_Overview_more_wishes.replace('{{count}}', String(myWishes.length - 3))}
+                          </span>
                         </CollapsibleTrigger>
                         <CollapsibleContent className="space-y-2 pt-2">
                           {myWishes.slice(3).map((wish) => {

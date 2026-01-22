@@ -3,10 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsAdmin } from '@/hooks/useAdmin';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { translations } from '@/i18n/translations';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
-import { fr, enUS } from 'date-fns/locale';
+import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
 import { GuildSubNav } from '@/components/guild/GuildSubNav';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { CosmicBackground } from '@/components/CosmicBackground';
@@ -66,7 +65,7 @@ const GuildMembers = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { isAdmin: isGlobalAdmin, loading: adminLoading } = useIsAdmin();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
 
   const [guild, setGuild] = useState<GuildInfo | null>(null);
   const [members, setMembers] = useState<RosterMember[]>([]);
@@ -89,6 +88,62 @@ const GuildMembers = () => {
   const [mainOpen, setMainOpen] = useState(false);
 
   const { hasPermission: hasActivityPermission } = useHasGuildPermission(guild?.id || null, 'view_activity_log');
+
+  const ui = language === 'fr'
+    ? {
+        adminReadOnly: 'Mode lecture admin',
+        guildMembersTitle: 'Membres de la guilde',
+        syncPrefix: 'Synchro',
+        syncMissing: 'Sync Battle.net pour voir tous les membres',
+        searchPlaceholder: 'Rechercher un personnage ou joueur...',
+        rankPlural: 'rangs',
+        rankSingle: 'rang',
+        allRanks: 'Tous les rangs',
+        guildforceLabel: 'Guildforce',
+        notRegistered: 'Non inscrit',
+        notRegisteredPlural: 'Non inscrits',
+        onGuildforce: 'Sur Guildforce',
+        mains: 'Mains',
+        alts: 'Alts',
+        mainAlt: 'Main/Alt',
+        mainsOnly: 'Mains uniquement',
+        altsOnly: 'Alts uniquement',
+        tableCharacter: 'Personnage',
+        tableClass: 'Classe',
+        tablePlayer: 'Joueur',
+        tableRank: 'Rang',
+        noMembers: 'Aucun membre trouve',
+        pageLabel: 'Page',
+        previous: 'Precedent',
+        next: 'Suivant',
+      }
+    : {
+        adminReadOnly: 'Admin read-only mode',
+        guildMembersTitle: 'Guild members',
+        syncPrefix: 'Synced',
+        syncMissing: 'Sync Battle.net to see all members',
+        searchPlaceholder: 'Search for a character or player...',
+        rankPlural: 'ranks',
+        rankSingle: 'rank',
+        allRanks: 'All ranks',
+        guildforceLabel: 'Guildforce',
+        notRegistered: 'Not registered',
+        notRegisteredPlural: 'Not registered',
+        onGuildforce: 'On Guildforce',
+        mains: 'Mains',
+        alts: 'Alts',
+        mainAlt: 'Main/Alt',
+        mainsOnly: 'Mains only',
+        altsOnly: 'Alts only',
+        tableCharacter: 'Character',
+        tableClass: 'Class',
+        tablePlayer: 'Player',
+        tableRank: 'Rank',
+        noMembers: 'No members found',
+        pageLabel: 'Page',
+        previous: 'Previous',
+        next: 'Next',
+      };
 
   // Get unique ranks for filter
   const uniqueRanks = useMemo(() => 
@@ -382,9 +437,9 @@ const GuildMembers = () => {
   const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
 
   const breadcrumbItems = [
-    { label: language === 'fr' ? 'Guildes' : 'Guilds', href: '/guilds' },
+    { label: t.common.myGuilds, href: '/guilds' },
     { label: guild?.name || '...', href: basePath },
-    { label: language === 'fr' ? 'Membres' : 'Members' },
+    { label: t.guild.members },
   ];
 
   const hasClassFilters = classFilters.length > 0;
@@ -439,7 +494,7 @@ const GuildMembers = () => {
           <div className="flex items-center justify-center gap-2 mb-4 p-2 rounded-lg bg-amber-500/10 border border-amber-500/30">
             <Eye className="h-4 w-4 text-amber-400" />
             <span className="text-sm text-amber-400 font-medium">
-              {language === 'fr' ? 'Mode lecture admin' : 'Admin read-only mode'}
+              {ui.adminReadOnly}
             </span>
           </div>
         )}
@@ -449,7 +504,7 @@ const GuildMembers = () => {
           <div className="flex items-center gap-3">
             <Users className="h-6 w-6 text-primary" />
             <h1 className="text-xl md:text-2xl font-bold">
-              {language === 'fr' ? 'Membres de la guilde' : 'Guild Members'}
+              {ui.guildMembersTitle}
             </h1>
             <Badge variant="secondary" className="text-xs">
               {members.length}
@@ -460,10 +515,10 @@ const GuildMembers = () => {
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <RefreshCw className="h-3.5 w-3.5" />
               <span>
-                {language === 'fr' ? 'Synchro ' : 'Synced '}
+                {ui.syncPrefix}{' '}
                 {formatDistanceToNow(new Date(lastSyncDate), { 
                   addSuffix: true, 
-                  locale: language === 'fr' ? fr : enUS 
+                  locale: DATE_LOCALE_BY_LANGUAGE[language] 
                 })}
               </span>
             </div>
@@ -473,9 +528,7 @@ const GuildMembers = () => {
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <RefreshCw className="h-4 w-4" />
               <span>
-                {language === 'fr' 
-                  ? 'Sync Battle.net pour voir tous les membres' 
-                  : 'Sync Battle.net to see all members'}
+                {ui.syncMissing}
               </span>
             </div>
           )}
@@ -486,13 +539,13 @@ const GuildMembers = () => {
           {/* Search - full width on mobile */}
           <div className="relative w-full md:max-w-[280px]">
             <label htmlFor="member-search" className="sr-only">
-              {language === 'fr' ? 'Rechercher un personnage ou joueur' : 'Search character or player'}
+              {t.common.search}
             </label>
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
             <Input
               id="member-search"
               name="member-search"
-              placeholder={language === 'fr' ? 'Rechercher un personnage ou joueur...' : 'Search character or player...'}
+              placeholder={ui.searchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="h-9 md:h-8 pl-8 text-sm cosmic-input"
@@ -527,12 +580,12 @@ const GuildMembers = () => {
                         ))
                       ) : (
                         <span>
-                          {selectedClasses.length} {language === 'fr' ? 'classes' : 'classes'}
+                          {selectedClasses.length} {t.dashboard.classesCount}
                         </span>
                       )}
                     </span>
                   ) : (
-                    <span className="text-foreground/70">{language === 'fr' ? 'Toutes les classes' : 'All classes'}</span>
+                    <span className="text-foreground/70">{t.dashboard.allClasses}</span>
                   )}
                   <ChevronDown className="h-3.5 w-3.5 opacity-50 flex-shrink-0" />
                 </Button>
@@ -545,7 +598,7 @@ const GuildMembers = () => {
                       className="flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left hover:bg-primary/10 text-muted-foreground"
                     >
                       <X className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span>{language === 'fr' ? 'Effacer' : 'Clear'}</span>
+                      <span>{t.dashboard.clear}</span>
                     </button>
                   )}
                   {uniqueClasses.map((cls) => {
@@ -583,10 +636,13 @@ const GuildMembers = () => {
                 >
                   {hasRankFilters ? (
                     <span>
-                      {rankFilters.length} {language === 'fr' ? (rankFilters.length > 1 ? 'rangs' : 'rang') : (rankFilters.length > 1 ? 'ranks' : 'rank')}
+                      {rankFilters.length}{' '}
+                      {rankFilters.length > 1
+                        ? ui.rankPlural
+                        : ui.rankSingle}
                     </span>
                   ) : (
-                    <span className="text-foreground/70">{language === 'fr' ? 'Tous les rangs' : 'All ranks'}</span>
+                    <span className="text-foreground/70">{ui.allRanks}</span>
                   )}
                   <ChevronDown className="h-3.5 w-3.5 opacity-50 flex-shrink-0" />
                 </Button>
@@ -599,7 +655,7 @@ const GuildMembers = () => {
                       className="flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left hover:bg-primary/10 text-muted-foreground"
                     >
                       <X className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span>{language === 'fr' ? 'Effacer' : 'Clear'}</span>
+                      <span>{t.dashboard.clear}</span>
                     </button>
                   )}
                   {uniqueRanks.map((rank) => {
@@ -646,17 +702,17 @@ const GuildMembers = () => {
                   {guildforceFilter === 'guildforce' && (
                     <span className="flex items-center gap-1.5 text-healer">
                       <CheckCircle2 className="h-4 w-4" />
-                      <span>Guildforce</span>
+                      <span>{ui.guildforceLabel}</span>
                     </span>
                   )}
                   {guildforceFilter === 'not-guildforce' && (
                     <span className="flex items-center gap-1.5 text-muted-foreground">
                       <XCircle className="h-4 w-4" />
-                      <span>{language === 'fr' ? 'Non inscrit' : 'Not registered'}</span>
+                      <span>{ui.notRegistered}</span>
                     </span>
                   )}
                   {guildforceFilter === 'all' && (
-                    <span className="text-foreground/70">Guildforce</span>
+                    <span className="text-foreground/70">{ui.guildforceLabel}</span>
                   )}
                   <ChevronDown className="h-3.5 w-3.5 opacity-50 flex-shrink-0" />
                 </Button>
@@ -669,7 +725,7 @@ const GuildMembers = () => {
                       className="flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left hover:bg-primary/10 text-muted-foreground"
                     >
                       <X className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span>{language === 'fr' ? 'Effacer' : 'Clear'}</span>
+                      <span>{t.dashboard.clear}</span>
                     </button>
                   )}
                   <button
@@ -681,7 +737,7 @@ const GuildMembers = () => {
                   >
                     {guildforceFilter === 'guildforce' && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
                     <CheckCircle2 className="h-4 w-4 text-healer" />
-                    <span className="text-healer">{language === 'fr' ? 'Sur Guildforce' : 'On Guildforce'}</span>
+                    <span className="text-healer">{ui.onGuildforce}</span>
                   </button>
                   <button
                     onClick={() => { setGuildforceFilter('not-guildforce'); setGuildforceOpen(false); setCurrentPage(1); }}
@@ -692,7 +748,7 @@ const GuildMembers = () => {
                   >
                     {guildforceFilter === 'not-guildforce' && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
                     <XCircle className="h-4 w-4 text-muted-foreground" />
-                    <span>{language === 'fr' ? 'Non inscrits' : 'Not registered'}</span>
+                    <span>{ui.notRegisteredPlural}</span>
                   </button>
                 </div>
               </PopoverContent>
@@ -712,14 +768,14 @@ const GuildMembers = () => {
                   {mainFilter === 'main-only' && (
                     <span className="flex items-center gap-1.5 text-amber-400">
                       <Star className="h-4 w-4 fill-amber-400" />
-                      <span>{language === 'fr' ? 'Mains' : 'Mains'}</span>
+                      <span>{ui.mains}</span>
                     </span>
                   )}
                   {mainFilter === 'alts-only' && (
-                    <span className="text-muted-foreground">{language === 'fr' ? 'Alts' : 'Alts'}</span>
+                    <span className="text-muted-foreground">{ui.alts}</span>
                   )}
                   {mainFilter === 'all' && (
-                    <span className="text-foreground/70">Main/Alt</span>
+                    <span className="text-foreground/70">{ui.mainAlt}</span>
                   )}
                   <ChevronDown className="h-3.5 w-3.5 opacity-50 flex-shrink-0" />
                 </Button>
@@ -732,7 +788,7 @@ const GuildMembers = () => {
                       className="flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left hover:bg-primary/10 text-muted-foreground"
                     >
                       <X className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span>{language === 'fr' ? 'Effacer' : 'Clear'}</span>
+                      <span>{t.dashboard.clear}</span>
                     </button>
                   )}
                   <button
@@ -744,7 +800,7 @@ const GuildMembers = () => {
                   >
                     {mainFilter === 'main-only' && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
                     <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-                    <span className="text-amber-400">{language === 'fr' ? 'Mains uniquement' : 'Mains only'}</span>
+                    <span className="text-amber-400">{ui.mainsOnly}</span>
                   </button>
                   <button
                     onClick={() => { setMainFilter('alts-only'); setMainOpen(false); setCurrentPage(1); }}
@@ -754,7 +810,7 @@ const GuildMembers = () => {
                     )}
                   >
                     {mainFilter === 'alts-only' && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
-                    <span>{language === 'fr' ? 'Alts uniquement' : 'Alts only'}</span>
+                    <span>{ui.altsOnly}</span>
                   </button>
                 </div>
               </PopoverContent>
@@ -765,18 +821,18 @@ const GuildMembers = () => {
         {/* Stats summary */}
         <div className="flex flex-wrap gap-2 mb-4 text-sm text-muted-foreground">
           <span>
-            {filteredMembers.length} {translations[language].guild.charactersShown}
+            {filteredMembers.length} {t.guild.charactersShown}
           </span>
           <span>•</span>
           <span className="text-healer">
-            {uniqueGuildforceMembers} {uniqueGuildforceMembers === 1 ? translations[language].guild.uniqueMember : translations[language].guild.uniqueMembers}
+            {uniqueGuildforceMembers} {uniqueGuildforceMembers === 1 ? t.guild.uniqueMember : t.guild.uniqueMembers}
           </span>
           <span className="text-muted-foreground/70">
-            ({guildforceCount} {translations[language].guild.characters})
+            ({guildforceCount} {t.guild.characters})
           </span>
           <span>•</span>
           <span className="text-muted-foreground">
-            {notOnGuildforceCount} {translations[language].guild.charactersNotRegistered}
+            {notOnGuildforceCount} {t.guild.charactersNotRegistered}
           </span>
         </div>
 
@@ -786,18 +842,18 @@ const GuildMembers = () => {
             <TableHeader>
               <TableRow className="border-border/50 hover:bg-transparent">
                 <TableHead className="w-[50px]">#</TableHead>
-                <TableHead>{language === 'fr' ? 'Personnage' : 'Character'}</TableHead>
-                <TableHead className="hidden md:table-cell">{language === 'fr' ? 'Classe' : 'Class'}</TableHead>
-                <TableHead>{language === 'fr' ? 'Joueur' : 'Player'}</TableHead>
-                <TableHead>{language === 'fr' ? 'Rang' : 'Rank'}</TableHead>
-                <TableHead className="text-center">Guildforce</TableHead>
+                <TableHead>{ui.tableCharacter}</TableHead>
+                <TableHead className="hidden md:table-cell">{ui.tableClass}</TableHead>
+                <TableHead>{ui.tablePlayer}</TableHead>
+                <TableHead>{ui.tableRank}</TableHead>
+                <TableHead className="text-center">{ui.guildforceLabel}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginatedMembers.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    {language === 'fr' ? 'Aucun membre trouvé' : 'No members found'}
+                    {ui.noMembers}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -901,14 +957,14 @@ const GuildMembers = () => {
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
                 className="h-9 px-3 !bg-input/60 backdrop-blur-sm !border-border/50 hover:!bg-input/80"
-                aria-label={language === 'fr' ? 'Page précédente' : 'Previous page'}
+                aria-label={ui.previous}
               >
                 <ChevronLeft className="h-4 w-4" />
-                <span className="hidden sm:inline">{language === 'fr' ? 'Précédent' : 'Previous'}</span>
+                <span className="hidden sm:inline">{ui.previous}</span>
               </Button>
 
               <span className="min-w-[92px] text-center text-sm text-foreground/70">
-                {language === 'fr' ? 'Page' : 'Page'} {currentPage} / {totalPages}
+                {ui.pageLabel} {currentPage} / {totalPages}
               </span>
 
               <Button
@@ -918,9 +974,9 @@ const GuildMembers = () => {
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
                 className="h-9 px-3 !bg-input/60 backdrop-blur-sm !border-border/50 hover:!bg-input/80"
-                aria-label={language === 'fr' ? 'Page suivante' : 'Next page'}
+                aria-label={ui.next}
               >
-                <span className="hidden sm:inline">{language === 'fr' ? 'Suivant' : 'Next'}</span>
+                <span className="hidden sm:inline">{ui.next}</span>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>

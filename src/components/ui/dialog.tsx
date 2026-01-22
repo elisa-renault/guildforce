@@ -4,7 +4,6 @@ import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { translations } from "@/i18n/translations";
 
 const Dialog = DialogPrimitive.Root;
 
@@ -33,8 +32,7 @@ const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => {
-  const { language } = useLanguage();
-  const t = translations[language];
+  const { t } = useLanguage();
 
   return (
     <DialogPortal>

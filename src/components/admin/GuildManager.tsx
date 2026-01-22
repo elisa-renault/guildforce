@@ -133,7 +133,9 @@ export function GuildManager() {
 
       // New behavior: backend returns immediately and continues in background
       if (data?.started) {
-        toast.success(`Sync lancée (job ${data.jobId}). Rafraîchis dans 1-2 min.`);
+        toast.success(
+          t.auto.components_admin_GuildManager_sync_job.replace('{{jobId}}', String(data.jobId))
+        );
         return;
       }
       
@@ -146,7 +148,7 @@ export function GuildManager() {
       fetchGuilds();
     } catch (error) {
       if (error instanceof Error && error.message === 'timeout') {
-        toast.success('Sync lancée, ça peut prendre quelques minutes (rafraîchis ensuite).');
+        toast.success(t.auto.components_admin_GuildManager_sync_started);
         return;
       }
       toast.error(t.admin.syncError);
@@ -424,7 +426,7 @@ export function GuildManager() {
                   <SortIcon columnKey="unique_members" />
                 </div>
               </TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="text-right">{t.auto.components_admin_GuildManager_actions}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -573,8 +575,8 @@ export function GuildManager() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Alliance">Alliance</SelectItem>
-                  <SelectItem value="Horde">Horde</SelectItem>
+                  <SelectItem value="Alliance">{t.guild.alliance}</SelectItem>
+                  <SelectItem value="Horde">{t.guild.horde}</SelectItem>
                 </SelectContent>
               </Select>
             </div>

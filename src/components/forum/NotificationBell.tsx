@@ -11,7 +11,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useNotifications, ForumNotification } from '@/hooks/useNotifications';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { formatDistanceToNow } from 'date-fns';
-import { fr, enUS } from 'date-fns/locale';
+import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
 import { cn } from '@/lib/utils';
 
 export function NotificationBell() {
@@ -28,7 +28,7 @@ export function NotificationBell() {
   } = useNotifications();
   const [open, setOpen] = useState(false);
 
-  const dateLocale = language === 'fr' ? fr : enUS;
+  const dateLocale = DATE_LOCALE_BY_LANGUAGE[language];
 
   const getNotificationIcon = (type: ForumNotification['type']) => {
     switch (type) {
@@ -51,17 +51,17 @@ export function NotificationBell() {
 
     switch (notif.type) {
       case 'mention':
-        return language === 'fr'
-          ? `${username} vous a mentionné dans "${topicTitle}"`
-          : `${username} mentioned you in "${topicTitle}"`;
+        return t.auto.components_forum_NotificationBell_mention
+          .replace('{{username}}', username)
+          .replace('{{topicTitle}}', topicTitle);
       case 'topic_reply':
-        return language === 'fr'
-          ? `${username} a répondu à votre sujet "${topicTitle}"`
-          : `${username} replied to your topic "${topicTitle}"`;
+        return t.auto.components_forum_NotificationBell_topic_reply
+          .replace('{{username}}', username)
+          .replace('{{topicTitle}}', topicTitle);
       case 'post_reply':
-        return language === 'fr'
-          ? `${username} a répondu dans "${topicTitle}"`
-          : `${username} replied in "${topicTitle}"`;
+        return t.auto.components_forum_NotificationBell_post_reply
+          .replace('{{username}}', username)
+          .replace('{{topicTitle}}', topicTitle);
     }
   };
 
@@ -82,7 +82,7 @@ export function NotificationBell() {
           variant="ghost"
           size="icon"
           className="relative text-muted-foreground hover:text-foreground hover:bg-white/5"
-          aria-label={t.notifications?.title || 'Notifications'}
+          aria-label={t.notifications.title}
         >
           <Bell className="h-4 w-4" strokeWidth={1.5} />
           {unreadCount > 0 && (
@@ -99,7 +99,7 @@ export function NotificationBell() {
       >
         <div className="flex items-center justify-between p-3 border-b border-border">
           <h3 className="font-medium text-foreground">
-            {t.notifications?.title || 'Notifications'}
+            {t.notifications.title}
           </h3>
           <div className="flex items-center gap-1">
             {unreadCount > 0 && (
@@ -110,7 +110,7 @@ export function NotificationBell() {
                 onClick={markAllAsRead}
               >
                 <CheckCheck className="h-3 w-3 mr-1" />
-                {t.notifications?.markAllRead || 'Mark all read'}
+                {t.notifications.markAllRead}
               </Button>
             )}
             {notifications.length > 0 && (
@@ -133,7 +133,7 @@ export function NotificationBell() {
             </div>
           ) : notifications.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground text-sm">
-              {t.notifications?.empty || 'No notifications'}
+              {t.notifications.empty}
             </div>
           ) : (
             <div className="divide-y divide-border">

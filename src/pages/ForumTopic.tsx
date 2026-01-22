@@ -17,7 +17,7 @@ import {
   Trash2, User, Clock, Eye, MessageSquare, Flag, Send
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { fr, enUS } from 'date-fns/locale';
+import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
 import {
@@ -37,7 +37,7 @@ const ForumTopicPage = () => {
   const navigate = useNavigate();
   const { language, t } = useLanguage();
   const { user } = useAuth();
-  const locale = language === 'fr' ? fr : enUS;
+  const locale = DATE_LOCALE_BY_LANGUAGE[language];
 
   const { topic, loading: topicLoading, refetch: refetchTopic, refreshReactions: refreshTopicReactions } = useForumTopic(topicId || null);
   const [page, setPage] = useState(1);
@@ -67,12 +67,12 @@ const ForumTopicPage = () => {
     setSubmitting(true);
     try {
       await createPost(topicId, replyContent.trim(), quotedPost?.id);
-      toast.success(language === 'fr' ? 'Réponse publiée !' : 'Reply posted!');
+      toast.success(t.auto.pages_ForumTopic_70);
       setReplyContent('');
       setQuotedPost(null);
       refetchPosts();
     } catch (error) {
-      toast.error(language === 'fr' ? 'Erreur lors de la publication' : 'Error posting reply');
+      toast.error(t.auto.pages_ForumTopic_75);
     } finally {
       setSubmitting(false);
     }
@@ -87,10 +87,10 @@ const ForumTopicPage = () => {
   const handleEditPost = async (postId: string, content: string) => {
     try {
       await updatePost(postId, content);
-      toast.success(language === 'fr' ? 'Message modifié' : 'Post updated');
+      toast.success(t.auto.pages_ForumTopic_90);
       refetchPosts();
     } catch (error) {
-      toast.error(language === 'fr' ? 'Erreur lors de la modification' : 'Error updating post');
+      toast.error(t.auto.pages_ForumTopic_93);
     }
   };
 
@@ -100,15 +100,15 @@ const ForumTopicPage = () => {
     try {
       if (deleteTarget.type === 'topic') {
         await deleteTopic(deleteTarget.id);
-        toast.success(language === 'fr' ? 'Sujet supprimé' : 'Topic deleted');
+        toast.success(t.auto.pages_ForumTopic_103);
         navigate(`/forum/category/${topic?.category?.slug}`);
       } else {
         await deletePost(deleteTarget.id);
-        toast.success(language === 'fr' ? 'Message supprimé' : 'Post deleted');
+        toast.success(t.auto.pages_ForumTopic_107);
         refetchPosts();
       }
     } catch (error) {
-      toast.error(language === 'fr' ? 'Erreur lors de la suppression' : 'Error deleting');
+      toast.error(t.auto.pages_ForumTopic_111);
     } finally {
       setDeleteDialogOpen(false);
       setDeleteTarget(null);
@@ -120,12 +120,12 @@ const ForumTopicPage = () => {
     try {
       await updateTopic(topic.id, { is_pinned: !topic.is_pinned });
       toast.success(topic.is_pinned 
-        ? (language === 'fr' ? 'Sujet désépinglé' : 'Topic unpinned')
-        : (language === 'fr' ? 'Sujet épinglé' : 'Topic pinned')
+        ? (t.auto.pages_ForumTopic_123)
+        : (t.auto.pages_ForumTopic_124)
       );
       refetchTopic();
     } catch (error) {
-      toast.error(language === 'fr' ? 'Erreur' : 'Error');
+      toast.error(t.auto.pages_ForumTopic_128);
     }
   };
 
@@ -134,12 +134,12 @@ const ForumTopicPage = () => {
     try {
       await updateTopic(topic.id, { is_locked: !topic.is_locked });
       toast.success(topic.is_locked 
-        ? (language === 'fr' ? 'Sujet déverrouillé' : 'Topic unlocked')
-        : (language === 'fr' ? 'Sujet verrouillé' : 'Topic locked')
+        ? (t.auto.pages_ForumTopic_137)
+        : (t.auto.pages_ForumTopic_138)
       );
       refetchTopic();
     } catch (error) {
-      toast.error(language === 'fr' ? 'Erreur' : 'Error');
+      toast.error(t.auto.pages_ForumTopic_142);
     }
   };
 
@@ -148,7 +148,7 @@ const ForumTopicPage = () => {
       await toggleReaction(type, id, reactionType);
       // No need to refetch - realtime will handle it
     } catch (error) {
-      toast.error(language === 'fr' ? 'Erreur' : 'Error');
+      toast.error(t.auto.pages_ForumTopic_151);
     }
   };
 

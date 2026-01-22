@@ -138,7 +138,7 @@ export const AvatarCropDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-foreground">Recadrer l'avatar</DialogTitle>
+          <DialogTitle className="text-foreground">{t.auto.components_AvatarCropDialog_title}</DialogTitle>
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
@@ -155,7 +155,7 @@ export const AvatarCropDialog = ({
               <img
                 ref={imgRef}
                 src={imageSrc}
-                alt="Crop preview"
+                alt={t.auto.components_AvatarCropDialog_crop_preview_alt}
                 onLoad={onImageLoad}
                 style={{
                   transform: `scale(${scale}) rotate(${rotate}deg)`,

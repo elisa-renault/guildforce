@@ -61,7 +61,7 @@ export const PollSectionEditor = ({
         <div className="flex items-start gap-3">
           <div className="flex items-center gap-2 pt-2 text-muted-foreground">
             <GripVertical className="h-5 w-5 cursor-grab" />
-            <span className="text-sm font-medium text-primary">S{index + 1}</span>
+            <span className="text-sm font-medium text-primary">{t.auto.components_polls_PollSectionEditor_section_label.replace('{{index}}', String(index + 1))}</span>
           </div>
 
           <div className="flex-1 space-y-3">

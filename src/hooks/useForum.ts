@@ -113,7 +113,7 @@ export function useForumCategories(guildId?: string | null) {
             .eq('category_id', cat.id)
             .order('created_at', { ascending: false })
             .limit(1)
-            .single();
+            .maybeSingle();
 
           let lastTopicWithAuthor = null;
           if (lastTopic) {
@@ -121,7 +121,7 @@ export function useForumCategories(guildId?: string | null) {
               .from('profiles')
               .select('username')
               .eq('id', lastTopic.author_id)
-              .single();
+              .maybeSingle();
             lastTopicWithAuthor = {
               id: lastTopic.id,
               title: lastTopic.title,

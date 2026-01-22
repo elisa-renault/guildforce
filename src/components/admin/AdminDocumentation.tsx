@@ -372,7 +372,7 @@ const DOCUMENTATION: DocSection[] = [
 ];
 
 export const AdminDocumentation = () => {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const [activeSection, setActiveSection] = useState<string>('overview');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -383,8 +383,8 @@ export const AdminDocumentation = () => {
     ? DOCUMENTATION.map(section => ({
         ...section,
         subsections: section.subsections.filter(sub => {
-          const title = language === 'fr' ? sub.titleFr : sub.titleEn;
-          const content = language === 'fr' ? sub.contentFr : sub.contentEn;
+          const title = ({ fr: sub.titleFr, en: sub.titleEn } as const)[language];
+          const content = ({ fr: sub.contentFr, en: sub.contentEn } as const)[language];
           const query = searchQuery.toLowerCase();
           return (
             title.toLowerCase().includes(query) ||
@@ -402,12 +402,10 @@ export const AdminDocumentation = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-xl font-display text-foreground">
-            {language === 'fr' ? 'Documentation' : 'Documentation'}
+            {t.auto.components_admin_AdminDocumentation_405}
           </h2>
           <p className="text-sm text-muted-foreground">
-            {language === 'fr' 
-              ? 'Guide complet de l\'application Guildforce'
-              : 'Complete guide to the Guildforce application'
+            {t.auto.components_admin_AdminDocumentation_408
             }
           </p>
         </div>
@@ -416,7 +414,7 @@ export const AdminDocumentation = () => {
         <div className="relative w-full sm:w-64">
           <input
             type="text"
-            placeholder={language === 'fr' ? 'Rechercher...' : 'Search...'}
+            placeholder={t.auto.components_admin_AdminDocumentation_419}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full px-3 py-2 text-sm rounded-md border border-border/50 bg-background/50 placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
@@ -455,7 +453,7 @@ export const AdminDocumentation = () => {
                       >
                         <Icon className={cn("h-4 w-4 flex-shrink-0", section.color)} />
                         <span className="truncate">
-                          {language === 'fr' ? section.titleFr : section.titleEn}
+                          {({ fr: section.titleFr, en: section.titleEn } as const)[language]}
                         </span>
                       </button>
                     );
@@ -472,9 +470,7 @@ export const AdminDocumentation = () => {
             <GlowCard className="p-6 text-center">
               <HelpCircle className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
               <p className="text-muted-foreground">
-                {language === 'fr' 
-                  ? 'Aucun résultat trouvé pour votre recherche'
-                  : 'No results found for your search'
+                {t.auto.components_admin_AdminDocumentation_475
                 }
               </p>
             </GlowCard>
@@ -489,7 +485,7 @@ export const AdminDocumentation = () => {
                     <Icon className="h-5 w-5" />
                   </div>
                   <h3 className="text-lg font-display text-foreground">
-                    {language === 'fr' ? section.titleFr : section.titleEn}
+                    {({ fr: section.titleFr, en: section.titleEn } as const)[language]}
                   </h3>
                 </div>
 
@@ -502,7 +498,7 @@ export const AdminDocumentation = () => {
                     >
                       <AccordionTrigger className="text-sm font-medium hover:no-underline py-3">
                         <div className="flex items-center gap-2 text-left">
-                          <span>{language === 'fr' ? sub.titleFr : sub.titleEn}</span>
+                          <span>{({ fr: sub.titleFr, en: sub.titleEn } as const)[language]}</span>
                           {sub.tags && (
                             <div className="hidden sm:flex gap-1 ml-2">
                               {sub.tags.slice(0, 2).map(tag => (
@@ -516,7 +512,7 @@ export const AdminDocumentation = () => {
                       </AccordionTrigger>
                       <AccordionContent className="text-sm text-muted-foreground pb-4">
                         <pre className="whitespace-pre-wrap font-sans leading-relaxed">
-                          {language === 'fr' ? sub.contentFr : sub.contentEn}
+                          {({ fr: sub.contentFr, en: sub.contentEn } as const)[language]}
                         </pre>
                       </AccordionContent>
                     </AccordionItem>

@@ -209,7 +209,7 @@ export const PollRespondentEditor = ({
   restrictAccess,
   onRestrictAccessChange,
 }: PollRespondentEditorProps) => {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   
   const sortedRanks = [...ranks].sort((a, b) => a.rank_index - b.rank_index);
   const maxRankIndex = sortedRanks.length > 0 ? Math.max(...sortedRanks.map(r => r.rank_index)) : 9;
@@ -260,7 +260,7 @@ export const PollRespondentEditor = ({
       <div className="flex items-center gap-3">
         <Target className="h-4 w-4 text-muted-foreground" />
         <Label className="text-sm font-medium">
-          {language === 'fr' ? 'Ciblage des répondants' : 'Respondent targeting'}
+          {t.auto.components_polls_PollRespondentEditor_263}
         </Label>
       </div>
 
@@ -271,15 +271,13 @@ export const PollRespondentEditor = ({
           onCheckedChange={handleRestrictChange}
         />
         <Label htmlFor="restrict-respondents" className="cursor-pointer text-sm">
-          {language === 'fr' ? 'Restreindre qui peut répondre' : 'Restrict who can respond'}
+          {t.auto.components_polls_PollRespondentEditor_274}
         </Label>
       </div>
 
       {!restrictAccess && (
         <p className="text-xs text-muted-foreground">
-          {language === 'fr' 
-            ? 'Tous les membres de la guilde peuvent répondre au sondage.' 
-            : 'All guild members can respond to the poll.'}
+          {t.auto.components_polls_PollRespondentEditor_280}
         </p>
       )}
 
@@ -289,7 +287,7 @@ export const PollRespondentEditor = ({
           <div className="p-3 rounded-lg border border-border/50 bg-muted/20">
             <div className="flex items-center gap-2 text-sm mb-2">
               <Crown className="h-4 w-4 text-primary" />
-              <span>{language === 'fr' ? 'Par rang' : 'By Rank'}</span>
+              <span>{t.auto.components_polls_PollRespondentEditor_292}</span>
             </div>
             <RankSlider
               maxValue={rankRule?.max_rank_index ?? maxRankIndex}
@@ -307,14 +305,14 @@ export const PollRespondentEditor = ({
                 <div className="flex-1">
                   <div className="flex items-center gap-2 text-sm mb-2">
                     <Users className="h-4 w-4 text-primary" />
-                    <span>{language === 'fr' ? 'Utilisateur spécifique' : 'Specific User'}</span>
+                    <span>{t.auto.components_polls_PollRespondentEditor_310}</span>
                   </div>
                   <Select
                     value={rule.user_id || ''}
                     onValueChange={(value) => updateRule(actualIndex, { user_id: value })}
                   >
                     <SelectTrigger className="w-full bg-card border-border">
-                      <SelectValue placeholder={language === 'fr' ? 'Sélectionner un utilisateur' : 'Select user'} />
+                      <SelectValue placeholder={t.auto.components_polls_PollRespondentEditor_317} />
                     </SelectTrigger>
                     <SelectContent className="bg-card border-border">
                       {members
@@ -348,13 +346,11 @@ export const PollRespondentEditor = ({
             className="text-xs"
           >
             <Plus className="h-3 w-3 mr-1" />
-            {language === 'fr' ? 'Ajouter un utilisateur' : 'Add user'}
+            {t.auto.components_polls_PollRespondentEditor_351}
           </Button>
 
           <p className="text-xs text-muted-foreground">
-            {language === 'fr' 
-              ? 'Les utilisateurs ajoutés individuellement peuvent répondre même s\'ils sont hors de la plage de rangs.' 
-              : 'Users added individually can respond even if outside the rank range.'}
+            {t.auto.components_polls_PollRespondentEditor_355}
           </p>
         </div>
       )}
