@@ -19,7 +19,7 @@ interface SortableQuestionProps {
   canRemove: boolean;
   compact?: boolean;
   id: string;
-  previousQuestions?: { id: string; text: string; options: string[]; type: string; scaleConfig?: { min: number; max: number } | null }[];
+  previousQuestions?: { id: string; text: string; options: string[]; type: string; scaleConfig?: { min: number; max: number; step?: number } | null }[];
 }
 
 export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps>(({
@@ -108,7 +108,7 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
         ? (question.options.length > 0 ? question.options : ['', ''])
         : [],
       scale_config: needsScale 
-        ? (question.scale_config || { min: 1, max: 10, step: 1, min_label: '', max_label: '' })
+        ? (question.scale_config || { min: 0, max: 10, step: 1, display: 'stars', min_label: '', max_label: '' })
         : null,
       // Reset allow_other if type doesn't support it
       allow_other: canOther ? question.allow_other : false,
@@ -116,7 +116,7 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
   };
 
   const handleScaleConfigChange = (field: keyof ScaleConfig, value: string | number) => {
-    const currentConfig = question.scale_config || { min: 1, max: 10, step: 1 };
+    const currentConfig = question.scale_config || { min: 0, max: 10, step: 1, display: 'stars' };
     onChange({
       ...question,
       scale_config: { ...currentConfig, [field]: value },
@@ -246,13 +246,32 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
               <Label className="text-xs text-muted-foreground">
                 {t.auto.components_polls_SortableQuestion_247}
               </Label>
+              <div className="space-y-1">
+                <Label className="text-xs">{t.polls?.scaleDisplay}</Label>
+                <Select
+                  value={question.scale_config?.display ?? 'stars'}
+                  onValueChange={(value) => handleScaleConfigChange('display', value)}
+                >
+                  <SelectTrigger className="bg-background">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="stars">{t.polls?.scaleDisplayStars}</SelectItem>
+                    <SelectItem value="slider">{t.polls?.scaleDisplaySlider}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="grid grid-cols-3 gap-2">
                 <div className="space-y-1">
                   <Label className="text-xs">{t.auto.components_polls_SortableQuestion_min_label}</Label>
                   <Input
                     type="number"
-                    value={question.scale_config?.min || 1}
-                    onChange={(e) => handleScaleConfigChange('min', parseInt(e.target.value) || 1)}
+                    step="0.1"
+                    value={question.scale_config?.min ?? 0}
+                    onChange={(e) => {
+                      const parsed = Number.parseFloat(e.target.value);
+                      handleScaleConfigChange('min', Number.isFinite(parsed) ? parsed : 0);
+                    }}
                     className="bg-background"
                   />
                 </div>
@@ -260,8 +279,12 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
                   <Label className="text-xs">{t.auto.components_polls_SortableQuestion_max_label}</Label>
                   <Input
                     type="number"
-                    value={question.scale_config?.max || 10}
-                    onChange={(e) => handleScaleConfigChange('max', parseInt(e.target.value) || 10)}
+                    step="0.1"
+                    value={question.scale_config?.max ?? 10}
+                    onChange={(e) => {
+                      const parsed = Number.parseFloat(e.target.value);
+                      handleScaleConfigChange('max', Number.isFinite(parsed) ? parsed : 10);
+                    }}
                     className="bg-background"
                   />
                 </div>
@@ -269,8 +292,12 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
                   <Label className="text-xs">{t.auto.components_polls_SortableQuestion_269}</Label>
                   <Input
                     type="number"
-                    value={question.scale_config?.step || 1}
-                    onChange={(e) => handleScaleConfigChange('step', parseInt(e.target.value) || 1)}
+                    step="0.1"
+                    value={question.scale_config?.step ?? 1}
+                    onChange={(e) => {
+                      const parsed = Number.parseFloat(e.target.value);
+                      handleScaleConfigChange('step', Number.isFinite(parsed) ? parsed : 1);
+                    }}
                     className="bg-background"
                   />
                 </div>

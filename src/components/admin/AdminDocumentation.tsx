@@ -220,8 +220,8 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Question Types',
         titleFr: 'Types de Questions',
-        contentEn: '9 question types supported:\n• single_choice: Radio buttons\n• multiple_choice: Checkboxes\n• text: Free text input\n• rating: Star rating (1-5)\n• scale: Slider with custom min/max/step\n• date: Date picker\n• time: Time picker\n• datetime: Combined date/time\n• ranking: Drag & drop ordering',
-        contentFr: '9 types de questions supportés :\n• single_choice : Boutons radio\n• multiple_choice : Cases à cocher\n• text : Saisie de texte libre\n• rating : Notation par étoiles (1-5)\n• scale : Curseur avec min/max/step personnalisés\n• date : Sélecteur de date\n• time : Sélecteur d\'heure\n• datetime : Date/heure combinés\n• ranking : Ordre par drag & drop',
+        contentEn: '9 question types supported:\n• single_choice: Radio buttons\n• multiple_choice: Checkboxes\n• text: Free text input\n• rating: Star rating (1-5)\n• scale: Custom scale (stars or slider, min/max/step)\n• date: Date picker\n• time: Time picker\n• datetime: Combined date/time\n• ranking: Drag & drop ordering',
+        contentFr: '9 types de questions supportés :\n• single_choice : Boutons radio\n• multiple_choice : Cases à cocher\n• text : Saisie de texte libre\n• rating : Notation par étoiles (1-5)\n• scale : Échelle personnalisée (étoiles ou curseur, min/max/pas)\n• date : Sélecteur de date\n• time : Sélecteur d\'heure\n• datetime : Date/heure combinés\n• ranking : Ordre par drag & drop',
         tags: ['polls', 'questions']
       },
       {
