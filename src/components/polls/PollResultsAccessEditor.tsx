@@ -44,7 +44,7 @@ interface RankSliderProps {
 const RankSlider = ({ maxValue, maxRank, ranks, officerRankThreshold, onChange }: RankSliderProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const sortedRanks = [...ranks].sort((a, b) => a.rank_index - b.rank_index);
   
   const minRank = 0;
@@ -58,7 +58,7 @@ const RankSlider = ({ maxValue, maxRank, ranks, officerRankThreshold, onChange }
 
   const getDisplayName = (index: number) => {
     if (index === officerRankThreshold) {
-      return language === 'fr' ? 'Officiers' : 'Officers';
+      return t.auto.components_polls_PollResultsAccessEditor_61;
     }
     return getRankName(index);
   };
@@ -222,7 +222,7 @@ export const PollResultsAccessEditor = ({
   restrictAccess,
   onRestrictAccessChange,
 }: PollResultsAccessEditorProps) => {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   
   const sortedRanks = [...ranks].sort((a, b) => a.rank_index - b.rank_index);
   const maxRankIndex = sortedRanks.length > 0 ? Math.max(...sortedRanks.map(r => r.rank_index)) : 9;
@@ -273,7 +273,7 @@ export const PollResultsAccessEditor = ({
       <div className="flex items-center gap-3">
         <Eye className="h-4 w-4 text-muted-foreground" />
         <Label className="text-sm font-medium">
-          {language === 'fr' ? 'Visibilité des résultats' : 'Results visibility'}
+          {t.auto.components_polls_PollResultsAccessEditor_276}
         </Label>
       </div>
 
@@ -284,15 +284,13 @@ export const PollResultsAccessEditor = ({
           onCheckedChange={handleRestrictChange}
         />
         <Label htmlFor="restrict-results" className="cursor-pointer text-sm">
-          {language === 'fr' ? 'Restreindre l\'accès aux résultats' : 'Restrict results access'}
+          {t.auto.components_polls_PollResultsAccessEditor_287}
         </Label>
       </div>
 
       {!restrictAccess && (
         <p className="text-xs text-muted-foreground">
-          {language === 'fr' 
-            ? 'Tous les membres de la guilde peuvent voir les résultats.' 
-            : 'All guild members can view results.'}
+          {t.auto.components_polls_PollResultsAccessEditor_293}
         </p>
       )}
 
@@ -302,7 +300,7 @@ export const PollResultsAccessEditor = ({
           <div className="p-3 rounded-lg border border-border/50 bg-muted/20">
             <div className="flex items-center gap-2 text-sm mb-2">
               <Crown className="h-4 w-4 text-primary" />
-              <span>{language === 'fr' ? 'Par rang' : 'By Rank'}</span>
+              <span>{t.auto.components_polls_PollResultsAccessEditor_305}</span>
             </div>
             <RankSlider
               maxValue={rankRule?.max_rank_index ?? 0}
@@ -321,14 +319,14 @@ export const PollResultsAccessEditor = ({
                 <div className="flex-1">
                   <div className="flex items-center gap-2 text-sm mb-2">
                     <Users className="h-4 w-4 text-primary" />
-                    <span>{language === 'fr' ? 'Utilisateur spécifique' : 'Specific User'}</span>
+                    <span>{t.auto.components_polls_PollResultsAccessEditor_324}</span>
                   </div>
                   <Select
                     value={rule.user_id || ''}
                     onValueChange={(value) => updateRule(actualIndex, { user_id: value })}
                   >
                     <SelectTrigger className="w-full bg-card border-border">
-                      <SelectValue placeholder={language === 'fr' ? 'Sélectionner...' : 'Select...'} />
+                      <SelectValue placeholder={t.auto.components_polls_PollResultsAccessEditor_331} />
                     </SelectTrigger>
                     <SelectContent className="bg-card border-border">
                       {members
@@ -361,13 +359,11 @@ export const PollResultsAccessEditor = ({
             className="text-xs"
           >
             <Plus className="h-3 w-3 mr-1" />
-            {language === 'fr' ? 'Ajouter un utilisateur' : 'Add User'}
+            {t.auto.components_polls_PollResultsAccessEditor_364}
           </Button>
 
           <p className="text-xs text-muted-foreground">
-            {language === 'fr' 
-              ? 'Les GMs et gestionnaires de sondages peuvent toujours voir les résultats.' 
-              : 'GMs and poll managers can always view results.'}
+            {t.auto.components_polls_PollResultsAccessEditor_368}
           </p>
         </div>
       )}

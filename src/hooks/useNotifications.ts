@@ -51,7 +51,7 @@ export function useNotifications() {
               .from('forum_topics')
               .select('title')
               .eq('id', notif.topic_id)
-              .single();
+              .maybeSingle();
             topic_title = topic?.title || '';
           }
 

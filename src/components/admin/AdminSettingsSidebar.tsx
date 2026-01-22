@@ -119,7 +119,7 @@ export const AdminSettingsSidebar = ({
                   )}
                 >
                   <Icon className="h-3.5 w-3.5" />
-                  <span>{language === 'fr' ? section.labelFr : section.labelEn}</span>
+                  <span>{({ fr: section.labelFr, en: section.labelEn } as const)[language]}</span>
                 </button>
               );
             })}
@@ -143,7 +143,7 @@ export const AdminSettingsSidebar = ({
           return (
             <div key={categoryKey}>
               <h3 className="px-3 mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                {language === 'fr' ? categoryLabel.fr : categoryLabel.en}
+                {({ fr: categoryLabel.fr, en: categoryLabel.en } as const)[language]}
               </h3>
               <div className="space-y-0.5">
                 {sections.map((section) => {
@@ -161,7 +161,7 @@ export const AdminSettingsSidebar = ({
                       )}
                     >
                       <Icon className="h-4 w-4 flex-shrink-0" />
-                      <span>{language === 'fr' ? section.labelFr : section.labelEn}</span>
+                      <span>{({ fr: section.labelFr, en: section.labelEn } as const)[language]}</span>
                     </button>
                   );
                 })}

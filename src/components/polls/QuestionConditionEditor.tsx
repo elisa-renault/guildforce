@@ -38,20 +38,20 @@ export const QuestionConditionEditor = ({
 
   // Operators for choice questions
   const choiceOperators: { value: ConditionOperator; label: string }[] = [
-    { value: 'equals', label: language === 'fr' ? 'est égal à' : 'equals' },
-    { value: 'not_equals', label: language === 'fr' ? 'est différent de' : 'is not equal to' },
-    { value: 'contains', label: language === 'fr' ? 'contient' : 'contains' },
-    { value: 'not_contains', label: language === 'fr' ? 'ne contient pas' : 'does not contain' },
+    { value: 'equals', label: t.auto.components_polls_QuestionConditionEditor_41 },
+    { value: 'not_equals', label: t.auto.components_polls_QuestionConditionEditor_42 },
+    { value: 'contains', label: t.auto.components_polls_QuestionConditionEditor_43 },
+    { value: 'not_contains', label: t.auto.components_polls_QuestionConditionEditor_44 },
   ];
 
   // Operators for numeric questions (scale/rating)
   const numericOperators: { value: ConditionOperator; label: string }[] = [
-    { value: 'equals', label: language === 'fr' ? 'est égal à' : 'equals' },
-    { value: 'not_equals', label: language === 'fr' ? 'est différent de' : 'is not equal to' },
-    { value: 'greater_than', label: language === 'fr' ? 'est supérieur à' : 'is greater than' },
-    { value: 'less_than', label: language === 'fr' ? 'est inférieur à' : 'is less than' },
-    { value: 'greater_equals', label: language === 'fr' ? 'est supérieur ou égal à' : 'is greater than or equal to' },
-    { value: 'less_equals', label: language === 'fr' ? 'est inférieur ou égal à' : 'is less than or equal to' },
+    { value: 'equals', label: t.auto.components_polls_QuestionConditionEditor_49 },
+    { value: 'not_equals', label: t.auto.components_polls_QuestionConditionEditor_50 },
+    { value: 'greater_than', label: t.auto.components_polls_QuestionConditionEditor_51 },
+    { value: 'less_than', label: t.auto.components_polls_QuestionConditionEditor_52 },
+    { value: 'greater_equals', label: t.auto.components_polls_QuestionConditionEditor_53 },
+    { value: 'less_equals', label: t.auto.components_polls_QuestionConditionEditor_54 },
   ];
 
   const operators = isSelectedNumeric ? numericOperators : choiceOperators;
@@ -123,7 +123,7 @@ export const QuestionConditionEditor = ({
         className="text-muted-foreground hover:text-primary"
       >
         <GitBranch className="h-4 w-4 mr-1" />
-        {t.polls?.addCondition || (language === 'fr' ? 'Ajouter une condition' : 'Add condition')}
+        {t.polls?.addCondition || (t.auto.components_polls_QuestionConditionEditor_126)}
       </Button>
     );
   }
@@ -145,7 +145,7 @@ export const QuestionConditionEditor = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm text-primary font-medium">
           <GitBranch className="h-4 w-4" />
-          {t.polls?.conditionalQuestion || (language === 'fr' ? 'Question conditionnelle' : 'Conditional question')}
+          {t.polls?.conditionalQuestion || (t.auto.components_polls_QuestionConditionEditor_148)}
         </div>
         <Button
           type="button"
@@ -160,7 +160,7 @@ export const QuestionConditionEditor = ({
 
       <div className="space-y-2">
         <Label className="text-xs text-muted-foreground">
-          {t.polls?.showIf || (language === 'fr' ? 'Afficher si la question' : 'Show if question')}
+          {t.polls?.showIf || (t.auto.components_polls_QuestionConditionEditor_163)}
         </Label>
         <Select value={condition.question_id} onValueChange={handleQuestionChange}>
           <SelectTrigger className="bg-background">
@@ -183,7 +183,7 @@ export const QuestionConditionEditor = ({
 
       <div className="space-y-2">
         <Label className="text-xs text-muted-foreground">
-          {t.polls?.conditionOperator || (language === 'fr' ? 'Opérateur' : 'Operator')}
+          {t.polls?.conditionOperator || (t.auto.components_polls_QuestionConditionEditor_186)}
         </Label>
         <Select value={condition.operator} onValueChange={(v) => handleOperatorChange(v as ConditionOperator)}>
           <SelectTrigger className="bg-background">
@@ -203,7 +203,7 @@ export const QuestionConditionEditor = ({
       {selectedQuestion && isChoiceType(selectedQuestion.type) && (
         <div className="space-y-2">
           <Label className="text-xs text-muted-foreground">
-            {t.polls?.conditionValues || (language === 'fr' ? 'Valeurs' : 'Values')}
+            {t.polls?.conditionValues || (t.auto.components_polls_QuestionConditionEditor_206)}
           </Label>
           <div className="space-y-1 max-h-32 overflow-y-auto">
             {selectedQuestion.options.map((option, idx) => (
@@ -221,7 +221,7 @@ export const QuestionConditionEditor = ({
           </div>
           {condition.values.length === 0 && (
             <p className="text-xs text-destructive">
-              {t.polls?.selectAtLeastOneValue || (language === 'fr' ? 'Sélectionnez au moins une valeur' : 'Select at least one value')}
+              {t.polls?.selectAtLeastOneValue || (t.auto.components_polls_QuestionConditionEditor_224)}
             </p>
           )}
         </div>
@@ -231,7 +231,7 @@ export const QuestionConditionEditor = ({
       {selectedQuestion && isNumericType(selectedQuestion.type) && (
         <div className="space-y-2">
           <Label className="text-xs text-muted-foreground">
-            {language === 'fr' ? 'Valeur' : 'Value'}
+            {t.auto.components_polls_QuestionConditionEditor_234}
             <span className="ml-1 text-muted-foreground/70">
               ({numericRange.min} - {numericRange.max})
             </span>
@@ -247,7 +247,7 @@ export const QuestionConditionEditor = ({
           />
           {(!condition.values[0] || condition.values[0] === '') && (
             <p className="text-xs text-destructive">
-              {language === 'fr' ? 'Entrez une valeur' : 'Enter a value'}
+              {t.auto.components_polls_QuestionConditionEditor_250}
             </p>
           )}
         </div>

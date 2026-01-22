@@ -90,7 +90,7 @@ export const LegalPagesEditor = () => {
       return;
     }
 
-    toast.success(language === 'fr' ? 'Page enregistrée' : 'Page saved', {
+    toast.success(t.auto.components_admin_LegalPagesEditor_93, {
       style: { background: 'hsl(var(--card))', borderColor: 'hsl(var(--primary) / 0.3)' },
     });
 
@@ -119,6 +119,8 @@ export const LegalPagesEditor = () => {
   if (editingPage) {
     const currentTitle = editLang === 'fr' ? editingPage.title_fr : editingPage.title_en;
     const currentContent = editLang === 'fr' ? editingPage.content_fr : editingPage.content_en;
+    const langLabelFr = t.auto?.components_admin_LegalPagesEditor_language_fr || 'FR';
+    const langLabelEn = t.auto?.components_admin_LegalPagesEditor_language_en || 'EN';
 
     return (
       <div className="space-y-4">
@@ -134,7 +136,7 @@ export const LegalPagesEditor = () => {
               className="gap-1.5"
             >
               {previewMode ? <Edit className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              {previewMode ? (language === 'fr' ? 'Éditer' : 'Edit') : (language === 'fr' ? 'Aperçu' : 'Preview')}
+              {previewMode ? (t.auto.components_admin_LegalPagesEditor_137) : (t.auto.components_admin_LegalPagesEditor_137_2)}
             </Button>
             <Button variant="ghost" size="sm" onClick={handleCancel}>
               {t.common.cancel}
@@ -157,8 +159,8 @@ export const LegalPagesEditor = () => {
 
         <Tabs value={editLang} onValueChange={(v) => setEditLang(v as 'fr' | 'en')}>
           <TabsList className="bg-card/50">
-            <TabsTrigger value="fr">🇫🇷 Français</TabsTrigger>
-            <TabsTrigger value="en">🇬🇧 English</TabsTrigger>
+            <TabsTrigger value="fr">{langLabelFr}</TabsTrigger>
+            <TabsTrigger value="en">{langLabelEn}</TabsTrigger>
           </TabsList>
 
           <TabsContent value={editLang} className="mt-4 space-y-4">
@@ -214,7 +216,7 @@ export const LegalPagesEditor = () => {
               <>
                 <div className="space-y-2">
                   <Label htmlFor={`title-${editLang}`}>
-                    {language === 'fr' ? 'Titre' : 'Title'} ({editLang.toUpperCase()})
+                    {t.auto.components_admin_LegalPagesEditor_217} ({editLang.toUpperCase()})
                   </Label>
                   <Input
                     id={`title-${editLang}`}
@@ -231,7 +233,7 @@ export const LegalPagesEditor = () => {
 
                 <div className="space-y-2">
                   <Label>
-                    {language === 'fr' ? 'Contenu' : 'Content'} ({editLang.toUpperCase()})
+                    {t.auto.components_admin_LegalPagesEditor_234} ({editLang.toUpperCase()})
                   </Label>
                   <MarkdownEditor
                     value={currentContent}
@@ -241,7 +243,7 @@ export const LegalPagesEditor = () => {
                         [editLang === 'fr' ? 'content_fr' : 'content_en']: value,
                       });
                     }}
-                    placeholder={language === 'fr' ? 'Contenu en Markdown...' : 'Content in Markdown...'}
+                    placeholder={t.auto.components_admin_LegalPagesEditor_244}
                     minHeight="300px"
                   />
                 </div>
@@ -256,15 +258,13 @@ export const LegalPagesEditor = () => {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground mb-4">
-        {language === 'fr'
-          ? 'Gérez les pages légales obligatoires de votre site. Le contenu est affiché en Markdown.'
-          : 'Manage the mandatory legal pages of your site. Content is displayed in Markdown.'}
+        {t.auto.components_admin_LegalPagesEditor_259}
       </p>
 
       {pages.map((page) => {
         const label = slugLabels[page.slug]?.[language] || page.slug;
         const updatedAt = new Date(page.updated_at).toLocaleDateString(
-          language === 'fr' ? 'fr-FR' : 'en-US',
+          t.auto.components_admin_LegalPagesEditor_267,
           { dateStyle: 'medium' }
         );
 
@@ -284,7 +284,7 @@ export const LegalPagesEditor = () => {
               </div>
               <Button variant="outline" size="sm" onClick={() => handleEdit(page)} className="gap-1.5">
                 <Edit className="h-4 w-4" />
-                {language === 'fr' ? 'Modifier' : 'Edit'}
+                {t.auto.components_admin_LegalPagesEditor_287}
               </Button>
             </div>
           </GlowCard>

@@ -65,6 +65,7 @@ const RosterWishes = () => {
   ]);
   const [editStatus, setEditStatus] = useState<CommitmentStatus>('undecided');
   const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState<'table' | 'analytics'>('table');
 
   // Roster state
   const [rosters, setRosters] = useState<RosterData[]>([]);
@@ -633,7 +634,7 @@ const RosterWishes = () => {
           <div className="flex items-center justify-center gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/30">
             <Eye className="h-4 w-4 text-amber-400" />
             <span className="text-sm text-amber-400 font-medium">
-              {language === 'fr' ? 'Mode lecture admin' : 'Admin read-only mode'}
+              {t.auto.pages_RosterWishes_636}
             </span>
           </div>
         </div>
@@ -659,6 +660,7 @@ const RosterWishes = () => {
               onClick={() => {
                 exportWishesToCSV(filteredMembers, {
                   language,
+                  t,
                   rosterName: currentRoster?.name || 'roster',
                   guildName: guild?.name || 'guild'
                 });
@@ -695,7 +697,7 @@ const RosterWishes = () => {
           </div>
         )}
 
-        <Tabs defaultValue="table" className="w-full">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'table' | 'analytics')} className="w-full">
           <TabsList className="mb-4">
             <TabsTrigger value="table" className="gap-2">
               <TableIcon className="h-4 w-4" />

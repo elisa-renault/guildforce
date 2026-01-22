@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import log from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
 import type { GuildPoll, GuildPollQuestion, GuildPollResponse, PollFormData, ResponseValue } from '@/types/poll';
 
@@ -284,6 +285,7 @@ export const usePollResults = (pollId: string | undefined) => {
 
 export const usePollMutations = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [saving, setSaving] = useState(false);
 
   const createPoll = async (guildId: string, data: PollFormData): Promise<string | null> => {
@@ -474,7 +476,7 @@ export const usePollMutations = () => {
       return poll.id;
     } catch (error) {
       log.error('Error creating poll:', error);
-      toast.error('Erreur lors de la création du sondage');
+      toast.error(t.auto.hooks_useGuildPolls_create_error);
       return null;
     } finally {
       setSaving(false);
@@ -501,7 +503,7 @@ export const usePollMutations = () => {
       return true;
     } catch (error) {
       log.error('Error updating poll:', error);
-      toast.error('Erreur lors de la mise à jour du sondage');
+      toast.error(t.auto.hooks_useGuildPolls_update_error);
       return false;
     } finally {
       setSaving(false);
@@ -517,11 +519,11 @@ export const usePollMutations = () => {
         .eq('id', pollId);
 
       if (error) throw error;
-      toast.success('Sondage publié !');
+      toast.success(t.auto.hooks_useGuildPolls_publish_success);
       return true;
     } catch (error) {
       log.error('Error publishing poll:', error);
-      toast.error('Erreur lors de la publication du sondage');
+      toast.error(t.auto.hooks_useGuildPolls_publish_error);
       return false;
     } finally {
       setSaving(false);
@@ -537,11 +539,11 @@ export const usePollMutations = () => {
         .eq('id', pollId);
 
       if (error) throw error;
-      toast.success('Sondage clôturé');
+      toast.success(t.auto.hooks_useGuildPolls_close_success);
       return true;
     } catch (error) {
       log.error('Error closing poll:', error);
-      toast.error('Erreur lors de la clôture du sondage');
+      toast.error(t.auto.hooks_useGuildPolls_close_error);
       return false;
     } finally {
       setSaving(false);
@@ -557,11 +559,11 @@ export const usePollMutations = () => {
         .eq('id', pollId);
 
       if (error) throw error;
-      toast.success('Sondage supprimé');
+      toast.success(t.auto.hooks_useGuildPolls_delete_success);
       return true;
     } catch (error) {
       log.error('Error deleting poll:', error);
-      toast.error('Erreur lors de la suppression du sondage');
+      toast.error(t.auto.hooks_useGuildPolls_delete_error);
       return false;
     } finally {
       setSaving(false);
@@ -590,11 +592,11 @@ export const usePollMutations = () => {
         if (error) throw error;
       }
 
-      toast.success('Réponses réinitialisées');
+      toast.success(t.auto.hooks_useGuildPolls_reset_success);
       return true;
     } catch (error) {
       log.error('Error resetting poll responses:', error);
-      toast.error('Erreur lors de la réinitialisation des réponses');
+      toast.error(t.auto.hooks_useGuildPolls_reset_error);
       return false;
     } finally {
       setSaving(false);
@@ -769,11 +771,11 @@ export const usePollMutations = () => {
         }
       }
 
-      toast.success('Questions mises à jour');
+      toast.success(t.auto.hooks_useGuildPolls_questions_updated);
       return true;
     } catch (error) {
       log.error('Error updating poll questions:', error);
-      toast.error('Erreur lors de la mise à jour des questions');
+      toast.error(t.auto.hooks_useGuildPolls_questions_update_error);
       return false;
     } finally {
       setSaving(false);
@@ -801,7 +803,7 @@ export const usePollMutations = () => {
       return true;
     } catch (error) {
       log.error('Error submitting response:', error);
-      toast.error('Erreur lors de l\'envoi de la réponse');
+      toast.error(t.auto.hooks_useGuildPolls_submit_response_error);
       return false;
     }
   };
@@ -826,11 +828,11 @@ export const usePollMutations = () => {
         });
 
       if (error) throw error;
-      toast.success('Réponses enregistrées !');
+      toast.success(t.auto.hooks_useGuildPolls_submit_all_success);
       return true;
     } catch (error) {
       log.error('Error submitting responses:', error);
-      toast.error('Erreur lors de l\'envoi des réponses');
+      toast.error(t.auto.hooks_useGuildPolls_submit_all_error);
       return false;
     } finally {
       setSaving(false);
@@ -897,7 +899,7 @@ export const usePollMutations = () => {
       return true;
     } catch (error) {
       log.error('Error saving results access rules:', error);
-      toast.error('Erreur lors de la sauvegarde des permissions');
+      toast.error(t.auto.hooks_useGuildPolls_results_rules_error);
       return false;
     } finally {
       setSaving(false);
@@ -964,7 +966,7 @@ export const usePollMutations = () => {
       return true;
     } catch (error) {
       log.error('Error saving respondent rules:', error);
-      toast.error('Erreur lors de la sauvegarde du ciblage');
+      toast.error(t.auto.hooks_useGuildPolls_respondent_rules_error);
       return false;
     } finally {
       setSaving(false);
@@ -1049,7 +1051,7 @@ export const usePollMutations = () => {
         .insert({
           guild_id: originalPoll.guild_id,
           created_by: user.id,
-          title: `${originalPoll.title} (copie)`,
+          title: `${originalPoll.title} ${t.auto.hooks_useGuildPolls_duplicate_suffix}`,
           description: originalPoll.description,
           is_anonymous: originalPoll.is_anonymous,
           allow_multiple_responses: originalPoll.allow_multiple_responses,
@@ -1146,7 +1148,7 @@ export const usePollMutations = () => {
       return newPoll.id;
     } catch (error) {
       log.error('Error duplicating poll:', error);
-      toast.error('Erreur lors de la duplication du sondage');
+      toast.error(t.auto.hooks_useGuildPolls_duplicate_error);
       return null;
     } finally {
       setSaving(false);

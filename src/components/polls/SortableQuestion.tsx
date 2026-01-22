@@ -52,15 +52,15 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
   };
 
   const questionTypes: { value: PollQuestionType; label: string }[] = [
-    { value: 'single_choice', label: language === 'fr' ? 'Choix unique' : 'Single choice' },
-    { value: 'multiple_choice', label: language === 'fr' ? 'Choix multiples' : 'Multiple choice' },
-    { value: 'text', label: language === 'fr' ? 'Texte libre' : 'Free text' },
-    { value: 'rating', label: language === 'fr' ? 'Échelle (1-5)' : 'Rating (1-5)' },
-    { value: 'date', label: language === 'fr' ? 'Date' : 'Date' },
-    { value: 'time', label: language === 'fr' ? 'Heure' : 'Time' },
-    { value: 'datetime', label: language === 'fr' ? 'Date et heure' : 'Date & Time' },
-    { value: 'ranking', label: language === 'fr' ? 'Classement' : 'Ranking' },
-    { value: 'scale', label: language === 'fr' ? 'Échelle personnalisée' : 'Custom Scale' },
+    { value: 'single_choice', label: t.auto.components_polls_SortableQuestion_55 },
+    { value: 'multiple_choice', label: t.auto.components_polls_SortableQuestion_56 },
+    { value: 'text', label: t.auto.components_polls_SortableQuestion_57 },
+    { value: 'rating', label: t.auto.components_polls_SortableQuestion_58 },
+    { value: 'date', label: t.auto.components_polls_SortableQuestion_59 },
+    { value: 'time', label: t.auto.components_polls_SortableQuestion_60 },
+    { value: 'datetime', label: t.auto.components_polls_SortableQuestion_61 },
+    { value: 'ranking', label: t.auto.components_polls_SortableQuestion_62 },
+    { value: 'scale', label: t.auto.components_polls_SortableQuestion_63 },
   ];
 
   const needsOptions = question.question_type === 'single_choice' || 
@@ -152,7 +152,7 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
               <Input
                 value={question.question_text}
                 onChange={(e) => onChange({ ...question, question_text: e.target.value })}
-                placeholder={language === 'fr' ? 'Votre question...' : 'Your question...'}
+                placeholder={t.auto.components_polls_SortableQuestion_155}
                 className="bg-background"
               />
             </div>
@@ -189,8 +189,8 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
             <div className="space-y-2 pl-4">
               <Label className="text-xs text-muted-foreground">
                 {question.question_type === 'ranking' 
-                  ? (language === 'fr' ? 'Éléments à classer' : 'Items to rank')
-                  : (language === 'fr' ? 'Options de réponse' : 'Answer options')}
+                  ? (t.auto.components_polls_SortableQuestion_192)
+                  : (t.auto.components_polls_SortableQuestion_193)}
               </Label>
               {question.options.map((option, optionIndex) => (
                 <div key={optionIndex} className="flex items-center gap-2">
@@ -200,7 +200,7 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
                   <Input
                     value={option}
                     onChange={(e) => handleOptionChange(optionIndex, e.target.value)}
-                    placeholder={`${language === 'fr' ? 'Option' : 'Option'} ${optionIndex + 1} *`}
+                    placeholder={`${t.auto.components_polls_SortableQuestion_203} ${optionIndex + 1} *`}
                     className={`flex-1 bg-background ${!option.trim() ? 'border-destructive/50' : ''}`}
                   />
                   {question.options.length > 2 && (
@@ -222,7 +222,7 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
                 className="text-primary"
               >
                 <Plus className="h-4 w-4 mr-1" />
-                {language === 'fr' ? 'Ajouter une option' : 'Add option'}
+                {t.auto.components_polls_SortableQuestion_225}
               </Button>
 
               {/* Allow Other option toggle */}
@@ -244,11 +244,11 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
           {needsScaleConfig && (
             <div className="space-y-3 pl-4">
               <Label className="text-xs text-muted-foreground">
-                {language === 'fr' ? 'Configuration de l\'échelle' : 'Scale Configuration'}
+                {t.auto.components_polls_SortableQuestion_247}
               </Label>
               <div className="grid grid-cols-3 gap-2">
                 <div className="space-y-1">
-                  <Label className="text-xs">Min</Label>
+                  <Label className="text-xs">{t.auto.components_polls_SortableQuestion_min_label}</Label>
                   <Input
                     type="number"
                     value={question.scale_config?.min || 1}
@@ -257,7 +257,7 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">Max</Label>
+                  <Label className="text-xs">{t.auto.components_polls_SortableQuestion_max_label}</Label>
                   <Input
                     type="number"
                     value={question.scale_config?.max || 10}
@@ -266,7 +266,7 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">{language === 'fr' ? 'Pas' : 'Step'}</Label>
+                  <Label className="text-xs">{t.auto.components_polls_SortableQuestion_269}</Label>
                   <Input
                     type="number"
                     value={question.scale_config?.step || 1}
@@ -277,20 +277,20 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
-                  <Label className="text-xs">{language === 'fr' ? 'Label min' : 'Min label'}</Label>
+                  <Label className="text-xs">{t.auto.components_polls_SortableQuestion_280}</Label>
                   <Input
                     value={question.scale_config?.min_label || ''}
                     onChange={(e) => handleScaleConfigChange('min_label', e.target.value)}
-                    placeholder={language === 'fr' ? 'Ex: Pas du tout' : 'Ex: Not at all'}
+                    placeholder={t.auto.components_polls_SortableQuestion_284}
                     className="bg-background"
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">{language === 'fr' ? 'Label max' : 'Max label'}</Label>
+                  <Label className="text-xs">{t.auto.components_polls_SortableQuestion_289}</Label>
                   <Input
                     value={question.scale_config?.max_label || ''}
                     onChange={(e) => handleScaleConfigChange('max_label', e.target.value)}
-                    placeholder={language === 'fr' ? 'Ex: Totalement' : 'Ex: Completely'}
+                    placeholder={t.auto.components_polls_SortableQuestion_293}
                     className="bg-background"
                   />
                 </div>
@@ -305,7 +305,7 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
               onCheckedChange={(checked) => onChange({ ...question, is_required: checked })}
             />
             <Label htmlFor={`required-${id}`} className="text-sm text-muted-foreground cursor-pointer">
-              {language === 'fr' ? 'Réponse obligatoire' : 'Required'}
+              {t.auto.components_polls_SortableQuestion_308}
             </Label>
           </div>
 

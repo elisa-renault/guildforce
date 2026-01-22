@@ -5,7 +5,6 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { translations } from "@/i18n/translations";
 
 const Sheet = SheetPrimitive.Root;
 
@@ -55,8 +54,7 @@ interface SheetContentProps
 
 const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Content>, SheetContentProps>(
   ({ side = "right", className, children, ...props }, ref) => {
-    const { language } = useLanguage();
-    const t = translations[language];
+    const { t } = useLanguage();
 
     return (
       <SheetPortal>

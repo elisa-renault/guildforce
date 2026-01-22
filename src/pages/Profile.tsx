@@ -42,6 +42,82 @@ const Profile = () => {
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [requestingDeletion, setRequestingDeletion] = useState(false);
 
+  const ui = language === 'fr'
+    ? {
+        setupSuccessTitle: 'Bienvenue !',
+        setupSuccessDesc: 'Ton profil a ete configure.',
+        updateSuccessDesc: 'Profil mis a jour avec succes !',
+        requestDeletionTitle: 'Demande enregistree',
+        requestDeletionDesc: 'Ta demande de suppression a ete enregistree. Un administrateur la traitera sous 30 jours.',
+        cancelDeletionTitle: 'Demande annulee',
+        cancelDeletionDesc: 'Ta demande de suppression a ete annulee.',
+        selectImageError: 'Veuillez selectionner un fichier image',
+        imageSizeError: "L'image doit faire moins de 5 Mo",
+        avatarUpdated: 'Avatar mis a jour !',
+        avatarRemoved: 'Avatar supprime',
+        profileNotFound: 'Profil introuvable.',
+        reconnectHint: 'Deconnecte-toi puis reconnecte-toi via Battle.net pour finaliser la liaison.',
+        backToLogin: 'Revenir a la connexion',
+        welcomeTitle: 'Bienvenue sur Guildforce !',
+        welcomeSubtitle: 'Choisis ton pseudo pour etre identifie par ta guilde',
+        connectedAs: 'Connecte en tant que {{battletag}}',
+        usernamePlaceholder: 'Ton pseudo sur le site',
+        usernameHint: "C'est le nom qui sera affiche dans ta guilde",
+        getStarted: "C'est parti !",
+        viewPublicProfile: 'Voir mon profil public',
+        avatarAlt: 'Avatar',
+        saveUsername: 'Enregistrer le pseudo',
+        preferencesTitle: 'Preferences',
+        privacyTitle: 'En savoir plus sur tes donnees',
+        privacyPublicTitle: 'Donnees publiques',
+        privacyPublicDesc: 'Pseudo et avatar visibles sur ton profil public.',
+        privacyGuildTitle: 'Donnees de guilde',
+        privacyGuildDesc: 'Personnages et voeux visibles par ta guilde uniquement.',
+        privacyPrivateTitle: 'Donnees privees',
+        privacyPrivateDesc: 'Email et tokens Battle.net jamais partages.',
+        dangerZoneTitle: 'Zone de danger',
+        languageFr: 'Francais',
+        languageEn: 'Anglais',
+      }
+    : {
+        setupSuccessTitle: 'Welcome!',
+        setupSuccessDesc: 'Your profile has been set up.',
+        updateSuccessDesc: 'Profile updated successfully!',
+        requestDeletionTitle: 'Request recorded',
+        requestDeletionDesc: 'Your deletion request has been recorded. An admin will process it within 30 days.',
+        cancelDeletionTitle: 'Request cancelled',
+        cancelDeletionDesc: 'Your deletion request has been cancelled.',
+        selectImageError: 'Please select an image file',
+        imageSizeError: 'Image must be under 5 MB',
+        avatarUpdated: 'Avatar updated!',
+        avatarRemoved: 'Avatar removed',
+        profileNotFound: 'Profile not found.',
+        reconnectHint: 'Sign out and sign back in via Battle.net to finish the link.',
+        backToLogin: 'Back to login',
+        welcomeTitle: 'Welcome to Guildforce!',
+        welcomeSubtitle: 'Choose your username so your guild can identify you',
+        connectedAs: 'Connected as {{battletag}}',
+        usernamePlaceholder: 'Your username on the site',
+        usernameHint: 'This name will be shown to your guild',
+        getStarted: "Let's get started!",
+        viewPublicProfile: 'View public profile',
+        avatarAlt: 'Avatar',
+        saveUsername: 'Save username',
+        preferencesTitle: 'Preferences',
+        privacyTitle: 'Learn more about your data',
+        privacyPublicTitle: 'Public data',
+        privacyPublicDesc: 'Username and avatar are visible on your public profile.',
+        privacyGuildTitle: 'Guild data',
+        privacyGuildDesc: 'Characters and wishes are visible to your guild only.',
+        privacyPrivateTitle: 'Private data',
+        privacyPrivateDesc: 'Email and Battle.net tokens are never shared.',
+        dangerZoneTitle: 'Danger zone',
+        languageFr: 'French',
+        languageEn: 'English',
+      };
+
+  const languageLabels = { fr: ui.languageFr, en: ui.languageEn };
+
   const profileSchema = z.object({
     username: z.string().min(2, 'Le pseudo doit contenir au moins 2 caractères').max(30, 'Le pseudo ne peut pas dépasser 30 caractères'),
   });
@@ -102,10 +178,10 @@ const Profile = () => {
       await refreshProfile();
       
       if (isSetupMode) {
-        toast({ title: 'Bienvenue !', description: 'Ton profil a été configuré.' });
+        toast({ title: ui.setupSuccessTitle, description: ui.setupSuccessDesc });
         navigate('/guilds', { replace: true });
       } else {
-        toast({ title: t.common.save, description: 'Profile updated successfully!' });
+        toast({ title: t.common.save, description: ui.updateSuccessDesc });
       }
     } catch (error: any) {
       toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
@@ -146,10 +222,8 @@ const Profile = () => {
       setDeleteDialogOpen(false);
       setDeleteConfirmText('');
       toast({
-        title: language === 'fr' ? 'Demande enregistrée' : 'Request submitted',
-        description: language === 'fr' 
-          ? 'Ta demande de suppression a été enregistrée. Un administrateur la traitera sous 30 jours.'
-          : 'Your deletion request has been submitted. An admin will process it within 30 days.',
+        title: ui.requestDeletionTitle,
+        description: ui.requestDeletionDesc,
       });
     } catch (error: any) {
       toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
@@ -171,10 +245,8 @@ const Profile = () => {
 
       setDeletionPending(false);
       toast({
-        title: language === 'fr' ? 'Demande annulée' : 'Request cancelled',
-        description: language === 'fr' 
-          ? 'Ta demande de suppression a été annulée.'
-          : 'Your deletion request has been cancelled.',
+        title: ui.cancelDeletionTitle,
+        description: ui.cancelDeletionDesc,
       });
     } catch (error: any) {
       toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
@@ -186,12 +258,12 @@ const Profile = () => {
     if (!file || !user) return;
 
     if (!file.type.startsWith('image/')) {
-      toast({ title: t.errors.generic, description: 'Please select an image file', variant: 'destructive' });
+      toast({ title: t.errors.generic, description: ui.selectImageError, variant: 'destructive' });
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      toast({ title: t.errors.generic, description: 'Image must be less than 5MB', variant: 'destructive' });
+      toast({ title: t.errors.generic, description: ui.imageSizeError, variant: 'destructive' });
       return;
     }
 
@@ -236,7 +308,7 @@ const Profile = () => {
       await refreshProfile();
       setCropDialogOpen(false);
       setSelectedImageSrc(null);
-      toast({ title: language === 'fr' ? 'Avatar mis à jour !' : 'Avatar updated!' });
+      toast({ title: ui.avatarUpdated });
     } catch (error: any) {
       toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
     } finally {
@@ -264,7 +336,7 @@ const Profile = () => {
       if (updateError) throw updateError;
 
       await refreshProfile();
-      toast({ title: language === 'fr' ? 'Avatar supprimé' : 'Avatar removed' });
+      toast({ title: ui.avatarRemoved });
     } catch (error: any) {
       toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
     } finally {
@@ -286,12 +358,12 @@ const Profile = () => {
       <div className="flex-1 flex items-center justify-center p-4 relative">
         <CosmicBackground />
         <GlowCard className="w-full max-w-md p-8 relative z-10 text-center" hoverable={false}>
-          <p className="text-foreground mb-2">Profil introuvable.</p>
+          <p className="text-foreground mb-2">{ui.profileNotFound}</p>
           <p className="text-sm text-muted-foreground mb-6">
-            Déconnecte-toi puis reconnecte-toi via Battle.net pour finaliser la liaison.
+            {ui.reconnectHint}
           </p>
           <CosmicButton onClick={() => navigate('/auth')} className="w-full">
-            Revenir à la connexion
+            {ui.backToLogin}
           </CosmicButton>
         </GlowCard>
       </div>
@@ -308,10 +380,10 @@ const Profile = () => {
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/25">
               <Sparkles className="h-8 w-8 text-white" strokeWidth={1.5} />
             </div>
-            <h1 className="font-display text-2xl text-foreground mb-2">Bienvenue sur Guildforce !</h1>
-            <p className="text-muted-foreground text-sm">Choisis ton pseudo pour être identifié par ta guilde</p>
+            <h1 className="font-display text-2xl text-foreground mb-2">{ui.welcomeTitle}</h1>
+            <p className="text-muted-foreground text-sm">{ui.welcomeSubtitle}</p>
             {profile?.battletag && (
-              <p className="text-xs text-muted-foreground mt-2">Connecté en tant que {profile.battletag}</p>
+              <p className="text-xs text-muted-foreground mt-2">{ui.connectedAs.replace('{{battletag}}', profile.battletag)}</p>
             )}
           </div>
 
@@ -321,10 +393,10 @@ const Profile = () => {
                 <FormItem>
                   <FormLabel className="text-foreground">{t.auth.pseudo}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ton pseudo sur le site" {...field} className="cosmic-input h-12 text-center text-lg" autoFocus />
+                    <Input placeholder={ui.usernamePlaceholder} {...field} className="cosmic-input h-12 text-center text-lg" autoFocus />
                   </FormControl>
                   <FormMessage />
-                  <p className="text-xs text-muted-foreground mt-1">C'est le nom qui sera affiché dans ta guilde</p>
+                  <p className="text-xs text-muted-foreground mt-1">{ui.usernameHint}</p>
                 </FormItem>
               )} />
 
@@ -334,15 +406,15 @@ const Profile = () => {
                   {t.profile.language}
                 </FormLabel>
                 <Select value={language} onValueChange={(val) => handleLanguageChange(val as Language)}>
-                  <SelectTrigger className="cosmic-input"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="cosmic-input"><SelectValue placeholder={language.toUpperCase()} /></SelectTrigger>
                   <SelectContent className="bg-card border-border">
-                    <SelectItem value="fr">🇫🇷 Français</SelectItem>
-                    <SelectItem value="en">🇬🇧 English</SelectItem>
+                    <SelectItem value="fr">{languageLabels.fr}</SelectItem>
+                    <SelectItem value="en">{languageLabels.en}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              <CosmicButton type="submit" className="w-full" size="lg" loading={saving}>C'est parti !</CosmicButton>
+              <CosmicButton type="submit" className="w-full" size="lg" loading={saving}>{ui.getStarted}</CosmicButton>
             </form>
           </Form>
         </GlowCard>
@@ -365,7 +437,7 @@ const Profile = () => {
             className="gap-1.5"
           >
             <ExternalLink className="h-3.5 w-3.5" strokeWidth={1.5} />
-            {language === 'fr' ? 'Voir mon profil public' : 'View public profile'}
+            {ui.viewPublicProfile}
           </Button>
         </div>
 
@@ -381,7 +453,7 @@ const Profile = () => {
                   {uploadingAvatar ? (
                     <Loader2 className="h-10 w-10 text-white animate-spin" />
                   ) : profile?.avatar_url ? (
-                    <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                    <img src={profile.avatar_url} alt={ui.avatarAlt} className="w-full h-full object-cover" />
                   ) : (
                     <User className="h-12 w-12 text-white" strokeWidth={1.5} />
                   )}
@@ -439,7 +511,7 @@ const Profile = () => {
                   )} />
 
                   <CosmicButton type="submit" className="w-full" loading={saving} icon={<Save className="h-4 w-4" strokeWidth={1.5} />}>
-                    {language === 'fr' ? 'Enregistrer le pseudo' : 'Save username'}
+                    {ui.saveUsername}
                   </CosmicButton>
                 </form>
               </Form>
@@ -459,7 +531,7 @@ const Profile = () => {
             <GlowCard className="p-5" hoverable={false}>
               <h2 className="text-sm font-medium text-foreground mb-4 flex items-center gap-2">
                 <Settings className="h-4 w-4 text-primary" strokeWidth={1.5} />
-                {language === 'fr' ? 'Préférences' : 'Preferences'}
+                {ui.preferencesTitle}
               </h2>
 
               {/* Language selector */}
@@ -469,14 +541,14 @@ const Profile = () => {
                   {t.profile.language}
                 </Label>
                 <Select value={language} onValueChange={(val) => handleLanguageChange(val as Language)}>
-                  <SelectTrigger className="cosmic-input mt-2"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="cosmic-input mt-2"><SelectValue placeholder={language.toUpperCase()} /></SelectTrigger>
                   <SelectContent className="bg-card border-border">
-                    <SelectItem value="fr">🇫🇷 Français</SelectItem>
-                    <SelectItem value="en">🇬🇧 English</SelectItem>
+                    <SelectItem value="fr">{languageLabels.fr}</SelectItem>
+                    <SelectItem value="en">{languageLabels.en}</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground mt-1.5">
-                  {language === 'fr' ? 'Sauvegardé automatiquement' : 'Saved automatically'}
+                  {t.common.savedAutomatically}
                 </p>
               </div>
 
@@ -533,37 +605,31 @@ const Profile = () => {
               <details className="group">
                 <summary className="text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors flex items-center gap-1.5">
                   <Info className="h-3.5 w-3.5" strokeWidth={1.5} />
-                  {language === 'fr' ? 'En savoir plus sur tes données' : 'Learn more about your data'}
+                  {ui.privacyTitle}
                 </summary>
                 <div className="mt-3 space-y-2 text-xs">
                   <div className="p-2.5 rounded-lg bg-muted/30 border border-border">
                     <p className="font-medium text-foreground">
-                      {language === 'fr' ? 'Données publiques' : 'Public data'}
+                      {ui.privacyPublicTitle}
                     </p>
                     <p className="text-muted-foreground mt-0.5">
-                      {language === 'fr' 
-                        ? 'Pseudo et avatar visibles sur ton profil public.'
-                        : 'Username and avatar visible on your public profile.'}
+                      {ui.privacyPublicDesc}
                     </p>
                   </div>
                   <div className="p-2.5 rounded-lg bg-muted/30 border border-border">
                     <p className="font-medium text-foreground">
-                      {language === 'fr' ? 'Données de guilde' : 'Guild data'}
+                      {ui.privacyGuildTitle}
                     </p>
                     <p className="text-muted-foreground mt-0.5">
-                      {language === 'fr' 
-                        ? 'Personnages et vœux visibles par ta guilde uniquement.'
-                        : 'Characters and wishes visible to your guild only.'}
+                      {ui.privacyGuildDesc}
                     </p>
                   </div>
                   <div className="p-2.5 rounded-lg bg-muted/30 border border-border">
                     <p className="font-medium text-foreground">
-                      {language === 'fr' ? 'Données privées' : 'Private data'}
+                      {ui.privacyPrivateTitle}
                     </p>
                     <p className="text-muted-foreground mt-0.5">
-                      {language === 'fr' 
-                        ? 'Email et tokens Battle.net jamais partagés.'
-                        : 'Email and Battle.net tokens never shared.'}
+                      {ui.privacyPrivateDesc}
                     </p>
                   </div>
                 </div>
@@ -574,15 +640,13 @@ const Profile = () => {
             <GlowCard className="p-5 border-destructive/30" hoverable={false}>
               <h2 className="text-sm font-medium text-destructive mb-4 flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4" strokeWidth={1.5} />
-                {language === 'fr' ? 'Zone de danger' : 'Danger Zone'}
+                {ui.dangerZoneTitle}
               </h2>
 
               {deletionPending ? (
                 <div className="space-y-3">
                   <p className="text-sm text-muted-foreground">
-                    {language === 'fr' 
-                      ? 'Une demande de suppression est en cours de traitement.'
-                      : 'A deletion request is pending processing.'}
+                    {t.profile.deletion.pending}
                   </p>
                   <Button
                     variant="outline"
@@ -590,7 +654,7 @@ const Profile = () => {
                     onClick={handleCancelDeletion}
                     className="w-full"
                   >
-                    {language === 'fr' ? 'Annuler la demande' : 'Cancel request'}
+                    {t.profile.deletion.cancelRequest}
                   </Button>
                 </div>
               ) : (
@@ -602,31 +666,27 @@ const Profile = () => {
                       className="w-full text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30 whitespace-normal text-left h-auto py-2"
                     >
                       <Trash2 className="h-4 w-4 mr-2 shrink-0" />
-                      <span>{language === 'fr' ? 'Demander la suppression de mon compte' : 'Request account deletion'}</span>
+                      <span>{t.profile.deletion.requestDeletion}</span>
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent className="bg-card border-border">
                     <AlertDialogHeader>
                       <AlertDialogTitle className="text-foreground">
-                        {language === 'fr' ? 'Supprimer ton compte ?' : 'Delete your account?'}
+                        {t.profile.deletion.confirmTitle}
                       </AlertDialogTitle>
                       <AlertDialogDescription className="space-y-3">
                         <p>
-                          {language === 'fr' 
-                            ? 'Cette action est irréversible. Toutes tes données seront définitivement supprimées :'
-                            : 'This action is irreversible. All your data will be permanently deleted:'}
+                          {t.profile.deletion.confirmDescription}
                         </p>
                         <ul className="list-disc list-inside text-sm space-y-1">
-                          <li>{language === 'fr' ? 'Ton profil et avatar' : 'Your profile and avatar'}</li>
-                          <li>{language === 'fr' ? 'Tes personnages WoW' : 'Your WoW characters'}</li>
-                          <li>{language === 'fr' ? 'Tes vœux de classe' : 'Your class wishes'}</li>
-                          <li>{language === 'fr' ? 'Tes messages sur le forum' : 'Your forum posts'}</li>
+                          <li>{t.profile.deletion.dataList.profile}</li>
+                          <li>{t.profile.deletion.dataList.characters}</li>
+                          <li>{t.profile.deletion.dataList.wishes}</li>
+                          <li>{t.profile.deletion.dataList.forumPosts}</li>
                         </ul>
                         <div className="pt-2">
                           <Label htmlFor="confirm-delete" className="text-foreground text-sm">
-                            {language === 'fr' 
-                              ? `Tape "${profile?.username}" pour confirmer`
-                              : `Type "${profile?.username}" to confirm`}
+                            {t.profile.deletion.typeToConfirm.replace('{{username}}', profile?.username || '')}
                           </Label>
                           <Input
                             id="confirm-delete"
@@ -648,7 +708,7 @@ const Profile = () => {
                         disabled={deleteConfirmText !== profile?.username || requestingDeletion}
                       >
                         {requestingDeletion && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                        {language === 'fr' ? 'Confirmer la suppression' : 'Confirm deletion'}
+                        {t.profile.deletion.confirmDeletion}
                       </Button>
                     </AlertDialogFooter>
                   </AlertDialogContent>

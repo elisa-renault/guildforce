@@ -5,7 +5,7 @@ import { ForumCategory } from '@/types/forum';
 import { GlowCard } from '@/components/GlowCard';
 import { MessageSquare, Clock, ChevronRight, FolderOpen, MessageCircle, Lightbulb, HelpCircle, Bug } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { fr, enUS } from 'date-fns/locale';
+import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
 
 interface ForumCategoryListProps {
   categories: ForumCategory[];
@@ -24,7 +24,7 @@ export const ForumCategoryList = forwardRef<HTMLDivElement, ForumCategoryListPro
   ({ categories, basePath = '/forum' }, ref) => {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
-  const locale = language === 'fr' ? fr : enUS;
+  const locale = DATE_LOCALE_BY_LANGUAGE[language];
 
   if (categories.length === 0) {
     return (

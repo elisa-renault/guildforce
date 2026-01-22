@@ -165,7 +165,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
     if (filters.minWishes !== null) {
       pills.push({
         key: 'minWishes',
-        label: `≥${filters.minWishes} ${language === 'fr' ? 'vœux' : 'wishes'}`,
+        label: `≥${filters.minWishes} ${t.auto.components_dashboard_RosterFilters_168}`,
         onRemove: () => updateFilter('minWishes', null),
       });
     }
@@ -258,7 +258,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
               )}
             >
               <Users className="h-4 w-4" />
-              <span>{language === 'fr' ? 'Joueurs' : 'Players'}</span>
+              <span>{t.guild.members}</span>
               {hasPlayersFilters && (
                 <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-xs">
                   {playersFilterCount}
@@ -321,7 +321,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
               )}
             >
               <Hash className="h-4 w-4" />
-              <span>{language === 'fr' ? 'Vœux' : 'Wishes'}</span>
+              <span>{t.dashboard.wishesCount}</span>
               {hasWishesFilters && (
                 <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-xs">
                   {wishesFilterCount}
@@ -481,7 +481,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
               )}
             >
               <Target className="h-4 w-4" />
-              <span>{language === 'fr' ? 'Spécialités' : 'Specs'}</span>
+              <span>{t.wishes.specs}</span>
               {hasSpecsFilters && (
                 <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-xs">
                   {specsFilterCount}
@@ -494,7 +494,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
             <div className="space-y-4">
               {/* Roles */}
               <div>
-                <h4 className="text-sm font-medium mb-2">{language === 'fr' ? 'Rôles' : 'Roles'}</h4>
+                <h4 className="text-sm font-medium mb-2">{t.auto.components_dashboard_RosterFilters_497}</h4>
                 <div className="flex gap-1.5">
                   {(Object.keys(roleConfig) as Role[]).map((role) => {
                     const config = roleConfig[role];
@@ -548,7 +548,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
 
               {/* Classes */}
               <div>
-                <h4 className="text-sm font-medium mb-2">{language === 'fr' ? 'Classes' : 'Classes'}</h4>
+                <h4 className="text-sm font-medium mb-2">{t.auto.components_dashboard_RosterFilters_551}</h4>
                 <div className="flex flex-wrap gap-1 max-h-[200px] overflow-y-auto">
                   {wowClasses.map((cls) => {
                     const isSelected = filters.classFilters.includes(cls.id);
@@ -613,7 +613,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
       {activePills.length > 0 && (
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs text-muted-foreground">
-            {language === 'fr' ? 'Actifs :' : 'Active:'}
+            {t.auto.components_dashboard_RosterFilters_616}
           </span>
           {activePills.map((pill) => (
             <Badge
@@ -633,7 +633,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
             onClick={resetAllFilters}
             className="text-xs text-muted-foreground hover:text-foreground underline"
           >
-            {language === 'fr' ? 'Tout effacer' : 'Clear all'}
+            {t.auto.components_dashboard_RosterFilters_636}
           </button>
         </div>
       )}

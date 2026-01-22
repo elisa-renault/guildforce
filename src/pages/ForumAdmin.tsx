@@ -490,7 +490,7 @@ const ForumAdmin = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30">
                     <div className="flex items-center gap-2 mb-1">
-                      <Badge variant="destructive" className="text-xs">Admin</Badge>
+                      <Badge variant="destructive" className="text-xs">{t.common.admin}</Badge>
                     </div>
                     <p className="text-xs text-muted-foreground">
                       {t.admin.adminRoleDesc}
@@ -603,29 +603,29 @@ const ForumAdmin = () => {
                 name="category-name"
                 value={categoryForm.name}
                 onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
-                placeholder="General Discussion"
+                placeholder={t.auto.pages_ForumAdmin_category_name_placeholder}
                 className="bg-muted/50 border-border"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="category-slug">Slug</Label>
+              <Label htmlFor="category-slug">{t.auto.pages_ForumAdmin_slug_label}</Label>
               <Input
                 id="category-slug"
                 name="category-slug"
                 value={categoryForm.slug}
                 onChange={(e) => setCategoryForm({ ...categoryForm, slug: e.target.value })}
-                placeholder="general"
+                placeholder={t.auto.pages_ForumAdmin_category_slug_placeholder}
                 className="bg-muted/50 border-border"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="category-description">Description</Label>
+              <Label htmlFor="category-description">{t.auto.pages_ForumAdmin_description_label}</Label>
               <Textarea
                 id="category-description"
                 name="category-description"
                 value={categoryForm.description}
                 onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
-                placeholder="Description..."
+                placeholder={t.auto.pages_ForumAdmin_category_description_placeholder}
                 className="bg-muted/50 border-border"
               />
             </div>
@@ -637,7 +637,7 @@ const ForumAdmin = () => {
                   name="category-icon"
                   value={categoryForm.icon}
                   onChange={(e) => setCategoryForm({ ...categoryForm, icon: e.target.value })}
-                  placeholder="💬"
+                  placeholder={t.auto.pages_ForumAdmin_category_icon_placeholder}
                   className="bg-muted/50 border-border"
                 />
               </div>

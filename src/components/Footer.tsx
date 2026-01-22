@@ -26,7 +26,7 @@ export const Footer = () => {
         <div className="hidden md:flex items-center justify-between">
           {/* Group 1: Identité (Branding) */}
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-foreground/80">Guildforce</span>
+            <span className="text-sm font-medium text-foreground/80">{t.auto.components_Footer_brand}</span>
             <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-full bg-primary/15 text-primary border border-primary/25">
               Alpha
             </span>
@@ -91,7 +91,7 @@ export const Footer = () => {
           {/* Row 1: Identité + Support CTA */}
           <div className="flex items-center justify-center gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-foreground/80">Guildforce</span>
+              <span className="text-sm font-medium text-foreground/80">{t.auto.components_Footer_brand}</span>
               <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-full bg-primary/15 text-primary border border-primary/25">
                 Alpha
               </span>

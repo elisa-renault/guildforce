@@ -32,7 +32,7 @@ import {
   Shield,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { fr, enUS } from 'date-fns/locale';
+import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
 
 interface ActivityLogProps {
   guildId: string;
@@ -69,7 +69,111 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
   const [filter, setFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 25;
-  
+  const ui =
+    language === 'fr'
+      ? {
+          title: "Journal d'activite",
+          system: 'Systeme',
+          unknown: 'Inconnu',
+          emptyText: 'Aucune activite recente',
+          entriesText: (count: number) => `Entrees: ${count}`,
+          statusConfirmed: 'Confirme',
+          statusWithdrawn: 'Retire',
+          statusUndecided: 'Indecis',
+          wishCreatedText: 'a ajoute un voeu',
+          wishUpdatedText: 'a modifie un voeu',
+          wishDeletedText: 'a supprime un voeu',
+          memberJoinedText: 'a rejoint la guilde',
+          commitmentChangedText: 'a change son engagement',
+          rosterCreatedText: 'Nouveau roster',
+          rosterUpdatedText: 'Roster mis a jour',
+          rosterDeletedText: 'Roster supprime',
+          permissionsUpdatedText: 'a modifie les permissions',
+          rulesLabel: 'regle(s) active(s)',
+          actionLabels: {
+            wish_validation: 'Validation',
+            wish_created: 'Voeu cree',
+            wish_updated: 'Voeu modifie',
+            wish_deleted: 'Voeu supprime',
+            member_joined: 'Nouveau membre',
+            commitment_changed: 'Engagement',
+            roster_created: 'Roster cree',
+            roster_updated: 'Roster modifie',
+            roster_deleted: 'Roster supprime',
+            permissions_updated: 'Permissions',
+          } as Record<ActionType, string>,
+          filterLabels: {
+            all: 'Tout',
+            wish_created: 'Voeux crees',
+            wish_updated: 'Voeux modifies',
+            wish_deleted: 'Voeux supprimes',
+            wish_validation: 'Validations',
+            member_joined: 'Nouveaux membres',
+            commitment_changed: 'Engagements',
+            roster_created: 'Rosters crees',
+            roster_updated: 'Rosters modifies',
+            roster_deleted: 'Rosters supprimes',
+            permissions_updated: 'Permissions',
+          },
+          permissionLabels: {
+            manage_wishes: 'Voeux',
+            manage_polls: 'Sondages',
+            manage_rosters: 'Rosters',
+            view_activity_log: 'Journal',
+          },
+        }
+      : {
+          title: 'Activity Log',
+          system: 'System',
+          unknown: 'Unknown',
+          emptyText: 'No recent activity',
+          entriesText: (count: number) => `Entries: ${count}`,
+          statusConfirmed: 'Confirmed',
+          statusWithdrawn: 'Withdrawn',
+          statusUndecided: 'Undecided',
+          wishCreatedText: 'added a wish',
+          wishUpdatedText: 'updated a wish',
+          wishDeletedText: 'deleted a wish',
+          memberJoinedText: 'joined the guild',
+          commitmentChangedText: 'changed commitment',
+          rosterCreatedText: 'New roster',
+          rosterUpdatedText: 'Roster updated',
+          rosterDeletedText: 'Roster deleted',
+          permissionsUpdatedText: 'updated permissions',
+          rulesLabel: 'active rule(s)',
+          actionLabels: {
+            wish_validation: 'Validation',
+            wish_created: 'Wish Created',
+            wish_updated: 'Wish Updated',
+            wish_deleted: 'Wish Deleted',
+            member_joined: 'Member Joined',
+            commitment_changed: 'Commitment',
+            roster_created: 'Roster Created',
+            roster_updated: 'Roster Updated',
+            roster_deleted: 'Roster Deleted',
+            permissions_updated: 'Permissions',
+          } as Record<ActionType, string>,
+          filterLabels: {
+            all: 'All',
+            wish_created: 'Wishes created',
+            wish_updated: 'Wishes updated',
+            wish_deleted: 'Wishes deleted',
+            wish_validation: 'Validations',
+            member_joined: 'New members',
+            commitment_changed: 'Commitments',
+            roster_created: 'Rosters created',
+            roster_updated: 'Rosters updated',
+            roster_deleted: 'Rosters deleted',
+            permissions_updated: 'Permissions',
+          },
+          permissionLabels: {
+            manage_wishes: 'Wishes',
+            manage_polls: 'Polls',
+            manage_rosters: 'Rosters',
+            view_activity_log: 'Activity',
+          },
+        };
+
   const actionTypes = filter === 'all' ? undefined : [filter as ActionType];
   const { logs, loading, refetch, totalPages, totalCount } = useActivityLog({ 
     guildId, 
@@ -85,19 +189,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
   };
 
   const getActionLabel = (actionType: ActionType): string => {
-    const labels: Record<ActionType, { en: string; fr: string }> = {
-      wish_validation: { en: 'Validation', fr: 'Validation' },
-      wish_created: { en: 'Wish Created', fr: 'Vœu créé' },
-      wish_updated: { en: 'Wish Updated', fr: 'Vœu modifié' },
-      wish_deleted: { en: 'Wish Deleted', fr: 'Vœu supprimé' },
-      member_joined: { en: 'Member Joined', fr: 'Nouveau membre' },
-      commitment_changed: { en: 'Commitment', fr: 'Engagement' },
-      roster_created: { en: 'Roster Created', fr: 'Roster créé' },
-      roster_updated: { en: 'Roster Updated', fr: 'Roster modifié' },
-      roster_deleted: { en: 'Roster Deleted', fr: 'Roster supprimé' },
-      permissions_updated: { en: 'Permissions', fr: 'Permissions' },
-    };
-    return labels[actionType]?.[language] || actionType;
+    return ui.actionLabels[actionType] || actionType;
   };
 
   const getValidationStatusLabel = (status: string): string => {
@@ -127,11 +219,11 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">
-                {log.user_profile?.username || 'System'}
+                {log.user_profile?.username || ui.system}
               </span>
-              <span className="text-muted-foreground">→</span>
+              <span className="text-muted-foreground">-&gt;</span>
               <span className="font-medium">
-                {log.target_user_profile?.username || 'Unknown'}
+                {log.target_user_profile?.username || ui.unknown}
               </span>
             </div>
             <div className="flex items-center gap-2 text-sm">
@@ -149,7 +241,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
             <div className="flex items-center gap-2 text-xs">
               {getValidationStatusIcon(oldStatus)}
               <span className="text-muted-foreground">{getValidationStatusLabel(oldStatus)}</span>
-              <span className="text-muted-foreground">→</span>
+              <span className="text-muted-foreground">-&gt;</span>
               {getValidationStatusIcon(newStatus)}
               <span className={newStatus === 'approved' ? 'text-emerald-400' : newStatus === 'rejected' ? 'text-red-400' : 'text-amber-400'}>
                 {getValidationStatusLabel(newStatus)}
@@ -167,9 +259,9 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
         return (
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
-              <span className="font-medium">{log.target_user_profile?.username || 'Unknown'}</span>
+              <span className="font-medium">{log.target_user_profile?.username || ui.unknown}</span>
               <span className="text-muted-foreground text-sm">
-                {language === 'fr' ? 'a ajouté un vœu' : 'added a wish'}
+                {ui.wishCreatedText}
               </span>
             </div>
             <div className="flex items-center gap-2 text-sm">
@@ -200,9 +292,9 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
         return (
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
-              <span className="font-medium">{log.target_user_profile?.username || 'Unknown'}</span>
+              <span className="font-medium">{log.target_user_profile?.username || ui.unknown}</span>
               <span className="text-muted-foreground text-sm">
-                {language === 'fr' ? 'a modifié un vœu' : 'updated a wish'}
+                {ui.wishUpdatedText}
               </span>
             </div>
             {classChanged ? (
@@ -212,7 +304,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
                     {oldClassData.name[language]}
                   </Badge>
                 )}
-                <span className="text-muted-foreground">→</span>
+                <span className="text-muted-foreground">-&gt;</span>
                 {newClassData && (
                   <Badge variant="outline" className={`bg-${newClassData.color}/20`}>
                     {newClassData.name[language]}
@@ -245,9 +337,9 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
         return (
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
-              <span className="font-medium">{log.target_user_profile?.username || 'Unknown'}</span>
+              <span className="font-medium">{log.target_user_profile?.username || ui.unknown}</span>
               <span className="text-muted-foreground text-sm">
-                {language === 'fr' ? 'a supprimé un vœu' : 'deleted a wish'}
+                {ui.wishDeletedText}
               </span>
             </div>
             <div className="flex items-center gap-2 text-sm">
@@ -269,9 +361,9 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
       case 'member_joined':
         return (
           <div className="flex items-center gap-2">
-            <span className="font-medium">{log.target_user_profile?.username || 'Unknown'}</span>
+            <span className="font-medium">{log.target_user_profile?.username || ui.unknown}</span>
             <span className="text-muted-foreground text-sm">
-              {language === 'fr' ? 'a rejoint la guilde' : 'joined the guild'}
+              {ui.memberJoinedText}
             </span>
           </div>
         );
@@ -281,9 +373,9 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
         const newStatus = details.new_status as string;
         
         const getStatusLabel = (status: string) => {
-          if (status === 'confirmed') return language === 'fr' ? 'Confirmé' : 'Confirmed';
-          if (status === 'withdrawn') return language === 'fr' ? 'Retrait' : 'Withdrawn';
-          return language === 'fr' ? 'Indécis' : 'Undecided';
+          if (status === 'confirmed') return ui.statusConfirmed;
+          if (status === 'withdrawn') return ui.statusWithdrawn;
+          return ui.statusUndecided;
         };
 
         const getStatusColor = (status: string) => {
@@ -295,14 +387,14 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
         return (
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
-              <span className="font-medium">{log.target_user_profile?.username || 'Unknown'}</span>
+              <span className="font-medium">{log.target_user_profile?.username || ui.unknown}</span>
               <span className="text-muted-foreground text-sm">
-                {language === 'fr' ? 'a changé son engagement' : 'changed commitment'}
+                {ui.commitmentChangedText}
               </span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <span className={`${getStatusColor(oldStatus)} opacity-60`}>{getStatusLabel(oldStatus)}</span>
-              <span className="text-muted-foreground">→</span>
+              <span className="text-muted-foreground">-&gt;</span>
               <span className={getStatusColor(newStatus)}>{getStatusLabel(newStatus)}</span>
             </div>
           </div>
@@ -313,7 +405,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
         return (
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground text-sm">
-              {language === 'fr' ? 'Nouveau roster :' : 'New roster:'}
+              {ui.rosterCreatedText}
             </span>
             <Badge variant="outline">{details.name as string}</Badge>
           </div>
@@ -325,7 +417,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
             {details.old_name !== details.new_name && (
               <div className="flex items-center gap-2">
                 <span className="text-muted-foreground">{details.old_name as string}</span>
-                <span className="text-muted-foreground">→</span>
+                <span className="text-muted-foreground">-&gt;</span>
                 <span className="font-medium">{details.new_name as string}</span>
               </div>
             )}
@@ -333,7 +425,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
               <div className="flex items-center gap-2">
                 <Badge variant="outline">{log.roster?.name || details.new_name as string}</Badge>
                 <span className="text-muted-foreground">
-                  {language === 'fr' ? 'modifié' : 'updated'}
+                  {ui.rosterUpdatedText}
                 </span>
               </div>
             )}
@@ -347,7 +439,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
               {details.name as string}
             </Badge>
             <span className="text-muted-foreground text-sm">
-              {language === 'fr' ? 'supprimé' : 'deleted'}
+              {ui.rosterDeletedText}
             </span>
           </div>
         );
@@ -356,24 +448,17 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
         const changes = details.changes as Record<string, { added: number; removed: number; modified: number }>;
         const totalRules = details.total_rules as number;
         
-        const getPermissionLabel = (type: string) => {
-          const labels: Record<string, { en: string; fr: string }> = {
-            manage_wishes: { en: 'Wishes', fr: 'Vœux' },
-            manage_polls: { en: 'Polls', fr: 'Sondages' },
-            manage_rosters: { en: 'Rosters', fr: 'Rosters' },
-            view_activity_log: { en: 'Activity', fr: 'Journal' },
-          };
-          return labels[type]?.[language] || type;
-        };
+        const getPermissionLabel = (type: string) =>
+          ui.permissionLabels[type as keyof typeof ui.permissionLabels] || type;
 
         const changedTypes = Object.keys(changes || {});
         
         return (
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
-              <span className="font-medium">{log.user_profile?.username || 'System'}</span>
+              <span className="font-medium">{log.user_profile?.username || ui.system}</span>
               <span className="text-muted-foreground text-sm">
-                {language === 'fr' ? 'a modifié les permissions' : 'updated permissions'}
+                {ui.permissionsUpdatedText}
               </span>
             </div>
             {changedTypes.length > 0 && (
@@ -386,7 +471,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
               </div>
             )}
             <span className="text-xs text-muted-foreground">
-              {totalRules} {language === 'fr' ? 'règle(s) active(s)' : 'active rule(s)'}
+              {totalRules} {ui.rulesLabel}
             </span>
           </div>
         );
@@ -397,7 +482,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
     }
   };
 
-  const dateLocale = language === 'fr' ? fr : enUS;
+  const dateLocale = DATE_LOCALE_BY_LANGUAGE[language];
 
   return (
     <div className="flex flex-col h-full">
@@ -406,7 +491,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
         <div className="flex items-center gap-2">
           <History className="h-5 w-5 text-primary" />
           <h3 className="font-semibold">
-            {language === 'fr' ? 'Journal d\'activité' : 'Activity Log'}
+            {ui.title}
           </h3>
         </div>
         <div className="flex items-center gap-2">
@@ -416,37 +501,37 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
             </SelectTrigger>
             <SelectContent className="bg-card border-border">
               <SelectItem value="all">
-                {language === 'fr' ? 'Tout' : 'All'}
+                {ui.filterLabels.all}
               </SelectItem>
               <SelectItem value="wish_created">
-                {language === 'fr' ? 'Vœux créés' : 'Wishes Created'}
+                {ui.filterLabels.wish_created}
               </SelectItem>
               <SelectItem value="wish_updated">
-                {language === 'fr' ? 'Vœux modifiés' : 'Wishes Updated'}
+                {ui.filterLabels.wish_updated}
               </SelectItem>
               <SelectItem value="wish_deleted">
-                {language === 'fr' ? 'Vœux supprimés' : 'Wishes Deleted'}
+                {ui.filterLabels.wish_deleted}
               </SelectItem>
               <SelectItem value="wish_validation">
-                {language === 'fr' ? 'Validations' : 'Validations'}
+                {ui.filterLabels.wish_validation}
               </SelectItem>
               <SelectItem value="member_joined">
-                {language === 'fr' ? 'Membres' : 'Members'}
+                {ui.filterLabels.member_joined}
               </SelectItem>
               <SelectItem value="commitment_changed">
-                {language === 'fr' ? 'Engagements' : 'Commitments'}
+                {ui.filterLabels.commitment_changed}
               </SelectItem>
               <SelectItem value="roster_created">
-                {language === 'fr' ? 'Rosters créés' : 'Rosters Created'}
+                {ui.filterLabels.roster_created}
               </SelectItem>
               <SelectItem value="roster_updated">
-                {language === 'fr' ? 'Rosters modifiés' : 'Rosters Updated'}
+                {ui.filterLabels.roster_updated}
               </SelectItem>
               <SelectItem value="roster_deleted">
-                {language === 'fr' ? 'Rosters supprimés' : 'Rosters Deleted'}
+                {ui.filterLabels.roster_deleted}
               </SelectItem>
               <SelectItem value="permissions_updated">
-                {language === 'fr' ? 'Permissions' : 'Permissions'}
+                {ui.filterLabels.permissions_updated}
               </SelectItem>
             </SelectContent>
           </Select>
@@ -478,7 +563,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
         ) : logs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
             <History className="h-12 w-12 mb-4 opacity-50" />
-            <p>{language === 'fr' ? 'Aucune activité' : 'No activity yet'}</p>
+            <p>{ui.emptyText}</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -545,9 +630,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
       {totalPages > 1 && (
         <div className="flex items-center justify-between pt-4 border-t border-border mt-4">
           <span className="text-sm text-muted-foreground">
-            {language === 'fr' 
-              ? `${totalCount} entrées`
-              : `${totalCount} entries`}
+            {ui.entriesText(totalCount)}
           </span>
           <div className="flex items-center gap-2">
             <Button

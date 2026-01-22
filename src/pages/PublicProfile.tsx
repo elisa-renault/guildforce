@@ -8,7 +8,7 @@ import { CosmicButton } from '@/components/CosmicButton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, ArrowLeft, Loader2, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
-import { fr, enUS } from 'date-fns/locale';
+import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
 import { useBattletagVisibility } from '@/hooks/useBattletagVisibility';
 
 interface PublicProfileData {
@@ -85,9 +85,7 @@ const PublicProfile = () => {
             {t.errors.notFound}
           </h1>
           <p className="text-muted-foreground text-sm mb-6">
-            {language === 'fr' 
-              ? `L'utilisateur "${username}" n'existe pas.`
-              : `The user "${username}" does not exist.`}
+            {t.auto.pages_PublicProfile_user_not_found.replace('{{username}}', username ?? '')}
           </p>
           <CosmicButton onClick={() => navigate(-1)} icon={<ArrowLeft className="h-4 w-4" />}>
             {t.common.back}
@@ -98,7 +96,7 @@ const PublicProfile = () => {
   }
 
   const memberSince = format(new Date(profile.created_at), 'MMMM yyyy', { 
-    locale: language === 'fr' ? fr : enUS 
+    locale: DATE_LOCALE_BY_LANGUAGE[language] 
   });
 
   return (
@@ -128,7 +126,7 @@ const PublicProfile = () => {
             <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground border-t border-border pt-4">
               <Calendar className="h-4 w-4" />
               <span>
-                {language === 'fr' ? 'Membre depuis' : 'Member since'} {memberSince}
+                {t.auto.pages_PublicProfile_131} {memberSince}
               </span>
             </div>
           </GlowCard>

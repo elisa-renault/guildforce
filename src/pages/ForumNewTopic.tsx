@@ -31,10 +31,10 @@ const ForumNewTopic = () => {
     setCreating(true);
     try {
       const topic = await createTopic(category.id, title.trim(), content.trim());
-      toast.success(language === 'fr' ? 'Sujet créé !' : 'Topic created!');
+      toast.success(t.auto.pages_ForumNewTopic_34);
       navigate(`/forum/topic/${topic.id}`);
     } catch (error) {
-      toast.error(language === 'fr' ? 'Erreur lors de la création' : 'Error creating topic');
+      toast.error(t.auto.pages_ForumNewTopic_37);
     } finally {
       setCreating(false);
     }
@@ -47,10 +47,10 @@ const ForumNewTopic = () => {
         <CosmicBackground />
         <div className="text-center">
           <p className="text-muted-foreground mb-4">
-            {language === 'fr' ? 'Connectez-vous pour créer un sujet' : 'Log in to create a topic'}
+            {t.auto.pages_ForumNewTopic_50}
           </p>
           <CosmicButton onClick={() => navigate('/auth')}>
-            {language === 'fr' ? 'Se connecter' : 'Log in'}
+            {t.auto.pages_ForumNewTopic_53}
           </CosmicButton>
         </div>
       </div>
@@ -72,10 +72,10 @@ const ForumNewTopic = () => {
         <CosmicBackground />
         <div className="text-center">
           <p className="text-muted-foreground mb-4">
-            {language === 'fr' ? 'Catégorie non trouvée' : 'Category not found'}
+            {t.auto.pages_ForumNewTopic_75}
           </p>
           <CosmicButton onClick={() => navigate('/forum')}>
-            {language === 'fr' ? 'Retour au forum' : 'Back to forum'}
+            {t.auto.pages_ForumNewTopic_78}
           </CosmicButton>
         </div>
       </div>
@@ -94,7 +94,7 @@ const ForumNewTopic = () => {
           items={[
             { label: 'Forum', href: '/forum' },
             { label: categoryName, href: `/forum/category/${categorySlug}` },
-            { label: language === 'fr' ? 'Nouveau sujet' : 'New topic' },
+            { label: t.auto.pages_ForumNewTopic_97 },
           ]}
           className="mb-4"
         />
@@ -109,10 +109,10 @@ const ForumNewTopic = () => {
           </button>
           <div>
             <h1 className="font-display text-2xl text-foreground">
-              {language === 'fr' ? 'Nouveau sujet' : 'New topic'}
+              {t.auto.pages_ForumNewTopic_112}
             </h1>
             <p className="text-sm text-muted-foreground">
-              {language === 'fr' ? `Dans ${categoryName}` : `In ${categoryName}`}
+              {t.auto.pages_ForumNewTopic_115.replace('{{categoryName}}', categoryName)}
             </p>
           </div>
         </div>
@@ -121,12 +121,12 @@ const ForumNewTopic = () => {
         <div className="space-y-6 bg-card/50 border border-border/50 rounded-xl p-6">
           <div>
             <label htmlFor="topic-title" className="block text-sm font-medium text-foreground mb-2">
-              {language === 'fr' ? 'Titre' : 'Title'}
+              {t.auto.pages_ForumNewTopic_124}
             </label>
             <Input
               id="topic-title"
               name="topic-title"
-              placeholder={language === 'fr' ? 'Titre du sujet' : 'Topic title'}
+              placeholder={t.auto.pages_ForumNewTopic_129}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="text-lg"
@@ -135,12 +135,12 @@ const ForumNewTopic = () => {
 
           <div>
             <label htmlFor="topic-content" className="block text-sm font-medium text-foreground mb-2">
-              {language === 'fr' ? 'Contenu' : 'Content'}
+              {t.auto.pages_ForumNewTopic_138}
             </label>
             <MarkdownEditor
               value={content}
               onChange={setContent}
-              placeholder={language === 'fr' ? 'Contenu de votre message...' : 'Your message content...'}
+              placeholder={t.auto.pages_ForumNewTopic_143}
               minHeight="300px"
             />
           </div>
@@ -157,7 +157,7 @@ const ForumNewTopic = () => {
               disabled={!title.trim() || !content.trim() || creating}
               loading={creating}
             >
-              {t.forum.createTopic || (language === 'fr' ? 'Créer le sujet' : 'Create topic')}
+              {t.forum.createTopic || (t.auto.pages_ForumNewTopic_160)}
             </CosmicButton>
           </div>
         </div>
