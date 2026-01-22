@@ -16,10 +16,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { GlowCard } from '@/components/GlowCard';
 import { StarRating } from '@/components/ui/star-rating';
+import { Slider } from '@/components/ui/slider';
 import { RankingInput } from './RankingInput';
 import { AlertTriangle, Lock, GitBranch, X } from 'lucide-react';
 import { OTHER_OPTION_VALUE } from '@/types/poll';
 import type { PollFormData, QuestionFormData, GuildPollQuestion, ResponseValue, QuestionCondition } from '@/types/poll';
+import { clampScaleValue, formatScaleValue, getScaleConfig, roundToStep } from '@/lib/pollScale';
 
 interface PollPreviewDialogProps {
   open: boolean;
@@ -118,7 +120,7 @@ const evaluateCondition = (
     const numericValue = sourceResponse.value;
     const threshold = parseFloat(condition.values[0]);
     
-    if (isNaN(threshold) || numericValue === 0) return false;
+    if (isNaN(threshold)) return false;
 
     switch (condition.operator) {
       case 'equals':
@@ -205,7 +207,7 @@ export const PollPreviewDialog = ({
           initial[q.id] = { type: 'ranking', values: [...q.options] };
           break;
         case 'scale':
-          initial[q.id] = { type: 'scale', value: 0 };
+          initial[q.id] = { type: 'scale', value: q.scale_config?.min ?? 0 };
           break;
       }
     });
@@ -244,9 +246,9 @@ export const PollPreviewDialog = ({
           case 'ranking':
             initial[q.id] = { type: 'ranking', values: [...q.options] };
             break;
-          case 'scale':
-            initial[q.id] = { type: 'scale', value: 0 };
-            break;
+        case 'scale':
+          initial[q.id] = { type: 'scale', value: q.scale_config?.min ?? 0 };
+          break;
         }
       });
       setResponses(initial);
@@ -560,19 +562,61 @@ export const PollPreviewDialog = ({
                             </div>
                           ) : null}
                           <div className="flex flex-col items-center gap-2">
-                            <StarRating
-                              value={(responses[question.id] as { type: 'scale'; value: number })?.value ?? 0}
-                              onChange={(value) => updateResponse(question.id, { type: 'scale', value })}
-                              max={question.scale_config?.max ?? 10}
-                              allowHalf={false}
-                              size="md"
-                            />
-                            <div className="text-center">
-                              <span className="text-lg font-semibold text-primary">
-                                {(responses[question.id] as { type: 'scale'; value: number })?.value ?? 0}
-                              </span>
-                              <span className="text-muted-foreground"> / {question.scale_config?.max ?? 10}</span>
-                            </div>
+                            {(() => {
+                              const scaleConfig = getScaleConfig(question.scale_config);
+                              const responseValue = (responses[question.id] as { type: 'scale'; value: number })?.value ?? scaleConfig.min;
+                              const clampedValue = clampScaleValue(responseValue, scaleConfig.min, scaleConfig.max);
+                              const roundedValue = roundToStep(clampedValue, scaleConfig.step, scaleConfig.min);
+                              const formattedValue = formatScaleValue(roundedValue, scaleConfig.step);
+                              const formattedMax = formatScaleValue(scaleConfig.max, scaleConfig.step);
+                              const maxStars = Math.max(1, Math.round(scaleConfig.max - scaleConfig.min));
+                              const starValue = clampScaleValue(roundedValue - scaleConfig.min, 0, maxStars);
+                              const allowHalf = scaleConfig.step <= 0.5;
+
+                              return (
+                                <>
+                                  {scaleConfig.display === 'stars' ? (
+                                    <StarRating
+                                      value={starValue}
+                                      onChange={(value) => {
+                                        const next = clampScaleValue(
+                                          roundToStep(scaleConfig.min + value, scaleConfig.step, scaleConfig.min),
+                                          scaleConfig.min,
+                                          scaleConfig.max
+                                        );
+                                        updateResponse(question.id, { type: 'scale', value: next });
+                                      }}
+                                      max={maxStars}
+                                      allowHalf={allowHalf}
+                                      size="md"
+                                    />
+                                  ) : (
+                                    <div className="w-full max-w-md">
+                                      <Slider
+                                        min={scaleConfig.min}
+                                        max={scaleConfig.max}
+                                        step={scaleConfig.step}
+                                        value={[roundedValue]}
+                                        onValueChange={([value]) => {
+                                          const next = clampScaleValue(
+                                            roundToStep(value, scaleConfig.step, scaleConfig.min),
+                                            scaleConfig.min,
+                                            scaleConfig.max
+                                          );
+                                          updateResponse(question.id, { type: 'scale', value: next });
+                                        }}
+                                      />
+                                    </div>
+                                  )}
+                                  <div className="text-center">
+                                    <span className="text-lg font-semibold text-primary">
+                                      {formattedValue}
+                                    </span>
+                                    <span className="text-muted-foreground"> / {formattedMax}</span>
+                                  </div>
+                                </>
+                              );
+                            })()}
                           </div>
                         </div>
                       )}

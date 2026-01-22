@@ -10,7 +10,7 @@ import type { QuestionCondition, ConditionOperator } from '@/types/poll';
 interface QuestionConditionEditorProps {
   condition: QuestionCondition | null | undefined;
   onChange: (condition: QuestionCondition | null) => void;
-  previousQuestions: { id: string; text: string; options: string[]; type: string; scaleConfig?: { min: number; max: number } | null }[];
+  previousQuestions: { id: string; text: string; options: string[]; type: string; scaleConfig?: { min: number; max: number; step?: number } | null }[];
 }
 
 // Helper to determine if a question type supports conditions
@@ -130,12 +130,16 @@ export const QuestionConditionEditor = ({
 
   // Get scale/rating range for numeric input hint
   const getNumericRange = () => {
-    if (!selectedQuestion) return { min: 1, max: 10 };
-    if (selectedQuestion.type === 'rating') return { min: 1, max: 5 };
+    if (!selectedQuestion) return { min: 0, max: 10, step: 1 };
+    if (selectedQuestion.type === 'rating') return { min: 0, max: 5, step: 0.5 };
     if (selectedQuestion.scaleConfig) {
-      return { min: selectedQuestion.scaleConfig.min, max: selectedQuestion.scaleConfig.max };
+      return { 
+        min: selectedQuestion.scaleConfig.min, 
+        max: selectedQuestion.scaleConfig.max, 
+        step: selectedQuestion.scaleConfig.step ?? 1 
+      };
     }
-    return { min: 1, max: 10 };
+    return { min: 0, max: 10, step: 1 };
   };
 
   const numericRange = getNumericRange();
@@ -240,6 +244,7 @@ export const QuestionConditionEditor = ({
             type="number"
             min={numericRange.min}
             max={numericRange.max}
+            step={numericRange.step}
             value={condition.values[0] || ''}
             onChange={(e) => handleNumericValueChange(e.target.value)}
             placeholder={`${numericRange.min} - ${numericRange.max}`}
