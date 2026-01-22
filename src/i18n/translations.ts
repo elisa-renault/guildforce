@@ -3333,6 +3333,7 @@ export const translations: Record<Language, Translations> = {
       pages_GuildPolls_211: 'Aucun sondage clôturé',
       pages_GuildPolls_89: 'Sondage dupliqué en brouillon',
       pages_Overview_243: 'Mode lecture admin',
+      pages_Overview_more_wishes: '+{{count}} autres voeux',
       pages_Profile_149: 'Demande enregistrée',
       pages_Profile_150: 'Ta demande de suppression a été enregistrée. Un administrateur la traitera sous 30 jours.',
       pages_Profile_174: 'Demande annulée',
