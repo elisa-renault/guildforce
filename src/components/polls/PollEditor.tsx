@@ -163,6 +163,7 @@ const SortableSectionHeader = ({
             value={section.title}
             onChange={(e) => onChange({ ...section, title: e.target.value })}
             placeholder={t.auto.components_polls_PollEditor_146}
+            autoResize
             className="bg-background font-medium resize-y min-h-9 py-2"
             rows={1}
           />
@@ -170,6 +171,7 @@ const SortableSectionHeader = ({
             value={section.description}
             onChange={(e) => onChange({ ...section, description: e.target.value })}
             placeholder={t.auto.components_polls_PollEditor_152}
+            autoResize
             className="bg-background resize-y text-sm"
             rows={2}
           />
@@ -619,6 +621,7 @@ export const PollEditor = ({
               value={formData.description}
               onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
               placeholder={t.auto.components_polls_PollEditor_552}
+              autoResize
               className="bg-background resize-none"
               rows={3}
             />
