@@ -417,9 +417,9 @@ const GuildPollNew = () => {
         />
       )}
 
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <Breadcrumbs items={breadcrumbs} className="mb-4" />
-        <h1 className="text-2xl font-bold mb-6">
+      <div className="container mx-auto px-1 py-5 sm:py-8 max-w-4xl">
+        <Breadcrumbs items={breadcrumbs} className="mb-4 px-8" />
+        <h1 className="text-2xl font-bold mb-6 px-8">
           {existingPoll ? t.polls?.edit : t.polls?.new}
         </h1>
 

@@ -3,11 +3,13 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { GripVertical, Plus, Trash2, X, ArrowUp, ArrowDown } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { AlignLeft, Calendar, CalendarClock, CheckSquare, Clock, GripHorizontal, ListOrdered, MessageSquare, SlidersHorizontal, Star, CircleDot, Plus, Trash2, X, ArrowUp, ArrowDown } from 'lucide-react';
 import { QuestionConditionEditor } from './QuestionConditionEditor';
 import type { QuestionFormData, PollQuestionType, ScaleConfig, QuestionCondition } from '@/types/poll';
 
@@ -20,17 +22,20 @@ interface SortableQuestionProps {
   compact?: boolean;
   id: string;
   previousQuestions?: { id: string; text: string; options: string[]; type: string; scaleConfig?: { min: number; max: number; step?: number } | null }[];
+  isActive?: boolean;
+  onActivate?: () => void;
 }
 
 export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps>(({
   question,
-  index,
   onChange,
   onRemove,
   canRemove,
   compact = false,
   id,
   previousQuestions = [],
+  isActive = false,
+  onActivate,
 }, outerRef) => {
   const { language, t } = useLanguage();
 
@@ -51,16 +56,16 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
     zIndex: isDragging ? 50 : undefined,
   };
 
-  const questionTypes: { value: PollQuestionType; label: string }[] = [
-    { value: 'single_choice', label: t.auto.components_polls_SortableQuestion_55 },
-    { value: 'multiple_choice', label: t.auto.components_polls_SortableQuestion_56 },
-    { value: 'text', label: t.auto.components_polls_SortableQuestion_57 },
-    { value: 'rating', label: t.auto.components_polls_SortableQuestion_58 },
-    { value: 'date', label: t.auto.components_polls_SortableQuestion_59 },
-    { value: 'time', label: t.auto.components_polls_SortableQuestion_60 },
-    { value: 'datetime', label: t.auto.components_polls_SortableQuestion_61 },
-    { value: 'ranking', label: t.auto.components_polls_SortableQuestion_62 },
-    { value: 'scale', label: t.auto.components_polls_SortableQuestion_63 },
+  const questionTypes: { value: PollQuestionType; label: string; Icon: typeof AlignLeft }[] = [
+    { value: 'single_choice', label: t.auto.components_polls_SortableQuestion_55, Icon: CircleDot },
+    { value: 'multiple_choice', label: t.auto.components_polls_SortableQuestion_56, Icon: CheckSquare },
+    { value: 'text', label: t.auto.components_polls_SortableQuestion_57, Icon: AlignLeft },
+    { value: 'rating', label: t.auto.components_polls_SortableQuestion_58, Icon: Star },
+    { value: 'scale', label: t.auto.components_polls_SortableQuestion_63, Icon: SlidersHorizontal },
+    { value: 'ranking', label: t.auto.components_polls_SortableQuestion_62, Icon: ListOrdered },
+    { value: 'date', label: t.auto.components_polls_SortableQuestion_59, Icon: Calendar },
+    { value: 'time', label: t.auto.components_polls_SortableQuestion_60, Icon: Clock },
+    { value: 'datetime', label: t.auto.components_polls_SortableQuestion_61, Icon: CalendarClock },
   ];
 
   const needsOptions = question.question_type === 'single_choice' || 
@@ -72,6 +77,23 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
   // "Other" option is only for single/multiple choice (not ranking)
   const canHaveOther = question.question_type === 'single_choice' || 
                        question.question_type === 'multiple_choice';
+
+  const typeLabel = questionTypes.find((type) => type.value === question.question_type)?.label ?? question.question_type;
+  const optionPreview = question.options.filter((option) => option.trim()).slice(0, 3);
+  const optionSummaryText = optionPreview.length > 0
+    ? optionPreview.join(' / ')
+    : t.auto.components_polls_SortableQuestion_193;
+  const scaleMin = question.scale_config?.min ?? 0;
+  const scaleMax = question.scale_config?.max ?? 10;
+  const previewText = needsOptions
+    ? optionSummaryText
+    : question.question_type === 'text'
+      ? (t.polls?.textResponsePlaceholder ?? 'Your answer...')
+      : question.question_type === 'scale'
+        ? `${scaleMin} to ${scaleMax}`
+        : question.question_type === 'rating'
+          ? (t.polls?.scaleDisplayStars ?? 'Stars')
+          : typeLabel;
 
   const handleAddOption = () => {
     onChange({
@@ -145,66 +167,111 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
     <div 
       ref={setNodeRef} 
       style={style}
-      className={`border border-border rounded-lg p-4 ${compact ? 'bg-background/50' : 'bg-card/50'}`}
+      className={`border rounded-lg p-2 sm:p-4 transition-[transform,border-color,box-shadow] duration-150 ease-out ${
+        compact ? 'bg-background/50' : 'bg-card/50'
+      } ${isActive ? 'border-primary/40 shadow-sm' : 'border-border'} ${
+        isDragging ? 'h-2 p-0 border-transparent bg-transparent overflow-hidden shadow-none' : ''
+      }`}
+      onClick={() => onActivate?.()}
+      role={isActive ? undefined : 'button'}
+      tabIndex={isActive ? -1 : 0}
+      onKeyDown={(event) => {
+        if (!isActive && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault();
+          onActivate?.();
+        }
+      }}
     >
-      <div className="flex items-start gap-3">
+      <div className="space-y-2 sm:space-y-3">
         <div 
-          className="flex items-center gap-2 pt-2 text-muted-foreground cursor-grab active:cursor-grabbing"
+          className="flex justify-center text-muted-foreground cursor-grab active:cursor-grabbing"
           {...attributes}
           {...listeners}
         >
-          <GripVertical className="h-5 w-5" />
-          <span className="text-sm font-medium">{index + 1}.</span>
+          <GripHorizontal className="h-5 w-5" />
         </div>
 
-        <div className="flex-1 space-y-4">
-          <div className="flex items-start gap-3">
+        <div className="space-y-2 sm:space-y-3">
+          <div className="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:items-start">
             <div className="flex-1">
-              <Input
-                value={question.question_text}
-                onChange={(e) => onChange({ ...question, question_text: e.target.value })}
-                placeholder={t.auto.components_polls_SortableQuestion_155}
-                className="bg-background"
-              />
+              {isActive ? (
+                <Textarea
+                  value={question.question_text}
+                  onChange={(e) => onChange({ ...question, question_text: e.target.value })}
+                  placeholder={t.auto.components_polls_SortableQuestion_155}
+                  className="bg-background resize-y min-h-9 py-2"
+                  rows={1}
+                  onFocus={() => onActivate?.()}
+                />
+              ) : (
+                <div className="min-h-[38px] rounded-md border border-transparent bg-background/50 px-3 py-2 text-sm text-foreground">
+                  {question.question_text.trim() || t.auto.components_polls_SortableQuestion_155}
+                </div>
+              )}
             </div>
 
-            <Select
-              value={question.question_type}
-              onValueChange={handleTypeChange}
-            >
-              <SelectTrigger className="w-[180px] bg-background">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {questionTypes.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
+              {isActive ? (
+                <Select
+                  value={question.question_type}
+                  onValueChange={handleTypeChange}
+                >
+                  <SelectTrigger className="w-full sm:w-[200px] bg-background">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {questionTypes.map((type) => (
+                      <SelectItem key={type.value} value={type.value} className="pl-3 [&>span:first-child]:hidden">
+                    <span className="flex items-center gap-2">
+                      <type.Icon className="h-4 w-4 text-muted-foreground" />
+                      {type.label}
+                    </span>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+              ) : (
+                <Badge variant="secondary">{typeLabel}</Badge>
+              )}
 
-            {canRemove && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onRemove}
-                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
+              {canRemove && isActive && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onRemove}
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
 
-          {needsOptions && (
-            <div className="space-y-2 pl-4">
+          {!isActive && (
+            <div className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
+              <span className="truncate">{previewText}</span>
+              {question.is_required && (
+                <Badge variant="outline">
+                  {t.auto.components_polls_SortableQuestion_308}
+                </Badge>
+              )}
+              {question.condition && (
+                <Badge variant="outline">
+                  {t.polls?.conditionalBadge ?? 'Conditional'}
+                </Badge>
+              )}
+            </div>
+          )}
+
+          {isActive && needsOptions && (
+            <div className="space-y-1.5 sm:space-y-2">
               <Label className="text-xs text-muted-foreground">
                 {question.question_type === 'ranking' 
                   ? (t.auto.components_polls_SortableQuestion_192)
                   : (t.auto.components_polls_SortableQuestion_193)}
               </Label>
               {question.options.map((option, optionIndex) => (
-                <div key={optionIndex} className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <div key={optionIndex} className="flex flex-col gap-1.5 sm:flex-row sm:items-center">
                   <div className="flex items-center gap-2 sm:flex-1">
                     <div className="w-5 h-5 rounded-full border border-primary/30 flex items-center justify-center text-xs text-muted-foreground">
                       {String.fromCharCode(65 + optionIndex)}
@@ -276,8 +343,8 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
             </div>
           )}
 
-          {needsScaleConfig && (
-            <div className="space-y-3 pl-4">
+          {isActive && needsScaleConfig && (
+            <div className="space-y-2 sm:space-y-3">
               <Label className="text-xs text-muted-foreground">
                 {t.auto.components_polls_SortableQuestion_247}
               </Label>
@@ -296,7 +363,7 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                 <div className="space-y-1">
                   <Label className="text-xs">{t.auto.components_polls_SortableQuestion_min_label}</Label>
                   <Input
@@ -337,7 +404,7 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
                 <div className="space-y-1">
                   <Label className="text-xs">{t.auto.components_polls_SortableQuestion_280}</Label>
                   <Input
@@ -360,19 +427,21 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
             </div>
           )}
 
-          <div className="flex items-center gap-2">
-            <Switch
-              id={`required-${id}`}
-              checked={question.is_required}
-              onCheckedChange={(checked) => onChange({ ...question, is_required: checked })}
-            />
-            <Label htmlFor={`required-${id}`} className="text-sm text-muted-foreground cursor-pointer">
-              {t.auto.components_polls_SortableQuestion_308}
-            </Label>
-          </div>
+          {isActive && (
+            <div className="flex items-center gap-2">
+              <Switch
+                id={`required-${id}`}
+                checked={question.is_required}
+                onCheckedChange={(checked) => onChange({ ...question, is_required: checked })}
+              />
+              <Label htmlFor={`required-${id}`} className="text-sm text-muted-foreground cursor-pointer">
+                {t.auto.components_polls_SortableQuestion_308}
+              </Label>
+            </div>
+          )}
 
           {/* Conditional question editor */}
-          {previousQuestions.length > 0 && (
+          {isActive && previousQuestions.length > 0 && (
             <QuestionConditionEditor
               condition={question.condition}
               onChange={handleConditionChange}
