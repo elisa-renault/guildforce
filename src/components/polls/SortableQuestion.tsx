@@ -199,6 +199,7 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
                   value={question.question_text}
                   onChange={(e) => onChange({ ...question, question_text: e.target.value })}
                   placeholder={t.auto.components_polls_SortableQuestion_155}
+                  autoResize
                   className="bg-background resize-y min-h-9 py-2"
                   rows={1}
                   onFocus={() => onActivate?.()}

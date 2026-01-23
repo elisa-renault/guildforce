@@ -77,6 +77,7 @@ export const PollSectionEditor = ({
                   value={section.description}
                   onChange={(e) => onChange({ ...section, description: e.target.value })}
                   placeholder={t.polls.sectionDescription}
+                  autoResize
                   className="bg-background resize-none text-sm"
                   rows={2}
                 />
