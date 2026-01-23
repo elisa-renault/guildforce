@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { GlowCard } from '@/components/GlowCard';
 import { SortableQuestion } from './SortableQuestion';
 import { PollPreviewDialog } from './PollPreviewDialog';
-import { Plus, Save, Play, Loader2, Layers, GripVertical, Trash2, ChevronUp, ChevronDown, Eye } from 'lucide-react';
+import { Plus, Save, Play, Loader2, Layers, GripHorizontal, Trash2, ChevronUp, ChevronDown, Eye } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   DndContext,
@@ -128,47 +128,51 @@ const SortableSectionHeader = ({
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="mb-2">
-      <div className="flex items-start gap-3 p-4 bg-primary/10 rounded-lg border border-primary/30">
-        <div 
-          className="flex items-center gap-2 pt-2 text-muted-foreground cursor-grab active:cursor-grabbing"
-          {...attributes}
-          {...listeners}
-        >
-          <GripVertical className="h-5 w-5" />
-          <span className="text-sm font-medium text-primary">{t.auto.components_polls_PollEditor_section_label.replace('{{index}}', String(sectionIndex + 1))}</span>
+    <div ref={setNodeRef} style={style} className="mb-1 sm:mb-2 transition-transform duration-150 ease-out">
+      <div className="p-2 sm:p-4 bg-primary/10 rounded-lg border border-primary/30">
+        <div className="flex items-center justify-between gap-2">
+          <div 
+            className="flex items-center gap-2 text-muted-foreground cursor-grab active:cursor-grabbing"
+            {...attributes}
+            {...listeners}
+          >
+            <GripHorizontal className="h-5 w-5" />
+            <span className="text-sm font-medium text-primary">
+              {t.auto.components_polls_PollEditor_section_label.replace('{{index}}', String(sectionIndex + 1))}
+            </span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onToggle}>
+              {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
+            {canRemove && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onRemove}
+                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
 
-        <div className="flex-1 space-y-2">
-          <Input
+        <div className="mt-2 space-y-2">
+          <Textarea
             value={section.title}
             onChange={(e) => onChange({ ...section, title: e.target.value })}
             placeholder={t.auto.components_polls_PollEditor_146}
-            className="bg-background font-medium"
+            className="bg-background font-medium resize-y min-h-9 py-2"
+            rows={1}
           />
           <Textarea
             value={section.description}
             onChange={(e) => onChange({ ...section, description: e.target.value })}
             placeholder={t.auto.components_polls_PollEditor_152}
-            className="bg-background resize-none text-sm"
+            className="bg-background resize-y text-sm"
             rows={2}
           />
-        </div>
-
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onToggle}>
-            {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-          </Button>
-          {canRemove && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onRemove}
-              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
         </div>
       </div>
     </div>
@@ -190,6 +194,7 @@ export const PollEditor = ({
 }: PollEditorProps) => {
   const { language, t } = useLanguage();
   const [openSections, setOpenSections] = useState<Record<number, boolean>>({});
+  const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const [overId, setOverId] = useState<UniqueIdentifier | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -241,6 +246,24 @@ export const PollEditor = ({
     setOpenSections(openState);
   }, [initialData]);
 
+  useEffect(() => {
+    const ids = [
+      ...formData.questions.map((_, i) => `general-q-${i}`),
+      ...formData.sections.flatMap((s, si) => s.questions.map((_, qi) => `section-${si}-q-${qi}`)),
+    ];
+
+    if (ids.length === 0) {
+      if (activeQuestionId !== null) {
+        setActiveQuestionId(null);
+      }
+      return;
+    }
+
+    if (!activeQuestionId || !ids.includes(activeQuestionId)) {
+      setActiveQuestionId(ids[0]);
+    }
+  }, [formData.questions, formData.sections, activeQuestionId]);
+
   // Only initialize access rules once on mount or when they actually change
   const initialAccessRulesRef = useRef<ResultsAccessRule[] | null>(null);
   useEffect(() => {
@@ -277,10 +300,12 @@ export const PollEditor = ({
 
   // Questions without section
   const handleAddQuestion = () => {
+    const newIndex = formData.questions.length;
     setFormData((prev) => ({
       ...prev,
       questions: [...prev.questions, { ...defaultQuestion }],
     }));
+    setActiveQuestionId(`general-q-${newIndex}`);
   };
 
   const handleQuestionChange = (index: number, question: QuestionFormData) => {
@@ -295,6 +320,9 @@ export const PollEditor = ({
       ...prev,
       questions: prev.questions.filter((_, i) => i !== index),
     }));
+    if (activeQuestionId === `general-q-${index}`) {
+      setActiveQuestionId(null);
+    }
   };
 
   // Sections
@@ -305,6 +333,7 @@ export const PollEditor = ({
       sections: [...prev.sections, { ...defaultSection }],
     }));
     setOpenSections(prev => ({ ...prev, [newIndex]: true }));
+    setActiveQuestionId(`section-${newIndex}-q-0`);
   };
 
   const handleSectionChange = (index: number, section: SectionFormData) => {
@@ -319,6 +348,7 @@ export const PollEditor = ({
       ...prev,
       sections: prev.sections.filter((_, i) => i !== index),
     }));
+    setActiveQuestionId(null);
   };
 
   const handleSectionQuestionChange = (sectionIndex: number, qIndex: number, question: QuestionFormData) => {
@@ -341,9 +371,13 @@ export const PollEditor = ({
           : s
       ),
     }));
+    if (activeQuestionId === `section-${sectionIndex}-q-${qIndex}`) {
+      setActiveQuestionId(null);
+    }
   };
 
   const handleAddSectionQuestion = (sectionIndex: number) => {
+    const newIndex = formData.sections[sectionIndex]?.questions.length ?? 0;
     setFormData((prev) => ({
       ...prev,
       sections: prev.sections.map((s, i) => 
@@ -352,12 +386,17 @@ export const PollEditor = ({
           : s
       ),
     }));
+    setActiveQuestionId(`section-${sectionIndex}-q-${newIndex}`);
   };
 
   // Unified drag handlers
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id);
     setOverId(null);
+    const info = parseQuestionId(event.active.id.toString());
+    if (info) {
+      setActiveQuestionId(event.active.id.toString());
+    }
   };
 
   const handleDragOver = (event: DragOverEvent) => {
@@ -383,6 +422,7 @@ export const PollEditor = ({
         ...prev,
         sections: arrayMove(prev.sections, oldIndex, newIndex),
       }));
+      setActiveQuestionId(null);
       return;
     }
 
@@ -424,6 +464,8 @@ export const PollEditor = ({
       targetQuestionIndex = formData.questions.length;
     }
 
+    let nextActiveId: string | null = null;
+
     setFormData((prev) => {
       const newFormData = { ...prev };
       
@@ -445,6 +487,7 @@ export const PollEditor = ({
         if (activeInfo.type === 'general' && activeInfo.questionIndex < targetQuestionIndex) {
           adjustedIndex--;
         }
+        nextActiveId = `general-q-${adjustedIndex}`;
         const newQuestions = [...newFormData.questions];
         newQuestions.splice(adjustedIndex, 0, activeQuestion);
         newFormData.questions = newQuestions;
@@ -454,6 +497,7 @@ export const PollEditor = ({
         if (activeInfo.type === 'section' && activeInfo.sectionIndex === targetSectionIndex && activeInfo.questionIndex < targetQuestionIndex) {
           adjustedIndex--;
         }
+        nextActiveId = `section-${targetSectionIndex}-q-${adjustedIndex}`;
         newFormData.sections = newFormData.sections.map((s, i) => {
           if (i === targetSectionIndex) {
             const newQuestions = [...s.questions];
@@ -466,6 +510,10 @@ export const PollEditor = ({
 
       return newFormData;
     });
+
+    if (nextActiveId) {
+      setActiveQuestionId(nextActiveId);
+    }
   };
 
   const handleSave = async () => {
@@ -504,10 +552,6 @@ export const PollEditor = ({
 
   // Build all sortable IDs
   const sectionHeaderIds = formData.sections.map((_, i) => `section-header-${i}`);
-  const allQuestionIds = [
-    ...formData.questions.map((_, i) => `general-q-${i}`),
-    ...formData.sections.flatMap((s, si) => s.questions.map((_, qi) => `section-${si}-q-${qi}`)),
-  ];
 
   // Get active question for overlay
   const getActiveQuestion = (): QuestionFormData | null => {
@@ -520,9 +564,34 @@ export const PollEditor = ({
     return formData.sections[info.sectionIndex!]?.questions[info.questionIndex] || null;
   };
 
+  const activeInfo = activeId ? parseQuestionId(activeId.toString()) : null;
+  const overInfo = overId ? parseQuestionId(overId.toString()) : null;
+  const activeContainer = activeInfo?.type === 'general'
+    ? 'general'
+    : activeInfo
+      ? `section-${activeInfo.sectionIndex}`
+      : null;
+  const overContainer = overInfo?.type === 'general'
+    ? 'general'
+    : overInfo
+      ? `section-${overInfo.sectionIndex}`
+      : null;
+  const isCrossContainer = !!(activeContainer && overContainer && activeContainer !== overContainer);
+
+  const renderDropIndicator = (isTarget: boolean) => {
+    if (!isCrossContainer || !isTarget) return null;
+    return (
+      <div className="flex items-center gap-2 py-0.5" aria-hidden="true">
+        <div className="h-0.5 w-full rounded-full bg-primary/70 shadow-[0_0_6px_rgba(139,92,246,0.3)]" />
+      </div>
+    );
+  };
+
+  const isDraggingQuestion = activeId ? !!parseQuestionId(activeId.toString()) : false;
+
   return (
-    <div className="space-y-6">
-      <GlowCard className="p-6">
+    <div className="space-y-6 pb-0 sm:pb-0">
+      <GlowCard className="p-3 sm:p-6">
         <h2 className="text-lg font-semibold mb-4">
           {t.auto.components_polls_PollEditor_527}
         </h2>
@@ -616,7 +685,7 @@ export const PollEditor = ({
       </GlowCard>
 
       {/* Respondent Targeting */}
-      <GlowCard className="p-6">
+      <GlowCard className="p-3 sm:p-6">
         <PollRespondentEditor
           accessRules={respondentAccessRules}
           members={members}
@@ -628,7 +697,7 @@ export const PollEditor = ({
       </GlowCard>
 
       {/* Results Access Control */}
-      <GlowCard className="p-6">
+      <GlowCard className="p-3 sm:p-6">
         <PollResultsAccessEditor
           accessRules={resultsAccessRules}
           members={members}
@@ -641,7 +710,7 @@ export const PollEditor = ({
       </GlowCard>
 
       {/* Unified Questions & Sections Editor */}
-      <GlowCard className={`p-6 ${metadataOnly ? 'opacity-60 pointer-events-none' : ''}`}>
+      <GlowCard className={`p-3 sm:p-6 ${metadataOnly ? 'opacity-60 pointer-events-none' : ''}`}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">
             {t.auto.components_polls_PollEditor_649}
@@ -683,7 +752,7 @@ export const PollEditor = ({
             {/* General Questions */}
             {formData.questions.length > 0 && (
               <div 
-                className={`space-y-3 p-3 rounded-lg border-2 border-dashed transition-colors duration-200 ${
+                className={`space-y-0.5 p-0 sm:p-3 rounded-lg border-2 border-dashed transition-colors duration-200 ${
                   activeId && overId?.toString().startsWith('general-q-')
                     ? 'border-primary bg-primary/10'
                     : 'border-transparent'
@@ -711,17 +780,22 @@ export const PollEditor = ({
                         q.type === 'rating'
                       );
 
+                    const questionId = `general-q-${index}`;
                     return (
-                      <SortableQuestion
-                        key={`general-q-${index}`}
-                        id={`general-q-${index}`}
-                        question={question}
-                        index={index}
-                        onChange={(q) => handleQuestionChange(index, q)}
-                        onRemove={() => handleRemoveQuestion(index)}
-                        canRemove={formData.questions.length > 1 || formData.sections.some(s => s.questions.length > 0)}
-                        previousQuestions={previousQuestions}
-                      />
+                      <div key={questionId} className="space-y-0.5">
+                        {renderDropIndicator(isDraggingQuestion && overId?.toString() === questionId)}
+                        <SortableQuestion
+                          id={questionId}
+                          question={question}
+                          index={index}
+                          onChange={(q) => handleQuestionChange(index, q)}
+                          onRemove={() => handleRemoveQuestion(index)}
+                          canRemove={formData.questions.length > 1 || formData.sections.some(s => s.questions.length > 0)}
+                          previousQuestions={previousQuestions}
+                          isActive={activeQuestionId === questionId}
+                          onActivate={() => setActiveQuestionId(questionId)}
+                        />
+                      </div>
                     );
                   })}
                 </SortableContext>
@@ -742,7 +816,7 @@ export const PollEditor = ({
                   return (
                     <div 
                       key={`section-${sectionIndex}`} 
-                      className={`space-y-2 p-3 rounded-lg border-2 border-dashed transition-colors duration-200 ${
+                      className={`space-y-1.5 p-0 sm:p-3 rounded-lg border-2 border-dashed transition-colors duration-200 ${
                         isSectionDropTarget
                           ? 'border-primary bg-primary/10'
                           : 'border-transparent'
@@ -760,7 +834,7 @@ export const PollEditor = ({
 
                       <Collapsible open={openSections[sectionIndex] !== false}>
                         <CollapsibleContent>
-                          <div className="ml-8 space-y-3">
+                          <div className="space-y-0.5">
                             <SortableContext 
                               items={section.questions.map((_, qi) => `section-${sectionIndex}-q-${qi}`)} 
                               strategy={verticalListSortingStrategy}
@@ -801,18 +875,23 @@ export const PollEditor = ({
                                   q.type === 'rating'
                                 );
 
+                                const questionId = `section-${sectionIndex}-q-${qIndex}`;
                                 return (
-                                  <SortableQuestion
-                                    key={`section-${sectionIndex}-q-${qIndex}`}
-                                    id={`section-${sectionIndex}-q-${qIndex}`}
-                                    question={question}
-                                    index={qIndex}
-                                    onChange={(q) => handleSectionQuestionChange(sectionIndex, qIndex, q)}
-                                    onRemove={() => handleRemoveSectionQuestion(sectionIndex, qIndex)}
-                                    canRemove={true}
-                                    compact
-                                    previousQuestions={allPreviousQuestions}
-                                  />
+                                  <div key={questionId} className="space-y-0.5">
+                                    {renderDropIndicator(isDraggingQuestion && overId?.toString() === questionId)}
+                                    <SortableQuestion
+                                      id={questionId}
+                                      question={question}
+                                      index={qIndex}
+                                      onChange={(q) => handleSectionQuestionChange(sectionIndex, qIndex, q)}
+                                      onRemove={() => handleRemoveSectionQuestion(sectionIndex, qIndex)}
+                                      canRemove={true}
+                                      compact
+                                      previousQuestions={allPreviousQuestions}
+                                      isActive={activeQuestionId === questionId}
+                                      onActivate={() => setActiveQuestionId(questionId)}
+                                    />
+                                  </div>
                                 );
                               })}
                             </SortableContext>
@@ -838,12 +917,15 @@ export const PollEditor = ({
 
           {typeof document !== 'undefined' &&
             createPortal(
-              <DragOverlay dropAnimation={null} adjustScale={false}>
+              <DragOverlay
+                dropAnimation={{ duration: 180, easing: 'cubic-bezier(0.2, 0, 0, 1)' }}
+                adjustScale={false}
+              >
                 {activeId && getActiveQuestion() && (
                   <div className="border border-primary rounded-lg p-3 bg-card shadow-xl max-w-md pointer-events-none">
                     <div className="flex items-center gap-2 text-sm">
-                      <GripVertical className="h-4 w-4 text-primary" />
-                      <span className="truncate">{getActiveQuestion()?.question_text || (t.auto.components_polls_PollEditor_852)}</span>
+                      <GripHorizontal className="h-4 w-4 text-primary" />
+                    <span className="truncate">{getActiveQuestion()?.question_text || (t.auto.components_polls_PollEditor_852)}</span>
                     </div>
                   </div>
                 )}
@@ -855,7 +937,7 @@ export const PollEditor = ({
       </GlowCard>
 
       {/* Sticky actions */}
-      <div className="sticky bottom-0 z-20 -mx-4 sm:mx-0 sm:rounded-lg px-4 py-3 bg-background/80 backdrop-blur border border-border/50">
+      <div className="sticky bottom-2 z-40 mx-2 rounded-lg sm:mx-0 px-3 pt-3 pr-16 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pr-4 sm:pb-3 sm:px-4 sm:py-3 bg-gradient-to-br from-background/95 via-background/85 to-primary/10 backdrop-blur border border-primary/20 shadow-[0_12px_30px_-20px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.04)]">
         {/* Validation feedback */}
         {!isValid && formData.title.trim() && (
           <div className="mb-2 text-sm text-muted-foreground">
@@ -863,12 +945,14 @@ export const PollEditor = ({
           </div>
         )}
 
-        <div className="flex items-center justify-end gap-3">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:justify-end sm:gap-3">
           {/* Preview button */}
           <Button
             variant="outline"
             onClick={() => setPreviewOpen(true)}
             disabled={!hasQuestions}
+            className="w-full sm:w-auto"
+            size="sm"
           >
             <Eye className="h-4 w-4 mr-2" />
             {t.polls?.preview || 'Preview'}
@@ -878,6 +962,8 @@ export const PollEditor = ({
             variant={onPublish ? "outline" : "default"}
             onClick={handleSave}
             disabled={!formData.title.trim() || saving}
+            className="w-full sm:w-auto"
+            size="sm"
           >
             {saving ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -894,6 +980,8 @@ export const PollEditor = ({
             <Button
               onClick={handlePublish}
               disabled={!isValid || saving}
+              className="col-span-2 w-full sm:col-span-1 sm:w-auto"
+              size="sm"
             >
               {saving ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
