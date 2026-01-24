@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Language, translations, Translations } from '@/i18n/translations';
+import { Language, Translations, getStaticTranslations, loadTranslations } from '@/i18n/translations';
 
 export type { Language } from '@/i18n/translations';
 
@@ -22,6 +22,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     if (browserLang.startsWith('fr')) return 'fr';
     return 'en';
   });
+  const [t, setT] = useState<Translations>(() => getStaticTranslations(language));
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
@@ -32,7 +33,17 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     document.documentElement.lang = language;
   }, [language]);
 
-  const t = translations[language];
+  useEffect(() => {
+    let cancelled = false;
+    loadTranslations(language).then((loaded) => {
+      if (!cancelled) {
+        setT(loaded);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [language]);
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t }}>
