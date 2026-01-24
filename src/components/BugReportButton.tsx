@@ -160,6 +160,7 @@ const BugReportButton = React.forwardRef<HTMLButtonElement, React.ComponentProps
               size="icon"
               className="h-10 w-10 rounded-full bg-card/80 backdrop-blur-sm border-border shadow-lg hover:bg-primary/20 hover:border-primary/50 transition-all"
               onClick={() => setIsOpen(true)}
+              aria-label={t.bugReport.button}
               {...props}
             >
               <Bug className="h-5 w-5" />

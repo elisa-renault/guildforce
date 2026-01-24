@@ -87,7 +87,10 @@ const Index = () => {
           <div className="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-4">
             {!user && (
               <Select value={selectedRegion} onValueChange={(v) => setSelectedRegion(v as BattleNetRegion)}>
-                <SelectTrigger className="w-full md:w-36 h-14 bg-card/80 border-border/50 hover:border-primary/50 transition-colors">
+                <SelectTrigger
+                  aria-label={t.battlenet.selectRegion}
+                  className="w-full md:w-36 h-14 bg-card/80 border-border/50 hover:border-primary/50 transition-colors"
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
