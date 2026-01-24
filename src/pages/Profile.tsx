@@ -329,12 +329,14 @@ const Profile = () => {
               )} />
 
               <div>
-                <FormLabel className="text-foreground text-sm mb-2 block">
+                <FormLabel htmlFor="profile-language-setup" className="text-foreground text-sm mb-2 block">
                   <Globe className="h-4 w-4 inline mr-2" strokeWidth={1.5} />
                   {t.profile.language}
                 </FormLabel>
                 <Select value={language} onValueChange={(val) => handleLanguageChange(val as Language)}>
-                  <SelectTrigger className="cosmic-input"><SelectValue placeholder={language.toUpperCase()} /></SelectTrigger>
+                  <SelectTrigger id="profile-language-setup" className="cosmic-input">
+                    <SelectValue placeholder={language.toUpperCase()} />
+                  </SelectTrigger>
                   <SelectContent className="bg-card border-border">
                     <SelectItem value="fr">{languageLabels.fr}</SelectItem>
                     <SelectItem value="en">{languageLabels.en}</SelectItem>
@@ -464,12 +466,14 @@ const Profile = () => {
 
               {/* Language selector */}
               <div className="mb-4 pb-4 border-b border-border">
-                <Label className="text-sm text-foreground flex items-center gap-2">
+                <Label htmlFor="profile-language" className="text-sm text-foreground flex items-center gap-2">
                   <Globe className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
                   {t.profile.language}
                 </Label>
                 <Select value={language} onValueChange={(val) => handleLanguageChange(val as Language)}>
-                  <SelectTrigger className="cosmic-input mt-2"><SelectValue placeholder={language.toUpperCase()} /></SelectTrigger>
+                  <SelectTrigger id="profile-language" className="cosmic-input mt-2">
+                    <SelectValue placeholder={language.toUpperCase()} />
+                  </SelectTrigger>
                   <SelectContent className="bg-card border-border">
                     <SelectItem value="fr">{languageLabels.fr}</SelectItem>
                     <SelectItem value="en">{languageLabels.en}</SelectItem>
