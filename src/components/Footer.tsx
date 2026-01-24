@@ -51,8 +51,13 @@ export const Footer = () => {
 
           {/* Group 3: Préférences (user settings) */}
           <div className="flex items-center gap-3">
+            <span id="footer-language-label" className="sr-only">{t.common.language}</span>
             <Select value={language} onValueChange={(value: 'fr' | 'en') => setLanguage(value)}>
-              <SelectTrigger aria-label={t.common.language} className="w-[120px] h-7 bg-transparent border-none text-muted-foreground hover:text-foreground text-xs gap-1.5 px-2">
+              <SelectTrigger
+                aria-label={t.common.language}
+                aria-labelledby="footer-language-label"
+                className="w-[120px] h-7 bg-transparent border-none text-muted-foreground hover:text-foreground text-xs gap-1.5 px-2"
+              >
                 <Globe className="h-3.5 w-3.5" />
                 <SelectValue />
               </SelectTrigger>
@@ -112,8 +117,13 @@ export const Footer = () => {
 
           {/* Row 2: Préférences (Langue + Cookies) */}
           <div className="flex items-center justify-center gap-3">
+            <span id="footer-language-label-mobile" className="sr-only">{t.common.language}</span>
             <Select value={language} onValueChange={(value: 'fr' | 'en') => setLanguage(value)}>
-              <SelectTrigger aria-label={t.common.language} className="w-[115px] h-7 bg-transparent border-border/50 text-muted-foreground text-xs rounded-full px-2.5 gap-1.5">
+              <SelectTrigger
+                aria-label={t.common.language}
+                aria-labelledby="footer-language-label-mobile"
+                className="w-[115px] h-7 bg-transparent border-border/50 text-muted-foreground text-xs rounded-full px-2.5 gap-1.5"
+              >
                 <Globe className="h-3.5 w-3.5" />
                 <SelectValue />
               </SelectTrigger>
