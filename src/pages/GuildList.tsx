@@ -267,9 +267,9 @@ const GuildList = () => {
             
             {/* Region selector */}
             <div className="mb-4 text-left">
-              <Label className="text-sm text-muted-foreground mb-2 block">{t.battlenet.selectRegion}</Label>
+              <Label htmlFor="guilds-region" className="text-sm text-muted-foreground mb-2 block">{t.battlenet.selectRegion}</Label>
               <Select value={selectedRegion} onValueChange={(v) => setSelectedRegion(v as BattleNetRegion)}>
-                <SelectTrigger className="w-full cosmic-input">
+                <SelectTrigger id="guilds-region" className="w-full cosmic-input">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="cosmic-glass border-border/50">

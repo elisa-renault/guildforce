@@ -221,9 +221,9 @@ const Auth = () => {
             <GlowCard className="w-full max-w-md p-6 sm:p-8">
               {/* Region Selector */}
               <div className="space-y-2 mb-6">
-                <Label className="text-sm text-muted-foreground">{t.battlenet.selectRegion}</Label>
+                <Label htmlFor="auth-region" className="text-sm text-muted-foreground">{t.battlenet.selectRegion}</Label>
                 <Select value={selectedRegion} onValueChange={value => setSelectedRegion(value as BattleNetRegion)}>
-                  <SelectTrigger className="w-full bg-card/60 border-border">
+                  <SelectTrigger id="auth-region" className="w-full bg-card/60 border-border">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

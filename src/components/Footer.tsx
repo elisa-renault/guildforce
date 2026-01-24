@@ -27,10 +27,10 @@ export const Footer = () => {
           {/* Group 1: Identité (Branding) */}
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-foreground/80">{t.auto.components_Footer_brand}</span>
-            <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-full bg-primary/15 text-primary border border-primary/25">
+            <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded bg-primary/35 text-primary-foreground border border-primary/50">
               Alpha
             </span>
-            <span className="text-xs text-muted-foreground/60">© {new Date().getFullYear()}</span>
+            <span className="text-xs text-muted-foreground/80">© {new Date().getFullYear()}</span>
           </div>
 
           {/* Group 2: Navigation légale (pure links) */}
@@ -52,7 +52,7 @@ export const Footer = () => {
           {/* Group 3: Préférences (user settings) */}
           <div className="flex items-center gap-3">
             <Select value={language} onValueChange={(value: 'fr' | 'en') => setLanguage(value)}>
-              <SelectTrigger className="w-[120px] h-7 bg-transparent border-none text-muted-foreground hover:text-foreground text-xs gap-1.5 px-2">
+              <SelectTrigger aria-label={t.common.language} className="w-[120px] h-7 bg-transparent border-none text-muted-foreground hover:text-foreground text-xs gap-1.5 px-2">
                 <Globe className="h-3.5 w-3.5" />
                 <SelectValue />
               </SelectTrigger>
@@ -92,7 +92,7 @@ export const Footer = () => {
           <div className="flex items-center justify-center gap-3">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-foreground/80">{t.auto.components_Footer_brand}</span>
-              <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-full bg-primary/15 text-primary border border-primary/25">
+              <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded bg-primary/35 text-primary-foreground border border-primary/50">
                 Alpha
               </span>
             </div>
@@ -102,16 +102,18 @@ export const Footer = () => {
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs text-muted-foreground hover:text-primary-foreground hover:bg-primary transition-all border border-border/50 hover:border-primary"
+              aria-label={t.common.tipMe}
             >
               <TipeeeIcon className="h-3.5 w-3.5" />
               <Beer className="h-3.5 w-3.5" />
+              <span className="sr-only">{t.common.tipMe}</span>
             </a>
           </div>
 
           {/* Row 2: Préférences (Langue + Cookies) */}
           <div className="flex items-center justify-center gap-3">
             <Select value={language} onValueChange={(value: 'fr' | 'en') => setLanguage(value)}>
-              <SelectTrigger className="w-[115px] h-7 bg-transparent border-border/50 text-muted-foreground text-xs rounded-full px-2.5 gap-1.5">
+              <SelectTrigger aria-label={t.common.language} className="w-[115px] h-7 bg-transparent border-border/50 text-muted-foreground text-xs rounded-full px-2.5 gap-1.5">
                 <Globe className="h-3.5 w-3.5" />
                 <SelectValue />
               </SelectTrigger>
@@ -152,7 +154,7 @@ export const Footer = () => {
           </div>
 
           {/* Row 4: Copyright */}
-          <div className="text-center text-[10px] text-muted-foreground/50">
+          <div className="text-center text-[10px] text-muted-foreground/80">
             © {new Date().getFullYear()}
           </div>
         </div>

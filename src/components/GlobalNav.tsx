@@ -105,7 +105,7 @@ export const GlobalNav = () => {
             />
             Guildforce
           </button>
-          <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded bg-primary/20 text-primary border border-primary/30">
+          <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded bg-primary/35 text-primary-foreground border border-primary/50">
             Alpha
           </span>
         </div>
