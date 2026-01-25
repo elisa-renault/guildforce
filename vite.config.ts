@@ -7,10 +7,15 @@ const deferStylesheets = () => ({
   name: "defer-stylesheets",
   transformIndexHtml(html: string) {
     return html.replace(
-      /<link rel="stylesheet" href="(\/assets\/[^"]+\.css)">/g,
-      (_match, href) =>
-        `<link rel="preload" as="style" href="${href}" onload="this.onload=null;this.rel='stylesheet'">` +
-        `<noscript><link rel="stylesheet" href="${href}"></noscript>`,
+      /<link\s+[^>]*rel=["']stylesheet["'][^>]*href=["'](\/assets\/[^"']+\.css)["'][^>]*>/g,
+      (match, href) => {
+        const crossOrigin = /crossorigin/i.test(match) ? " crossorigin" : "";
+        return (
+          `<link rel="preload" as="style" href="${href}"${crossOrigin} ` +
+          `onload="this.onload=null;this.rel='stylesheet'">` +
+          `<noscript><link rel="stylesheet" href="${href}"${crossOrigin}></noscript>`
+        );
+      },
     );
   },
 });
