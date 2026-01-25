@@ -37,4 +37,4 @@ jobs:
             cd /var/www/guildforce
             npm ci
             npm run build
-            sudo -n /usr/bin/systemctl restart guildforce
+            sudo -n /usr/bin/systemctl reload nginx
