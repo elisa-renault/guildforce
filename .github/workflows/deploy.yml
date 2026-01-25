@@ -37,4 +37,7 @@ jobs:
             cd /var/www/guildforce
             npm ci
             npm run build
+            sudo -n /usr/bin/install -m 0644 /var/www/guildforce/nginx/guildforce.conf /etc/nginx/sites-available/guildforce.conf
+            sudo -n /usr/bin/ln -sf /etc/nginx/sites-available/guildforce.conf /etc/nginx/sites-enabled/guildforce.conf
+            sudo -n /usr/sbin/nginx -t
             sudo -n /usr/bin/systemctl reload nginx
