@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Language, Translations, loadTranslations } from '@/i18n/translations';
+import { translationsEn } from '@/i18n/translations.en';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 
 export type { Language } from '@/i18n/translations';
@@ -12,18 +13,22 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
+const getInitialLanguage = (): Language => {
+  // Check localStorage first
+  const stored = localStorage.getItem('preferred_language');
+  if (stored === 'en' || stored === 'fr') return stored;
+
+  // Check browser language
+  const browserLang = navigator.language.toLowerCase();
+  if (browserLang.startsWith('fr')) return 'fr';
+  return 'en';
+};
+
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [language, setLanguageState] = useState<Language>(() => {
-    // Check localStorage first
-    const stored = localStorage.getItem('preferred_language');
-    if (stored === 'en' || stored === 'fr') return stored;
-    
-    // Check browser language
-    const browserLang = navigator.language.toLowerCase();
-    if (browserLang.startsWith('fr')) return 'fr';
-    return 'en';
-  });
-  const [t, setT] = useState<Translations | null>(null);
+  const [language, setLanguageState] = useState<Language>(() => getInitialLanguage());
+  const [t, setT] = useState<Translations | null>(() =>
+    language === 'en' ? translationsEn : null,
+  );
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
