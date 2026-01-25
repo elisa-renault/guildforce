@@ -9,6 +9,9 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
+  preview: {
+    allowedHosts: ["guildforce.app", "www.guildforce.app"],
+  },
   test: {
     environment: "jsdom",
     setupFiles: "./src/setupTests.ts",
