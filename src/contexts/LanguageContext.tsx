@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Language, Translations, getStaticTranslations, loadTranslations } from '@/i18n/translations';
+import { Language, Translations, loadTranslations } from '@/i18n/translations';
+import { LoadingScreen } from '@/components/ui/loading-screen';
 
 export type { Language } from '@/i18n/translations';
 
@@ -22,7 +23,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     if (browserLang.startsWith('fr')) return 'fr';
     return 'en';
   });
-  const [t, setT] = useState<Translations>(() => getStaticTranslations(language));
+  const [t, setT] = useState<Translations | null>(null);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
@@ -44,6 +45,10 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
       cancelled = true;
     };
   }, [language]);
+
+  if (!t) {
+    return <LoadingScreen message={language === 'fr' ? 'Chargement...' : 'Loading...'} />;
+  }
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t }}>
