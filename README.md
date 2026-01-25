@@ -1,73 +1,71 @@
-# Welcome to your Lovable project
+# Guildforce
 
-## Project info
+Guild management platform to centralize members, polls, forums, and profiles.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## URL
 
-## How can I edit this code?
+https://guildforce.app
 
-There are several ways of editing your application.
+## Key features
 
-**Use Lovable**
+- Authentication and user profiles via Supabase.
+- Guild directory, member management, and ranks.
+- Advanced polls with drag-and-drop editor, sections, preview, respondent targeting, and results access control.
+- Full forum (categories, topics, moderation/admin).
+- Roster management and member wishes.
+- Public pages, changelog, and legal pages.
+- Bilingual UI (FR/EN).
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Tech stack
 
-Changes made via Lovable will be committed automatically to this repo.
+- Vite + React + TypeScript
+- Tailwind CSS + shadcn/ui
+- Supabase (auth + data)
+- TanStack Query
+- Vitest
 
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## Local development
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Environment variables
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Create a `.env` file at the root with:
 
-**Use GitHub Codespaces**
+```sh
+VITE_SUPABASE_URL="https://YOUR_PROJECT.supabase.co"
+VITE_SUPABASE_PROJECT_ID="YOUR_PROJECT_ID"
+VITE_SUPABASE_PUBLISHABLE_KEY="YOUR_ANON_KEY"
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Useful scripts
 
-## What technologies are used for this project?
+```sh
+npm run dev
+npm run build
+npm run preview
+npm run lint
+npm run test
+```
 
-This project is built with:
+## Tests
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Unit tests use Vitest and live in `src/__tests__`.
 
-## How can I deploy this project?
+## Deployment
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+The GitHub Actions workflow `.github/workflows/deploy.yml`:
 
-## Can I connect a custom domain to my Lovable project?
+- syncs the code to the VPS via rsync
+- installs dependencies and builds
+- installs/reloads the Nginx config
 
-Yes, you can!
+Nginx config: `nginx/guildforce.conf`.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Supabase
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+- Migrations: `supabase/migrations`
+- Edge functions: `supabase/functions`
