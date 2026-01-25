@@ -2,6 +2,7 @@ import { lazy } from "react";
 import type { ReactNode } from "react";
 import { matchPath } from "react-router-dom";
 import type { Translations } from "@/i18n/translations";
+import Index from "./pages/Index";
 
 export type RouteLabelKey = keyof Translations["routeMeta"];
 
@@ -22,7 +23,6 @@ type AppRoute = {
   hideGlobalNav?: boolean;
 };
 
-const Index = lazy(() => import("./pages/Index"));
 const Auth = lazy(() => import("./pages/Auth"));
 const GuildList = lazy(() => import("./pages/GuildList"));
 const Wishes = lazy(() => import("./pages/Wishes"));

@@ -1,4 +1,5 @@
 // Internationalization translations
+import { translationsEn } from './translations.en';
 export type Language = 'en' | 'fr';
 
 export interface Translations {
@@ -902,8 +903,7 @@ export const loadTranslations = async (language: Language): Promise<Translations
     const mod = await import('./translations.fr');
     return mod.translationsFr;
   }
-  const mod = await import('./translations.en');
-  return mod.translationsEn;
+  return translationsEn;
 };
 
 const collectTranslationKeys = (value: unknown, prefix = '', keys = new Set<string>()) => {
