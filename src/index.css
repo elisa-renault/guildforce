@@ -98,11 +98,6 @@
     background: hsl(var(--background));
     min-height: 100vh;
     overflow-x: hidden;
-    font-size-adjust: 0.52;
-  }
-
-  .font-display {
-    font-size-adjust: 0.46;
   }
 
   /* Subtle noise overlay */
