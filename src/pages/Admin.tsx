@@ -32,6 +32,14 @@ interface AdminStats {
   uniqueWishUsers: number;
   totalWishes: number;
   guildsWithWishes: number;
+  guildsWithRosterWishes: number;
+  guildEngagementRate: number;
+  guildsWithTwoMembers: number;
+  guildsWithTwoWishUsers: number;
+  totalPolls: number;
+  activePolls: number;
+  closedPolls: number;
+  pollVoters: number;
 }
 
 export default function Admin() {
@@ -86,51 +94,131 @@ export default function Admin() {
       if (!isModerator) return;
       
       try {
-        const [
-          { count: usersCount },
-          { count: guildsCount },
-          { count: topicsCount },
-          { count: postsCount },
-          { count: reportsCount },
-          { count: sanctionsCount },
-          { count: bugsCount },
-          { count: deletionsCount },
-          { count: totalWishesCount },
-          { data: uniqueWishUsersData },
-          { data: guildsWithWishesData }
-        ] = await Promise.all([
-          supabase.from('profiles').select('*', { count: 'exact', head: true }),
-          supabase.from('guilds').select('*', { count: 'exact', head: true }),
-          supabase.from('forum_topics').select('*', { count: 'exact', head: true }),
-          supabase.from('forum_posts').select('*', { count: 'exact', head: true }),
-          supabase.from('forum_reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-          supabase.from('forum_user_sanctions').select('*', { count: 'exact', head: true }).eq('is_active', true),
-          supabase.from('bug_reports').select('*', { count: 'exact', head: true }).eq('status', 'open'),
-          supabase.from('account_deletion_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-          supabase.from('class_wishes').select('*', { count: 'exact', head: true }),
-          supabase.from('class_wishes').select('user_id'),
-          supabase.from('class_wishes').select('guild_id')
-        ]);
-
-        // Count unique users and unique guilds with wishes
-        const uniqueUserIds = new Set(uniqueWishUsersData?.map(w => w.user_id) || []);
-        const uniqueGuildIds = new Set(guildsWithWishesData?.map(w => w.guild_id) || []);
+        const { data, error } = await supabase.rpc('get_admin_dashboard_stats');
+        if (error) throw error;
+        const statsRow = Array.isArray(data) ? data[0] : data;
+        if (!statsRow) throw new Error('Missing admin dashboard stats');
 
         setStats({
-          totalUsers: usersCount || 0,
-          totalGuilds: guildsCount || 0,
-          totalTopics: topicsCount || 0,
-          totalPosts: postsCount || 0,
-          pendingReports: reportsCount || 0,
-          activeSanctions: sanctionsCount || 0,
-          openBugs: bugsCount || 0,
-          pendingDeletions: deletionsCount || 0,
-          uniqueWishUsers: uniqueUserIds.size,
-          totalWishes: totalWishesCount || 0,
-          guildsWithWishes: uniqueGuildIds.size,
+          totalUsers: statsRow?.total_users ?? 0,
+          totalGuilds: statsRow?.total_guilds ?? 0,
+          totalTopics: statsRow?.total_topics ?? 0,
+          totalPosts: statsRow?.total_posts ?? 0,
+          pendingReports: statsRow?.pending_reports ?? 0,
+          activeSanctions: statsRow?.active_sanctions ?? 0,
+          openBugs: statsRow?.open_bugs ?? 0,
+          pendingDeletions: statsRow?.pending_deletions ?? 0,
+          uniqueWishUsers: statsRow?.unique_wish_users ?? 0,
+          totalWishes: statsRow?.total_wishes ?? 0,
+          guildsWithWishes: statsRow?.guilds_with_wishes ?? 0,
+          guildsWithRosterWishes: statsRow?.guilds_with_roster_wishes ?? 0,
+          guildEngagementRate: statsRow?.guild_engagement_rate ?? 0,
+          guildsWithTwoMembers: statsRow?.guilds_with_two_members ?? 0,
+          guildsWithTwoWishUsers: statsRow?.guilds_with_two_wish_users ?? 0,
+          totalPolls: statsRow?.total_polls ?? 0,
+          activePolls: statsRow?.active_polls ?? 0,
+          closedPolls: statsRow?.closed_polls ?? 0,
+          pollVoters: statsRow?.poll_voters ?? 0,
         });
       } catch (error) {
         log.error('Error fetching admin stats:', error);
+        try {
+          const [
+            { count: usersCount },
+            { count: guildsCount },
+            { count: topicsCount },
+            { count: postsCount },
+            { count: reportsCount },
+            { count: sanctionsCount },
+            { count: bugsCount },
+            { count: deletionsCount },
+            { count: totalWishesCount },
+            { data: wishesData },
+            { data: guildMembersData },
+            { count: totalPollsCount },
+            { count: activePollsCount },
+            { count: closedPollsCount },
+            { data: pollVotersData }
+          ] = await Promise.all([
+            supabase.from('profiles').select('*', { count: 'exact', head: true }),
+            supabase.from('guilds').select('*', { count: 'exact', head: true }),
+            supabase.from('forum_topics').select('*', { count: 'exact', head: true }),
+            supabase.from('forum_posts').select('*', { count: 'exact', head: true }),
+            supabase.from('forum_reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+            supabase.from('forum_user_sanctions').select('*', { count: 'exact', head: true }).eq('is_active', true),
+            supabase.from('bug_reports').select('*', { count: 'exact', head: true }).eq('status', 'open'),
+            supabase.from('account_deletion_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+            supabase.from('class_wishes').select('*', { count: 'exact', head: true }),
+            supabase.from('class_wishes').select('user_id, guild_id, roster_id'),
+            supabase.from('guild_members').select('guild_id, user_id'),
+            supabase.from('guild_polls').select('*', { count: 'exact', head: true }),
+            supabase.from('guild_polls').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+            supabase.from('guild_polls').select('*', { count: 'exact', head: true }).eq('status', 'closed'),
+            supabase.from('guild_poll_responses').select('user_id')
+          ]);
+
+          const wishesList = wishesData || [];
+          const uniqueUserIds = new Set(wishesList.map(w => w.user_id).filter(Boolean));
+          const uniqueGuildIds = new Set(wishesList.map(w => w.guild_id).filter(Boolean));
+          const guildsWithRosterWishes = new Set(
+            wishesList.filter(w => w.roster_id).map(w => w.guild_id).filter(Boolean),
+          );
+
+          const guildWishUsersMap = new Map<string, Set<string>>();
+          wishesList
+            .filter(w => w.roster_id && w.guild_id && w.user_id)
+            .forEach(w => {
+              const key = String(w.guild_id);
+              if (!guildWishUsersMap.has(key)) {
+                guildWishUsersMap.set(key, new Set());
+              }
+              guildWishUsersMap.get(key)?.add(String(w.user_id));
+            });
+          const guildsWithTwoWishUsers = [...guildWishUsersMap.values()].filter(set => set.size >= 2).length;
+
+          const guildMembersList = guildMembersData || [];
+          const guildMembersMap = new Map<string, Set<string>>();
+          guildMembersList
+            .filter(m => m.guild_id && m.user_id)
+            .forEach(m => {
+              const key = String(m.guild_id);
+              if (!guildMembersMap.has(key)) {
+                guildMembersMap.set(key, new Set());
+              }
+              guildMembersMap.get(key)?.add(String(m.user_id));
+            });
+          const guildsWithTwoMembers = [...guildMembersMap.values()].filter(set => set.size >= 2).length;
+
+          const pollVoters = new Set((pollVotersData || []).map(r => r.user_id).filter(Boolean));
+          const totalGuilds = guildsCount || 0;
+          const guildEngagementRate = totalGuilds > 0
+            ? Math.round((guildsWithRosterWishes.size / totalGuilds) * 100)
+            : 0;
+
+          setStats({
+            totalUsers: usersCount || 0,
+            totalGuilds: guildsCount || 0,
+            totalTopics: topicsCount || 0,
+            totalPosts: postsCount || 0,
+            pendingReports: reportsCount || 0,
+            activeSanctions: sanctionsCount || 0,
+            openBugs: bugsCount || 0,
+            pendingDeletions: deletionsCount || 0,
+            uniqueWishUsers: uniqueUserIds.size,
+            totalWishes: totalWishesCount || 0,
+            guildsWithWishes: uniqueGuildIds.size,
+            guildsWithRosterWishes: guildsWithRosterWishes.size,
+            guildEngagementRate,
+            guildsWithTwoMembers,
+            guildsWithTwoWishUsers,
+            totalPolls: totalPollsCount || 0,
+            activePolls: activePollsCount || 0,
+            closedPolls: closedPollsCount || 0,
+            pollVoters: pollVoters.size,
+          });
+        } catch (legacyError) {
+          log.error('Error fetching legacy admin stats:', legacyError);
+        }
       } finally {
         setLoadingStats(false);
       }
