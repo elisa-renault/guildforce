@@ -8,7 +8,8 @@ import { Download, Loader2, ShieldAlert } from 'lucide-react';
 
 export function AdminBackupSection() {
   const { language } = useLanguage();
-  const [downloading, setDownloading] = useState(false);
+  const [downloadingBackup, setDownloadingBackup] = useState(false);
+  const [downloadingUsers, setDownloadingUsers] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const copy = {
@@ -16,6 +17,7 @@ export function AdminBackupSection() {
       title: 'Backup complet',
       desc: 'Télécharge un export complet des données au format SQL (réservé aux admins).',
       button: 'Télécharger le backup',
+      usersButton: 'Exporter les users (CSV)',
       warningTitle: 'Attention',
       warning: 'Selon la taille de la base, le téléchargement peut être long.',
     },
@@ -23,6 +25,7 @@ export function AdminBackupSection() {
       title: 'Full backup',
       desc: 'Download a full data export as an SQL file (admins only).',
       button: 'Download backup',
+      usersButton: 'Export users (CSV)',
       warningTitle: 'Warning',
       warning: 'Depending on database size, this download can take a while.',
     },
@@ -30,9 +33,9 @@ export function AdminBackupSection() {
 
   const t = copy[language];
 
-  const download = async () => {
+  const download = async (path: string, fallbackFilename: string, setBusy: (v: boolean) => void) => {
     setError(null);
-    setDownloading(true);
+    setBusy(true);
 
     try {
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
@@ -43,7 +46,7 @@ export function AdminBackupSection() {
       const baseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
       if (!baseUrl) throw new Error('Missing backend URL');
 
-      const res = await fetch(`${baseUrl}/functions/v1/full-backup`, {
+      const res = await fetch(`${baseUrl}/functions/v1/${path}`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -58,7 +61,7 @@ export function AdminBackupSection() {
       const blob = await res.blob();
       const disposition = res.headers.get('content-disposition');
       const filenameMatch = disposition?.match(/filename="?([^";]+)"?/i);
-      const filename = filenameMatch?.[1] || 'guildforce_full_backup.sql';
+      const filename = filenameMatch?.[1] || fallbackFilename;
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -71,9 +74,12 @@ export function AdminBackupSection() {
     } catch (e: any) {
       setError(e?.message || 'Download failed');
     } finally {
-      setDownloading(false);
+      setBusy(false);
     }
   };
+
+  const downloadBackup = () => download('full-backup', 'guildforce_full_backup.sql', setDownloadingBackup);
+  const downloadUsers = () => download('export-users', 'guildforce_users.csv', setDownloadingUsers);
 
   return (
     <div className="space-y-4">
@@ -96,8 +102,9 @@ export function AdminBackupSection() {
             </Alert>
           )}
 
-          <Button onClick={download} disabled={downloading}>
-            {downloading ? (
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <Button onClick={downloadBackup} disabled={downloadingBackup || downloadingUsers}>
+              {downloadingBackup ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
                 <span className="ml-2">…</span>
@@ -108,7 +115,26 @@ export function AdminBackupSection() {
                 <span className="ml-2">{t.button}</span>
               </>
             )}
-          </Button>
+            </Button>
+
+            <Button
+              variant="secondary"
+              onClick={downloadUsers}
+              disabled={downloadingBackup || downloadingUsers}
+            >
+              {downloadingUsers ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="ml-2">…</span>
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4" />
+                  <span className="ml-2">{t.usersButton}</span>
+                </>
+              )}
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
