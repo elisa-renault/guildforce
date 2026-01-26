@@ -1788,6 +1788,12 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: boolean
       }
+      list_public_tables: {
+        Args: never
+        Returns: {
+          table_name: string
+        }[]
+      }
       log_guild_activity: {
         Args: {
           p_action_details?: Json
