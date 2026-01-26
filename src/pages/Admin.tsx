@@ -18,6 +18,7 @@ import { AdminDashboardSection } from '@/components/admin/AdminDashboardSection'
 import { AdminPermissionsManager } from '@/components/admin/AdminPermissionsManager';
 import { AdminForumSection } from '@/components/admin/AdminForumSection';
 import { AdminDocumentation } from '@/components/admin/AdminDocumentation';
+import { AdminBackupSection } from '@/components/admin/AdminBackupSection';
 import { Crown, Loader2 } from 'lucide-react';
 
 interface AdminStats {
@@ -275,6 +276,10 @@ export default function Admin() {
       case 'guilds':
         if (!isAdmin) return null;
         return <GuildManager />;
+
+      case 'backup':
+        if (!isAdmin) return null;
+        return <AdminBackupSection />;
       
       case 'forum':
         return <AdminForumSection />;
