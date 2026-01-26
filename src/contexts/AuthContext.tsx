@@ -1,7 +1,40 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import log from '@/lib/logger';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import type { User, Session } from '@supabase/supabase-js';
+
+let supabaseModulePromise: Promise<typeof import('@/integrations/supabase/client')> | null = null;
+
+const loadSupabase = () => {
+  if (!supabaseModulePromise) {
+    supabaseModulePromise = import('@/integrations/supabase/client');
+  }
+  return supabaseModulePromise;
+};
+
+const scheduleIdle = (cb: () => void) => {
+  const win = window as Window & {
+    requestIdleCallback?: (callback: () => void) => number;
+    cancelIdleCallback?: (handle: number) => void;
+  };
+
+  if (typeof win.requestIdleCallback === 'function') {
+    return win.requestIdleCallback(cb);
+  }
+
+  return window.setTimeout(cb, 0);
+};
+
+const cancelIdle = (handle: number) => {
+  const win = window as Window & {
+    cancelIdleCallback?: (handle: number) => void;
+  };
+
+  if (typeof win.cancelIdleCallback === 'function') {
+    win.cancelIdleCallback(handle);
+  } else {
+    window.clearTimeout(handle);
+  }
+};
 
 interface Profile {
   id: string;
@@ -33,6 +66,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
+    const { supabase } = await loadSupabase();
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
@@ -54,6 +88,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Background sync of Battle.net data on login (non-blocking)
   const triggerBattleNetSync = async (accessToken: string) => {
     try {
+      const { supabase } = await loadSupabase();
       // Fire and forget - don't block the UI
       supabase.functions.invoke('battlenet-auth/resync', {
         headers: { Authorization: `Bearer ${accessToken}` },
@@ -72,8 +107,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     let cancelled = false;
+    let subscription: { unsubscribe: () => void } | null = null;
 
     const init = async () => {
+      const { supabase } = await loadSupabase();
+
       // Fetch initial session and profile once; this avoids UI "flicker" where pages
       // render with user!=null but profile==null for a moment.
       const { data: { session } } = await supabase.auth.getSession();
@@ -84,7 +122,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (session?.user) {
         const profileData = await fetchProfile(session.user.id);
-        
+
         // Trigger background sync if user has Battle.net linked
         if (profileData?.battlenet_id && session.access_token) {
           triggerBattleNetSync(session.access_token);
@@ -94,46 +132,52 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       if (!cancelled) setLoading(false);
+
+      const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
+        (event, newSession) => {
+          // Only update state if there's an actual change
+          setSession((prev) => {
+            if (prev?.access_token === newSession?.access_token) return prev;
+            return newSession;
+          });
+
+          setUser((prev) => {
+            if (prev?.id === newSession?.user?.id) return prev;
+            return newSession?.user ?? null;
+          });
+
+          // Defer profile fetch to avoid edge-case deadlocks
+          if (newSession?.user) {
+            setTimeout(async () => {
+              const profileData = await fetchProfile(newSession.user!.id);
+
+              // Trigger background sync on SIGNED_IN event if Battle.net is linked
+              if (event === 'SIGNED_IN' && profileData?.battlenet_id && newSession.access_token) {
+                triggerBattleNetSync(newSession.access_token);
+              }
+            }, 0);
+          } else {
+            setProfile(null);
+          }
+        },
+      );
+
+      subscription = authSubscription;
     };
 
-    init();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, newSession) => {
-        // Only update state if there's an actual change
-        setSession((prev) => {
-          if (prev?.access_token === newSession?.access_token) return prev;
-          return newSession;
-        });
-
-        setUser((prev) => {
-          if (prev?.id === newSession?.user?.id) return prev;
-          return newSession?.user ?? null;
-        });
-
-        // Defer profile fetch to avoid edge-case deadlocks
-        if (newSession?.user) {
-          setTimeout(async () => {
-            const profileData = await fetchProfile(newSession.user!.id);
-            
-            // Trigger background sync on SIGNED_IN event if Battle.net is linked
-            if (event === 'SIGNED_IN' && profileData?.battlenet_id && newSession.access_token) {
-              triggerBattleNetSync(newSession.access_token);
-            }
-          }, 0);
-        } else {
-          setProfile(null);
-        }
-      }
-    );
+    const idleHandle = scheduleIdle(() => {
+      init();
+    });
 
     return () => {
       cancelled = true;
-      subscription.unsubscribe();
+      cancelIdle(idleHandle);
+      subscription?.unsubscribe();
     };
   }, []);
 
   const signUp = async (email: string, password: string, discordPseudo: string, language: string) => {
+    const { supabase } = await loadSupabase();
     const redirectUrl = `${window.location.origin}/`;
     
     const { error } = await supabase.auth.signUp({
@@ -152,6 +196,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const signIn = async (email: string, password: string) => {
+    const { supabase } = await loadSupabase();
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -161,6 +206,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const signOut = async () => {
+    const { supabase } = await loadSupabase();
     // Clear local state first to prevent stale data issues
     setUser(null);
     setSession(null);
