@@ -9,7 +9,7 @@ import { CookieBanner } from './CookieBanner';
  */
 export const StickyBottomBar: React.FC = () => {
   return (
-    <div className="sticky bottom-0 z-50">
+    <div className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
       {/* Bug button - always visible, positioned top-right of the sticky area */}
       <div className="absolute bottom-full right-0 mb-0 pointer-events-none">
         <div className="m-4 pointer-events-auto">
@@ -18,7 +18,9 @@ export const StickyBottomBar: React.FC = () => {
       </div>
       
       {/* Cookie banner - only visible when not dismissed */}
-      <CookieBanner />
+      <div className="pointer-events-auto">
+        <CookieBanner />
+      </div>
     </div>
   );
 };
