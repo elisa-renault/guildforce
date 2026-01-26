@@ -112,7 +112,7 @@ export const CookieBanner: React.FC = () => {
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {t.cookies.description}{' '}
-                  <Link to="/privacy" className="text-primary hover:underline">
+                  <Link to="/privacy" className="text-foreground underline underline-offset-2 decoration-foreground/60 hover:decoration-foreground">
                     {t.cookies.learnMore}
                   </Link>
                 </p>
