@@ -94,7 +94,7 @@ export default function Admin() {
       if (!isModerator) return;
       
       try {
-        const { data, error } = await supabase.rpc('get_admin_dashboard_stats');
+        const { data, error } = await supabase.rpc('get_admin_dashboard_stats' as any);
         if (error) throw error;
         const statsRow = Array.isArray(data) ? data[0] : data;
         if (!statsRow) throw new Error('Missing admin dashboard stats');
