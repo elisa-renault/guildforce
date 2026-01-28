@@ -1893,12 +1893,26 @@ async function fetchAndStoreCharacters(
           const insertedChar = insertedChars?.find((ic: any) => ic.id === charId);
           if (!insertedChar) continue;
 
-          const rosterMember = rosterMembers.find(
-            (m: any) => m.character?.name?.toLowerCase() === insertedChar.name.toLowerCase()
+          // Match by BOTH name AND realm to handle cross-realm guilds correctly
+          // This prevents mismatches when a user has multiple characters with the same name
+          let rosterMember = rosterMembers.find(
+            (m: any) => 
+              m.character?.name?.toLowerCase() === insertedChar.name.toLowerCase() &&
+              m.character?.realm?.slug?.toLowerCase() === insertedChar.realm_slug?.toLowerCase()
           );
 
+          // Fallback: if no exact match (realm data might be missing), try name-only
+          if (!rosterMember) {
+            rosterMember = rosterMembers.find(
+              (m: any) => m.character?.name?.toLowerCase() === insertedChar.name.toLowerCase()
+            );
+            if (rosterMember) {
+              log.info(`Realm fallback match for ${sanitizePII(insertedChar.name, 'name')}: expected realm ${insertedChar.realm_slug}, matched ${rosterMember.character?.realm?.slug}`);
+            }
+          }
+
           if (rosterMember) {
-            log.debug(`Found ${sanitizePII(insertedChar.name, 'name')} in roster with rank ${rosterMember.rank}`);
+            log.debug(`Found ${sanitizePII(insertedChar.name, 'name')}-${insertedChar.realm_slug} in roster with rank ${rosterMember.rank}`);
             guildMemberships.push({
               characterId: charId,
               guildName: guildInfo.name,
