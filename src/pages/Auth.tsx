@@ -81,7 +81,29 @@ const Auth = () => {
         throw new Error(data.error || 'Battle.net login failed');
       }
 
-      if (data.verifyToken) {
+      if (data.access_token) {
+        const accessToken = data.access_token as string;
+        const refreshToken = (data.refresh_token as string) || accessToken;
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        if (error) throw error;
+
+        // Clear processed code from sessionStorage
+        sessionStorage.removeItem('bnet_processed_code');
+        toast({
+          title: data.isNewUser ? t.auth.accountCreated : t.auth.welcomeBack,
+          description: `${t.battlenet.connected} : ${data.battletag}`,
+        });
+
+        // Redirect new users to profile setup, existing users to guilds
+        if (data.isNewUser) {
+          navigate('/profile?setup=true', { replace: true });
+        } else {
+          navigate('/guilds', { replace: true });
+        }
+      } else if (data.verifyToken) {
         const token_hash = data.verifyToken as string;
         const type = (data.tokenType || 'magiclink') as any;
         const { error } = await supabase.auth.verifyOtp({ token_hash, type });

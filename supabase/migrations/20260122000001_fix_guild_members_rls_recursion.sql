@@ -4,7 +4,8 @@ RETURNS boolean
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
-SET search_path = public, row_security = off
+SET search_path = public
+SET row_security = off
 AS $$
   SELECT EXISTS (
     SELECT 1
@@ -24,4 +25,4 @@ BEGIN
       AND role = 'gm'
   );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, row_security = off;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public SET row_security = off;
