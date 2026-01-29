@@ -1,7 +1,10 @@
-project_id = "nztgnodoxfxjgbgcysge"
+project_id = "gdqpeitjwdwvkzzmngiy"
 
 [functions.battlenet-auth]
 verify_jwt = false
 
 [functions.submit-bug-report]
+verify_jwt = false
+
+[functions.sync-wow-spells]
 verify_jwt = false
