@@ -26,4 +26,6 @@ dist-ssr
 
 *.sql
 !scripts/sql/*.sql
-
+ 
+# Supabase temp
+/supabase/.temp/
