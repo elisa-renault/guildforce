@@ -1463,6 +1463,29 @@ async function fetchAllWowCharactersForMatching(supabase: any): Promise<Array<{ 
   return allChars;
 }
 
+function dedupeRosterEntries(rosterData: any[]) {
+  const rosterMap = new Map<string, any>();
+  for (const entry of rosterData) {
+    const key = `${entry.guild_id}-${entry.character_name.toLowerCase()}-${entry.character_realm_slug.toLowerCase()}`;
+    const existing = rosterMap.get(key);
+
+    if (!existing) {
+      rosterMap.set(key, entry);
+      continue;
+    }
+
+    const hasHigherRank = entry.rank_index < existing.rank_index;
+    const hasHigherLevel =
+      entry.rank_index === existing.rank_index && entry.character_level > existing.character_level;
+
+    if (hasHigherRank || hasHigherLevel) {
+      rosterMap.set(key, entry);
+    }
+  }
+
+  return Array.from(rosterMap.values());
+}
+
 /**
  * Stores the full guild roster in guild_roster_cache table.
  * This allows showing all WoW guild members, even those not on Guildforce yet.
@@ -1545,6 +1568,8 @@ async function storeFullRoster(
       };
     });
 
+    const dedupedRosterData = dedupeRosterEntries(rosterData);
+
     // Delete old roster cache for this guild and insert new data
     await supabase
       .from('guild_roster_cache')
@@ -1553,18 +1578,18 @@ async function storeFullRoster(
 
     // Insert in batches of 100 to avoid payload limits
     const batchSize = 100;
-    for (let i = 0; i < rosterData.length; i += batchSize) {
-      const batch = rosterData.slice(i, i + batchSize);
+    for (let i = 0; i < dedupedRosterData.length; i += batchSize) {
+      const batch = dedupedRosterData.slice(i, i + batchSize);
       const { error: insertError } = await supabase
         .from('guild_roster_cache')
-        .insert(batch);
+        .upsert(batch, { onConflict: 'guild_id,character_name,character_realm_slug' });
 
       if (insertError) {
         log.error(`Error inserting roster batch ${i / batchSize + 1}:`, insertError);
       }
     }
 
-    log.info(`Successfully cached ${rosterData.length} roster members for guild ${sanitizePII(guildName, 'name')}`);
+    log.info(`Successfully cached ${dedupedRosterData.length} roster members for guild ${sanitizePII(guildName, 'name')}`);
   } catch (error) {
     log.error('Error storing full roster:', error);
   }
@@ -1633,6 +1658,8 @@ async function storeFullRosterForGuild(
       };
     });
 
+    const dedupedRosterData = dedupeRosterEntries(rosterData);
+
     // Delete old roster cache for this guild and insert new data
     await supabase
       .from('guild_roster_cache')
@@ -1641,18 +1668,18 @@ async function storeFullRosterForGuild(
 
     // Insert in batches of 100 to avoid payload limits
     const batchSize = 100;
-    for (let i = 0; i < rosterData.length; i += batchSize) {
-      const batch = rosterData.slice(i, i + batchSize);
+    for (let i = 0; i < dedupedRosterData.length; i += batchSize) {
+      const batch = dedupedRosterData.slice(i, i + batchSize);
       const { error: insertError } = await supabase
         .from('guild_roster_cache')
-        .insert(batch);
+        .upsert(batch, { onConflict: 'guild_id,character_name,character_realm_slug' });
 
       if (insertError) {
         log.error(`Error inserting roster batch ${i / batchSize + 1}:`, insertError);
       }
     }
 
-    log.info(`Successfully cached ${rosterData.length} roster members for guild ${sanitizePII(guildName, 'name')}`);
+    log.info(`Successfully cached ${dedupedRosterData.length} roster members for guild ${sanitizePII(guildName, 'name')}`);
   } catch (error) {
     log.error('Error storing full roster for guild:', error);
   }
