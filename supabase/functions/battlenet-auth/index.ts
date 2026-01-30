@@ -1927,21 +1927,42 @@ async function fetchAndStoreCharacters(
           const insertedChar = insertedChars?.find((ic: any) => ic.id === charId);
           if (!insertedChar) continue;
 
-          // Match by BOTH name AND realm to handle cross-realm guilds correctly
-          // This prevents mismatches when a user has multiple characters with the same name
-          let rosterMember = rosterMembers.find(
-            (m: any) => 
-              m.character?.name?.toLowerCase() === insertedChar.name.toLowerCase() &&
-              m.character?.realm?.slug?.toLowerCase() === insertedChar.realm_slug?.toLowerCase()
+          const charName = insertedChar.name?.toLowerCase();
+          const charRealm = insertedChar.realm_slug?.toLowerCase();
+          const nameMatches = charName
+            ? rosterMembers.filter(
+                (m: any) => m.character?.name?.toLowerCase() === charName
+              )
+            : [];
+
+          if (nameMatches.length > 1) {
+            const realmList = nameMatches
+              .map((m: any) => m.character?.realm?.slug)
+              .filter(Boolean)
+              .join(', ');
+            log.info(
+              `Multiple roster matches for ${sanitizePII(insertedChar.name, 'name')} (${nameMatches.length}): realms=${realmList || 'unknown'}`
+            );
+          }
+
+          // Match by BOTH name AND realm to handle cross-realm guilds correctly.
+          // This prevents mismatches when a user has multiple characters with the same name.
+          let rosterMember = nameMatches.find(
+            (m: any) => m.character?.realm?.slug?.toLowerCase() === charRealm
           );
 
-          // Fallback: if no exact match (realm data might be missing), try name-only
-          if (!rosterMember) {
-            rosterMember = rosterMembers.find(
-              (m: any) => m.character?.name?.toLowerCase() === insertedChar.name.toLowerCase()
-            );
-            if (rosterMember) {
-              log.info(`Realm fallback match for ${sanitizePII(insertedChar.name, 'name')}: expected realm ${insertedChar.realm_slug}, matched ${rosterMember.character?.realm?.slug}`);
+          // Fallback: only use name-only match when it's unambiguous (or realm missing).
+          if (!rosterMember && nameMatches.length > 0) {
+            if (!charRealm || nameMatches.length === 1) {
+              rosterMember = nameMatches[0];
+              const expectedRealm = charRealm || 'unknown';
+              log.info(
+                `Realm fallback match for ${sanitizePII(insertedChar.name, 'name')}: expected realm ${expectedRealm}, matched ${rosterMember.character?.realm?.slug}`
+              );
+            } else {
+              log.info(
+                `Ambiguous roster match for ${sanitizePII(insertedChar.name, 'name')} (${nameMatches.length} candidates); skipping name-only fallback`
+              );
             }
           }
 
