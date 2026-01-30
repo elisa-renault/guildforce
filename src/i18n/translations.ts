@@ -345,6 +345,15 @@ export interface Translations {
     rolesByPriority: string;
     wish1: string;
     otherWishes: string;
+    tokenDistribution: string;
+    tokenDreadful: string;
+    tokenMystic: string;
+    tokenVenerated: string;
+    tokenZenith: string;
+    majorBuffsDebuffs: string;
+    majorBuffs: string;
+    majorDebuffs: string;
+    allValidations: string;
     missingClasses: string;
     allClassesRepresented: string;
     // Wish range filter
