@@ -1134,64 +1134,98 @@ Deno.serve(async (req) => {
 
       log.info(`Resync requested for user ${sanitizePII(userId, 'id')}`);
 
-      // Get stored Battle.net token
-      const { data: tokenData, error: tokenError } = await supabase
-        .from('battlenet_tokens')
-        .select('access_token, expires_at')
-        .eq('user_id', userId)
-        .maybeSingle();
+      const { data: lockRows, error: lockError } = await supabase
+        .from('profiles')
+        .update({ is_syncing: true })
+        .eq('id', userId)
+        .eq('is_syncing', false)
+        .select('id');
 
-      if (tokenError || !tokenData) {
-        log.error('No Battle.net token found for user');
-        return new Response(JSON.stringify({ error: 'No Battle.net account linked. Please connect your Battle.net account first.' }), {
-          status: 400,
+      if (lockError) {
+        log.error('Failed to acquire resync lock', lockError);
+        return new Response(JSON.stringify({ error: 'Failed to start resync' }), {
+          status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
-      // Check if token is expired
-      if (new Date(tokenData.expires_at) < new Date()) {
-        log.error('Battle.net token expired');
-        return new Response(JSON.stringify({ error: 'Battle.net session expired. Please reconnect your Battle.net account.' }), {
-          status: 401,
+      if (!lockRows || lockRows.length === 0) {
+        log.info(`Resync already in progress for user ${sanitizePII(userId, 'id')}`);
+        return new Response(JSON.stringify({ error: 'Resync already in progress' }), {
+          status: 409,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
-      // Get user's region from battlenet_tokens (stored during OAuth callback)
-      const { data: tokenInfo } = await supabase
-        .from('battlenet_tokens')
-        .select('region')
-        .eq('user_id', userId)
-        .maybeSingle();
+      try {
+        // Get stored Battle.net token
+        const { data: tokenData, error: tokenError } = await supabase
+          .from('battlenet_tokens')
+          .select('access_token, expires_at')
+          .eq('user_id', userId)
+          .maybeSingle();
 
-      const preferredRegion = getValidRegion(tokenInfo?.region);
-      log.info(`Resync using preferred region: ${preferredRegion.toUpperCase()}`);
+        if (tokenError || !tokenData) {
+          log.error('No Battle.net token found for user');
+          return new Response(JSON.stringify({ error: 'No Battle.net account linked. Please connect your Battle.net account first.' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
 
-      // Re-fetch characters and guilds with multi-region fallback
-      const syncResult = await fetchAndStoreCharacters(supabase, tokenData.access_token, userId, preferredRegion);
+        // Check if token is expired
+        if (new Date(tokenData.expires_at) < new Date()) {
+          log.error('Battle.net token expired');
+          return new Response(JSON.stringify({ error: 'Battle.net session expired. Please reconnect your Battle.net account.' }), {
+            status: 401,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
 
-      if (!syncResult.success) {
-        log.error(`Resync failed for user ${sanitizePII(userId, 'id')}: ${syncResult.error}`);
+        // Get user's region from battlenet_tokens (stored during OAuth callback)
+        const { data: tokenInfo } = await supabase
+          .from('battlenet_tokens')
+          .select('region')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        const preferredRegion = getValidRegion(tokenInfo?.region);
+        log.info(`Resync using preferred region: ${preferredRegion.toUpperCase()}`);
+
+        // Re-fetch characters and guilds with multi-region fallback
+        const syncResult = await fetchAndStoreCharacters(supabase, tokenData.access_token, userId, preferredRegion);
+
+        if (!syncResult.success) {
+          log.error(`Resync failed for user ${sanitizePII(userId, 'id')}: ${syncResult.error}`);
+          return new Response(JSON.stringify({ 
+            success: false, 
+            error: syncResult.error || 'Failed to sync characters',
+            errorCode: 'SYNC_FAILED'
+          }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        log.info(`Resync completed for user ${sanitizePII(userId, 'id')} (detected region: ${syncResult.detectedRegion?.toUpperCase()})`);
+
         return new Response(JSON.stringify({ 
-          success: false, 
-          error: syncResult.error || 'Failed to sync characters',
-          errorCode: 'SYNC_FAILED'
+          success: true, 
+          message: 'Battle.net data synchronized successfully',
+          detectedRegion: syncResult.detectedRegion,
         }), {
-          status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
+      } finally {
+        const { error: unlockError } = await supabase
+          .from('profiles')
+          .update({ is_syncing: false })
+          .eq('id', userId);
+
+        if (unlockError) {
+          log.error('Failed to release resync lock', unlockError);
+        }
       }
-
-      log.info(`Resync completed for user ${sanitizePII(userId, 'id')} (detected region: ${syncResult.detectedRegion?.toUpperCase()})`);
-
-      return new Response(JSON.stringify({ 
-        success: true, 
-        message: 'Battle.net data synchronized successfully',
-        detectedRegion: syncResult.detectedRegion,
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
     }
 
     // Scheduled sync for all users with valid tokens (called by cron or admin)
