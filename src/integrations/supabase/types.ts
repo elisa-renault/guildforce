@@ -1319,6 +1319,33 @@ export type Database = {
         }
         Relationships: []
       }
+      raid_effects: {
+        Row: {
+          category: string
+          class_id: string
+          created_at: string
+          id: number
+          spec_id: string | null
+          spell_id: number
+        }
+        Insert: {
+          category: string
+          class_id: string
+          created_at?: string
+          id?: number
+          spec_id?: string | null
+          spell_id: number
+        }
+        Update: {
+          category?: string
+          class_id?: string
+          created_at?: string
+          id?: number
+          spec_id?: string | null
+          spell_id?: number
+        }
+        Relationships: []
+      }
       poll_respondent_rules: {
         Row: {
           access_type: string
@@ -1401,6 +1428,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      wow_spells: {
+        Row: {
+          description_en: string | null
+          description_fr: string | null
+          name_en: string | null
+          name_fr: string | null
+          spell_id: number
+          updated_at: string
+        }
+        Insert: {
+          description_en?: string | null
+          description_fr?: string | null
+          name_en?: string | null
+          name_fr?: string | null
+          spell_id: number
+          updated_at?: string
+        }
+        Update: {
+          description_en?: string | null
+          description_fr?: string | null
+          name_en?: string | null
+          name_fr?: string | null
+          spell_id?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {

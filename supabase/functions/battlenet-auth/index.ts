@@ -2,6 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
@@ -715,17 +716,55 @@ Deno.serve(async (req) => {
       let userId: string;
       let isNewUser = false;
       let userEmail: string = bnetEmail; // Email to use for magic link
+      const ensureAuthUserForProfile = async (profileId: string) => {
+        const { data: authUser } = await supabase.auth.admin.getUserById(profileId);
+        if (authUser?.user) {
+          userEmail = authUser.user.email || bnetEmail;
+          userId = profileId;
+          log.info(`Using existing auth user for profile: ${sanitizePII(userId, 'id')}`);
+          return;
+        }
+
+        const password = generateSecurePassword();
+        const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+          email: bnetEmail,
+          password,
+          email_confirm: true,
+          user_metadata: {
+            name: userInfo.battletag,
+            full_name: userInfo.battletag,
+            username: userInfo.battletag.split('#')[0],
+            preferred_language: defaultLanguage,
+            battlenet_id: battlenetIdStr,
+          },
+        });
+
+        if (createError || !newUser.user) {
+          log.error('Failed to create user:', createError);
+          throw new Error('Failed to create user');
+        }
+
+        userId = newUser.user.id;
+        userEmail = newUser.user.email || bnetEmail;
+        log.info(`New auth user created: ${sanitizePII(userId, 'id')}`);
+
+        if (userId !== profileId) {
+          const { error: reassignError } = await supabase.rpc('reassign_profile_id', {
+            old_id: profileId,
+            new_id: userId,
+          });
+          if (reassignError) {
+            log.error('Failed to reassign profile ID:', reassignError);
+            throw new Error('Failed to reassign profile ID');
+          }
+        }
+      };
 
       if (existingProfile) {
-        userId = existingProfile.id;
-        log.info(`Existing user found by battlenet_id: ${sanitizePII(userId, 'id')}`);
-        
-        // Get the actual auth user to find their real email
-        const { data: authUser } = await supabase.auth.admin.getUserById(userId);
-        if (authUser?.user?.email) {
-          userEmail = authUser.user.email;
-          log.info(`Using existing user email for magic link`);
-        }
+        const profileId = existingProfile.id;
+        log.info(`Existing user found by battlenet_id: ${sanitizePII(profileId, 'id')}`);
+        isNewUser = false;
+        await ensureAuthUserForProfile(profileId);
       } else {
         const { data: existingUsers } = await supabase.auth.admin.listUsers();
         const existingBnetEmailUser = existingUsers?.users?.find((u) => u.email === bnetEmail);
@@ -743,16 +782,10 @@ Deno.serve(async (req) => {
             .maybeSingle();
 
           if (profileByBattletag) {
-            userId = profileByBattletag.id;
+            const profileId = profileByBattletag.id;
             isNewUser = false;
-            log.info(`Existing user found by battletag: ${sanitizePII(userId, 'id')}`);
-            
-            // Get the actual auth user to find their real email
-            const { data: authUser } = await supabase.auth.admin.getUserById(userId);
-            if (authUser?.user?.email) {
-              userEmail = authUser.user.email;
-              log.info(`Using existing user email for magic link`);
-            }
+            log.info(`Existing user found by battletag: ${sanitizePII(profileId, 'id')}`);
+            await ensureAuthUserForProfile(profileId);
           } else {
             isNewUser = true;
             const password = generateSecurePassword();
@@ -855,6 +888,7 @@ Deno.serve(async (req) => {
       await fetchAndStoreCharacters(supabase, tokenData.access_token, userId, region);
 
       // Generate magic link for session using the correct email
+      log.info(`Generating magic link for email: ${sanitizePII(userEmail, 'email')}`);
       const { data: magicLinkData, error: magicLinkError } = await supabase.auth.admin.generateLink({
         type: 'magiclink',
         email: userEmail,
