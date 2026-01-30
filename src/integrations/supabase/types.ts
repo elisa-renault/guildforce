@@ -1781,6 +1781,13 @@ export type Database = {
         Args: { p_poll_id: string; p_user_id: string }
         Returns: boolean
       }
+      get_poll_response_counts: {
+        Args: { p_poll_ids: string[] }
+        Returns: {
+          poll_id: string
+          response_count: number
+        }[]
+      }
       get_guild_member_counts: {
         Args: { p_guild_ids: string[] }
         Returns: {

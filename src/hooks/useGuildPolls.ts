@@ -79,42 +79,19 @@ export const useGuildPolls = (guildId: string | undefined) => {
         filteredData = data.filter(poll => accessiblePollIds.has(poll.id));
       }
 
-      // Get all question IDs from filtered polls
-      const allQuestionIds = filteredData.flatMap(poll => 
-        (poll.questions as { id: string }[] | null)?.map(q => q.id) || []
-      );
-
-      // Fetch response counts in a single query if there are questions
+      // Fetch response counts in a single call (bypasses results access but still enforces poll visibility)
       let responseCounts: Record<string, number> = {};
-      if (allQuestionIds.length > 0) {
-        const { data: responses } = await supabase
-          .from('guild_poll_responses')
-          .select('question_id, user_id')
-          .in('question_id', allQuestionIds);
+      const pollIds = filteredData.map(poll => poll.id);
+      if (pollIds.length > 0) {
+        const { data: counts, error: countsError } = await supabase
+          .rpc('get_poll_response_counts', { p_poll_ids: pollIds });
 
-        // Count unique users per poll
-        const pollUserMap: Record<string, Set<string>> = {};
-        for (const poll of filteredData) {
-          pollUserMap[poll.id] = new Set();
-        }
-
-        // Map question_id back to poll_id
-        const questionToPoll: Record<string, string> = {};
-        for (const poll of filteredData) {
-          for (const q of (poll.questions as { id: string }[] | null) || []) {
-            questionToPoll[q.id] = poll.id;
+        if (countsError) {
+          log.error('Error fetching poll response counts:', countsError);
+        } else {
+          for (const row of counts || []) {
+            responseCounts[row.poll_id] = row.response_count ?? 0;
           }
-        }
-
-        for (const response of responses || []) {
-          const pollId = questionToPoll[response.question_id];
-          if (pollId) {
-            pollUserMap[pollId].add(response.user_id);
-          }
-        }
-
-        for (const [pollId, users] of Object.entries(pollUserMap)) {
-          responseCounts[pollId] = users.size;
         }
       }
 
