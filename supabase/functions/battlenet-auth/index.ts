@@ -129,6 +129,14 @@ const log = {
   },
 };
 
+function isMissingColumnError(error: unknown, column: string): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const maybeError = error as { code?: string; message?: string; details?: string };
+  if (maybeError.code !== 'PGRST204') return false;
+  const haystack = `${maybeError.message ?? ''} ${maybeError.details ?? ''}`;
+  return haystack.includes(`'${column}'`);
+}
+
 // ============================================================================
 // UTILITY FUNCTIONS
 // ============================================================================
@@ -1142,6 +1150,9 @@ Deno.serve(async (req) => {
 
       log.info(`Resync requested for user ${sanitizePII(userId, 'id')}`);
 
+      let lockAcquired = false;
+      let lockSupported = true;
+
       const { data: lockRows, error: lockError } = await supabase
         .from('profiles')
         .update({ is_syncing: true })
@@ -1150,19 +1161,24 @@ Deno.serve(async (req) => {
         .select('id');
 
       if (lockError) {
-        log.error('Failed to acquire resync lock', lockError);
-        return new Response(JSON.stringify({ error: 'Failed to start resync' }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      if (!lockRows || lockRows.length === 0) {
+        if (isMissingColumnError(lockError, 'is_syncing')) {
+          lockSupported = false;
+          log.error('Resync lock column missing; proceeding without lock', lockError);
+        } else {
+          log.error('Failed to acquire resync lock', lockError);
+          return new Response(JSON.stringify({ error: 'Failed to start resync' }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      } else if (!lockRows || lockRows.length === 0) {
         log.info(`Resync already in progress for user ${sanitizePII(userId, 'id')}`);
         return new Response(JSON.stringify({ error: 'Resync already in progress' }), {
           status: 409,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
+      } else {
+        lockAcquired = true;
       }
 
       try {
@@ -1225,13 +1241,15 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       } finally {
-        const { error: unlockError } = await supabase
-          .from('profiles')
-          .update({ is_syncing: false })
-          .eq('id', userId);
+        if (lockSupported && lockAcquired) {
+          const { error: unlockError } = await supabase
+            .from('profiles')
+            .update({ is_syncing: false })
+            .eq('id', userId);
 
-        if (unlockError) {
-          log.error('Failed to release resync lock', unlockError);
+          if (unlockError) {
+            log.error('Failed to release resync lock', unlockError);
+          }
         }
       }
     }
