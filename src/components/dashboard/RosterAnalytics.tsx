@@ -159,8 +159,10 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
   const [rangeFilter, setRangeFilter] = useState<RangeFilter>('all');
   const [validationFilter, setValidationFilter] = useState<ValidationFilter>('all');
+  const [validationFilterTouched, setValidationFilterTouched] = useState(false);
   const [raidEffects, setRaidEffects] = useState<RaidEffectRow[]>([]);
   const [wowSpells, setWowSpells] = useState<WowSpellRow[]>([]);
+  const showBuffsDebuffs = false;
   const tokenNames: Record<TokenGroupId, string> = {
     dreadful: t.dashboard.tokenDreadful,
     mystic: t.dashboard.tokenMystic,
@@ -170,6 +172,14 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
 
   useEffect(() => {
     let isActive = true;
+
+    if (!showBuffsDebuffs) {
+      setRaidEffects([]);
+      setWowSpells([]);
+      return () => {
+        isActive = false;
+      };
+    }
 
     const fetchRaidEffects = async () => {
       const { data: effectsData, error: effectsError } = await supabase
@@ -213,7 +223,18 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [showBuffsDebuffs]);
+
+  const hasValidatedWishes = useMemo(() => {
+    return members.some(member =>
+      (member.wishes || []).some(wish => (wish.validation_status || 'pending') === 'approved')
+    );
+  }, [members]);
+
+  useEffect(() => {
+    if (validationFilterTouched) return;
+    setValidationFilter(hasValidatedWishes ? 'approved' : 'all');
+  }, [hasValidatedWishes, validationFilterTouched]);
 
   // Pre-filter members based on commitment and exclude those with 0 wishes
   const filteredMembers = useMemo(() => {
@@ -601,7 +622,13 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
             </SelectContent>
           </Select>
 
-          <Select value={validationFilter} onValueChange={(v) => setValidationFilter(v as ValidationFilter)}>
+          <Select
+            value={validationFilter}
+            onValueChange={(v) => {
+              setValidationFilterTouched(true);
+              setValidationFilter(v as ValidationFilter);
+            }}
+          >
             <SelectTrigger className="h-7 w-auto min-w-[110px] text-xs">
               <SelectValue>
                 {validationFilter === 'all' ? t.dashboard.allValidations :
@@ -897,72 +924,73 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
             )}
           </GlowCard>
 
-          {/* Major Buffs/Debuffs - 3 columns */}
-          <GlowCard className="p-3 lg:col-span-3">
-            <h4 className="text-sm font-semibold mb-2">{t.dashboard.majorBuffsDebuffs}</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <h5 className="text-xs font-semibold text-muted-foreground mb-1">
-                  {t.dashboard.majorBuffs}
-                </h5>
-                {majorBuffsDebuffs.buffs.length > 0 ? (
-                  <div className="space-y-1">
-                    {majorBuffsDebuffs.buffs.map(buff => (
-                      <UITooltip key={buff.spellId} delayDuration={100}>
-                        <TooltipTrigger asChild>
-                          <div className="flex items-center gap-2 text-xs cursor-default">
-                            <span
-                              className={`w-5 text-right tabular-nums ${buff.count === 0 ? 'text-red-500' : 'text-muted-foreground'}`}
-                            >
-                              {buff.count}
-                            </span>
-                            <span className={`font-medium ${buff.count === 0 ? 'text-red-500' : ''}`}>
-                              {buff.name}
-                            </span>
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent sideOffset={6} className="max-w-[220px]">
-                          <p className="text-xs">{buff.description}</p>
-                        </TooltipContent>
-                      </UITooltip>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground">{t.dashboard.noData}</p>
-                )}
+          {showBuffsDebuffs && (
+            <GlowCard className="p-3 lg:col-span-3">
+              <h4 className="text-sm font-semibold mb-2">{t.dashboard.majorBuffsDebuffs}</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <h5 className="text-xs font-semibold text-muted-foreground mb-1">
+                    {t.dashboard.majorBuffs}
+                  </h5>
+                  {majorBuffsDebuffs.buffs.length > 0 ? (
+                    <div className="space-y-1">
+                      {majorBuffsDebuffs.buffs.map(buff => (
+                        <UITooltip key={buff.spellId} delayDuration={100}>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center gap-2 text-xs cursor-default">
+                              <span
+                                className={`w-5 text-right tabular-nums ${buff.count === 0 ? 'text-red-500' : 'text-muted-foreground'}`}
+                              >
+                                {buff.count}
+                              </span>
+                              <span className={`font-medium ${buff.count === 0 ? 'text-red-500' : ''}`}>
+                                {buff.name}
+                              </span>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent sideOffset={6} className="max-w-[220px]">
+                            <p className="text-xs">{buff.description}</p>
+                          </TooltipContent>
+                        </UITooltip>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">{t.dashboard.noData}</p>
+                  )}
+                </div>
+                <div>
+                  <h5 className="text-xs font-semibold text-muted-foreground mb-1">
+                    {t.dashboard.majorDebuffs}
+                  </h5>
+                  {majorBuffsDebuffs.debuffs.length > 0 ? (
+                    <div className="space-y-1">
+                      {majorBuffsDebuffs.debuffs.map(debuff => (
+                        <UITooltip key={debuff.spellId} delayDuration={100}>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center gap-2 text-xs cursor-default">
+                              <span
+                                className={`w-5 text-right tabular-nums ${debuff.count === 0 ? 'text-red-500' : 'text-muted-foreground'}`}
+                              >
+                                {debuff.count}
+                              </span>
+                              <span className={`font-medium ${debuff.count === 0 ? 'text-red-500' : ''}`}>
+                                {debuff.name}
+                              </span>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent sideOffset={6} className="max-w-[220px]">
+                            <p className="text-xs">{debuff.description}</p>
+                          </TooltipContent>
+                        </UITooltip>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">{t.dashboard.noData}</p>
+                  )}
+                </div>
               </div>
-              <div>
-                <h5 className="text-xs font-semibold text-muted-foreground mb-1">
-                  {t.dashboard.majorDebuffs}
-                </h5>
-                {majorBuffsDebuffs.debuffs.length > 0 ? (
-                  <div className="space-y-1">
-                    {majorBuffsDebuffs.debuffs.map(debuff => (
-                      <UITooltip key={debuff.spellId} delayDuration={100}>
-                        <TooltipTrigger asChild>
-                          <div className="flex items-center gap-2 text-xs cursor-default">
-                            <span
-                              className={`w-5 text-right tabular-nums ${debuff.count === 0 ? 'text-red-500' : 'text-muted-foreground'}`}
-                            >
-                              {debuff.count}
-                            </span>
-                            <span className={`font-medium ${debuff.count === 0 ? 'text-red-500' : ''}`}>
-                              {debuff.name}
-                            </span>
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent sideOffset={6} className="max-w-[220px]">
-                          <p className="text-xs">{debuff.description}</p>
-                        </TooltipContent>
-                      </UITooltip>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground">{t.dashboard.noData}</p>
-                )}
-              </div>
-            </div>
-          </GlowCard>
+            </GlowCard>
+          )}
         </div>
 
         {/* Missing/All Classes Alert - Compact */}
