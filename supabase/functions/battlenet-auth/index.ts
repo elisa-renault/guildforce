@@ -164,6 +164,14 @@ function toGuildSlugUnicode(guildName: string): string {
     .replace(/\s+/g, '-');
 }
 
+function normalizeCharacterKey(value: string): string {
+  return value.normalize('NFC').toLowerCase();
+}
+
+function buildCharacterKey(name: string, realmSlug: string): string {
+  return `${normalizeCharacterKey(name)}-${normalizeCharacterKey(realmSlug)}`;
+}
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -1841,6 +1849,14 @@ async function fetchAndStoreCharacters(
 
     log.info(`Successfully saved ${characters.length} characters to database`);
 
+    const insertedCharMap = new Map<string, { id: string; name: string; realm_slug: string }>();
+    if (insertedChars) {
+      for (const insertedChar of insertedChars) {
+        if (!insertedChar?.name || !insertedChar?.realm_slug) continue;
+        insertedCharMap.set(buildCharacterKey(insertedChar.name, insertedChar.realm_slug), insertedChar);
+      }
+    }
+
     // Sync profiles.main_character_name if not already set
     const mainChar = insertData.find(c => c.is_main);
     if (mainChar) {
@@ -1899,9 +1915,7 @@ async function fetchAndStoreCharacters(
           const guildRealmSlug = charDetail.guild.realm?.slug || char.realmSlug;
           const guildFaction = charDetail.guild.faction?.type || 'UNKNOWN';
           
-          const insertedChar = insertedChars?.find(
-            (ic: any) => ic.name.toLowerCase() === char.name.toLowerCase() && ic.realm_slug === char.realmSlug
-          );
+          const insertedChar = insertedCharMap.get(buildCharacterKey(char.name, char.realmSlug));
           
           if (insertedChar) {
             await supabase
