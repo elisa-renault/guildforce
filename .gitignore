@@ -25,9 +25,5 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-*.sql
-!scripts/sql/*.sql
- 
 # Supabase temp
 /supabase/.temp/
