@@ -10,6 +10,14 @@ const BATTLENET_CLIENT_ID = Deno.env.get('BATTLENET_CLIENT_ID')!;
 const BATTLENET_CLIENT_SECRET = Deno.env.get('BATTLENET_CLIENT_SECRET')!;
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const GUILD_CHAR_MIN_LEVEL = Deno.env.get('GUILD_CHAR_MIN_LEVEL');
+const GUILD_CHAR_MAX_CHECK = Deno.env.get('GUILD_CHAR_MAX_CHECK');
+
+function parseOptionalInt(value: string | undefined): number | null {
+  if (!value) return null;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isNaN(parsed) ? null : parsed;
+}
 
 // Battle.net OAuth URL (same for all regions)
 const BATTLENET_OAUTH_URL = 'https://oauth.battle.net';
@@ -1821,14 +1829,21 @@ async function fetchAndStoreCharacters(
     }
 
     // Fetch detailed character info for guild memberships
-    const maxLevelChars = characters.filter(c => c.level >= 70).slice(0, 20);
-    log.debug(`Checking ${maxLevelChars.length} max-level characters for guild info...`);
+    const minGuildCharLevel = parseOptionalInt(GUILD_CHAR_MIN_LEVEL);
+    const maxGuildCharsToCheck = Math.max(parseOptionalInt(GUILD_CHAR_MAX_CHECK) ?? 20, 1);
+    const guildCharCandidates = minGuildCharLevel === null
+      ? characters
+      : characters.filter(c => c.level >= minGuildCharLevel);
+    const guildCharsToCheck = guildCharCandidates.slice(0, maxGuildCharsToCheck);
+    log.debug(
+      `Checking ${guildCharsToCheck.length} character(s) for guild info (min level: ${minGuildCharLevel ?? 'none'}, limit: ${maxGuildCharsToCheck}).`
+    );
 
     const guildMemberships: GuildMembershipData[] = [];
     const guildsToCheck: Map<string, { name: string; realmSlug: string; faction: string; characterIds: string[] }> = new Map();
 
     // Fetch character details to get guild info
-    for (const char of maxLevelChars) {
+    for (const char of guildCharsToCheck) {
       try {
         const charDetailUrl = `${apiUrl}/profile/wow/character/${char.realmSlug.toLowerCase()}/${char.name.toLowerCase()}?namespace=${namespace}&locale=${locale}`;
         
