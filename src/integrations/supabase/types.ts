@@ -1464,6 +1464,7 @@ export type Database = {
           battletag_visibility: string
           created_at: string
           id: string
+          is_syncing: boolean
           main_character_name: string | null
           preferred_language: string
           show_battletag: boolean | null
@@ -1477,6 +1478,7 @@ export type Database = {
           battletag_visibility?: string
           created_at?: string
           id: string
+          is_syncing?: boolean
           main_character_name?: string | null
           preferred_language?: string
           show_battletag?: boolean | null
@@ -1490,6 +1492,7 @@ export type Database = {
           battletag_visibility?: string
           created_at?: string
           id?: string
+          is_syncing?: boolean
           main_character_name?: string | null
           preferred_language?: string
           show_battletag?: boolean | null
