@@ -2010,18 +2010,50 @@ async function fetchAndStoreCharacters(
         rank_name: gm.rankName,
       }));
 
-      const { error: membershipError } = await supabase
-        .from('wow_guild_memberships')
-        .insert(membershipData);
+      const uniqueCharacterIds = Array.from(
+        new Set(membershipData.map(m => m.character_id))
+      );
 
-      if (membershipError) {
-        log.error('Failed to insert guild memberships:', membershipError);
+      const { data: existingChars, error: existingCharsError } = await supabase
+        .from('wow_characters')
+        .select('id')
+        .in('id', uniqueCharacterIds)
+        .eq('user_id', userId);
+
+      if (existingCharsError) {
+        log.error('Failed to verify character ids for guild memberships:', existingCharsError);
+      }
+
+      const existingCharIdSet = new Set(
+        (existingChars || []).map((char: { id: string }) => char.id)
+      );
+
+      const filteredMembershipData = membershipData.filter(m =>
+        existingCharIdSet.has(m.character_id)
+      );
+
+      if (filteredMembershipData.length !== membershipData.length) {
+        log.info(
+          `Skipping ${membershipData.length - filteredMembershipData.length} guild memberships because characters no longer exist`
+        );
+      }
+
+      if (filteredMembershipData.length === 0) {
+        log.info('No valid guild memberships to insert after character verification');
       } else {
-        log.info(`Successfully saved ${guildMemberships.length} guild memberships`);
-        
-        const gmMemberships = guildMemberships.filter(gm => gm.rankIndex === 0);
-        if (gmMemberships.length > 0) {
-          log.info(`User is Guild Master of ${gmMemberships.length} guild(s)!`);
+        const { error: membershipError } = await supabase
+          .from('wow_guild_memberships')
+          .insert(filteredMembershipData);
+
+        if (membershipError) {
+          log.error('Failed to insert guild memberships:', membershipError);
+        } else {
+          log.info(`Successfully saved ${filteredMembershipData.length} guild memberships`);
+          
+          const gmMemberships = guildMemberships.filter(gm => gm.rankIndex === 0);
+          if (gmMemberships.length > 0) {
+            log.info(`User is Guild Master of ${gmMemberships.length} guild(s)!`);
+          }
         }
       }
 
