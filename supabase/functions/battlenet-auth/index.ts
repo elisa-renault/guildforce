@@ -1839,7 +1839,25 @@ async function fetchAndStoreCharacters(
       return { success: false, detectedRegion: region, error: 'Failed to save characters' };
     }
 
-    log.info(`Successfully saved ${characters.length} characters to database`);
+    const insertedCount = insertedChars?.length ?? 0;
+    log.info(
+      `Successfully saved ${characters.length} characters to database (upsert returned ${insertedCount})`
+    );
+    if (insertedCount !== characters.length) {
+      const insertedKeys = new Set(
+        (insertedChars ?? []).map(
+          char => `${char.name.toLowerCase()}-${char.realm_slug.toLowerCase()}`
+        )
+      );
+      const missingKeys = insertData
+        .map(char => `${char.name.toLowerCase()}-${char.realm_slug.toLowerCase()}`)
+        .filter(charKey => !insertedKeys.has(charKey));
+      if (missingKeys.length > 0) {
+        log.warn(
+          `Upsert returned fewer characters than expected. Missing keys: ${missingKeys.join(', ')}`
+        );
+      }
+    }
 
     // Sync profiles.main_character_name if not already set
     const mainChar = insertData.find(c => c.is_main);
