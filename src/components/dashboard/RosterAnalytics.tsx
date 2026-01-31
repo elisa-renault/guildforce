@@ -61,23 +61,23 @@ const tokenGroupConfig: { id: TokenGroupId; classIds: string[] }[] = [
 ];
 
 const tokenColorMap: Record<TokenGroupId, string> = {
-  dreadful: '#7dd3fc', // cloth - light blue
+  dreadful: '#c4b5fd', // cloth - light violet
   mystic: '#fb923c', // leather - orange
-  venerated: '#34d399', // mail - green
+  venerated: '#0070de', // mail - shaman blue
   zenith: '#f472b6', // plate - pink
 };
 
 const tokenTextColorMap: Record<TokenGroupId, string> = {
-  dreadful: '#7dd3fc',
+  dreadful: '#c4b5fd',
   mystic: '#fb923c',
-  venerated: '#34d399',
+  venerated: '#0070de',
   zenith: '#f472b6',
 };
 
 const tokenGradientMap: Record<TokenGroupId, string> = {
-  dreadful: 'linear-gradient(90deg, #7dd3fc, #7dd3fc)',
+  dreadful: 'linear-gradient(90deg, #c4b5fd, #c4b5fd)',
   mystic: 'linear-gradient(90deg, #fb923c, #fb923c)',
-  venerated: 'linear-gradient(90deg, #34d399, #34d399)',
+  venerated: 'linear-gradient(90deg, #0070de, #0070de)',
   zenith: 'linear-gradient(90deg, #f472b6, #f472b6)',
 };
 
