@@ -54,31 +54,31 @@ const rangeColorMap: Record<RangeType, string> = {
 type TokenGroupId = 'dreadful' | 'mystic' | 'venerated' | 'zenith';
 
 const tokenGroupConfig: { id: TokenGroupId; classIds: string[] }[] = [
-  { id: 'dreadful', classIds: ['death-knight', 'warlock', 'demon-hunter'] },
-  { id: 'mystic', classIds: ['hunter', 'druid', 'mage'] },
-  { id: 'venerated', classIds: ['paladin', 'priest', 'shaman'] },
-  { id: 'zenith', classIds: ['warrior', 'rogue', 'monk', 'evoker'] },
+  { id: 'dreadful', classIds: ['priest', 'mage', 'warlock'] },
+  { id: 'mystic', classIds: ['rogue', 'monk', 'druid', 'demon-hunter'] },
+  { id: 'venerated', classIds: ['hunter', 'shaman', 'evoker'] },
+  { id: 'zenith', classIds: ['warrior', 'paladin', 'death-knight'] },
 ];
 
 const tokenColorMap: Record<TokenGroupId, string> = {
-  dreadful: 'hsl(330, 80%, 60%)',
-  mystic: 'hsl(200, 70%, 65%)',
-  venerated: 'hsl(330, 65%, 75%)',
-  zenith: 'hsl(150, 65%, 45%)',
+  dreadful: '#7dd3fc', // cloth - light blue
+  mystic: '#fb923c', // leather - orange
+  venerated: '#34d399', // mail - green
+  zenith: '#f472b6', // plate - pink
 };
 
 const tokenTextColorMap: Record<TokenGroupId, string> = {
-  dreadful: '#b91c1c',
-  mystic: '#0ea5e9',
-  venerated: '#db2777',
-  zenith: '#eab308',
+  dreadful: '#7dd3fc',
+  mystic: '#fb923c',
+  venerated: '#34d399',
+  zenith: '#f472b6',
 };
 
 const tokenGradientMap: Record<TokenGroupId, string> = {
-  dreadful: 'linear-gradient(90deg, #dc2626, #7c3aed)',
-  mystic: 'linear-gradient(90deg, #7dd3fc, #fdba74)',
-  venerated: 'linear-gradient(90deg, #f472b6, #ffffff)',
-  zenith: 'linear-gradient(90deg, #facc15, #2dd4bf)',
+  dreadful: 'linear-gradient(90deg, #7dd3fc, #7dd3fc)',
+  mystic: 'linear-gradient(90deg, #fb923c, #fb923c)',
+  venerated: 'linear-gradient(90deg, #34d399, #34d399)',
+  zenith: 'linear-gradient(90deg, #f472b6, #f472b6)',
 };
 
 interface RosterAnalyticsProps {
@@ -164,10 +164,10 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   const [wowSpells, setWowSpells] = useState<WowSpellRow[]>([]);
   const showBuffsDebuffs = false;
   const tokenNames: Record<TokenGroupId, string> = {
-    dreadful: t.dashboard.tokenDreadful,
-    mystic: t.dashboard.tokenMystic,
-    venerated: t.dashboard.tokenVenerated,
-    zenith: t.dashboard.tokenZenith,
+    dreadful: `${t.dashboard.tokenDreadful} (Cloth)`,
+    mystic: `${t.dashboard.tokenMystic} (Leather)`,
+    venerated: `${t.dashboard.tokenVenerated} (Mail)`,
+    zenith: `${t.dashboard.tokenZenith} (Plate)`,
   };
 
   useEffect(() => {
