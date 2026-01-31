@@ -44,7 +44,7 @@ const MemberWishes = () => {
   const navigate = useNavigate();
   const { regionSlug, serverSlug, guildSlug, memberId } = useParams();
   const { t, language } = useLanguage();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [guild, setGuild] = useState<{ id: string; name: string; server: string; region: string } | null>(null);
   const [member, setMember] = useState<{ username: string; battletag: string | null; status: string } | null>(null);
@@ -69,6 +69,7 @@ const MemberWishes = () => {
   }, [navigate, guild]);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user || !regionSlug || !serverSlug || !guildSlug || !memberId) {
       navigate('/auth');
       return;
@@ -150,7 +151,7 @@ const MemberWishes = () => {
     };
 
     fetchData();
-  }, [user, regionSlug, serverSlug, guildSlug, memberId, navigate]);
+  }, [user, authLoading, regionSlug, serverSlug, guildSlug, memberId, navigate]);
 
   // Handle validation
   const handleValidation = async (choiceIndex: number, status: ValidationStatus) => {

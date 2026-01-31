@@ -34,7 +34,7 @@ const RosterWishes = () => {
   const navigate = useNavigate();
   const { regionSlug, serverSlug, guildSlug } = useParams();
   const { t, language } = useLanguage();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { isAdmin: isGlobalAdmin, loading: adminLoading } = useIsAdmin();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
@@ -288,6 +288,7 @@ const RosterWishes = () => {
   };
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user || !regionSlug || !serverSlug || !guildSlug) {
       navigate('/auth');
       return;
@@ -295,7 +296,7 @@ const RosterWishes = () => {
     // Wait for admin check to complete
     if (adminLoading) return;
     fetchData();
-  }, [user, regionSlug, serverSlug, guildSlug, navigate, adminLoading, isGlobalAdmin]);
+  }, [user, authLoading, regionSlug, serverSlug, guildSlug, navigate, adminLoading, isGlobalAdmin]);
 
   useEffect(() => {
     if (guildId && selectedRosterId) {
