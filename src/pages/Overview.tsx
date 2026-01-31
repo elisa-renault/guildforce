@@ -34,7 +34,7 @@ const Overview = () => {
   const navigate = useNavigate();
   const { regionSlug, serverSlug, guildSlug } = useParams();
   const { t, language } = useLanguage();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { isAdmin: isGlobalAdmin, loading: adminLoading } = useIsAdmin();
   const [loading, setLoading] = useState(true);
   const [guildId, setGuildId] = useState<string | null>(null);
@@ -53,6 +53,7 @@ const Overview = () => {
   const [confirmedMembers, setConfirmedMembers] = useState(0);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user || !regionSlug || !serverSlug || !guildSlug) {
       navigate('/auth');
       return;
@@ -177,7 +178,7 @@ const Overview = () => {
     };
 
     fetchData();
-  }, [user, regionSlug, serverSlug, guildSlug, navigate, adminLoading, isGlobalAdmin]);
+  }, [user, authLoading, regionSlug, serverSlug, guildSlug, navigate, adminLoading, isGlobalAdmin]);
 
   if (loading) {
     return (

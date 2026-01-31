@@ -158,7 +158,7 @@ const Wishes = () => {
   const location = useLocation();
   const { regionSlug, serverSlug, guildSlug } = useParams();
   const { t, language } = useLanguage();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const requestedRosterId = new URLSearchParams(location.search).get('rosterId');
   const [loading, setLoading] = useState(true);
@@ -194,6 +194,7 @@ const Wishes = () => {
   ];
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user || !regionSlug || !serverSlug || !guildSlug) {
       navigate('/auth');
       return;
@@ -300,7 +301,7 @@ const { data: allGuilds } = await supabase
     };
 
     fetchData();
-  }, [user, regionSlug, serverSlug, guildSlug, navigate, requestedRosterId]);
+  }, [user, authLoading, regionSlug, serverSlug, guildSlug, navigate, requestedRosterId]);
 
   // Fetch wishes when roster changes
   useEffect(() => {

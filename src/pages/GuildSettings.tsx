@@ -62,7 +62,7 @@ const GuildSettings = () => {
   const initialSection = (searchParams.get('section') as SettingsSection) || 'profile';
   const initialRosterId = searchParams.get('roster');
   const { t } = useLanguage();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   
   const [loading, setLoading] = useState(true);
@@ -164,6 +164,7 @@ const GuildSettings = () => {
   };
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user) {
       navigate('/auth');
       return;
@@ -242,7 +243,7 @@ const GuildSettings = () => {
     };
 
     loadGuildAndCheckAccess();
-  }, [user, regionSlug, serverSlug, guildSlug, navigate]);
+  }, [user, authLoading, regionSlug, serverSlug, guildSlug, navigate]);
 
   const getVisibleSections = (gm: boolean, rosters: boolean, activity: boolean): SettingsSection[] => {
     const sections: SettingsSection[] = [];

@@ -31,6 +31,7 @@ export function useIsAdmin() {
         return;
       }
 
+      setLoading(true);
       try {
         const { data, error } = await supabase
           .from('user_roles')
@@ -73,6 +74,7 @@ export function useAdminRoles() {
         return;
       }
 
+      setLoading(true);
       try {
         const { data, error } = await supabase
           .from('user_roles')
@@ -115,6 +117,7 @@ export function useIsModerator() {
         return;
       }
 
+      setLoading(true);
       try {
         // Check if user has admin or moderator role
         const { data, error } = await supabase
