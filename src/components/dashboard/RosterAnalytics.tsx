@@ -164,10 +164,10 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   const [wowSpells, setWowSpells] = useState<WowSpellRow[]>([]);
   const showBuffsDebuffs = false;
   const tokenNames: Record<TokenGroupId, string> = {
-    dreadful: `${t.dashboard.tokenDreadful} (Cloth)`,
-    mystic: `${t.dashboard.tokenMystic} (Leather)`,
-    venerated: `${t.dashboard.tokenVenerated} (Mail)`,
-    zenith: `${t.dashboard.tokenZenith} (Plate)`,
+    dreadful: `${t.dashboard.tokenDreadful} (${t.dashboard.tokenCloth})`,
+    mystic: `${t.dashboard.tokenMystic} (${t.dashboard.tokenLeather})`,
+    venerated: `${t.dashboard.tokenVenerated} (${t.dashboard.tokenMail})`,
+    zenith: `${t.dashboard.tokenZenith} (${t.dashboard.tokenPlate})`,
   };
 
   useEffect(() => {
@@ -880,6 +880,17 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
           {/* Token Distribution - 2 columns */}
           <GlowCard className="p-3 lg:col-span-2">
             <h4 className="text-sm font-semibold mb-2">{t.dashboard.tokenDistribution}</h4>
+            <p className="text-[11px] text-muted-foreground mb-2">
+              {t.dashboard.tokenDistributionInfo}{' '}
+              <a
+                href="https://www.wowhead.com/news/new-tier-set-token-groups-datamined-in-midnight-379062"
+                target="_blank"
+                rel="noreferrer"
+                className="underline underline-offset-2 hover:text-foreground"
+              >
+                {t.dashboard.tokenDistributionSource}
+              </a>
+            </p>
             {totalTokenWishes > 0 ? (
               <div className="space-y-2">
                 {tokenStats.map(stat => (

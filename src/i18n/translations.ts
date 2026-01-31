@@ -346,6 +346,12 @@ export interface Translations {
     wish1: string;
     otherWishes: string;
     tokenDistribution: string;
+    tokenCloth: string;
+    tokenLeather: string;
+    tokenMail: string;
+    tokenPlate: string;
+    tokenDistributionInfo: string;
+    tokenDistributionSource: string;
     tokenDreadful: string;
     tokenMystic: string;
     tokenVenerated: string;
