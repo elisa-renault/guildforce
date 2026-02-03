@@ -1,71 +1,95 @@
 # Guildforce
 
-Guild management platform to centralize members, polls, forums, and profiles.
+◆ **Guildforce** is a guild operations platform for World of Warcraft communities.  
+It helps guild leaders and officers manage rosters, wishes, polls, and forum discussions in one place.
 
-## URL
+**Live app:** `https://guildforce.app`
 
-https://guildforce.app
+## Product Highlights
 
-## Key features
+- Battle.net-based authentication with Supabase session handling.
+- Guild-centric operations: members, ranks, roster access rules, and activity flows.
+- Wish workflow with status lifecycle (pending, approved, rejected).
+- Advanced polls with sections, question logic, respondent targeting, and result visibility rules.
+- Full forum system with moderation, sanctions, and realtime notifications.
+- Bilingual user experience (French / English).
 
-- Authentication and user profiles via Supabase.
-- Guild directory, member management, and ranks.
-- Advanced polls with drag-and-drop editor, sections, preview, respondent targeting, and results access control.
-- Full forum (categories, topics, moderation/admin).
-- Roster management and member wishes.
-- Public pages, changelog, and legal pages.
-- Bilingual UI (FR/EN).
+## Tech Stack
 
-## Tech stack
+| Layer | Technology |
+|---|---|
+| Frontend | React 18, TypeScript, Vite |
+| UI | Tailwind CSS, shadcn/ui |
+| Backend | Supabase (PostgreSQL, RLS, Edge Functions) |
+| Data Fetching | TanStack Query |
+| Testing | Vitest, Testing Library |
 
-- Vite + React + TypeScript
-- Tailwind CSS + shadcn/ui
-- Supabase (auth + data)
-- TanStack Query
-- Vitest
+## Quick Start
 
-## Local development
+### 1) Install dependencies
 
-```sh
+```bash
 npm install
+```
+
+### 2) Configure environment
+
+Create `.env` at the repository root (or copy from `.env.example`):
+
+```bash
+VITE_SUPABASE_PROJECT_ID="your-project-id"
+VITE_SUPABASE_PUBLISHABLE_KEY="your-anon-key"
+VITE_SUPABASE_URL="https://your-project-id.supabase.co"
+```
+
+### 3) Run locally
+
+```bash
 npm run dev
 ```
 
-## Environment variables
+## Scripts
 
-Create a `.env` file at the root with:
-
-```sh
-VITE_SUPABASE_URL="https://YOUR_PROJECT.supabase.co"
-VITE_SUPABASE_PROJECT_ID="YOUR_PROJECT_ID"
-VITE_SUPABASE_PUBLISHABLE_KEY="YOUR_ANON_KEY"
-```
-
-## Useful scripts
-
-```sh
-npm run dev
-npm run build
-npm run preview
-npm run lint
-npm run test
-```
-
-## Tests
-
-Unit tests use Vitest and live in `src/__tests__`.
-
-## Deployment
-
-The GitHub Actions workflow `.github/workflows/deploy.yml`:
-
-- syncs the code to the VPS via rsync
-- installs dependencies and builds
-- installs/reloads the Nginx config
-
-Nginx config: `nginx/guildforce.conf`.
+- `npm run dev` - start Vite dev server.
+- `npm run build` - build production bundle.
+- `npm run build:dev` - build in development mode.
+- `npm run preview` - preview the production build locally.
+- `npm run lint` - run ESLint.
+- `npm run test` - run Vitest suite.
 
 ## Supabase
 
 - Migrations: `supabase/migrations`
-- Edge functions: `supabase/functions`
+- Edge Functions: `supabase/functions`
+- Migration procedure (manual): `MIGRATION_SUPABASE.md`
+
+## Testing & Quality
+
+◆ Main test folder: `src/__tests__`  
+◆ Run checks before PR/merge:
+
+```bash
+npm run lint
+npm run test
+```
+
+## Deployment
+
+Deployment runs through GitHub Actions via `.github/workflows/deploy.yml`:
+
+- Trigger: push to `main` (or manual dispatch).
+- Syncs repository content to the VPS using `rsync`.
+- Runs `npm ci` and `npm run build` on the server.
+- Reloads Nginx service.
+
+## Security Notes
+
+- Never commit secrets (`.env`, service-role keys, tokens).
+- Keep `.env.example` sanitized (placeholders only).
+- Respect Supabase RLS-first design for all app features.
+
+## License
+
+◆ This project is **source-available and proprietary** ("All Rights Reserved").  
+Public repository access does not grant rights to reuse or redistribute the code.  
+See `LICENSE` for full terms.
