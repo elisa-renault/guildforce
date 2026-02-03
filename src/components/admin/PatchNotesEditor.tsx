@@ -1,21 +1,21 @@
-import { useEffect, useState } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { GlowCard } from '@/components/GlowCard';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
-import { MarkdownEditor } from '@/components/forum/MarkdownEditor';
-import { toast } from 'sonner';
-import { 
-  Save, Eye, Edit, Loader2, Plus, Trash2, ScrollText, 
-  Calendar, CheckCircle, FileEdit 
+import {
+  Calendar,
+  CheckCircle,
+  Edit,
+  Eye,
+  FileEdit,
+  Loader2,
+  Plus,
+  Save,
+  ScrollText,
+  Trash2,
 } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { toast } from 'sonner';
+
+import { MarkdownEditor } from '@/components/forum/MarkdownEditor';
+import { GlowCard } from '@/components/GlowCard';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,20 +27,56 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getIntlLocale, isSupportedLanguage, LANGUAGE_OPTIONS, type Language } from '@/i18n/config';
+import { resolveSemanticMessage } from '@/i18n/semantic';
+import { supabase } from '@/integrations/supabase/client';
+import {
+  collectPersistedTranslations,
+  selectContentTranslation,
+  toEditableTranslationMap,
+  type EditableContentTranslationMap,
+} from '@/lib/contentTranslations';
+
+
+interface PatchNoteTranslation {
+  id?: string;
+  language: string;
+  title: string;
+  content: string;
+}
 
 interface PatchNote {
   id: string;
   version: string;
-  title_fr: string;
-  title_en: string;
-  content_fr: string;
-  content_en: string;
   status: 'draft' | 'published';
   published_at: string | null;
   created_at: string;
   updated_at: string;
   created_by: string | null;
+  patch_note_translations: PatchNoteTranslation[];
 }
+
+interface EditablePatchNote {
+  id: string;
+  version: string;
+  status: 'draft' | 'published';
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+  translations: EditableContentTranslationMap;
+}
+
+const getLanguageLabel = (language: Language): string =>
+  LANGUAGE_OPTIONS.find((option) => option.code === language)?.label || language;
 
 export const PatchNotesEditor = () => {
   const { language, t } = useLanguage();
@@ -48,19 +84,17 @@ export const PatchNotesEditor = () => {
   const [notes, setNotes] = useState<PatchNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [editingNote, setEditingNote] = useState<PatchNote | null>(null);
+  const [editingNote, setEditingNote] = useState<EditablePatchNote | null>(null);
   const [previewMode, setPreviewMode] = useState(false);
-  const [editLang, setEditLang] = useState<'fr' | 'en'>('fr');
+  const [editLang, setEditLang] = useState<Language>('en');
   const [isNew, setIsNew] = useState(false);
+  const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
+    resolveSemanticMessage({ key, language, translations: t });
 
-  useEffect(() => {
-    fetchNotes();
-  }, []);
-
-  const fetchNotes = async () => {
+  const fetchNotes = useCallback(async () => {
     const { data, error } = await supabase
       .from('patch_notes')
-      .select('*')
+      .select('id, version, status, published_at, created_at, updated_at, created_by, patch_note_translations(id, language, title, content)')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -70,13 +104,16 @@ export const PatchNotesEditor = () => {
 
     setNotes((data as PatchNote[]) || []);
     setLoading(false);
-  };
+  }, [t.errors.generic]);
+
+  useEffect(() => {
+    void fetchNotes();
+  }, [fetchNotes]);
 
   const handleNew = () => {
-    // Generate next version number
-    const versions = notes.map(n => n.version).filter(v => /^\d+\.\d+\.\d+$/.test(v));
+    const versions = notes.map((note) => note.version).filter((value) => /^\d+\.\d+\.\d+$/.test(value));
     let nextVersion = '0.1.0';
-    
+
     if (versions.length > 0) {
       const sorted = versions.sort((a, b) => {
         const [aMajor, aMinor, aPatch] = a.split('.').map(Number);
@@ -92,30 +129,37 @@ export const PatchNotesEditor = () => {
     setEditingNote({
       id: '',
       version: nextVersion,
-      title_fr: '',
-      title_en: '',
-      content_fr: '',
-      content_en: '',
       status: 'draft',
       published_at: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       created_by: user?.id || null,
+      translations: toEditableTranslationMap([]),
     });
     setIsNew(true);
     setPreviewMode(false);
+    setEditLang(language);
   };
 
   const handleEdit = (note: PatchNote) => {
-    setEditingNote({ ...note });
+    setEditingNote({
+      id: note.id,
+      version: note.version,
+      status: note.status,
+      published_at: note.published_at,
+      created_at: note.created_at,
+      updated_at: note.updated_at,
+      created_by: note.created_by,
+      translations: toEditableTranslationMap(note.patch_note_translations || []),
+    });
     setIsNew(false);
     setPreviewMode(false);
+    setEditLang(language);
   };
 
   const handleSave = async () => {
     if (!editingNote || !user) return;
 
-    // Validate version format
     if (!/^\d+\.\d+\.\d+$/.test(editingNote.version)) {
       toast.error(t.patchnotes.versionFormat, {
         style: { background: 'hsl(var(--card))', borderColor: 'hsl(var(--destructive) / 0.3)' },
@@ -123,26 +167,41 @@ export const PatchNotesEditor = () => {
       return;
     }
 
+    const translationRows = collectPersistedTranslations(editingNote.translations, ['en']);
+    const hasEnglishTitle = translationRows.some((row) => row.language === 'en' && row.title.length > 0);
+
+    if (!hasEnglishTitle) {
+      toast.error(t.errors.generic, {
+        description: sm('admin.patch.required_en_title'),
+        style: { background: 'hsl(var(--card))', borderColor: 'hsl(var(--destructive) / 0.3)' },
+      });
+      return;
+    }
+
     setSaving(true);
 
+    const publishedAt = editingNote.status === 'published'
+      ? editingNote.published_at || new Date().toISOString()
+      : null;
+
+    let targetNoteId = editingNote.id;
+
     if (isNew) {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('patch_notes')
         .insert({
           version: editingNote.version,
-          title_fr: editingNote.title_fr,
-          title_en: editingNote.title_en,
-          content_fr: editingNote.content_fr,
-          content_en: editingNote.content_en,
           status: editingNote.status,
-          published_at: editingNote.status === 'published' ? new Date().toISOString() : null,
+          published_at: publishedAt,
           created_by: user.id,
-        });
+        })
+        .select('id')
+        .single();
 
-      setSaving(false);
+      if (error || !data) {
+        setSaving(false);
 
-      if (error) {
-        if (error.code === '23505') {
+        if (error?.code === '23505') {
           toast.error(t.patchnotes.versionExists, {
             style: { background: 'hsl(var(--card))', borderColor: 'hsl(var(--destructive) / 0.3)' },
           });
@@ -153,26 +212,21 @@ export const PatchNotesEditor = () => {
         }
         return;
       }
+
+      targetNoteId = data.id;
     } else {
       const { error } = await supabase
         .from('patch_notes')
         .update({
           version: editingNote.version,
-          title_fr: editingNote.title_fr,
-          title_en: editingNote.title_en,
-          content_fr: editingNote.content_fr,
-          content_en: editingNote.content_en,
           status: editingNote.status,
-          published_at: editingNote.status === 'published' && !editingNote.published_at 
-            ? new Date().toISOString() 
-            : editingNote.published_at,
+          published_at: publishedAt,
           updated_at: new Date().toISOString(),
         })
         .eq('id', editingNote.id);
 
-      setSaving(false);
-
       if (error) {
+        setSaving(false);
         toast.error(t.errors.generic, {
           style: { background: 'hsl(var(--card))', borderColor: 'hsl(var(--destructive) / 0.3)' },
         });
@@ -180,20 +234,38 @@ export const PatchNotesEditor = () => {
       }
     }
 
+    const { error: translationError } = await supabase
+      .from('patch_note_translations')
+      .upsert(
+        translationRows.map((row) => ({
+          patch_note_id: targetNoteId,
+          language: row.language,
+          title: row.title,
+          content: row.content,
+        })),
+        { onConflict: 'patch_note_id,language' },
+      );
+
+    setSaving(false);
+
+    if (translationError) {
+      toast.error(t.errors.generic, {
+        style: { background: 'hsl(var(--card))', borderColor: 'hsl(var(--destructive) / 0.3)' },
+      });
+      return;
+    }
+
     toast.success(t.patchnotes.saved, {
       style: { background: 'hsl(var(--card))', borderColor: 'hsl(var(--primary) / 0.3)' },
     });
 
-    fetchNotes();
+    void fetchNotes();
     setEditingNote(null);
     setIsNew(false);
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase
-      .from('patch_notes')
-      .delete()
-      .eq('id', id);
+    const { error } = await supabase.from('patch_notes').delete().eq('id', id);
 
     if (error) {
       toast.error(t.errors.generic);
@@ -204,7 +276,7 @@ export const PatchNotesEditor = () => {
       style: { background: 'hsl(var(--card))', borderColor: 'hsl(var(--primary) / 0.3)' },
     });
 
-    fetchNotes();
+    void fetchNotes();
   };
 
   const handleCancel = () => {
@@ -243,10 +315,14 @@ export const PatchNotesEditor = () => {
   }
 
   if (editingNote) {
-    const currentTitle = editLang === 'fr' ? editingNote.title_fr : editingNote.title_en;
-    const currentContent = editLang === 'fr' ? editingNote.content_fr : editingNote.content_en;
-    const langLabelFr = t.auto?.components_admin_PatchNotesEditor_language_fr || 'FR';
-    const langLabelEn = t.auto?.components_admin_PatchNotesEditor_language_en || 'EN';
+    const currentTranslation = editingNote.translations[editLang];
+    const titlePlaceholder = editLang === 'fr'
+      ? sm('admin.patch.title_placeholder.fr')
+      : sm('admin.patch.title_placeholder.en');
+    const contentPlaceholder = editLang === 'fr'
+      ? sm('admin.patch.content_placeholder.fr')
+      : sm('admin.patch.content_placeholder.en');
+    const emptyPreview = editLang === 'fr' ? '*Aucun contenu*' : '*No content*';
 
     return (
       <div className="space-y-4">
@@ -275,7 +351,6 @@ export const PatchNotesEditor = () => {
         </div>
 
         <GlowCard className="p-4 space-y-4">
-          {/* Version and status */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="version">{t.patchnotes.version}</Label>
@@ -283,8 +358,8 @@ export const PatchNotesEditor = () => {
                 id="version"
                 name="version"
                 value={editingNote.version}
-                onChange={(e) => setEditingNote({ ...editingNote, version: e.target.value })}
-                placeholder={t.auto.components_admin_PatchNotesEditor_version_placeholder}
+                onChange={(event) => setEditingNote({ ...editingNote, version: event.target.value })}
+                placeholder={sm('admin.patch.version_placeholder')}
                 className="font-mono"
               />
               <p className="text-xs text-muted-foreground">{t.patchnotes.versionFormat}</p>
@@ -315,79 +390,98 @@ export const PatchNotesEditor = () => {
             </div>
           </div>
 
-          {/* Language tabs */}
-          <Tabs value={editLang} onValueChange={(v) => setEditLang(v as 'fr' | 'en')}>
-            <TabsList className="mb-4">
-              <TabsTrigger value="fr">{langLabelFr}</TabsTrigger>
-              <TabsTrigger value="en">{langLabelEn}</TabsTrigger>
-            </TabsList>
+          <div className="space-y-2 max-w-xs">
+            <Label>{t.auth.language}</Label>
+            <Select
+              value={editLang}
+              onValueChange={(value) => {
+                if (isSupportedLanguage(value)) {
+                  setEditLang(value);
+                }
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {LANGUAGE_OPTIONS.map((option) => (
+                  <SelectItem key={option.code} value={option.code}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-            <TabsContent value="fr" className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title_fr">{t.patchnotes.title}</Label>
-                <Input
-                  id="title_fr"
-                  name="title_fr"
-                  value={editingNote.title_fr}
-                  onChange={(e) => setEditingNote({ ...editingNote, title_fr: e.target.value })}
-                  placeholder={t.auto.components_admin_PatchNotesEditor_title_fr_placeholder}
-                />
-              </div>
-              {previewMode ? (
-                <div className="prose prose-invert max-w-none p-4 bg-background/50 rounded-lg border border-border/50">
-                  <ReactMarkdown>{editingNote.content_fr || '*Aucun contenu*'}</ReactMarkdown>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <Label>{t.patchnotes.content}</Label>
-                  <MarkdownEditor
-                    value={editingNote.content_fr}
-                    onChange={(v) => setEditingNote({ ...editingNote, content_fr: v })}
-                    placeholder={t.auto.components_admin_PatchNotesEditor_content_fr_placeholder}
-                  />
-                </div>
-              )}
-            </TabsContent>
+          <div className="space-y-2">
+            <Label htmlFor={`title-${editLang}`}>
+              {t.patchnotes.title} ({getLanguageLabel(editLang)})
+            </Label>
+            <Input
+              id={`title-${editLang}`}
+              value={currentTranslation.title}
+              onChange={(event) => {
+                const title = event.target.value;
+                setEditingNote((prev) => {
+                  if (!prev) return prev;
+                  return {
+                    ...prev,
+                    translations: {
+                      ...prev.translations,
+                      [editLang]: {
+                        ...prev.translations[editLang],
+                        title,
+                        exists: true,
+                      },
+                    },
+                  };
+                });
+              }}
+              placeholder={titlePlaceholder}
+            />
+          </div>
 
-            <TabsContent value="en" className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title_en">{t.patchnotes.title}</Label>
-                <Input
-                  id="title_en"
-                  name="title_en"
-                  value={editingNote.title_en}
-                  onChange={(e) => setEditingNote({ ...editingNote, title_en: e.target.value })}
-                  placeholder={t.auto.components_admin_PatchNotesEditor_title_en_placeholder}
-                />
-              </div>
-              {previewMode ? (
-                <div className="prose prose-invert max-w-none p-4 bg-background/50 rounded-lg border border-border/50">
-                  <ReactMarkdown>{editingNote.content_en || '*No content*'}</ReactMarkdown>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <Label>{t.patchnotes.content}</Label>
-                  <MarkdownEditor
-                    value={editingNote.content_en}
-                    onChange={(v) => setEditingNote({ ...editingNote, content_en: v })}
-                    placeholder={t.auto.components_admin_PatchNotesEditor_content_en_placeholder}
-                  />
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
+          {previewMode ? (
+            <div className="prose prose-invert max-w-none p-4 bg-background/50 rounded-lg border border-border/50">
+              <ReactMarkdown>{currentTranslation.content || emptyPreview}</ReactMarkdown>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label>
+                {t.patchnotes.content} ({getLanguageLabel(editLang)})
+              </Label>
+              <MarkdownEditor
+                value={currentTranslation.content}
+                onChange={(content) => {
+                  setEditingNote((prev) => {
+                    if (!prev) return prev;
+                    return {
+                      ...prev,
+                      translations: {
+                        ...prev.translations,
+                        [editLang]: {
+                          ...prev.translations[editLang],
+                          content,
+                          exists: true,
+                        },
+                      },
+                    };
+                  });
+                }}
+                placeholder={contentPlaceholder}
+              />
+            </div>
+          )}
         </GlowCard>
       </div>
     );
   }
 
-  // List view
-  const publishedCount = notes.filter(n => n.status === 'published').length;
-  const draftCount = notes.filter(n => n.status === 'draft').length;
+  const publishedCount = notes.filter((note) => note.status === 'published').length;
+  const draftCount = notes.filter((note) => note.status === 'draft').length;
 
   return (
     <div className="space-y-4">
-      {/* Header with stats */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <span className="flex items-center gap-1.5">
@@ -405,7 +499,6 @@ export const PatchNotesEditor = () => {
         </Button>
       </div>
 
-      {/* Notes list */}
       {notes.length === 0 ? (
         <GlowCard className="p-6 text-center">
           <ScrollText className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
@@ -417,75 +510,66 @@ export const PatchNotesEditor = () => {
         </GlowCard>
       ) : (
         <div className="space-y-3">
-          {notes.map((note) => (
-            <GlowCard
-              key={note.id}
-              className="p-4 hover:bg-card/60 transition-colors cursor-pointer"
-              onClick={() => handleEdit(note)}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="font-mono font-semibold text-foreground">
-                      v{note.version}
-                    </span>
-                    <Badge 
-                      variant={note.status === 'published' ? 'default' : 'secondary'}
-                      className={note.status === 'published' ? 'bg-green-500/20 text-green-400 border-green-500/30' : ''}
-                    >
-                      {note.status === 'published' ? t.patchnotes.published : t.patchnotes.draft}
-                    </Badge>
-                    {note.status === 'published' && isRecent(note.published_at) && (
-                      <Badge className="bg-primary/20 text-primary border-primary/30">
-                        {t.common.new}
+          {notes.map((note) => {
+            const localized = selectContentTranslation(note.patch_note_translations ?? [], language);
+            return (
+              <GlowCard
+                key={note.id}
+                className="p-4 hover:bg-card/60 transition-colors cursor-pointer"
+                onClick={() => handleEdit(note)}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <span className="font-mono font-semibold text-foreground">v{note.version}</span>
+                      <Badge
+                        variant={note.status === 'published' ? 'default' : 'secondary'}
+                        className={note.status === 'published' ? 'bg-green-500/20 text-green-400 border-green-500/30' : ''}
+                      >
+                        {note.status === 'published' ? t.patchnotes.published : t.patchnotes.draft}
                       </Badge>
-                    )}
+                      {note.status === 'published' && isRecent(note.published_at) && (
+                        <Badge className="bg-primary/20 text-primary border-primary/30">{t.common.new}</Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-foreground truncate">{localized.title}</p>
+                    <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {note.published_at
+                        ? `${t.patchnotes.publishedAt} ${new Date(note.published_at).toLocaleDateString(getIntlLocale(language))}`
+                        : new Date(note.created_at).toLocaleDateString(getIntlLocale(language))}
+                    </p>
                   </div>
-                  <p className="text-sm text-foreground truncate">
-                    {note[`title_${language}` as 'title_fr' | 'title_en']}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    {note.published_at 
-                      ? `${t.patchnotes.publishedAt} ${new Date(note.published_at).toLocaleDateString(language)}`
-                      : new Date(note.created_at).toLocaleDateString(language)
-                    }
-                  </p>
+                  <div className="flex items-center gap-1" onClick={(event) => event.stopPropagation()}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(note)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>{t.patchnotes.confirmDelete}</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {t.patchnotes.confirmDeleteDesc} v{note.version}
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDelete(note.id)}>
+                            {t.common.delete}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => handleEdit(note)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>{t.patchnotes.confirmDelete}</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          {t.patchnotes.confirmDeleteDesc} v{note.version}
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDelete(note.id)}>
-                          {t.common.delete}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </div>
-            </GlowCard>
-          ))}
+              </GlowCard>
+            );
+          })}
         </div>
       )}
     </div>

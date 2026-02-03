@@ -10,6 +10,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { detectLanguageFromNavigator } from '@/i18n/config';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
@@ -68,7 +69,7 @@ const Auth = () => {
       const redirectUri = getRedirectUri('/auth');
 
       // Detect browser language for new accounts
-      const browserLanguage = navigator.language.toLowerCase().startsWith('fr') ? 'fr' : 'en';
+      const browserLanguage = detectLanguageFromNavigator(navigator.language);
       
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/battlenet-auth/login`, {
         method: 'POST',

@@ -1,34 +1,65 @@
-import { useEffect, useState } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { Edit, Eye, FileText, Loader2, Save } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import { toast } from 'sonner';
+
+import { MarkdownEditor } from '@/components/forum/MarkdownEditor';
 import { GlowCard } from '@/components/GlowCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MarkdownEditor } from '@/components/forum/MarkdownEditor';
-import { toast } from 'sonner';
-import { Save, FileText, Eye, Edit, Loader2 } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
+import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getIntlLocale, isSupportedLanguage, LANGUAGE_OPTIONS, type Language } from '@/i18n/config';
+import { resolveSemanticMessage } from '@/i18n/semantic';
+import { supabase } from '@/integrations/supabase/client';
+import {
+  collectPersistedTranslations,
+  selectContentTranslation,
+  toEditableTranslationMap,
+  type EditableContentTranslationMap,
+} from '@/lib/contentTranslations';
+
+
+interface LegalPageTranslation {
+  id?: string;
+  language: string;
+  title: string;
+  content: string;
+}
 
 interface LegalPage {
   id: string;
   slug: string;
-  title_fr: string;
-  title_en: string;
-  content_fr: string;
-  content_en: string;
   updated_at: string;
   updated_by: string | null;
+  legal_page_translations: LegalPageTranslation[];
+}
+
+interface EditableLegalPage {
+  id: string;
+  slug: string;
+  updated_at: string;
+  updated_by: string | null;
+  translations: EditableContentTranslationMap;
 }
 
 const slugLabels: Record<string, { fr: string; en: string }> = {
-  'legal-notice': { fr: 'Mentions légales', en: 'Legal Notice' },
-  'privacy-policy': { fr: 'Politique de confidentialité', en: 'Privacy Policy' },
+  'legal-notice': { fr: 'Mentions legales', en: 'Legal Notice' },
+  'privacy-policy': { fr: 'Politique de confidentialite', en: 'Privacy Policy' },
   'terms-of-service': { fr: 'CGU', en: 'Terms of Service' },
 };
+
+const getSlugLabel = (slug: string, language: Language) => {
+  const label = slugLabels[slug];
+  if (!label) return slug;
+  return language === 'fr' ? label.fr : label.en;
+};
+
+const getLanguageLabel = (language: Language): string =>
+  LANGUAGE_OPTIONS.find((option) => option.code === language)?.label || language;
 
 export const LegalPagesEditor = () => {
   const { language, t } = useLanguage();
@@ -36,18 +67,16 @@ export const LegalPagesEditor = () => {
   const [pages, setPages] = useState<LegalPage[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
-  const [editingPage, setEditingPage] = useState<LegalPage | null>(null);
+  const [editingPage, setEditingPage] = useState<EditableLegalPage | null>(null);
   const [previewMode, setPreviewMode] = useState(false);
-  const [editLang, setEditLang] = useState<'fr' | 'en'>('fr');
+  const [editLang, setEditLang] = useState<Language>('en');
+  const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
+    resolveSemanticMessage({ key, language, translations: t });
 
-  useEffect(() => {
-    fetchPages();
-  }, []);
-
-  const fetchPages = async () => {
+  const fetchPages = useCallback(async () => {
     const { data, error } = await supabase
       .from('legal_pages')
-      .select('*')
+      .select('id, slug, updated_at, updated_by, legal_page_translations(id, language, title, content)')
       .order('slug');
 
     if (error) {
@@ -55,27 +84,69 @@ export const LegalPagesEditor = () => {
       return;
     }
 
-    setPages(data || []);
+    setPages((data as LegalPage[]) || []);
     setLoading(false);
-  };
+  }, [t.errors.generic]);
+
+  useEffect(() => {
+    void fetchPages();
+  }, [fetchPages]);
 
   const handleEdit = (page: LegalPage) => {
-    setEditingPage({ ...page });
+    setEditingPage({
+      id: page.id,
+      slug: page.slug,
+      updated_at: page.updated_at,
+      updated_by: page.updated_by,
+      translations: toEditableTranslationMap(page.legal_page_translations || []),
+    });
     setPreviewMode(false);
+    setEditLang(language);
   };
 
   const handleSave = async () => {
     if (!editingPage || !user) return;
 
+    const translationRows = collectPersistedTranslations(editingPage.translations, ['en', 'fr']);
+
+    const hasEnglish =
+      translationRows.some((row) => row.language === 'en' && row.title.length > 0 && row.content.length > 0);
+    const hasFrench =
+      translationRows.some((row) => row.language === 'fr' && row.title.length > 0 && row.content.length > 0);
+
+    if (!hasEnglish || !hasFrench) {
+      toast.error(t.errors.generic, {
+        description: sm('admin.legal.required_en_fr'),
+        style: { background: 'hsl(var(--card))', borderColor: 'hsl(var(--destructive) / 0.3)' },
+      });
+      return;
+    }
+
     setSaving(editingPage.id);
 
-    const { error } = await supabase
+    const { error: translationError } = await supabase
+      .from('legal_page_translations')
+      .upsert(
+        translationRows.map((row) => ({
+          legal_page_id: editingPage.id,
+          language: row.language,
+          title: row.title,
+          content: row.content,
+        })),
+        { onConflict: 'legal_page_id,language' },
+      );
+
+    if (translationError) {
+      setSaving(null);
+      toast.error(t.errors.generic, {
+        style: { background: 'hsl(var(--card))', borderColor: 'hsl(var(--destructive) / 0.3)' },
+      });
+      return;
+    }
+
+    const { error: pageError } = await supabase
       .from('legal_pages')
       .update({
-        title_fr: editingPage.title_fr,
-        title_en: editingPage.title_en,
-        content_fr: editingPage.content_fr,
-        content_en: editingPage.content_en,
         updated_at: new Date().toISOString(),
         updated_by: user.id,
       })
@@ -83,18 +154,18 @@ export const LegalPagesEditor = () => {
 
     setSaving(null);
 
-    if (error) {
+    if (pageError) {
       toast.error(t.errors.generic, {
         style: { background: 'hsl(var(--card))', borderColor: 'hsl(var(--destructive) / 0.3)' },
       });
       return;
     }
 
-    toast.success(t.auto.components_admin_LegalPagesEditor_93, {
+    toast.success(sm('admin.legal.saved'), {
       style: { background: 'hsl(var(--card))', borderColor: 'hsl(var(--primary) / 0.3)' },
     });
 
-    fetchPages();
+    void fetchPages();
     setEditingPage(null);
   };
 
@@ -117,17 +188,12 @@ export const LegalPagesEditor = () => {
   }
 
   if (editingPage) {
-    const currentTitle = editLang === 'fr' ? editingPage.title_fr : editingPage.title_en;
-    const currentContent = editLang === 'fr' ? editingPage.content_fr : editingPage.content_en;
-    const langLabelFr = t.auto?.components_admin_LegalPagesEditor_language_fr || 'FR';
-    const langLabelEn = t.auto?.components_admin_LegalPagesEditor_language_en || 'EN';
+    const currentTranslation = editingPage.translations[editLang];
 
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-medium text-foreground">
-            {slugLabels[editingPage.slug]?.[language] || editingPage.slug}
-          </h3>
+          <h3 className="text-lg font-medium text-foreground">{getSlugLabel(editingPage.slug, language)}</h3>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
@@ -136,7 +202,7 @@ export const LegalPagesEditor = () => {
               className="gap-1.5"
             >
               {previewMode ? <Edit className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              {previewMode ? (t.auto.components_admin_LegalPagesEditor_137) : (t.auto.components_admin_LegalPagesEditor_137_2)}
+              {previewMode ? sm('admin.legal.toggle_edit') : sm('admin.legal.toggle_preview')}
             </Button>
             <Button variant="ghost" size="sm" onClick={handleCancel}>
               {t.common.cancel}
@@ -157,126 +223,146 @@ export const LegalPagesEditor = () => {
           </div>
         </div>
 
-        <Tabs value={editLang} onValueChange={(v) => setEditLang(v as 'fr' | 'en')}>
-          <TabsList className="bg-card/50">
-            <TabsTrigger value="fr">{langLabelFr}</TabsTrigger>
-            <TabsTrigger value="en">{langLabelEn}</TabsTrigger>
-          </TabsList>
+        <div className="space-y-2 max-w-xs">
+          <Label>{t.auth.language}</Label>
+          <Select
+            value={editLang}
+            onValueChange={(value) => {
+              if (isSupportedLanguage(value)) {
+                setEditLang(value);
+              }
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {LANGUAGE_OPTIONS.map((option) => (
+                <SelectItem key={option.code} value={option.code}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-          <TabsContent value={editLang} className="mt-4 space-y-4">
-            {previewMode ? (
-              <GlowCard className="p-6">
-                <h1 className="font-display text-2xl text-foreground mb-4">{currentTitle}</h1>
-                <div className="prose prose-invert prose-sm max-w-none">
-                  <ReactMarkdown
-                    components={{
-                      h2: ({ children }) => (
-                        <h2 className="text-lg font-semibold text-foreground mt-6 mb-3 first:mt-0">
-                          {children}
-                        </h2>
-                      ),
-                      h3: ({ children }) => (
-                        <h3 className="text-base font-medium text-foreground mt-4 mb-2">
-                          {children}
-                        </h3>
-                      ),
-                      p: ({ children }) => (
-                        <p className="text-muted-foreground mb-3 leading-relaxed">
-                          {children}
-                        </p>
-                      ),
-                      ul: ({ children }) => (
-                        <ul className="list-disc list-inside text-muted-foreground mb-3 space-y-1">
-                          {children}
-                        </ul>
-                      ),
-                      li: ({ children }) => (
-                        <li className="text-muted-foreground">{children}</li>
-                      ),
-                      strong: ({ children }) => (
-                        <strong className="text-foreground font-medium">{children}</strong>
-                      ),
-                      a: ({ href, children }) => (
-                        <a
-                          href={href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline"
-                        >
-                          {children}
-                        </a>
-                      ),
-                    }}
-                  >
-                    {currentContent}
-                  </ReactMarkdown>
-                </div>
-              </GlowCard>
-            ) : (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor={`title-${editLang}`}>
-                    {t.auto.components_admin_LegalPagesEditor_217} ({editLang.toUpperCase()})
-                  </Label>
-                  <Input
-                    id={`title-${editLang}`}
-                    value={currentTitle}
-                    onChange={(e) => {
-                      setEditingPage({
-                        ...editingPage,
-                        [editLang === 'fr' ? 'title_fr' : 'title_en']: e.target.value,
-                      });
-                    }}
-                    className="bg-card"
-                  />
-                </div>
+        {previewMode ? (
+          <GlowCard className="p-6">
+            <h1 className="font-display text-2xl text-foreground mb-4">{currentTranslation.title}</h1>
+            <div className="prose prose-invert prose-sm max-w-none">
+              <ReactMarkdown
+                components={{
+                  h2: ({ children }) => (
+                    <h2 className="text-lg font-semibold text-foreground mt-6 mb-3 first:mt-0">{children}</h2>
+                  ),
+                  h3: ({ children }) => (
+                    <h3 className="text-base font-medium text-foreground mt-4 mb-2">{children}</h3>
+                  ),
+                  p: ({ children }) => <p className="text-muted-foreground mb-3 leading-relaxed">{children}</p>,
+                  ul: ({ children }) => (
+                    <ul className="list-disc list-inside text-muted-foreground mb-3 space-y-1">{children}</ul>
+                  ),
+                  li: ({ children }) => <li className="text-muted-foreground">{children}</li>,
+                  strong: ({ children }) => <strong className="text-foreground font-medium">{children}</strong>,
+                  a: ({ href, children }) => (
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      {children}
+                    </a>
+                  ),
+                }}
+              >
+                {currentTranslation.content}
+              </ReactMarkdown>
+            </div>
+          </GlowCard>
+        ) : (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor={`title-${editLang}`}>
+                {sm('admin.legal.field_title')} ({getLanguageLabel(editLang)})
+              </Label>
+              <Input
+                id={`title-${editLang}`}
+                value={currentTranslation.title}
+                onChange={(event) => {
+                  const title = event.target.value;
+                  setEditingPage((prev) => {
+                    if (!prev) return prev;
+                    return {
+                      ...prev,
+                      translations: {
+                        ...prev.translations,
+                        [editLang]: {
+                          ...prev.translations[editLang],
+                          title,
+                          exists: true,
+                        },
+                      },
+                    };
+                  });
+                }}
+                className="bg-card"
+              />
+            </div>
 
-                <div className="space-y-2">
-                  <Label>
-                    {t.auto.components_admin_LegalPagesEditor_234} ({editLang.toUpperCase()})
-                  </Label>
-                  <MarkdownEditor
-                    value={currentContent}
-                    onChange={(value) => {
-                      setEditingPage({
-                        ...editingPage,
-                        [editLang === 'fr' ? 'content_fr' : 'content_en']: value,
-                      });
-                    }}
-                    placeholder={t.auto.components_admin_LegalPagesEditor_244}
-                    minHeight="300px"
-                  />
-                </div>
-              </>
-            )}
-          </TabsContent>
-        </Tabs>
+            <div className="space-y-2">
+              <Label>
+                {sm('admin.legal.field_content')} ({getLanguageLabel(editLang)})
+              </Label>
+              <MarkdownEditor
+                value={currentTranslation.content}
+                onChange={(content) => {
+                  setEditingPage((prev) => {
+                    if (!prev) return prev;
+                    return {
+                      ...prev,
+                      translations: {
+                        ...prev.translations,
+                        [editLang]: {
+                          ...prev.translations[editLang],
+                          content,
+                          exists: true,
+                        },
+                      },
+                    };
+                  });
+                }}
+                placeholder={sm('admin.legal.markdown_placeholder')}
+                minHeight="300px"
+              />
+            </div>
+          </>
+        )}
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground mb-4">
-        {t.auto.components_admin_LegalPagesEditor_259}
-      </p>
+      <p className="text-sm text-muted-foreground mb-4">{sm('admin.legal.list_help')}</p>
 
       {pages.map((page) => {
-        const label = slugLabels[page.slug]?.[language] || page.slug;
-        const updatedAt = new Date(page.updated_at).toLocaleDateString(
-          t.auto.components_admin_LegalPagesEditor_267,
-          { dateStyle: 'medium' }
-        );
+        const label = getSlugLabel(page.slug, language);
+        const updatedAt = new Date(page.updated_at).toLocaleDateString(getIntlLocale(language), {
+          dateStyle: 'medium',
+        });
+        const localized = selectContentTranslation(page.legal_page_translations ?? [], language);
 
         return (
           <GlowCard key={page.id} className="p-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 min-w-0">
                 <div className="p-2 rounded-lg bg-primary/10">
                   <FileText className="h-5 w-5 text-primary" />
                 </div>
-                <div>
-                  <h4 className="font-medium text-foreground">{label}</h4>
+                <div className="min-w-0">
+                  <h4 className="font-medium text-foreground truncate">{label}</h4>
+                  <p className="text-xs text-muted-foreground truncate">{localized.title}</p>
                   <p className="text-xs text-muted-foreground">
                     {t.legal.lastUpdated}: {updatedAt}
                   </p>
@@ -284,7 +370,7 @@ export const LegalPagesEditor = () => {
               </div>
               <Button variant="outline" size="sm" onClick={() => handleEdit(page)} className="gap-1.5">
                 <Edit className="h-4 w-4" />
-                {t.auto.components_admin_LegalPagesEditor_287}
+                {sm('admin.legal.edit_action')}
               </Button>
             </div>
           </GlowCard>

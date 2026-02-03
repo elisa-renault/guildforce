@@ -25,7 +25,7 @@ const App = () => (
             <BrowserRouter>
               <GlobalNav />
               <div className="flex-1 flex flex-col relative z-10 pb-4 md:pb-0">
-                <Suspense fallback={<LoadingScreen message="Chargement..." />}>
+                <Suspense fallback={<LoadingScreen message="Loading..." />}>
                   <Routes>
                     {appRoutes.map((route) => (
                       <Route key={route.path} path={route.path} element={route.element} />

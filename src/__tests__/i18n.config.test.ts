@@ -1,0 +1,34 @@
+import { describe, expect, it } from 'vitest';
+import {
+  FALLBACK_LANGUAGE,
+  SUPPORTED_LANGUAGES,
+  detectLanguageFromNavigator,
+  resolveLanguage,
+} from '@/i18n/config';
+
+describe('i18n config', () => {
+  it('resolves known locales to supported language codes', () => {
+    expect(resolveLanguage('fr-CA')).toBe('fr');
+    expect(resolveLanguage('de-DE')).toBe('de');
+    expect(resolveLanguage('it_IT')).toBe('it');
+    expect(resolveLanguage('ru')).toBe('ru');
+    expect(resolveLanguage('ko-KR')).toBe('ko');
+    expect(resolveLanguage('zh-TW')).toBe('zh-CN');
+  });
+
+  it('falls back to EN for unknown or empty locales', () => {
+    expect(resolveLanguage(undefined)).toBe(FALLBACK_LANGUAGE);
+    expect(resolveLanguage(null)).toBe(FALLBACK_LANGUAGE);
+    expect(resolveLanguage('')).toBe(FALLBACK_LANGUAGE);
+    expect(resolveLanguage('es-ES')).toBe(FALLBACK_LANGUAGE);
+  });
+
+  it('uses the same resolution rules for browser locales', () => {
+    expect(detectLanguageFromNavigator('fr-FR')).toBe('fr');
+    expect(detectLanguageFromNavigator('es-MX')).toBe(FALLBACK_LANGUAGE);
+  });
+
+  it('exposes the recommended supported language list', () => {
+    expect(SUPPORTED_LANGUAGES).toEqual(['en', 'fr', 'de', 'it', 'ru', 'zh-CN', 'ko']);
+  });
+});

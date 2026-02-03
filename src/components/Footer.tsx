@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { LANGUAGE_OPTIONS, isSupportedLanguage } from '@/i18n/config';
 import { Beer, Cookie, Globe } from 'lucide-react';
 import { TipeeeIcon } from './TipeeeIcon';
 import { openCookiePreferences } from './CookieBanner';
@@ -10,11 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
-const languages = [
-  { code: 'fr' as const, label: 'Français' },
-  { code: 'en' as const, label: 'English' },
-];
 
 export const Footer = () => {
   const { language, setLanguage, t } = useLanguage();
@@ -52,7 +48,7 @@ export const Footer = () => {
           {/* Group 3: Préférences (user settings) */}
           <div className="flex items-center gap-3">
             <span id="footer-language-label" className="sr-only">{t.profile.language}</span>
-            <Select value={language} onValueChange={(value: 'fr' | 'en') => setLanguage(value)}>
+            <Select value={language} onValueChange={(value) => isSupportedLanguage(value) && setLanguage(value)}>
               <SelectTrigger
                 aria-label={t.profile.language}
                 aria-labelledby="footer-language-label"
@@ -62,7 +58,7 @@ export const Footer = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {languages.map((lang) => (
+                {LANGUAGE_OPTIONS.map((lang) => (
                   <SelectItem key={lang.code} value={lang.code}>
                     {lang.label}
                   </SelectItem>
@@ -118,7 +114,7 @@ export const Footer = () => {
           {/* Row 2: Préférences (Langue + Cookies) */}
           <div className="flex items-center justify-center gap-3">
             <span id="footer-language-label-mobile" className="sr-only">{t.profile.language}</span>
-            <Select value={language} onValueChange={(value: 'fr' | 'en') => setLanguage(value)}>
+            <Select value={language} onValueChange={(value) => isSupportedLanguage(value) && setLanguage(value)}>
               <SelectTrigger
                 aria-label={t.profile.language}
                 aria-labelledby="footer-language-label-mobile"
@@ -128,7 +124,7 @@ export const Footer = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {languages.map((lang) => (
+                {LANGUAGE_OPTIONS.map((lang) => (
                   <SelectItem key={lang.code} value={lang.code}>
                     {lang.label}
                   </SelectItem>

@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { getIntlLocale } from '@/i18n/config';
 import { supabase } from '@/integrations/supabase/client';
+import { selectContentTranslation } from '@/lib/contentTranslations';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { Button } from '@/components/ui/button';
@@ -12,10 +14,11 @@ import ReactMarkdown from 'react-markdown';
 interface LegalPageData {
   id: string;
   slug: string;
-  title_fr: string;
-  title_en: string;
-  content_fr: string;
-  content_en: string;
+  legal_page_translations: Array<{
+    language: string;
+    title: string;
+    content: string;
+  }>;
   updated_at: string;
 }
 
@@ -41,7 +44,7 @@ const LegalPage = () => {
       
       const { data, error } = await supabase
         .from('legal_pages')
-        .select('*')
+        .select('id, slug, updated_at, legal_page_translations(language, title, content)')
         .eq('slug', dbSlug)
         .single();
 
@@ -57,10 +60,14 @@ const LegalPage = () => {
     fetchPage();
   }, [location.pathname, navigate]);
 
-  const title = page ? page[`title_${language}` as 'title_fr' | 'title_en'] : '';
-  const content = page ? page[`content_${language}` as 'content_fr' | 'content_en'] : '';
-  const localeCode = ({ fr: 'fr-FR', en: 'en-US' } as const)[language];
-  const updatedAt = page?.updated_at ? new Date(page.updated_at).toLocaleDateString(localeCode) : '';
+  const localized = page
+    ? selectContentTranslation(page.legal_page_translations ?? [], language)
+    : { title: '', content: '' };
+  const title = localized.title;
+  const content = localized.content;
+  const updatedAt = page?.updated_at
+    ? new Date(page.updated_at).toLocaleDateString(getIntlLocale(language))
+    : '';
 
   return (
     <div className="flex-1 flex flex-col pt-16 relative">

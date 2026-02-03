@@ -64,6 +64,25 @@ function getValidRegion(region: string | undefined): BattleNetRegion {
   return 'eu';
 }
 
+const DEFAULT_LANGUAGE = 'en';
+
+function normalizePreferredLanguage(candidate: unknown): string {
+  if (typeof candidate !== 'string') return DEFAULT_LANGUAGE;
+
+  const normalized = candidate.trim().replace(/_/g, '-').toLowerCase();
+  if (!normalized) return DEFAULT_LANGUAGE;
+
+  if (normalized === 'fr' || normalized.startsWith('fr-')) return 'fr';
+  if (normalized === 'de' || normalized.startsWith('de-')) return 'de';
+  if (normalized === 'it' || normalized.startsWith('it-')) return 'it';
+  if (normalized === 'ru' || normalized.startsWith('ru-')) return 'ru';
+  if (normalized === 'ko' || normalized.startsWith('ko-')) return 'ko';
+  if (normalized === 'zh' || normalized.startsWith('zh-')) return 'zh-CN';
+  if (normalized === 'en' || normalized.startsWith('en-')) return 'en';
+
+  return DEFAULT_LANGUAGE;
+}
+
 // ============================================================================
 // LOGGING UTILITIES
 // ============================================================================
@@ -676,7 +695,7 @@ Deno.serve(async (req) => {
     if (path === 'login' && req.method === 'POST') {
       const { code, redirectUri, region: requestedRegion, browserLanguage } = await req.json();
       const region = getValidRegion(requestedRegion);
-      const defaultLanguage = browserLanguage === 'fr' ? 'fr' : 'en';
+      const defaultLanguage = normalizePreferredLanguage(browserLanguage);
 
       log.info(`Battle.net login (${region.toUpperCase()}) - exchanging code for token...`);
 

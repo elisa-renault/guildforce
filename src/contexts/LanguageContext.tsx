@@ -1,9 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Language, Translations, loadTranslations } from '@/i18n/translations';
+import { detectLanguageFromNavigator, resolveLanguage } from '@/i18n/config';
 import { translationsEn } from '@/i18n/translations.en';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 
-export type { Language } from '@/i18n/translations';
+export type { Language } from '@/i18n/config';
 
 interface LanguageContextType {
   language: Language;
@@ -16,18 +17,16 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 const getInitialLanguage = (): Language => {
   // Check localStorage first
   const stored = localStorage.getItem('preferred_language');
-  if (stored === 'en' || stored === 'fr') return stored;
+  if (stored) return resolveLanguage(stored);
 
   // Check browser language
-  const browserLang = navigator.language.toLowerCase();
-  if (browserLang.startsWith('fr')) return 'fr';
-  return 'en';
+  return detectLanguageFromNavigator(navigator.language);
 };
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(() => getInitialLanguage());
   const [t, setT] = useState<Translations | null>(() =>
-    language === 'en' ? translationsEn : null,
+    language === 'fr' ? null : translationsEn,
   );
 
   const setLanguage = (lang: Language) => {

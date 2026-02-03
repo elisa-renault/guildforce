@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useLanguage, Language } from '@/contexts/LanguageContext';
+import { LANGUAGE_OPTIONS, isSupportedLanguage } from '@/i18n/config';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -44,7 +45,6 @@ const Profile = () => {
 
   const ui = t.profile.ui;
 
-  const languageLabels = { fr: ui.languageFr, en: ui.languageEn };
 
   const profileSchema = z.object({
     username: z.string().min(2, t.profile.validation.usernameMin).max(30, t.profile.validation.usernameMax),
@@ -333,13 +333,14 @@ const Profile = () => {
                   <Globe className="h-4 w-4 inline mr-2" strokeWidth={1.5} />
                   {t.profile.language}
                 </FormLabel>
-                <Select value={language} onValueChange={(val) => handleLanguageChange(val as Language)}>
+                <Select value={language} onValueChange={(val) => isSupportedLanguage(val) && handleLanguageChange(val)}>
                   <SelectTrigger id="profile-language-setup" className="cosmic-input">
                     <SelectValue placeholder={language.toUpperCase()} />
                   </SelectTrigger>
                   <SelectContent className="bg-card border-border">
-                    <SelectItem value="fr">{languageLabels.fr}</SelectItem>
-                    <SelectItem value="en">{languageLabels.en}</SelectItem>
+                    {LANGUAGE_OPTIONS.map((option) => (
+                      <SelectItem key={option.code} value={option.code}>{option.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -470,13 +471,14 @@ const Profile = () => {
                   <Globe className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
                   {t.profile.language}
                 </Label>
-                <Select value={language} onValueChange={(val) => handleLanguageChange(val as Language)}>
+                <Select value={language} onValueChange={(val) => isSupportedLanguage(val) && handleLanguageChange(val)}>
                   <SelectTrigger id="profile-language" className="cosmic-input mt-2">
                     <SelectValue placeholder={language.toUpperCase()} />
                   </SelectTrigger>
                   <SelectContent className="bg-card border-border">
-                    <SelectItem value="fr">{languageLabels.fr}</SelectItem>
-                    <SelectItem value="en">{languageLabels.en}</SelectItem>
+                    {LANGUAGE_OPTIONS.map((option) => (
+                      <SelectItem key={option.code} value={option.code}>{option.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground mt-1.5">
