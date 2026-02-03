@@ -1,6 +1,7 @@
 // Internationalization translations
 import { translationsEn } from './translations.en';
-export type Language = 'en' | 'fr';
+import type { Language } from './config';
+export type { Language } from './config';
 
 export interface Translations {
   // Common
@@ -973,8 +974,8 @@ const collectTranslationKeys = (value: unknown, prefix = '', keys = new Set<stri
   return keys;
 };
 
-const checkTranslationCompleteness = (map: Record<Language, Translations>) => {
-  const languages = Object.keys(map) as Language[];
+const checkTranslationCompleteness = <Lang extends string>(map: Record<Lang, Translations>) => {
+  const languages = Object.keys(map) as Lang[];
   if (languages.length < 2) return;
 
   const baseLanguage = languages[0];

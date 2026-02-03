@@ -2,8 +2,10 @@ import { MemberWish, ValidationStatus } from '@/types/guild';
 import { getClassById, getSpecById, getRolesFromSpecs } from '@/data/wowClasses';
 import { Language, Translations } from '@/i18n/translations';
 
+type LocalizedValue = { en: string; fr: string } & Partial<Record<Language, string>>;
+
 // Localized class names
-const classNames: Record<string, Record<Language, string>> = {
+const classNames: Record<string, LocalizedValue> = {
   warrior: { en: 'Warrior', fr: 'Guerrier' },
   paladin: { en: 'Paladin', fr: 'Paladin' },
   hunter: { en: 'Hunter', fr: 'Chasseur' },
@@ -20,7 +22,7 @@ const classNames: Record<string, Record<Language, string>> = {
 };
 
 // Localized spec names
-const specNames: Record<string, Record<Language, string>> = {
+const specNames: Record<string, LocalizedValue> = {
   // Warrior
   'warrior-arms': { en: 'Arms', fr: 'Armes' },
   'warrior-fury': { en: 'Fury', fr: 'Fureur' },
@@ -78,19 +80,19 @@ const specNames: Record<string, Record<Language, string>> = {
   'evoker-augmentation': { en: 'Augmentation', fr: 'Augmentation' },
 };
 
-const roleNames: Record<string, Record<Language, string>> = {
+const roleNames: Record<string, LocalizedValue> = {
   tank: { en: 'Tank', fr: 'Tank' },
   healer: { en: 'Healer', fr: 'Soigneur' },
   dps: { en: 'DPS', fr: 'DPS' },
 };
 
-const statusNames: Record<string, Record<Language, string>> = {
+const statusNames: Record<string, LocalizedValue> = {
   confirmed: { en: 'Confirmed', fr: 'Confirmé' },
   potential: { en: 'Undecided', fr: 'Indécis' },
   withdrawn: { en: 'Withdrawn', fr: 'Retrait' },
 };
 
-const validationNames: Record<ValidationStatus, Record<Language, string>> = {
+const validationNames: Record<ValidationStatus, LocalizedValue> = {
   pending: { en: 'Pending', fr: 'En attente' },
   approved: { en: 'Approved', fr: 'Approuvé' },
   rejected: { en: 'Rejected', fr: 'Rejeté' },
@@ -119,7 +121,7 @@ function getLocalizedSpecName(specId: string, lang: Language): string {
 
 function getLocalizedRoles(specIds: string[], lang: Language): string {
   const roles = getRolesFromSpecs(specIds);
-  return roles.map(r => roleNames[r]?.[lang] || r).join(', ');
+  return roles.map(r => roleNames[r]?.[lang] || roleNames[r]?.en || r).join(', ');
 }
 
 function escapeCSV(value: string): string {
@@ -162,7 +164,7 @@ export function exportWishesToCSV(members: MemberWish[], options: ExportOptions)
   for (const member of members) {
     const row: string[] = [
       escapeCSV(member.username),
-      escapeCSV(statusNames[member.status]?.[language] || member.status),
+      escapeCSV(statusNames[member.status]?.[language] || statusNames[member.status]?.en || member.status),
     ];
 
     for (let i = 0; i < maxWishes; i++) {
@@ -173,7 +175,11 @@ export function exportWishesToCSV(members: MemberWish[], options: ExportOptions)
           escapeCSV(wish.spec_ids?.map(s => getLocalizedSpecName(s, language)).join(', ') || ''),
           escapeCSV(getLocalizedRoles(wish.spec_ids || [], language)),
           escapeCSV(wish.comment || ''),
-          escapeCSV(validationNames[wish.validation_status || 'pending']?.[language] || '')
+          escapeCSV(
+            validationNames[wish.validation_status || 'pending']?.[language] ||
+              validationNames[wish.validation_status || 'pending']?.en ||
+              ''
+          )
         );
       } else {
         row.push('', '', '', '', '');

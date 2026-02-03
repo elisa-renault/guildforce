@@ -20,6 +20,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { resolveSemanticMessage } from '@/i18n/semantic';
 import { cn } from '@/lib/utils';
 
 interface DocSection {
@@ -327,8 +328,8 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Support and compliance workflows',
         titleFr: 'Workflows support et conformité',
-        contentEn: '`bug_reports` and `account_deletion_requests` provide operational queues. `legal_pages` and `patch_notes` support bilingual content publishing directly from admin tooling.',
-        contentFr: '`bug_reports` et `account_deletion_requests` fournissent des files opérationnelles. `legal_pages` et `patch_notes` supportent la publication de contenu bilingue directement depuis les outils admin.',
+        contentEn: '`bug_reports` and `account_deletion_requests` provide operational queues. `legal_pages` and `patch_notes` now rely on translation tables (`legal_page_translations`, `patch_note_translations`) for scalable multilingual publishing.',
+        contentFr: '`bug_reports` et `account_deletion_requests` fournissent des files operationnelles. `legal_pages` et `patch_notes` reposent desormais sur des tables de traductions (`legal_page_translations`, `patch_note_translations`) pour une publication multilingue scalable.',
         tags: ['admin', 'support', 'legal'],
       },
     ],
@@ -357,8 +358,8 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Privacy controls',
         titleFr: 'Contrôles de confidentialité',
-        contentEn: 'Privacy-related controls include BattleTag visibility preferences, account deletion requests, cookie consent, and legal page governance. Keep user-facing copy synchronized in FR/EN.',
-        contentFr: 'Les contrôles liés à la confidentialité incluent la visibilité BattleTag, les demandes de suppression de compte, le consentement cookies et la gouvernance des pages légales. Maintenir les contenus utilisateurs synchronisés en FR/EN.',
+        contentEn: 'Privacy-related controls include BattleTag visibility preferences, account deletion requests, cookie consent, and legal page governance. Keep user-facing copy synchronized across supported locales, with EN fallback.',
+        contentFr: 'Les controles lies a la confidentialite incluent la visibilite BattleTag, les demandes de suppression de compte, le consentement cookies et la gouvernance des pages legales. Maintenir les contenus utilisateurs synchronises sur toutes les langues supportees, avec fallback EN.',
         tags: ['security', 'privacy', 'gdpr'],
       },
     ],
@@ -394,8 +395,8 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Admin/content tables',
         titleFr: 'Tables admin/contenu',
-        contentEn: '- `user_roles`\n- `bug_reports`\n- `legal_pages`, `patch_notes`\n- `account_deletion_requests`',
-        contentFr: '- `user_roles`\n- `bug_reports`\n- `legal_pages`, `patch_notes`\n- `account_deletion_requests`',
+        contentEn: '- `user_roles`\n- `bug_reports`\n- `legal_pages`, `legal_page_translations`\n- `patch_notes`, `patch_note_translations`\n- `account_deletion_requests`',
+        contentFr: '- `user_roles`\n- `bug_reports`\n- `legal_pages`, `legal_page_translations`\n- `patch_notes`, `patch_note_translations`\n- `account_deletion_requests`',
         tags: ['database', 'admin'],
       },
     ],
@@ -406,6 +407,8 @@ export const AdminDocumentation = () => {
   const { language, t } = useLanguage();
   const [activeSection, setActiveSection] = useState<string>('overview');
   const [searchQuery, setSearchQuery] = useState('');
+  const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
+    resolveSemanticMessage({ key, language, translations: t });
 
   const currentSection = DOCUMENTATION.find((section) => section.id === activeSection);
 
@@ -432,17 +435,17 @@ export const AdminDocumentation = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-xl font-display text-foreground">
-            {t.auto.components_admin_AdminDocumentation_405}
+            {sm('admin.documentation.title')}
           </h2>
           <p className="text-sm text-muted-foreground">
-            {t.auto.components_admin_AdminDocumentation_408}
+            {sm('admin.documentation.subtitle')}
           </p>
         </div>
 
         <div className="relative w-full sm:w-64">
           <input
             type="text"
-            placeholder={t.auto.components_admin_AdminDocumentation_419}
+            placeholder={sm('admin.documentation.search_placeholder')}
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
             className="w-full px-3 py-2 text-sm rounded-md border border-border/50 bg-background/50 placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
@@ -497,7 +500,7 @@ export const AdminDocumentation = () => {
             <GlowCard className="p-6 text-center">
               <HelpCircle className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
               <p className="text-muted-foreground">
-                {t.auto.components_admin_AdminDocumentation_475}
+                {sm('admin.documentation.no_results')}
               </p>
             </GlowCard>
           )}

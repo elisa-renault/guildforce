@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { getIntlLocale } from '@/i18n/config';
 import { supabase } from '@/integrations/supabase/client';
+import { selectContentTranslation } from '@/lib/contentTranslations';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { Badge } from '@/components/ui/badge';
@@ -11,11 +13,12 @@ import ReactMarkdown from 'react-markdown';
 interface PatchNote {
   id: string;
   version: string;
-  title_fr: string;
-  title_en: string;
-  content_fr: string;
-  content_en: string;
   published_at: string | null;
+  patch_note_translations: Array<{
+    language: string;
+    title: string;
+    content: string;
+  }>;
 }
 
 export default function Changelog() {
@@ -27,7 +30,7 @@ export default function Changelog() {
     async function fetchNotes() {
       const { data, error } = await supabase
         .from('patch_notes')
-        .select('id, version, title_fr, title_en, content_fr, content_en, published_at')
+        .select('id, version, published_at, patch_note_translations(language, title, content)')
         .eq('status', 'published')
         .order('published_at', { ascending: false });
 
@@ -86,8 +89,9 @@ export default function Changelog() {
         ) : (
           <div className="space-y-6">
             {notes.map((note) => {
-              const title = note[`title_${language}` as 'title_fr' | 'title_en'];
-              const content = note[`content_${language}` as 'content_fr' | 'content_en'];
+              const localized = selectContentTranslation(note.patch_note_translations ?? [], language);
+              const title = localized.title;
+              const content = localized.content;
               return (
               <GlowCard key={note.id} className="p-6">
                 {/* Version header */}
@@ -100,9 +104,9 @@ export default function Changelog() {
                       {t.common.new}
                     </Badge>
                   )}
-                  <span className="text-sm text-muted-foreground flex items-center gap-1 ml-auto">
+                    <span className="text-sm text-muted-foreground flex items-center gap-1 ml-auto">
                     <Calendar className="h-3.5 w-3.5" />
-                    {note.published_at && new Date(note.published_at).toLocaleDateString(language, {
+                    {note.published_at && new Date(note.published_at).toLocaleDateString(getIntlLocale(language), {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',

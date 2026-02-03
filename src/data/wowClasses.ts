@@ -1,26 +1,35 @@
 // WoW Classes and Specializations data
 // Centralized for easy updates
+import { SUPPORTED_LANGUAGES } from '@/i18n/config';
+import type { Language } from '@/i18n/config';
 
 export type Role = 'tank' | 'healer' | 'dps';
 
 export type RangeType = 'melee' | 'ranged';
 
+type LocalizedLabel = { en: string; fr: string } & Partial<Record<Language, string>>;
+
+const withLanguageFallbacks = (label: LocalizedLabel): Record<Language, string> => {
+  const next = { ...label } as Record<Language, string>;
+
+  for (const language of SUPPORTED_LANGUAGES) {
+    if (next[language]) continue;
+    next[language] = language === 'fr' ? next.fr : next.en;
+  }
+
+  return next;
+};
+
 export interface Specialization {
   id: string;
-  name: {
-    en: string;
-    fr: string;
-  };
+  name: LocalizedLabel;
   role: Role;
   range: RangeType;
 }
 
 export interface WoWClass {
   id: string;
-  name: {
-    en: string;
-    fr: string;
-  };
+  name: LocalizedLabel;
   color: string; // Tailwind class color
   specs: Specialization[];
 }
@@ -158,6 +167,13 @@ export const wowClasses: WoWClass[] = [
     ],
   },
 ];
+
+for (const wowClass of wowClasses) {
+  wowClass.name = withLanguageFallbacks(wowClass.name);
+  for (const spec of wowClass.specs) {
+    spec.name = withLanguageFallbacks(spec.name);
+  }
+}
 
 // Helper functions
 export const getClassById = (classId: string): WoWClass | undefined => {

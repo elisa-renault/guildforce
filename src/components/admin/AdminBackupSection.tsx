@@ -31,7 +31,7 @@ export function AdminBackupSection() {
     },
   } as const;
 
-  const t = copy[language];
+  const t = language === 'fr' ? copy.fr : copy.en;
 
   const download = async (path: string, fallbackFilename: string, setBusy: (v: boolean) => void) => {
     setError(null);
