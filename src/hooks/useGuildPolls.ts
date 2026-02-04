@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
 import type { GuildPoll, GuildPollQuestion, GuildPollResponse, PollFormData, ResponseValue } from '@/types/poll';
+import { resolveSemanticMessage } from '@/i18n/semantic';
 
 export const useGuildPolls = (guildId: string | undefined) => {
   const { user } = useAuth();
@@ -262,7 +263,9 @@ export const usePollResults = (pollId: string | undefined) => {
 
 export const usePollMutations = () => {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
+    resolveSemanticMessage({ key, language, translations: t });
   const [saving, setSaving] = useState(false);
 
   const createPoll = async (guildId: string, data: PollFormData): Promise<string | null> => {
@@ -453,7 +456,7 @@ export const usePollMutations = () => {
       return poll.id;
     } catch (error) {
       log.error('Error creating poll:', error);
-      toast.error(t.auto.hooks_useGuildPolls_create_error);
+      toast.error(sm('polls.mutations.create_error'));
       return null;
     } finally {
       setSaving(false);
@@ -480,7 +483,7 @@ export const usePollMutations = () => {
       return true;
     } catch (error) {
       log.error('Error updating poll:', error);
-      toast.error(t.auto.hooks_useGuildPolls_update_error);
+      toast.error(sm('polls.mutations.update_error'));
       return false;
     } finally {
       setSaving(false);
@@ -496,11 +499,11 @@ export const usePollMutations = () => {
         .eq('id', pollId);
 
       if (error) throw error;
-      toast.success(t.auto.hooks_useGuildPolls_publish_success);
+      toast.success(sm('polls.mutations.publish_success'));
       return true;
     } catch (error) {
       log.error('Error publishing poll:', error);
-      toast.error(t.auto.hooks_useGuildPolls_publish_error);
+      toast.error(sm('polls.mutations.publish_error'));
       return false;
     } finally {
       setSaving(false);
@@ -516,11 +519,11 @@ export const usePollMutations = () => {
         .eq('id', pollId);
 
       if (error) throw error;
-      toast.success(t.auto.hooks_useGuildPolls_close_success);
+      toast.success(sm('polls.mutations.close_success'));
       return true;
     } catch (error) {
       log.error('Error closing poll:', error);
-      toast.error(t.auto.hooks_useGuildPolls_close_error);
+      toast.error(sm('polls.mutations.close_error'));
       return false;
     } finally {
       setSaving(false);
@@ -536,11 +539,11 @@ export const usePollMutations = () => {
         .eq('id', pollId);
 
       if (error) throw error;
-      toast.success(t.auto.hooks_useGuildPolls_delete_success);
+      toast.success(sm('polls.mutations.delete_success'));
       return true;
     } catch (error) {
       log.error('Error deleting poll:', error);
-      toast.error(t.auto.hooks_useGuildPolls_delete_error);
+      toast.error(sm('polls.mutations.delete_error'));
       return false;
     } finally {
       setSaving(false);
@@ -569,11 +572,11 @@ export const usePollMutations = () => {
         if (error) throw error;
       }
 
-      toast.success(t.auto.hooks_useGuildPolls_reset_success);
+      toast.success(sm('polls.mutations.reset_success'));
       return true;
     } catch (error) {
       log.error('Error resetting poll responses:', error);
-      toast.error(t.auto.hooks_useGuildPolls_reset_error);
+      toast.error(sm('polls.mutations.reset_error'));
       return false;
     } finally {
       setSaving(false);
@@ -752,11 +755,11 @@ export const usePollMutations = () => {
         }
       }
 
-      toast.success(t.auto.hooks_useGuildPolls_questions_updated);
+      toast.success(sm('polls.mutations.questions_updated'));
       return true;
     } catch (error) {
       log.error('Error updating poll questions:', error);
-      toast.error(t.auto.hooks_useGuildPolls_questions_update_error);
+      toast.error(sm('polls.mutations.questions_update_error'));
       return false;
     } finally {
       setSaving(false);
@@ -784,7 +787,7 @@ export const usePollMutations = () => {
       return true;
     } catch (error) {
       log.error('Error submitting response:', error);
-      toast.error(t.auto.hooks_useGuildPolls_submit_response_error);
+      toast.error(sm('polls.mutations.submit_response_error'));
       return false;
     }
   };
@@ -809,11 +812,11 @@ export const usePollMutations = () => {
         });
 
       if (error) throw error;
-      toast.success(t.auto.hooks_useGuildPolls_submit_all_success);
+      toast.success(sm('polls.mutations.submit_all_success'));
       return true;
     } catch (error) {
       log.error('Error submitting responses:', error);
-      toast.error(t.auto.hooks_useGuildPolls_submit_all_error);
+      toast.error(sm('polls.mutations.submit_all_error'));
       return false;
     } finally {
       setSaving(false);
@@ -880,7 +883,7 @@ export const usePollMutations = () => {
       return true;
     } catch (error) {
       log.error('Error saving results access rules:', error);
-      toast.error(t.auto.hooks_useGuildPolls_results_rules_error);
+      toast.error(sm('polls.mutations.results_rules_error'));
       return false;
     } finally {
       setSaving(false);
@@ -947,7 +950,7 @@ export const usePollMutations = () => {
       return true;
     } catch (error) {
       log.error('Error saving respondent rules:', error);
-      toast.error(t.auto.hooks_useGuildPolls_respondent_rules_error);
+      toast.error(sm('polls.mutations.respondent_rules_error'));
       return false;
     } finally {
       setSaving(false);
@@ -1032,7 +1035,7 @@ export const usePollMutations = () => {
         .insert({
           guild_id: originalPoll.guild_id,
           created_by: user.id,
-          title: `${originalPoll.title} ${t.auto.hooks_useGuildPolls_duplicate_suffix}`,
+          title: `${originalPoll.title} ${sm('polls.mutations.duplicate_suffix')}`,
           description: originalPoll.description,
           is_anonymous: originalPoll.is_anonymous,
           allow_multiple_responses: originalPoll.allow_multiple_responses,
@@ -1129,7 +1132,7 @@ export const usePollMutations = () => {
       return newPoll.id;
     } catch (error) {
       log.error('Error duplicating poll:', error);
-      toast.error(t.auto.hooks_useGuildPolls_duplicate_error);
+      toast.error(sm('polls.mutations.duplicate_error'));
       return null;
     } finally {
       setSaving(false);

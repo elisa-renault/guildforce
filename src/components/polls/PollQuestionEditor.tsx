@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { GripVertical, Plus, Trash2, X, ArrowUp, ArrowDown } from 'lucide-react';
 import { QuestionConditionEditor } from './QuestionConditionEditor';
 import type { QuestionFormData, PollQuestionType, ScaleConfig, QuestionCondition } from '@/types/poll';
+import { resolveSemanticMessage } from '@/i18n/semantic';
 
 interface PollQuestionEditorProps {
   question: QuestionFormData;
@@ -28,17 +29,19 @@ export const PollQuestionEditor = ({
   previousQuestions = [],
 }: PollQuestionEditorProps) => {
   const { language, t } = useLanguage();
+  const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
+    resolveSemanticMessage({ key, language, translations: t });
 
   const questionTypes: { value: PollQuestionType; label: string }[] = [
-    { value: 'single_choice', label: t.auto.components_polls_PollQuestionEditor_33 },
-    { value: 'multiple_choice', label: t.auto.components_polls_PollQuestionEditor_34 },
-    { value: 'text', label: t.auto.components_polls_PollQuestionEditor_35 },
-    { value: 'rating', label: t.auto.components_polls_PollQuestionEditor_36 },
-    { value: 'date', label: t.auto.components_polls_PollQuestionEditor_37 },
-    { value: 'time', label: t.auto.components_polls_PollQuestionEditor_38 },
-    { value: 'datetime', label: t.auto.components_polls_PollQuestionEditor_39 },
-    { value: 'ranking', label: t.auto.components_polls_PollQuestionEditor_40 },
-    { value: 'scale', label: t.auto.components_polls_PollQuestionEditor_41 },
+    { value: 'single_choice', label: sm('polls.sortable.type.single_choice') },
+    { value: 'multiple_choice', label: sm('polls.sortable.type.multiple_choice') },
+    { value: 'text', label: sm('polls.sortable.type.text') },
+    { value: 'rating', label: sm('polls.sortable.type.rating') },
+    { value: 'date', label: sm('polls.sortable.type.date') },
+    { value: 'time', label: sm('polls.sortable.type.time') },
+    { value: 'datetime', label: sm('polls.sortable.type.datetime') },
+    { value: 'ranking', label: sm('polls.sortable.type.ranking') },
+    { value: 'scale', label: sm('polls.sortable.type.scale') },
   ];
 
   const needsOptions = question.question_type === 'single_choice' || 
@@ -133,7 +136,7 @@ export const PollQuestionEditor = ({
               <Input
                 value={question.question_text}
                 onChange={(e) => onChange({ ...question, question_text: e.target.value })}
-                placeholder={t.auto.components_polls_PollQuestionEditor_125}
+                placeholder={sm('polls.sortable.question_placeholder')}
                 className="bg-background"
               />
             </div>
@@ -170,8 +173,8 @@ export const PollQuestionEditor = ({
             <div className="space-y-2 pl-4">
               <Label className="text-xs text-muted-foreground">
                 {question.question_type === 'ranking' 
-                  ? (t.auto.components_polls_PollQuestionEditor_162)
-                  : (t.auto.components_polls_PollQuestionEditor_163)}
+                  ? (sm('polls.sortable.ranking_items_label'))
+                  : (sm('polls.sortable.answer_options_label'))}
               </Label>
               {question.options.map((option, optionIndex) => (
                 <div key={optionIndex} className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -182,7 +185,7 @@ export const PollQuestionEditor = ({
                     <Input
                       value={option}
                       onChange={(e) => handleOptionChange(optionIndex, e.target.value)}
-                      placeholder={`${t.auto.components_polls_PollQuestionEditor_173} ${optionIndex + 1} *`}
+                      placeholder={`${sm('polls.sortable.option_prefix')} ${optionIndex + 1} *`}
                       className={`flex-1 min-w-0 bg-background ${!option.trim() ? 'border-destructive/50' : ''}`}
                     />
                   </div>
@@ -227,7 +230,7 @@ export const PollQuestionEditor = ({
                 className="text-primary"
               >
                 <Plus className="h-4 w-4 mr-1" />
-                {t.auto.components_polls_PollQuestionEditor_195}
+                {sm('polls.sortable.add_option')}
               </Button>
 
               {/* Allow Other option toggle */}
@@ -249,7 +252,7 @@ export const PollQuestionEditor = ({
           {needsScaleConfig && (
             <div className="space-y-3 pl-4">
               <Label className="text-xs text-muted-foreground">
-                {t.auto.components_polls_PollQuestionEditor_217}
+                {sm('polls.sortable.scale_settings')}
               </Label>
               <div className="space-y-1">
                 <Label className="text-xs">{t.polls?.scaleDisplay}</Label>
@@ -268,7 +271,7 @@ export const PollQuestionEditor = ({
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <div className="space-y-1">
-                  <Label className="text-xs">{t.auto.components_polls_PollQuestionEditor_min_label}</Label>
+                  <Label className="text-xs">{sm('polls.sortable.min_value_label')}</Label>
                   <Input
                     type="number"
                     step="0.1"
@@ -281,7 +284,7 @@ export const PollQuestionEditor = ({
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">{t.auto.components_polls_PollQuestionEditor_max_label}</Label>
+                  <Label className="text-xs">{sm('polls.sortable.max_value_label')}</Label>
                   <Input
                     type="number"
                     step="0.1"
@@ -294,7 +297,7 @@ export const PollQuestionEditor = ({
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">{t.auto.components_polls_PollQuestionEditor_239}</Label>
+                  <Label className="text-xs">{sm('polls.sortable.step_label')}</Label>
                   <Input
                     type="number"
                     step="0.1"
@@ -309,20 +312,20 @@ export const PollQuestionEditor = ({
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
-                  <Label className="text-xs">{t.auto.components_polls_PollQuestionEditor_250}</Label>
+                  <Label className="text-xs">{sm('polls.sortable.min_label_field')}</Label>
                   <Input
                     value={question.scale_config?.min_label || ''}
                     onChange={(e) => handleScaleConfigChange('min_label', e.target.value)}
-                    placeholder={t.auto.components_polls_PollQuestionEditor_254}
+                    placeholder={sm('polls.sortable.min_label_placeholder')}
                     className="bg-background"
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">{t.auto.components_polls_PollQuestionEditor_259}</Label>
+                  <Label className="text-xs">{sm('polls.sortable.max_label_field')}</Label>
                   <Input
                     value={question.scale_config?.max_label || ''}
                     onChange={(e) => handleScaleConfigChange('max_label', e.target.value)}
-                    placeholder={t.auto.components_polls_PollQuestionEditor_263}
+                    placeholder={sm('polls.sortable.max_label_placeholder')}
                     className="bg-background"
                   />
                 </div>
@@ -337,7 +340,7 @@ export const PollQuestionEditor = ({
               onCheckedChange={(checked) => onChange({ ...question, is_required: checked })}
             />
             <Label htmlFor={`required-${index}`} className="text-sm text-muted-foreground cursor-pointer">
-              {t.auto.components_polls_PollQuestionEditor_278}
+              {sm('polls.sortable.required_answer')}
             </Label>
           </div>
 

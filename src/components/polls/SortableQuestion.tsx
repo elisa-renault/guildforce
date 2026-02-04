@@ -9,9 +9,10 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { AlignLeft, Calendar, CalendarClock, CheckSquare, Clock, GripHorizontal, ListOrdered, MessageSquare, SlidersHorizontal, Star, CircleDot, Plus, Trash2, X, ArrowUp, ArrowDown } from 'lucide-react';
+import { AlignLeft, Calendar, CalendarClock, CheckSquare, Clock, GripHorizontal, ListOrdered, SlidersHorizontal, Star, CircleDot, Plus, Trash2, X, ArrowUp, ArrowDown } from 'lucide-react';
 import { QuestionConditionEditor } from './QuestionConditionEditor';
 import type { QuestionFormData, PollQuestionType, ScaleConfig, QuestionCondition } from '@/types/poll';
+import { resolveSemanticMessage } from '@/i18n/semantic';
 
 interface SortableQuestionProps {
   question: QuestionFormData;
@@ -38,6 +39,8 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
   onActivate,
 }, outerRef) => {
   const { language, t } = useLanguage();
+  const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
+    resolveSemanticMessage({ key, language, translations: t });
 
   const {
     attributes,
@@ -57,15 +60,15 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
   };
 
   const questionTypes: { value: PollQuestionType; label: string; Icon: typeof AlignLeft }[] = [
-    { value: 'single_choice', label: t.auto.components_polls_SortableQuestion_55, Icon: CircleDot },
-    { value: 'multiple_choice', label: t.auto.components_polls_SortableQuestion_56, Icon: CheckSquare },
-    { value: 'text', label: t.auto.components_polls_SortableQuestion_57, Icon: AlignLeft },
-    { value: 'rating', label: t.auto.components_polls_SortableQuestion_58, Icon: Star },
-    { value: 'scale', label: t.auto.components_polls_SortableQuestion_63, Icon: SlidersHorizontal },
-    { value: 'ranking', label: t.auto.components_polls_SortableQuestion_62, Icon: ListOrdered },
-    { value: 'date', label: t.auto.components_polls_SortableQuestion_59, Icon: Calendar },
-    { value: 'time', label: t.auto.components_polls_SortableQuestion_60, Icon: Clock },
-    { value: 'datetime', label: t.auto.components_polls_SortableQuestion_61, Icon: CalendarClock },
+    { value: 'single_choice', label: sm('polls.sortable.type.single_choice'), Icon: CircleDot },
+    { value: 'multiple_choice', label: sm('polls.sortable.type.multiple_choice'), Icon: CheckSquare },
+    { value: 'text', label: sm('polls.sortable.type.text'), Icon: AlignLeft },
+    { value: 'rating', label: sm('polls.sortable.type.rating'), Icon: Star },
+    { value: 'scale', label: sm('polls.sortable.type.scale'), Icon: SlidersHorizontal },
+    { value: 'ranking', label: sm('polls.sortable.type.ranking'), Icon: ListOrdered },
+    { value: 'date', label: sm('polls.sortable.type.date'), Icon: Calendar },
+    { value: 'time', label: sm('polls.sortable.type.time'), Icon: Clock },
+    { value: 'datetime', label: sm('polls.sortable.type.datetime'), Icon: CalendarClock },
   ];
 
   const needsOptions = question.question_type === 'single_choice' || 
@@ -82,7 +85,7 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
   const optionPreview = question.options.filter((option) => option.trim()).slice(0, 3);
   const optionSummaryText = optionPreview.length > 0
     ? optionPreview.join(' / ')
-    : t.auto.components_polls_SortableQuestion_193;
+    : sm('polls.sortable.answer_options_label');
   const scaleMin = question.scale_config?.min ?? 0;
   const scaleMax = question.scale_config?.max ?? 10;
   const previewText = needsOptions
@@ -198,7 +201,7 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
                 <Textarea
                   value={question.question_text}
                   onChange={(e) => onChange({ ...question, question_text: e.target.value })}
-                  placeholder={t.auto.components_polls_SortableQuestion_155}
+                  placeholder={sm('polls.sortable.question_placeholder')}
                   autoResize
                   className="bg-background resize-y min-h-9 py-2"
                   rows={1}
@@ -206,7 +209,7 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
                 />
               ) : (
                 <div className="min-h-[38px] rounded-md border border-transparent bg-background/50 px-3 py-2 text-sm text-foreground">
-                  {question.question_text.trim() || t.auto.components_polls_SortableQuestion_155}
+                  {question.question_text.trim() || sm('polls.sortable.question_placeholder')}
                 </div>
               )}
             </div>
@@ -253,7 +256,7 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
               <span className="truncate">{previewText}</span>
               {question.is_required && (
                 <Badge variant="outline">
-                  {t.auto.components_polls_SortableQuestion_308}
+                  {sm('polls.sortable.required_answer')}
                 </Badge>
               )}
               {question.condition && (
@@ -268,8 +271,8 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
             <div className="space-y-1.5 sm:space-y-2">
               <Label className="text-xs text-muted-foreground">
                 {question.question_type === 'ranking' 
-                  ? (t.auto.components_polls_SortableQuestion_192)
-                  : (t.auto.components_polls_SortableQuestion_193)}
+                  ? (sm('polls.sortable.ranking_items_label'))
+                  : (sm('polls.sortable.answer_options_label'))}
               </Label>
               {question.options.map((option, optionIndex) => (
                 <div key={optionIndex} className="flex flex-col gap-1.5 sm:flex-row sm:items-center">
@@ -280,7 +283,7 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
                     <Input
                       value={option}
                       onChange={(e) => handleOptionChange(optionIndex, e.target.value)}
-                      placeholder={`${t.auto.components_polls_SortableQuestion_203} ${optionIndex + 1} *`}
+                      placeholder={`${sm('polls.sortable.option_prefix')} ${optionIndex + 1} *`}
                       className={`flex-1 min-w-0 bg-background ${!option.trim() ? 'border-destructive/50' : ''}`}
                     />
                   </div>
@@ -325,7 +328,7 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
                 className="text-primary"
               >
                 <Plus className="h-4 w-4 mr-1" />
-                {t.auto.components_polls_SortableQuestion_225}
+                {sm('polls.sortable.add_option')}
               </Button>
 
               {/* Allow Other option toggle */}
@@ -347,7 +350,7 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
           {isActive && needsScaleConfig && (
             <div className="space-y-2 sm:space-y-3">
               <Label className="text-xs text-muted-foreground">
-                {t.auto.components_polls_SortableQuestion_247}
+                {sm('polls.sortable.scale_settings')}
               </Label>
               <div className="space-y-1">
                 <Label className="text-xs">{t.polls?.scaleDisplay}</Label>
@@ -366,7 +369,7 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
               </div>
               <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                 <div className="space-y-1">
-                  <Label className="text-xs">{t.auto.components_polls_SortableQuestion_min_label}</Label>
+                  <Label className="text-xs">{sm('polls.sortable.min_value_label')}</Label>
                   <Input
                     type="number"
                     step="0.1"
@@ -379,7 +382,7 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">{t.auto.components_polls_SortableQuestion_max_label}</Label>
+                  <Label className="text-xs">{sm('polls.sortable.max_value_label')}</Label>
                   <Input
                     type="number"
                     step="0.1"
@@ -392,7 +395,7 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">{t.auto.components_polls_SortableQuestion_269}</Label>
+                  <Label className="text-xs">{sm('polls.sortable.step_label')}</Label>
                   <Input
                     type="number"
                     step="0.1"
@@ -407,20 +410,20 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
               </div>
               <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
                 <div className="space-y-1">
-                  <Label className="text-xs">{t.auto.components_polls_SortableQuestion_280}</Label>
+                  <Label className="text-xs">{sm('polls.sortable.min_label_field')}</Label>
                   <Input
                     value={question.scale_config?.min_label || ''}
                     onChange={(e) => handleScaleConfigChange('min_label', e.target.value)}
-                    placeholder={t.auto.components_polls_SortableQuestion_284}
+                    placeholder={sm('polls.sortable.min_label_placeholder')}
                     className="bg-background"
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">{t.auto.components_polls_SortableQuestion_289}</Label>
+                  <Label className="text-xs">{sm('polls.sortable.max_label_field')}</Label>
                   <Input
                     value={question.scale_config?.max_label || ''}
                     onChange={(e) => handleScaleConfigChange('max_label', e.target.value)}
-                    placeholder={t.auto.components_polls_SortableQuestion_293}
+                    placeholder={sm('polls.sortable.max_label_placeholder')}
                     className="bg-background"
                   />
                 </div>
@@ -436,7 +439,7 @@ export const SortableQuestion = forwardRef<HTMLDivElement, SortableQuestionProps
                 onCheckedChange={(checked) => onChange({ ...question, is_required: checked })}
               />
               <Label htmlFor={`required-${id}`} className="text-sm text-muted-foreground cursor-pointer">
-                {t.auto.components_polls_SortableQuestion_308}
+                {sm('polls.sortable.required_answer')}
               </Label>
             </div>
           )}
