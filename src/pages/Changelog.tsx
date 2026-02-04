@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { getIntlLocale } from '@/i18n/config';
 import { supabase } from '@/integrations/supabase/client';
 import { selectContentTranslation } from '@/lib/contentTranslations';
 import { CosmicBackground } from '@/components/CosmicBackground';
@@ -9,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollText, Calendar } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import { formatDateLocalized } from '@/i18n/format';
 
 interface PatchNote {
   id: string;
@@ -106,7 +106,7 @@ export default function Changelog() {
                   )}
                     <span className="text-sm text-muted-foreground flex items-center gap-1 ml-auto">
                     <Calendar className="h-3.5 w-3.5" />
-                    {note.published_at && new Date(note.published_at).toLocaleDateString(getIntlLocale(language), {
+                    {note.published_at && formatDateLocalized(note.published_at, language, {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',

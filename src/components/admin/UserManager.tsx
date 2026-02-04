@@ -30,6 +30,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatDateTimeLocalized, formatPluralMessage, interpolateMessage } from '@/i18n/format';
 
 type AppRole = 'admin' | 'moderator' | 'user';
 type SortDirection = 'asc' | 'desc';
@@ -249,7 +250,7 @@ export function UserManager() {
         
         const removedTemplate = t.auto?.components_admin_UserManager_role_removed;
         toast.success(
-          removedTemplate ? removedTemplate.replace('{{role}}', role) : role
+          removedTemplate ? interpolateMessage(removedTemplate, { role }) : role
         );
       } else {
         // Add role
@@ -267,7 +268,7 @@ export function UserManager() {
         
         const assignedTemplate = t.auto?.components_admin_UserManager_role_assigned;
         toast.success(
-          assignedTemplate ? assignedTemplate.replace('{{role}}', role) : role
+          assignedTemplate ? interpolateMessage(assignedTemplate, { role }) : role
         );
       }
     } catch (error) {
@@ -281,12 +282,12 @@ export function UserManager() {
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
   const formatDateTime = (dateStr: string) => {
-    return new Date(dateStr).toLocaleString(t.auto.components_admin_UserManager_286, {
+    return formatDateTimeLocalized(dateStr, language, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
@@ -581,9 +582,14 @@ export function UserManager() {
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <span className="text-sm text-muted-foreground">
-            {totalCount > 1
-              ? (t.auto?.components_admin_UserManager_total_users_plural || '{{count}} users').replace('{{count}}', String(totalCount))
-              : (t.auto?.components_admin_UserManager_total_users_single || '{{count}} user').replace('{{count}}', String(totalCount))}
+            {formatPluralMessage({
+              language,
+              count: totalCount,
+              forms: {
+                one: t.auto?.components_admin_UserManager_total_users_single || '{{count}} user',
+                other: t.auto?.components_admin_UserManager_total_users_plural || '{{count}} users',
+              },
+            })}
           </span>
           <div className="flex items-center gap-2">
             <Button

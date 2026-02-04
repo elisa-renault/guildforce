@@ -10,9 +10,8 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useNotifications, ForumNotification } from '@/hooks/useNotifications';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { formatDistanceToNow } from 'date-fns';
-import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
 import { cn } from '@/lib/utils';
+import { formatDistanceFromNowLocalized, interpolateMessage } from '@/i18n/format';
 
 export function NotificationBell() {
   const navigate = useNavigate();
@@ -27,8 +26,6 @@ export function NotificationBell() {
     clearAllNotifications,
   } = useNotifications();
   const [open, setOpen] = useState(false);
-
-  const dateLocale = DATE_LOCALE_BY_LANGUAGE[language];
 
   const getNotificationIcon = (type: ForumNotification['type']) => {
     switch (type) {
@@ -51,17 +48,11 @@ export function NotificationBell() {
 
     switch (notif.type) {
       case 'mention':
-        return t.auto.components_forum_NotificationBell_mention
-          .replace('{{username}}', username)
-          .replace('{{topicTitle}}', topicTitle);
+        return interpolateMessage(t.auto.components_forum_NotificationBell_mention, { username, topicTitle });
       case 'topic_reply':
-        return t.auto.components_forum_NotificationBell_topic_reply
-          .replace('{{username}}', username)
-          .replace('{{topicTitle}}', topicTitle);
+        return interpolateMessage(t.auto.components_forum_NotificationBell_topic_reply, { username, topicTitle });
       case 'post_reply':
-        return t.auto.components_forum_NotificationBell_post_reply
-          .replace('{{username}}', username)
-          .replace('{{topicTitle}}', topicTitle);
+        return interpolateMessage(t.auto.components_forum_NotificationBell_post_reply, { username, topicTitle });
     }
   };
 
@@ -157,10 +148,7 @@ export function NotificationBell() {
                       {getNotificationText(notif)}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {formatDistanceToNow(new Date(notif.created_at), {
-                        addSuffix: true,
-                        locale: dateLocale,
-                      })}
+                      {formatDistanceFromNowLocalized(notif.created_at, language, true)}
                     </p>
                   </div>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

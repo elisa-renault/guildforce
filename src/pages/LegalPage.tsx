@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { getIntlLocale } from '@/i18n/config';
 import { supabase } from '@/integrations/supabase/client';
 import { selectContentTranslation } from '@/lib/contentTranslations';
 import { CosmicBackground } from '@/components/CosmicBackground';
@@ -10,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import { formatDateLocalized } from '@/i18n/format';
 
 interface LegalPageData {
   id: string;
@@ -66,7 +66,7 @@ const LegalPage = () => {
   const title = localized.title;
   const content = localized.content;
   const updatedAt = page?.updated_at
-    ? new Date(page.updated_at).toLocaleDateString(getIntlLocale(language))
+    ? formatDateLocalized(page.updated_at, language)
     : '';
 
   return (
