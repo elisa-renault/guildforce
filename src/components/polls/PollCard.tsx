@@ -6,10 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { BarChart3, Clock, Edit, Eye, Users, Lock, Trash2, Play, User, Settings, Copy } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
 import type { GuildPoll } from '@/types/poll';
 import { EditActivePollDialog } from './EditActivePollDialog';
+import { formatDistanceFromNowLocalized } from '@/i18n/format';
 
 interface PollCardProps {
   poll: GuildPoll;
@@ -32,7 +31,6 @@ export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
 }, ref) => {
   const navigate = useNavigate();
   const { language, t } = useLanguage();
-  const locale = DATE_LOCALE_BY_LANGUAGE[language];
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const handleEditMetadata = () => {
@@ -131,10 +129,7 @@ export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
           <div className="flex items-center gap-1">
             <Clock className="h-3.5 w-3.5" />
             <span>
-              {formatDistanceToNow(new Date(poll.created_at), { 
-                addSuffix: true, 
-                locale 
-              })}
+              {formatDistanceFromNowLocalized(poll.created_at, language, true)}
             </span>
           </div>
 

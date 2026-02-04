@@ -5,8 +5,7 @@ import { useGuildPolls } from '@/hooks/useGuildPolls';
 import { GlowCard } from '@/components/GlowCard';
 import { Button } from '@/components/ui/button';
 import { BarChart3, ChevronRight, Users, Clock } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
+import { formatDistanceFromNowLocalized } from '@/i18n/format';
 
 interface ActivePollWidgetProps {
   guildId: string;
@@ -18,7 +17,6 @@ export const ActivePollWidget = forwardRef<HTMLDivElement, ActivePollWidgetProps
   ({ guildId, guildSlug, isGM = false }, ref) => {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
-  const locale = DATE_LOCALE_BY_LANGUAGE[language];
   
   const { polls, loading } = useGuildPolls(guildId);
   
@@ -72,7 +70,7 @@ export const ActivePollWidget = forwardRef<HTMLDivElement, ActivePollWidgetProps
                 <Clock className="h-3 w-3 shrink-0" />
                 <span>
                   {t.polls.ends}{' '}
-                  {formatDistanceToNow(new Date(activePoll.ends_at), { addSuffix: true, locale })}
+                  {formatDistanceFromNowLocalized(activePoll.ends_at, language, true)}
                 </span>
               </div>
             )}

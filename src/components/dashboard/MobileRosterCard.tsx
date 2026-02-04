@@ -2,7 +2,7 @@ import { Badge } from '@/components/ui/badge';
 import { CosmicButton } from '@/components/CosmicButton';
 import { CheckCircle, HelpCircle, XCircle, Pencil, Shield, Heart, Sword, Swords, Crosshair, MessageSquare } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { getClassById, getSpecById } from '@/data/wowClasses';
+import { getClassById, getLocalizedClassName, getSpecById } from '@/data/wowClasses';
 import { MemberWish, WishChoice, ValidationStatus } from '@/types/guild';
 import { WishValidationBadge } from './WishValidationBadge';
 import { cn } from '@/lib/utils';
@@ -49,7 +49,7 @@ export const MobileRosterCard = ({
             color: `hsl(var(--class-${cls.id}))`
           }}
         >
-          <span className="font-medium truncate">{cls.name[language]}</span>
+          <span className="font-medium truncate">{getLocalizedClassName(cls.id, language)}</span>
           {specs.length > 0 && (
             <div className="flex items-center gap-1 text-muted-foreground">
               {specs.slice(0, 2).map((spec) => {

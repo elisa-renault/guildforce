@@ -337,12 +337,6 @@ const LEGACY_AUTO_KEY_BY_SEMANTIC_KEY: Partial<Record<SemanticKey, string>> = {
   'forum.report.dialog.cancel': 'components_forum_ReportDialog_128',
   'forum.report.dialog.submitting': 'components_forum_ReportDialog_138',
   'forum.report.dialog.submit': 'components_forum_ReportDialog_143',
-  'forum.report.reason.spam': 'components_forum_ReportDialog_reason_spam',
-  'forum.report.reason.harassment': 'components_forum_ReportDialog_reason_harassment',
-  'forum.report.reason.inappropriate': 'components_forum_ReportDialog_reason_inappropriate',
-  'forum.report.reason.misinformation': 'components_forum_ReportDialog_reason_misinformation',
-  'forum.report.reason.other': 'components_forum_ReportDialog_reason_other',
-
   'polls.sortable.type.single_choice': 'components_polls_SortableQuestion_55',
   'polls.sortable.type.multiple_choice': 'components_polls_SortableQuestion_56',
   'polls.sortable.type.text': 'components_polls_SortableQuestion_57',

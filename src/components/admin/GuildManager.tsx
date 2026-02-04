@@ -55,6 +55,7 @@ import {
   ArrowDown
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { interpolateMessage } from '@/i18n/format';
 import { toSlug } from '@/lib/guildSlug';
 
 interface Guild {
@@ -134,7 +135,7 @@ export function GuildManager() {
       // New behavior: backend returns immediately and continues in background
       if (data?.started) {
         toast.success(
-          t.auto.components_admin_GuildManager_sync_job.replace('{{jobId}}', String(data.jobId))
+          interpolateMessage(t.auto.components_admin_GuildManager_sync_job, { jobId: data.jobId })
         );
         return;
       }

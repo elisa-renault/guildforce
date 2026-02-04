@@ -1,6 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { wowClasses, getClassById, getSpecById, Role, RangeType } from '@/data/wowClasses';
+import {
+  wowClasses,
+  getClassById,
+  getLocalizedClassName,
+  getLocalizedSpecName,
+  getSpecById,
+  Role,
+  RangeType,
+} from '@/data/wowClasses';
 import { MemberWish } from '@/types/guild';
 import { GlowCard } from '@/components/GlowCard';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +28,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
+import { interpolateMessage } from '@/i18n/format';
 
 // Color mapping from Tailwind class to CSS variable
 const classColorMap: Record<string, string> = {
@@ -330,7 +339,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
         const wowClass = getClassById(id);
         return {
           id,
-          name: wowClass?.name[language] || id,
+          name: wowClass ? getLocalizedClassName(wowClass.id, language) : id,
           color: wowClass?.color || 'class-warrior',
           wish1: data.wish1,
           total: data.total,
@@ -352,7 +361,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
         const wowClass = getClassById(classId);
         return {
           id: classId,
-          name: wowClass?.name[language] || classId,
+          name: wowClass ? getLocalizedClassName(wowClass.id, language) : classId,
           color: wowClass?.color || 'class-warrior',
         };
       });
@@ -446,8 +455,8 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
         const wowClass = wowClasses.find(c => c.specs.some(s => s.id === id));
         return {
           id,
-          specName: spec?.name[language] || id,
-          className: wowClass?.name[language] || '',
+          specName: spec ? getLocalizedSpecName(spec.id, language) : id,
+          className: wowClass ? getLocalizedClassName(wowClass.id, language) : '',
           classColor: wowClass?.color || 'class-warrior',
           role: spec?.role || 'dps',
           range: spec?.range || 'melee',
@@ -559,7 +568,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     if (n === 1) return t.dashboard.wishRange1;
     if (n === 13) return t.dashboard.allWishes;
     const template = t.auto?.components_dashboard_RosterAnalytics_wish_range;
-    return template ? template.replace('{{n}}', String(n)) : `Voeux 1-${n}`;
+    return template ? interpolateMessage(template, { n }) : `Voeux 1-${n}`;
   };
 
   // Calculate totals for KPI bar

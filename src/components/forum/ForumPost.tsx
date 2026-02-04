@@ -11,9 +11,8 @@ import { UserRoleBadge } from './UserRoleBadge';
 import { ReportDialog } from './ReportDialog';
 import { UserContextMenu } from './UserContextMenu';
 import { Quote, Edit3, Trash2, User, Clock, Check, X, Flag } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
 import ReactMarkdown from 'react-markdown';
+import { formatDistanceFromNowLocalized } from '@/i18n/format';
 
 interface ForumPostProps {
   post: ForumPostType;
@@ -36,7 +35,6 @@ export const ForumPost = ({
 }: ForumPostProps) => {
   const { user } = useAuth();
   const { language, t } = useLanguage();
-  const locale = DATE_LOCALE_BY_LANGUAGE[language];
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
@@ -105,7 +103,7 @@ export const ForumPost = ({
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Clock className="h-3 w-3" />
-            <span>{formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale })}</span>
+            <span>{formatDistanceFromNowLocalized(post.created_at, language, true)}</span>
             {post.is_edited && (
               <span className="italic">({t.forum.edited})</span>
             )}

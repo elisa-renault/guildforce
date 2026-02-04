@@ -4,7 +4,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsAdmin } from '@/hooks/useAdmin';
 import { supabase } from '@/integrations/supabase/client';
-import { getClassById, getSpecById } from '@/data/wowClasses';
+import { getClassById, getLocalizedClassName, getLocalizedSpecName, getSpecById } from '@/data/wowClasses';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
 import { GlowCard } from '@/components/GlowCard';
@@ -16,6 +16,7 @@ import { Loader2, Sparkles, Users, CheckCircle2, Shield, Heart, Swords, ChevronD
 import { toSlug, getGuildWishesPath } from '@/lib/guildSlug';
 import { CommitmentStatus } from '@/components/CommitmentToggle';
 import { cn } from '@/lib/utils';
+import { interpolateMessage } from '@/i18n/format';
 
 interface WishSummary {
   choice_index: number;
@@ -277,7 +278,7 @@ const Overview = () => {
                           {t.wishes.choice} #{firstApproved.choice_index}
                           {wowClass && (
                             <span className="ml-1 opacity-80">
-                              ({wowClass.name[language]})
+                              ({getLocalizedClassName(wowClass.id, language)})
                             </span>
                           )}
                         </span>
@@ -313,13 +314,13 @@ const Overview = () => {
                           </div>
                           {wowClass && (
                             <span className={cn("text-sm font-medium", `text-${wowClass.color}`)}>
-                              {wowClass.name[language]}
+                              {getLocalizedClassName(wowClass.id, language)}
                             </span>
                           )}
                           <div className="flex gap-1 ml-auto flex-wrap justify-end">
                             {specs.map((spec) => (
                               <Badge key={spec!.id} variant="outline" className="text-xs px-1.5 py-0.5">
-                                {spec!.name[language]}
+                                {getLocalizedSpecName(spec!.id, language)}
                               </Badge>
                             ))}
                           </div>
@@ -333,7 +334,7 @@ const Overview = () => {
                         <CollapsibleTrigger className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors w-full py-1 group">
                           <ChevronDown className="h-3 w-3 transition-transform group-data-[state=open]:rotate-180" />
                           <span>
-                            {t.auto.pages_Overview_more_wishes.replace('{{count}}', String(myWishes.length - 3))}
+                            {interpolateMessage(t.auto.pages_Overview_more_wishes, { count: myWishes.length - 3 })}
                           </span>
                         </CollapsibleTrigger>
                         <CollapsibleContent className="space-y-2 pt-2">
@@ -348,13 +349,13 @@ const Overview = () => {
                                 </div>
                                 {wowClass && (
                                   <span className={cn("text-sm font-medium", `text-${wowClass.color}`)}>
-                                    {wowClass.name[language]}
+                                    {getLocalizedClassName(wowClass.id, language)}
                                   </span>
                                 )}
                                 <div className="flex gap-1 ml-auto flex-wrap justify-end">
                                   {specs.map((spec) => (
                                     <Badge key={spec!.id} variant="outline" className="text-xs px-1.5 py-0.5">
-                                      {spec!.name[language]}
+                                      {getLocalizedSpecName(spec!.id, language)}
                                     </Badge>
                                   ))}
                                 </div>

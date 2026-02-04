@@ -7,7 +7,7 @@ import { CosmicButton } from '@/components/CosmicButton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { CheckCircle, HelpCircle, XCircle, Pencil, Save, Shield, Heart, Sword, Swords, Crosshair, MessageSquare, Plus, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { getClassById, getSpecById } from '@/data/wowClasses';
+import { getClassById, getLocalizedClassName, getLocalizedSpecName, getSpecById } from '@/data/wowClasses';
 import { MemberWish, WishData, WishChoice, ValidationStatus } from '@/types/guild';
 import { InlineWishEditor } from './InlineWishEditor';
 import { WishValidationBadge } from './WishValidationBadge';
@@ -87,7 +87,7 @@ export const RosterTable = ({
     const wish = wishes.find(w => w.choice_index === choiceIndex);
     if (!wish) return '';
     const cls = getClassById(wish.class_id);
-    return cls ? cls.name[language].toLowerCase() : '';
+    return cls ? getLocalizedClassName(cls.id, language).toLowerCase() : '';
   };
 
   // Sort members
@@ -216,7 +216,7 @@ export const RosterTable = ({
               color: `hsl(var(--class-${cls.id}))`
             }}
           >
-            <span className="truncate">{cls.name[language]}</span>
+            <span className="truncate">{getLocalizedClassName(cls.id, language)}</span>
           </div>
           
           {/* Validation badge */}
@@ -243,7 +243,7 @@ export const RosterTable = ({
               return (
                 <div key={spec.id} className="flex items-center gap-0.5">
                   {Icon && <Icon className={cn("h-3 w-3 flex-shrink-0", config?.color)} />}
-                  <span className="text-muted-foreground">{spec.name[language]}</span>
+                  <span className="text-muted-foreground">{getLocalizedSpecName(spec.id, language)}</span>
                 </div>
               );
             })

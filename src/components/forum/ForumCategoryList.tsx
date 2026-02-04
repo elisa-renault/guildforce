@@ -4,8 +4,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { ForumCategory } from '@/types/forum';
 import { GlowCard } from '@/components/GlowCard';
 import { MessageSquare, Clock, ChevronRight, FolderOpen, MessageCircle, Lightbulb, HelpCircle, Bug } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
+import { formatDistanceFromNowLocalized } from '@/i18n/format';
 
 interface ForumCategoryListProps {
   categories: ForumCategory[];
@@ -24,7 +23,6 @@ export const ForumCategoryList = forwardRef<HTMLDivElement, ForumCategoryListPro
   ({ categories, basePath = '/forum' }, ref) => {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
-  const locale = DATE_LOCALE_BY_LANGUAGE[language];
 
   if (categories.length === 0) {
     return (
@@ -95,7 +93,7 @@ export const ForumCategoryList = forwardRef<HTMLDivElement, ForumCategoryListPro
               <p className="text-foreground truncate">{category.last_topic.title}</p>
               <p className="text-xs text-muted-foreground flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                {formatDistanceToNow(new Date(category.last_topic.created_at), { addSuffix: true, locale })}
+                {formatDistanceFromNowLocalized(category.last_topic.created_at, language, true)}
                 <span>{t.forum.by} {category.last_topic.author_name}</span>
               </p>
             </div>

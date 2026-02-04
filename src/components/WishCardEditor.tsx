@@ -1,6 +1,14 @@
 import React, { useState, forwardRef } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { wowClasses, getClassById, Role, RangeType, Specialization } from '@/data/wowClasses';
+import {
+  wowClasses,
+  getClassById,
+  getLocalizedClassName,
+  getLocalizedSpecName,
+  Role,
+  RangeType,
+  Specialization,
+} from '@/data/wowClasses';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
@@ -95,7 +103,7 @@ export const WishCardEditor = forwardRef<HTMLDivElement, WishCardEditorProps>(
             } : undefined}
           >
             <span className="truncate">
-              {selectedClass ? selectedClass.name[language] : classPlaceholder}
+              {selectedClass ? getLocalizedClassName(selectedClass.id, language) : classPlaceholder}
             </span>
             <ChevronDown className="h-4 w-4 opacity-50 flex-shrink-0" />
           </Button>
@@ -117,7 +125,7 @@ export const WishCardEditor = forwardRef<HTMLDivElement, WishCardEditorProps>(
                   style={{ color: `hsl(var(--class-${cls.id}))` }}
                 >
                   {isSelected && <Check className="h-4 w-4 flex-shrink-0" />}
-                  <span className="truncate">{cls.name[language]}</span>
+                  <span className="truncate">{getLocalizedClassName(cls.id, language)}</span>
                 </button>
               );
             })}
@@ -148,7 +156,7 @@ export const WishCardEditor = forwardRef<HTMLDivElement, WishCardEditorProps>(
                       <span key={spec.id} className="flex items-center gap-1">
                         {idx > 0 && <span className="text-muted-foreground/50">•</span>}
                         <Icon className={cn("h-4 w-4", config.color)} />
-                        <span className="text-foreground">{spec.name[language]}</span>
+                        <span className="text-foreground">{getLocalizedSpecName(spec.id, language)}</span>
                       </span>
                     );
                   })}
@@ -185,7 +193,7 @@ export const WishCardEditor = forwardRef<HTMLDivElement, WishCardEditorProps>(
                   >
                     <Icon className={cn("h-4 w-4", config.color)} />
                     <span className={cn("flex-1", isSelected ? config.color : "text-foreground")}>
-                      {spec.name[language]}
+                      {getLocalizedSpecName(spec.id, language)}
                     </span>
                     {isSelected && <Check className={cn("h-4 w-4", config.color)} />}
                   </button>

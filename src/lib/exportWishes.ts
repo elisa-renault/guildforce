@@ -1,84 +1,9 @@
-import { MemberWish, ValidationStatus } from '@/types/guild';
-import { getClassById, getSpecById, getRolesFromSpecs } from '@/data/wowClasses';
+import { getLocalizedClassName, getLocalizedSpecName, getRolesFromSpecs } from '@/data/wowClasses';
+import { interpolateMessage } from '@/i18n/format';
 import { Language, Translations } from '@/i18n/translations';
+import { MemberWish, ValidationStatus } from '@/types/guild';
 
 type LocalizedValue = { en: string; fr: string } & Partial<Record<Language, string>>;
-
-// Localized class names
-const classNames: Record<string, LocalizedValue> = {
-  warrior: { en: 'Warrior', fr: 'Guerrier' },
-  paladin: { en: 'Paladin', fr: 'Paladin' },
-  hunter: { en: 'Hunter', fr: 'Chasseur' },
-  rogue: { en: 'Rogue', fr: 'Voleur' },
-  priest: { en: 'Priest', fr: 'Prêtre' },
-  shaman: { en: 'Shaman', fr: 'Chaman' },
-  mage: { en: 'Mage', fr: 'Mage' },
-  warlock: { en: 'Warlock', fr: 'Démoniste' },
-  monk: { en: 'Monk', fr: 'Moine' },
-  druid: { en: 'Druid', fr: 'Druide' },
-  'demon-hunter': { en: 'Demon Hunter', fr: 'Chasseur de démons' },
-  'death-knight': { en: 'Death Knight', fr: 'Chevalier de la mort' },
-  evoker: { en: 'Evoker', fr: 'Évocateur' },
-};
-
-// Localized spec names
-const specNames: Record<string, LocalizedValue> = {
-  // Warrior
-  'warrior-arms': { en: 'Arms', fr: 'Armes' },
-  'warrior-fury': { en: 'Fury', fr: 'Fureur' },
-  'warrior-protection': { en: 'Protection', fr: 'Protection' },
-  // Paladin
-  'paladin-holy': { en: 'Holy', fr: 'Sacré' },
-  'paladin-protection': { en: 'Protection', fr: 'Protection' },
-  'paladin-retribution': { en: 'Retribution', fr: 'Vindicte' },
-  // Hunter
-  'hunter-beast-mastery': { en: 'Beast Mastery', fr: 'Maîtrise des bêtes' },
-  'hunter-marksmanship': { en: 'Marksmanship', fr: 'Précision' },
-  'hunter-survival': { en: 'Survival', fr: 'Survie' },
-  'hunter-pack-leader': { en: 'Pack Leader', fr: 'Chef de meute' },
-  // Rogue
-  'rogue-assassination': { en: 'Assassination', fr: 'Assassinat' },
-  'rogue-outlaw': { en: 'Outlaw', fr: 'Hors-la-loi' },
-  'rogue-subtlety': { en: 'Subtlety', fr: 'Finesse' },
-  // Priest
-  'priest-discipline': { en: 'Discipline', fr: 'Discipline' },
-  'priest-holy': { en: 'Holy', fr: 'Sacré' },
-  'priest-shadow': { en: 'Shadow', fr: 'Ombre' },
-  // Shaman
-  'shaman-elemental': { en: 'Elemental', fr: 'Élémentaire' },
-  'shaman-enhancement': { en: 'Enhancement', fr: 'Amélioration' },
-  'shaman-restoration': { en: 'Restoration', fr: 'Restauration' },
-  // Mage
-  'mage-arcane': { en: 'Arcane', fr: 'Arcanes' },
-  'mage-fire': { en: 'Fire', fr: 'Feu' },
-  'mage-frost': { en: 'Frost', fr: 'Givre' },
-  // Warlock
-  'warlock-affliction': { en: 'Affliction', fr: 'Affliction' },
-  'warlock-demonology': { en: 'Demonology', fr: 'Démonologie' },
-  'warlock-destruction': { en: 'Destruction', fr: 'Destruction' },
-  // Monk
-  'monk-brewmaster': { en: 'Brewmaster', fr: 'Maître brasseur' },
-  'monk-mistweaver': { en: 'Mistweaver', fr: 'Tisse-brume' },
-  'monk-windwalker': { en: 'Windwalker', fr: 'Marche-vent' },
-  // Druid
-  'druid-balance': { en: 'Balance', fr: 'Équilibre' },
-  'druid-feral': { en: 'Feral', fr: 'Féral' },
-  'druid-guardian': { en: 'Guardian', fr: 'Gardien' },
-  'druid-restoration': { en: 'Restoration', fr: 'Restauration' },
-  'druid-elune': { en: 'Elune', fr: 'Elune' },
-  // Demon Hunter
-  'demon-hunter-havoc': { en: 'Havoc', fr: 'Dévastation' },
-  'demon-hunter-vengeance': { en: 'Vengeance', fr: 'Vengeance' },
-  'demon-hunter-devourer': { en: 'Devourer', fr: 'Dévoreur' },
-  // Death Knight
-  'death-knight-blood': { en: 'Blood', fr: 'Sang' },
-  'death-knight-frost': { en: 'Frost', fr: 'Givre' },
-  'death-knight-unholy': { en: 'Unholy', fr: 'Impie' },
-  // Evoker
-  'evoker-devastation': { en: 'Devastation', fr: 'Dévastation' },
-  'evoker-preservation': { en: 'Preservation', fr: 'Préservation' },
-  'evoker-augmentation': { en: 'Augmentation', fr: 'Augmentation' },
-};
 
 const roleNames: Record<string, LocalizedValue> = {
   tank: { en: 'Tank', fr: 'Tank' },
@@ -87,15 +12,15 @@ const roleNames: Record<string, LocalizedValue> = {
 };
 
 const statusNames: Record<string, LocalizedValue> = {
-  confirmed: { en: 'Confirmed', fr: 'Confirmé' },
-  potential: { en: 'Undecided', fr: 'Indécis' },
+  confirmed: { en: 'Confirmed', fr: 'Confirme' },
+  potential: { en: 'Undecided', fr: 'Indecis' },
   withdrawn: { en: 'Withdrawn', fr: 'Retrait' },
 };
 
 const validationNames: Record<ValidationStatus, LocalizedValue> = {
   pending: { en: 'Pending', fr: 'En attente' },
-  approved: { en: 'Approved', fr: 'Approuvé' },
-  rejected: { en: 'Rejected', fr: 'Rejeté' },
+  approved: { en: 'Approved', fr: 'Approuve' },
+  rejected: { en: 'Rejected', fr: 'Rejete' },
 };
 
 interface ExportOptions {
@@ -105,23 +30,9 @@ interface ExportOptions {
   guildName: string;
 }
 
-function getLocalizedClassName(classId: string, lang: Language): string {
-  const localized = classNames[classId]?.[lang];
-  if (localized) return localized;
-  const wowClass = getClassById(classId);
-  return wowClass?.name?.[lang] ?? wowClass?.name?.en ?? classId;
-}
-
-function getLocalizedSpecName(specId: string, lang: Language): string {
-  const localized = specNames[specId]?.[lang];
-  if (localized) return localized;
-  const spec = getSpecById(specId);
-  return spec?.name?.[lang] ?? spec?.name?.en ?? specId;
-}
-
 function getLocalizedRoles(specIds: string[], lang: Language): string {
   const roles = getRolesFromSpecs(specIds);
-  return roles.map(r => roleNames[r]?.[lang] || roleNames[r]?.en || r).join(', ');
+  return roles.map((role) => roleNames[role]?.[lang] || roleNames[role]?.en || role).join(', ');
 }
 
 function escapeCSV(value: string): string {
@@ -134,31 +45,25 @@ function escapeCSV(value: string): string {
 export function exportWishesToCSV(members: MemberWish[], options: ExportOptions): void {
   const { language, rosterName, guildName, t } = options;
 
-  // Find max wishes count
-  const maxWishes = Math.max(...members.map(m => m.wishes.length), 0);
+  const maxWishes = Math.max(...members.map((member) => member.wishes.length), 0);
   if (maxWishes === 0) {
     return;
   }
 
-  // Build headers
-  const headers: string[] = [
-    t.auto?.export_player || 'Player',
-    t.auto?.export_commitment || 'Commitment',
-  ];
+  const headers: string[] = [t.auto?.export_player || 'Player', t.auto?.export_commitment || 'Commitment'];
 
   for (let i = 1; i <= maxWishes; i++) {
     const wishTemplate = t.auto?.export_wish_label || 'Wish {{index}}';
-    const wishLabel = wishTemplate.replace('{{index}}', String(i));
+    const wishLabel = interpolateMessage(wishTemplate, { index: i });
     headers.push(
       `${wishLabel} - ${t.auto?.export_class || 'Class'}`,
       `${wishLabel} - ${t.auto?.export_specs || 'Specs'}`,
       `${wishLabel} - ${t.auto?.export_roles || 'Roles'}`,
       `${wishLabel} - ${t.auto?.export_comment || 'Comment'}`,
-      `${wishLabel} - ${t.auto?.export_validation || 'Validation'}`
+      `${wishLabel} - ${t.auto?.export_validation || 'Validation'}`,
     );
   }
 
-  // Build rows
   const rows: string[][] = [];
 
   for (const member of members) {
@@ -168,18 +73,18 @@ export function exportWishesToCSV(members: MemberWish[], options: ExportOptions)
     ];
 
     for (let i = 0; i < maxWishes; i++) {
-      const wish = member.wishes.find(w => w.choice_index === i + 1);
+      const wish = member.wishes.find((entry) => entry.choice_index === i + 1);
       if (wish && wish.class_id) {
         row.push(
           escapeCSV(getLocalizedClassName(wish.class_id, language)),
-          escapeCSV(wish.spec_ids?.map(s => getLocalizedSpecName(s, language)).join(', ') || ''),
+          escapeCSV(wish.spec_ids?.map((specId) => getLocalizedSpecName(specId, language)).join(', ') || ''),
           escapeCSV(getLocalizedRoles(wish.spec_ids || [], language)),
           escapeCSV(wish.comment || ''),
           escapeCSV(
             validationNames[wish.validation_status || 'pending']?.[language] ||
               validationNames[wish.validation_status || 'pending']?.en ||
-              ''
-          )
+              '',
+          ),
         );
       } else {
         row.push('', '', '', '', '');
@@ -189,16 +94,13 @@ export function exportWishesToCSV(members: MemberWish[], options: ExportOptions)
     rows.push(row);
   }
 
-  // Build CSV content with BOM for Excel UTF-8 compatibility
   const BOM = '\uFEFF';
-  const csvContent = BOM + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const csvContent = BOM + [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
 
-  // Create and trigger download
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
 
-  // Format filename
   const date = new Date().toISOString().split('T')[0];
   const safeGuildName = guildName.replace(/[^a-zA-Z0-9-_]/g, '-');
   const safeRosterName = rosterName.replace(/[^a-zA-Z0-9-_]/g, '-');

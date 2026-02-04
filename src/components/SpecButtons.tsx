@@ -1,5 +1,5 @@
 import { useLanguage } from '@/contexts/LanguageContext';
-import { getClassById, Role } from '@/data/wowClasses';
+import { getClassById, getLocalizedSpecName, Role } from '@/data/wowClasses';
 import { cn } from '@/lib/utils';
 import { Check, Shield, Heart, Sword } from 'lucide-react';
 
@@ -77,7 +77,7 @@ export const SpecButtons = ({ classId, selectedSpecs, onChange }: SpecButtonsPro
               "text-sm font-medium",
               isSelected ? config.color : "text-foreground"
             )}>
-              {spec.name[language]}
+              {getLocalizedSpecName(spec.id, language)}
             </span>
           </button>
         );

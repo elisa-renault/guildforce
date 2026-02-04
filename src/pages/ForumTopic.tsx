@@ -16,8 +16,6 @@ import {
   Loader2, ChevronLeft, ChevronRight, Pin, Lock, 
   Trash2, User, Clock, Eye, MessageSquare, Flag, Send
 } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
 import {
@@ -31,13 +29,13 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
+import { formatDistanceFromNowLocalized } from '@/i18n/format';
 
 const ForumTopicPage = () => {
   const { topicId } = useParams<{ topicId: string }>();
   const navigate = useNavigate();
   const { language, t } = useLanguage();
   const { user } = useAuth();
-  const locale = DATE_LOCALE_BY_LANGUAGE[language];
 
   const { topic, loading: topicLoading, refetch: refetchTopic, refreshReactions: refreshTopicReactions } = useForumTopic(topicId || null);
   const [page, setPage] = useState(1);
@@ -347,7 +345,7 @@ const ForumTopicPage = () => {
                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Clock className="h-3 w-3" />
-                    {formatDistanceToNow(new Date(topic.created_at), { addSuffix: true, locale })}
+                    {formatDistanceFromNowLocalized(topic.created_at, language, true)}
                   </span>
                   <span className="flex items-center gap-1">
                     <Eye className="h-3 w-3" />

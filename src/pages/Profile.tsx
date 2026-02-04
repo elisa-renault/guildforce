@@ -12,6 +12,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useLanguage, Language } from '@/contexts/LanguageContext';
 import { LANGUAGE_OPTIONS, isSupportedLanguage } from '@/i18n/config';
+import { interpolateMessage } from '@/i18n/format';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -311,7 +312,7 @@ const Profile = () => {
             <h1 className="font-display text-2xl text-foreground mb-2">{ui.welcomeTitle}</h1>
             <p className="text-muted-foreground text-sm">{ui.welcomeSubtitle}</p>
             {profile?.battletag && (
-              <p className="text-xs text-muted-foreground mt-2">{ui.connectedAs.replace('{{battletag}}', profile.battletag)}</p>
+              <p className="text-xs text-muted-foreground mt-2">{interpolateMessage(ui.connectedAs, { battletag: profile.battletag })}</p>
             )}
           </div>
 
@@ -620,7 +621,7 @@ const Profile = () => {
                         </ul>
                         <div className="pt-2">
                           <Label htmlFor="confirm-delete" className="text-foreground text-sm">
-                            {t.profile.deletion.typeToConfirm.replace('{{username}}', profile?.username || '')}
+                            {interpolateMessage(t.profile.deletion.typeToConfirm, { username: profile?.username || '' })}
                           </Label>
                           <Input
                             id="confirm-delete"

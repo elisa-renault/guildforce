@@ -21,6 +21,7 @@ import {
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Ban, Clock, User, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { interpolateMessage } from '@/i18n/format';
 
 interface SanctionDialogProps {
   open: boolean;
@@ -69,7 +70,7 @@ export const SanctionDialog = ({
       await applySanction(targetUser.id, sanctionType, reason, durationHours);
       
       toast.success(
-        t.auto.components_forum_SanctionDialog_applied.replace('{{username}}', targetUser.username),
+        interpolateMessage(t.auto.components_forum_SanctionDialog_applied, { username: targetUser.username }),
         {
           style: { background: 'hsl(var(--card))', borderColor: 'hsl(var(--primary) / 0.3)' },
         }

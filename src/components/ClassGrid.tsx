@@ -1,5 +1,5 @@
 import { useLanguage } from '@/contexts/LanguageContext';
-import { wowClasses, WoWClass } from '@/data/wowClasses';
+import { getLocalizedClassName, wowClasses, WoWClass } from '@/data/wowClasses';
 import { cn } from '@/lib/utils';
 import { Check } from 'lucide-react';
 
@@ -67,7 +67,7 @@ export const ClassGrid = ({ value, onChange }: ClassGridProps) => {
               "text-[10px] sm:text-xs font-medium text-center leading-tight",
               isSelected ? colors.text : "text-muted-foreground"
             )}>
-              {wowClass.name[language]}
+              {getLocalizedClassName(wowClass.id, language)}
             </span>
           </button>
         );
