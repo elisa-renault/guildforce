@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Loader2, ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { interpolateMessage } from '@/i18n/format';
+import { resolveSemanticMessage } from '@/i18n/semantic';
 
 const ForumNewTopic = () => {
   const { categorySlug } = useParams<{ categorySlug: string }>();
@@ -19,6 +20,8 @@ const ForumNewTopic = () => {
   const { user } = useAuth();
   const { categories, loading: categoriesLoading } = useForumCategories();
   const { createTopic } = useForumActions();
+  const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
+    resolveSemanticMessage({ key, language, translations: t });
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -32,10 +35,10 @@ const ForumNewTopic = () => {
     setCreating(true);
     try {
       const topic = await createTopic(category.id, title.trim(), content.trim());
-      toast.success(t.auto.pages_ForumNewTopic_34);
+      toast.success(sm('forum.new_topic.toast.created'));
       navigate(`/forum/topic/${topic.id}`);
     } catch (error) {
-      toast.error(t.auto.pages_ForumNewTopic_37);
+      toast.error(sm('forum.new_topic.toast.create_error'));
     } finally {
       setCreating(false);
     }
@@ -48,10 +51,10 @@ const ForumNewTopic = () => {
         <CosmicBackground />
         <div className="text-center">
           <p className="text-muted-foreground mb-4">
-            {t.auto.pages_ForumNewTopic_50}
+            {sm('forum.new_topic.auth_required')}
           </p>
           <CosmicButton onClick={() => navigate('/auth')}>
-            {t.auto.pages_ForumNewTopic_53}
+            {sm('forum.new_topic.login')}
           </CosmicButton>
         </div>
       </div>
@@ -73,10 +76,10 @@ const ForumNewTopic = () => {
         <CosmicBackground />
         <div className="text-center">
           <p className="text-muted-foreground mb-4">
-            {t.auto.pages_ForumNewTopic_75}
+            {sm('forum.new_topic.category_not_found')}
           </p>
           <CosmicButton onClick={() => navigate('/forum')}>
-            {t.auto.pages_ForumNewTopic_78}
+            {sm('forum.new_topic.back_to_forum')}
           </CosmicButton>
         </div>
       </div>
@@ -95,7 +98,7 @@ const ForumNewTopic = () => {
           items={[
             { label: 'Forum', href: '/forum' },
             { label: categoryName, href: `/forum/category/${categorySlug}` },
-            { label: t.auto.pages_ForumNewTopic_97 },
+            { label: sm('forum.new_topic.title') },
           ]}
           className="mb-4"
         />
@@ -110,10 +113,10 @@ const ForumNewTopic = () => {
           </button>
           <div>
             <h1 className="font-display text-2xl text-foreground">
-              {t.auto.pages_ForumNewTopic_112}
+              {sm('forum.new_topic.title')}
             </h1>
             <p className="text-sm text-muted-foreground">
-              {interpolateMessage(t.auto.pages_ForumNewTopic_115, { categoryName })}
+              {interpolateMessage(sm('forum.new_topic.in_category'), { categoryName })}
             </p>
           </div>
         </div>
@@ -122,12 +125,12 @@ const ForumNewTopic = () => {
         <div className="space-y-6 bg-card/50 border border-border/50 rounded-xl p-6">
           <div>
             <label htmlFor="topic-title" className="block text-sm font-medium text-foreground mb-2">
-              {t.auto.pages_ForumNewTopic_124}
+              {sm('forum.new_topic.field_title')}
             </label>
             <Input
               id="topic-title"
               name="topic-title"
-              placeholder={t.auto.pages_ForumNewTopic_129}
+              placeholder={sm('forum.new_topic.title_placeholder')}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="text-lg"
@@ -136,12 +139,12 @@ const ForumNewTopic = () => {
 
           <div>
             <label htmlFor="topic-content" className="block text-sm font-medium text-foreground mb-2">
-              {t.auto.pages_ForumNewTopic_138}
+              {sm('forum.new_topic.field_content')}
             </label>
             <MarkdownEditor
               value={content}
               onChange={setContent}
-              placeholder={t.auto.pages_ForumNewTopic_143}
+              placeholder={sm('forum.new_topic.content_placeholder')}
               minHeight="300px"
             />
           </div>
@@ -158,7 +161,7 @@ const ForumNewTopic = () => {
               disabled={!title.trim() || !content.trim() || creating}
               loading={creating}
             >
-              {t.forum.createTopic || (t.auto.pages_ForumNewTopic_160)}
+              {t.forum.createTopic || sm('forum.new_topic.create')}
             </CosmicButton>
           </div>
         </div>

@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { isSupportedLanguage, LANGUAGE_OPTIONS, type Language } from '@/i18n/config';
+import { getBilingualContentLanguage, isSupportedLanguage, LANGUAGE_OPTIONS, type Language } from '@/i18n/config';
 import { formatDateLocalized } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { supabase } from '@/integrations/supabase/client';
@@ -56,7 +56,7 @@ const slugLabels: Record<string, { fr: string; en: string }> = {
 const getSlugLabel = (slug: string, language: Language) => {
   const label = slugLabels[slug];
   if (!label) return slug;
-  return language === 'fr' ? label.fr : label.en;
+  return label[getBilingualContentLanguage(language)];
 };
 
 const getLanguageLabel = (language: Language): string =>

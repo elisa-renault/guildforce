@@ -22,6 +22,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Ban, Clock, User, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { interpolateMessage } from '@/i18n/format';
+import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 
 interface SanctionDialogProps {
   open: boolean;
@@ -34,14 +35,14 @@ interface SanctionDialogProps {
   onSuccess?: () => void;
 }
 
-const DURATION_OPTIONS = [
-  { value: '1', label: { fr: '1 heure', en: '1 hour' } },
-  { value: '6', label: { fr: '6 heures', en: '6 hours' } },
-  { value: '24', label: { fr: '1 jour', en: '1 day' } },
-  { value: '72', label: { fr: '3 jours', en: '3 days' } },
-  { value: '168', label: { fr: '1 semaine', en: '1 week' } },
-  { value: '720', label: { fr: '1 mois', en: '1 month' } },
-  { value: 'permanent', label: { fr: 'Permanent', en: 'Permanent' } },
+const DURATION_OPTIONS: ReadonlyArray<{ value: string; key: SemanticKey }> = [
+  { value: '1', key: 'forum.sanctions.duration.1h' },
+  { value: '6', key: 'forum.sanctions.duration.6h' },
+  { value: '24', key: 'forum.sanctions.duration.1d' },
+  { value: '72', key: 'forum.sanctions.duration.3d' },
+  { value: '168', key: 'forum.sanctions.duration.1w' },
+  { value: '720', key: 'forum.sanctions.duration.1m' },
+  { value: 'permanent', key: 'forum.sanctions.duration.permanent' },
 ];
 
 export const SanctionDialog = ({
@@ -52,15 +53,17 @@ export const SanctionDialog = ({
 }: SanctionDialogProps) => {
   const { language, t } = useLanguage();
   const { applySanction } = useForumSanctionActions();
-  
+
   const [sanctionType, setSanctionType] = useState<SanctionType>('timeout');
   const [duration, setDuration] = useState('24');
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const s = (key: SemanticKey) => resolveSemanticMessage({ key, language, translations: t });
+
   const handleSubmit = async () => {
     if (!reason.trim()) {
-      toast.error(t.auto.components_forum_SanctionDialog_62);
+      toast.error(s('forum.sanctions.toast.reason_required'));
       return;
     }
 
@@ -68,21 +71,18 @@ export const SanctionDialog = ({
     try {
       const durationHours = duration === 'permanent' ? undefined : parseInt(duration);
       await applySanction(targetUser.id, sanctionType, reason, durationHours);
-      
-      toast.success(
-        interpolateMessage(t.auto.components_forum_SanctionDialog_applied, { username: targetUser.username }),
-        {
-          style: { background: 'hsl(var(--card))', borderColor: 'hsl(var(--primary) / 0.3)' },
-        }
-      );
-      
+
+      toast.success(interpolateMessage(s('forum.sanctions.toast.applied'), { username: targetUser.username }), {
+        style: { background: 'hsl(var(--card))', borderColor: 'hsl(var(--primary) / 0.3)' },
+      });
+
       onOpenChange(false);
       setSanctionType('timeout');
       setDuration('24');
       setReason('');
       onSuccess?.();
     } catch (error) {
-      toast.error(t.auto.components_forum_SanctionDialog_86);
+      toast.error(s('forum.sanctions.toast.apply_error'));
     } finally {
       setLoading(false);
     }
@@ -94,7 +94,7 @@ export const SanctionDialog = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Ban className="h-5 w-5 text-destructive" />
-            {t.auto.components_forum_SanctionDialog_98}
+            {s('forum.sanctions.dialog.title')}
           </DialogTitle>
         </DialogHeader>
 
@@ -112,15 +112,13 @@ export const SanctionDialog = ({
             </Avatar>
             <div>
               <p className="font-medium text-foreground">{targetUser.username}</p>
-              <p className="text-xs text-muted-foreground">
-                {t.auto.components_forum_SanctionDialog_117}
-              </p>
+              <p className="text-xs text-muted-foreground">{s('forum.sanctions.dialog.target_user')}</p>
             </div>
           </div>
 
           {/* Sanction type */}
           <div className="space-y-2">
-            <Label>{t.auto.components_forum_SanctionDialog_124}</Label>
+            <Label>{s('forum.sanctions.dialog.type_label')}</Label>
             <Select value={sanctionType} onValueChange={(v) => setSanctionType(v as SanctionType)}>
               <SelectTrigger className="bg-muted/50 border-border">
                 <SelectValue />
@@ -129,13 +127,13 @@ export const SanctionDialog = ({
                 <SelectItem value="timeout">
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4" />
-                    {t.auto.components_forum_SanctionDialog_133}
+                    {s('forum.sanctions.type.timeout')}
                   </div>
                 </SelectItem>
                 <SelectItem value="ban">
                   <div className="flex items-center gap-2">
                     <Ban className="h-4 w-4" />
-                    {t.auto.components_forum_SanctionDialog_139}
+                    {s('forum.sanctions.type.ban')}
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -144,7 +142,7 @@ export const SanctionDialog = ({
 
           {/* Duration */}
           <div className="space-y-2">
-            <Label>{t.auto.components_forum_SanctionDialog_148}</Label>
+            <Label>{s('forum.sanctions.dialog.duration_label')}</Label>
             <Select value={duration} onValueChange={setDuration}>
               <SelectTrigger className="bg-muted/50 border-border">
                 <SelectValue />
@@ -152,7 +150,7 @@ export const SanctionDialog = ({
               <SelectContent className="bg-card border-border">
                 {DURATION_OPTIONS.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label[language]}
+                    {s(opt.key)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -161,13 +159,13 @@ export const SanctionDialog = ({
 
           {/* Reason */}
           <div className="space-y-2">
-            <Label htmlFor="sanction-reason">{t.auto.components_forum_SanctionDialog_165}</Label>
+            <Label htmlFor="sanction-reason">{s('forum.sanctions.dialog.reason_label')}</Label>
             <Textarea
               id="sanction-reason"
               name="sanction-reason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder={t.auto.components_forum_SanctionDialog_171}
+              placeholder={s('forum.sanctions.dialog.reason_placeholder')}
               className="bg-muted/50 border-border min-h-[100px]"
             />
           </div>
@@ -175,10 +173,10 @@ export const SanctionDialog = ({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-            {t.auto.components_forum_SanctionDialog_179}
+            {s('forum.sanctions.dialog.cancel')}
           </Button>
-          <Button 
-            onClick={handleSubmit} 
+          <Button
+            onClick={handleSubmit}
             disabled={loading}
             className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
           >
@@ -187,7 +185,7 @@ export const SanctionDialog = ({
             ) : (
               <Ban className="h-4 w-4 mr-2" />
             )}
-            {t.auto.components_forum_SanctionDialog_191}
+            {s('forum.sanctions.dialog.apply')}
           </Button>
         </DialogFooter>
       </DialogContent>

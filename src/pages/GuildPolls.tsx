@@ -13,6 +13,7 @@ import { useGuildPolls, usePollMutations } from '@/hooks/useGuildPolls';
 import { toast } from 'sonner';
 import { toSlug } from '@/lib/guildSlug';
 import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
+import { resolveSemanticMessage } from '@/i18n/semantic';
 
 const GuildPolls = () => {
   const { regionSlug, serverSlug, guildSlug } = useParams();
@@ -29,6 +30,8 @@ const GuildPolls = () => {
   const { polls, loading: pollsLoading, refetch } = useGuildPolls(guildId || undefined);
   const { publishPoll, closePoll, deletePoll, duplicatePoll, saving } = usePollMutations();
   const { hasPermission: hasManagePolls, loading: permLoading } = useHasGuildPermission(guildId, 'manage_polls');
+  const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
+    resolveSemanticMessage({ key, language, translations: t });
 
   // User can manage polls if they are GM OR have manage_polls permission
   const canManagePolls = isGM || hasManagePolls;
@@ -86,7 +89,7 @@ const GuildPolls = () => {
   const handleDuplicate = async (pollId: string) => {
     const newPollId = await duplicatePoll(pollId);
     if (newPollId) {
-      toast.success(t.auto.pages_GuildPolls_89);
+      toast.success(sm('guild.polls.toast.duplicated'));
       refetch();
     }
   };
@@ -121,13 +124,13 @@ const GuildPolls = () => {
         <div className="max-w-4xl mx-auto">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
             <h1 className="text-xl md:text-2xl font-bold">
-              {t.auto.pages_GuildPolls_124}
+              {sm('guild.polls.title')}
             </h1>
 
             {canManagePolls && (
               <Button onClick={() => navigate(`${basePath}/polls/new`)} size="sm" className="md:size-default">
                 <Plus className="h-4 w-4 md:mr-2" />
-                <span className="hidden sm:inline">{t.auto.pages_GuildPolls_130}</span>
+                <span className="hidden sm:inline">{sm('guild.polls.new')}</span>
               </Button>
             )}
           </div>
@@ -138,21 +141,21 @@ const GuildPolls = () => {
             </div>
           ) : polls.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              {t.auto.pages_GuildPolls_141}
+              {sm('guild.polls.empty')}
             </div>
           ) : (
             <Tabs defaultValue="active">
               <TabsList className="mb-6">
                 <TabsTrigger value="active">
-                  {t.auto.pages_GuildPolls_147} ({activePolls.length})
+                  {sm('guild.polls.tab.active')} ({activePolls.length})
                 </TabsTrigger>
                 {canManagePolls && (
                   <TabsTrigger value="draft">
-                    {t.auto.pages_GuildPolls_151} ({draftPolls.length})
+                    {sm('guild.polls.tab.draft')} ({draftPolls.length})
                   </TabsTrigger>
                 )}
                 <TabsTrigger value="closed">
-                  {t.auto.pages_GuildPolls_155} ({closedPolls.length})
+                  {sm('guild.polls.tab.closed')} ({closedPolls.length})
                 </TabsTrigger>
               </TabsList>
 
@@ -169,7 +172,7 @@ const GuildPolls = () => {
                 ))}
                 {activePolls.length === 0 && (
                   <p className="text-center py-8 text-muted-foreground">
-                    {t.auto.pages_GuildPolls_172}
+                    {sm('guild.polls.empty.active')}
                   </p>
                 )}
               </TabsContent>
@@ -189,7 +192,7 @@ const GuildPolls = () => {
                   ))}
                   {draftPolls.length === 0 && (
                     <p className="text-center py-8 text-muted-foreground">
-                      {t.auto.pages_GuildPolls_192}
+                      {sm('guild.polls.empty.draft')}
                     </p>
                   )}
                 </TabsContent>
@@ -208,7 +211,7 @@ const GuildPolls = () => {
                 ))}
                 {closedPolls.length === 0 && (
                   <p className="text-center py-8 text-muted-foreground">
-                    {t.auto.pages_GuildPolls_211}
+                    {sm('guild.polls.empty.closed')}
                   </p>
                 )}
               </TabsContent>

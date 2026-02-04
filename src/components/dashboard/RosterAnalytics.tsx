@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { interpolateMessage } from '@/i18n/format';
+import { getBilingualContentLanguage } from '@/i18n/config';
 
 // Color mapping from Tailwind class to CSS variable
 const classColorMap: Record<string, string> = {
@@ -261,10 +262,19 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   }, [members, commitmentFilter]);
 
   const spellMap = useMemo(() => {
+    const contentLanguage = getBilingualContentLanguage(language);
     const map = new Map<number, { name: string; description: string }>();
     wowSpells.forEach(spell => {
-      const name = language === 'fr' ? spell.name_fr : spell.name_en;
-      const description = language === 'fr' ? spell.description_fr : spell.description_en;
+      const nameByLanguage = {
+        en: spell.name_en,
+        fr: spell.name_fr,
+      };
+      const descriptionByLanguage = {
+        en: spell.description_en,
+        fr: spell.description_fr,
+      };
+      const name = nameByLanguage[contentLanguage];
+      const description = descriptionByLanguage[contentLanguage];
       const fallbackName = spell.name_en || spell.name_fr || `Spell ${spell.spell_id}`;
       map.set(spell.spell_id, {
         name: name || fallbackName,

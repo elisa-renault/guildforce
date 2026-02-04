@@ -1,35 +1,36 @@
+import { User, Shield, Users2, History, RefreshCw, Key } from 'lucide-react';
 import { useLayoutEffect, useState } from 'react';
-import { cn } from '@/lib/utils';
+
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { User, Shield, Users2, History, RefreshCw, Key } from 'lucide-react';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { resolveSemanticMessage } from '@/i18n/semantic';
+import { cn } from '@/lib/utils';
 
 export type SettingsSection = 'profile' | 'permissions' | 'rosters' | 'activity' | 'battlenet' | 'mypermissions';
 
 interface SectionConfig {
   id: SettingsSection;
-  labelEn: string;
-  labelFr: string;
+  labelKey: Parameters<typeof resolveSemanticMessage>[0]['key'];
   icon: React.ElementType;
   category: 'guild' | 'management' | 'audit' | 'integration' | 'mypermissions';
 }
 
 const SECTIONS: SectionConfig[] = [
-  { id: 'profile', labelEn: 'Profile', labelFr: 'Profil', icon: User, category: 'guild' },
-  { id: 'permissions', labelEn: 'Permissions', labelFr: 'Permissions', icon: Shield, category: 'management' },
-  { id: 'mypermissions', labelEn: 'My Permissions', labelFr: 'Mes permissions', icon: Key, category: 'mypermissions' },
-  { id: 'rosters', labelEn: 'Rosters', labelFr: 'Rosters', icon: Users2, category: 'management' },
-  { id: 'activity', labelEn: 'Activity', labelFr: 'Activité', icon: History, category: 'audit' },
-  { id: 'battlenet', labelEn: 'Battle.net', labelFr: 'Battle.net', icon: RefreshCw, category: 'integration' },
+  { id: 'profile', labelKey: 'settings.sidebar.section.profile', icon: User, category: 'guild' },
+  { id: 'permissions', labelKey: 'settings.sidebar.section.permissions', icon: Shield, category: 'management' },
+  { id: 'mypermissions', labelKey: 'settings.sidebar.section.mypermissions', icon: Key, category: 'mypermissions' },
+  { id: 'rosters', labelKey: 'settings.sidebar.section.rosters', icon: Users2, category: 'management' },
+  { id: 'activity', labelKey: 'settings.sidebar.section.activity', icon: History, category: 'audit' },
+  { id: 'battlenet', labelKey: 'settings.sidebar.section.battlenet', icon: RefreshCw, category: 'integration' },
 ];
 
-const CATEGORIES = {
-  mypermissions: { en: 'MY ACCESS', fr: 'MON ACCÈS' },
-  guild: { en: 'GUILD', fr: 'GUILDE' },
-  management: { en: 'MANAGEMENT', fr: 'GESTION' },
-  audit: { en: 'AUDIT', fr: 'AUDIT' },
-  integration: { en: 'INTEGRATION', fr: 'INTÉGRATION' },
+const CATEGORIES: Record<SectionConfig['category'], Parameters<typeof resolveSemanticMessage>[0]['key']> = {
+  mypermissions: 'settings.sidebar.category.mypermissions',
+  guild: 'settings.sidebar.category.guild',
+  management: 'settings.sidebar.category.management',
+  audit: 'settings.sidebar.category.audit',
+  integration: 'settings.sidebar.category.integration',
 };
 
 interface GuildSettingsSidebarProps {
@@ -43,9 +44,11 @@ export const GuildSettingsSidebar = ({
   onSectionChange,
   visibleSections,
 }: GuildSettingsSidebarProps) => {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const isMobile = useIsMobile();
   const [tabsTop, setTabsTop] = useState<number>(104);
+  const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
+    resolveSemanticMessage({ key, language, translations: t });
 
   // Measure heights synchronously before paint to avoid flicker
   useLayoutEffect(() => {
@@ -54,7 +57,7 @@ export const GuildSettingsSidebar = ({
     const compute = () => {
       const subNav = document.querySelector<HTMLElement>('[data-guild-subnav]');
       const globalNav = document.querySelector<HTMLElement>('[data-global-nav]');
-      
+
       const globalH = globalNav?.offsetHeight ?? 64;
       const subH = subNav?.offsetHeight ?? 44;
       const nextTop = globalH + subH;
@@ -63,7 +66,7 @@ export const GuildSettingsSidebar = ({
 
     // Run immediately
     compute();
-    
+
     // Also run on resize
     window.addEventListener('resize', compute);
 
@@ -95,8 +98,8 @@ export const GuildSettingsSidebar = ({
     return (
       <>
         {/* Fixed tabs bar */}
-        <div 
-          className="fixed left-0 right-0 z-30 border-b border-border/50 bg-background/95 backdrop-blur-sm px-3" 
+        <div
+          className="fixed left-0 right-0 z-30 border-b border-border/50 bg-background/95 backdrop-blur-sm px-3"
           style={{ top: tabsTop }}
         >
           <ScrollArea className="w-full">
@@ -109,14 +112,14 @@ export const GuildSettingsSidebar = ({
                     key={section.id}
                     onClick={() => onSectionChange(section.id)}
                     className={cn(
-                      "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0",
+                      'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0',
                       isActive
-                        ? "bg-primary/20 text-foreground ring-1 ring-primary/50"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                        ? 'bg-primary/20 text-foreground ring-1 ring-primary/50'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                     )}
                   >
                     <Icon className="h-3.5 w-3.5" />
-                    <span>{({ fr: section.labelFr, en: section.labelEn } as const)[language]}</span>
+                    <span>{sm(section.labelKey)}</span>
                   </button>
                 );
               })}
@@ -143,7 +146,7 @@ export const GuildSettingsSidebar = ({
           return (
             <div key={categoryKey}>
               <h3 className="px-3 mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                {({ fr: categoryLabel.fr, en: categoryLabel.en } as const)[language]}
+                {sm(categoryLabel)}
               </h3>
               <div className="space-y-0.5">
                 {sections.map((section) => {
@@ -154,14 +157,14 @@ export const GuildSettingsSidebar = ({
                       key={section.id}
                       onClick={() => onSectionChange(section.id)}
                       className={cn(
-                        "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors text-left",
+                        'w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors text-left',
                         isActive
-                          ? "bg-primary/20 text-foreground ring-1 ring-primary/50"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                          ? 'bg-primary/20 text-foreground ring-1 ring-primary/50'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                       )}
                     >
                       <Icon className="h-4 w-4 flex-shrink-0" />
-                      <span>{({ fr: section.labelFr, en: section.labelEn } as const)[language]}</span>
+                      <span>{sm(section.labelKey)}</span>
                     </button>
                   );
                 })}

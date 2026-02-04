@@ -35,7 +35,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { isSupportedLanguage, LANGUAGE_OPTIONS, type Language } from '@/i18n/config';
+import { getBilingualValue, isSupportedLanguage, LANGUAGE_OPTIONS, type Language } from '@/i18n/config';
 import { formatDateLocalized } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { supabase } from '@/integrations/supabase/client';
@@ -317,13 +317,15 @@ export const PatchNotesEditor = () => {
 
   if (editingNote) {
     const currentTranslation = editingNote.translations[editLang];
-    const titlePlaceholder = editLang === 'fr'
-      ? sm('admin.patch.title_placeholder.fr')
-      : sm('admin.patch.title_placeholder.en');
-    const contentPlaceholder = editLang === 'fr'
-      ? sm('admin.patch.content_placeholder.fr')
-      : sm('admin.patch.content_placeholder.en');
-    const emptyPreview = editLang === 'fr' ? '*Aucun contenu*' : '*No content*';
+    const titlePlaceholder = getBilingualValue(editLang, {
+      en: sm('admin.patch.title_placeholder.en'),
+      fr: sm('admin.patch.title_placeholder.fr'),
+    });
+    const contentPlaceholder = getBilingualValue(editLang, {
+      en: sm('admin.patch.content_placeholder.en'),
+      fr: sm('admin.patch.content_placeholder.fr'),
+    });
+    const emptyPreview = getBilingualValue(editLang, { en: '*No content*', fr: '*Aucun contenu*' });
 
     return (
       <div className="space-y-4">

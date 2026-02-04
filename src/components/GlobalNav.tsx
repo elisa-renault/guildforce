@@ -1,12 +1,14 @@
+import { Shield, User, LogOut, MessageSquare, Menu, Crown } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
-import { useIsAdmin } from '@/hooks/useAdmin';
-import { Shield, User, LogOut, MessageSquare, Menu, Crown } from 'lucide-react';
+
 import { CosmicButton } from '@/components/CosmicButton';
 import { NotificationBell } from '@/components/forum/NotificationBell';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useIsAdmin } from '@/hooks/useAdmin';
+import { resolveSemanticMessage } from '@/i18n/semantic';
 import { getRouteMeta } from '@/routes';
 
 export const GlobalNav = () => {
@@ -17,6 +19,8 @@ export const GlobalNav = () => {
   const { isAdmin } = useIsAdmin();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const routeMeta = getRouteMeta(location.pathname);
+  const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
+    resolveSemanticMessage({ key, language, translations: t });
 
   if (routeMeta?.hideGlobalNav) return null;
 
@@ -95,7 +99,7 @@ export const GlobalNav = () => {
           <button 
             onClick={() => navigate('/')}
             className="group inline-flex items-center gap-2 font-display text-lg text-foreground hover:text-primary-foreground hover:drop-shadow-[0_0_12px_hsl(292,63%,50%)] transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded px-1"
-            aria-label={t.auto.components_GlobalNav_home_aria_label}
+            aria-label={sm('globalnav.home.aria_label')}
           >
             <img
               src="/logos/logo-white.svg"
@@ -112,13 +116,13 @@ export const GlobalNav = () => {
 
         {/* Center navigation - Desktop only */}
         {user && (
-          <nav className="hidden md:flex items-center gap-1" role="navigation" aria-label={t.auto.components_GlobalNav_nav_aria_label}>
+          <nav className="hidden md:flex items-center gap-1" role="navigation" aria-label={sm('globalnav.nav.aria_label')}>
             <NavLinks />
           </nav>
         )}
 
         {/* Right side - notifications, auth, and mobile menu */}
-        <div className="flex items-center gap-1" role="group" aria-label={t.auto.components_GlobalNav_auth_aria_label}>
+        <div className="flex items-center gap-1" role="group" aria-label={sm('globalnav.auth.aria_label')}>
           {user && <NotificationBell />}
           {user ? (
             <>
@@ -136,7 +140,7 @@ export const GlobalNav = () => {
                 <SheetTrigger asChild>
                   <button 
                     className={`md:hidden ${navButtonBase} ${navButtonInactive} p-2`}
-                    aria-label={t.auto.components_GlobalNav_menu_aria_label}
+                    aria-label={sm('globalnav.menu.aria_label')}
                   >
                     <Menu className="h-5 w-5" strokeWidth={1.5} />
                   </button>
@@ -144,7 +148,7 @@ export const GlobalNav = () => {
                 <SheetContent side="right" className="w-[280px] bg-background border-border/50 p-0">
                   <div className="flex flex-col h-full">
                     <div className="p-4 border-b border-border/30">
-                      <span className="font-display text-lg text-foreground">{t.auto.components_GlobalNav_menu_label}</span>
+                      <span className="font-display text-lg text-foreground">{sm('globalnav.menu.label')}</span>
                     </div>
                     <nav className="flex flex-col gap-1 p-4">
                       <NavLinks mobile />

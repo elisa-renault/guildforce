@@ -1,9 +1,9 @@
-import { Link } from 'react-router-dom';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { LANGUAGE_OPTIONS, isSupportedLanguage } from '@/i18n/config';
 import { Beer, Cookie, Globe } from 'lucide-react';
-import { TipeeeIcon } from './TipeeeIcon';
+import { Link } from 'react-router-dom';
+
 import { openCookiePreferences } from './CookieBanner';
+import { TipeeeIcon } from './TipeeeIcon';
+
 import {
   Select,
   SelectContent,
@@ -11,9 +11,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { LANGUAGE_OPTIONS, isSupportedLanguage } from '@/i18n/config';
+import { resolveSemanticMessage } from '@/i18n/semantic';
+
 
 export const Footer = () => {
   const { language, setLanguage, t } = useLanguage();
+  const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
+    resolveSemanticMessage({ key, language, translations: t });
 
   return (
     <footer className="relative z-10 border-t border-border/30 bg-background/60 backdrop-blur-md mt-auto">
@@ -22,7 +28,8 @@ export const Footer = () => {
         <div className="hidden md:flex items-center justify-between">
           {/* Group 1: Identité (Branding) */}
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-foreground/80">{t.auto.components_Footer_brand}</span>
+            <span className="text-sm font-medium text-foreground/80">{sm('footer.brand')}</span>
+            
             <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded bg-primary/35 text-primary-foreground border border-primary/50">
               Alpha
             </span>
@@ -92,7 +99,7 @@ export const Footer = () => {
           {/* Row 1: Identité + Support CTA */}
           <div className="flex items-center justify-center gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-foreground/80">{t.auto.components_Footer_brand}</span>
+              <span className="text-sm font-medium text-foreground/80">{sm('footer.brand')}</span>
               <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded bg-primary/35 text-primary-foreground border border-primary/50">
                 Alpha
               </span>

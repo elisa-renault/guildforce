@@ -27,6 +27,7 @@ import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
 import { getLocalizedClassName, wowClasses } from '@/data/wowClasses';
 import { BATTLENET_CLASS_MAP } from '@/data/battlenetClasses';
 import { formatDistanceFromNowLocalized } from '@/i18n/format';
+import { resolveSemanticMessage } from '@/i18n/semantic';
 
 interface RosterMember {
   id: string;
@@ -88,61 +89,33 @@ const GuildMembers = () => {
 
   const { hasPermission: hasActivityPermission } = useHasGuildPermission(guild?.id || null, 'view_activity_log');
 
-  const ui = language === 'fr'
-    ? {
-        adminReadOnly: 'Mode lecture admin',
-        guildMembersTitle: 'Membres de la guilde',
-        syncPrefix: 'Synchro',
-        syncMissing: 'Sync Battle.net pour voir tous les membres',
-        searchPlaceholder: 'Rechercher un personnage ou joueur...',
-        rankPlural: 'rangs',
-        rankSingle: 'rang',
-        allRanks: 'Tous les rangs',
-        guildforceLabel: 'Guildforce',
-        notRegistered: 'Non inscrit',
-        notRegisteredPlural: 'Non inscrits',
-        onGuildforce: 'Sur Guildforce',
-        mains: 'Mains',
-        alts: 'Alts',
-        mainAlt: 'Main/Alt',
-        mainsOnly: 'Mains uniquement',
-        altsOnly: 'Alts uniquement',
-        tableCharacter: 'Personnage',
-        tableClass: 'Classe',
-        tablePlayer: 'Joueur',
-        tableRank: 'Rang',
-        noMembers: 'Aucun membre trouve',
-        pageLabel: 'Page',
-        previous: 'Precedent',
-        next: 'Suivant',
-      }
-    : {
-        adminReadOnly: 'Admin read-only mode',
-        guildMembersTitle: 'Guild members',
-        syncPrefix: 'Synced',
-        syncMissing: 'Sync Battle.net to see all members',
-        searchPlaceholder: 'Search for a character or player...',
-        rankPlural: 'ranks',
-        rankSingle: 'rank',
-        allRanks: 'All ranks',
-        guildforceLabel: 'Guildforce',
-        notRegistered: 'Not registered',
-        notRegisteredPlural: 'Not registered',
-        onGuildforce: 'On Guildforce',
-        mains: 'Mains',
-        alts: 'Alts',
-        mainAlt: 'Main/Alt',
-        mainsOnly: 'Mains only',
-        altsOnly: 'Alts only',
-        tableCharacter: 'Character',
-        tableClass: 'Class',
-        tablePlayer: 'Player',
-        tableRank: 'Rank',
-        noMembers: 'No members found',
-        pageLabel: 'Page',
-        previous: 'Previous',
-        next: 'Next',
-      };
+  const memberUi = {
+    adminReadOnly: resolveSemanticMessage({ key: 'guild.members.admin_read_only', language, translations: t }),
+    guildMembersTitle: resolveSemanticMessage({ key: 'guild.members.title', language, translations: t }),
+    syncPrefix: resolveSemanticMessage({ key: 'guild.members.sync_prefix', language, translations: t }),
+    syncMissing: resolveSemanticMessage({ key: 'guild.members.sync_missing', language, translations: t }),
+    searchPlaceholder: resolveSemanticMessage({ key: 'guild.members.search_placeholder', language, translations: t }),
+    rankPlural: resolveSemanticMessage({ key: 'guild.members.rank_plural', language, translations: t }),
+    rankSingle: resolveSemanticMessage({ key: 'guild.members.rank_single', language, translations: t }),
+    allRanks: resolveSemanticMessage({ key: 'guild.members.all_ranks', language, translations: t }),
+    guildforceLabel: resolveSemanticMessage({ key: 'guild.members.guildforce_label', language, translations: t }),
+    notRegistered: resolveSemanticMessage({ key: 'guild.members.not_registered', language, translations: t }),
+    notRegisteredPlural: resolveSemanticMessage({ key: 'guild.members.not_registered_plural', language, translations: t }),
+    onGuildforce: resolveSemanticMessage({ key: 'guild.members.on_guildforce', language, translations: t }),
+    mains: resolveSemanticMessage({ key: 'guild.members.mains', language, translations: t }),
+    alts: resolveSemanticMessage({ key: 'guild.members.alts', language, translations: t }),
+    mainAlt: resolveSemanticMessage({ key: 'guild.members.main_alt', language, translations: t }),
+    mainsOnly: resolveSemanticMessage({ key: 'guild.members.mains_only', language, translations: t }),
+    altsOnly: resolveSemanticMessage({ key: 'guild.members.alts_only', language, translations: t }),
+    tableCharacter: resolveSemanticMessage({ key: 'guild.members.table_character', language, translations: t }),
+    tableClass: resolveSemanticMessage({ key: 'guild.members.table_class', language, translations: t }),
+    tablePlayer: resolveSemanticMessage({ key: 'guild.members.table_player', language, translations: t }),
+    tableRank: resolveSemanticMessage({ key: 'guild.members.table_rank', language, translations: t }),
+    noMembers: resolveSemanticMessage({ key: 'guild.members.no_members', language, translations: t }),
+    pageLabel: resolveSemanticMessage({ key: 'guild.members.page_label', language, translations: t }),
+    previous: resolveSemanticMessage({ key: 'guild.members.previous', language, translations: t }),
+    next: resolveSemanticMessage({ key: 'guild.members.next', language, translations: t }),
+  };
 
   // Get unique ranks for filter
   const uniqueRanks = useMemo(() => 
@@ -492,7 +465,7 @@ const GuildMembers = () => {
           <div className="flex items-center justify-center gap-2 mb-4 p-2 rounded-lg bg-amber-500/10 border border-amber-500/30">
             <Eye className="h-4 w-4 text-amber-400" />
             <span className="text-sm text-amber-400 font-medium">
-              {ui.adminReadOnly}
+              {memberUi.adminReadOnly}
             </span>
           </div>
         )}
@@ -502,7 +475,7 @@ const GuildMembers = () => {
           <div className="flex items-center gap-3">
             <Users className="h-6 w-6 text-primary" />
             <h1 className="text-xl md:text-2xl font-bold">
-              {ui.guildMembersTitle}
+              {memberUi.guildMembersTitle}
             </h1>
             <Badge variant="secondary" className="text-xs">
               {members.length}
@@ -513,7 +486,7 @@ const GuildMembers = () => {
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <RefreshCw className="h-3.5 w-3.5" />
               <span>
-                {ui.syncPrefix}{' '}
+                {memberUi.syncPrefix}{' '}
                 {formatDistanceFromNowLocalized(lastSyncDate, language, true)}
               </span>
             </div>
@@ -523,7 +496,7 @@ const GuildMembers = () => {
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <RefreshCw className="h-4 w-4" />
               <span>
-                {ui.syncMissing}
+                {memberUi.syncMissing}
               </span>
             </div>
           )}
@@ -540,7 +513,7 @@ const GuildMembers = () => {
             <Input
               id="member-search"
               name="member-search"
-              placeholder={ui.searchPlaceholder}
+              placeholder={memberUi.searchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="h-9 md:h-8 pl-8 text-sm cosmic-input"
@@ -633,11 +606,11 @@ const GuildMembers = () => {
                     <span>
                       {rankFilters.length}{' '}
                       {rankFilters.length > 1
-                        ? ui.rankPlural
-                        : ui.rankSingle}
+                        ? memberUi.rankPlural
+                        : memberUi.rankSingle}
                     </span>
                   ) : (
-                    <span className="text-foreground/70">{ui.allRanks}</span>
+                    <span className="text-foreground/70">{memberUi.allRanks}</span>
                   )}
                   <ChevronDown className="h-3.5 w-3.5 opacity-50 flex-shrink-0" />
                 </Button>
@@ -697,17 +670,17 @@ const GuildMembers = () => {
                   {guildforceFilter === 'guildforce' && (
                     <span className="flex items-center gap-1.5 text-healer">
                       <CheckCircle2 className="h-4 w-4" />
-                      <span>{ui.guildforceLabel}</span>
+                      <span>{memberUi.guildforceLabel}</span>
                     </span>
                   )}
                   {guildforceFilter === 'not-guildforce' && (
                     <span className="flex items-center gap-1.5 text-muted-foreground">
                       <XCircle className="h-4 w-4" />
-                      <span>{ui.notRegistered}</span>
+                      <span>{memberUi.notRegistered}</span>
                     </span>
                   )}
                   {guildforceFilter === 'all' && (
-                    <span className="text-foreground/70">{ui.guildforceLabel}</span>
+                    <span className="text-foreground/70">{memberUi.guildforceLabel}</span>
                   )}
                   <ChevronDown className="h-3.5 w-3.5 opacity-50 flex-shrink-0" />
                 </Button>
@@ -732,7 +705,7 @@ const GuildMembers = () => {
                   >
                     {guildforceFilter === 'guildforce' && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
                     <CheckCircle2 className="h-4 w-4 text-healer" />
-                    <span className="text-healer">{ui.onGuildforce}</span>
+                    <span className="text-healer">{memberUi.onGuildforce}</span>
                   </button>
                   <button
                     onClick={() => { setGuildforceFilter('not-guildforce'); setGuildforceOpen(false); setCurrentPage(1); }}
@@ -743,7 +716,7 @@ const GuildMembers = () => {
                   >
                     {guildforceFilter === 'not-guildforce' && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
                     <XCircle className="h-4 w-4 text-muted-foreground" />
-                    <span>{ui.notRegisteredPlural}</span>
+                    <span>{memberUi.notRegisteredPlural}</span>
                   </button>
                 </div>
               </PopoverContent>
@@ -763,14 +736,14 @@ const GuildMembers = () => {
                   {mainFilter === 'main-only' && (
                     <span className="flex items-center gap-1.5 text-amber-400">
                       <Star className="h-4 w-4 fill-amber-400" />
-                      <span>{ui.mains}</span>
+                      <span>{memberUi.mains}</span>
                     </span>
                   )}
                   {mainFilter === 'alts-only' && (
-                    <span className="text-muted-foreground">{ui.alts}</span>
+                    <span className="text-muted-foreground">{memberUi.alts}</span>
                   )}
                   {mainFilter === 'all' && (
-                    <span className="text-foreground/70">{ui.mainAlt}</span>
+                    <span className="text-foreground/70">{memberUi.mainAlt}</span>
                   )}
                   <ChevronDown className="h-3.5 w-3.5 opacity-50 flex-shrink-0" />
                 </Button>
@@ -795,7 +768,7 @@ const GuildMembers = () => {
                   >
                     {mainFilter === 'main-only' && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
                     <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-                    <span className="text-amber-400">{ui.mainsOnly}</span>
+                    <span className="text-amber-400">{memberUi.mainsOnly}</span>
                   </button>
                   <button
                     onClick={() => { setMainFilter('alts-only'); setMainOpen(false); setCurrentPage(1); }}
@@ -805,7 +778,7 @@ const GuildMembers = () => {
                     )}
                   >
                     {mainFilter === 'alts-only' && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
-                    <span>{ui.altsOnly}</span>
+                    <span>{memberUi.altsOnly}</span>
                   </button>
                 </div>
               </PopoverContent>
@@ -837,18 +810,18 @@ const GuildMembers = () => {
             <TableHeader>
               <TableRow className="border-border/50 hover:bg-transparent">
                 <TableHead className="w-[50px]">#</TableHead>
-                <TableHead>{ui.tableCharacter}</TableHead>
-                <TableHead className="hidden md:table-cell">{ui.tableClass}</TableHead>
-                <TableHead>{ui.tablePlayer}</TableHead>
-                <TableHead>{ui.tableRank}</TableHead>
-                <TableHead className="text-center">{ui.guildforceLabel}</TableHead>
+                <TableHead>{memberUi.tableCharacter}</TableHead>
+                <TableHead className="hidden md:table-cell">{memberUi.tableClass}</TableHead>
+                <TableHead>{memberUi.tablePlayer}</TableHead>
+                <TableHead>{memberUi.tableRank}</TableHead>
+                <TableHead className="text-center">{memberUi.guildforceLabel}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginatedMembers.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    {ui.noMembers}
+                    {memberUi.noMembers}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -952,14 +925,14 @@ const GuildMembers = () => {
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
                 className="h-9 px-3 !bg-input/60 backdrop-blur-sm !border-border/50 hover:!bg-input/80"
-                aria-label={ui.previous}
+                aria-label={memberUi.previous}
               >
                 <ChevronLeft className="h-4 w-4" />
-                <span className="hidden sm:inline">{ui.previous}</span>
+                <span className="hidden sm:inline">{memberUi.previous}</span>
               </Button>
 
               <span className="min-w-[92px] text-center text-sm text-foreground/70">
-                {ui.pageLabel} {currentPage} / {totalPages}
+                {memberUi.pageLabel} {currentPage} / {totalPages}
               </span>
 
               <Button
@@ -969,9 +942,9 @@ const GuildMembers = () => {
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
                 className="h-9 px-3 !bg-input/60 backdrop-blur-sm !border-border/50 hover:!bg-input/80"
-                aria-label={ui.next}
+                aria-label={memberUi.next}
               >
-                <span className="hidden sm:inline">{ui.next}</span>
+                <span className="hidden sm:inline">{memberUi.next}</span>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>

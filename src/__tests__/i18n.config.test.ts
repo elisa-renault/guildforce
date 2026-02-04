@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
+
 import {
   FALLBACK_LANGUAGE,
   SUPPORTED_LANGUAGES,
   detectLanguageFromNavigator,
+  getBilingualContentLanguage,
+  getBilingualValue,
   resolveLanguage,
 } from '@/i18n/config';
 
@@ -30,5 +33,17 @@ describe('i18n config', () => {
 
   it('exposes the recommended supported language list', () => {
     expect(SUPPORTED_LANGUAGES).toEqual(['en', 'fr', 'de', 'it', 'ru', 'zh-CN', 'ko']);
+  });
+
+  it('maps app locales to legacy bilingual content locales', () => {
+    expect(getBilingualContentLanguage('fr')).toBe('fr');
+    expect(getBilingualContentLanguage('en')).toBe('en');
+    expect(getBilingualContentLanguage('de')).toBe('en');
+    expect(getBilingualContentLanguage('zh-CN')).toBe('en');
+  });
+
+  it('resolves bilingual values through the locale registry', () => {
+    expect(getBilingualValue('fr', { en: 'Hello', fr: 'Salut' })).toBe('Salut');
+    expect(getBilingualValue('de', { en: 'Hello', fr: 'Salut' })).toBe('Hello');
   });
 });
