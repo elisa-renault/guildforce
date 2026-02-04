@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useActivityLog, ActionType } from '@/hooks/useActivityLog';
-import { getClassById, getSpecById } from '@/data/wowClasses';
+import { getClassById, getLocalizedClassName, getLocalizedSpecName, getSpecById } from '@/data/wowClasses';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -31,8 +31,7 @@ import {
   ChevronRight,
   Shield,
 } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
+import { formatDistanceFromNowLocalized } from '@/i18n/format';
 
 interface ActivityLogProps {
   guildId: string;
@@ -229,12 +228,12 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
             <div className="flex items-center gap-2 text-sm">
               {classData && (
                 <Badge variant="outline" className={`bg-${classData.color}/20`}>
-                  {classData.name[language]}
+                  {getLocalizedClassName(classData.id, language)}
                 </Badge>
               )}
               {specs.length > 0 && (
                 <span className="text-muted-foreground">
-                  ({specs.map(s => s?.name[language]).join(', ')})
+                  ({specs.map(s => getLocalizedSpecName(s!.id, language)).join(', ')})
                 </span>
               )}
             </div>
@@ -267,12 +266,12 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
             <div className="flex items-center gap-2 text-sm">
               {classData && (
                 <Badge variant="outline" className={`bg-${classData.color}/20`}>
-                  {classData.name[language]}
+                  {getLocalizedClassName(classData.id, language)}
                 </Badge>
               )}
               {specs.length > 0 && (
                 <span className="text-muted-foreground">
-                  ({specs.map(s => s?.name[language]).join(', ')})
+                  ({specs.map(s => getLocalizedSpecName(s!.id, language)).join(', ')})
                 </span>
               )}
             </div>
@@ -301,13 +300,13 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
               <div className="flex items-center gap-2 text-sm">
                 {oldClassData && (
                   <Badge variant="outline" className={`bg-${oldClassData.color}/20 opacity-50`}>
-                    {oldClassData.name[language]}
+                    {getLocalizedClassName(oldClassData.id, language)}
                   </Badge>
                 )}
                 <span className="text-muted-foreground">-&gt;</span>
                 {newClassData && (
                   <Badge variant="outline" className={`bg-${newClassData.color}/20`}>
-                    {newClassData.name[language]}
+                    {getLocalizedClassName(newClassData.id, language)}
                   </Badge>
                 )}
               </div>
@@ -315,12 +314,12 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
               <div className="flex items-center gap-2 text-sm">
                 {newClassData && (
                   <Badge variant="outline" className={`bg-${newClassData.color}/20`}>
-                    {newClassData.name[language]}
+                    {getLocalizedClassName(newClassData.id, language)}
                   </Badge>
                 )}
                 {newSpecs.length > 0 && (
                   <span className="text-muted-foreground">
-                    ({newSpecs.map(s => s?.name[language]).join(', ')})
+                    ({newSpecs.map(s => getLocalizedSpecName(s!.id, language)).join(', ')})
                   </span>
                 )}
               </div>
@@ -345,12 +344,12 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
             <div className="flex items-center gap-2 text-sm">
               {classData && (
                 <Badge variant="outline" className={`bg-${classData.color}/20 opacity-50`}>
-                  {classData.name[language]}
+                  {getLocalizedClassName(classData.id, language)}
                 </Badge>
               )}
               {specs.length > 0 && (
                 <span className="text-muted-foreground opacity-50">
-                  ({specs.map(s => s?.name[language]).join(', ')})
+                  ({specs.map(s => getLocalizedSpecName(s!.id, language)).join(', ')})
                 </span>
               )}
             </div>
@@ -482,8 +481,6 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
     }
   };
 
-  const dateLocale = DATE_LOCALE_BY_LANGUAGE[language];
-
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -586,10 +583,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
                     </span>
                   )}
                   <span className="text-xs text-muted-foreground ml-auto whitespace-nowrap">
-                    {formatDistanceToNow(new Date(log.created_at), {
-                      addSuffix: true,
-                      locale: dateLocale,
-                    })}
+                    {formatDistanceFromNowLocalized(log.created_at, language, true)}
                   </span>
                 </div>
 
@@ -615,10 +609,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
 
                 {/* Desktop: Timestamp */}
                 <div className="hidden sm:block text-xs text-muted-foreground whitespace-nowrap flex-shrink-0">
-                  {formatDistanceToNow(new Date(log.created_at), {
-                    addSuffix: true,
-                    locale: dateLocale,
-                  })}
+                  {formatDistanceFromNowLocalized(log.created_at, language, true)}
                 </div>
               </div>
             ))}

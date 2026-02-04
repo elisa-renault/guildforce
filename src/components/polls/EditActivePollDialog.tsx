@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { AlertTriangle, FileEdit, Settings } from 'lucide-react';
+import { interpolateMessage } from '@/i18n/format';
 
 interface EditActivePollDialogProps {
   open: boolean;
@@ -35,7 +36,7 @@ export const EditActivePollDialog = forwardRef<HTMLDivElement, EditActivePollDia
             {t.polls.editActivePoll}
           </DialogTitle>
           <DialogDescription>
-            {t.polls.editActivePollDesc.replace('{{count}}', String(responseCount))}
+            {interpolateMessage(t.polls.editActivePollDesc, { count: responseCount })}
           </DialogDescription>
         </DialogHeader>
 

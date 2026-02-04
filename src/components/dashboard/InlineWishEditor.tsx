@@ -1,5 +1,13 @@
 import { useLanguage } from '@/contexts/LanguageContext';
-import { wowClasses, getClassById, getSpecById, Role, Specialization } from '@/data/wowClasses';
+import {
+  wowClasses,
+  getClassById,
+  getLocalizedClassName,
+  getLocalizedSpecName,
+  getSpecById,
+  Role,
+  Specialization,
+} from '@/data/wowClasses';
 import { WishData } from '@/types/guild';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -79,7 +87,7 @@ export const InlineWishEditor = ({ wish, choiceIndex, onChange, usedClassIds = [
             } : undefined}
           >
             <span className="truncate">
-              {selectedClass ? selectedClass.name[language] : t.wishes.selectClass}
+              {selectedClass ? getLocalizedClassName(selectedClass.id, language) : t.wishes.selectClass}
             </span>
             <ChevronDown className="h-3 w-3 opacity-50 flex-shrink-0" />
           </Button>
@@ -105,7 +113,7 @@ export const InlineWishEditor = ({ wish, choiceIndex, onChange, usedClassIds = [
                   style={{ color: `hsl(var(--class-${cls.id}))` }}
                 >
                   {isSelected && <Check className="h-3 w-3 flex-shrink-0" />}
-                  <span className="truncate">{cls.name[language]}</span>
+                  <span className="truncate">{getLocalizedClassName(cls.id, language)}</span>
                 </button>
               );
             })}
@@ -139,7 +147,7 @@ export const InlineWishEditor = ({ wish, choiceIndex, onChange, usedClassIds = [
                       return (
                         <>
                           <Icon className={cn("h-3 w-3 flex-shrink-0", config.color)} />
-                          <span className="truncate">{firstSpec.name[language]}</span>
+                          <span className="truncate">{getLocalizedSpecName(firstSpec.id, language)}</span>
                         </>
                       );
                     })()}
@@ -179,7 +187,7 @@ export const InlineWishEditor = ({ wish, choiceIndex, onChange, usedClassIds = [
                       )}
                     >
                       <Icon className={cn("h-3.5 w-3.5", config.color)} />
-                      <span className="flex-1 truncate">{spec.name[language]}</span>
+                      <span className="flex-1 truncate">{getLocalizedSpecName(spec.id, language)}</span>
                       {isSelected && <Check className="h-3 w-3 text-primary flex-shrink-0" />}
                     </button>
                   );

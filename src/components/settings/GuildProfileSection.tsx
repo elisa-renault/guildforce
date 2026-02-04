@@ -7,6 +7,7 @@ import { CosmicButton } from '@/components/CosmicButton';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Label } from '@/components/ui/label';
 import { Upload, Trash2, Shield, Crown } from 'lucide-react';
+import { interpolateMessage } from '@/i18n/format';
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 
@@ -467,7 +468,7 @@ export const GuildProfileSection = ({
               </span>
             </div>
             <p className="text-[10px] md:text-xs text-muted-foreground mb-2 md:mb-3">
-              {t.permissions.ranksRange.replace('{{max}}', String(localOfficerRank))}
+              {interpolateMessage(t.permissions.ranksRange, { max: localOfficerRank })}
             </p>
             
             <OfficerRankSlider

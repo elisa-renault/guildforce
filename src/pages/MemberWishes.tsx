@@ -9,7 +9,13 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Shield, Heart, Swords, Crosshair, CheckCircle, HelpCircle, XCircle, Pencil, ArrowLeft } from 'lucide-react';
 import { CosmicButton } from '@/components/CosmicButton';
 import { toSlug, getGuildPath } from '@/lib/guildSlug';
-import { getClassById, getSpecById, Specialization } from '@/data/wowClasses';
+import {
+  getClassById,
+  getLocalizedClassName,
+  getLocalizedSpecName,
+  getSpecById,
+  Specialization,
+} from '@/data/wowClasses';
 import { WishValidationBadge } from '@/components/dashboard/WishValidationBadge';
 import { ValidationStatus } from '@/types/guild';
 import { cn } from '@/lib/utils';
@@ -321,7 +327,7 @@ const MemberWishes = () => {
                         }}
                       >
                         <span className="lg:hidden mr-2 text-xs text-muted-foreground">#{index + 1}</span>
-                        {cls.name[language]}
+                        {getLocalizedClassName(cls.id, language)}
                       </div>
                     ) : (
                       <div className="h-9 w-full rounded-md border border-dashed border-muted-foreground/20 flex items-center justify-center">
@@ -339,7 +345,7 @@ const MemberWishes = () => {
                             <span key={spec.id} className="flex items-center gap-1.5 text-sm whitespace-nowrap">
                               {idx > 0 && <span className="text-muted-foreground/50 mr-1">•</span>}
                               <Icon className={cn("h-4 w-4 flex-shrink-0", config.color)} />
-                              <span className="text-foreground">{spec.name[language]}</span>
+                              <span className="text-foreground">{getLocalizedSpecName(spec.id, language)}</span>
                             </span>
                           );
                         })}

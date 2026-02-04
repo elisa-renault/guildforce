@@ -1,7 +1,7 @@
 import React, { useState, useEffect, forwardRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useLanguage, Language } from '@/contexts/LanguageContext';
-import { getClassById } from '@/data/wowClasses';
+import { getClassById, getLocalizedClassName } from '@/data/wowClasses';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +14,7 @@ import { GuildSubNav } from '@/components/guild';
 import { RosterSelector } from '@/components/roster';
 import { Loader2, Save, GripVertical, Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 import { toSlug } from '@/lib/guildSlug';
+import { interpolateMessage } from '@/i18n/format';
 import {
   DndContext,
   closestCenter,
@@ -397,7 +398,9 @@ const { data: allGuilds } = await supabase
       const cls = getClassById(invalidWish.classId);
       toast({
         title: t.wishes.specRequired,
-        description: t.wishes.specRequiredDesc.replace('{class}', cls?.name[language] || ''),
+        description: interpolateMessage(t.wishes.specRequiredDesc, {
+          class: cls ? getLocalizedClassName(cls.id, language) : '',
+        }),
         variant: 'destructive'
       });
       return;

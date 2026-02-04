@@ -4,8 +4,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useIsAdmin } from '@/hooks/useAdmin';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
-import { formatDistanceToNow } from 'date-fns';
-import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
 import { GuildSubNav } from '@/components/guild/GuildSubNav';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { CosmicBackground } from '@/components/CosmicBackground';
@@ -26,8 +24,9 @@ import {
 import { cn } from '@/lib/utils';
 import { Crown, Shield, Search, Users, CheckCircle2, XCircle, RefreshCw, ChevronDown, ChevronLeft, ChevronRight, Check, X, Star, Eye } from 'lucide-react';
 import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
-import { wowClasses } from '@/data/wowClasses';
+import { getLocalizedClassName, wowClasses } from '@/data/wowClasses';
 import { BATTLENET_CLASS_MAP } from '@/data/battlenetClasses';
+import { formatDistanceFromNowLocalized } from '@/i18n/format';
 
 interface RosterMember {
   id: string;
@@ -172,8 +171,7 @@ const GuildMembers = () => {
     if (!classKey) return 'Unknown';
     const wowClass = wowClasses.find(c => c.id === classKey);
     if (!wowClass) return 'Unknown';
-    const name = wowClass.name as unknown as { en: string; fr: string };
-    return name[language] || name.en || 'Unknown';
+    return getLocalizedClassName(wowClass.id, language);
   };
 
   const toggleClass = (classId: string) => {
@@ -516,10 +514,7 @@ const GuildMembers = () => {
               <RefreshCw className="h-3.5 w-3.5" />
               <span>
                 {ui.syncPrefix}{' '}
-                {formatDistanceToNow(new Date(lastSyncDate), { 
-                  addSuffix: true, 
-                  locale: DATE_LOCALE_BY_LANGUAGE[language] 
-                })}
+                {formatDistanceFromNowLocalized(lastSyncDate, language, true)}
               </span>
             </div>
           )}
@@ -575,7 +570,7 @@ const GuildMembers = () => {
                             style={{ color: cls.color }}
                             className="truncate max-w-[60px] md:max-w-none"
                           >
-                            {cls.name[language]}
+                          {getLocalizedClassName(cls.id, language)}
                           </span>
                         ))
                       ) : (
@@ -615,7 +610,7 @@ const GuildMembers = () => {
                         style={{ color: cls.color }}
                       >
                         {isSelected && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
-                        <span>{cls.name[language]}</span>
+                        <span>{getLocalizedClassName(cls.id, language)}</span>
                       </button>
                     );
                   })}

@@ -180,9 +180,27 @@ export const getClassById = (classId: string): WoWClass | undefined => {
   return wowClasses.find(c => c.id === classId);
 };
 
+const LEGACY_SPEC_ID_ALIASES: Record<string, string> = {
+  'death-knight-blood': 'dk-blood',
+  'death-knight-frost': 'dk-frost',
+  'death-knight-unholy': 'dk-unholy',
+  'demon-hunter-havoc': 'dh-havoc',
+  'demon-hunter-vengeance': 'dh-vengeance',
+  'demon-hunter-devourer': 'dh-devourer',
+};
+
+const EXTRA_SPEC_LABELS: Record<string, LocalizedLabel> = {
+  'hunter-pack-leader': { en: 'Pack Leader', fr: 'Chef de meute' },
+  'druid-elune': { en: 'Elune', fr: 'Elune' },
+};
+
+const normalizeSpecId = (specId: string): string => LEGACY_SPEC_ID_ALIASES[specId] || specId;
+
 export const getSpecById = (specId: string): Specialization | undefined => {
+  const normalizedSpecId = normalizeSpecId(specId);
+
   for (const wowClass of wowClasses) {
-    const spec = wowClass.specs.find(s => s.id === specId);
+    const spec = wowClass.specs.find(s => s.id === normalizedSpecId);
     if (spec) return spec;
   }
   return undefined;
@@ -210,4 +228,26 @@ export const getRangesFromSpecs = (specIds: string[]): RangeType[] => {
     }
   }
   return Array.from(ranges);
+};
+
+const getLocalizedLabel = (label: Partial<Record<Language, string>>, language: Language, fallback: string): string =>
+  label[language] || label.en || fallback;
+
+export const getLocalizedClassName = (classId: string, language: Language): string => {
+  const wowClass = getClassById(classId);
+  if (!wowClass) return classId;
+  return getLocalizedLabel(wowClass.name, language, classId);
+};
+
+export const getLocalizedSpecName = (specId: string, language: Language): string => {
+  const spec = getSpecById(specId);
+  if (spec) return getLocalizedLabel(spec.name, language, specId);
+
+  const extra = EXTRA_SPEC_LABELS[specId];
+  if (extra) {
+    const normalized = withLanguageFallbacks(extra);
+    return getLocalizedLabel(normalized, language, specId);
+  }
+
+  return specId;
 };

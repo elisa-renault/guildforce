@@ -3,8 +3,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { ForumTopic, REACTION_TYPES } from '@/types/forum';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Pin, Lock, MessageSquare, Eye, Clock, User } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
+import { formatDistanceFromNowLocalized } from '@/i18n/format';
 
 interface ForumTopicListProps {
   topics: ForumTopic[];
@@ -14,7 +13,6 @@ interface ForumTopicListProps {
 export const ForumTopicList = ({ topics, basePath = '/forum' }: ForumTopicListProps) => {
   const navigate = useNavigate();
   const { language, t } = useLanguage();
-  const locale = DATE_LOCALE_BY_LANGUAGE[language];
 
   if (topics.length === 0) {
     return (
@@ -74,7 +72,7 @@ export const ForumTopicList = ({ topics, basePath = '/forum' }: ForumTopicListPr
                 <span>{topic.author?.username || 'Inconnu'}</span>
                 <span className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
-                  {formatDistanceToNow(new Date(topic.created_at), { addSuffix: true, locale })}
+                  {formatDistanceFromNowLocalized(topic.created_at, language, true)}
                 </span>
               </div>
             </div>
@@ -107,7 +105,7 @@ export const ForumTopicList = ({ topics, basePath = '/forum' }: ForumTopicListPr
               {topic.last_reply_at ? (
                 <div className="text-xs text-muted-foreground">
                   <p>
-                    {formatDistanceToNow(new Date(topic.last_reply_at), { addSuffix: true, locale })}
+                    {formatDistanceFromNowLocalized(topic.last_reply_at, language, true)}
                   </p>
                   {topic.last_reply_author && (
                     <p>{t.forum.by} {topic.last_reply_author.username}</p>

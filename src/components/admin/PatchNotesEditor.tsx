@@ -35,7 +35,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { getIntlLocale, isSupportedLanguage, LANGUAGE_OPTIONS, type Language } from '@/i18n/config';
+import { isSupportedLanguage, LANGUAGE_OPTIONS, type Language } from '@/i18n/config';
+import { formatDateLocalized } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -536,8 +537,8 @@ export const PatchNotesEditor = () => {
                     <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
                       {note.published_at
-                        ? `${t.patchnotes.publishedAt} ${new Date(note.published_at).toLocaleDateString(getIntlLocale(language))}`
-                        : new Date(note.created_at).toLocaleDateString(getIntlLocale(language))}
+                        ? `${t.patchnotes.publishedAt} ${formatDateLocalized(note.published_at, language, { dateStyle: 'medium' })}`
+                        : formatDateLocalized(note.created_at, language, { dateStyle: 'medium' })}
                     </p>
                   </div>
                   <div className="flex items-center gap-1" onClick={(event) => event.stopPropagation()}>

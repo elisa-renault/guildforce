@@ -9,10 +9,11 @@ import {
   Hash, RotateCcw, Users, Target
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { wowClasses, Role } from '@/data/wowClasses';
+import { getLocalizedClassName, wowClasses, Role } from '@/data/wowClasses';
 import { RosterFilters as RosterFiltersType, ValidationStatus, CommitmentFilter, RangeFilter } from '@/types/guild';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
+import { interpolateMessage } from '@/i18n/format';
 
 interface RosterFiltersProps {
   filters: RosterFiltersType;
@@ -153,7 +154,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
     if (filters.maxWishIndex !== null) {
       const label = filters.maxWishIndex === 1 
         ? t.dashboard.wishRange1 
-        : t.dashboard.wishRangeN.replace('{{n}}', filters.maxWishIndex.toString());
+        : interpolateMessage(t.dashboard.wishRangeN, { n: filters.maxWishIndex });
       pills.push({
         key: 'maxWishIndex',
         label,
@@ -220,7 +221,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
       if (cls) {
         pills.push({
           key: `class-${classId}`,
-          label: cls.name[language],
+          label: getLocalizedClassName(cls.id, language),
           color: `hsl(var(--class-${classId}))`,
           onRemove: () => toggleClass(classId),
         });
@@ -352,7 +353,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
                       className="h-7 text-xs"
                       onClick={() => updateFilter('maxWishIndex', n)}
                     >
-                      {n === 1 ? t.dashboard.wishRange1 : t.dashboard.wishRangeN.replace('{{n}}', n.toString())}
+                      {n === 1 ? t.dashboard.wishRange1 : interpolateMessage(t.dashboard.wishRangeN, { n })}
                     </Button>
                   ))}
                 </div>
@@ -565,7 +566,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
                         )}
                         style={{ color: `hsl(var(--class-${cls.id}))` }}
                       >
-                        {cls.name[language]}
+                        {getLocalizedClassName(cls.id, language)}
                       </button>
                     );
                   })}

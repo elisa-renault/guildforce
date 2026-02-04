@@ -7,9 +7,8 @@ import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, ArrowLeft, Loader2, Calendar } from 'lucide-react';
-import { format } from 'date-fns';
-import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
 import { useBattletagVisibility } from '@/hooks/useBattletagVisibility';
+import { formatDateLocalized, interpolateMessage } from '@/i18n/format';
 
 interface PublicProfileData {
   id: string;
@@ -85,7 +84,7 @@ const PublicProfile = () => {
             {t.errors.notFound}
           </h1>
           <p className="text-muted-foreground text-sm mb-6">
-            {t.auto.pages_PublicProfile_user_not_found.replace('{{username}}', username ?? '')}
+            {interpolateMessage(t.auto.pages_PublicProfile_user_not_found, { username: username ?? '' })}
           </p>
           <CosmicButton onClick={() => navigate(-1)} icon={<ArrowLeft className="h-4 w-4" />}>
             {t.common.back}
@@ -95,9 +94,7 @@ const PublicProfile = () => {
     );
   }
 
-  const memberSince = format(new Date(profile.created_at), 'MMMM yyyy', { 
-    locale: DATE_LOCALE_BY_LANGUAGE[language] 
-  });
+  const memberSince = formatDateLocalized(profile.created_at, language, { month: 'long', year: 'numeric' });
 
   return (
     <div className="flex-1 relative pt-16">

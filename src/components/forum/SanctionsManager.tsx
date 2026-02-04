@@ -16,13 +16,11 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Ban, Clock, User, Undo2, Loader2 } from 'lucide-react';
-import { formatDistanceToNow, format } from 'date-fns';
-import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
 import { toast } from 'sonner';
+import { formatDateTimeLocalized, formatDistanceFromNowLocalized, interpolateMessage } from '@/i18n/format';
 
 export const SanctionsManager = () => {
   const { language, t } = useLanguage();
-  const locale = DATE_LOCALE_BY_LANGUAGE[language];
   const { fetchActiveSanctions, revokeSanction } = useForumSanctionActions();
   
   const [sanctions, setSanctions] = useState<ForumSanction[]>([]);
@@ -147,11 +145,15 @@ export const SanctionsManager = () => {
                           {t.auto.components_forum_SanctionsManager_147}: {sanction.created_by_profile?.username || 'Unknown'}
                         </span>
                         <span>
-                          {formatDistanceToNow(new Date(sanction.created_at), { addSuffix: true, locale })}
+                          {formatDistanceFromNowLocalized(sanction.created_at, language, true)}
                         </span>
                         {sanction.expires_at ? (
                           <span>
-                            {t.auto.components_forum_SanctionsManager_154}: {format(new Date(sanction.expires_at), 'PPp', { locale })}
+                            {t.auto.components_forum_SanctionsManager_154}:{' '}
+                            {formatDateTimeLocalized(sanction.expires_at, language, {
+                              dateStyle: 'medium',
+                              timeStyle: 'short',
+                            })}
                           </span>
                         ) : (
                           <span className="text-destructive">
@@ -193,8 +195,10 @@ export const SanctionsManager = () => {
               {t.forum.moderation?.revokeSanction || (t.auto.components_forum_SanctionsManager_193)}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {(t.forum.moderation?.revokeSanctionConfirm || (t.auto.components_forum_SanctionsManager_196))
-                .replace('{{username}}', confirmRevoke?.profiles?.username || '')}
+              {interpolateMessage(
+                t.forum.moderation?.revokeSanctionConfirm || t.auto.components_forum_SanctionsManager_196,
+                { username: confirmRevoke?.profiles?.username || '' },
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

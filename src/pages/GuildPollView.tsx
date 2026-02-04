@@ -13,6 +13,8 @@ import { Loader2, BarChart3, ArrowLeft, Lock, Edit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import type { ResponseValue } from '@/types/poll';
+import { formatDateLocalized } from '@/i18n/format';
+import { resolveSemanticMessage } from '@/i18n/semantic';
 
 const GuildPollView = () => {
   const navigate = useNavigate();
@@ -31,6 +33,8 @@ const GuildPollView = () => {
   const { poll, loading: pollLoading, refetch } = usePoll(pollId);
   const { poll: pollResults, loading: resultsLoading, refetch: refetchResults } = usePollResults(pollId);
   const { submitAllResponses, checkCanViewResults, saving } = usePollMutations();
+  const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
+    resolveSemanticMessage({ key, language, translations: t });
 
   const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
 
@@ -109,7 +113,7 @@ const GuildPollView = () => {
   const handleSubmit = async (responses: { questionId: string; value: ResponseValue }[]) => {
     try {
       await submitAllResponses(responses);
-      toast({ title: t.polls?.submitResponses ? t.polls.submitResponses.replace('Envoyer mes réponses', 'Réponses enregistrées !').replace('Submit my responses', 'Responses submitted!') : 'Responses submitted!' });
+      toast({ title: sm('polls.mutations.submit_all_success') });
       setHasResponded(true);
       setShowResults(true);
       setIsEditing(false);
@@ -188,7 +192,7 @@ const GuildPollView = () => {
           <span className={isClosed ? 'text-destructive' : ''}>
               {isClosed 
                 ? t.polls?.closed 
-                : `${t.polls?.endsOn}: ${new Date(poll.ends_at).toLocaleDateString()}`
+                : `${t.polls?.endsOn}: ${formatDateLocalized(poll.ends_at, language, { dateStyle: 'medium' })}`
               }
             </span>
           )}

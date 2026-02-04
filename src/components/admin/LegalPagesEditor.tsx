@@ -12,7 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { getIntlLocale, isSupportedLanguage, LANGUAGE_OPTIONS, type Language } from '@/i18n/config';
+import { isSupportedLanguage, LANGUAGE_OPTIONS, type Language } from '@/i18n/config';
+import { formatDateLocalized } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -348,7 +349,7 @@ export const LegalPagesEditor = () => {
 
       {pages.map((page) => {
         const label = getSlugLabel(page.slug, language);
-        const updatedAt = new Date(page.updated_at).toLocaleDateString(getIntlLocale(language), {
+        const updatedAt = formatDateLocalized(page.updated_at, language, {
           dateStyle: 'medium',
         });
         const localized = selectContentTranslation(page.legal_page_translations ?? [], language);

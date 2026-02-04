@@ -1001,7 +1001,7 @@ const checkTranslationCompleteness = <Lang extends string>(map: Record<Lang, Tra
   }
 };
 
-if (import.meta.env?.DEV) {
+if (import.meta.env?.DEV && !import.meta.env?.VITEST) {
   Promise.all([import('./translations.en'), import('./translations.fr')]).then(([en, fr]) => {
     checkTranslationCompleteness({ en: en.translationsEn, fr: fr.translationsFr });
   });

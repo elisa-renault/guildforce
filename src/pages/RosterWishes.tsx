@@ -6,7 +6,14 @@ import { useIsAdmin } from '@/hooks/useAdmin';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
-import { getClassById, getSpecById, getRolesFromSpecs, Role, wowClasses } from '@/data/wowClasses';
+import {
+  getClassById,
+  getLocalizedClassName,
+  getSpecById,
+  getRolesFromSpecs,
+  Role,
+  wowClasses,
+} from '@/data/wowClasses';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
 import { GuildSubNav } from '@/components/guild';
@@ -19,6 +26,7 @@ import { toSlug, getGuildWishesPath } from '@/lib/guildSlug';
 import { CommitmentStatus } from '@/components/CommitmentToggle';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { interpolateMessage } from '@/i18n/format';
 
 // Max wishes = number of WoW classes
 const MAX_WISHES = wowClasses.length;
@@ -381,7 +389,9 @@ const RosterWishes = () => {
       const cls = getClassById(invalidWish.classId);
       toast({
         title: t.wishes.specRequired,
-        description: t.wishes.specRequiredDesc.replace('{class}', cls?.name[language] || ''),
+        description: interpolateMessage(t.wishes.specRequiredDesc, {
+          class: cls ? getLocalizedClassName(cls.id, language) : '',
+        }),
         variant: "destructive"
       });
       return;
