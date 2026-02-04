@@ -6,11 +6,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { X, GitBranch } from 'lucide-react';
 import type { QuestionCondition, ConditionOperator } from '@/types/poll';
+import { resolveSemanticMessage } from '@/i18n/semantic';
 
 interface QuestionConditionEditorProps {
   condition: QuestionCondition | null | undefined;
   onChange: (condition: QuestionCondition | null) => void;
-  previousQuestions: { id: string; text: string; options: string[]; type: string; scaleConfig?: { min: number; max: number; step?: number } | null }[];
+  previousQuestions: {
+    id: string;
+    text: string;
+    options: string[];
+    type: string;
+    scaleConfig?: { min: number; max: number; step?: number } | null;
+  }[];
 }
 
 // Helper to determine if a question type supports conditions
@@ -23,35 +30,35 @@ export const QuestionConditionEditor = ({
   previousQuestions,
 }: QuestionConditionEditorProps) => {
   const { t, language } = useLanguage();
+  const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
+    resolveSemanticMessage({ key, language, translations: t });
 
   // Filter questions that can be used as condition source (choice-based or numeric)
-  const eligibleQuestions = previousQuestions.filter(q => 
-    isChoiceType(q.type) || isNumericType(q.type)
-  );
+  const eligibleQuestions = previousQuestions.filter((q) => isChoiceType(q.type) || isNumericType(q.type));
 
   if (eligibleQuestions.length === 0) {
     return null;
   }
 
-  const selectedQuestion = eligibleQuestions.find(q => q.id === condition?.question_id);
+  const selectedQuestion = eligibleQuestions.find((q) => q.id === condition?.question_id);
   const isSelectedNumeric = selectedQuestion && isNumericType(selectedQuestion.type);
 
   // Operators for choice questions
   const choiceOperators: { value: ConditionOperator; label: string }[] = [
-    { value: 'equals', label: t.auto.components_polls_QuestionConditionEditor_41 },
-    { value: 'not_equals', label: t.auto.components_polls_QuestionConditionEditor_42 },
-    { value: 'contains', label: t.auto.components_polls_QuestionConditionEditor_43 },
-    { value: 'not_contains', label: t.auto.components_polls_QuestionConditionEditor_44 },
+    { value: 'equals', label: sm('polls.condition.operator.equals') },
+    { value: 'not_equals', label: sm('polls.condition.operator.not_equals') },
+    { value: 'contains', label: sm('polls.condition.operator.contains') },
+    { value: 'not_contains', label: sm('polls.condition.operator.not_contains') },
   ];
 
   // Operators for numeric questions (scale/rating)
   const numericOperators: { value: ConditionOperator; label: string }[] = [
-    { value: 'equals', label: t.auto.components_polls_QuestionConditionEditor_49 },
-    { value: 'not_equals', label: t.auto.components_polls_QuestionConditionEditor_50 },
-    { value: 'greater_than', label: t.auto.components_polls_QuestionConditionEditor_51 },
-    { value: 'less_than', label: t.auto.components_polls_QuestionConditionEditor_52 },
-    { value: 'greater_equals', label: t.auto.components_polls_QuestionConditionEditor_53 },
-    { value: 'less_equals', label: t.auto.components_polls_QuestionConditionEditor_54 },
+    { value: 'equals', label: sm('polls.condition.operator.equals') },
+    { value: 'not_equals', label: sm('polls.condition.operator.not_equals') },
+    { value: 'greater_than', label: sm('polls.condition.operator.greater_than') },
+    { value: 'less_than', label: sm('polls.condition.operator.less_than') },
+    { value: 'greater_equals', label: sm('polls.condition.operator.greater_equals') },
+    { value: 'less_equals', label: sm('polls.condition.operator.less_equals') },
   ];
 
   const operators = isSelectedNumeric ? numericOperators : choiceOperators;
@@ -73,13 +80,13 @@ export const QuestionConditionEditor = ({
   };
 
   const handleQuestionChange = (questionId: string) => {
-    const newQuestion = eligibleQuestions.find(q => q.id === questionId);
+    const newQuestion = eligibleQuestions.find((q) => q.id === questionId);
     const isNumeric = newQuestion && isNumericType(newQuestion.type);
-    
+
     // Reset operator if switching between numeric and choice
     const currentIsNumeric = selectedQuestion && isNumericType(selectedQuestion.type);
     const needsOperatorReset = isNumeric !== currentIsNumeric;
-    
+
     onChange({
       ...condition!,
       question_id: questionId,
@@ -97,9 +104,7 @@ export const QuestionConditionEditor = ({
 
   const handleValueToggle = (value: string, checked: boolean) => {
     const currentValues = condition?.values || [];
-    const newValues = checked
-      ? [...currentValues, value]
-      : currentValues.filter(v => v !== value);
+    const newValues = checked ? [...currentValues, value] : currentValues.filter((v) => v !== value);
     onChange({
       ...condition!,
       values: newValues,
@@ -123,7 +128,7 @@ export const QuestionConditionEditor = ({
         className="text-muted-foreground hover:text-primary"
       >
         <GitBranch className="h-4 w-4 mr-1" />
-        {t.polls?.addCondition || (t.auto.components_polls_QuestionConditionEditor_126)}
+        {t.polls?.addCondition || 'Add condition'}
       </Button>
     );
   }
@@ -133,10 +138,10 @@ export const QuestionConditionEditor = ({
     if (!selectedQuestion) return { min: 0, max: 10, step: 1 };
     if (selectedQuestion.type === 'rating') return { min: 0, max: 5, step: 0.5 };
     if (selectedQuestion.scaleConfig) {
-      return { 
-        min: selectedQuestion.scaleConfig.min, 
-        max: selectedQuestion.scaleConfig.max, 
-        step: selectedQuestion.scaleConfig.step ?? 1 
+      return {
+        min: selectedQuestion.scaleConfig.min,
+        max: selectedQuestion.scaleConfig.max,
+        step: selectedQuestion.scaleConfig.step ?? 1,
       };
     }
     return { min: 0, max: 10, step: 1 };
@@ -149,7 +154,7 @@ export const QuestionConditionEditor = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm text-primary font-medium">
           <GitBranch className="h-4 w-4" />
-          {t.polls?.conditionalQuestion || (t.auto.components_polls_QuestionConditionEditor_148)}
+          {t.polls?.conditionalQuestion || 'Conditional question'}
         </div>
         <Button
           type="button"
@@ -163,9 +168,7 @@ export const QuestionConditionEditor = ({
       </div>
 
       <div className="space-y-2">
-        <Label className="text-xs text-muted-foreground">
-          {t.polls?.showIf || (t.auto.components_polls_QuestionConditionEditor_163)}
-        </Label>
+        <Label className="text-xs text-muted-foreground">{t.polls?.showIf || 'Show if'}</Label>
         <Select value={condition.question_id} onValueChange={handleQuestionChange}>
           <SelectTrigger className="bg-background">
             <SelectValue />
@@ -173,10 +176,10 @@ export const QuestionConditionEditor = ({
           <SelectContent>
             {eligibleQuestions.map((q, idx) => (
               <SelectItem key={q.id} value={q.id}>
-                {idx + 1}. {q.text.length > 40 ? q.text.slice(0, 40) + '...' : q.text}
+                {idx + 1}. {q.text.length > 40 ? `${q.text.slice(0, 40)}...` : q.text}
                 {isNumericType(q.type) && (
                   <span className="text-muted-foreground ml-1">
-                    ({q.type === 'rating' ? '★' : '⚖️'})
+                    ({q.type === 'rating' ? 'stars' : 'scale'})
                   </span>
                 )}
               </SelectItem>
@@ -186,10 +189,8 @@ export const QuestionConditionEditor = ({
       </div>
 
       <div className="space-y-2">
-        <Label className="text-xs text-muted-foreground">
-          {t.polls?.conditionOperator || (t.auto.components_polls_QuestionConditionEditor_186)}
-        </Label>
-        <Select value={condition.operator} onValueChange={(v) => handleOperatorChange(v as ConditionOperator)}>
+        <Label className="text-xs text-muted-foreground">{t.polls?.conditionOperator || 'Condition operator'}</Label>
+        <Select value={condition.operator} onValueChange={(value) => handleOperatorChange(value as ConditionOperator)}>
           <SelectTrigger className="bg-background">
             <SelectValue />
           </SelectTrigger>
@@ -206,9 +207,7 @@ export const QuestionConditionEditor = ({
       {/* Choice-based value selection */}
       {selectedQuestion && isChoiceType(selectedQuestion.type) && (
         <div className="space-y-2">
-          <Label className="text-xs text-muted-foreground">
-            {t.polls?.conditionValues || (t.auto.components_polls_QuestionConditionEditor_206)}
-          </Label>
+          <Label className="text-xs text-muted-foreground">{t.polls?.conditionValues || 'Condition values'}</Label>
           <div className="space-y-1 max-h-32 overflow-y-auto">
             {selectedQuestion.options.map((option, idx) => (
               <div key={idx} className="flex items-center gap-2">
@@ -225,7 +224,7 @@ export const QuestionConditionEditor = ({
           </div>
           {condition.values.length === 0 && (
             <p className="text-xs text-destructive">
-              {t.polls?.selectAtLeastOneValue || (t.auto.components_polls_QuestionConditionEditor_224)}
+              {t.polls?.selectAtLeastOneValue || 'Select at least one value'}
             </p>
           )}
         </div>
@@ -235,7 +234,7 @@ export const QuestionConditionEditor = ({
       {selectedQuestion && isNumericType(selectedQuestion.type) && (
         <div className="space-y-2">
           <Label className="text-xs text-muted-foreground">
-            {t.auto.components_polls_QuestionConditionEditor_234}
+            {sm('polls.condition.numeric_value_label')}
             <span className="ml-1 text-muted-foreground/70">
               ({numericRange.min} - {numericRange.max})
             </span>
@@ -246,14 +245,12 @@ export const QuestionConditionEditor = ({
             max={numericRange.max}
             step={numericRange.step}
             value={condition.values[0] || ''}
-            onChange={(e) => handleNumericValueChange(e.target.value)}
+            onChange={(event) => handleNumericValueChange(event.target.value)}
             placeholder={`${numericRange.min} - ${numericRange.max}`}
             className="bg-background w-32"
           />
           {(!condition.values[0] || condition.values[0] === '') && (
-            <p className="text-xs text-destructive">
-              {t.auto.components_polls_QuestionConditionEditor_250}
-            </p>
+            <p className="text-xs text-destructive">{sm('polls.condition.numeric_value_required')}</p>
           )}
         </div>
       )}

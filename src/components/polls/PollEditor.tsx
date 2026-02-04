@@ -36,6 +36,7 @@ import { CSS } from '@dnd-kit/utilities';
 import type { PollFormData, QuestionFormData, SectionFormData } from '@/types/poll';
 import { PollResultsAccessEditor, type ResultsAccessRule } from './PollResultsAccessEditor';
 import { PollRespondentEditor, type RespondentAccessRule } from './PollRespondentEditor';
+import { resolveSemanticMessage } from '@/i18n/semantic';
 
 interface Roster {
   id: string;
@@ -110,6 +111,8 @@ const SortableSectionHeader = ({
   canRemove: boolean;
 }) => {
   const { language, t } = useLanguage();
+  const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
+    resolveSemanticMessage({ key, language, translations: t });
   const id = `section-header-${sectionIndex}`;
   
   const {
@@ -138,7 +141,7 @@ const SortableSectionHeader = ({
           >
             <GripHorizontal className="h-5 w-5" />
             <span className="text-sm font-medium text-primary">
-              {t.auto.components_polls_PollEditor_section_label.replace('{{index}}', String(sectionIndex + 1))}
+              {sm('polls.editor.section_label').replace('{{index}}', String(sectionIndex + 1))}
             </span>
           </div>
           <div className="flex items-center gap-1">
@@ -162,7 +165,7 @@ const SortableSectionHeader = ({
           <Textarea
             value={section.title}
             onChange={(e) => onChange({ ...section, title: e.target.value })}
-            placeholder={t.auto.components_polls_PollEditor_146}
+            placeholder={sm('polls.editor.section_title_placeholder')}
             autoResize
             className="bg-background font-medium resize-y min-h-9 py-2"
             rows={1}
@@ -170,7 +173,7 @@ const SortableSectionHeader = ({
           <Textarea
             value={section.description}
             onChange={(e) => onChange({ ...section, description: e.target.value })}
-            placeholder={t.auto.components_polls_PollEditor_152}
+            placeholder={sm('polls.editor.section_description_placeholder')}
             autoResize
             className="bg-background resize-y text-sm"
             rows={2}
@@ -195,6 +198,8 @@ export const PollEditor = ({
   initialRespondentRules = [],
 }: PollEditorProps) => {
   const { language, t } = useLanguage();
+  const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
+    resolveSemanticMessage({ key, language, translations: t });
   const [openSections, setOpenSections] = useState<Record<number, boolean>>({});
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
@@ -595,32 +600,32 @@ export const PollEditor = ({
     <div className="space-y-6 pb-0 sm:pb-0">
       <GlowCard className="p-3 sm:p-6">
         <h2 className="text-lg font-semibold mb-4">
-          {t.auto.components_polls_PollEditor_527}
+          {sm('polls.editor.settings_title')}
         </h2>
 
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="title">
-              {t.auto.components_polls_PollEditor_533} *
+              {sm('polls.editor.field_title')} *
             </Label>
             <Input
               id="title"
               value={formData.title}
               onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
-              placeholder={t.auto.components_polls_PollEditor_539}
+              placeholder={sm('polls.editor.title_placeholder')}
               className="bg-background"
             />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="description">
-              {t.auto.components_polls_PollEditor_546}
+              {sm('polls.editor.field_description')}
             </Label>
             <Textarea
               id="description"
               value={formData.description}
               onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-              placeholder={t.auto.components_polls_PollEditor_552}
+              placeholder={sm('polls.editor.description_placeholder')}
               autoResize
               className="bg-background resize-none"
               rows={3}
@@ -630,7 +635,7 @@ export const PollEditor = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>
-                {t.auto.components_polls_PollEditor_563}
+                {sm('polls.editor.field_roster')}
               </Label>
               <Select
                 value={formData.roster_id || 'all'}
@@ -644,7 +649,7 @@ export const PollEditor = ({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">
-                    {t.auto.components_polls_PollEditor_577}
+                    {sm('polls.editor.roster_all')}
                   </SelectItem>
                   {rosters.map((roster) => (
                     <SelectItem key={roster.id} value={roster.id}>
@@ -657,7 +662,7 @@ export const PollEditor = ({
 
             <div className="space-y-2">
               <Label htmlFor="ends_at">
-                {t.auto.components_polls_PollEditor_590}
+                {sm('polls.editor.field_end_at')}
               </Label>
               <Input
                 id="ends_at"
@@ -680,7 +685,7 @@ export const PollEditor = ({
                 onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, is_anonymous: checked }))}
               />
               <Label htmlFor="anonymous" className="cursor-pointer">
-                {t.auto.components_polls_PollEditor_613}
+                {sm('polls.editor.toggle_anonymous')}
               </Label>
             </div>
           </div>
@@ -716,17 +721,17 @@ export const PollEditor = ({
       <GlowCard className={`p-3 sm:p-6 ${metadataOnly ? 'opacity-60 pointer-events-none' : ''}`}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">
-            {t.auto.components_polls_PollEditor_649}
+            {sm('polls.editor.questions_title')}
           </h2>
           {!metadataOnly && (
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={handleAddSection}>
                 <Layers className="h-4 w-4 mr-1" />
-                {t.auto.components_polls_PollEditor_655}
+                {sm('polls.editor.add_section')}
               </Button>
               <Button variant="outline" size="sm" onClick={handleAddQuestion}>
                 <Plus className="h-4 w-4 mr-1" />
-                {t.auto.components_polls_PollEditor_659}
+                {sm('polls.editor.add_question')}
               </Button>
             </div>
           )}
@@ -734,7 +739,7 @@ export const PollEditor = ({
 
         {metadataOnly && (
           <p className="text-sm text-muted-foreground mb-4">
-            {t.auto.components_polls_PollEditor_667}
+            {sm('polls.editor.metadata_only_hint')}
           </p>
         )}
 
@@ -748,7 +753,7 @@ export const PollEditor = ({
           <div className="space-y-4">
             {formData.questions.length === 0 && formData.sections.length === 0 && (
               <p className="text-muted-foreground text-sm text-center py-4">
-                {t.auto.components_polls_PollEditor_683}
+                {sm('polls.editor.empty_state')}
               </p>
             )}
 
@@ -762,7 +767,7 @@ export const PollEditor = ({
                 }`}
               >
                 <h3 className="text-sm font-medium text-muted-foreground">
-                  {t.auto.components_polls_PollEditor_699}
+                  {sm('polls.editor.general_questions')}
                 </h3>
                 <SortableContext items={formData.questions.map((_, i) => `general-q-${i}`)} strategy={verticalListSortingStrategy}>
                   {formData.questions.map((question, index) => {
@@ -906,7 +911,7 @@ export const PollEditor = ({
                               className="text-primary w-full border border-dashed border-primary/30 hover:border-primary/50"
                             >
                               <Plus className="h-4 w-4 mr-1" />
-                              {t.auto.components_polls_PollEditor_833}
+                              {sm('polls.editor.add_section_question')}
                             </Button>
                           </div>
                         </CollapsibleContent>
@@ -928,7 +933,7 @@ export const PollEditor = ({
                   <div className="border border-primary rounded-lg p-3 bg-card shadow-xl max-w-md pointer-events-none">
                     <div className="flex items-center gap-2 text-sm">
                       <GripHorizontal className="h-4 w-4 text-primary" />
-                    <span className="truncate">{getActiveQuestion()?.question_text || (t.auto.components_polls_PollEditor_852)}</span>
+                    <span className="truncate">{getActiveQuestion()?.question_text || (sm('polls.editor.drag_overlay_placeholder'))}</span>
                     </div>
                   </div>
                 )}
@@ -944,7 +949,7 @@ export const PollEditor = ({
         {/* Validation feedback */}
         {!isValid && formData.title.trim() && (
           <div className="mb-2 text-sm text-muted-foreground">
-            {t.auto.components_polls_PollEditor_868}
+            {sm('polls.editor.invalid_hint')}
           </div>
         )}
 
@@ -974,8 +979,8 @@ export const PollEditor = ({
               <Save className="h-4 w-4 mr-2" />
             )}
             {onPublish 
-              ? (t.auto.components_polls_PollEditor_896)
-              : (t.auto.components_polls_PollEditor_897)
+              ? (sm('polls.editor.save_changes'))
+              : (sm('polls.editor.save_draft'))
             }
           </Button>
 
@@ -991,7 +996,7 @@ export const PollEditor = ({
               ) : (
                 <Play className="h-4 w-4 mr-2" />
               )}
-              {t.auto.components_polls_PollEditor_911}
+              {sm('polls.editor.publish')}
             </Button>
           )}
         </div>

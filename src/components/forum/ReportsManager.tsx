@@ -26,11 +26,12 @@ import {
 } from '@/components/ui/select';
 import {
   Flag, User, Clock, Check, X, Eye, MessageSquare,
-  Loader2, ExternalLink
+  Loader2
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
 import { toast } from 'sonner';
+import { resolveSemanticMessage } from '@/i18n/semantic';
 
 interface ReportWithDetails {
   id: string;
@@ -74,6 +75,8 @@ export const ReportsManager = () => {
   const { language, t } = useLanguage();
   const { user } = useAuth();
   const locale = DATE_LOCALE_BY_LANGUAGE[language];
+  const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
+    resolveSemanticMessage({ key, language, translations: t });
 
   const [reports, setReports] = useState<ReportWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
@@ -170,11 +173,11 @@ export const ReportsManager = () => {
       setReports(enrichedReports);
     } catch (error) {
       log.error('Error fetching reports:', error);
-      toast.error(t.auto.components_forum_ReportsManager_173);
+      toast.error(resolveSemanticMessage({ key: 'forum.reports.error_fetch', language, translations: t }));
     } finally {
       setLoading(false);
     }
-  }, [filter, language]);
+  }, [filter, language, t]);
 
   useEffect(() => {
     fetchReports();
@@ -215,8 +218,8 @@ export const ReportsManager = () => {
 
       toast.success(
         status === 'resolved'
-          ? (t.auto.components_forum_ReportsManager_218)
-          : (t.auto.components_forum_ReportsManager_219)
+          ? (sm('forum.reports.resolve_success'))
+          : (sm('forum.reports.dismiss_success'))
       );
       setResolveDialogOpen(false);
       setSelectedReport(null);
@@ -224,7 +227,7 @@ export const ReportsManager = () => {
       fetchReports();
     } catch (error) {
       log.error('Error resolving report:', error);
-      toast.error(t.auto.components_forum_ReportsManager_227);
+      toast.error(sm('forum.reports.error_resolve'));
     } finally {
       setResolving(false);
     }
@@ -248,15 +251,15 @@ export const ReportsManager = () => {
     switch (status) {
       case 'pending':
         return <Badge variant="secondary" className="bg-amber-500/20 text-amber-400">
-          {t.auto.components_forum_ReportsManager_251}
+          {sm('forum.reports.status.pending')}
         </Badge>;
       case 'resolved':
         return <Badge variant="secondary" className="bg-green-500/20 text-green-400">
-          {t.auto.components_forum_ReportsManager_255}
+          {sm('forum.reports.status.resolved')}
         </Badge>;
       case 'dismissed':
         return <Badge variant="secondary" className="bg-muted text-muted-foreground">
-          {t.auto.components_forum_ReportsManager_259}
+          {sm('forum.reports.status.dismissed')}
         </Badge>;
       default:
         return null;
@@ -270,7 +273,7 @@ export const ReportsManager = () => {
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-lg flex items-center gap-2">
           <Flag className="h-5 w-5" />
-          {t.auto.components_forum_ReportsManager_273}
+          {sm('forum.reports.title')}
           {pendingCount > 0 && (
             <Badge variant="destructive" className="ml-2">
               {pendingCount}
@@ -282,10 +285,10 @@ export const ReportsManager = () => {
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-card border-border">
-            <SelectItem value="all">{t.auto.components_forum_ReportsManager_285}</SelectItem>
-            <SelectItem value="pending">{t.auto.components_forum_ReportsManager_286}</SelectItem>
-            <SelectItem value="resolved">{t.auto.components_forum_ReportsManager_287}</SelectItem>
-            <SelectItem value="dismissed">{t.auto.components_forum_ReportsManager_288}</SelectItem>
+            <SelectItem value="all">{sm('forum.reports.filter.all')}</SelectItem>
+            <SelectItem value="pending">{sm('forum.reports.filter.pending')}</SelectItem>
+            <SelectItem value="resolved">{sm('forum.reports.filter.resolved')}</SelectItem>
+            <SelectItem value="dismissed">{sm('forum.reports.filter.dismissed')}</SelectItem>
           </SelectContent>
         </Select>
       </CardHeader>
@@ -296,7 +299,7 @@ export const ReportsManager = () => {
           </div>
         ) : reports.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">
-            {t.auto.components_forum_ReportsManager_299}
+            {sm('forum.reports.empty')}
           </p>
         ) : (
           <div className="space-y-3">
@@ -331,10 +334,10 @@ export const ReportsManager = () => {
                         )}
                       </Avatar>
                       <span className="text-sm text-foreground">
-                        {report.reporter?.username || 'Inconnu'}
+                        {report.reporter?.username || t.forum.unknownUser}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        {t.auto.components_forum_ReportsManager_337}
+                        {sm('forum.reports.reporter_label')}
                       </span>
                     </div>
 
@@ -344,7 +347,7 @@ export const ReportsManager = () => {
                         <div>
                           <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                             <MessageSquare className="h-3 w-3" />
-                            {t.auto.components_forum_ReportsManager_347} {report.post.author?.username || 'Inconnu'}
+                            {sm('forum.reports.post_by')} {report.post.author?.username || t.forum.unknownUser}
                           </p>
                           <p className="text-sm text-foreground line-clamp-2">
                             {report.post.content}
@@ -353,7 +356,7 @@ export const ReportsManager = () => {
                       ) : report.topic ? (
                         <div>
                           <p className="text-xs text-muted-foreground mb-1">
-                            {t.auto.components_forum_ReportsManager_356} {report.topic.author?.username || 'Inconnu'}
+                            {sm('forum.reports.topic_by')} {report.topic.author?.username || t.forum.unknownUser}
                           </p>
                           <p className="text-sm font-medium text-foreground">
                             {report.topic.title}
@@ -361,7 +364,7 @@ export const ReportsManager = () => {
                         </div>
                       ) : (
                         <p className="text-sm text-muted-foreground italic">
-                          {t.auto.components_forum_ReportsManager_364}
+                          {sm('forum.reports.content_missing')}
                         </p>
                       )}
                     </div>
@@ -376,7 +379,7 @@ export const ReportsManager = () => {
                     {/* Resolution info */}
                     {report.status !== 'pending' && report.resolver && (
                       <p className="text-xs text-muted-foreground">
-                        {t.auto.components_forum_ReportsManager_379} {report.resolver.username}
+                        {sm('forum.reports.resolved_by')} {report.resolver.username}
                         {report.resolution_note && ` : "${report.resolution_note}"`}
                       </p>
                     )}
@@ -392,7 +395,7 @@ export const ReportsManager = () => {
                       disabled={!report.post && !report.topic}
                     >
                       <Eye className="h-4 w-4 mr-1" />
-                      {t.auto.components_forum_ReportsManager_395}
+                      {sm('forum.reports.action.view')}
                     </Button>
                     {report.status === 'pending' && (
                       <Button
@@ -401,7 +404,7 @@ export const ReportsManager = () => {
                         onClick={() => openResolveDialog(report)}
                         className="h-8"
                       >
-                        {t.auto.components_forum_ReportsManager_404}
+                        {sm('forum.reports.action.resolve')}
                       </Button>
                     )}
                   </div>
@@ -417,7 +420,7 @@ export const ReportsManager = () => {
         <DialogContent className="sm:max-w-md bg-card border-border">
           <DialogHeader>
             <DialogTitle>
-              {t.auto.components_forum_ReportsManager_420}
+              {sm('forum.reports.dialog.title')}
             </DialogTitle>
           </DialogHeader>
 
@@ -425,14 +428,14 @@ export const ReportsManager = () => {
             {selectedReport && (
               <div className="p-3 rounded-lg bg-muted/30">
                 <p className="text-sm text-muted-foreground mb-1">
-                  {t.auto.components_forum_ReportsManager_428}{' '}
+                  {sm('forum.reports.dialog.reason')}{' '}
                   <span className="text-foreground">
                     {REPORT_REASONS[selectedReport.reason as ReportReason]?.[language] || selectedReport.reason}
                   </span>
                 </p>
                 {selectedReport.details && (
                   <p className="text-sm text-muted-foreground">
-                    {t.auto.components_forum_ReportsManager_435} "{selectedReport.details}"
+                    {sm('forum.reports.dialog.details')} "{selectedReport.details}"
                   </p>
                 )}
               </div>
@@ -440,14 +443,14 @@ export const ReportsManager = () => {
 
             <div className="space-y-2">
               <label htmlFor="resolution-note" className="text-sm font-medium">
-                {t.auto.components_forum_ReportsManager_443}
+                {sm('forum.reports.dialog.note_label')}
               </label>
               <Textarea
                 id="resolution-note"
                 name="resolution-note"
                 value={resolutionNote}
                 onChange={(e) => setResolutionNote(e.target.value)}
-                placeholder={t.auto.components_forum_ReportsManager_450}
+                placeholder={sm('forum.reports.dialog.note_placeholder')}
                 className="bg-background/50"
               />
             </div>
@@ -460,7 +463,7 @@ export const ReportsManager = () => {
               disabled={resolving}
             >
               <X className="h-4 w-4 mr-2" />
-              {t.auto.components_forum_ReportsManager_463}
+              {sm('forum.reports.dialog.dismiss')}
             </Button>
             <Button
               onClick={() => handleResolve('resolved')}
@@ -472,7 +475,7 @@ export const ReportsManager = () => {
               ) : (
                 <Check className="h-4 w-4 mr-2" />
               )}
-              {t.auto.components_forum_ReportsManager_475}
+              {sm('forum.reports.dialog.resolve')}
             </Button>
           </DialogFooter>
         </DialogContent>

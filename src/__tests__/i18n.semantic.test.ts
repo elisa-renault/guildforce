@@ -40,8 +40,58 @@ describe('semantic i18n', () => {
     expect(value).toBe('An English title is required.');
   });
 
+  it('resolves forum report copy with semantic FR text', () => {
+    const value = resolveSemanticMessage({
+      key: 'forum.report.dialog.title',
+      language: 'fr',
+      translations: asTranslations({}),
+    });
+
+    expect(value).toBe('Signaler ce contenu');
+  });
+
+  it('keeps poll mutation compatibility with legacy auto keys', () => {
+    const value = resolveSemanticMessage({
+      key: 'polls.mutations.publish_success',
+      language: 'de',
+      translations: asTranslations({
+        hooks_useGuildPolls_publish_success: 'Umfrage veroffentlicht (legacy)',
+      }),
+    });
+
+    expect(value).toBe('Umfrage veroffentlicht (legacy)');
+  });
+
+  it('keeps poll editor compatibility with legacy auto keys', () => {
+    const value = resolveSemanticMessage({
+      key: 'polls.editor.publish',
+      language: 'de',
+      translations: asTranslations({
+        components_polls_PollEditor_911: 'Veroffentlichen (legacy)',
+      }),
+    });
+
+    expect(value).toBe('Veroffentlichen (legacy)');
+  });
+
+  it('returns forum reports FR semantic copy', () => {
+    const value = resolveSemanticMessage({
+      key: 'forum.reports.title',
+      language: 'fr',
+      translations: asTranslations({}),
+    });
+
+    expect(value).toBe('Signalements');
+  });
+
   it('exposes semantic keys for migration checks', () => {
     expect(listSemanticKeys()).toContain('admin.legal.saved');
     expect(listSemanticKeys()).toContain('admin.documentation.search_placeholder');
+    expect(listSemanticKeys()).toContain('forum.report.dialog.title');
+    expect(listSemanticKeys()).toContain('polls.sortable.type.scale');
+    expect(listSemanticKeys()).toContain('polls.mutations.publish_success');
+    expect(listSemanticKeys()).toContain('polls.editor.publish');
+    expect(listSemanticKeys()).toContain('polls.condition.operator.equals');
+    expect(listSemanticKeys()).toContain('forum.reports.title');
   });
 });

@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Loader2, Flag } from 'lucide-react';
 import { toast } from 'sonner';
+import { resolveSemanticMessage } from '@/i18n/semantic';
 
 interface ReportDialogProps {
   open: boolean;
@@ -23,15 +24,16 @@ interface ReportDialogProps {
   targetId: string;
 }
 
-const REPORT_REASONS = {
-  spam: { fr: 'Spam', en: 'Spam' },
-  harassment: { fr: 'Harcèlement', en: 'Harassment' },
-  inappropriate: { fr: 'Contenu inapproprié', en: 'Inappropriate content' },
-  misinformation: { fr: 'Désinformation', en: 'Misinformation' },
-  other: { fr: 'Autre', en: 'Other' },
-} as const;
+const REPORT_REASONS = ['spam', 'harassment', 'inappropriate', 'misinformation', 'other'] as const;
 
-type ReportReason = keyof typeof REPORT_REASONS;
+type ReportReason = (typeof REPORT_REASONS)[number];
+const REPORT_REASON_KEY_BY_REASON: Record<ReportReason, Parameters<typeof resolveSemanticMessage>[0]['key']> = {
+  spam: 'forum.report.reason.spam',
+  harassment: 'forum.report.reason.harassment',
+  inappropriate: 'forum.report.reason.inappropriate',
+  misinformation: 'forum.report.reason.misinformation',
+  other: 'forum.report.reason.other',
+};
 
 export const ReportDialog = ({
   open,
@@ -41,6 +43,8 @@ export const ReportDialog = ({
 }: ReportDialogProps) => {
   const { language, t } = useLanguage();
   const { user } = useAuth();
+  const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
+    resolveSemanticMessage({ key, language, translations: t });
   const [reason, setReason] = useState<ReportReason>('spam');
   const [details, setDetails] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -59,14 +63,12 @@ export const ReportDialog = ({
 
       if (error) throw error;
 
-      toast.success(
-        t.auto.components_forum_ReportDialog_63
-      );
+      toast.success(sm('forum.report.dialog.success'));
       onOpenChange(false);
       setReason('spam');
       setDetails('');
     } catch (error) {
-      toast.error(t.auto.components_forum_ReportDialog_71);
+      toast.error(sm('forum.report.dialog.error'));
     } finally {
       setSubmitting(false);
     }
@@ -78,50 +80,40 @@ export const ReportDialog = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-foreground">
             <Flag className="h-5 w-5 text-destructive" />
-            {t.auto.components_forum_ReportDialog_83}
+            {sm('forum.report.dialog.title')}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label>{t.auto.components_forum_ReportDialog_89}</Label>
-            <RadioGroup value={reason} onValueChange={(v) => setReason(v as ReportReason)}>
-              {(Object.entries(REPORT_REASONS) as [ReportReason, { fr: string; en: string }][]).map(
-                ([key, labels]) => (
-                  <div key={key} className="flex items-center space-x-2">
-                    <RadioGroupItem value={key} id={key} />
-                    <Label htmlFor={key} className="cursor-pointer font-normal">
-                      {labels[language]}
-                    </Label>
-                  </div>
-                )
-              )}
+            <Label>{sm('forum.report.dialog.reason_label')}</Label>
+            <RadioGroup value={reason} onValueChange={(value) => setReason(value as ReportReason)}>
+              {REPORT_REASONS.map((reasonKey) => (
+                <div key={reasonKey} className="flex items-center space-x-2">
+                  <RadioGroupItem value={reasonKey} id={reasonKey} />
+                  <Label htmlFor={reasonKey} className="cursor-pointer font-normal">
+                    {sm(REPORT_REASON_KEY_BY_REASON[reasonKey])}
+                  </Label>
+                </div>
+              ))}
             </RadioGroup>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="details">
-              {t.auto.components_forum_ReportDialog_106}
-            </Label>
+            <Label htmlFor="details">{sm('forum.report.dialog.details_label')}</Label>
             <Textarea
               id="details"
               value={details}
-              onChange={(e) => setDetails(e.target.value)}
-              placeholder={
-                t.auto.components_forum_ReportDialog_113
-              }
+              onChange={(event) => setDetails(event.target.value)}
+              placeholder={sm('forum.report.dialog.details_placeholder')}
               className="min-h-[80px] bg-background/50"
             />
           </div>
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={submitting}
-          >
-            {t.auto.components_forum_ReportDialog_128}
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>
+            {sm('forum.report.dialog.cancel')}
           </Button>
           <Button
             onClick={handleSubmit}
@@ -131,12 +123,12 @@ export const ReportDialog = ({
             {submitting ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                {t.auto.components_forum_ReportDialog_138}
+                {sm('forum.report.dialog.submitting')}
               </>
             ) : (
               <>
                 <Flag className="h-4 w-4 mr-2" />
-                {t.auto.components_forum_ReportDialog_143}
+                {sm('forum.report.dialog.submit')}
               </>
             )}
           </Button>
