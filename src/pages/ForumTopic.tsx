@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceFromNowLocalized } from '@/i18n/format';
+import { resolveSemanticMessage } from '@/i18n/semantic';
 
 const ForumTopicPage = () => {
   const { topicId } = useParams<{ topicId: string }>();
@@ -49,6 +50,8 @@ const ForumTopicPage = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'topic' | 'post'; id: string } | null>(null);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
+    resolveSemanticMessage({ key, language, translations: t });
 
   const totalPages = Math.ceil(totalCount / 20);
   const isAuthor = user?.id === topic?.author_id;
@@ -65,12 +68,12 @@ const ForumTopicPage = () => {
     setSubmitting(true);
     try {
       await createPost(topicId, replyContent.trim(), quotedPost?.id);
-      toast.success(t.auto.pages_ForumTopic_70);
+      toast.success(sm('forum.topic.toast.reply_created'));
       setReplyContent('');
       setQuotedPost(null);
       refetchPosts();
     } catch (error) {
-      toast.error(t.auto.pages_ForumTopic_75);
+      toast.error(sm('forum.topic.toast.reply_create_error'));
     } finally {
       setSubmitting(false);
     }
@@ -85,10 +88,10 @@ const ForumTopicPage = () => {
   const handleEditPost = async (postId: string, content: string) => {
     try {
       await updatePost(postId, content);
-      toast.success(t.auto.pages_ForumTopic_90);
+      toast.success(sm('forum.topic.toast.reply_updated'));
       refetchPosts();
     } catch (error) {
-      toast.error(t.auto.pages_ForumTopic_93);
+      toast.error(sm('forum.topic.toast.reply_update_error'));
     }
   };
 
@@ -98,15 +101,15 @@ const ForumTopicPage = () => {
     try {
       if (deleteTarget.type === 'topic') {
         await deleteTopic(deleteTarget.id);
-        toast.success(t.auto.pages_ForumTopic_103);
+        toast.success(sm('forum.topic.toast.topic_deleted'));
         navigate(`/forum/category/${topic?.category?.slug}`);
       } else {
         await deletePost(deleteTarget.id);
-        toast.success(t.auto.pages_ForumTopic_107);
+        toast.success(sm('forum.topic.toast.reply_deleted'));
         refetchPosts();
       }
     } catch (error) {
-      toast.error(t.auto.pages_ForumTopic_111);
+      toast.error(sm('forum.topic.toast.delete_error'));
     } finally {
       setDeleteDialogOpen(false);
       setDeleteTarget(null);
@@ -118,12 +121,12 @@ const ForumTopicPage = () => {
     try {
       await updateTopic(topic.id, { is_pinned: !topic.is_pinned });
       toast.success(topic.is_pinned 
-        ? (t.auto.pages_ForumTopic_123)
-        : (t.auto.pages_ForumTopic_124)
+        ? sm('forum.topic.toast.unpinned')
+        : sm('forum.topic.toast.pinned')
       );
       refetchTopic();
     } catch (error) {
-      toast.error(t.auto.pages_ForumTopic_128);
+      toast.error(sm('forum.topic.toast.pin_error'));
     }
   };
 
@@ -132,12 +135,12 @@ const ForumTopicPage = () => {
     try {
       await updateTopic(topic.id, { is_locked: !topic.is_locked });
       toast.success(topic.is_locked 
-        ? (t.auto.pages_ForumTopic_137)
-        : (t.auto.pages_ForumTopic_138)
+        ? sm('forum.topic.toast.unlocked')
+        : sm('forum.topic.toast.locked')
       );
       refetchTopic();
     } catch (error) {
-      toast.error(t.auto.pages_ForumTopic_142);
+      toast.error(sm('forum.topic.toast.lock_error'));
     }
   };
 
@@ -146,7 +149,7 @@ const ForumTopicPage = () => {
       await toggleReaction(type, id, reactionType);
       // No need to refetch - realtime will handle it
     } catch (error) {
-      toast.error(t.auto.pages_ForumTopic_151);
+      toast.error(sm('forum.topic.toast.reaction_error'));
     }
   };
 

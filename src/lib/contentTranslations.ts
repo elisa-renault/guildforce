@@ -1,4 +1,10 @@
-import { FALLBACK_LANGUAGE, SUPPORTED_LANGUAGES, resolveLanguage, type Language } from '@/i18n/config';
+import {
+  FALLBACK_LANGUAGE,
+  SUPPORTED_LANGUAGES,
+  getBilingualContentLanguage,
+  resolveLanguage,
+  type Language,
+} from '@/i18n/config';
 
 export interface ContentTranslation {
   language: string;
@@ -58,9 +64,10 @@ export const toEditableTranslationMap = (
 
   for (const language of SUPPORTED_LANGUAGES) {
     const exact = byLanguage.get(language);
+    const bilingualFallback = byLanguage.get(getBilingualContentLanguage(language));
     const seed =
       exact ||
-      (language === 'fr' ? byLanguage.get('fr') : byLanguage.get(FALLBACK_LANGUAGE)) ||
+      bilingualFallback ||
       fallback;
 
     map[language] = {

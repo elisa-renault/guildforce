@@ -20,6 +20,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { getBilingualValue } from '@/i18n/config';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { cn } from '@/lib/utils';
 
@@ -416,8 +417,8 @@ export const AdminDocumentation = () => {
     ? DOCUMENTATION.map((section) => ({
         ...section,
         subsections: section.subsections.filter((subsection) => {
-          const title = ({ fr: subsection.titleFr, en: subsection.titleEn } as const)[language];
-          const content = ({ fr: subsection.contentFr, en: subsection.contentEn } as const)[language];
+          const title = getBilingualValue(language, { en: subsection.titleEn, fr: subsection.titleFr });
+          const content = getBilingualValue(language, { en: subsection.contentEn, fr: subsection.contentFr });
           const query = searchQuery.toLowerCase();
           return (
             title.toLowerCase().includes(query) ||
@@ -484,7 +485,7 @@ export const AdminDocumentation = () => {
                       >
                         <Icon className={cn('h-4 w-4 flex-shrink-0', section.color)} />
                         <span className="truncate">
-                          {({ fr: section.titleFr, en: section.titleEn } as const)[language]}
+                          {getBilingualValue(language, { en: section.titleEn, fr: section.titleFr })}
                         </span>
                       </button>
                     );
@@ -515,7 +516,7 @@ export const AdminDocumentation = () => {
                     <Icon className="h-5 w-5" />
                   </div>
                   <h3 className="text-lg font-display text-foreground">
-                    {({ fr: section.titleFr, en: section.titleEn } as const)[language]}
+                    {getBilingualValue(language, { en: section.titleEn, fr: section.titleFr })}
                   </h3>
                 </div>
 
@@ -528,7 +529,7 @@ export const AdminDocumentation = () => {
                     >
                       <AccordionTrigger className="text-sm font-medium hover:no-underline py-3">
                         <div className="flex items-center gap-2 text-left">
-                          <span>{({ fr: subsection.titleFr, en: subsection.titleEn } as const)[language]}</span>
+                          <span>{getBilingualValue(language, { en: subsection.titleEn, fr: subsection.titleFr })}</span>
                           {subsection.tags && (
                             <div className="hidden sm:flex gap-1 ml-2">
                               {subsection.tags.slice(0, 2).map((tag) => (
@@ -542,7 +543,7 @@ export const AdminDocumentation = () => {
                       </AccordionTrigger>
                       <AccordionContent className="text-sm text-muted-foreground pb-4">
                         <pre className="whitespace-pre-wrap font-sans leading-relaxed">
-                          {({ fr: subsection.contentFr, en: subsection.contentEn } as const)[language]}
+                          {getBilingualValue(language, { en: subsection.contentEn, fr: subsection.contentFr })}
                         </pre>
                       </AccordionContent>
                     </AccordionItem>

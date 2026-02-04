@@ -11,6 +11,7 @@ import { format, parseISO } from 'date-fns';
 import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
 import { cn } from '@/lib/utils';
 import { clampScaleValue, formatScaleValue, getScaleConfig, getScaleSteps, roundToStep } from '@/lib/pollScale';
+import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 
 interface PollResultsProps {
   questions: GuildPollQuestion[];
@@ -24,6 +25,7 @@ export const PollResults = ({
   totalResponses,
 }: PollResultsProps) => {
   const { language, t } = useLanguage();
+  const s = (key: SemanticKey) => resolveSemanticMessage({ key, language, translations: t });
 
   const getChoiceStats = (question: GuildPollQuestion) => {
     const stats: Record<string, { count: number; users: { id: string; username: string; avatar_url: string | null }[]; otherTexts?: string[] }> = {};
@@ -214,14 +216,14 @@ export const PollResults = ({
             <span>
               {totalResponses}{' '}
               {totalResponses === 1
-                ? t.auto.components_polls_PollResults_response_single
-                : t.auto.components_polls_PollResults_response_plural}
+                ? s('polls.results.response_single')
+                : s('polls.results.response_plural')}
             </span>
         </div>
         {isAnonymous && (
           <Badge variant="outline" className="bg-primary/15 text-primary border-primary/30">
             <Lock className="h-3 w-3 mr-1" />
-            {t.auto.components_polls_PollResults_224}
+            {s('polls.results.anonymous_badge')}
           </Badge>
         )}
       </div>
@@ -327,7 +329,7 @@ export const PollResults = ({
                   return v.type === 'text' && v.value && v.value.trim().length > 0;
                 }).length === 0) && (
                   <p className="text-sm text-muted-foreground italic">
-                    {t.auto.components_polls_PollResults_330}
+                    {s('polls.results.text.empty')}
                   </p>
                 )}
               </div>
@@ -380,7 +382,7 @@ export const PollResults = ({
                       {!isAnonymous && individualRatings.length > 0 && (
                         <div className="space-y-2 pt-2 border-t border-border/50">
                           <p className="text-sm text-muted-foreground mb-2">
-                            {t.auto.components_polls_PollResults_383}
+                            {s('polls.results.rating.individual_ratings')}
                           </p>
                           <div className="grid gap-2">
                             {individualRatings.map((rating, idx) => (
@@ -422,7 +424,7 @@ export const PollResults = ({
                     <Calendar className="h-4 w-4" />
                   )}
                   <span className="text-sm">
-                    {question.responses?.length || 0} {t.auto.components_polls_PollResults_425}
+                    {question.responses?.length || 0} {s('polls.results.datetime.responses')}
                   </span>
                 </div>
                 {(() => {
@@ -432,7 +434,7 @@ export const PollResults = ({
                   if (stats.length === 0) {
                     return (
                       <p className="text-sm text-muted-foreground italic">
-                        {t.auto.components_polls_PollResults_435}
+                        {s('polls.results.datetime.empty')}
                       </p>
                     );
                   }
@@ -559,7 +561,7 @@ export const PollResults = ({
                       {!isAnonymous && individualRatings.length > 0 && (
                         <div className="space-y-2 pt-2 border-t border-border/50">
                           <p className="text-sm text-muted-foreground mb-2">
-                            {t.auto.components_polls_PollResults_536}
+                            {s('polls.results.scale.individual_ratings')}
                           </p>
                           <div className="grid gap-2">
                             {individualRatings.map((rating, idx) => (
@@ -601,7 +603,7 @@ export const PollResults = ({
                 <div className="flex items-center gap-2 text-muted-foreground mb-2">
                   <ListOrdered className="h-4 w-4" />
                   <span className="text-sm">
-                    {question.responses?.length || 0} {t.auto.components_polls_PollResults_574}
+                    {question.responses?.length || 0} {s('polls.results.ranking.responses')}
                   </span>
                 </div>
                 {(() => {
@@ -611,7 +613,7 @@ export const PollResults = ({
                   if (ranked.length === 0 || total === 0) {
                     return (
                       <p className="text-sm text-muted-foreground italic">
-                        {t.auto.components_polls_PollResults_584}
+                        {s('polls.results.ranking.empty')}
                       </p>
                     );
                   }
@@ -641,7 +643,7 @@ export const PollResults = ({
                                 className="h-1.5 flex-1 bg-muted/40" 
                               />
                               <span className="text-xs text-muted-foreground whitespace-nowrap">
-                                {t.auto.components_polls_PollResults_614}: {item.averageScore.toFixed(1)}
+                                {s('polls.results.ranking.avg_score')}: {item.averageScore.toFixed(1)}
                               </span>
                             </div>
                           </div>

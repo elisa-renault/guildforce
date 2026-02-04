@@ -1,6 +1,6 @@
 // WoW Classes and Specializations data
 // Centralized for easy updates
-import { SUPPORTED_LANGUAGES } from '@/i18n/config';
+import { SUPPORTED_LANGUAGES, getBilingualContentLanguage } from '@/i18n/config';
 import type { Language } from '@/i18n/config';
 
 export type Role = 'tank' | 'healer' | 'dps';
@@ -14,7 +14,7 @@ const withLanguageFallbacks = (label: LocalizedLabel): Record<Language, string> 
 
   for (const language of SUPPORTED_LANGUAGES) {
     if (next[language]) continue;
-    next[language] = language === 'fr' ? next.fr : next.en;
+    next[language] = next[getBilingualContentLanguage(language)];
   }
 
   return next;

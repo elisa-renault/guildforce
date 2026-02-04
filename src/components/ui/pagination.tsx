@@ -1,16 +1,21 @@
-import * as React from "react";
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+import * as React from "react";
 
-import { cn } from "@/lib/utils";
 import { ButtonProps, buttonVariants } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { resolveSemanticMessage } from "@/i18n/semantic";
+import { cn } from "@/lib/utils";
 
 const Pagination = ({ className, ...props }: React.ComponentProps<"nav">) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   return (
     <nav
       role="navigation"
-      aria-label={t.auto.components_ui_pagination_label}
+      aria-label={resolveSemanticMessage({
+        key: "ui.pagination.aria_label",
+        language,
+        translations: t,
+      })}
       className={cn("mx-auto flex w-full justify-center", className)}
       {...props}
     />

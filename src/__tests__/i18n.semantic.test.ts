@@ -84,14 +84,51 @@ describe('semantic i18n', () => {
     expect(value).toBe('Signalements');
   });
 
+  it('keeps forum sanctions compatibility with legacy auto keys', () => {
+    const value = resolveSemanticMessage({
+      key: 'forum.sanctions.dialog.title',
+      language: 'de',
+      translations: asTranslations({
+        components_forum_SanctionDialog_98: 'Sanktion anwenden (legacy)',
+      }),
+    });
+
+    expect(value).toBe('Sanktion anwenden (legacy)');
+  });
+
+  it('keeps poll results compatibility with legacy auto keys', () => {
+    const value = resolveSemanticMessage({
+      key: 'polls.results.anonymous_badge',
+      language: 'de',
+      translations: asTranslations({
+        components_polls_PollResults_224: 'Anonyme Antworten (legacy)',
+      }),
+    });
+
+    expect(value).toBe('Anonyme Antworten (legacy)');
+  });
+
   it('exposes semantic keys for migration checks', () => {
     expect(listSemanticKeys()).toContain('admin.legal.saved');
     expect(listSemanticKeys()).toContain('admin.documentation.search_placeholder');
     expect(listSemanticKeys()).toContain('forum.report.dialog.title');
+    expect(listSemanticKeys()).toContain('forum.sanctions.dialog.title');
     expect(listSemanticKeys()).toContain('polls.sortable.type.scale');
     expect(listSemanticKeys()).toContain('polls.mutations.publish_success');
     expect(listSemanticKeys()).toContain('polls.editor.publish');
     expect(listSemanticKeys()).toContain('polls.condition.operator.equals');
+    expect(listSemanticKeys()).toContain('polls.results.anonymous_badge');
     expect(listSemanticKeys()).toContain('forum.reports.title');
+    expect(listSemanticKeys()).toContain('guild.members.title');
+    expect(listSemanticKeys()).toContain('admin.backup.title');
+    expect(listSemanticKeys()).toContain('admin.sidebar.section.dashboard');
+    expect(listSemanticKeys()).toContain('settings.sidebar.section.profile');
+    expect(listSemanticKeys()).toContain('ui.breadcrumb.aria_label');
+    expect(listSemanticKeys()).toContain('globalnav.home.aria_label');
+    expect(listSemanticKeys()).toContain('footer.brand');
+    expect(listSemanticKeys()).toContain('forum.new_topic.title');
+    expect(listSemanticKeys()).toContain('forum.topic.toast.reply_created');
+    expect(listSemanticKeys()).toContain('guild.polls.title');
+    expect(listSemanticKeys()).toContain('activity.log.title');
   });
 });

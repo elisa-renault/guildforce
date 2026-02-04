@@ -1,5 +1,11 @@
 // Internationalization translations
 import { translationsEn } from './translations.en';
+import type { translationsDe } from './translations.de';
+import type { translationsIt } from './translations.it';
+import type { translationsKo } from './translations.ko';
+import type { translationsRu } from './translations.ru';
+import type { translationsZhCn } from './translations.zh-CN';
+import type { translationsFr } from './translations.fr';
 import type { Language } from './config';
 export type { Language } from './config';
 
@@ -947,13 +953,46 @@ export interface Translations {
   auto: Record<string, string>;
 }
 
+type TranslationModule =
+  | { translationsEn: typeof translationsEn }
+  | { translationsFr: typeof translationsFr }
+  | { translationsDe: typeof translationsDe }
+  | { translationsIt: typeof translationsIt }
+  | { translationsRu: typeof translationsRu }
+  | { translationsZhCn: typeof translationsZhCn }
+  | { translationsKo: typeof translationsKo };
+
+const TRANSLATION_LOADERS: Record<Language, () => Promise<Translations>> = {
+  en: async () => translationsEn,
+  fr: async () => {
+    const mod = (await import('./translations.fr')) as TranslationModule;
+    return mod.translationsFr;
+  },
+  de: async () => {
+    const mod = (await import('./translations.de')) as TranslationModule;
+    return mod.translationsDe;
+  },
+  it: async () => {
+    const mod = (await import('./translations.it')) as TranslationModule;
+    return mod.translationsIt;
+  },
+  ru: async () => {
+    const mod = (await import('./translations.ru')) as TranslationModule;
+    return mod.translationsRu;
+  },
+  'zh-CN': async () => {
+    const mod = (await import('./translations.zh-CN')) as TranslationModule;
+    return mod.translationsZhCn;
+  },
+  ko: async () => {
+    const mod = (await import('./translations.ko')) as TranslationModule;
+    return mod.translationsKo;
+  },
+};
+
 
 export const loadTranslations = async (language: Language): Promise<Translations> => {
-  if (language === 'fr') {
-    const mod = await import('./translations.fr');
-    return mod.translationsFr;
-  }
-  return translationsEn;
+  return TRANSLATION_LOADERS[language]?.() ?? TRANSLATION_LOADERS.en();
 };
 
 const collectTranslationKeys = (value: unknown, prefix = '', keys = new Set<string>()) => {
@@ -1002,7 +1041,15 @@ const checkTranslationCompleteness = <Lang extends string>(map: Record<Lang, Tra
 };
 
 if (import.meta.env?.DEV && !import.meta.env?.VITEST) {
-  Promise.all([import('./translations.en'), import('./translations.fr')]).then(([en, fr]) => {
-    checkTranslationCompleteness({ en: en.translationsEn, fr: fr.translationsFr });
+  Promise.all([
+    loadTranslations('en'),
+    loadTranslations('fr'),
+    loadTranslations('de'),
+    loadTranslations('it'),
+    loadTranslations('ru'),
+    loadTranslations('zh-CN'),
+    loadTranslations('ko'),
+  ]).then(([en, fr, de, it, ru, zhCn, ko]) => {
+    checkTranslationCompleteness({ en, fr, de, it, ru, 'zh-CN': zhCn, ko });
   });
 }

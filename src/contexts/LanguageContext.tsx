@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Language, Translations, loadTranslations } from '@/i18n/translations';
-import { detectLanguageFromNavigator, resolveLanguage } from '@/i18n/config';
-import { translationsEn } from '@/i18n/translations.en';
+
 import { LoadingScreen } from '@/components/ui/loading-screen';
+import { detectLanguageFromNavigator, getBilingualContentLanguage, getBilingualValue, resolveLanguage } from '@/i18n/config';
+import { Language, Translations, loadTranslations } from '@/i18n/translations';
+import { translationsEn } from '@/i18n/translations.en';
 
 export type { Language } from '@/i18n/config';
 
@@ -25,8 +26,9 @@ const getInitialLanguage = (): Language => {
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(() => getInitialLanguage());
+  const initialContentLanguage = getBilingualContentLanguage(language);
   const [t, setT] = useState<Translations | null>(() =>
-    language === 'fr' ? null : translationsEn,
+    initialContentLanguage === 'fr' ? null : translationsEn,
   );
 
   const setLanguage = (lang: Language) => {
@@ -51,7 +53,11 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
   }, [language]);
 
   if (!t) {
-    return <LoadingScreen message={language === 'fr' ? 'Chargement...' : 'Loading...'} />;
+    return (
+      <LoadingScreen
+        message={getBilingualValue(language, { en: 'Loading...', fr: 'Chargement...' })}
+      />
+    );
   }
 
   return (

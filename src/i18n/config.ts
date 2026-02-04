@@ -1,6 +1,8 @@
 export const SUPPORTED_LANGUAGES = ['en', 'fr', 'de', 'it', 'ru', 'zh-CN', 'ko'] as const;
 
 export type Language = (typeof SUPPORTED_LANGUAGES)[number];
+export type BilingualContentLanguage = 'en' | 'fr';
+export type BilingualValue<T> = Record<BilingualContentLanguage, T>;
 
 export const FALLBACK_LANGUAGE: Language = 'en';
 
@@ -57,3 +59,19 @@ export const detectLanguageFromNavigator = (browserLanguage: string): Language =
 
 export const getIntlLocale = (language: Language): string =>
   INTL_LOCALE_BY_LANGUAGE[language] || INTL_LOCALE_BY_LANGUAGE[FALLBACK_LANGUAGE];
+
+const BILINGUAL_CONTENT_LANGUAGE_BY_LANGUAGE: Record<Language, BilingualContentLanguage> = {
+  en: 'en',
+  fr: 'fr',
+  de: 'en',
+  it: 'en',
+  ru: 'en',
+  'zh-CN': 'en',
+  ko: 'en',
+};
+
+export const getBilingualContentLanguage = (language: Language): BilingualContentLanguage =>
+  BILINGUAL_CONTENT_LANGUAGE_BY_LANGUAGE[language] || 'en';
+
+export const getBilingualValue = <T>(language: Language, value: BilingualValue<T>): T =>
+  value[getBilingualContentLanguage(language)];

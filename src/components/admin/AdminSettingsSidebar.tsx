@@ -1,16 +1,17 @@
+import { LayoutDashboard, Users, Shield, FileText, Bug, Trash2, MessageSquare, Settings, BookOpen, ScrollText, Download } from 'lucide-react';
 import { useLayoutEffect, useState, RefObject } from 'react';
-import { cn } from '@/lib/utils';
+
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { LayoutDashboard, Users, Shield, FileText, Bug, Trash2, MessageSquare, Settings, BookOpen, ScrollText, Download } from 'lucide-react';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { resolveSemanticMessage } from '@/i18n/semantic';
+import { cn } from '@/lib/utils';
 
 export type AdminSection = 'dashboard' | 'users' | 'permissions' | 'guilds' | 'forum' | 'legal' | 'patchnotes' | 'bugs' | 'deletions' | 'docs' | 'backup';
 
 interface SectionConfig {
   id: AdminSection;
-  labelEn: string;
-  labelFr: string;
+  labelKey: Parameters<typeof resolveSemanticMessage>[0]['key'];
   icon: React.ElementType;
   category: 'overview' | 'management' | 'content' | 'support';
   requiresAdmin?: boolean;
@@ -18,24 +19,24 @@ interface SectionConfig {
 }
 
 const SECTIONS: SectionConfig[] = [
-  { id: 'dashboard', labelEn: 'Dashboard', labelFr: 'Tableau de bord', icon: LayoutDashboard, category: 'overview', allowsModerator: true },
-  { id: 'docs', labelEn: 'Documentation', labelFr: 'Documentation', icon: BookOpen, category: 'overview', requiresAdmin: true },
-  { id: 'users', labelEn: 'Users', labelFr: 'Utilisateurs', icon: Users, category: 'management', requiresAdmin: true },
-  { id: 'permissions', labelEn: 'Permissions', labelFr: 'Permissions', icon: Settings, category: 'management', requiresAdmin: true },
-  { id: 'guilds', labelEn: 'Guilds', labelFr: 'Guildes', icon: Shield, category: 'management', requiresAdmin: true },
-  { id: 'backup', labelEn: 'Backup', labelFr: 'Backup', icon: Download, category: 'management', requiresAdmin: true },
-  { id: 'forum', labelEn: 'Forum', labelFr: 'Forum', icon: MessageSquare, category: 'content', allowsModerator: true },
-  { id: 'legal', labelEn: 'Legal Pages', labelFr: 'Pages légales', icon: FileText, category: 'content', requiresAdmin: true },
-  { id: 'patchnotes', labelEn: 'Patchnotes', labelFr: 'Patchnotes', icon: ScrollText, category: 'content', requiresAdmin: true },
-  { id: 'bugs', labelEn: 'Bug Reports', labelFr: 'Bugs', icon: Bug, category: 'support', allowsModerator: true },
-  { id: 'deletions', labelEn: 'Deletions', labelFr: 'Suppressions', icon: Trash2, category: 'support', requiresAdmin: true },
+  { id: 'dashboard', labelKey: 'admin.sidebar.section.dashboard', icon: LayoutDashboard, category: 'overview', allowsModerator: true },
+  { id: 'docs', labelKey: 'admin.sidebar.section.docs', icon: BookOpen, category: 'overview', requiresAdmin: true },
+  { id: 'users', labelKey: 'admin.sidebar.section.users', icon: Users, category: 'management', requiresAdmin: true },
+  { id: 'permissions', labelKey: 'admin.sidebar.section.permissions', icon: Settings, category: 'management', requiresAdmin: true },
+  { id: 'guilds', labelKey: 'admin.sidebar.section.guilds', icon: Shield, category: 'management', requiresAdmin: true },
+  { id: 'backup', labelKey: 'admin.sidebar.section.backup', icon: Download, category: 'management', requiresAdmin: true },
+  { id: 'forum', labelKey: 'admin.sidebar.section.forum', icon: MessageSquare, category: 'content', allowsModerator: true },
+  { id: 'legal', labelKey: 'admin.sidebar.section.legal', icon: FileText, category: 'content', requiresAdmin: true },
+  { id: 'patchnotes', labelKey: 'admin.sidebar.section.patchnotes', icon: ScrollText, category: 'content', requiresAdmin: true },
+  { id: 'bugs', labelKey: 'admin.sidebar.section.bugs', icon: Bug, category: 'support', allowsModerator: true },
+  { id: 'deletions', labelKey: 'admin.sidebar.section.deletions', icon: Trash2, category: 'support', requiresAdmin: true },
 ];
 
-const CATEGORIES = {
-  overview: { en: 'OVERVIEW', fr: 'APERÇU' },
-  management: { en: 'MANAGEMENT', fr: 'GESTION' },
-  content: { en: 'CONTENT', fr: 'CONTENU' },
-  support: { en: 'SUPPORT', fr: 'SUPPORT' },
+const CATEGORIES: Record<SectionConfig['category'], Parameters<typeof resolveSemanticMessage>[0]['key']> = {
+  overview: 'admin.sidebar.category.overview',
+  management: 'admin.sidebar.category.management',
+  content: 'admin.sidebar.category.content',
+  support: 'admin.sidebar.category.support',
 };
 
 interface AdminSettingsSidebarProps {
@@ -53,9 +54,11 @@ export const AdminSettingsSidebar = ({
   isModerator,
   mobileTabsRef,
 }: AdminSettingsSidebarProps) => {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const isMobile = useIsMobile();
   const [tabsTop, setTabsTop] = useState<number>(64);
+  const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
+    resolveSemanticMessage({ key, language, translations: t });
 
   useLayoutEffect(() => {
     if (!isMobile) return;
@@ -98,9 +101,9 @@ export const AdminSettingsSidebar = ({
   // Mobile: fixed horizontal tabs only (spacer is handled by parent)
   if (isMobile) {
     return (
-      <div 
+      <div
         ref={mobileTabsRef}
-        className="fixed left-0 right-0 z-30 border-b border-border/50 bg-background/95 backdrop-blur-sm px-3" 
+        className="fixed left-0 right-0 z-30 border-b border-border/50 bg-background/95 backdrop-blur-sm px-3"
         style={{ top: tabsTop }}
       >
         <ScrollArea className="w-full">
@@ -113,14 +116,14 @@ export const AdminSettingsSidebar = ({
                   key={section.id}
                   onClick={() => onSectionChange(section.id)}
                   className={cn(
-                    "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0",
+                    'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0',
                     isActive
-                      ? "bg-primary/20 text-foreground ring-1 ring-primary/50"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      ? 'bg-primary/20 text-foreground ring-1 ring-primary/50'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                   )}
                 >
                   <Icon className="h-3.5 w-3.5" />
-                  <span>{({ fr: section.labelFr, en: section.labelEn } as const)[language]}</span>
+                  <span>{sm(section.labelKey)}</span>
                 </button>
               );
             })}
@@ -144,7 +147,7 @@ export const AdminSettingsSidebar = ({
           return (
             <div key={categoryKey}>
               <h3 className="px-3 mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                {({ fr: categoryLabel.fr, en: categoryLabel.en } as const)[language]}
+                {sm(categoryLabel)}
               </h3>
               <div className="space-y-0.5">
                 {sections.map((section) => {
@@ -155,14 +158,14 @@ export const AdminSettingsSidebar = ({
                       key={section.id}
                       onClick={() => onSectionChange(section.id)}
                       className={cn(
-                        "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors text-left",
+                        'w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors text-left',
                         isActive
-                          ? "bg-primary/20 text-foreground ring-1 ring-primary/50"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                          ? 'bg-primary/20 text-foreground ring-1 ring-primary/50'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                       )}
                     >
                       <Icon className="h-4 w-4 flex-shrink-0" />
-                      <span>{({ fr: section.labelFr, en: section.labelEn } as const)[language]}</span>
+                      <span>{sm(section.labelKey)}</span>
                     </button>
                   );
                 })}

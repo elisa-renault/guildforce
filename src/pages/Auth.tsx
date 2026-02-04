@@ -1,21 +1,22 @@
+import { ArrowLeft, Loader2, Shield, ChevronDown, Mail } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import log from '@/lib/logger';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+
+import { BattleNetIcon } from '@/components/BattleNetIcon';
+import { CosmicBackground } from '@/components/CosmicBackground';
+import { CosmicButton } from '@/components/CosmicButton';
+import { GlowCard } from '@/components/GlowCard';
 import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { detectLanguageFromNavigator } from '@/i18n/config';
-import { CosmicBackground } from '@/components/CosmicBackground';
-import { GlowCard } from '@/components/GlowCard';
-import { CosmicButton } from '@/components/CosmicButton';
-import { BattleNetIcon } from '@/components/BattleNetIcon';
-import { ArrowLeft, Loader2, Shield, ChevronDown, Mail } from 'lucide-react';
+import { resolveSemanticMessage } from '@/i18n/semantic';
+import { supabase } from '@/integrations/supabase/client';
 import {
   type BattleNetRegion,
   REGION_LABELS,
@@ -24,11 +25,12 @@ import {
   getRedirectUri,
   generateOAuthState,
 } from '@/lib/battlenetOAuth';
+import log from '@/lib/logger';
 
 const Auth = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { user, signIn } = useAuth();
   const { toast } = useToast();
   const [bnetLoading, setBnetLoading] = useState(false);
@@ -37,6 +39,8 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState<BattleNetRegion>('eu');
   const [emailFormOpen, setEmailFormOpen] = useState(false);
+  const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
+    resolveSemanticMessage({ key, language, translations: t });
 
   // Check for Battle.net callback - only process once
   useEffect(() => {
@@ -211,7 +215,7 @@ const Auth = () => {
               <div className="p-4 rounded-2xl bg-primary/20 border border-primary/30">
                 <Shield className="h-12 w-12 text-primary" />
               </div>
-              <h1 className="text-4xl font-display text-foreground">{t.auto.pages_Auth_brand}</h1>
+              <h1 className="text-4xl font-display text-foreground">{sm('auth.brand')}</h1>
             </div>
             
             <div className="space-y-4">
@@ -231,7 +235,7 @@ const Auth = () => {
             <div className="lg:hidden text-center space-y-2 mb-4">
               <div className="flex items-center justify-center gap-3 mb-4">
                 <Shield className="h-8 w-8 text-primary" />
-                <span className="text-2xl font-display text-foreground">{t.auto.pages_Auth_brand}</span>
+                <span className="text-2xl font-display text-foreground">{sm('auth.brand')}</span>
               </div>
               <h1 className="text-2xl font-semibold text-foreground">
                 {t.auth.loginTitle}
@@ -302,7 +306,7 @@ const Auth = () => {
                         type="email"
                         value={email}
                         onChange={e => setEmail(e.target.value)}
-                        placeholder={t.auto.pages_Auth_email_placeholder}
+                        placeholder={sm('auth.email_placeholder')}
                         required
                         className="bg-card/60 border-border"
                       />
@@ -315,7 +319,7 @@ const Auth = () => {
                         type="password"
                         value={password}
                         onChange={e => setPassword(e.target.value)}
-                        placeholder={t.auto.pages_Auth_password_placeholder}
+                        placeholder={sm('auth.password_placeholder')}
                         required
                         className="bg-card/60 border-border"
                       />

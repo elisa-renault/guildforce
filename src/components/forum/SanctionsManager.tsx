@@ -18,15 +18,18 @@ import {
 import { Ban, Clock, User, Undo2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDateTimeLocalized, formatDistanceFromNowLocalized, interpolateMessage } from '@/i18n/format';
+import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 
 export const SanctionsManager = () => {
   const { language, t } = useLanguage();
   const { fetchActiveSanctions, revokeSanction } = useForumSanctionActions();
-  
+
   const [sanctions, setSanctions] = useState<ForumSanction[]>([]);
   const [loading, setLoading] = useState(true);
   const [revoking, setRevoking] = useState<string | null>(null);
   const [confirmRevoke, setConfirmRevoke] = useState<ForumSanction | null>(null);
+
+  const s = (key: SemanticKey) => resolveSemanticMessage({ key, language, translations: t });
 
   const loadSanctions = async () => {
     setLoading(true);
@@ -35,7 +38,7 @@ export const SanctionsManager = () => {
       setSanctions(data);
     } catch (error) {
       console.error('Error loading sanctions:', error);
-      toast.error(t.auto.components_forum_SanctionsManager_40);
+      toast.error(s('forum.sanctions.toast.load_error'));
     } finally {
       setLoading(false);
     }
@@ -47,18 +50,17 @@ export const SanctionsManager = () => {
 
   const handleRevoke = async () => {
     if (!confirmRevoke) return;
-    
+
     setRevoking(confirmRevoke.id);
     try {
       await revokeSanction(confirmRevoke.id);
-      toast.success(
-        t.auto.components_forum_SanctionsManager_57,
-        { style: { background: 'hsl(var(--card))', borderColor: 'hsl(var(--primary) / 0.3)' } }
-      );
+      toast.success(s('forum.sanctions.toast.revoked'), {
+        style: { background: 'hsl(var(--card))', borderColor: 'hsl(var(--primary) / 0.3)' },
+      });
       loadSanctions();
     } catch (error) {
       console.error('Error revoking sanction:', error);
-      toast.error(t.auto.components_forum_SanctionsManager_63);
+      toast.error(s('forum.sanctions.toast.revoke_error'));
     } finally {
       setRevoking(null);
       setConfirmRevoke(null);
@@ -81,7 +83,7 @@ export const SanctionsManager = () => {
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <Ban className="h-5 w-5 text-destructive" />
-            {t.auto.components_forum_SanctionsManager_86}
+            {s('forum.sanctions.manager.title')}
             {sanctions.length > 0 && (
               <Badge variant="destructive" className="ml-2">
                 {sanctions.length}
@@ -91,9 +93,7 @@ export const SanctionsManager = () => {
         </CardHeader>
         <CardContent>
           {sanctions.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">
-              {t.auto.components_forum_SanctionsManager_97}
-            </p>
+            <p className="text-center text-muted-foreground py-8">{s('forum.sanctions.manager.empty')}</p>
           ) : (
             <div className="space-y-3">
               {sanctions.map((sanction) => (
@@ -114,56 +114,48 @@ export const SanctionsManager = () => {
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-foreground">
-                          {sanction.profiles?.username || 'Unknown'}
+                          {sanction.profiles?.username || s('forum.sanctions.value.unknown')}
                         </span>
-                        <Badge 
+                        <Badge
                           variant={sanction.sanction_type === 'ban' ? 'destructive' : 'secondary'}
                           className="text-xs"
                         >
                           {sanction.sanction_type === 'ban' ? (
                             <>
                               <Ban className="h-3 w-3 mr-1" />
-                              {t.auto.components_forum_SanctionsManager_128}
+                              {s('forum.sanctions.type.ban')}
                             </>
                           ) : (
                             <>
                               <Clock className="h-3 w-3 mr-1" />
-                              {t.auto.components_forum_SanctionsManager_133}
+                              {s('forum.sanctions.type.timeout')}
                             </>
                           )}
                         </Badge>
                       </div>
-                      
-                      {sanction.reason && (
-                        <p className="text-sm text-muted-foreground">
-                          {sanction.reason}
-                        </p>
-                      )}
-                      
+
+                      {sanction.reason && <p className="text-sm text-muted-foreground">{sanction.reason}</p>}
+
                       <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                         <span>
-                          {t.auto.components_forum_SanctionsManager_147}: {sanction.created_by_profile?.username || 'Unknown'}
+                          {s('forum.sanctions.manager.by_label')}: {sanction.created_by_profile?.username || s('forum.sanctions.value.unknown')}
                         </span>
-                        <span>
-                          {formatDistanceFromNowLocalized(sanction.created_at, language, true)}
-                        </span>
+                        <span>{formatDistanceFromNowLocalized(sanction.created_at, language, true)}</span>
                         {sanction.expires_at ? (
                           <span>
-                            {t.auto.components_forum_SanctionsManager_154}:{' '}
+                            {s('forum.sanctions.manager.expires_label')}:{' '}
                             {formatDateTimeLocalized(sanction.expires_at, language, {
                               dateStyle: 'medium',
                               timeStyle: 'short',
                             })}
                           </span>
                         ) : (
-                          <span className="text-destructive">
-                            {t.auto.components_forum_SanctionsManager_158}
-                          </span>
+                          <span className="text-destructive">{s('forum.sanctions.manager.permanent')}</span>
                         )}
                       </div>
                     </div>
                   </div>
-                  
+
                   <Button
                     variant="ghost"
                     size="sm"
@@ -176,7 +168,7 @@ export const SanctionsManager = () => {
                     ) : (
                       <>
                         <Undo2 className="h-4 w-4 mr-1" />
-                        {t.auto.components_forum_SanctionsManager_177}
+                        {s('forum.sanctions.manager.revoke')}
                       </>
                     )}
                   </Button>
@@ -191,23 +183,16 @@ export const SanctionsManager = () => {
       <AlertDialog open={!!confirmRevoke} onOpenChange={() => setConfirmRevoke(null)}>
         <AlertDialogContent className="bg-card border-border">
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t.forum.moderation?.revokeSanction || (t.auto.components_forum_SanctionsManager_193)}
-            </AlertDialogTitle>
+            <AlertDialogTitle>{s('forum.sanctions.dialog.revoke_title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              {interpolateMessage(
-                t.forum.moderation?.revokeSanctionConfirm || t.auto.components_forum_SanctionsManager_196,
-                { username: confirmRevoke?.profiles?.username || '' },
-              )}
+              {interpolateMessage(s('forum.sanctions.dialog.revoke_confirm'), {
+                username: confirmRevoke?.profiles?.username || '',
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>
-              {t.common.cancel}
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={handleRevoke}>
-              {t.forum.moderation?.revoke || (t.auto.components_forum_SanctionsManager_207)}
-            </AlertDialogAction>
+            <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRevoke}>{s('forum.sanctions.dialog.revoke_action')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

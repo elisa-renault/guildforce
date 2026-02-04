@@ -1,9 +1,10 @@
-import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { ChevronRight, MoreHorizontal } from "lucide-react";
+import * as React from "react";
 
-import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { resolveSemanticMessage } from "@/i18n/semantic";
+import { cn } from "@/lib/utils";
 
 const Breadcrumb = React.forwardRef<
   HTMLElement,
@@ -11,8 +12,18 @@ const Breadcrumb = React.forwardRef<
     separator?: React.ReactNode;
   }
 >(({ ...props }, ref) => {
-  const { t } = useLanguage();
-  return <nav ref={ref} aria-label={t.auto.components_ui_breadcrumb_label} {...props} />;
+  const { t, language } = useLanguage();
+  return (
+    <nav
+      ref={ref}
+      aria-label={resolveSemanticMessage({
+        key: "ui.breadcrumb.aria_label",
+        language,
+        translations: t,
+      })}
+      {...props}
+    />
+  );
 });
 Breadcrumb.displayName = "Breadcrumb";
 
@@ -71,7 +82,7 @@ const BreadcrumbSeparator = ({ children, className, ...props }: React.ComponentP
 BreadcrumbSeparator.displayName = "BreadcrumbSeparator";
 
 const BreadcrumbEllipsis = ({ className, ...props }: React.ComponentProps<"span">) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   return (
     <span
       role="presentation"
@@ -80,7 +91,13 @@ const BreadcrumbEllipsis = ({ className, ...props }: React.ComponentProps<"span"
       {...props}
     >
       <MoreHorizontal className="h-4 w-4" />
-      <span className="sr-only">{t.auto.components_ui_breadcrumb_more}</span>
+      <span className="sr-only">
+        {resolveSemanticMessage({
+          key: "ui.breadcrumb.more",
+          language,
+          translations: t,
+        })}
+      </span>
     </span>
   );
 };
