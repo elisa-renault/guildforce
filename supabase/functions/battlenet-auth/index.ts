@@ -1962,17 +1962,24 @@ async function fetchAndStoreCharacters(
 
     // Fetch detailed character info for guild memberships
     const minGuildCharLevel = parseOptionalInt(GUILD_CHAR_MIN_LEVEL);
-    const maxGuildCharsToCheck = Math.max(parseOptionalInt(GUILD_CHAR_MAX_CHECK) ?? 20, 1);
+    const configuredGuildCharLimit = parseOptionalInt(GUILD_CHAR_MAX_CHECK);
+    const maxGuildCharsToCheck =
+      configuredGuildCharLimit === null || configuredGuildCharLimit <= 0
+        ? null
+        : Math.max(configuredGuildCharLimit, 1);
     const guildCharCandidates = minGuildCharLevel === null
       ? characters
       : characters.filter(c => c.level >= minGuildCharLevel);
-    const guildCharsToCheck = guildCharCandidates.slice(0, maxGuildCharsToCheck);
+    const guildCharsToCheck = maxGuildCharsToCheck === null
+      ? guildCharCandidates
+      : guildCharCandidates.slice(0, maxGuildCharsToCheck);
     log.debug(
-      `Checking ${guildCharsToCheck.length} character(s) for guild info (min level: ${minGuildCharLevel ?? 'none'}, limit: ${maxGuildCharsToCheck}).`
+      `Checking ${guildCharsToCheck.length} character(s) for guild info (min level: ${minGuildCharLevel ?? 'none'}, limit: ${maxGuildCharsToCheck ?? 'all'}).`
     );
 
     const guildMemberships: GuildMembershipData[] = [];
     const guildsToCheck: Map<string, { name: string; realmSlug: string; faction: string; characterIds: string[] }> = new Map();
+    let characterDetailSuccessCount = 0;
 
     // Fetch character details to get guild info
     for (const char of guildCharsToCheck) {
@@ -1989,6 +1996,7 @@ async function fetchAndStoreCharacters(
         }
 
         const charDetail = await charDetailResponse.json();
+        characterDetailSuccessCount += 1;
         
         if (charDetail.guild) {
           log.debug(`Character ${sanitizePII(char.name, 'name')} is in guild: ${sanitizePII(charDetail.guild.name, 'name')}`);
@@ -2202,8 +2210,12 @@ async function fetchAndStoreCharacters(
         }
       }
 
-      await autoJoinGuilds(supabase, userId, guildMemberships, region);
     }
+
+    // Only run cleanup when we have at least one successful character-detail fetch
+    // (or no characters to check), to avoid accidental removals on transient API failures.
+    const allowGuildCleanup = guildCharsToCheck.length === 0 || characterDetailSuccessCount > 0;
+    await autoJoinGuilds(supabase, userId, guildMemberships, region, allowGuildCleanup);
 
     // Re-establish matched_user_id links in guild_roster_cache for this user's characters
     // This fixes the issue where syncing a user's characters would clear the links
@@ -2350,7 +2362,8 @@ async function autoJoinGuilds(
   supabase: any,
   userId: string,
   guildMemberships: GuildMembershipData[],
-  region: BattleNetRegion = 'eu'
+  region: BattleNetRegion = 'eu',
+  allowCleanup = true
 ) {
   try {
     // Group memberships by unique guild
@@ -2376,7 +2389,11 @@ async function autoJoinGuilds(
     }
 
     const currentWoWGuilds = new Set<string>(uniqueGuilds.keys());
-    await cleanupLeftGuilds(supabase, userId, currentWoWGuilds);
+    if (allowCleanup) {
+      await cleanupLeftGuilds(supabase, userId, currentWoWGuilds);
+    } else {
+      log.info(`Skipping guild membership cleanup for user ${sanitizePII(userId, 'id')} due to missing character detail fetch results`);
+    }
 
     log.debug(`Processing ${uniqueGuilds.size} unique guilds for auto-join...`);
 
