@@ -10,6 +10,7 @@ import { MarkdownEditor } from '@/components/forum';
 import { Input } from '@/components/ui/input';
 import { Loader2, ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import { interpolateMessage } from '@/i18n/format';
 
 const ForumNewTopic = () => {
   const { categorySlug } = useParams<{ categorySlug: string }>();
@@ -112,7 +113,7 @@ const ForumNewTopic = () => {
               {t.auto.pages_ForumNewTopic_112}
             </h1>
             <p className="text-sm text-muted-foreground">
-              {t.auto.pages_ForumNewTopic_115.replace('{{categoryName}}', categoryName)}
+              {interpolateMessage(t.auto.pages_ForumNewTopic_115, { categoryName })}
             </p>
           </div>
         </div>

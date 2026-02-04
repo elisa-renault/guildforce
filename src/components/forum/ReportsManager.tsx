@@ -28,10 +28,9 @@ import {
   Flag, User, Clock, Check, X, Eye, MessageSquare,
   Loader2
 } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
 import { toast } from 'sonner';
 import { resolveSemanticMessage } from '@/i18n/semantic';
+import { formatDistanceFromNowLocalized } from '@/i18n/format';
 
 interface ReportWithDetails {
   id: string;
@@ -74,7 +73,6 @@ export const ReportsManager = () => {
   const navigate = useNavigate();
   const { language, t } = useLanguage();
   const { user } = useAuth();
-  const locale = DATE_LOCALE_BY_LANGUAGE[language];
   const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
     resolveSemanticMessage({ key, language, translations: t });
 
@@ -318,7 +316,7 @@ export const ReportsManager = () => {
                       </Badge>
                       <span className="text-xs text-muted-foreground flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        {formatDistanceToNow(new Date(report.created_at), { addSuffix: true, locale })}
+                        {formatDistanceFromNowLocalized(report.created_at, language, true)}
                       </span>
                     </div>
 

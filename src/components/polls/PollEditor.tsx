@@ -37,6 +37,7 @@ import type { PollFormData, QuestionFormData, SectionFormData } from '@/types/po
 import { PollResultsAccessEditor, type ResultsAccessRule } from './PollResultsAccessEditor';
 import { PollRespondentEditor, type RespondentAccessRule } from './PollRespondentEditor';
 import { resolveSemanticMessage } from '@/i18n/semantic';
+import { interpolateMessage } from '@/i18n/format';
 
 interface Roster {
   id: string;
@@ -141,7 +142,7 @@ const SortableSectionHeader = ({
           >
             <GripHorizontal className="h-5 w-5" />
             <span className="text-sm font-medium text-primary">
-              {sm('polls.editor.section_label').replace('{{index}}', String(sectionIndex + 1))}
+              {interpolateMessage(sm('polls.editor.section_label'), { index: sectionIndex + 1 })}
             </span>
           </div>
           <div className="flex items-center gap-1">
