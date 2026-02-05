@@ -1,11 +1,17 @@
 import { Badge } from '@/components/ui/badge';
 import { CosmicButton } from '@/components/CosmicButton';
-import { CheckCircle, HelpCircle, XCircle, Pencil, Shield, Heart, Sword, Swords, Crosshair, MessageSquare, Lock, Unlock } from 'lucide-react';
+import { CheckCircle, HelpCircle, XCircle, Pencil, Shield, Heart, Sword, Swords, Crosshair, MessageSquare, Lock, Unlock, MoreVertical, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getClassById, getLocalizedClassName, getSpecById } from '@/data/wowClasses';
 import { MemberWish, WishChoice, ValidationStatus } from '@/types/guild';
 import { WishValidationBadge } from './WishValidationBadge';
 import { cn } from '@/lib/utils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface MobileRosterCardProps {
   member: MemberWish;
@@ -85,6 +91,24 @@ export const MobileRosterCard = ({
   const filledWishes = member.wishes.filter(w => w.class_id);
   const memberLocked = Boolean(member.wishes_locked);
   const effectiveLocked = isRosterLocked || memberLocked;
+  const actionItems = [
+    ...(isGM && onToggleMemberLock ? [{
+      key: 'lock',
+      label: memberLocked ? t.wishes.unlockMember : t.wishes.lockMember,
+      icon: memberLocked ? Unlock : Lock,
+      onClick: () => onToggleMemberLock(member.id, !memberLocked),
+      loading: lockingMemberId === member.id,
+      disabled: false,
+    }] : []),
+    ...(isOwnRow ? [{
+      key: 'edit',
+      label: t.common.edit,
+      icon: Pencil,
+      onClick: () => onStartEditing(member),
+      loading: false,
+      disabled: effectiveLocked,
+    }] : []),
+  ];
 
   const handleCardClick = (e: React.MouseEvent) => {
     // Don't trigger card click if clicking on interactive elements
@@ -132,33 +156,57 @@ export const MobileRosterCard = ({
           </Badge>
         </div>
         <div className="flex items-center gap-1">
-          {isGM && onToggleMemberLock && (
+          {actionItems.length <= 1 && actionItems.map((action) => (
             <CosmicButton
+              key={action.key}
               size="sm"
               variant="outline"
               onClick={(e) => {
                 e.stopPropagation();
-                onToggleMemberLock(member.id, !memberLocked);
+                action.onClick();
               }}
-              loading={lockingMemberId === member.id}
-              icon={memberLocked ? <Unlock className="h-3.5 w-3.5" strokeWidth={1.5} /> : <Lock className="h-3.5 w-3.5" strokeWidth={1.5} />}
+              loading={action.loading}
+              disabled={action.disabled}
+              icon={<action.icon className="h-3.5 w-3.5" strokeWidth={1.5} />}
               className="h-7 w-7 p-0"
-              aria-label={memberLocked ? t.wishes.unlockMember : t.wishes.lockMember}
+              aria-label={action.label}
             />
-          )}
-          {isOwnRow && (
-            <CosmicButton 
-              size="sm" 
-              variant="outline" 
-              onClick={(e) => {
-                e.stopPropagation();
-                onStartEditing(member);
-              }}
-              disabled={effectiveLocked}
-              icon={<Pencil className="h-3.5 w-3.5" strokeWidth={1.5} />}
-              className="h-7 w-7 p-0"
-              aria-label={t.common.edit}
-            />
+          ))}
+          {actionItems.length > 1 && (
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger asChild>
+                <CosmicButton
+                  size="sm"
+                  variant="outline"
+                  onClick={(e) => e.stopPropagation()}
+                  icon={<MoreVertical className="h-3.5 w-3.5" strokeWidth={1.5} />}
+                  className="h-7 w-7 p-0"
+                  aria-label={t.common.actions}
+                />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-card border-border">
+                {actionItems.map((action) => (
+                  <DropdownMenuItem
+                    key={action.key}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!action.disabled && !action.loading) {
+                        action.onClick();
+                      }
+                    }}
+                    disabled={action.disabled || action.loading}
+                    className="cursor-pointer"
+                  >
+                    {action.loading ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <action.icon className="h-4 w-4 mr-2" />
+                    )}
+                    {action.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
       </div>

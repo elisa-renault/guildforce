@@ -4,6 +4,7 @@ export const translationsEn: Translations = {
     common: {
       loading: 'Loading...',
       open: 'Open',
+      actions: 'Actions',
       save: 'Save',
       cancel: 'Cancel',
       delete: 'Delete',

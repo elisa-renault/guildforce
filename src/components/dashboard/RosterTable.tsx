@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { CheckCircle, HelpCircle, XCircle, Pencil, Save, Shield, Heart, Sword, Swords, Crosshair, MessageSquare, Plus, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Lock, Unlock } from 'lucide-react';
+import { CheckCircle, HelpCircle, XCircle, Pencil, Save, Shield, Heart, Sword, Swords, Crosshair, MessageSquare, Plus, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Lock, Unlock, MoreVertical, Loader2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getClassById, getLocalizedClassName, getLocalizedSpecName, getSpecById } from '@/data/wowClasses';
 import { MemberWish, WishData, WishChoice, ValidationStatus } from '@/types/guild';
@@ -16,6 +16,12 @@ import { MobileRosterCard } from './MobileRosterCard';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 type SortColumn = 'player' | 'status' | 'wish1' | 'wish2' | 'wish3' | 'wishesCount';
 type SortDirection = 'asc' | 'desc';
@@ -415,6 +421,31 @@ export const RosterTable = ({
                 : memberLocked
                   ? t.wishes.lockedMemberDesc
                   : '';
+
+              const rowActions = [
+                ...(isGM && onToggleMemberLock ? [{
+                  key: 'lock',
+                  label: memberLocked ? t.wishes.unlockMember : t.wishes.lockMember,
+                  icon: memberLocked ? Unlock : Lock,
+                  onClick: () => onToggleMemberLock(member.id, !memberLocked),
+                  loading: lockingMemberId === member.id,
+                  disabled: false,
+                }] : []),
+                ...(isOwnRow ? [{
+                  key: 'edit',
+                  label: isEditing ? t.common.save : t.common.edit,
+                  icon: isEditing ? Save : Pencil,
+                  onClick: () => {
+                    if (isEditing) {
+                      onSaveEditing();
+                    } else {
+                      onStartEditing(member);
+                    }
+                  },
+                  loading: isEditing && saving,
+                  disabled: isEditingLocked,
+                }] : []),
+              ];
               
               const handleRowClick = () => {
                 // Navigate to member wishes page (read-only view) for all members
@@ -510,58 +541,68 @@ export const RosterTable = ({
                     </TableCell>
                     <TableCell className="py-1 pl-0 pr-1">
                       <div className="flex justify-end gap-1">
-                        {isGM && onToggleMemberLock && (
+                        {rowActions.length <= 1 && rowActions.map((action) => (
                           <TooltipProvider delayDuration={200}>
-                            <Tooltip>
+                            <Tooltip key={action.key}>
                               <TooltipTrigger asChild>
                                 <CosmicButton
                                   size="sm"
-                                  variant="outline"
+                                  variant={action.key === 'edit' && isEditing ? "default" : "outline"}
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    onToggleMemberLock(member.id, !memberLocked);
+                                    action.onClick();
                                   }}
-                                  loading={lockingMemberId === member.id}
-                                  icon={memberLocked ? <Unlock className="h-3.5 w-3.5" strokeWidth={1.5} /> : <Lock className="h-3.5 w-3.5" strokeWidth={1.5} />}
-                                  className="h-8 px-2"
-                                />
-                              </TooltipTrigger>
-                              <TooltipContent side="left">
-                                {memberLocked ? t.wishes.unlockMember : t.wishes.lockMember}
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-                        {isOwnRow && (
-                          <TooltipProvider delayDuration={200}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <CosmicButton 
-                                  size="sm" 
-                                  variant={isEditing ? "default" : "outline"}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (isEditing) {
-                                      onSaveEditing();
-                                    } else {
-                                      onStartEditing(member);
-                                    }
-                                  }}
-                                  loading={isEditing && saving}
-                                  disabled={isEditingLocked}
+                                  loading={action.loading}
+                                  disabled={action.disabled}
                                   icon={
-                                    isEditing
-                                      ? (!saving ? <Save className="h-4 w-4" strokeWidth={1.5} /> : undefined)
-                                      : <Pencil className="h-3.5 w-3.5" strokeWidth={1.5} />
+                                    action.loading
+                                      ? undefined
+                                      : <action.icon className={action.key === 'edit' ? "h-4 w-4" : "h-3.5 w-3.5"} strokeWidth={1.5} />
                                   }
                                   className="h-8 px-2"
                                 />
                               </TooltipTrigger>
                               <TooltipContent side="left">
-                                {isEditing ? t.common.save : t.common.edit}
+                                {action.label}
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
+                        ))}
+                        {rowActions.length > 1 && (
+                          <DropdownMenu modal={false}>
+                            <DropdownMenuTrigger asChild>
+                              <CosmicButton
+                                size="sm"
+                                variant="outline"
+                                onClick={(e) => e.stopPropagation()}
+                                icon={<MoreVertical className="h-4 w-4" strokeWidth={1.5} />}
+                                className="h-8 w-8 p-0"
+                                aria-label={t.common.actions}
+                              />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="bg-card border-border">
+                              {rowActions.map((action) => (
+                                <DropdownMenuItem
+                                  key={action.key}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (!action.disabled && !action.loading) {
+                                      action.onClick();
+                                    }
+                                  }}
+                                  disabled={action.disabled || action.loading}
+                                  className="cursor-pointer"
+                                >
+                                  {action.loading ? (
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                  ) : (
+                                    <action.icon className="h-4 w-4 mr-2" />
+                                  )}
+                                  {action.label}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         )}
                       </div>
                     </TableCell>
