@@ -285,7 +285,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "tokenDistribution": "Token-Verteilung",
     "tokenCloth": "Tuch",
     "tokenLeather": "Leder",
-    "tokenMail": "Post",
+    "tokenMail": "Kette",
     "tokenPlate": "Platte",
     "tokenDistributionInfo": "F\u00fcr Mitternacht wird eine neue Token-Verteilung f\u00fcr Tier-Sets erwartet.",
     "tokenDistributionSource": "Siehe den Wowhead-Artikel.",
