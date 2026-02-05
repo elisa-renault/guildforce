@@ -1,4 +1,4 @@
-﻿-- Fix mojibake artifacts in Terms of Service translations.
+-- Fix mojibake artifacts in Terms of Service translations.
 -- Handles known broken dash sequences in legal page markdown headings.
 
 BEGIN;

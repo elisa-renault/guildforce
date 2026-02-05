@@ -1,4 +1,4 @@
-﻿-- Seed German content rows for admin dynamic content tables.
+-- Seed German content rows for admin dynamic content tables.
 -- Idempotent: inserts only when DE row is missing.
 
 BEGIN;
