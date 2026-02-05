@@ -2328,6 +2328,16 @@ async function cleanupLeftGuilds(
       if (!currentWoWGuilds.has(guildKey)) {
         log.info(`User no longer in WoW guild ${sanitizePII(guild.name, 'name')}, removing from app...`);
 
+        const { error: wishesDeleteError } = await supabase
+          .from('class_wishes')
+          .delete()
+          .eq('guild_id', guild.id)
+          .eq('user_id', userId);
+
+        if (wishesDeleteError) {
+          log.error(`Error deleting wishes for removed guild ${sanitizePII(guild.name, 'name')}:`, wishesDeleteError);
+        }
+
         if (guild.owner_id === userId) {
           log.info(`User was owner of guild ${sanitizePII(guild.name, 'name')}, making it orphan...`);
           await supabase
@@ -2346,6 +2356,68 @@ async function cleanupLeftGuilds(
     log.debug('Cleanup of left guilds completed');
   } catch (error) {
     log.error('Error in cleanupLeftGuilds:', error);
+  }
+}
+
+/**
+ * Deletes wishes that no longer have a matching guild_members row for the user.
+ * This catches historical orphan wishes that may remain after older cleanup flows.
+ */
+async function cleanupOrphanWishes(
+  supabase: any,
+  userId: string
+) {
+  try {
+    const { data: memberGuildRows, error: memberGuildsError } = await supabase
+      .from('guild_members')
+      .select('guild_id')
+      .eq('user_id', userId);
+
+    if (memberGuildsError) {
+      log.error('Error loading member guilds for orphan wish cleanup:', memberGuildsError);
+      return;
+    }
+
+    const memberGuildIds = new Set(
+      (memberGuildRows || []).map((row: { guild_id: string }) => row.guild_id)
+    );
+
+    const { data: wishGuildRows, error: wishGuildsError } = await supabase
+      .from('class_wishes')
+      .select('guild_id')
+      .eq('user_id', userId);
+
+    if (wishGuildsError) {
+      log.error('Error loading user wishes for orphan cleanup:', wishGuildsError);
+      return;
+    }
+
+    const orphanGuildIds = Array.from(
+      new Set(
+        (wishGuildRows || [])
+          .map((row: { guild_id: string }) => row.guild_id)
+          .filter((guildId: string) => !memberGuildIds.has(guildId))
+      )
+    );
+
+    if (orphanGuildIds.length === 0) {
+      return;
+    }
+
+    const { error: deleteError } = await supabase
+      .from('class_wishes')
+      .delete()
+      .eq('user_id', userId)
+      .in('guild_id', orphanGuildIds);
+
+    if (deleteError) {
+      log.error('Error deleting orphan wishes:', deleteError);
+      return;
+    }
+
+    log.info(`Deleted orphan wishes for user ${sanitizePII(userId, 'id')} in ${orphanGuildIds.length} guild(s)`);
+  } catch (error) {
+    log.error('Error in cleanupOrphanWishes:', error);
   }
 }
 
@@ -2522,6 +2594,8 @@ async function autoJoinGuilds(
         log.error(`Error processing guild ${sanitizePII(guildInfo.name, 'name')}:`, err);
       }
     }
+
+    await cleanupOrphanWishes(supabase, userId);
 
     log.info('Auto-join guilds completed');
   } catch (error) {
