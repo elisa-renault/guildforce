@@ -132,28 +132,35 @@ export const MobileRosterCard = ({
     >
       {/* Header with name and status */}
       <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <span className="font-medium text-foreground">{member.username}</span>
-          {effectiveLocked && <Lock className="h-3.5 w-3.5 text-amber-400" />}
-          <Badge 
-            variant={member.status === 'confirmed' ? 'default' : 'outline'}
-            className={cn(
-              "text-[10px] px-1.5 py-0",
-              member.status === 'confirmed' 
-                ? 'bg-healer/20 text-healer border-healer/30' 
-                : member.status === 'withdrawn'
-                ? 'bg-destructive/20 text-destructive border-destructive/30'
-                : 'bg-amber-500/20 text-amber-500 border-amber-500/30'
-            )}
-          >
-            {member.status === 'confirmed' ? (
-              <CheckCircle className="h-3 w-3" strokeWidth={1.5} />
-            ) : member.status === 'withdrawn' ? (
-              <XCircle className="h-3 w-3" strokeWidth={1.5} />
-            ) : (
-              <HelpCircle className="h-3 w-3" strokeWidth={1.5} />
-            )}
-          </Badge>
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-foreground">{member.username}</span>
+            {effectiveLocked && <Lock className="h-3.5 w-3.5 text-amber-400" />}
+            <Badge 
+              variant={member.status === 'confirmed' ? 'default' : 'outline'}
+              className={cn(
+                "text-[10px] px-1.5 py-0",
+                member.status === 'confirmed' 
+                  ? 'bg-healer/20 text-healer border-healer/30' 
+                  : member.status === 'withdrawn'
+                  ? 'bg-destructive/20 text-destructive border-destructive/30'
+                  : 'bg-amber-500/20 text-amber-500 border-amber-500/30'
+              )}
+            >
+              {member.status === 'confirmed' ? (
+                <CheckCircle className="h-3 w-3" strokeWidth={1.5} />
+              ) : member.status === 'withdrawn' ? (
+                <XCircle className="h-3 w-3" strokeWidth={1.5} />
+              ) : (
+                <HelpCircle className="h-3 w-3" strokeWidth={1.5} />
+              )}
+            </Badge>
+          </div>
+          {member.mainCharacterName && (
+            <div className="text-[11px] text-muted-foreground">
+              <span className="text-foreground/80">{member.mainCharacterName}</span>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-1">
           {actionItems.length <= 1 && actionItems.map((action) => (

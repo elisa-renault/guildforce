@@ -22,6 +22,7 @@ export interface WishChoice {
 export interface MemberWish {
   id: string;
   username: string;
+  mainCharacterName?: string | null;
   status: 'confirmed' | 'potential' | string;
   wishes: WishChoice[];
   wishes_locked?: boolean;
