@@ -14,6 +14,7 @@ import { GuildSubNav } from '@/components/guild';
 import { RosterSelector } from '@/components/roster';
 import { Loader2, Save, GripVertical, Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 import { toSlug } from '@/lib/guildSlug';
+import { resolveSpecOrder } from '@/lib/wishOrder';
 import { interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import {
@@ -326,7 +327,7 @@ const { data: allGuilds } = await supabase
         const loadedWishes: WishData[] = wishesData.map((w, index) => ({
           id: `wish-${index + 1}`,
           classId: w.class_id,
-          specIds: w.spec_ids || [],
+          specIds: resolveSpecOrder(w.spec_ids || [], w.spec_order),
           comment: w.comment || '',
         }));
         setWishes(loadedWishes);
@@ -438,6 +439,7 @@ const { data: allGuilds } = await supabase
           choice_index: i + 1,
           class_id: w.classId,
           spec_ids: w.specIds,
+          spec_order: w.specIds,
           comment: w.comment,
         }))
         .filter(w => w.class_id);

@@ -8,7 +8,7 @@ export type ValidationStatus = 'pending' | 'approved' | 'rejected';
 export interface WishChoice {
   choice_index: number;
   class_id: string;
-  spec_ids: string[];
+  spec_ids: string[]; // ordered by priority, first = main spec
   comment: string | null;
   validation_status?: ValidationStatus;
   validated_by?: string | null;
@@ -31,7 +31,7 @@ export interface MemberWish {
  */
 export interface WishData {
   classId: string;
-  specIds: string[];
+  specIds: string[]; // ordered by priority, first = main spec
   comment: string;
 }
 

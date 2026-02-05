@@ -1,4 +1,4 @@
-import type { Translations } from './translations';
+﻿import type { Translations } from './translations';
 
 export const translationsFr: Translations = {
     common: {
@@ -187,6 +187,10 @@ export const translationsFr: Translations = {
       choiceNumber: 'Choix n°{{number}}',
       selectClass: 'Sélectionnez une classe',
       selectSpecs: 'Sélectionnez les spécialisations',
+      reorderSpecs: 'Réorganiser les spécialisations',
+      mainSpec: 'Principal',
+      moveSpecUp: 'Monter la spécialisation',
+      moveSpecDown: 'Descendre la spécialisation',
       comment: 'Commentaire',
       commentPlaceholder: 'Informations complémentaires',
       status: 'Engagement',
@@ -1245,3 +1249,6 @@ export const translationsFr: Translations = {
       pages_Wishes_session_expired: 'Session expirée',
     },
   }
+
+
+

@@ -18,6 +18,7 @@ import { CommitmentStatus } from '@/components/CommitmentToggle';
 import { cn } from '@/lib/utils';
 import { interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
+import { resolveSpecOrder } from '@/lib/wishOrder';
 
 interface WishSummary {
   choice_index: number;
@@ -154,14 +155,19 @@ const Overview = () => {
         // Fetch my wishes for the default roster
         const { data: wishesData } = await supabase
           .from('class_wishes')
-          .select('choice_index, class_id, spec_ids, validation_status')
+          .select('choice_index, class_id, spec_ids, spec_order, validation_status')
           .eq('guild_id', foundGuildId)
           .eq('user_id', user.id)
           .eq('roster_id', rostersData.id)
           .order('choice_index');
 
         if (wishesData) {
-          setMyWishes(wishesData);
+          setMyWishes(wishesData.map(wish => ({
+            choice_index: wish.choice_index,
+            class_id: wish.class_id,
+            spec_ids: resolveSpecOrder(wish.spec_ids || [], wish.spec_order),
+            validation_status: wish.validation_status,
+          })));
         }
       } else if (rostersData) {
         setDefaultRoster(rostersData);

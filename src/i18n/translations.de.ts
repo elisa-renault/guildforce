@@ -1,4 +1,4 @@
-import { createLocaleTranslations } from './createLocaleTranslations';
+﻿import { createLocaleTranslations } from './createLocaleTranslations';
 import type { Translations } from './translations';
 import { translationsEn } from './translations.en';
 
@@ -189,6 +189,10 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "choiceNumber": "Auswahl #{{number}}",
     "selectClass": "W\u00e4hlen Sie eine Klasse aus",
     "selectSpecs": "Spezialisierungen ausw\u00e4hlen",
+    "reorderSpecs": "Spezialisierungen neu ordnen",
+    "mainSpec": "Haupt",
+    "moveSpecUp": "Spezialisierung nach oben",
+    "moveSpecDown": "Spezialisierung nach unten",
     "comment": "Kommentar",
     "commentPlaceholder": "Weitere Informationen",
     "status": "Verpflichtung",
@@ -916,3 +920,4 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "status": "Status"
   }
 });
+

@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useBattletagVisibility } from '@/hooks/useBattletagVisibility';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { resolveSpecOrder } from '@/lib/wishOrder';
 
 interface WishChoice {
   choice_index: number;
@@ -141,15 +142,20 @@ const MemberWishes = () => {
       // Get wishes with validation info
       const { data: wishesData } = await supabase
         .from('class_wishes')
-        .select('choice_index, class_id, spec_ids, comment, validation_status, validated_by, validated_at')
+        .select('choice_index, class_id, spec_ids, spec_order, comment, validation_status, validated_by, validated_at')
         .eq('guild_id', matchedGuild.id)
         .eq('user_id', memberId)
         .order('choice_index');
 
       if (wishesData) {
         setWishes(wishesData.map(w => ({
-          ...w,
+          choice_index: w.choice_index,
+          class_id: w.class_id,
+          spec_ids: resolveSpecOrder(w.spec_ids || [], w.spec_order),
+          comment: w.comment,
           validation_status: (w.validation_status as ValidationStatus) || 'pending',
+          validated_by: w.validated_by,
+          validated_at: w.validated_at,
         })));
       }
 
@@ -188,14 +194,19 @@ const MemberWishes = () => {
       // Revert on error
       const { data } = await supabase
         .from('class_wishes')
-        .select('choice_index, class_id, spec_ids, comment, validation_status, validated_by, validated_at')
+        .select('choice_index, class_id, spec_ids, spec_order, comment, validation_status, validated_by, validated_at')
         .eq('guild_id', guild.id)
         .eq('user_id', memberId)
         .order('choice_index');
       if (data) {
         setWishes(data.map(w => ({
-          ...w,
+          choice_index: w.choice_index,
+          class_id: w.class_id,
+          spec_ids: resolveSpecOrder(w.spec_ids || [], w.spec_order),
+          comment: w.comment,
           validation_status: (w.validation_status as ValidationStatus) || 'pending',
+          validated_by: w.validated_by,
+          validated_at: w.validated_at,
         })));
       }
     } else {

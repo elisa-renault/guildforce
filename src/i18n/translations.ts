@@ -262,6 +262,10 @@ export interface Translations {
     choiceNumber: string;
     selectClass: string;
     selectSpecs: string;
+    reorderSpecs: string;
+    mainSpec: string;
+    moveSpecUp: string;
+    moveSpecDown: string;
     comment: string;
     commentPlaceholder: string;
     status: string;
