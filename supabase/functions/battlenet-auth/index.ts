@@ -1273,6 +1273,194 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Resync all guild members for a specific guild (GM/owner only)
+    if (path === 'guild-resync' && req.method === 'POST') {
+      const authHeader = req.headers.get('Authorization');
+      if (!authHeader) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const payload = await req.json().catch(() => ({}));
+      const guildId = typeof payload?.guildId === 'string' ? payload.guildId : '';
+      if (!guildId) {
+        return new Response(JSON.stringify({ error: 'Missing guildId' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      const token = authHeader.replace('Bearer ', '');
+      const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+
+      if (claimsError || !claimsData?.claims) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const requesterUserId = claimsData.claims.sub as string;
+
+      const { data: guild, error: guildError } = await supabase
+        .from('guilds')
+        .select('id, name, server, region, owner_id')
+        .eq('id', guildId)
+        .maybeSingle();
+
+      if (guildError || !guild) {
+        return new Response(JSON.stringify({ error: 'Guild not found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const { data: gmMembership } = await supabase
+        .from('guild_members')
+        .select('id')
+        .eq('guild_id', guildId)
+        .eq('user_id', requesterUserId)
+        .eq('role', 'gm')
+        .maybeSingle();
+
+      const isOwner = guild.owner_id === requesterUserId;
+      const isGM = !!gmMembership;
+
+      if (!isOwner && !isGM) {
+        return new Response(JSON.stringify({ error: 'Only guild owner or GM can trigger guild sync' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const jobId = crypto.randomUUID();
+      log.info(`Starting guild-resync job ${jobId} for guild ${sanitizePII(guildId, 'id')} by ${sanitizePII(requesterUserId, 'id')}`);
+
+      const runGuildResync = async () => {
+        const { data: memberRows, error: memberRowsError } = await supabase
+          .from('guild_members')
+          .select('user_id, status')
+          .eq('guild_id', guildId)
+          .neq('status', 'withdrawn');
+
+        if (memberRowsError) {
+          log.error(`Guild-resync ${jobId}: failed to fetch guild members`, memberRowsError);
+          throw new Error('Failed to fetch guild members');
+        }
+
+        const memberUserIds = Array.from(
+          new Set((memberRows || []).map((row: { user_id: string }) => row.user_id))
+        );
+
+        const nowIso = new Date().toISOString();
+        const { data: tokenRows, error: tokenRowsError } = await supabase
+          .from('battlenet_tokens')
+          .select('user_id, access_token, region, expires_at')
+          .in('user_id', memberUserIds.length > 0 ? memberUserIds : ['00000000-0000-0000-0000-000000000000'])
+          .gt('expires_at', nowIso);
+
+        if (tokenRowsError) {
+          log.error(`Guild-resync ${jobId}: failed to fetch tokens`, tokenRowsError);
+          throw new Error('Failed to fetch member tokens');
+        }
+
+        let synced = 0;
+        let errors = 0;
+        for (const tokenRow of (tokenRows || [])) {
+          try {
+            const region = getValidRegion(tokenRow.region);
+            const result = await fetchAndStoreCharacters(
+              supabase,
+              tokenRow.access_token,
+              tokenRow.user_id,
+              region
+            );
+
+            if (result.success) {
+              synced += 1;
+            } else {
+              errors += 1;
+              log.error(
+                `Guild-resync ${jobId}: sync failed for member ${sanitizePII(tokenRow.user_id, 'id')}: ${result.error}`
+              );
+            }
+            await new Promise(resolve => setTimeout(resolve, 200));
+          } catch (err) {
+            errors += 1;
+            log.error(`Guild-resync ${jobId}: sync error for member ${sanitizePII(tokenRow.user_id, 'id')}:`, err);
+          }
+        }
+
+        const guildRegion = getValidRegion(guild.region);
+        const guildServerSlug = guild.server.toLowerCase().replace(/\s+/g, '-').replace(/'/g, '');
+        let rosterSynced = false;
+        try {
+          const rosterData = await fetchPublicGuildRoster(guildRegion, guildServerSlug, guild.name);
+          if (rosterData) {
+            if (rosterData.faction && rosterData.faction !== 'UNKNOWN') {
+              await supabase
+                .from('guilds')
+                .update({ faction: rosterData.faction.toLowerCase() })
+                .eq('id', guildId);
+            }
+            await storeFullRosterForGuild(supabase, guildId, guild.name, rosterData.members || []);
+            rosterSynced = true;
+          }
+        } catch (err) {
+          log.error(`Guild-resync ${jobId}: roster sync failed for guild ${sanitizePII(guild.name, 'name')}`, err);
+        }
+
+        const totalMembers = memberUserIds.length;
+        const membersWithValidToken = (tokenRows || []).length;
+        const skipped = Math.max(totalMembers - membersWithValidToken, 0);
+
+        log.info(
+          `Guild-resync ${jobId} completed: guild=${sanitizePII(guildId, 'id')}, total=${totalMembers}, synced=${synced}, errors=${errors}, skipped=${skipped}, rosterSynced=${rosterSynced}`
+        );
+
+        return {
+          success: true,
+          jobId,
+          guildId,
+          totalMembers,
+          membersWithValidToken,
+          synced,
+          errors,
+          skipped,
+          rosterSynced,
+        };
+      };
+
+      const canBackground = typeof (globalThis as any).EdgeRuntime?.waitUntil === 'function';
+      if (canBackground) {
+        (globalThis as any).EdgeRuntime.waitUntil(
+          runGuildResync().catch((err) => {
+            log.error(`Guild-resync job ${jobId} failed:`, err);
+          })
+        );
+
+        return new Response(JSON.stringify({ started: true, jobId, guildId }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      try {
+        const result = await runGuildResync();
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } catch (err) {
+        log.error(`Guild-resync job ${jobId} failed (inline):`, err);
+        return new Response(JSON.stringify({ error: 'Guild sync failed', jobId }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     // Scheduled sync for all users with valid tokens (called by cron or admin)
     if (path === 'scheduled-sync' && req.method === 'POST') {
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
