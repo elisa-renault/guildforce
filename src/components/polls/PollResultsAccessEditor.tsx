@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Plus, Trash2, Users, Crown, Eye } from 'lucide-react';
+import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 
 export interface ResultsAccessRule {
   access_type: 'rank_range' | 'user';
@@ -45,34 +46,36 @@ const RankSlider = ({ maxValue, maxRank, ranks, officerRankThreshold, onChange }
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const { language, t } = useLanguage();
+  const s = (key: SemanticKey) => resolveSemanticMessage({ key, language, translations: t });
   const sortedRanks = [...ranks].sort((a, b) => a.rank_index - b.rank_index);
-  
-  const minRank = 0;
-  
+
   const allRankIndices = Array.from({ length: maxRank + 1 }, (_, i) => i);
 
   const getRankName = (index: number) => {
-    const rank = sortedRanks.find(r => r.rank_index === index);
+    const rank = sortedRanks.find((r) => r.rank_index === index);
     return rank?.rank_name || `Rank ${index}`;
   };
 
   const getDisplayName = (index: number) => {
     if (index === officerRankThreshold) {
-      return t.auto.components_polls_PollResultsAccessEditor_61;
+      return s('polls.results_access.officer_threshold');
     }
     return getRankName(index);
   };
 
-  const getIndexFromPosition = useCallback((clientX: number): number => {
-    if (!containerRef.current) return maxValue;
-    
-    const rect = containerRef.current.getBoundingClientRect();
-    const relativeX = clientX - rect.left;
-    const percentage = Math.max(0, Math.min(1, relativeX / rect.width));
-    const index = Math.round(percentage * maxRank);
-    
-    return Math.max(0, Math.min(maxRank, index));
-  }, [maxRank, maxValue]);
+  const getIndexFromPosition = useCallback(
+    (clientX: number): number => {
+      if (!containerRef.current) return maxValue;
+
+      const rect = containerRef.current.getBoundingClientRect();
+      const relativeX = clientX - rect.left;
+      const percentage = Math.max(0, Math.min(1, relativeX / rect.width));
+      const index = Math.round(percentage * maxRank);
+
+      return Math.max(0, Math.min(maxRank, index));
+    },
+    [maxRank, maxValue],
+  );
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -81,11 +84,14 @@ const RankSlider = ({ maxValue, maxRank, ranks, officerRankThreshold, onChange }
     onChange(newIndex);
   };
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDragging) return;
-    const newIndex = getIndexFromPosition(e.clientX);
-    onChange(newIndex);
-  }, [isDragging, getIndexFromPosition, onChange]);
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isDragging) return;
+      const newIndex = getIndexFromPosition(e.clientX);
+      onChange(newIndex);
+    },
+    [isDragging, getIndexFromPosition, onChange],
+  );
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -98,12 +104,15 @@ const RankSlider = ({ maxValue, maxRank, ranks, officerRankThreshold, onChange }
     onChange(newIndex);
   };
 
-  const handleTouchMove = useCallback((e: TouchEvent) => {
-    if (!isDragging) return;
-    const touch = e.touches[0];
-    const newIndex = getIndexFromPosition(touch.clientX);
-    onChange(newIndex);
-  }, [isDragging, getIndexFromPosition, onChange]);
+  const handleTouchMove = useCallback(
+    (e: TouchEvent) => {
+      if (!isDragging) return;
+      const touch = e.touches[0];
+      const newIndex = getIndexFromPosition(touch.clientX);
+      onChange(newIndex);
+    },
+    [isDragging, getIndexFromPosition, onChange],
+  );
 
   useEffect(() => {
     if (isDragging) {
@@ -112,7 +121,7 @@ const RankSlider = ({ maxValue, maxRank, ranks, officerRankThreshold, onChange }
       window.addEventListener('touchmove', handleTouchMove);
       window.addEventListener('touchend', handleMouseUp);
     }
-    
+
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
@@ -131,23 +140,23 @@ const RankSlider = ({ maxValue, maxRank, ranks, officerRankThreshold, onChange }
   return (
     <div className="py-4 select-none">
       <div className="relative h-8 flex items-center">
-        <div 
+        <div
           className="absolute top-1/2 -translate-y-1/2 h-1 bg-border rounded-full"
-          style={{ 
+          style={{
             left: `${trackLeftOffset}px`,
-            right: `${trackRightOffset}px`
+            right: `${trackRightOffset}px`,
           }}
         />
-        
-        <div 
+
+        <div
           className="absolute top-1/2 -translate-y-1/2 h-1 bg-primary rounded-full pointer-events-none"
-          style={{ 
+          style={{
             left: `${trackLeftOffset}px`,
-            width: maxRank > 0 ? `calc((100% - ${trackLeftOffset + trackRightOffset}px) * ${maxValue / maxRank})` : '0px'
+            width: maxRank > 0 ? `calc((100% - ${trackLeftOffset + trackRightOffset}px) * ${maxValue / maxRank})` : '0px',
           }}
         />
-        
-        <div 
+
+        <div
           ref={containerRef}
           className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between cursor-pointer"
           onMouseDown={handleMouseDown}
@@ -156,18 +165,17 @@ const RankSlider = ({ maxValue, maxRank, ranks, officerRankThreshold, onChange }
           {allRankIndices.map((index) => {
             const isSelected = index <= maxValue;
             const isEndpoint = index === maxValue;
-            
+
             return (
-              <div 
-                key={index} 
-                className="relative flex items-center justify-center"
-                style={{ width: '20px' }}
-              >
+              <div key={index} className="relative flex items-center justify-center" style={{ width: '20px' }}>
                 <div
-                  onClick={(e) => { e.stopPropagation(); handleTickClick(index); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleTickClick(index);
+                  }}
                   className={`transition-colors z-10 ${
-                    isEndpoint 
-                      ? 'w-5 h-5 rounded-full bg-primary cursor-grab active:cursor-grabbing shadow-lg shadow-primary/40' 
+                    isEndpoint
+                      ? 'w-5 h-5 rounded-full bg-primary cursor-grab active:cursor-grabbing shadow-lg shadow-primary/40'
                       : isSelected
                         ? 'w-2.5 h-2.5 rounded-full bg-primary cursor-pointer'
                         : 'w-2.5 h-2.5 rounded-full bg-muted-foreground/40 cursor-pointer hover:bg-muted-foreground/60'
@@ -178,33 +186,25 @@ const RankSlider = ({ maxValue, maxRank, ranks, officerRankThreshold, onChange }
           })}
         </div>
       </div>
-      
+
       <div className="flex justify-between mt-2">
         {allRankIndices.map((index) => {
           const isSelected = index <= maxValue;
           return (
-            <div 
-              key={index} 
-              className="flex justify-center"
-              style={{ width: '20px' }}
-            >
-              <span 
-                className={`text-[10px] tabular-nums ${
-                  isSelected ? 'text-foreground font-medium' : 'text-muted-foreground'
-                }`}
-              >
+            <div key={index} className="flex justify-center" style={{ width: '20px' }}>
+              <span className={`text-[10px] tabular-nums ${isSelected ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
                 {index}
               </span>
             </div>
           );
         })}
       </div>
-      
+
       <div className="text-xs text-muted-foreground mt-3 text-center">
         <span className="text-primary font-medium">{getRankName(0)}</span>
         {maxValue > 0 && (
           <>
-            <span className="mx-1">→</span>
+            <span className="mx-1">{'->'}</span>
             <span className="text-primary font-medium">{getDisplayName(maxValue)}</span>
           </>
         )}
@@ -213,24 +213,24 @@ const RankSlider = ({ maxValue, maxRank, ranks, officerRankThreshold, onChange }
   );
 };
 
-export const PollResultsAccessEditor = ({ 
-  accessRules, 
-  members, 
-  ranks, 
+export const PollResultsAccessEditor = ({
+  accessRules,
+  members,
+  ranks,
   officerRankThreshold = 2,
   onChange,
   restrictAccess,
   onRestrictAccessChange,
 }: PollResultsAccessEditorProps) => {
   const { language, t } = useLanguage();
-  
+  const s = (key: SemanticKey) => resolveSemanticMessage({ key, language, translations: t });
+
   const sortedRanks = [...ranks].sort((a, b) => a.rank_index - b.rank_index);
-  const maxRankIndex = sortedRanks.length > 0 ? Math.max(...sortedRanks.map(r => r.rank_index)) : 9;
+  const maxRankIndex = sortedRanks.length > 0 ? Math.max(...sortedRanks.map((r) => r.rank_index)) : 9;
 
   const handleRestrictChange = (checked: boolean) => {
     onRestrictAccessChange(checked);
     if (checked && accessRules.length === 0) {
-      // Add default rank rule (GM only)
       onChange([{ access_type: 'rank_range', min_rank_index: 0, max_rank_index: 0 }]);
     }
   };
@@ -252,13 +252,12 @@ export const PollResultsAccessEditor = ({
   };
 
   const selectedUserIds = accessRules
-    .filter(r => r.access_type === 'user')
-    .map(r => r.user_id)
+    .filter((r) => r.access_type === 'user')
+    .map((r) => r.user_id)
     .filter(Boolean);
 
-  // Find or create rank rule
-  const rankRule = accessRules.find(r => r.access_type === 'rank_range');
-  const rankRuleIndex = accessRules.findIndex(r => r.access_type === 'rank_range');
+  const rankRule = accessRules.find((r) => r.access_type === 'rank_range');
+  const rankRuleIndex = accessRules.findIndex((r) => r.access_type === 'rank_range');
 
   const handleRankChange = (maxRank: number) => {
     if (rankRuleIndex >= 0) {
@@ -272,35 +271,24 @@ export const PollResultsAccessEditor = ({
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <Eye className="h-4 w-4 text-muted-foreground" />
-        <Label className="text-sm font-medium">
-          {t.auto.components_polls_PollResultsAccessEditor_276}
-        </Label>
+        <Label className="text-sm font-medium">{s('polls.results_access.title')}</Label>
       </div>
 
       <div className="flex items-center gap-2">
-        <Switch
-          id="restrict-results"
-          checked={restrictAccess}
-          onCheckedChange={handleRestrictChange}
-        />
+        <Switch id="restrict-results" checked={restrictAccess} onCheckedChange={handleRestrictChange} />
         <Label htmlFor="restrict-results" className="cursor-pointer text-sm">
-          {t.auto.components_polls_PollResultsAccessEditor_287}
+          {s('polls.results_access.restrict_toggle')}
         </Label>
       </div>
 
-      {!restrictAccess && (
-        <p className="text-xs text-muted-foreground">
-          {t.auto.components_polls_PollResultsAccessEditor_293}
-        </p>
-      )}
+      {!restrictAccess && <p className="text-xs text-muted-foreground">{s('polls.results_access.open_hint')}</p>}
 
       {restrictAccess && (
         <div className="space-y-4 pt-2">
-          {/* Rank-based access */}
           <div className="p-3 rounded-lg border border-border/50 bg-muted/20">
             <div className="flex items-center gap-2 text-sm mb-2">
               <Crown className="h-4 w-4 text-primary" />
-              <span>{t.auto.components_polls_PollResultsAccessEditor_305}</span>
+              <span>{s('polls.results_access.rank_rule_title')}</span>
             </div>
             <RankSlider
               maxValue={rankRule?.max_rank_index ?? 0}
@@ -311,60 +299,49 @@ export const PollResultsAccessEditor = ({
             />
           </div>
 
-          {/* User-specific rules */}
-          {accessRules.filter(r => r.access_type === 'user').map((rule, idx) => {
-            const actualIndex = accessRules.indexOf(rule);
-            return (
-              <div key={actualIndex} className="flex items-start gap-2 p-3 rounded-lg border border-border/50 bg-muted/20">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 text-sm mb-2">
-                    <Users className="h-4 w-4 text-primary" />
-                    <span>{t.auto.components_polls_PollResultsAccessEditor_324}</span>
+          {accessRules
+            .filter((r) => r.access_type === 'user')
+            .map((rule) => {
+              const actualIndex = accessRules.indexOf(rule);
+              return (
+                <div key={actualIndex} className="flex items-start gap-2 p-3 rounded-lg border border-border/50 bg-muted/20">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 text-sm mb-2">
+                      <Users className="h-4 w-4 text-primary" />
+                      <span>{s('polls.results_access.user_rule_title')}</span>
+                    </div>
+                    <Select value={rule.user_id || ''} onValueChange={(value) => updateRule(actualIndex, { user_id: value })}>
+                      <SelectTrigger className="w-full bg-card border-border">
+                        <SelectValue placeholder={s('polls.results_access.user_placeholder')} />
+                      </SelectTrigger>
+                      <SelectContent className="bg-card border-border">
+                        {members
+                          .filter((m) => !selectedUserIds.includes(m.user_id) || m.user_id === rule.user_id)
+                          .map((member) => (
+                            <SelectItem key={member.user_id} value={member.user_id} className="hover:bg-primary/20">
+                              {member.username}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <Select
-                    value={rule.user_id || ''}
-                    onValueChange={(value) => updateRule(actualIndex, { user_id: value })}
+
+                  <button
+                    onClick={() => removeRule(actualIndex)}
+                    className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center hover:bg-destructive/20 transition-colors flex-shrink-0 mt-1"
                   >
-                    <SelectTrigger className="w-full bg-card border-border">
-                      <SelectValue placeholder={t.auto.components_polls_PollResultsAccessEditor_331} />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card border-border">
-                      {members
-                        .filter(m => !selectedUserIds.includes(m.user_id) || m.user_id === rule.user_id)
-                        .map((member) => (
-                          <SelectItem key={member.user_id} value={member.user_id} className="hover:bg-primary/20">
-                            {member.username}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </button>
                 </div>
+              );
+            })}
 
-                <button
-                  onClick={() => removeRule(actualIndex)}
-                  className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center hover:bg-destructive/20 transition-colors flex-shrink-0 mt-1"
-                >
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </button>
-              </div>
-            );
-          })}
-
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={addUserRule}
-            disabled={members.length === 0}
-            className="text-xs"
-          >
+          <Button type="button" variant="outline" size="sm" onClick={addUserRule} disabled={members.length === 0} className="text-xs">
             <Plus className="h-3 w-3 mr-1" />
-            {t.auto.components_polls_PollResultsAccessEditor_364}
+            {s('polls.results_access.add_user')}
           </Button>
 
-          <p className="text-xs text-muted-foreground">
-            {t.auto.components_polls_PollResultsAccessEditor_368}
-          </p>
+          <p className="text-xs text-muted-foreground">{s('polls.results_access.hint')}</p>
         </div>
       )}
     </div>

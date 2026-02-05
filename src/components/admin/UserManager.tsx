@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDateTimeLocalized, formatPluralMessage, interpolateMessage } from '@/i18n/format';
+import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 
 type AppRole = 'admin' | 'moderator' | 'user';
 type SortDirection = 'asc' | 'desc';
@@ -61,6 +62,7 @@ const ITEMS_PER_PAGE = 15;
 
 export function UserManager() {
   const { language, t } = useLanguage();
+  const s = (key: SemanticKey) => resolveSemanticMessage({ key, language, translations: t });
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<UserWithRoles[]>([]);
   const [loading, setLoading] = useState(true);
@@ -196,7 +198,7 @@ export function UserManager() {
       setUsers(usersWithData);
     } catch (error) {
       log.error('Error fetching users:', error);
-      toast.error(t.auto.components_admin_UserManager_198);
+      toast.error(s('admin.user_manager.toast.fetch_error'));
     } finally {
       setLoading(false);
     }
@@ -221,8 +223,7 @@ export function UserManager() {
   const toggleRole = async (userId: string, role: AppRole) => {
     // Prevent removing own admin role
     if (userId === currentUser?.id && role === 'admin') {
-      toast.error(t.auto.components_admin_UserManager_223
-      );
+      toast.error(s('admin.user_manager.toast.self_admin_forbidden'));
       return;
     }
 
@@ -273,7 +274,7 @@ export function UserManager() {
       }
     } catch (error) {
       log.error('Error toggling role:', error);
-      toast.error(t.auto.components_admin_UserManager_277);
+      toast.error(s('admin.user_manager.toast.toggle_error'));
     } finally {
       setTogglingRole(null);
     }
@@ -345,13 +346,13 @@ export function UserManager() {
       {/* Search */}
       <div className="relative">
         <label htmlFor="user-search" className="sr-only">
-          {t.auto.components_admin_UserManager_349}
+          {s('admin.user_manager.search_label')}
         </label>
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           id="user-search"
           name="user-search"
-          placeholder={t.auto.components_admin_UserManager_355}
+          placeholder={s('admin.user_manager.search_placeholder')}
           value={searchQuery}
           onChange={(e) => handleSearch(e.target.value)}
           className="pl-10"
@@ -371,7 +372,7 @@ export function UserManager() {
                   className={headerButtonClass}
                   aria-sort={sortKey === 'username' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                 >
-                  {t.auto.components_admin_UserManager_375}
+                  {s('admin.user_manager.table.username')}
                   {sortIcon('username')}
                 </button>
               </TableHead>
@@ -382,7 +383,7 @@ export function UserManager() {
                   className={headerButtonClass}
                   aria-sort={sortKey === 'battletag' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                 >
-                  {t.auto.components_admin_UserManager_386}
+                  {s('admin.user_manager.table.battletag')}
                   {sortIcon('battletag')}
                 </button>
               </TableHead>
@@ -393,7 +394,7 @@ export function UserManager() {
                   className={headerButtonClass}
                   aria-sort={sortKey === 'region' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                 >
-                  {t.auto.components_admin_UserManager_397}
+                  {s('admin.user_manager.table.region')}
                   {sortIcon('region')}
                 </button>
               </TableHead>
@@ -404,7 +405,7 @@ export function UserManager() {
                   className={headerButtonClass}
                   aria-sort={sortKey === 'created_at' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                 >
-                  {t.auto.components_admin_UserManager_408}
+                  {s('admin.user_manager.table.created_at')}
                   {sortIcon('created_at')}
                 </button>
               </TableHead>
@@ -415,7 +416,7 @@ export function UserManager() {
                   className={headerButtonClass}
                   aria-sort={sortKey === 'updated_at' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                 >
-                  {t.auto.components_admin_UserManager_419}
+                  {s('admin.user_manager.table.updated_at')}
                   {sortIcon('updated_at')}
                 </button>
               </TableHead>
@@ -426,7 +427,7 @@ export function UserManager() {
                   className={headerButtonClass}
                   aria-sort={sortKey === 'preferred_language' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                 >
-                  {t.auto.components_admin_UserManager_430}
+                  {s('admin.user_manager.table.language')}
                   {sortIcon('preferred_language')}
                 </button>
               </TableHead>
@@ -437,7 +438,7 @@ export function UserManager() {
                   className={headerButtonClass}
                   aria-sort={sortKey === 'main_character_name' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                 >
-                  {t.auto.components_admin_UserManager_441}
+                  {s('admin.user_manager.table.main_character')}
                   {sortIcon('main_character_name')}
                 </button>
               </TableHead>
@@ -448,11 +449,11 @@ export function UserManager() {
                   className={headerButtonClass}
                   aria-sort={sortKey === 'roles' ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                 >
-                  {t.auto.components_admin_UserManager_452}
+                  {s('admin.user_manager.table.roles')}
                   {sortIcon('roles')}
                 </button>
               </TableHead>
-              <TableHead className="text-right">{t.auto.components_admin_UserManager_456}</TableHead>
+              <TableHead className="text-right">{s('admin.user_manager.table.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody className="[&_td]:px-2 [&_td]:py-2 sm:[&_td]:px-3 md:[&_td]:py-3">
@@ -467,7 +468,7 @@ export function UserManager() {
             ) : users.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
-                  {t.auto.components_admin_UserManager_471}
+                  {s('admin.user_manager.table.empty')}
                 </TableCell>
               </TableRow>
             ) : (
@@ -486,7 +487,7 @@ export function UserManager() {
                       {user.username}
                       {user.id === currentUser?.id && (
                         <Badge variant="outline" className="text-xs">
-                          {t.auto.components_admin_UserManager_490}
+                          {s('admin.user_manager.me_badge')}
                         </Badge>
                       )}
                     </div>
