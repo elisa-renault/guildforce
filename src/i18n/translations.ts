@@ -1,8 +1,10 @@
 // Internationalization translations
 import { translationsEn } from './translations.en';
+import type { translationsEs } from './translations.es';
 import type { translationsDe } from './translations.de';
 import type { translationsIt } from './translations.it';
 import type { translationsKo } from './translations.ko';
+import type { translationsPtBr } from './translations.pt-BR';
 import type { translationsRu } from './translations.ru';
 import type { translationsZhCn } from './translations.zh-CN';
 import type { translationsFr } from './translations.fr';
@@ -957,6 +959,8 @@ type TranslationModule =
   | { translationsEn: typeof translationsEn }
   | { translationsFr: typeof translationsFr }
   | { translationsDe: typeof translationsDe }
+  | { translationsEs: typeof translationsEs }
+  | { translationsPtBr: typeof translationsPtBr }
   | { translationsIt: typeof translationsIt }
   | { translationsRu: typeof translationsRu }
   | { translationsZhCn: typeof translationsZhCn }
@@ -971,6 +975,14 @@ const TRANSLATION_LOADERS: Record<Language, () => Promise<Translations>> = {
   de: async () => {
     const mod = (await import('./translations.de')) as TranslationModule;
     return mod.translationsDe;
+  },
+  es: async () => {
+    const mod = (await import('./translations.es')) as TranslationModule;
+    return mod.translationsEs;
+  },
+  'pt-BR': async () => {
+    const mod = (await import('./translations.pt-BR')) as TranslationModule;
+    return mod.translationsPtBr;
   },
   it: async () => {
     const mod = (await import('./translations.it')) as TranslationModule;
@@ -1045,11 +1057,13 @@ if (import.meta.env?.DEV && !import.meta.env?.VITEST) {
     loadTranslations('en'),
     loadTranslations('fr'),
     loadTranslations('de'),
+    loadTranslations('es'),
+    loadTranslations('pt-BR'),
     loadTranslations('it'),
     loadTranslations('ru'),
     loadTranslations('zh-CN'),
     loadTranslations('ko'),
-  ]).then(([en, fr, de, it, ru, zhCn, ko]) => {
-    checkTranslationCompleteness({ en, fr, de, it, ru, 'zh-CN': zhCn, ko });
+  ]).then(([en, fr, de, es, ptBr, it, ru, zhCn, ko]) => {
+    checkTranslationCompleteness({ en, fr, de, es, 'pt-BR': ptBr, it, ru, 'zh-CN': zhCn, ko });
   });
 }

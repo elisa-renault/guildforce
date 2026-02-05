@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { getBilingualContentLanguage, isSupportedLanguage, LANGUAGE_OPTIONS, type Language } from '@/i18n/config';
+import { FALLBACK_LANGUAGE, getBilingualContentLanguage, isSupportedLanguage, LANGUAGE_OPTIONS, type Language } from '@/i18n/config';
 import { formatDateLocalized } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { supabase } from '@/integrations/supabase/client';
@@ -108,14 +108,14 @@ export const LegalPagesEditor = () => {
   const handleSave = async () => {
     if (!editingPage || !user) return;
 
-    const translationRows = collectPersistedTranslations(editingPage.translations, ['en', 'fr']);
+    const translationRows = collectPersistedTranslations(editingPage.translations, [FALLBACK_LANGUAGE]);
 
-    const hasEnglish =
-      translationRows.some((row) => row.language === 'en' && row.title.length > 0 && row.content.length > 0);
-    const hasFrench =
-      translationRows.some((row) => row.language === 'fr' && row.title.length > 0 && row.content.length > 0);
+    const hasFallbackLanguage =
+      translationRows.some(
+        (row) => row.language === FALLBACK_LANGUAGE && row.title.length > 0 && row.content.length > 0,
+      );
 
-    if (!hasEnglish || !hasFrench) {
+    if (!hasFallbackLanguage) {
       toast.error(t.errors.generic, {
         description: sm('admin.legal.required_en_fr'),
         style: { background: 'hsl(var(--card))', borderColor: 'hsl(var(--destructive) / 0.3)' },

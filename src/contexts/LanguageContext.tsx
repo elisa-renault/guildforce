@@ -6,11 +6,12 @@ import { Language, Translations, loadTranslations } from '@/i18n/translations';
 import { translationsEn } from '@/i18n/translations.en';
 
 export type { Language } from '@/i18n/config';
+type RuntimeTranslations = Translations & { lang: Language };
 
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: Translations;
+  t: RuntimeTranslations;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -27,8 +28,8 @@ const getInitialLanguage = (): Language => {
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(() => getInitialLanguage());
   const initialContentLanguage = getBilingualContentLanguage(language);
-  const [t, setT] = useState<Translations | null>(() =>
-    initialContentLanguage === 'fr' ? null : translationsEn,
+  const [t, setT] = useState<RuntimeTranslations | null>(() =>
+    initialContentLanguage === 'fr' ? null : ({ ...translationsEn, lang: language } as RuntimeTranslations),
   );
 
   const setLanguage = (lang: Language) => {
@@ -44,7 +45,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     let cancelled = false;
     loadTranslations(language).then((loaded) => {
       if (!cancelled) {
-        setT(loaded);
+        setT({ ...(loaded as Translations), lang: language });
       }
     });
     return () => {

@@ -1,4 +1,4 @@
-export const SUPPORTED_LANGUAGES = ['en', 'fr', 'de', 'it', 'ru', 'zh-CN', 'ko'] as const;
+export const SUPPORTED_LANGUAGES = ['en', 'fr', 'de', 'es', 'pt-BR', 'it', 'ru', 'zh-CN', 'ko'] as const;
 
 export type Language = (typeof SUPPORTED_LANGUAGES)[number];
 export type BilingualContentLanguage = 'en' | 'fr';
@@ -8,18 +8,22 @@ export const FALLBACK_LANGUAGE: Language = 'en';
 
 export const LANGUAGE_OPTIONS: ReadonlyArray<{ code: Language; label: string }> = [
   { code: 'en', label: 'English' },
-  { code: 'fr', label: 'Français' },
+  { code: 'fr', label: 'Fran\u00e7ais' },
   { code: 'de', label: 'Deutsch' },
+  { code: 'es', label: 'Espa\u00f1ol' },
+  { code: 'pt-BR', label: 'Portugu\u00eas (Brasil)' },
   { code: 'it', label: 'Italiano' },
-  { code: 'ru', label: 'Русский' },
-  { code: 'zh-CN', label: '中文 (简体)' },
-  { code: 'ko', label: '한국어' },
+  { code: 'ru', label: '\u0420\u0443\u0441\u0441\u043a\u0438\u0439' },
+  { code: 'zh-CN', label: '\u4e2d\u6587 (\u7b80\u4f53)' },
+  { code: 'ko', label: '\ud55c\uad6d\uc5b4' },
 ];
 
 export const INTL_LOCALE_BY_LANGUAGE: Record<Language, string> = {
   en: 'en-US',
   fr: 'fr-FR',
   de: 'de-DE',
+  es: 'es-ES',
+  'pt-BR': 'pt-BR',
   it: 'it-IT',
   ru: 'ru-RU',
   'zh-CN': 'zh-CN',
@@ -30,6 +34,8 @@ const LANGUAGE_ALIAS_BY_PREFIX: Array<{ prefix: string; language: Language }> = 
   { prefix: 'en', language: 'en' },
   { prefix: 'fr', language: 'fr' },
   { prefix: 'de', language: 'de' },
+  { prefix: 'es', language: 'es' },
+  { prefix: 'pt', language: 'pt-BR' },
   { prefix: 'it', language: 'it' },
   { prefix: 'ru', language: 'ru' },
   { prefix: 'ko', language: 'ko' },
@@ -64,6 +70,8 @@ const BILINGUAL_CONTENT_LANGUAGE_BY_LANGUAGE: Record<Language, BilingualContentL
   en: 'en',
   fr: 'fr',
   de: 'en',
+  es: 'en',
+  'pt-BR': 'en',
   it: 'en',
   ru: 'en',
   'zh-CN': 'en',
