@@ -15,7 +15,7 @@ const EN_SEMANTIC_MESSAGES = {
   'admin.legal.markdown_placeholder': 'Write legal page content in Markdown...',
   'admin.legal.list_help': 'Manage public legal pages. Each page can have multiple language versions with EN fallback.',
   'admin.legal.edit_action': 'Edit',
-  'admin.legal.required_en_fr': 'EN and FR legal versions are required.',
+  'admin.legal.required_en_fr': 'An English legal version is required (fallback locale).',
 
   'admin.patch.version_placeholder': '1.2.3',
   'admin.patch.title_placeholder.fr': 'Titre de la version',
@@ -467,7 +467,7 @@ const FR_SEMANTIC_MESSAGES: Record<keyof typeof EN_SEMANTIC_MESSAGES, string> = 
   'admin.legal.markdown_placeholder': 'Ecrivez le contenu legal en Markdown...',
   'admin.legal.list_help': 'Gerez les pages legales publiques. Chaque page peut avoir plusieurs versions linguistiques avec fallback EN.',
   'admin.legal.edit_action': 'Modifier',
-  'admin.legal.required_en_fr': 'Les versions legales EN et FR sont obligatoires.',
+  'admin.legal.required_en_fr': 'Une version legale anglaise est obligatoire (langue fallback).',
 
   'admin.patch.version_placeholder': '1.2.3',
   'admin.patch.title_placeholder.fr': 'Titre de la version',

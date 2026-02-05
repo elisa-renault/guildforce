@@ -13,6 +13,8 @@ describe('i18n config', () => {
   it('resolves known locales to supported language codes', () => {
     expect(resolveLanguage('fr-CA')).toBe('fr');
     expect(resolveLanguage('de-DE')).toBe('de');
+    expect(resolveLanguage('es-MX')).toBe('es');
+    expect(resolveLanguage('pt-PT')).toBe('pt-BR');
     expect(resolveLanguage('it_IT')).toBe('it');
     expect(resolveLanguage('ru')).toBe('ru');
     expect(resolveLanguage('ko-KR')).toBe('ko');
@@ -23,16 +25,16 @@ describe('i18n config', () => {
     expect(resolveLanguage(undefined)).toBe(FALLBACK_LANGUAGE);
     expect(resolveLanguage(null)).toBe(FALLBACK_LANGUAGE);
     expect(resolveLanguage('')).toBe(FALLBACK_LANGUAGE);
-    expect(resolveLanguage('es-ES')).toBe(FALLBACK_LANGUAGE);
+    expect(resolveLanguage('sv-SE')).toBe(FALLBACK_LANGUAGE);
   });
 
   it('uses the same resolution rules for browser locales', () => {
     expect(detectLanguageFromNavigator('fr-FR')).toBe('fr');
-    expect(detectLanguageFromNavigator('es-MX')).toBe(FALLBACK_LANGUAGE);
+    expect(detectLanguageFromNavigator('es-MX')).toBe('es');
   });
 
   it('exposes the recommended supported language list', () => {
-    expect(SUPPORTED_LANGUAGES).toEqual(['en', 'fr', 'de', 'it', 'ru', 'zh-CN', 'ko']);
+    expect(SUPPORTED_LANGUAGES).toEqual(['en', 'fr', 'de', 'es', 'pt-BR', 'it', 'ru', 'zh-CN', 'ko']);
   });
 
   it('maps app locales to legacy bilingual content locales', () => {

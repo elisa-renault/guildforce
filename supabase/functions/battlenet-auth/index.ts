@@ -74,6 +74,8 @@ function normalizePreferredLanguage(candidate: unknown): string {
 
   if (normalized === 'fr' || normalized.startsWith('fr-')) return 'fr';
   if (normalized === 'de' || normalized.startsWith('de-')) return 'de';
+  if (normalized === 'es' || normalized.startsWith('es-')) return 'es';
+  if (normalized === 'pt' || normalized.startsWith('pt-')) return 'pt-BR';
   if (normalized === 'it' || normalized.startsWith('it-')) return 'it';
   if (normalized === 'ru' || normalized.startsWith('ru-')) return 'ru';
   if (normalized === 'ko' || normalized.startsWith('ko-')) return 'ko';
