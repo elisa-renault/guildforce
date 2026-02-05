@@ -166,6 +166,23 @@ const RosterWishes = () => {
     return localDate.toISOString();
   };
 
+  const getMainCharacterName = (value?: string | null) => {
+    if (!value) return null;
+    const trimmed = value.trim();
+    const separators = [' - ', ' — ', ' – '];
+    for (const sep of separators) {
+      if (trimmed.includes(sep)) {
+        const [name] = trimmed.split(sep);
+        return name?.trim() || trimmed;
+      }
+    }
+    if (trimmed.includes('-')) {
+      const [name] = trimmed.split('-');
+      return name?.trim() || trimmed;
+    }
+    return trimmed;
+  };
+
   const fetchData = async () => {
     if (!user || !regionSlug || !serverSlug || !guildSlug) return;
 
@@ -291,7 +308,7 @@ const RosterWishes = () => {
 
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, username')
+        .select('id, username, main_character_name')
         .in('id', userIds);
 
       // Filter wishes by selected roster
@@ -322,6 +339,7 @@ const RosterWishes = () => {
         return {
           id: m.user_id,
           username: profile?.username || 'Unknown',
+          mainCharacterName: getMainCharacterName(profile?.main_character_name),
           status: m.status,
           wishes_locked: m.wishes_locked,
           wishes: memberWishes.sort((a, b) => a.choice_index - b.choice_index),

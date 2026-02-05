@@ -466,33 +466,40 @@ export const RosterTable = ({
                     onClick={handleRowClick}
                   >
                     <TableCell className="font-medium text-foreground text-sm py-2 px-2 md:px-3">
-                      <div className="flex items-center gap-1.5">
-                        <span className="truncate">{member.username}</span>
-                        {effectiveLocked && (
-                          <TooltipProvider delayDuration={200}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Lock className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" />
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="text-xs max-w-[220px]">
-                                {lockTooltip}
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-                        {!isEditing && extraWishes > 0 && (
-                          <TooltipProvider delayDuration={200}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Badge variant="outline" className="text-[10px] px-1 py-0 text-muted-foreground border-muted-foreground/30 flex-shrink-0">
-                                  +{extraWishes}
-                                </Badge>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="text-xs">
-                                {extraWishes + 3} {s('dashboard.roster_table.total_wishes_suffix')}
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
+                      <div className="flex flex-col gap-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="truncate">{member.username}</span>
+                          {effectiveLocked && (
+                            <TooltipProvider delayDuration={200}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Lock className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" />
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="text-xs max-w-[220px]">
+                                  {lockTooltip}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                          {!isEditing && extraWishes > 0 && (
+                            <TooltipProvider delayDuration={200}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Badge variant="outline" className="text-[10px] px-1 py-0 text-muted-foreground border-muted-foreground/30 flex-shrink-0">
+                                    +{extraWishes}
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="text-xs">
+                                  {extraWishes + 3} {s('dashboard.roster_table.total_wishes_suffix')}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </div>
+                        {member.mainCharacterName && (
+                          <div className="text-[11px] text-muted-foreground truncate">
+                            <span className="text-foreground/80">{member.mainCharacterName}</span>
+                          </div>
                         )}
                       </div>
                     </TableCell>
