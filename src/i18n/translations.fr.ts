@@ -3,6 +3,7 @@ import type { Translations } from './translations';
 export const translationsFr: Translations = {
     common: {
       loading: 'Chargement...',
+      open: 'Ouvrir',
       save: 'Enregistrer',
       cancel: 'Annuler',
       delete: 'Supprimer',
@@ -585,6 +586,7 @@ export const translationsFr: Translations = {
     },
     guildNav: {
       dashboard: 'Tableau de bord',
+      overview: 'Aperçu',
       myWishes: 'Mes vœux',
       polls: 'Sondages',
       settings: 'Paramètres',
@@ -594,6 +596,7 @@ export const translationsFr: Translations = {
       guildOverview: 'Aperçu guilde',
       quickAccess: 'Accès rapide',
       wishesTable: 'Table de vœux',
+      members: 'Membres',
       noWishApproved: 'Aucun vœu validé',
       noWishesYet: "Vous n'avez pas encore défini vos vœux",
     },

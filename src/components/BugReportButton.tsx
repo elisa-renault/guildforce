@@ -274,7 +274,7 @@ const BugReportButton = React.forwardRef<HTMLButtonElement, React.ComponentProps
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">{t.bugReport.userStatus}:</span>
-                    <span>{user ? profile?.username || 'Connecté' : t.bugReport.anonymous}</span>
+                    <span>{user ? profile?.username || t.common.you : t.bugReport.anonymous}</span>
                   </div>
                 </CollapsibleContent>
               </Collapsible>

@@ -18,7 +18,7 @@ describe('semantic i18n', () => {
     expect(value).toBe('Modifier');
   });
 
-  it('uses legacy auto compatibility when locale semantic copy is missing', () => {
+  it('prefers DE semantic copy over legacy compatibility when available', () => {
     const value = resolveSemanticMessage({
       key: 'admin.documentation.title',
       language: 'de',
@@ -27,17 +27,76 @@ describe('semantic i18n', () => {
       }),
     });
 
-    expect(value).toBe('Dokumentation (legacy)');
+    expect(value).toBe('Dokumentation');
   });
 
-  it('falls back to EN semantic copy when no compatibility key is available', () => {
+  it('falls back to EN semantic copy when the locale has no dedicated semantic pack', () => {
     const value = resolveSemanticMessage({
       key: 'admin.patch.required_en_title',
-      language: 'de',
+      language: 'it',
       translations: asTranslations({}),
     });
 
     expect(value).toBe('An English title is required.');
+  });
+
+  it('returns dedicated DE semantic copy for release-scope keys', () => {
+    const releasePrefixes = ['admin.', 'forum.', 'polls.', 'guild.', 'settings.', 'ui.', 'globalnav.', 'activity.'];
+    const allowedIdentical = new Set([
+      'footer.brand',
+      'auth.brand',
+      'admin.patch.version_placeholder',
+      'admin.patch.content_placeholder.fr',
+      'forum.report.dialog.details_label',
+      'forum.report.reason.spam',
+      'forum.markdown.toolbar.separator',
+      'forum.markdown.toolbar.link',
+      'polls.sortable.option_prefix',
+      'polls.sortable.min_value_label',
+      'polls.sortable.max_value_label',
+      'forum.new_topic.in_category',
+      'guild.members.guildforce_label',
+      'guild.members.alts',
+      'guild.members.main_alt',
+      'admin.user_manager.table.battletag',
+      'admin.user_manager.table.region',
+      'admin.sidebar.section.forum',
+      'admin.sidebar.section.patchnotes',
+      'admin.sidebar.category.overview',
+      'admin.sidebar.category.management',
+      'admin.sidebar.category.content',
+      'admin.sidebar.category.support',
+      'settings.sidebar.section.battlenet',
+      'settings.sidebar.category.mypermissions',
+      'settings.sidebar.category.guild',
+      'settings.sidebar.category.management',
+      'settings.sidebar.category.audit',
+      'settings.sidebar.category.integration',
+      'ui.pagination.aria_label',
+      'settings.guild_battlenet.title',
+      'polls.section.section_label',
+      'admin.bug_reports.url_label',
+      'activity.log.system',
+    ]);
+    const keysToCheck = listSemanticKeys().filter((key) =>
+      releasePrefixes.some((prefix) => key.startsWith(prefix)),
+    );
+
+    const leaks = keysToCheck.filter((key) => {
+      const deValue = resolveSemanticMessage({
+        key,
+        language: 'de',
+        translations: asTranslations({}),
+      });
+      const enValue = resolveSemanticMessage({
+        key,
+        language: 'en',
+        translations: asTranslations({}),
+      });
+      return !allowedIdentical.has(key) && deValue === enValue;
+    });
+
+    expect(leaks).toEqual([]);
   });
 
   it('resolves forum report copy with semantic FR text', () => {
@@ -53,7 +112,7 @@ describe('semantic i18n', () => {
   it('keeps poll mutation compatibility with legacy auto keys', () => {
     const value = resolveSemanticMessage({
       key: 'polls.mutations.publish_success',
-      language: 'de',
+      language: 'it',
       translations: asTranslations({
         hooks_useGuildPolls_publish_success: 'Umfrage veroffentlicht (legacy)',
       }),
@@ -65,7 +124,7 @@ describe('semantic i18n', () => {
   it('keeps poll editor compatibility with legacy auto keys', () => {
     const value = resolveSemanticMessage({
       key: 'polls.editor.publish',
-      language: 'de',
+      language: 'it',
       translations: asTranslations({
         components_polls_PollEditor_911: 'Veroffentlichen (legacy)',
       }),
@@ -87,7 +146,7 @@ describe('semantic i18n', () => {
   it('keeps forum sanctions compatibility with legacy auto keys', () => {
     const value = resolveSemanticMessage({
       key: 'forum.sanctions.dialog.title',
-      language: 'de',
+      language: 'it',
       translations: asTranslations({
         components_forum_SanctionDialog_98: 'Sanktion anwenden (legacy)',
       }),
@@ -99,7 +158,7 @@ describe('semantic i18n', () => {
   it('keeps poll results compatibility with legacy auto keys', () => {
     const value = resolveSemanticMessage({
       key: 'polls.results.anonymous_badge',
-      language: 'de',
+      language: 'it',
       translations: asTranslations({
         components_polls_PollResults_224: 'Anonyme Antworten (legacy)',
       }),
@@ -111,7 +170,7 @@ describe('semantic i18n', () => {
   it('keeps markdown editor compatibility with legacy auto keys', () => {
     const value = resolveSemanticMessage({
       key: 'forum.markdown.tab.write',
-      language: 'de',
+      language: 'it',
       translations: asTranslations({
         components_forum_MarkdownEditor_188: 'Schreiben (legacy)',
       }),
@@ -123,7 +182,7 @@ describe('semantic i18n', () => {
   it('keeps admin deletion requests compatibility with legacy auto keys', () => {
     const value = resolveSemanticMessage({
       key: 'admin.deletion.title',
-      language: 'de',
+      language: 'it',
       translations: asTranslations({
         components_admin_DeletionRequestsManager_126: 'Kontoloschanfragen (legacy)',
       }),
@@ -135,7 +194,7 @@ describe('semantic i18n', () => {
   it('keeps admin user manager compatibility with legacy auto keys', () => {
     const value = resolveSemanticMessage({
       key: 'admin.user_manager.table.username',
-      language: 'de',
+      language: 'it',
       translations: asTranslations({
         components_admin_UserManager_375: 'Benutzername (legacy)',
       }),
@@ -147,7 +206,7 @@ describe('semantic i18n', () => {
   it('keeps poll access editors compatibility with legacy auto keys', () => {
     const value = resolveSemanticMessage({
       key: 'polls.results_access.title',
-      language: 'de',
+      language: 'it',
       translations: asTranslations({
         components_polls_PollResultsAccessEditor_276: 'Ergebniszugriff (legacy)',
       }),
@@ -159,7 +218,7 @@ describe('semantic i18n', () => {
   it('keeps forum page/admin compatibility with legacy auto keys', () => {
     const value = resolveSemanticMessage({
       key: 'forum.page.empty.no_categories',
-      language: 'de',
+      language: 'it',
       translations: asTranslations({
         pages_Forum_72: 'Noch keine Kategorien (legacy)',
       }),
@@ -171,7 +230,7 @@ describe('semantic i18n', () => {
   it('keeps public profile/overview compatibility with legacy auto keys', () => {
     const value = resolveSemanticMessage({
       key: 'overview.admin_read_only',
-      language: 'de',
+      language: 'it',
       translations: asTranslations({
         pages_Overview_243: 'Admin Nur-Lese-Modus (legacy)',
       }),
@@ -183,7 +242,7 @@ describe('semantic i18n', () => {
   it('keeps final auto compatibility keys for wishes/dashboard', () => {
     const value = resolveSemanticMessage({
       key: 'wishes.session_expired',
-      language: 'de',
+      language: 'it',
       translations: asTranslations({
         pages_Wishes_session_expired: 'Sitzung abgelaufen (legacy)',
       }),

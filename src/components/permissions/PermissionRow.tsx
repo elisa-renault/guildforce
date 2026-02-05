@@ -7,6 +7,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { PermissionRule, GuildRank } from '@/hooks/useGuildPermissions';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { interpolateMessage } from '@/i18n/format';
+import { resolveSemanticMessage } from '@/i18n/semantic';
+import { formatRankLabel } from '@/lib/rankLabel';
 
 interface PermissionRowProps {
   label: string;
@@ -37,12 +39,18 @@ const MiniRankSlider = ({
   const [isDragging, setIsDragging] = useState(false);
   const sortedRanks = [...ranks].sort((a, b) => a.rank_index - b.rank_index);
   const { t } = useLanguage();
+  const rankLabel = resolveSemanticMessage({ key: 'guild.members.rank_label', language: t.lang, translations: t });
   
   const allRankIndices = Array.from({ length: maxRank + 1 }, (_, i) => i);
 
   const getRankName = (index: number) => {
     const rank = sortedRanks.find(r => r.rank_index === index);
-    return rank?.rank_name || `Rank ${index}`;
+    return formatRankLabel({
+      rankName: rank?.rank_name,
+      rankIndex: index,
+      rankLabel,
+      guildMasterLabel: t.guild.rank0,
+    });
   };
 
   const getIndexFromPosition = useCallback((clientX: number): number => {

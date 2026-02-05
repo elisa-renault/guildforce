@@ -13,6 +13,8 @@ import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
 import type { PollFormData, SectionFormData, QuestionFormData } from '@/types/poll';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { resolveSemanticMessage } from '@/i18n/semantic';
+import { formatRankLabel } from '@/lib/rankLabel';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,6 +42,7 @@ const GuildPollNew = () => {
   const [searchParams] = useSearchParams();
   const editMode = searchParams.get('mode') as 'metadata' | 'full' | null;
   const { language, t } = useLanguage();
+  const rankLabel = resolveSemanticMessage({ key: 'guild.members.rank_label', language, translations: t });
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
@@ -148,7 +151,13 @@ const GuildPollNew = () => {
         const uniqueRanks = new Map<number, string>();
         rosterCache?.forEach((r) => {
           if (r.rank_index !== null && !uniqueRanks.has(r.rank_index)) {
-            uniqueRanks.set(r.rank_index, r.rank_name || `Rank ${r.rank_index}`);
+            const normalizedLabel = formatRankLabel({
+              rankName: r.rank_name,
+              rankIndex: r.rank_index,
+              rankLabel,
+              guildMasterLabel: t.guild.rank0,
+            });
+            uniqueRanks.set(r.rank_index, normalizedLabel);
           }
         });
         if (!cancelled) {

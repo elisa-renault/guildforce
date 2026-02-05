@@ -22,16 +22,16 @@ interface RosterFiltersProps {
 }
 
 
-const roleConfig: Record<Role, { icon: typeof Shield; color: string; label: { en: string; fr: string } }> = {
-  tank: { icon: Shield, color: 'text-tank', label: { en: 'Tank', fr: 'Tank' } },
-  healer: { icon: Heart, color: 'text-healer', label: { en: 'Healer', fr: 'Healer' } },
-  dps: { icon: Sword, color: 'text-dps', label: { en: 'DPS', fr: 'DPS' } },
+const roleConfig: Record<Role, { icon: typeof Shield; color: string }> = {
+  tank: { icon: Shield, color: 'text-tank' },
+  healer: { icon: Heart, color: 'text-healer' },
+  dps: { icon: Sword, color: 'text-dps' },
 };
 
-const validationConfig: Record<ValidationStatus, { icon: typeof Clock; color: string; bgColor: string; label: { en: string; fr: string } }> = {
-  pending: { icon: Clock, color: 'text-amber-400', bgColor: 'bg-amber-400/10', label: { en: 'Pending', fr: 'En attente' } },
-  approved: { icon: CheckCircle2, color: 'text-healer', bgColor: 'bg-healer/10', label: { en: 'Approved', fr: 'Approuvé' } },
-  rejected: { icon: XCircle, color: 'text-destructive', bgColor: 'bg-destructive/10', label: { en: 'Rejected', fr: 'Refusé' } },
+const validationConfig: Record<ValidationStatus, { icon: typeof Clock; color: string; bgColor: string }> = {
+  pending: { icon: Clock, color: 'text-amber-400', bgColor: 'bg-amber-400/10' },
+  approved: { icon: CheckCircle2, color: 'text-healer', bgColor: 'bg-healer/10' },
+  rejected: { icon: XCircle, color: 'text-destructive', bgColor: 'bg-destructive/10' },
 };
 
 const commitmentConfig: Record<CommitmentFilter, { icon: typeof UserCheck; color: string; labelKey: 'confirmed' | 'undecided' | 'withdrawn' }> = {
@@ -179,7 +179,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
       const config = validationConfig[v];
       pills.push({
         key: `validation-${v}`,
-        label: config.label[language],
+        label: t.wishes.validation[v],
         color: config.color,
         onRemove: () => toggleValidation(v),
       });
@@ -200,7 +200,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
       if (config) {
         pills.push({
           key: `role-${r}`,
-          label: config.label[language],
+          label: t.dashboard[r as Role],
           color: config.color,
           onRemove: () => toggleRole(r),
         });
@@ -376,7 +376,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
                       className="h-7 text-xs"
                       onClick={() => updateFilter('minWishes', n)}
                     >
-                      {n === null ? t.common.all : `≥${n}`}
+                      {n === null ? t.common.all : `>=${n}`}
                     </Button>
                   ))}
                 </div>
@@ -406,7 +406,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
                           {isSelected && <Check className="h-3.5 w-3.5" />}
                         </div>
                         <Icon className={cn("h-4 w-4", config.color)} />
-                        <span className={config.color}>{config.label[language]}</span>
+                        <span className={config.color}>{t.wishes.validation[status]}</span>
                       </button>
                     );
                   })}
@@ -514,7 +514,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
                         onClick={() => toggleRole(role)}
                       >
                         <Icon className="h-4 w-4" />
-                        {config.label[language]}
+                        {t.dashboard[role]}
                       </Button>
                     );
                   })}

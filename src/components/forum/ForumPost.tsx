@@ -85,12 +85,12 @@ export const ForumPost = ({
           {authorData ? (
             <UserContextMenu user={authorData} isModerator={isModerator}>
               <span className="text-sm font-medium text-foreground text-center hover:text-primary transition-colors">
-                {post.author?.username || 'Inconnu'}
+                {post.author?.username || t.forum.unknownUser}
               </span>
             </UserContextMenu>
           ) : (
             <span className="text-sm font-medium text-foreground text-center">
-              Inconnu
+              {t.forum.unknownUser}
             </span>
           )}
           <UserRoleBadge roles={authorRoles} size="sm" />

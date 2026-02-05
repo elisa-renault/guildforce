@@ -3,24 +3,16 @@ import { interpolateMessage } from '@/i18n/format';
 import { Language, Translations } from '@/i18n/translations';
 import { MemberWish, ValidationStatus } from '@/types/guild';
 
-type LocalizedValue = { en: string; fr: string } & Partial<Record<Language, string>>;
-
-const roleNames: Record<string, LocalizedValue> = {
-  tank: { en: 'Tank', fr: 'Tank' },
-  healer: { en: 'Healer', fr: 'Soigneur' },
-  dps: { en: 'DPS', fr: 'DPS' },
-};
-
-const statusNames: Record<string, LocalizedValue> = {
-  confirmed: { en: 'Confirmed', fr: 'Confirme' },
-  potential: { en: 'Undecided', fr: 'Indecis' },
-  withdrawn: { en: 'Withdrawn', fr: 'Retrait' },
-};
-
-const validationNames: Record<ValidationStatus, LocalizedValue> = {
-  pending: { en: 'Pending', fr: 'En attente' },
-  approved: { en: 'Approved', fr: 'Approuve' },
-  rejected: { en: 'Rejected', fr: 'Rejete' },
+const filenameSuffixByLanguage: Partial<Record<Language, string>> = {
+  en: 'wishes',
+  fr: 'voeux',
+  de: 'wuensche',
+  es: 'deseos',
+  'pt-BR': 'desejos',
+  it: 'desideri',
+  ru: 'zhelaniya',
+  'zh-CN': 'zhiyuan',
+  ko: 'hui-mang',
 };
 
 interface ExportOptions {
@@ -30,9 +22,16 @@ interface ExportOptions {
   guildName: string;
 }
 
-function getLocalizedRoles(specIds: string[], lang: Language): string {
+function getLocalizedRoles(specIds: string[], t: Translations): string {
   const roles = getRolesFromSpecs(specIds);
-  return roles.map((role) => roleNames[role]?.[lang] || roleNames[role]?.en || role).join(', ');
+  return roles
+    .map((role) => {
+      if (role === 'tank' || role === 'healer' || role === 'dps') {
+        return t.dashboard[role];
+      }
+      return role;
+    })
+    .join(', ');
 }
 
 function escapeCSV(value: string): string {
@@ -50,17 +49,27 @@ export function exportWishesToCSV(members: MemberWish[], options: ExportOptions)
     return;
   }
 
-  const headers: string[] = [t.auto?.export_player || 'Player', t.auto?.export_commitment || 'Commitment'];
+  const statusLabelByStatus: Record<string, string> = {
+    confirmed: t.wishes.confirmed,
+    potential: t.wishes.potential,
+    withdrawn: t.wishes.commitment.withdrawn,
+  };
+  const validationLabelByStatus: Record<ValidationStatus, string> = {
+    pending: t.wishes.validation.pending,
+    approved: t.wishes.validation.approved,
+    rejected: t.wishes.validation.rejected,
+  };
+
+  const headers: string[] = [t.dashboard.player, t.dashboard.commitment];
 
   for (let i = 1; i <= maxWishes; i++) {
-    const wishTemplate = t.auto?.export_wish_label || 'Wish {{index}}';
-    const wishLabel = interpolateMessage(wishTemplate, { index: i });
+    const wishLabel = interpolateMessage(t.wishes.choiceNumber, { number: i });
     headers.push(
-      `${wishLabel} - ${t.auto?.export_class || 'Class'}`,
-      `${wishLabel} - ${t.auto?.export_specs || 'Specs'}`,
-      `${wishLabel} - ${t.auto?.export_roles || 'Roles'}`,
-      `${wishLabel} - ${t.auto?.export_comment || 'Comment'}`,
-      `${wishLabel} - ${t.auto?.export_validation || 'Validation'}`,
+      `${wishLabel} - ${t.profile.characterClass}`,
+      `${wishLabel} - ${t.wishes.specs}`,
+      `${wishLabel} - ${t.dashboard.rolesByPriority}`,
+      `${wishLabel} - ${t.wishes.comment}`,
+      `${wishLabel} - ${t.dashboard.validation}`,
     );
   }
 
@@ -69,7 +78,7 @@ export function exportWishesToCSV(members: MemberWish[], options: ExportOptions)
   for (const member of members) {
     const row: string[] = [
       escapeCSV(member.username),
-      escapeCSV(statusNames[member.status]?.[language] || statusNames[member.status]?.en || member.status),
+      escapeCSV(statusLabelByStatus[member.status] || member.status),
     ];
 
     for (let i = 0; i < maxWishes; i++) {
@@ -78,13 +87,9 @@ export function exportWishesToCSV(members: MemberWish[], options: ExportOptions)
         row.push(
           escapeCSV(getLocalizedClassName(wish.class_id, language)),
           escapeCSV(wish.spec_ids?.map((specId) => getLocalizedSpecName(specId, language)).join(', ') || ''),
-          escapeCSV(getLocalizedRoles(wish.spec_ids || [], language)),
+          escapeCSV(getLocalizedRoles(wish.spec_ids || [], t)),
           escapeCSV(wish.comment || ''),
-          escapeCSV(
-            validationNames[wish.validation_status || 'pending']?.[language] ||
-              validationNames[wish.validation_status || 'pending']?.en ||
-              '',
-          ),
+          escapeCSV(validationLabelByStatus[wish.validation_status || 'pending'] || ''),
         );
       } else {
         row.push('', '', '', '', '');
@@ -104,7 +109,7 @@ export function exportWishesToCSV(members: MemberWish[], options: ExportOptions)
   const date = new Date().toISOString().split('T')[0];
   const safeGuildName = guildName.replace(/[^a-zA-Z0-9-_]/g, '-');
   const safeRosterName = rosterName.replace(/[^a-zA-Z0-9-_]/g, '-');
-  const filenameSuffix = t.auto?.export_filename_suffix || 'wishes';
+  const filenameSuffix = filenameSuffixByLanguage[language] || filenameSuffixByLanguage.en;
   const filename = `${safeGuildName}-${safeRosterName}-${filenameSuffix}-${date}.csv`;
 
   link.href = url;

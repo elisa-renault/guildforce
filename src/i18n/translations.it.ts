@@ -5,6 +5,7 @@ import type { Translations } from './translations';
 export const translationsIt: Translations = createLocaleTranslations(translationsEn, {
   common: {
     loading: 'Caricamento',
+    open: 'Apri',
     save: 'Salva',
     cancel: 'Annulla',
     delete: 'Elimina',

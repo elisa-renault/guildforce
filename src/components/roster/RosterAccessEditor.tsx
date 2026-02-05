@@ -3,6 +3,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, Users, Crown } from 'lucide-react';
+import { resolveSemanticMessage } from '@/i18n/semantic';
+import { formatRankLabel } from '@/lib/rankLabel';
 
 interface AccessRule {
   access_type: 'user' | 'rank';
@@ -39,13 +41,20 @@ const RankSlider = ({ maxValue, maxRank, ranks, onChange }: RankSliderProps) => 
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const sortedRanks = [...ranks].sort((a, b) => a.rank_index - b.rank_index);
+  const { t } = useLanguage();
+  const rankLabel = resolveSemanticMessage({ key: 'guild.members.rank_label', language: t.lang, translations: t });
   
   // Always start from 0 (GM)
   const allRankIndices = Array.from({ length: maxRank + 1 }, (_, i) => i);
 
   const getRankName = (index: number) => {
     const rank = sortedRanks.find(r => r.rank_index === index);
-    return rank?.rank_name || `Rank ${index}`;
+    return formatRankLabel({
+      rankName: rank?.rank_name,
+      rankIndex: index,
+      rankLabel,
+      guildMasterLabel: t.guild.rank0,
+    });
   };
 
   const getIndexFromPosition = useCallback((clientX: number): number => {

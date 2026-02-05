@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { LANGUAGE_OPTIONS, isSupportedLanguage } from '@/i18n/config';
+import { getLanguageDisplayLabel, LANGUAGE_OPTIONS, isSupportedLanguage } from '@/i18n/config';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 
 
@@ -62,12 +62,12 @@ export const Footer = () => {
                 className="w-[120px] h-7 bg-transparent border-none text-muted-foreground hover:text-foreground text-xs gap-1.5 px-2"
               >
                 <Globe className="h-3.5 w-3.5" />
-                <SelectValue />
+                <SelectValue placeholder={getLanguageDisplayLabel(language)} />
               </SelectTrigger>
               <SelectContent>
                 {LANGUAGE_OPTIONS.map((lang) => (
                   <SelectItem key={lang.code} value={lang.code}>
-                    {lang.label}
+                    {getLanguageDisplayLabel(lang.code)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -128,12 +128,12 @@ export const Footer = () => {
                 className="w-[115px] h-7 bg-transparent border-border/50 text-muted-foreground text-xs rounded-full px-2.5 gap-1.5"
               >
                 <Globe className="h-3.5 w-3.5" />
-                <SelectValue />
+                <SelectValue placeholder={getLanguageDisplayLabel(language)} />
               </SelectTrigger>
               <SelectContent>
                 {LANGUAGE_OPTIONS.map((lang) => (
                   <SelectItem key={lang.code} value={lang.code}>
-                    {lang.label}
+                    {getLanguageDisplayLabel(lang.code)}
                   </SelectItem>
                 ))}
               </SelectContent>

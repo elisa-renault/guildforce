@@ -19,10 +19,11 @@ export function generateRankIndices(maxRank: number): number[] {
  */
 export function getRankName(
   index: number,
-  ranks: GuildRank[]
+  ranks: GuildRank[],
+  fallbackLabel?: string
 ): string {
   const rank = ranks.find(r => r.rank_index === index);
-  return rank?.rank_name || `Rank ${index}`;
+  return rank?.rank_name || fallbackLabel || `${index}`;
 }
 
 /**

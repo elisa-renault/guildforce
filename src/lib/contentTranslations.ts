@@ -33,6 +33,12 @@ const getLanguageMap = (translations: ContentTranslation[]): Map<Language, Conte
   return byLanguage;
 };
 
+const normalizeContentValue = (value: string): string =>
+  value
+    .replace(/\r\n/g, '\n')
+    .replace(/\s+/g, ' ')
+    .trim();
+
 export const selectContentTranslation = (
   translations: ContentTranslation[],
   language: Language,
@@ -94,4 +100,31 @@ export const collectPersistedTranslations = (
       content: map[language].content,
     }))
     .filter(({ title, content }) => title.length > 0 || content.length > 0);
+};
+
+export const isTranslationMissingOrUntranslated = (
+  translations: ContentTranslation[],
+  targetLanguage: Language,
+  sourceLanguages: Language[] = ['en', 'fr'],
+): boolean => {
+  const byLanguage = getLanguageMap(translations);
+  const target = byLanguage.get(targetLanguage);
+  if (!target) return true;
+
+  const normalizedTitle = normalizeContentValue(target.title);
+  const normalizedContent = normalizeContentValue(target.content);
+  if (!normalizedTitle || !normalizedContent) return true;
+
+  for (const sourceLanguage of sourceLanguages) {
+    if (sourceLanguage === targetLanguage) continue;
+
+    const source = byLanguage.get(sourceLanguage);
+    if (!source) continue;
+
+    if (normalizedContent === normalizeContentValue(source.content)) {
+      return true;
+    }
+  }
+
+  return false;
 };

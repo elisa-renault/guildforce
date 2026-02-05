@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
+
 import {
   collectPersistedTranslations,
+  isTranslationMissingOrUntranslated,
   selectContentTranslation,
   toEditableTranslationMap,
 } from '@/lib/contentTranslations';
@@ -51,5 +53,30 @@ describe('contentTranslations', () => {
     const languages = rows.map((row) => row.language).sort();
 
     expect(languages).toEqual(['de', 'en']);
+  });
+
+  it('flags missing DE translation when content is copied from EN', () => {
+    const missing = isTranslationMissingOrUntranslated(
+      [
+        { language: 'en', title: 'Privacy Policy', content: 'English content' },
+        { language: 'de', title: 'Datenschutzerklaerung', content: 'English content' },
+      ],
+      'de',
+    );
+
+    expect(missing).toBe(true);
+  });
+
+  it('does not flag DE translation when localized content differs from EN/FR', () => {
+    const missing = isTranslationMissingOrUntranslated(
+      [
+        { language: 'en', title: 'Privacy Policy', content: 'English content' },
+        { language: 'fr', title: 'Politique de confidentialite', content: 'Contenu francais' },
+        { language: 'de', title: 'Datenschutzerklaerung', content: 'Deutscher Inhalt' },
+      ],
+      'de',
+    );
+
+    expect(missing).toBe(false);
   });
 });

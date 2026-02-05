@@ -28,6 +28,7 @@ import { getLocalizedClassName, wowClasses } from '@/data/wowClasses';
 import { BATTLENET_CLASS_MAP } from '@/data/battlenetClasses';
 import { formatDistanceFromNowLocalized } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
+import { formatRankLabel } from '@/lib/rankLabel';
 
 interface RosterMember {
   id: string;
@@ -97,6 +98,7 @@ const GuildMembers = () => {
     searchPlaceholder: resolveSemanticMessage({ key: 'guild.members.search_placeholder', language, translations: t }),
     rankPlural: resolveSemanticMessage({ key: 'guild.members.rank_plural', language, translations: t }),
     rankSingle: resolveSemanticMessage({ key: 'guild.members.rank_single', language, translations: t }),
+    rankLabel: resolveSemanticMessage({ key: 'guild.members.rank_label', language, translations: t }),
     allRanks: resolveSemanticMessage({ key: 'guild.members.all_ranks', language, translations: t }),
     guildforceLabel: resolveSemanticMessage({ key: 'guild.members.guildforce_label', language, translations: t }),
     notRegistered: resolveSemanticMessage({ key: 'guild.members.not_registered', language, translations: t }),
@@ -116,6 +118,14 @@ const GuildMembers = () => {
     previous: resolveSemanticMessage({ key: 'guild.members.previous', language, translations: t }),
     next: resolveSemanticMessage({ key: 'guild.members.next', language, translations: t }),
   };
+
+  const getRankLabel = (rankName: string | null, index: number) =>
+    formatRankLabel({
+      rankName,
+      rankIndex: index,
+      rankLabel: memberUi.rankLabel,
+      guildMasterLabel: t.guild.rank0,
+    });
 
   // Get unique ranks for filter
   const uniqueRanks = useMemo(() => 
@@ -647,7 +657,7 @@ const GuildMembers = () => {
                           isGMRank && "text-amber-400",
                           !isGMRank && isOfficer && "text-primary"
                         )}>
-                          {rank.name || `Rank ${rank.index}`}
+                          {getRankLabel(rank.name, rank.index)}
                         </span>
                       </button>
                     );
@@ -897,7 +907,7 @@ const GuildMembers = () => {
                           !member.is_guild_master && member.rank_index <= (guild?.officer_rank_threshold ?? 2) && "bg-primary/20 text-primary border-primary/30"
                         )}
                       >
-                        {member.rank_name || `Rank ${member.rank_index}`}
+                        {getRankLabel(member.rank_name, member.rank_index)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-center">

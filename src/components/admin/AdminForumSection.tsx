@@ -44,7 +44,7 @@ export const AdminForumSection = () => {
             </p>
           </div>
           <Button onClick={() => navigate('/forum/admin')} className="gap-2">
-            {t.common.loading === 'Chargement...' ? 'Ouvrir' : 'Open'}
+            {t.common.open}
             <ExternalLink className="h-4 w-4" />
           </Button>
         </div>

@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { resolveSemanticMessage } from '@/i18n/semantic';
+import { formatRankLabel } from '@/lib/rankLabel';
 
 export type PermissionType = 
   | 'manage_wishes' 
@@ -37,6 +39,7 @@ export function useGuildPermissions(guildId: string | null) {
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
   const { t } = useLanguage();
+  const rankLabel = resolveSemanticMessage({ key: 'guild.members.rank_label', language: t.lang, translations: t });
 
   const loadData = useCallback(async () => {
     if (!guildId) return;
@@ -103,7 +106,13 @@ export function useGuildPermissions(guildId: string | null) {
           const uniqueRanks = new Map<number, string>();
           ranksData.forEach(r => {
             if (!uniqueRanks.has(r.rank_index)) {
-              uniqueRanks.set(r.rank_index, r.rank_name || `Rank ${r.rank_index}`);
+              const normalizedLabel = formatRankLabel({
+                rankName: r.rank_name,
+                rankIndex: r.rank_index,
+                rankLabel,
+                guildMasterLabel: t.guild.rank0,
+              });
+              uniqueRanks.set(r.rank_index, normalizedLabel);
             }
           });
 

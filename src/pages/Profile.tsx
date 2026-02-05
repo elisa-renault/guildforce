@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useLanguage, Language } from '@/contexts/LanguageContext';
-import { LANGUAGE_OPTIONS, isSupportedLanguage } from '@/i18n/config';
+import { getLanguageDisplayLabel, LANGUAGE_OPTIONS, isSupportedLanguage } from '@/i18n/config';
 import { interpolateMessage } from '@/i18n/format';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -336,11 +336,11 @@ const Profile = () => {
                 </FormLabel>
                 <Select value={language} onValueChange={(val) => isSupportedLanguage(val) && handleLanguageChange(val)}>
                   <SelectTrigger id="profile-language-setup" className="cosmic-input">
-                    <SelectValue placeholder={language.toUpperCase()} />
+                    <SelectValue placeholder={getLanguageDisplayLabel(language)} />
                   </SelectTrigger>
                   <SelectContent className="bg-card border-border">
                     {LANGUAGE_OPTIONS.map((option) => (
-                      <SelectItem key={option.code} value={option.code}>{option.label}</SelectItem>
+                      <SelectItem key={option.code} value={option.code}>{getLanguageDisplayLabel(option.code)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -474,11 +474,11 @@ const Profile = () => {
                 </Label>
                 <Select value={language} onValueChange={(val) => isSupportedLanguage(val) && handleLanguageChange(val)}>
                   <SelectTrigger id="profile-language" className="cosmic-input mt-2">
-                    <SelectValue placeholder={language.toUpperCase()} />
+                    <SelectValue placeholder={getLanguageDisplayLabel(language)} />
                   </SelectTrigger>
                   <SelectContent className="bg-card border-border">
                     {LANGUAGE_OPTIONS.map((option) => (
-                      <SelectItem key={option.code} value={option.code}>{option.label}</SelectItem>
+                      <SelectItem key={option.code} value={option.code}>{getLanguageDisplayLabel(option.code)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

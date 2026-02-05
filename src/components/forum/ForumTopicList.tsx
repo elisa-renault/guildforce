@@ -72,7 +72,7 @@ export const ForumTopicList = ({ topics, basePath = '/forum' }: ForumTopicListPr
                 </h3>
               </div>
               <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                <span>{topic.author?.username || 'Inconnu'}</span>
+                <span>{topic.author?.username || t.forum.unknownUser}</span>
                 <span className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
                   {formatDistanceFromNowLocalized(topic.created_at, language, true)}

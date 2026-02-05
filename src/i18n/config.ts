@@ -18,6 +18,25 @@ export const LANGUAGE_OPTIONS: ReadonlyArray<{ code: Language; label: string }> 
   { code: 'ko', label: '\ud55c\uad6d\uc5b4' },
 ];
 
+export const LANGUAGE_FLAG_BY_CODE: Readonly<Record<Language, string>> = {
+  en: '🇺🇸',
+  fr: '🇫🇷',
+  de: '🇩🇪',
+  es: '🇪🇸',
+  'pt-BR': '🇧🇷',
+  it: '🇮🇹',
+  ru: '🇷🇺',
+  'zh-CN': '🇨🇳',
+  ko: '🇰🇷',
+};
+
+export const getLanguageDisplayLabel = (language: Language): string => {
+  const option = LANGUAGE_OPTIONS.find((entry) => entry.code === language);
+  const label = option?.label || language;
+  const flag = LANGUAGE_FLAG_BY_CODE[language];
+  return flag ? `${flag} ${label}` : label;
+};
+
 export const INTL_LOCALE_BY_LANGUAGE: Record<Language, string> = {
   en: 'en-US',
   fr: 'fr-FR',

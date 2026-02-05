@@ -35,12 +35,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { getBilingualValue, isSupportedLanguage, LANGUAGE_OPTIONS, type Language } from '@/i18n/config';
+import { getBilingualContentLanguage, isSupportedLanguage, LANGUAGE_OPTIONS, type Language } from '@/i18n/config';
 import { formatDateLocalized } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { supabase } from '@/integrations/supabase/client';
 import {
   collectPersistedTranslations,
+  isTranslationMissingOrUntranslated,
   selectContentTranslation,
   toEditableTranslationMap,
   type EditableContentTranslationMap,
@@ -79,6 +80,9 @@ interface EditablePatchNote {
 const getLanguageLabel = (language: Language): string =>
   LANGUAGE_OPTIONS.find((option) => option.code === language)?.label || language;
 
+const hasGermanTranslation = (translations: PatchNoteTranslation[]): boolean =>
+  !isTranslationMissingOrUntranslated(translations, 'de');
+
 export const PatchNotesEditor = () => {
   const { language, t } = useLanguage();
   const { user } = useAuth();
@@ -91,6 +95,17 @@ export const PatchNotesEditor = () => {
   const [isNew, setIsNew] = useState(false);
   const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
     resolveSemanticMessage({ key, language, translations: t });
+  const smForLanguage = (
+    key: Parameters<typeof resolveSemanticMessage>[0]['key'],
+    targetLanguage: Language,
+  ) => resolveSemanticMessage({ key, language: targetLanguage, translations: t });
+  const getPatchPlaceholder = (field: 'title' | 'content', targetLanguage: Language) => {
+    const bilingual = getBilingualContentLanguage(targetLanguage);
+    const key = `admin.patch.${field}_placeholder.${bilingual}` as Parameters<
+      typeof resolveSemanticMessage
+    >[0]['key'];
+    return smForLanguage(key, targetLanguage);
+  };
 
   const fetchNotes = useCallback(async () => {
     const { data, error } = await supabase
@@ -317,15 +332,13 @@ export const PatchNotesEditor = () => {
 
   if (editingNote) {
     const currentTranslation = editingNote.translations[editLang];
-    const titlePlaceholder = getBilingualValue(editLang, {
-      en: sm('admin.patch.title_placeholder.en'),
-      fr: sm('admin.patch.title_placeholder.fr'),
-    });
-    const contentPlaceholder = getBilingualValue(editLang, {
-      en: sm('admin.patch.content_placeholder.en'),
-      fr: sm('admin.patch.content_placeholder.fr'),
-    });
-    const emptyPreview = getBilingualValue(editLang, { en: '*No content*', fr: '*Aucun contenu*' });
+    const titlePlaceholder = getPatchPlaceholder('title', editLang);
+    const contentPlaceholder = getPatchPlaceholder('content', editLang);
+    const emptyPreview = editLang === 'fr'
+      ? '*Aucun contenu*'
+      : editLang === 'de'
+        ? '*Kein Inhalt*'
+        : '*No content*';
 
     return (
       <div className="space-y-4">
@@ -482,6 +495,7 @@ export const PatchNotesEditor = () => {
 
   const publishedCount = notes.filter((note) => note.status === 'published').length;
   const draftCount = notes.filter((note) => note.status === 'draft').length;
+  const missingDeCount = notes.filter((note) => !hasGermanTranslation(note.patch_note_translations || [])).length;
 
   return (
     <div className="space-y-4">
@@ -494,6 +508,10 @@ export const PatchNotesEditor = () => {
           <span className="flex items-center gap-1.5">
             <FileEdit className="h-4 w-4 text-yellow-500" />
             {draftCount} {t.patchnotes.draft.toLowerCase()}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <ScrollText className="h-4 w-4 text-orange-500" />
+            DE missing: {missingDeCount}
           </span>
         </div>
         <Button size="sm" onClick={handleNew} className="gap-1.5">
@@ -515,6 +533,7 @@ export const PatchNotesEditor = () => {
         <div className="space-y-3">
           {notes.map((note) => {
             const localized = selectContentTranslation(note.patch_note_translations ?? [], language);
+            const missingDe = !hasGermanTranslation(note.patch_note_translations || []);
             return (
               <GlowCard
                 key={note.id}
@@ -531,6 +550,11 @@ export const PatchNotesEditor = () => {
                       >
                         {note.status === 'published' ? t.patchnotes.published : t.patchnotes.draft}
                       </Badge>
+                      {missingDe ? (
+                        <Badge variant="secondary" className="text-[10px] uppercase tracking-wide">
+                          DE missing
+                        </Badge>
+                      ) : null}
                       {note.status === 'published' && isRecent(note.published_at) && (
                         <Badge className="bg-primary/20 text-primary border-primary/30">{t.common.new}</Badge>
                       )}

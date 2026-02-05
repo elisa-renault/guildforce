@@ -3,6 +3,7 @@ import type { Translations } from './translations';
 export const translationsEn: Translations = {
     common: {
       loading: 'Loading...',
+      open: 'Open',
       save: 'Save',
       cancel: 'Cancel',
       delete: 'Delete',
@@ -585,6 +586,7 @@ export const translationsEn: Translations = {
     },
     guildNav: {
       dashboard: 'Dashboard',
+      overview: 'Overview',
       myWishes: 'My Wishes',
       polls: 'Polls',
       settings: 'Settings',
@@ -594,6 +596,7 @@ export const translationsEn: Translations = {
       guildOverview: 'Guild Overview',
       quickAccess: 'Quick Access',
       wishesTable: 'Wishes Table',
+      members: 'Members',
       noWishApproved: 'No wish approved',
       noWishesYet: "You haven't set your wishes yet",
     },

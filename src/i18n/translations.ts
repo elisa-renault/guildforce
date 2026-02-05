@@ -15,6 +15,7 @@ export interface Translations {
   // Common
   common: {
     loading: string;
+    open: string;
     save: string;
     cancel: string;
     delete: string;
