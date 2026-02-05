@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { CosmicButton } from '@/components/CosmicButton';
-import { CheckCircle, HelpCircle, XCircle, Pencil, Shield, Heart, Sword, Swords, Crosshair, MessageSquare } from 'lucide-react';
+import { CheckCircle, HelpCircle, XCircle, Pencil, Shield, Heart, Sword, Swords, Crosshair, MessageSquare, Lock, Unlock } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getClassById, getLocalizedClassName, getSpecById } from '@/data/wowClasses';
 import { MemberWish, WishChoice, ValidationStatus } from '@/types/guild';
@@ -11,9 +11,12 @@ interface MobileRosterCardProps {
   member: MemberWish;
   isOwnRow: boolean;
   isGM: boolean;
+  isRosterLocked?: boolean;
   onStartEditing: (member: MemberWish) => void;
   onValidateWish?: (userId: string, choiceIndex: number, status: ValidationStatus) => void;
   onClick: () => void;
+  onToggleMemberLock?: (memberId: string, locked: boolean) => void;
+  lockingMemberId?: string | null;
 }
 
 const roleConfig: Record<string, { icon: typeof Shield; color: string }> = {
@@ -26,9 +29,12 @@ export const MobileRosterCard = ({
   member,
   isOwnRow,
   isGM,
+  isRosterLocked = false,
   onStartEditing,
   onValidateWish,
   onClick,
+  onToggleMemberLock,
+  lockingMemberId = null,
 }: MobileRosterCardProps) => {
   const { t, language } = useLanguage();
 
@@ -77,6 +83,8 @@ export const MobileRosterCard = ({
   };
 
   const filledWishes = member.wishes.filter(w => w.class_id);
+  const memberLocked = Boolean(member.wishes_locked);
+  const effectiveLocked = isRosterLocked || memberLocked;
 
   const handleCardClick = (e: React.MouseEvent) => {
     // Don't trigger card click if clicking on interactive elements
@@ -102,6 +110,7 @@ export const MobileRosterCard = ({
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <span className="font-medium text-foreground">{member.username}</span>
+          {effectiveLocked && <Lock className="h-3.5 w-3.5 text-amber-400" />}
           <Badge 
             variant={member.status === 'confirmed' ? 'default' : 'outline'}
             className={cn(
@@ -122,19 +131,36 @@ export const MobileRosterCard = ({
             )}
           </Badge>
         </div>
-        {isOwnRow && (
-          <CosmicButton 
-            size="sm" 
-            variant="outline" 
-            onClick={(e) => {
-              e.stopPropagation();
-              onStartEditing(member);
-            }}
-            icon={<Pencil className="h-3.5 w-3.5" strokeWidth={1.5} />}
-            className="h-7 w-7 p-0"
-            aria-label={t.common.edit}
-          />
-        )}
+        <div className="flex items-center gap-1">
+          {isGM && onToggleMemberLock && (
+            <CosmicButton
+              size="sm"
+              variant="outline"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleMemberLock(member.id, !memberLocked);
+              }}
+              loading={lockingMemberId === member.id}
+              icon={memberLocked ? <Unlock className="h-3.5 w-3.5" strokeWidth={1.5} /> : <Lock className="h-3.5 w-3.5" strokeWidth={1.5} />}
+              className="h-7 w-7 p-0"
+              aria-label={memberLocked ? t.wishes.unlockMember : t.wishes.lockMember}
+            />
+          )}
+          {isOwnRow && (
+            <CosmicButton 
+              size="sm" 
+              variant="outline" 
+              onClick={(e) => {
+                e.stopPropagation();
+                onStartEditing(member);
+              }}
+              disabled={effectiveLocked}
+              icon={<Pencil className="h-3.5 w-3.5" strokeWidth={1.5} />}
+              className="h-7 w-7 p-0"
+              aria-label={t.common.edit}
+            />
+          )}
+        </div>
       </div>
 
       {/* Wishes list */}

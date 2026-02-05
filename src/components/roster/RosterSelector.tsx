@@ -1,12 +1,15 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Layers } from 'lucide-react';
+import { Layers, Lock } from 'lucide-react';
+import { resolveWishLockState } from '@/lib/wishLock';
 
 interface Roster {
   id: string;
   name: string;
   is_default: boolean;
   hasAccess: boolean;
+  wishes_locked?: boolean | null;
+  wishes_lock_at?: string | null;
 }
 
 interface RosterSelectorProps {
@@ -14,12 +17,26 @@ interface RosterSelectorProps {
   selectedRosterId: string | null;
   onSelect: (rosterId: string) => void;
   showAccessIndicator?: boolean;
+  showWishesLockIndicator?: boolean;
 }
 
-export const RosterSelector = ({ rosters, selectedRosterId, onSelect, showAccessIndicator = false }: RosterSelectorProps) => {
+export const RosterSelector = ({
+  rosters,
+  selectedRosterId,
+  onSelect,
+  showAccessIndicator = false,
+  showWishesLockIndicator = false,
+}: RosterSelectorProps) => {
   const { t } = useLanguage();
   
   const selectedRoster = rosters.find(r => r.id === selectedRosterId);
+  const selectedLockState = selectedRoster
+    ? resolveWishLockState({
+        rosterLocked: selectedRoster.wishes_locked,
+        rosterLockAt: selectedRoster.wishes_lock_at,
+        memberLocked: false,
+      })
+    : null;
 
   // If only one roster, display it as static text (no dropdown)
   if (rosters.length <= 1) {
@@ -31,6 +48,9 @@ export const RosterSelector = ({ rosters, selectedRosterId, onSelect, showAccess
         <span className="text-sm md:text-base font-medium truncate">{selectedRoster.name}</span>
         {selectedRoster.is_default && (
           <span className="text-xs text-muted-foreground flex-shrink-0">({t.rosters?.default || 'Default'})</span>
+        )}
+        {showWishesLockIndicator && selectedLockState?.isLocked && (
+          <Lock className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" />
         )}
       </div>
     );
@@ -44,26 +64,39 @@ export const RosterSelector = ({ rosters, selectedRosterId, onSelect, showAccess
           <SelectValue className="truncate" placeholder={t.rosters?.selectRoster || 'Select roster'} />
         </SelectTrigger>
         <SelectContent className="bg-card border-border z-50">
-          {rosters.map((roster) => (
-            <SelectItem 
-              key={roster.id} 
-              value={roster.id}
-              className="hover:bg-primary/20"
-              disabled={showAccessIndicator && !roster.hasAccess}
-            >
-              <span className="flex items-center gap-2 min-w-0">
-                <span className="truncate">{roster.name}</span>
-                {roster.is_default && (
-                  <span className="text-xs text-muted-foreground flex-shrink-0">({t.rosters?.default || 'Default'})</span>
-                )}
-                {showAccessIndicator && !roster.hasAccess && (
-                  <span className="text-xs text-destructive flex-shrink-0">🔒</span>
-                )}
-              </span>
-            </SelectItem>
-          ))}
+          {rosters.map((roster) => {
+            const lockState = resolveWishLockState({
+              rosterLocked: roster.wishes_locked,
+              rosterLockAt: roster.wishes_lock_at,
+              memberLocked: false,
+            });
+            return (
+              <SelectItem 
+                key={roster.id} 
+                value={roster.id}
+                className="hover:bg-primary/20"
+                disabled={showAccessIndicator && !roster.hasAccess}
+              >
+                <span className="flex items-center gap-2 min-w-0">
+                  <span className="truncate">{roster.name}</span>
+                  {roster.is_default && (
+                    <span className="text-xs text-muted-foreground flex-shrink-0">({t.rosters?.default || 'Default'})</span>
+                  )}
+                  {showAccessIndicator && !roster.hasAccess && (
+                    <Lock className="h-3.5 w-3.5 text-destructive flex-shrink-0" />
+                  )}
+                  {showWishesLockIndicator && lockState.isLocked && (
+                    <Lock className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" />
+                  )}
+                </span>
+              </SelectItem>
+            );
+          })}
         </SelectContent>
       </Select>
+      {showWishesLockIndicator && selectedLockState?.isLocked && (
+        <Lock className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" />
+      )}
     </div>
   );
 };

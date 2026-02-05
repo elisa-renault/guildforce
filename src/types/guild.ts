@@ -24,6 +24,7 @@ export interface MemberWish {
   username: string;
   status: 'confirmed' | 'potential' | string;
   wishes: WishChoice[];
+  wishes_locked?: boolean;
 }
 
 /**

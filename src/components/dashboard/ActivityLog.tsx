@@ -30,6 +30,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Shield,
+  Lock,
+  Unlock,
 } from 'lucide-react';
 import { formatDistanceFromNowLocalized, interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
@@ -45,6 +47,10 @@ const ACTION_ICONS: Record<ActionType, React.ReactNode> = {
   wish_deleted: <Trash2 className="h-4 w-4" />,
   member_joined: <UserPlus className="h-4 w-4" />,
   commitment_changed: <UserCog className="h-4 w-4" />,
+  roster_wishes_locked: <Lock className="h-4 w-4" />,
+  roster_wishes_unlocked: <Unlock className="h-4 w-4" />,
+  member_wishes_locked: <Lock className="h-4 w-4" />,
+  member_wishes_unlocked: <Unlock className="h-4 w-4" />,
   roster_created: <FileText className="h-4 w-4" />,
   roster_updated: <Pencil className="h-4 w-4" />,
   roster_deleted: <Trash2 className="h-4 w-4" />,
@@ -58,6 +64,10 @@ const ACTION_COLORS: Record<ActionType, string> = {
   wish_deleted: 'bg-red-500/20 text-red-400',
   member_joined: 'bg-cyan-500/20 text-cyan-400',
   commitment_changed: 'bg-violet-500/20 text-violet-400',
+  roster_wishes_locked: 'bg-amber-500/20 text-amber-400',
+  roster_wishes_unlocked: 'bg-emerald-500/20 text-emerald-400',
+  member_wishes_locked: 'bg-amber-500/20 text-amber-400',
+  member_wishes_unlocked: 'bg-emerald-500/20 text-emerald-400',
   roster_created: 'bg-blue-500/20 text-blue-400',
   roster_updated: 'bg-amber-500/20 text-amber-400',
   roster_deleted: 'bg-red-500/20 text-red-400',
@@ -87,6 +97,11 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
     wishDeletedText: resolveSemanticMessage({ key: 'activity.log.wish_deleted', language, translations: t }),
     memberJoinedText: resolveSemanticMessage({ key: 'activity.log.member_joined', language, translations: t }),
     commitmentChangedText: resolveSemanticMessage({ key: 'activity.log.commitment_changed', language, translations: t }),
+    rosterWishesLockedText: resolveSemanticMessage({ key: 'activity.log.roster_wishes_locked', language, translations: t }),
+    rosterWishesLockedScheduledText: resolveSemanticMessage({ key: 'activity.log.roster_wishes_locked_scheduled', language, translations: t }),
+    rosterWishesUnlockedText: resolveSemanticMessage({ key: 'activity.log.roster_wishes_unlocked', language, translations: t }),
+    memberWishesLockedText: resolveSemanticMessage({ key: 'activity.log.member_wishes_locked', language, translations: t }),
+    memberWishesUnlockedText: resolveSemanticMessage({ key: 'activity.log.member_wishes_unlocked', language, translations: t }),
     rosterCreatedText: resolveSemanticMessage({ key: 'activity.log.roster_created', language, translations: t }),
     rosterUpdatedText: resolveSemanticMessage({ key: 'activity.log.roster_updated', language, translations: t }),
     rosterDeletedText: resolveSemanticMessage({ key: 'activity.log.roster_deleted', language, translations: t }),
@@ -99,6 +114,10 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
       wish_deleted: resolveSemanticMessage({ key: 'activity.log.action.wish_deleted', language, translations: t }),
       member_joined: resolveSemanticMessage({ key: 'activity.log.action.member_joined', language, translations: t }),
       commitment_changed: resolveSemanticMessage({ key: 'activity.log.action.commitment_changed', language, translations: t }),
+      roster_wishes_locked: resolveSemanticMessage({ key: 'activity.log.action.roster_wishes_locked', language, translations: t }),
+      roster_wishes_unlocked: resolveSemanticMessage({ key: 'activity.log.action.roster_wishes_unlocked', language, translations: t }),
+      member_wishes_locked: resolveSemanticMessage({ key: 'activity.log.action.member_wishes_locked', language, translations: t }),
+      member_wishes_unlocked: resolveSemanticMessage({ key: 'activity.log.action.member_wishes_unlocked', language, translations: t }),
       roster_created: resolveSemanticMessage({ key: 'activity.log.action.roster_created', language, translations: t }),
       roster_updated: resolveSemanticMessage({ key: 'activity.log.action.roster_updated', language, translations: t }),
       roster_deleted: resolveSemanticMessage({ key: 'activity.log.action.roster_deleted', language, translations: t }),
@@ -112,6 +131,10 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
       wish_validation: resolveSemanticMessage({ key: 'activity.log.filter.wish_validation', language, translations: t }),
       member_joined: resolveSemanticMessage({ key: 'activity.log.filter.member_joined', language, translations: t }),
       commitment_changed: resolveSemanticMessage({ key: 'activity.log.filter.commitment_changed', language, translations: t }),
+      roster_wishes_locked: resolveSemanticMessage({ key: 'activity.log.filter.roster_wishes_locked', language, translations: t }),
+      roster_wishes_unlocked: resolveSemanticMessage({ key: 'activity.log.filter.roster_wishes_unlocked', language, translations: t }),
+      member_wishes_locked: resolveSemanticMessage({ key: 'activity.log.filter.member_wishes_locked', language, translations: t }),
+      member_wishes_unlocked: resolveSemanticMessage({ key: 'activity.log.filter.member_wishes_unlocked', language, translations: t }),
       roster_created: resolveSemanticMessage({ key: 'activity.log.filter.roster_created', language, translations: t }),
       roster_updated: resolveSemanticMessage({ key: 'activity.log.filter.roster_updated', language, translations: t }),
       roster_deleted: resolveSemanticMessage({ key: 'activity.log.filter.roster_deleted', language, translations: t }),
@@ -352,6 +375,49 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
         );
       }
 
+      case 'roster_wishes_locked': {
+        const scheduled = Boolean(details.scheduled);
+        const message = scheduled ? ui.rosterWishesLockedScheduledText : ui.rosterWishesLockedText;
+        return (
+          <div className="flex items-center gap-2">
+            <Badge variant="outline">{log.roster?.name || ui.unknown}</Badge>
+            <span className="text-muted-foreground text-sm">
+              {message}
+            </span>
+          </div>
+        );
+      }
+
+      case 'roster_wishes_unlocked':
+        return (
+          <div className="flex items-center gap-2">
+            <Badge variant="outline">{log.roster?.name || ui.unknown}</Badge>
+            <span className="text-muted-foreground text-sm">
+              {ui.rosterWishesUnlockedText}
+            </span>
+          </div>
+        );
+
+      case 'member_wishes_locked':
+        return (
+          <div className="flex items-center gap-2">
+            <span className="font-medium">{log.target_user_profile?.username || ui.unknown}</span>
+            <span className="text-muted-foreground text-sm">
+              {ui.memberWishesLockedText}
+            </span>
+          </div>
+        );
+
+      case 'member_wishes_unlocked':
+        return (
+          <div className="flex items-center gap-2">
+            <span className="font-medium">{log.target_user_profile?.username || ui.unknown}</span>
+            <span className="text-muted-foreground text-sm">
+              {ui.memberWishesUnlockedText}
+            </span>
+          </div>
+        );
+
       case 'roster_created':
         return (
           <div className="flex items-center gap-2">
@@ -469,6 +535,18 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
               </SelectItem>
               <SelectItem value="commitment_changed">
                 {ui.filterLabels.commitment_changed}
+              </SelectItem>
+              <SelectItem value="roster_wishes_locked">
+                {ui.filterLabels.roster_wishes_locked}
+              </SelectItem>
+              <SelectItem value="roster_wishes_unlocked">
+                {ui.filterLabels.roster_wishes_unlocked}
+              </SelectItem>
+              <SelectItem value="member_wishes_locked">
+                {ui.filterLabels.member_wishes_locked}
+              </SelectItem>
+              <SelectItem value="member_wishes_unlocked">
+                {ui.filterLabels.member_wishes_unlocked}
               </SelectItem>
               <SelectItem value="roster_created">
                 {ui.filterLabels.roster_created}

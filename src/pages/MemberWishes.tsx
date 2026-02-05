@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Shield, Heart, Swords, Crosshair, CheckCircle, HelpCircle, XCircle, Pencil, ArrowLeft } from 'lucide-react';
+import { Loader2, Shield, Heart, Swords, Crosshair, CheckCircle, HelpCircle, XCircle, Pencil, ArrowLeft, Lock, Unlock } from 'lucide-react';
 import { CosmicButton } from '@/components/CosmicButton';
 import { toSlug, getGuildPath } from '@/lib/guildSlug';
 import {
@@ -57,6 +57,9 @@ const MemberWishes = () => {
   const [member, setMember] = useState<{ username: string; battletag: string | null; status: string } | null>(null);
   const [wishes, setWishes] = useState<WishChoice[]>([]);
   const [isGM, setIsGM] = useState(false);
+  const [canManageWishes, setCanManageWishes] = useState(false);
+  const [memberWishesLocked, setMemberWishesLocked] = useState(false);
+  const [lockingMember, setLockingMember] = useState(false);
   const [validatingWish, setValidatingWish] = useState<number | null>(null);
   
   // Use the centralized hook for BattleTag visibility
@@ -109,12 +112,20 @@ const MemberWishes = () => {
           .eq('guild_id', matchedGuild.id)
           .eq('user_id', user.id)
           .single();
-        
-        setIsGM(memberRole?.role === 'gm');
+
+        const userIsGM = memberRole?.role === 'gm';
+        setIsGM(userIsGM);
+
+        const { data: manageWishesPerm } = await supabase.rpc('has_guild_permission', {
+          p_guild_id: matchedGuild.id,
+          p_permission: 'manage_wishes',
+          p_user_id: user.id,
+        });
+        setCanManageWishes(!!userIsGM || !!manageWishesPerm);
       }
       const { data: memberData } = await supabase
         .from('guild_members')
-        .select('status, user_id')
+        .select('status, user_id, wishes_locked')
         .eq('guild_id', matchedGuild.id)
         .eq('user_id', memberId)
         .single();
@@ -138,6 +149,8 @@ const MemberWishes = () => {
           status: memberData.status,
         });
       }
+
+      setMemberWishesLocked(!!memberData.wishes_locked);
 
       // Get wishes with validation info
       const { data: wishesData } = await supabase
@@ -221,6 +234,26 @@ const MemberWishes = () => {
     setValidatingWish(null);
   };
 
+  const handleToggleMemberLock = async () => {
+    if (!guild || !memberId) return;
+    setLockingMember(true);
+    try {
+      const { error } = await supabase.rpc('set_member_wishes_locked', {
+        p_guild_id: guild.id,
+        p_member_id: memberId,
+        p_locked: !memberWishesLocked,
+      });
+      if (error) throw error;
+      const nextLocked = !memberWishesLocked;
+      setMemberWishesLocked(nextLocked);
+      toast.success(nextLocked ? t.wishes.memberLockedToast : t.wishes.memberUnlockedToast);
+    } catch (error: any) {
+      toast.error(error?.message || t.errors.generic);
+    } finally {
+      setLockingMember(false);
+    }
+  };
+
   const choiceLabels = [
     t.wishes.preferredChoice,
     t.wishes.secondChoice,
@@ -282,6 +315,16 @@ const MemberWishes = () => {
                 )}
               </Badge>
             )}
+
+            {memberWishesLocked && (
+              <Badge
+                variant="outline"
+                className="text-xs px-2 py-1 bg-amber-500/10 text-amber-500 border-amber-500/30 flex items-center gap-1"
+              >
+                <Lock className="h-3.5 w-3.5" strokeWidth={1.5} />
+                {t.wishes.lockedTitle}
+              </Badge>
+            )}
             
             {/* Edit button for own wishes */}
             {user?.id === memberId && guild && (
@@ -292,6 +335,18 @@ const MemberWishes = () => {
                 onClick={() => navigate(`${getGuildPath(guild.region, guild.server, guild.name)}/wishes`)}
               >
                 {t.common.edit}
+              </CosmicButton>
+            )}
+
+            {canManageWishes && guild && (
+              <CosmicButton
+                size="sm"
+                variant="outline"
+                icon={memberWishesLocked ? <Unlock className="h-3.5 w-3.5" strokeWidth={1.5} /> : <Lock className="h-3.5 w-3.5" strokeWidth={1.5} />}
+                loading={lockingMember}
+                onClick={handleToggleMemberLock}
+              >
+                {memberWishesLocked ? t.wishes.unlockMember : t.wishes.lockMember}
               </CosmicButton>
             )}
           </div>
@@ -307,6 +362,16 @@ const MemberWishes = () => {
             }
           </h2>
         </div>
+
+        {memberWishesLocked && (
+          <div className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 flex items-start gap-2 text-amber-200">
+            <Lock className="h-4 w-4 mt-0.5 text-amber-400" />
+            <div className="text-sm">
+              <div className="font-medium">{t.wishes.lockedTitle}</div>
+              <div className="text-amber-200/80">{t.wishes.lockedMemberDesc}</div>
+            </div>
+          </div>
+        )}
 
         {wishes.length === 0 ? (
           <GlowCard className="p-6 text-center" hoverable={false}>

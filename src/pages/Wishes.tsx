@@ -12,11 +12,13 @@ import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { GuildSubNav } from '@/components/guild';
 import { RosterSelector } from '@/components/roster';
-import { Loader2, Save, GripVertical, Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
+import { Loader2, Save, GripVertical, Plus, Trash2, ChevronUp, ChevronDown, Lock, Clock } from 'lucide-react';
 import { toSlug } from '@/lib/guildSlug';
 import { resolveSpecOrder } from '@/lib/wishOrder';
-import { interpolateMessage } from '@/i18n/format';
+import { formatDateTimeLocalized, interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
+import { resolveWishLockState } from '@/lib/wishLock';
+import { cn } from '@/lib/utils';
 import {
   DndContext,
   closestCenter,
@@ -47,6 +49,8 @@ interface RosterData {
   name: string;
   is_default: boolean;
   hasAccess: boolean;
+  wishes_locked?: boolean | null;
+  wishes_lock_at?: string | null;
 }
 
 interface SortableWishCardProps {
@@ -61,9 +65,11 @@ interface SortableWishCardProps {
   canRemove: boolean;
   choiceLabels: string[];
   usedClassIds: string[];
+  disabled?: boolean;
 }
 
-const SortableWishCard = forwardRef<HTMLDivElement, SortableWishCardProps>(({ wish, index, totalWishes, onChange, onRemove, onClear, onMoveUp, onMoveDown, canRemove, choiceLabels, usedClassIds }, outerRef) => {
+const SortableWishCard = forwardRef<HTMLDivElement, SortableWishCardProps>(
+  ({ wish, index, totalWishes, onChange, onRemove, onClear, onMoveUp, onMoveDown, canRemove, choiceLabels, usedClassIds, disabled = false }, outerRef) => {
   const { t } = useLanguage();
   const s = (key: SemanticKey, fallback?: string) =>
     resolveSemanticMessage({ key, language: t.lang, translations: t, fallback });
@@ -74,7 +80,7 @@ const SortableWishCard = forwardRef<HTMLDivElement, SortableWishCardProps>(({ wi
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: wish.id });
+  } = useSortable({ id: wish.id, disabled: disabled });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -84,11 +90,12 @@ const SortableWishCard = forwardRef<HTMLDivElement, SortableWishCardProps>(({ wi
 
   const canMoveUp = index > 0;
   const canMoveDown = index < totalWishes - 1;
+  const isDisabled = disabled;
 
   return (
     <div ref={setNodeRef} style={style}>
       <GlowCard 
-        className="p-3"
+        className={cn("p-3", isDisabled && "opacity-60")}
         hoverable={false}
       >
         <div className="flex items-center gap-2">
@@ -96,7 +103,7 @@ const SortableWishCard = forwardRef<HTMLDivElement, SortableWishCardProps>(({ wi
           <div className="hidden lg:flex flex-col gap-0.5">
             <button
               onClick={onMoveUp}
-              disabled={!canMoveUp}
+              disabled={!canMoveUp || isDisabled}
               className="w-5 h-5 rounded bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
               title={s('wishes.move_up')}
             >
@@ -104,7 +111,7 @@ const SortableWishCard = forwardRef<HTMLDivElement, SortableWishCardProps>(({ wi
             </button>
             <button
               onClick={onMoveDown}
-              disabled={!canMoveDown}
+              disabled={!canMoveDown || isDisabled}
               className="w-5 h-5 rounded bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
               title={s('wishes.move_down')}
             >
@@ -114,7 +121,11 @@ const SortableWishCard = forwardRef<HTMLDivElement, SortableWishCardProps>(({ wi
           <button
             {...attributes}
             {...listeners}
-            className="hidden lg:flex w-7 h-7 rounded-lg bg-muted/50 items-center justify-center cursor-grab active:cursor-grabbing hover:bg-muted transition-colors flex-shrink-0"
+            disabled={isDisabled}
+            className={cn(
+              "hidden lg:flex w-7 h-7 rounded-lg bg-muted/50 items-center justify-center flex-shrink-0",
+              isDisabled ? "cursor-not-allowed opacity-40" : "cursor-grab active:cursor-grabbing hover:bg-muted transition-colors"
+            )}
             title={s('wishes.drag_reorder')}
           >
             <GripVertical className="h-4 w-4 text-muted-foreground" />
@@ -128,13 +139,18 @@ const SortableWishCard = forwardRef<HTMLDivElement, SortableWishCardProps>(({ wi
             wish={wish}
             onChange={onChange}
             usedClassIds={usedClassIds}
+            disabled={isDisabled}
           />
 
           {/* Delete button */}
           {canRemove ? (
             <button
               onClick={onRemove}
-              className="w-7 h-7 rounded-lg bg-destructive/10 flex items-center justify-center hover:bg-destructive/20 transition-colors flex-shrink-0"
+              disabled={isDisabled}
+              className={cn(
+                "w-7 h-7 rounded-lg bg-destructive/10 flex items-center justify-center transition-colors flex-shrink-0",
+                isDisabled ? "opacity-40 cursor-not-allowed" : "hover:bg-destructive/20"
+              )}
               title={t.common.delete}
             >
               <Trash2 className="h-4 w-4 text-destructive" />
@@ -142,7 +158,11 @@ const SortableWishCard = forwardRef<HTMLDivElement, SortableWishCardProps>(({ wi
           ) : wish.classId ? (
             <button
               onClick={onClear}
-              className="w-7 h-7 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors flex-shrink-0"
+              disabled={isDisabled}
+              className={cn(
+                "w-7 h-7 rounded-lg bg-muted/50 flex items-center justify-center transition-colors flex-shrink-0",
+                isDisabled ? "opacity-40 cursor-not-allowed" : "hover:bg-muted"
+              )}
               title={t.common.delete}
             >
               <Trash2 className="h-4 w-4 text-muted-foreground" />
@@ -173,6 +193,7 @@ const Wishes = () => {
   const [guildId, setGuildId] = useState<string | null>(null);
   const [guild, setGuild] = useState<{ name: string; server: string; region: string; faction: string; avatar_url?: string | null } | null>(null);
   const [confirmed, setConfirmed] = useState<CommitmentStatus>('undecided');
+  const [memberWishesLocked, setMemberWishesLocked] = useState(false);
   const [wishes, setWishes] = useState<WishData[]>([
     { id: 'wish-1', classId: '', specIds: [], comment: '' },
     { id: 'wish-2', classId: '', specIds: [], comment: '' },
@@ -271,6 +292,8 @@ const { data: allGuilds } = await supabase
               name: roster.name,
               is_default: roster.is_default,
               hasAccess: true,
+              wishes_locked: roster.wishes_locked,
+              wishes_lock_at: roster.wishes_lock_at,
             });
           }
         }
@@ -289,7 +312,7 @@ const { data: allGuilds } = await supabase
 
       const { data: memberData } = await supabase
         .from('guild_members')
-        .select('status')
+        .select('status, wishes_locked')
         .eq('guild_id', foundGuildId)
         .eq('user_id', user.id)
         .single();
@@ -302,6 +325,7 @@ const { data: allGuilds } = await supabase
           'withdrawn': 'withdrawn',
         };
         setConfirmed(statusMap[memberData.status] || 'undecided');
+        setMemberWishesLocked(!!memberData.wishes_locked);
       }
 
       setLoading(false);
@@ -345,6 +369,7 @@ const { data: allGuilds } = await supabase
   }, [guildId, selectedRosterId, user]);
 
   const updateWish = (index: number, field: keyof Omit<WishData, 'id'>, value: any) => {
+    if (lockState?.isLocked) return;
     const updated = [...wishes];
     updated[index] = { ...updated[index], [field]: value };
     if (field === 'classId') {
@@ -354,29 +379,34 @@ const { data: allGuilds } = await supabase
   };
 
   const addWish = () => {
+    if (lockState?.isLocked) return;
     if (wishes.length >= 13) return; // Max 13 wishes (one per class)
     const newId = `wish-${Date.now()}`;
     setWishes([...wishes, { id: newId, classId: '', specIds: [], comment: '' }]);
   };
 
   const removeWish = (index: number) => {
+    if (lockState?.isLocked) return;
     if (wishes.length <= 1) return;
     setWishes(wishes.filter((_, i) => i !== index));
   };
 
   const clearWish = (index: number) => {
+    if (lockState?.isLocked) return;
     const updated = [...wishes];
     updated[index] = { ...updated[index], classId: '', specIds: [], comment: '' };
     setWishes(updated);
   };
 
   const moveWish = (index: number, direction: 'up' | 'down') => {
+    if (lockState?.isLocked) return;
     const newIndex = direction === 'up' ? index - 1 : index + 1;
     if (newIndex < 0 || newIndex >= wishes.length) return;
     setWishes(arrayMove(wishes, index, newIndex));
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
+    if (lockState?.isLocked) return;
     const { active, over } = event;
     
     if (over && active.id !== over.id) {
@@ -395,6 +425,20 @@ const { data: allGuilds } = await supabase
     }
     if (!selectedRosterId) {
       toast({ title: t.errors.generic, description: t.wishes.noRosterSelected, variant: 'destructive' });
+      return;
+    }
+
+    const rosterLockState = resolveWishLockState({
+      rosterLocked: rosters.find(r => r.id === selectedRosterId)?.wishes_locked,
+      rosterLockAt: rosters.find(r => r.id === selectedRosterId)?.wishes_lock_at,
+      memberLocked: memberWishesLocked,
+    });
+    if (rosterLockState.isLocked) {
+      toast({
+        title: t.wishes.lockedTitle,
+        description: rosterLockState.reason === 'member' ? t.wishes.lockedMemberDesc : t.wishes.lockedRosterDesc,
+        variant: 'destructive',
+      });
       return;
     }
     
@@ -468,6 +512,21 @@ const { data: allGuilds } = await supabase
     );
   }
 
+  const currentRoster = rosters.find(r => r.id === selectedRosterId);
+  const lockState = resolveWishLockState({
+    rosterLocked: currentRoster?.wishes_locked,
+    rosterLockAt: currentRoster?.wishes_lock_at,
+    memberLocked: memberWishesLocked,
+  });
+  const lockMessage =
+    lockState.reason === 'member'
+      ? t.wishes.lockedMemberDesc
+      : t.wishes.lockedRosterDesc;
+  const scheduledLabel =
+    lockState.isScheduled && lockState.scheduledAt
+      ? formatDateTimeLocalized(lockState.scheduledAt, language, { dateStyle: 'medium', timeStyle: 'short' })
+      : null;
+
   // Only show accessible rosters
   const accessibleRosters = rosters.filter(r => r.hasAccess);
 
@@ -495,11 +554,13 @@ const { data: allGuilds } = await supabase
             rosters={accessibleRosters}
             selectedRosterId={selectedRosterId}
             onSelect={setSelectedRosterId}
+            showWishesLockIndicator={true}
           />
           <CosmicButton 
             size="sm" 
             onClick={saveWishes} 
             loading={saving}
+            disabled={lockState.isLocked}
             icon={<Save className="h-4 w-4" strokeWidth={1.5} />}
           >
             {t.wishes.saveWishes}
@@ -512,9 +573,31 @@ const { data: allGuilds } = await supabase
           <h2 className="text-2xl font-display cosmic-text">{t.wishes.title}</h2>
         </div>
 
+        {lockState.isLocked && (
+          <div className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 flex items-start gap-2 text-amber-200">
+            <Lock className="h-4 w-4 mt-0.5 text-amber-400" />
+            <div className="text-sm">
+              <div className="font-medium">{t.wishes.lockedTitle}</div>
+              <div className="text-amber-200/80">{lockMessage}</div>
+            </div>
+          </div>
+        )}
+
+        {!lockState.isLocked && scheduledLabel && (
+          <div className="mb-4 rounded-lg border border-sky-500/30 bg-sky-500/10 p-3 flex items-start gap-2 text-sky-200">
+            <Clock className="h-4 w-4 mt-0.5 text-sky-400" />
+            <div className="text-sm">
+              <div className="font-medium">{t.wishes.lockScheduledTitle}</div>
+              <div className="text-sky-200/80">
+                {interpolateMessage(t.wishes.lockScheduledDesc, { date: scheduledLabel })}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Commitment toggle */}
         <GlowCard className="p-4 mb-4">
-          <CommitmentToggle status={confirmed} onChange={setConfirmed} />
+          <CommitmentToggle status={confirmed} onChange={setConfirmed} disabled={lockState.isLocked} />
         </GlowCard>
 
         {/* Wish cards with drag and drop */}
@@ -549,6 +632,7 @@ const { data: allGuilds } = await supabase
                     canRemove={wishes.length > 1}
                     choiceLabels={choiceLabels}
                     usedClassIds={usedClassIds}
+                    disabled={lockState.isLocked}
                   />
                 );
               })}
@@ -561,7 +645,11 @@ const { data: allGuilds } = await supabase
           <div className="mt-4 text-center">
             <button
               onClick={addWish}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-dashed border-primary/50 text-sm text-primary hover:bg-primary/10 transition-colors"
+              disabled={lockState.isLocked}
+              className={cn(
+                "inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-dashed border-primary/50 text-sm text-primary transition-colors",
+                lockState.isLocked ? "opacity-50 cursor-not-allowed" : "hover:bg-primary/10"
+              )}
             >
               <Plus className="h-4 w-4" />
               {t.wishes.addWish}
@@ -574,6 +662,7 @@ const { data: allGuilds } = await supabase
             size="md" 
             onClick={saveWishes} 
             loading={saving}
+            disabled={lockState.isLocked}
             icon={<Save className="h-4 w-4" strokeWidth={1.5} />}
           >
             {t.wishes.saveWishes}

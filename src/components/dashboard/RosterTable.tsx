@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { CheckCircle, HelpCircle, XCircle, Pencil, Save, Shield, Heart, Sword, Swords, Crosshair, MessageSquare, Plus, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { CheckCircle, HelpCircle, XCircle, Pencil, Save, Shield, Heart, Sword, Swords, Crosshair, MessageSquare, Plus, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Lock, Unlock } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getClassById, getLocalizedClassName, getLocalizedSpecName, getSpecById } from '@/data/wowClasses';
 import { MemberWish, WishData, WishChoice, ValidationStatus } from '@/types/guild';
@@ -30,6 +30,8 @@ interface RosterTableProps {
   saving: boolean;
   maxWishes: number;
   isGM?: boolean;
+  isRosterLocked?: boolean;
+  isEditingLocked?: boolean;
   onStartEditing: (member: MemberWish) => void;
   onUpdateEditWish: (index: number, field: keyof WishData, value: any) => void;
   onEditStatusChange: (status: CommitmentStatus) => void;
@@ -38,6 +40,8 @@ interface RosterTableProps {
   onRemoveWish: (index: number) => void;
   onClearWish: (index: number) => void;
   onValidateWish?: (userId: string, choiceIndex: number, status: ValidationStatus) => void;
+  onToggleMemberLock?: (memberId: string, locked: boolean) => void;
+  lockingMemberId?: string | null;
 }
 
 // Role config for icons
@@ -57,6 +61,8 @@ export const RosterTable = ({
   saving,
   maxWishes,
   isGM = false,
+  isRosterLocked = false,
+  isEditingLocked = false,
   onStartEditing,
   onUpdateEditWish,
   onEditStatusChange,
@@ -65,6 +71,8 @@ export const RosterTable = ({
   onRemoveWish,
   onClearWish,
   onValidateWish,
+  onToggleMemberLock,
+  lockingMemberId = null,
 }: RosterTableProps) => {
   const { t, language } = useLanguage();
   const s = (key: SemanticKey, fallback?: string) =>
@@ -292,12 +300,17 @@ export const RosterTable = ({
             choiceIndex={wishIndex}
             onChange={(field, value) => onUpdateEditWish(wishIndex, field, value)}
             usedClassIds={usedClassIds}
+            disabled={isEditingLocked}
           />
         </div>
         {canRemove ? (
           <button
             onClick={() => onRemoveWish(wishIndex)}
-            className="h-7 w-7 flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors rounded"
+            disabled={isEditingLocked}
+            className={cn(
+              "h-7 w-7 flex items-center justify-center transition-colors rounded",
+              isEditingLocked ? "text-muted-foreground/40 cursor-not-allowed" : "text-muted-foreground hover:text-destructive"
+            )}
             title={t.common.delete}
           >
             <Trash2 className="h-3.5 w-3.5" />
@@ -305,7 +318,11 @@ export const RosterTable = ({
         ) : hasContent && (
           <button
             onClick={() => onClearWish(wishIndex)}
-            className="h-7 w-7 flex items-center justify-center text-muted-foreground/50 hover:text-muted-foreground transition-colors rounded"
+            disabled={isEditingLocked}
+            className={cn(
+              "h-7 w-7 flex items-center justify-center transition-colors rounded",
+              isEditingLocked ? "text-muted-foreground/30 cursor-not-allowed" : "text-muted-foreground/50 hover:text-muted-foreground"
+            )}
             title={t.common.delete}
           >
             <Trash2 className="h-3.5 w-3.5" />
@@ -358,9 +375,12 @@ export const RosterTable = ({
               member={member}
               isOwnRow={isOwnRow}
               isGM={isGM}
+              isRosterLocked={isRosterLocked}
               onStartEditing={handleStartEditing}
               onValidateWish={onValidateWish}
               onClick={handleCardClick}
+              onToggleMemberLock={onToggleMemberLock}
+              lockingMemberId={lockingMemberId}
             />
           );
         })}
@@ -380,7 +400,7 @@ export const RosterTable = ({
               <SortableHeader column="wish1"><span className="hidden md:inline">{t.dashboard.firstChoice}</span><span className="md:hidden">#1</span></SortableHeader>
               <SortableHeader column="wish2"><span className="hidden md:inline">{t.dashboard.secondChoice}</span><span className="md:hidden">#2</span></SortableHeader>
               <SortableHeader column="wish3"><span className="hidden md:inline">{t.dashboard.thirdChoice}</span><span className="md:hidden">#3</span></SortableHeader>
-              <TableHead className="text-muted-foreground text-xs py-2 px-0 w-[40px]"></TableHead>
+              <TableHead className="text-muted-foreground text-xs py-2 px-0 w-[72px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -388,6 +408,13 @@ export const RosterTable = ({
               const isOwnRow = member.id === currentUserId;
               const isEditing = editingUserId === member.id;
               const extraWishes = getExtraWishesCount(member.wishes);
+              const memberLocked = Boolean(member.wishes_locked);
+              const effectiveLocked = isRosterLocked || memberLocked;
+              const lockTooltip = isRosterLocked
+                ? t.wishes.lockedRosterDesc
+                : memberLocked
+                  ? t.wishes.lockedMemberDesc
+                  : '';
               
               const handleRowClick = () => {
                 // Navigate to member wishes page (read-only view) for all members
@@ -410,6 +437,18 @@ export const RosterTable = ({
                     <TableCell className="font-medium text-foreground text-sm py-2 px-2 md:px-3">
                       <div className="flex items-center gap-1.5">
                         <span className="truncate">{member.username}</span>
+                        {effectiveLocked && (
+                          <TooltipProvider delayDuration={200}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Lock className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" />
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="text-xs max-w-[220px]">
+                                {lockTooltip}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
                         {!isEditing && extraWishes > 0 && (
                           <TooltipProvider delayDuration={200}>
                             <Tooltip>
@@ -433,6 +472,7 @@ export const RosterTable = ({
                           onChange={onEditStatusChange}
                           compact
                           asBadge
+                          disabled={isEditingLocked}
                         />
                       ) : (
                         <Badge 
@@ -469,48 +509,61 @@ export const RosterTable = ({
                       {isEditing ? renderEditWishCell(2, editWishes.length > 1) : renderWishCell(member.id, member.wishes, 3)}
                     </TableCell>
                     <TableCell className="py-1 pl-0 pr-1">
-                      {isOwnRow && (
-                        <div className="flex justify-end">
-                          {isEditing ? (
-                            <TooltipProvider delayDuration={200}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <CosmicButton 
-                                    size="sm" 
-                                    onClick={onSaveEditing}
-                                    loading={saving}
-                                    icon={!saving ? <Save className="h-4 w-4" strokeWidth={1.5} /> : undefined}
-                                    className="h-8 px-2"
-                                  />
-                                </TooltipTrigger>
-                                <TooltipContent side="left">
-                                  {t.common.save}
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          ) : (
-                            <TooltipProvider delayDuration={200}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <CosmicButton 
-                                    size="sm" 
-                                    variant="outline" 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
+                      <div className="flex justify-end gap-1">
+                        {isGM && onToggleMemberLock && (
+                          <TooltipProvider delayDuration={200}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <CosmicButton
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onToggleMemberLock(member.id, !memberLocked);
+                                  }}
+                                  loading={lockingMemberId === member.id}
+                                  icon={memberLocked ? <Unlock className="h-3.5 w-3.5" strokeWidth={1.5} /> : <Lock className="h-3.5 w-3.5" strokeWidth={1.5} />}
+                                  className="h-8 px-2"
+                                />
+                              </TooltipTrigger>
+                              <TooltipContent side="left">
+                                {memberLocked ? t.wishes.unlockMember : t.wishes.lockMember}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                        {isOwnRow && (
+                          <TooltipProvider delayDuration={200}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <CosmicButton 
+                                  size="sm" 
+                                  variant={isEditing ? "default" : "outline"}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (isEditing) {
+                                      onSaveEditing();
+                                    } else {
                                       onStartEditing(member);
-                                    }}
-                                    icon={<Pencil className="h-3.5 w-3.5" strokeWidth={1.5} />}
-                                    className="h-8 px-2"
-                                  />
-                                </TooltipTrigger>
-                                <TooltipContent side="left">
-                                  {t.common.edit}
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                        </div>
-                      )}
+                                    }
+                                  }}
+                                  loading={isEditing && saving}
+                                  disabled={isEditingLocked}
+                                  icon={
+                                    isEditing
+                                      ? (!saving ? <Save className="h-4 w-4" strokeWidth={1.5} /> : undefined)
+                                      : <Pencil className="h-3.5 w-3.5" strokeWidth={1.5} />
+                                  }
+                                  className="h-8 px-2"
+                                />
+                              </TooltipTrigger>
+                              <TooltipContent side="left">
+                                {isEditing ? t.common.save : t.common.edit}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                   
@@ -551,7 +604,11 @@ export const RosterTable = ({
                       <TableCell colSpan={7} className="py-2 px-2 md:px-3">
                         <button
                           onClick={onAddWish}
-                          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
+                          disabled={isEditingLocked}
+                          className={cn(
+                            "flex items-center gap-1.5 text-xs transition-colors",
+                            isEditingLocked ? "text-muted-foreground/40 cursor-not-allowed" : "text-muted-foreground hover:text-primary"
+                          )}
                         >
                           <Plus className="h-3.5 w-3.5" />
                           {t.dashboard.addWish}
