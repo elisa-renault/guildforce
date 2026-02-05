@@ -6,6 +6,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
   "common": {
     "loading": "Wird geladen",
     "open": "\u00d6ffnen",
+    "actions": "Aktionen",
     "save": "Speichern",
     "cancel": "Abbrechen",
     "delete": "Loschen",
@@ -231,7 +232,16 @@ export const translationsDe: Translations = createLocaleTranslations(translation
       "rejectedBy": "Abgelehnt von"
     },
     "specRequired": "Spezialisierung erforderlich",
-    "specRequiredDesc": "Bitte w\u00e4hlen Sie mindestens eine Spezialisierung f\u00fcr {class} aus"
+    "specRequiredDesc": "Bitte w\u00e4hlen Sie mindestens eine Spezialisierung f\u00fcr {class} aus",
+    "lockedTitle": "W\u00fcnsche gesperrt",
+    "lockedRosterDesc": "Die W\u00fcnsche dieses Rosters sind von einem Offizier gesperrt.",
+    "lockedMemberDesc": "Die W\u00fcnsche sind von einem Offizier gesperrt.",
+    "lockScheduledTitle": "Sperre geplant",
+    "lockScheduledDesc": "Die W\u00fcnsche werden am {date} gesperrt.",
+    "memberLockedToast": "Mitgliedsw\u00fcnsche gesperrt",
+    "memberUnlockedToast": "Mitgliedsw\u00fcnsche entsperrt",
+    "lockMember": "Mitglied sperren",
+    "unlockMember": "Mitglied entsperren"
   },
   "dashboard": {
     "title": "Aufstellung-Dashboard",
@@ -436,7 +446,20 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "selectUser": "Benutzer ausw\u00e4hlen",
     "addRankRule": "Rangregel hinzuf\u00fcgen",
     "addUserRule": "Benutzer hinzuf\u00fcgen",
-    "noAccessWarning": "Keine Zugriffsregeln definiert. Nur GMs k\u00f6nnen W\u00fcnsche einreichen."
+    "noAccessWarning": "Keine Zugriffsregeln definiert. Nur GMs k\u00f6nnen W\u00fcnsche einreichen.",
+    "wishesLockTitle": "W\u00fcnsch-Sperre",
+    "wishesLockedStatus": "Gesperrt",
+    "wishesUnlockedStatus": "Entsperrt",
+    "lockWishes": "W\u00fcnsche sperren",
+    "unlockWishes": "W\u00fcnsche entsperren",
+    "wishesLockAtLabel": "Sperren am",
+    "wishesLockAtHint": "Sperrt W\u00fcnsche automatisch zur geplanten Zeit.",
+    "wishesLockClear": "Planung aufheben",
+    "wishesLockSchedule": "Sperre planen",
+    "wishesLockedToast": "Rosterw\u00fcnsche gesperrt",
+    "wishesUnlockedToast": "Rosterw\u00fcnsche entsperrt",
+    "wishesLockScheduledToast": "Roster-Sperre geplant",
+    "wishesLockClearedToast": "Roster-Sperrplanung entfernt"
   },
   "forum": {
     "title": "Forum",
