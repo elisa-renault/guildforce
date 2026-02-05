@@ -29,9 +29,12 @@ export const GuildBattleNetSection = ({
         throw new Error('Not authenticated');
       }
 
-      const { data, error } = await supabase.functions.invoke('battlenet-auth/resync', {
+      const { data, error } = await supabase.functions.invoke('battlenet-auth/guild-resync', {
         headers: {
           Authorization: `Bearer ${session.session.access_token}`,
+        },
+        body: {
+          guildId,
         },
       });
 
