@@ -20,15 +20,17 @@ import { GuildSubNav } from '@/components/guild';
 import { RosterFilters, RosterTable, RosterAnalytics } from '@/components/dashboard';
 import { RosterSelector, RosterEditDialog } from '@/components/roster';
 import { MemberWish, WishData, RosterFilters as RosterFiltersType, ValidationStatus } from '@/types/guild';
-import { Loader2, Sparkles, Settings, TableIcon, BarChart3, Download, Eye } from 'lucide-react';
+import { Loader2, Sparkles, Settings, TableIcon, BarChart3, Download, Eye, Lock, Unlock, Clock } from 'lucide-react';
 import { exportWishesToCSV } from '@/lib/exportWishes';
 import { toSlug, getGuildWishesPath } from '@/lib/guildSlug';
 import { CommitmentStatus } from '@/components/CommitmentToggle';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { interpolateMessage } from '@/i18n/format';
+import { formatDateTimeLocalized, interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import { resolveSpecOrder } from '@/lib/wishOrder';
+import { resolveWishLockState } from '@/lib/wishLock';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 
 // Max wishes = number of WoW classes
 const MAX_WISHES = wowClasses.length;
@@ -38,6 +40,8 @@ interface RosterData {
   name: string;
   is_default: boolean;
   hasAccess: boolean;
+  wishes_locked?: boolean | null;
+  wishes_lock_at?: string | null;
 }
 
 const RosterWishes = () => {
@@ -83,6 +87,11 @@ const RosterWishes = () => {
   const [rosters, setRosters] = useState<RosterData[]>([]);
   const [selectedRosterId, setSelectedRosterId] = useState<string | null>(null);
   const [rosterSettingsOpen, setRosterSettingsOpen] = useState(false);
+  const [lockDialogOpen, setLockDialogOpen] = useState(false);
+  const [lockAtInput, setLockAtInput] = useState('');
+  const [lockingRoster, setLockingRoster] = useState(false);
+  const [schedulingLock, setSchedulingLock] = useState(false);
+  const [lockingMemberId, setLockingMemberId] = useState<string | null>(null);
 
   const isMobile = useIsMobile();
 
@@ -137,6 +146,25 @@ const RosterWishes = () => {
       window.removeEventListener('resize', compute);
     };
   }, [guild, isMobile]);
+
+  const toLocalInputValue = (value?: string | null) => {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    const pad = (num: number) => String(num).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  };
+
+  const toIsoFromLocalInput = (value: string) => {
+    if (!value) return null;
+    const [datePart, timePart] = value.split('T');
+    if (!datePart || !timePart) return null;
+    const [year, month, day] = datePart.split('-').map(Number);
+    const [hour, minute] = timePart.split(':').map(Number);
+    if ([year, month, day, hour, minute].some(n => Number.isNaN(n))) return null;
+    const localDate = new Date(year, month - 1, day, hour, minute);
+    return localDate.toISOString();
+  };
 
   const fetchData = async () => {
     if (!user || !regionSlug || !serverSlug || !guildSlug) return;
@@ -219,6 +247,8 @@ const RosterWishes = () => {
               name: roster.name,
               is_default: roster.is_default,
               hasAccess: true,
+              wishes_locked: roster.wishes_locked,
+              wishes_lock_at: roster.wishes_lock_at,
             };
           }
           const { data: hasAccess } = await supabase.rpc('has_roster_access', {
@@ -230,6 +260,8 @@ const RosterWishes = () => {
             name: roster.name,
             is_default: roster.is_default,
             hasAccess: hasAccess || false,
+            wishes_locked: roster.wishes_locked,
+            wishes_lock_at: roster.wishes_lock_at,
           };
         })
       );
@@ -251,7 +283,7 @@ const RosterWishes = () => {
 
     const { data: membersData } = await supabase
       .from('guild_members')
-      .select('user_id, status')
+      .select('user_id, status, wishes_locked')
       .eq('guild_id', guildId);
 
     if (membersData) {
@@ -291,6 +323,7 @@ const RosterWishes = () => {
           id: m.user_id,
           username: profile?.username || 'Unknown',
           status: m.status,
+          wishes_locked: m.wishes_locked,
           wishes: memberWishes.sort((a, b) => a.choice_index - b.choice_index),
         };
       });
@@ -316,6 +349,12 @@ const RosterWishes = () => {
     }
   }, [guildId, selectedRosterId]);
 
+  useEffect(() => {
+    if (!lockDialogOpen) return;
+    const roster = rosters.find(r => r.id === selectedRosterId);
+    setLockAtInput(toLocalInputValue(roster?.wishes_lock_at));
+  }, [lockDialogOpen, rosters, selectedRosterId]);
+
 
   const startEditing = (member: MemberWish) => {
     if (member.id !== user?.id) return;
@@ -324,6 +363,20 @@ const RosterWishes = () => {
     const currentRoster = rosters.find(r => r.id === selectedRosterId);
     if (!currentRoster?.hasAccess) {
       toast({ title: t.rosters?.noAccess || 'No access to this roster', variant: 'destructive' });
+      return;
+    }
+
+    const lockState = resolveWishLockState({
+      rosterLocked: currentRoster?.wishes_locked,
+      rosterLockAt: currentRoster?.wishes_lock_at,
+      memberLocked: member.wishes_locked,
+    });
+    if (lockState.isLocked) {
+      toast({
+        title: t.wishes.lockedTitle,
+        description: lockState.reason === 'member' ? t.wishes.lockedMemberDesc : t.wishes.lockedRosterDesc,
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -357,6 +410,73 @@ const RosterWishes = () => {
     setEditingUserId(member.id);
   };
 
+  const updateRosterLockState = (rosterId: string, updates: Partial<RosterData>) => {
+    setRosters(prev => prev.map(r => (r.id === rosterId ? { ...r, ...updates } : r)));
+  };
+
+  const handleRosterLockToggle = async (lock: boolean) => {
+    if (!selectedRosterId || !guildId) return;
+    setLockingRoster(true);
+    try {
+      if (lock) {
+        const { error } = await supabase.rpc('lock_roster_wishes', { p_roster_id: selectedRosterId });
+        if (error) throw error;
+        updateRosterLockState(selectedRosterId, { wishes_locked: true, wishes_lock_at: null });
+        toast({ title: t.rosters.wishesLockedToast });
+      } else {
+        const { error } = await supabase.rpc('unlock_roster_wishes', { p_roster_id: selectedRosterId });
+        if (error) throw error;
+        updateRosterLockState(selectedRosterId, { wishes_locked: false, wishes_lock_at: null });
+        toast({ title: t.rosters.wishesUnlockedToast });
+      }
+    } catch (error: any) {
+      toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
+    } finally {
+      setLockingRoster(false);
+    }
+  };
+
+  const handleScheduleLock = async (nextValue?: string | null) => {
+    if (!selectedRosterId || !guildId) return;
+    setSchedulingLock(true);
+    try {
+      const lockAtIso = toIsoFromLocalInput(nextValue ?? lockAtInput);
+      const { error } = await supabase.rpc('schedule_roster_wishes_lock', {
+        p_roster_id: selectedRosterId,
+        p_lock_at: lockAtIso,
+      });
+      if (error) throw error;
+      updateRosterLockState(selectedRosterId, { wishes_lock_at: lockAtIso });
+      toast({ title: lockAtIso ? t.rosters.wishesLockScheduledToast : t.rosters.wishesLockClearedToast });
+      if (!lockAtIso) {
+        setLockAtInput('');
+      }
+    } catch (error: any) {
+      toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
+    } finally {
+      setSchedulingLock(false);
+    }
+  };
+
+  const handleToggleMemberLock = async (memberId: string, locked: boolean) => {
+    if (!guildId) return;
+    setLockingMemberId(memberId);
+    try {
+      const { error } = await supabase.rpc('set_member_wishes_locked', {
+        p_guild_id: guildId,
+        p_member_id: memberId,
+        p_locked: locked,
+      });
+      if (error) throw error;
+      setMembers(prev => prev.map(m => (m.id === memberId ? { ...m, wishes_locked: locked } : m)));
+      toast({ title: locked ? t.wishes.memberLockedToast : t.wishes.memberUnlockedToast });
+    } catch (error: any) {
+      toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
+    } finally {
+      setLockingMemberId(null);
+    }
+  };
+
   const addWish = () => {
     if (editWishes.length >= MAX_WISHES) return;
     setEditWishes([...editWishes, { classId: '', specIds: [], comment: '' }]);
@@ -386,6 +506,22 @@ const RosterWishes = () => {
 
   const saveEditing = async () => {
     if (!user || !guildId || !editingUserId || !selectedRosterId) return;
+
+    const currentRoster = rosters.find(r => r.id === selectedRosterId);
+    const currentMember = members.find(m => m.id === editingUserId);
+    const lockState = resolveWishLockState({
+      rosterLocked: currentRoster?.wishes_locked,
+      rosterLockAt: currentRoster?.wishes_lock_at,
+      memberLocked: currentMember?.wishes_locked,
+    });
+    if (lockState.isLocked) {
+      toast({
+        title: t.wishes.lockedTitle,
+        description: lockState.reason === 'member' ? t.wishes.lockedMemberDesc : t.wishes.lockedRosterDesc,
+        variant: 'destructive',
+      });
+      return;
+    }
     
     // Validation: each class must have at least one spec
     const invalidWish = editWishes.find(w => w.classId && w.specIds.length === 0);
@@ -626,6 +762,21 @@ const RosterWishes = () => {
   }
 
   const currentRoster = rosters.find(r => r.id === selectedRosterId);
+  const rosterLockState = resolveWishLockState({
+    rosterLocked: currentRoster?.wishes_locked,
+    rosterLockAt: currentRoster?.wishes_lock_at,
+    memberLocked: false,
+  });
+  const currentMember = members.find(m => m.id === user?.id);
+  const currentMemberLockState = resolveWishLockState({
+    rosterLocked: currentRoster?.wishes_locked,
+    rosterLockAt: currentRoster?.wishes_lock_at,
+    memberLocked: currentMember?.wishes_locked,
+  });
+  const rosterScheduledLabel =
+    rosterLockState.isScheduled && rosterLockState.scheduledAt
+      ? formatDateTimeLocalized(rosterLockState.scheduledAt, language, { dateStyle: 'medium', timeStyle: 'short' })
+      : null;
 
   const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
 
@@ -668,6 +819,7 @@ const RosterWishes = () => {
             selectedRosterId={selectedRosterId}
             onSelect={setSelectedRosterId}
             showAccessIndicator={true}
+            showWishesLockIndicator={true}
           />
           <div className="flex gap-1.5 md:gap-2">
             <CosmicButton 
@@ -693,6 +845,17 @@ const RosterWishes = () => {
                 <span className="hidden md:inline">{t.wishes.editMyWishes}</span>
               </CosmicButton>
             )}
+            {canManageWishes && !isAdminReadOnly && selectedRosterId && (
+              <CosmicButton
+                size="sm"
+                variant={rosterLockState.isLocked ? "default" : "outline"}
+                onClick={() => setLockDialogOpen(true)}
+                icon={<Lock className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />}
+                className="h-7 w-7 md:h-8 md:w-auto p-0 md:px-3"
+              >
+                <span className="hidden md:inline">{t.rosters.wishesLockTitle}</span>
+              </CosmicButton>
+            )}
             {isGM && selectedRosterId && (
               <CosmicButton size="sm" variant="outline" onClick={() => setRosterSettingsOpen(true)} icon={<Settings className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 w-7 md:h-8 md:w-auto p-0 md:px-3">
                 <span className="hidden md:inline">{t.dashboard.roster}</span>
@@ -710,6 +873,28 @@ const RosterWishes = () => {
         {currentRoster && !currentRoster.hasAccess && (
           <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive">
             {t.rosters?.noAccessMessage || 'You can view this roster but cannot edit your wishes.'}
+          </div>
+        )}
+
+        {currentRoster && rosterLockState.isLocked && (
+          <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-sm text-amber-200 flex items-start gap-2">
+            <Lock className="h-4 w-4 mt-0.5 text-amber-400" />
+            <div>
+              <div className="font-medium">{t.wishes.lockedTitle}</div>
+              <div className="text-amber-200/80">{t.wishes.lockedRosterDesc}</div>
+            </div>
+          </div>
+        )}
+
+        {currentRoster && !rosterLockState.isLocked && rosterScheduledLabel && (
+          <div className="mb-4 p-3 rounded-lg bg-sky-500/10 border border-sky-500/30 text-sm text-sky-200 flex items-start gap-2">
+            <Clock className="h-4 w-4 mt-0.5 text-sky-400" />
+            <div>
+              <div className="font-medium">{t.wishes.lockScheduledTitle}</div>
+              <div className="text-sky-200/80">
+                {interpolateMessage(t.wishes.lockScheduledDesc, { date: rosterScheduledLabel })}
+              </div>
+            </div>
           </div>
         )}
 
@@ -741,6 +926,8 @@ const RosterWishes = () => {
               saving={saving}
               maxWishes={MAX_WISHES}
               isGM={canManageWishes}
+              isRosterLocked={rosterLockState.isLocked}
+              isEditingLocked={currentMemberLockState.isLocked}
               onStartEditing={startEditing}
               onUpdateEditWish={updateEditWish}
               onEditStatusChange={setEditStatus}
@@ -749,6 +936,8 @@ const RosterWishes = () => {
               onRemoveWish={removeWish}
               onClearWish={clearWish}
               onValidateWish={validateWish}
+              onToggleMemberLock={canManageWishes && !isAdminReadOnly ? handleToggleMemberLock : undefined}
+              lockingMemberId={lockingMemberId}
             />
           </TabsContent>
 
@@ -757,6 +946,74 @@ const RosterWishes = () => {
           </TabsContent>
         </Tabs>
       </main>
+
+      {selectedRosterId && (
+        <Dialog open={lockDialogOpen} onOpenChange={setLockDialogOpen}>
+          <DialogContent className="bg-card border-border max-w-md">
+            <DialogHeader>
+              <DialogTitle>{t.rosters.wishesLockTitle}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-medium">
+                    {rosterLockState.isLocked ? t.rosters.wishesLockedStatus : t.rosters.wishesUnlockedStatus}
+                  </div>
+                  {currentRoster?.wishes_lock_at && (
+                    <div className="text-xs text-muted-foreground">
+                      {t.rosters.wishesLockAtLabel}:{' '}
+                      {formatDateTimeLocalized(currentRoster.wishes_lock_at, language, { dateStyle: 'medium', timeStyle: 'short' })}
+                    </div>
+                  )}
+                </div>
+                <CosmicButton
+                  size="sm"
+                  onClick={() => handleRosterLockToggle(!rosterLockState.isLocked)}
+                  loading={lockingRoster}
+                  icon={
+                    rosterLockState.isLocked
+                      ? <Unlock className="h-3.5 w-3.5" strokeWidth={1.5} />
+                      : <Lock className="h-3.5 w-3.5" strokeWidth={1.5} />
+                  }
+                >
+                  {rosterLockState.isLocked ? t.rosters.unlockWishes : t.rosters.lockWishes}
+                </CosmicButton>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="roster-wishes-lock-at" className="text-sm text-muted-foreground">
+                  {t.rosters.wishesLockAtLabel}
+                </label>
+                <Input
+                  id="roster-wishes-lock-at"
+                  type="datetime-local"
+                  value={lockAtInput}
+                  onChange={(e) => setLockAtInput(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">{t.rosters.wishesLockAtHint}</p>
+                <div className="flex justify-end gap-2 pt-2">
+                  {currentRoster?.wishes_lock_at && (
+                    <CosmicButton
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setLockAtInput('');
+                        handleScheduleLock('');
+                      }}
+                      disabled={schedulingLock}
+                    >
+                      {t.rosters.wishesLockClear}
+                    </CosmicButton>
+                  )}
+                  <CosmicButton size="sm" onClick={() => handleScheduleLock()} loading={schedulingLock}>
+                    {t.rosters.wishesLockSchedule}
+                  </CosmicButton>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Roster Settings Dialog */}
       {guildId && selectedRosterId && (

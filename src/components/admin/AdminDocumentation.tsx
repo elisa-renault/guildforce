@@ -220,6 +220,13 @@ const DOCUMENTATION: DocSection[] = [
         contentFr: 'L\'engagement est suivi au niveau membre de guilde (`confirmed`, `potential`, `withdrawn`) et complète les priorités de vœux pour distinguer l\'intention de la disponibilité.',
         tags: ['wishes', 'commitment'],
       },
+      {
+        titleEn: 'Wish locking and deadlines',
+        titleFr: 'Verrouillage des vœux et deadlines',
+        contentEn: 'Roster locks use `rosters.wishes_locked` with optional scheduling via `wishes_lock_at`. Member overrides live in `guild_members.wishes_locked`. RLS enforcement relies on `can_edit_wishes()`, while admin RPCs `lock_roster_wishes`, `unlock_roster_wishes`, `schedule_roster_wishes_lock`, and `set_member_wishes_locked` power manual controls. Scheduled locks run via `apply_scheduled_wish_locks()`.',
+        contentFr: 'Les verrous roster utilisent `rosters.wishes_locked` avec planification via `wishes_lock_at`. Les verrous membres sont stockés dans `guild_members.wishes_locked`. La RLS s\'appuie sur `can_edit_wishes()` et les RPCs `lock_roster_wishes`, `unlock_roster_wishes`, `schedule_roster_wishes_lock`, `set_member_wishes_locked` pour les actions manuelles. Les verrous programmés passent par `apply_scheduled_wish_locks()`.',
+        tags: ['wishes', 'rosters', 'security', 'scheduling'],
+      },
     ],
   },
   {
@@ -352,8 +359,8 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Helper RPC functions',
         titleFr: 'Fonctions RPC utilitaires',
-        contentEn: 'Core helpers include:\n- `has_role`, `has_guild_permission`, `has_roster_access`\n- `is_guild_member`, `is_guild_gm`\n- `can_respond_to_poll`, `can_view_poll_results`\n- `is_user_forum_sanctioned`\nUse these functions instead of duplicating permission logic in frontend code.',
-        contentFr: 'Les helpers principaux incluent :\n- `has_role`, `has_guild_permission`, `has_roster_access`\n- `is_guild_member`, `is_guild_gm`\n- `can_respond_to_poll`, `can_view_poll_results`\n- `is_user_forum_sanctioned`\nUtiliser ces fonctions plutôt que de dupliquer la logique de permissions côté frontend.',
+        contentEn: 'Core helpers include:\n- `has_role`, `has_guild_permission`, `has_roster_access`\n- `is_guild_member`, `is_guild_gm`\n- `are_wishes_locked`, `can_edit_wishes`\n- `can_respond_to_poll`, `can_view_poll_results`\n- `is_user_forum_sanctioned`\nUse these functions instead of duplicating permission logic in frontend code.',
+        contentFr: 'Les helpers principaux incluent :\n- `has_role`, `has_guild_permission`, `has_roster_access`\n- `is_guild_member`, `is_guild_gm`\n- `are_wishes_locked`, `can_edit_wishes`\n- `can_respond_to_poll`, `can_view_poll_results`\n- `is_user_forum_sanctioned`\nUtiliser ces fonctions plutôt que de dupliquer la logique de permissions côté frontend.',
         tags: ['security', 'rpc', 'permissions'],
       },
       {
@@ -375,15 +382,15 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Core tables',
         titleFr: 'Tables cœur',
-        contentEn: '- `profiles`, `battlenet_tokens`\n- `wow_characters`, `wow_guild_memberships`\n- `guilds`, `guild_members`, `guild_roster_cache`',
-        contentFr: '- `profiles`, `battlenet_tokens`\n- `wow_characters`, `wow_guild_memberships`\n- `guilds`, `guild_members`, `guild_roster_cache`',
+        contentEn: '- `profiles`, `battlenet_tokens`\n- `wow_characters`, `wow_guild_memberships`\n- `guilds`, `guild_members` (includes `wishes_locked`), `guild_roster_cache`',
+        contentFr: '- `profiles`, `battlenet_tokens`\n- `wow_characters`, `wow_guild_memberships`\n- `guilds`, `guild_members` (inclut `wishes_locked`), `guild_roster_cache`',
         tags: ['database', 'core'],
       },
       {
         titleEn: 'Feature tables',
         titleFr: 'Tables de fonctionnalités',
-        contentEn: '- Roster/wishes: `rosters`, `roster_access_rules`, `class_wishes`\n- Permissions/activity: `guild_permissions`, `guild_activity_logs`\n- Polls: `guild_polls`, `guild_poll_sections`, `guild_poll_questions`, `guild_poll_responses`, `poll_respondent_rules`, `poll_results_access_rules`\n- Composition metadata: `raid_effects`, `wow_spells`',
-        contentFr: '- Rosters/vœux : `rosters`, `roster_access_rules`, `class_wishes`\n- Permissions/activité : `guild_permissions`, `guild_activity_logs`\n- Sondages : `guild_polls`, `guild_poll_sections`, `guild_poll_questions`, `guild_poll_responses`, `poll_respondent_rules`, `poll_results_access_rules`\n- Métadonnées de composition : `raid_effects`, `wow_spells`',
+        contentEn: '- Roster/wishes: `rosters` (wishes_locked, wishes_lock_at), `roster_access_rules`, `class_wishes`\n- Permissions/activity: `guild_permissions`, `guild_activity_logs`\n- Polls: `guild_polls`, `guild_poll_sections`, `guild_poll_questions`, `guild_poll_responses`, `poll_respondent_rules`, `poll_results_access_rules`\n- Composition metadata: `raid_effects`, `wow_spells`',
+        contentFr: '- Rosters/vœux : `rosters` (wishes_locked, wishes_lock_at), `roster_access_rules`, `class_wishes`\n- Permissions/activité : `guild_permissions`, `guild_activity_logs`\n- Sondages : `guild_polls`, `guild_poll_sections`, `guild_poll_questions`, `guild_poll_responses`, `poll_respondent_rules`, `poll_results_access_rules`\n- Métadonnées de composition : `raid_effects`, `wow_spells`',
         tags: ['database', 'features'],
       },
       {

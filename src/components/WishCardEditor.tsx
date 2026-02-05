@@ -29,6 +29,7 @@ interface WishCardEditorProps {
   wish: WishData;
   onChange: (field: keyof WishData, value: any) => void;
   usedClassIds?: string[];
+  disabled?: boolean;
 }
 
 const roleConfig: Record<Role, { color: string; bgSelected: string }> = {
@@ -46,7 +47,7 @@ const getSpecIcon = (spec: Specialization) => {
 };
 
 export const WishCardEditor = forwardRef<HTMLDivElement, WishCardEditorProps>(
-  ({ wish, onChange, usedClassIds = [] }, ref) => {
+  ({ wish, onChange, usedClassIds = [], disabled = false }, ref) => {
   const { language, t } = useLanguage();
   const [classOpen, setClassOpen] = useState(false);
   const [specOpen, setSpecOpen] = useState(false);
@@ -62,6 +63,7 @@ export const WishCardEditor = forwardRef<HTMLDivElement, WishCardEditorProps>(
   );
 
   const handleClassSelect = (classId: string) => {
+    if (disabled) return;
     if (wish.classId === classId) {
       onChange('classId', '');
     } else {
@@ -71,6 +73,7 @@ export const WishCardEditor = forwardRef<HTMLDivElement, WishCardEditorProps>(
   };
 
   const handleSpecToggle = (specId: string) => {
+    if (disabled) return;
     if (wish.specIds.includes(specId)) {
       // Prevent deselecting if it's the last spec
       if (wish.specIds.length <= 1) return;
@@ -81,6 +84,7 @@ export const WishCardEditor = forwardRef<HTMLDivElement, WishCardEditorProps>(
   };
 
   const handleSpecMove = (index: number, direction: 'up' | 'down') => {
+    if (disabled) return;
     const nextIndex = direction === 'up' ? index - 1 : index + 1;
     if (nextIndex < 0 || nextIndex >= wish.specIds.length) return;
     onChange('specIds', moveSpecOrder(wish.specIds, index, nextIndex));
@@ -93,7 +97,7 @@ export const WishCardEditor = forwardRef<HTMLDivElement, WishCardEditorProps>(
   const commentPlaceholder = t.wishes.commentPlaceholder;
 
   return (
-    <div ref={ref} className="flex flex-col lg:flex-row gap-2 lg:gap-3 flex-1">
+    <div ref={ref} className={cn("flex flex-col lg:flex-row gap-2 lg:gap-3 flex-1", disabled && "opacity-60")}>
       {/* Class Selector */}
       <Popover open={classOpen} onOpenChange={setClassOpen}>
         <PopoverTrigger asChild>
@@ -110,6 +114,7 @@ export const WishCardEditor = forwardRef<HTMLDivElement, WishCardEditorProps>(
               color: `hsl(var(--class-${selectedClass.id}))`,
               borderColor: `hsl(var(--class-${selectedClass.id}) / 0.4)`
             } : undefined}
+            disabled={disabled}
           >
             <span className="truncate">
               {selectedClass ? getLocalizedClassName(selectedClass.id, language) : classPlaceholder}
@@ -155,6 +160,7 @@ export const WishCardEditor = forwardRef<HTMLDivElement, WishCardEditorProps>(
                   : "border-dashed border-muted-foreground/40 text-muted-foreground",
                 hasSpecError && "border-destructive/60 animate-pulse"
               )}
+              disabled={disabled}
             >
               {selectedSpecs.length > 0 ? (
                 <span className="flex items-center gap-1.5 truncate">
@@ -246,7 +252,7 @@ export const WishCardEditor = forwardRef<HTMLDivElement, WishCardEditorProps>(
                   <button
                     key={spec.id}
                     onClick={() => handleSpecToggle(spec.id)}
-                    disabled={isSelected && wish.specIds.length <= 1}
+                    disabled={disabled || (isSelected && wish.specIds.length <= 1)}
                     className={cn(
                       "w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-colors text-left",
                       isSelected 
@@ -280,6 +286,7 @@ export const WishCardEditor = forwardRef<HTMLDivElement, WishCardEditorProps>(
         placeholder={commentPlaceholder}
         value={wish.comment}
         onChange={(e) => onChange('comment', e.target.value)}
+        disabled={disabled}
         className="h-9 w-full lg:flex-1 rounded-md border border-border bg-card/50 px-3 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50"
       />
     </div>

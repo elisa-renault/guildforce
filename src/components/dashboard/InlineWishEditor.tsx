@@ -23,6 +23,7 @@ interface InlineWishEditorProps {
   choiceIndex: number;
   onChange: (field: keyof WishData, value: any) => void;
   usedClassIds?: string[];
+  disabled?: boolean;
 }
 
 const roleConfig: Record<Role, { color: string }> = {
@@ -39,7 +40,13 @@ const getSpecIcon = (spec: Specialization) => {
   return spec.range === 'ranged' ? Crosshair : Swords;
 };
 
-export const InlineWishEditor = ({ wish, choiceIndex, onChange, usedClassIds = [] }: InlineWishEditorProps) => {
+export const InlineWishEditor = ({
+  wish,
+  choiceIndex,
+  onChange,
+  usedClassIds = [],
+  disabled = false,
+}: InlineWishEditorProps) => {
   const { language, t } = useLanguage();
   const [classOpen, setClassOpen] = useState(false);
   const [specOpen, setSpecOpen] = useState(false);
@@ -49,6 +56,7 @@ export const InlineWishEditor = ({ wish, choiceIndex, onChange, usedClassIds = [
   const selectedSpecs = wish.specIds.map(id => getSpecById(id)).filter(Boolean);
 
   const handleClassSelect = (classId: string) => {
+    if (disabled) return;
     if (wish.classId === classId) {
       onChange('classId', '');
     } else {
@@ -58,6 +66,7 @@ export const InlineWishEditor = ({ wish, choiceIndex, onChange, usedClassIds = [
   };
 
   const handleSpecToggle = (specId: string) => {
+    if (disabled) return;
     if (wish.specIds.includes(specId)) {
       // Prevent deselecting if it's the last spec
       if (wish.specIds.length <= 1) return;
@@ -68,6 +77,7 @@ export const InlineWishEditor = ({ wish, choiceIndex, onChange, usedClassIds = [
   };
 
   const handleSpecMove = (index: number, direction: 'up' | 'down') => {
+    if (disabled) return;
     const nextIndex = direction === 'up' ? index - 1 : index + 1;
     if (nextIndex < 0 || nextIndex >= wish.specIds.length) return;
     onChange('specIds', moveSpecOrder(wish.specIds, index, nextIndex));
@@ -93,6 +103,7 @@ export const InlineWishEditor = ({ wish, choiceIndex, onChange, usedClassIds = [
               backgroundColor: `hsl(var(--class-${selectedClass.id}) / 0.2)`,
               color: `hsl(var(--class-${selectedClass.id}))`
             } : undefined}
+            disabled={disabled}
           >
             <span className="truncate">
               {selectedClass ? getLocalizedClassName(selectedClass.id, language) : t.wishes.selectClass}
@@ -145,6 +156,7 @@ export const InlineWishEditor = ({ wish, choiceIndex, onChange, usedClassIds = [
                     : "border-dashed border-muted-foreground/30 text-muted-foreground",
                   hasSpecError && "border-destructive/60 animate-pulse"
                 )}
+                disabled={disabled}
               >
                 {selectedSpecs.length > 0 ? (
                   <span className="flex items-center gap-1 truncate">
@@ -238,7 +250,7 @@ export const InlineWishEditor = ({ wish, choiceIndex, onChange, usedClassIds = [
                     <button
                       key={spec.id}
                       onClick={() => handleSpecToggle(spec.id)}
-                      disabled={isSelected && wish.specIds.length <= 1}
+                      disabled={disabled || (isSelected && wish.specIds.length <= 1)}
                       className={cn(
                         "w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-colors text-left",
                         isSelected 
@@ -275,6 +287,7 @@ export const InlineWishEditor = ({ wish, choiceIndex, onChange, usedClassIds = [
                 wish.comment ? "text-primary" : "text-muted-foreground/50 hover:text-muted-foreground"
               )}
               title={t.wishes.comment}
+              disabled={disabled}
             >
               <MessageSquare className="h-3 w-3" />
             </Button>
@@ -284,6 +297,7 @@ export const InlineWishEditor = ({ wish, choiceIndex, onChange, usedClassIds = [
               placeholder={t.wishes.commentPlaceholder}
               value={wish.comment}
               onChange={(e) => onChange('comment', e.target.value)}
+              disabled={disabled}
               className="min-h-[60px] resize-none text-xs"
             />
           </PopoverContent>

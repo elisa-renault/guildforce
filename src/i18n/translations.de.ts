@@ -1,4 +1,4 @@
-﻿import { createLocaleTranslations } from './createLocaleTranslations';
+import { createLocaleTranslations } from './createLocaleTranslations';
 import type { Translations } from './translations';
 import { translationsEn } from './translations.en';
 
@@ -63,11 +63,11 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "forumCategory": "Forum-Kategorie",
     "forumNewTopic": "Neues Thema",
     "forumTopic": "Forum-Thema",
-    "guildOverview": "Gilden-Ubersicht",
+    "guildOverview": "Gilden\u00fcbersicht",
     "guildRoster": "Aufstellung",
-    "guildWishes": "Wunsche",
+    "guildWishes": "W\u00fcnsche",
     "guildSettings": "Gilden-Einstellungen",
-    "guildMemberWishes": "Mitglieder-Wunsche",
+    "guildMemberWishes": "Mitglieder-W\u00fcnsche",
     "guildPolls": "Umfragen",
     "guildPollNew": "Neue Umfrage",
     "guildPollEdit": "Umfrage bearbeiten",
@@ -107,12 +107,12 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "joinGuild": "Meiner Gilde beitreten",
     "features": {
       "collect": {
-        "title": "Wunsche sammeln",
+        "title": "W\u00fcnsche sammeln",
         "description": "Mitglieder senden bis zu 3 Klassenwahlen mit bevorzugten Spezialisierungen."
       },
       "visualize": {
         "title": "Roster visualisieren",
-        "description": "Alle Wunsche auf einen Blick mit Rollen- und Klassenfiltern."
+        "description": "Alle W\u00fcnsche auf einen Blick mit Rollen- und Klassenfiltern."
       },
       "export": {
         "title": "Daten exportieren",
@@ -162,7 +162,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "uniqueMember": "Einzigartiges Mitglied am Guildforce",
     "uniqueMembers": "Einzigartige Mitglieder am Guildforce",
     "characters": "Charaktere",
-    "charactersNotRegistered": "Zeichen nicht registriert",
+    "charactersNotRegistered": "Charaktere nicht registriert",
     "noMembers": "Noch keine Mitglieder",
     "leaveGuild": "Gilde verlassen",
     "deleteGuild": "Gilde l\u00f6schen",
@@ -184,10 +184,10 @@ export const translationsDe: Translations = createLocaleTranslations(translation
   "wishes": {
     "title": "Meine Klassenw\u00fcnsche",
     "wishesOf": "W\u00fcnsche von",
-    "subtitle": "W\u00e4hlen Sie bis zu 3 Klassen aus, die Sie in der n\u00e4chsten Erweiterung spielen m\u00f6chten",
+    "subtitle": "W\u00e4hle bis zu 3 Klassen aus, die du in der n\u00e4chsten Erweiterung spielen m\u00f6chtest",
     "choice": "Auswahl",
     "choiceNumber": "Auswahl #{{number}}",
-    "selectClass": "W\u00e4hlen Sie eine Klasse aus",
+    "selectClass": "W\u00e4hle eine Klasse aus",
     "selectSpecs": "Spezialisierungen ausw\u00e4hlen",
     "reorderSpecs": "Spezialisierungen neu ordnen",
     "mainSpec": "Haupt",
@@ -195,30 +195,30 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "moveSpecDown": "Spezialisierung nach unten",
     "comment": "Kommentar",
     "commentPlaceholder": "Weitere Informationen",
-    "status": "Verpflichtung",
-    "confirmed": "Best\u00e4tigt f\u00fcr die n\u00e4chste Saison",
+    "status": "Zusage",
+    "confirmed": "Best\u00e4tigt f\u00fcr die n\u00e4chste Season",
     "potential": "Potenzial / Ungewiss",
     "noWishes": "Noch keine W\u00fcnsche eingereicht",
-    "saveWishes": "Speichern Sie meine W\u00fcnsche",
+    "saveWishes": "Meine W\u00fcnsche speichern",
     "wishesSaved": "Ihre W\u00fcnsche wurden gespeichert!",
     "clickToExpand": "Klicken Sie hier, um Details anzuzeigen",
     "clickToEdit": "Klicken Sie hier, um Ihre W\u00fcnsche zu bearbeiten",
-    "editMyWishes": "Bearbeiten Sie meine W\u00fcnsche",
+    "editMyWishes": "Meine W\u00fcnsche bearbeiten",
     "specs": "Spezialisierungen",
     "preferredChoice": "Ihr Wunschkurs",
     "secondChoice": "Zweite Wahl",
     "thirdChoice": "Dritte Wahl",
-    "addWish": "F\u00fcgen Sie einen Wunsch hinzu",
+    "addWish": "F\u00fcge einen Wunsch hinzu",
     "removeWish": "Entfernen",
     "noRosterSelected": "Kein Aufstellung ausgew\u00e4hlt. Bitte w\u00e4hlen Sie zun\u00e4chst einen Aufstellung aus.",
     "commitment": {
-      "title": "Mythische Raid-Verpflichtung",
+      "title": "Mythische Raid-Zusage",
       "confirmed": "Best\u00e4tigt",
       "confirmedDesc": "Ich werde regelm\u00e4\u00dfig f\u00fcr mythische Raids verf\u00fcgbar sein",
-      "undecided": "Unentschieden",
-      "undecidedDesc": "Meine Verf\u00fcgbarkeit oder Kursauswahl kann sich \u00e4ndern",
+      "undecided": "Unentschlossen",
+      "undecidedDesc": "Meine Verf\u00fcgbarkeit oder Klassenwahl kann sich \u00e4ndern",
       "withdrawn": "Zur\u00fcckgezogen",
-      "withdrawnDesc": "Ich werde diese Saison nicht teilnehmen"
+      "withdrawnDesc": "Ich werde in dieser Season nicht teilnehmen"
     },
     "validation": {
       "pending": "Ausstehend",
@@ -247,9 +247,9 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "ranged": "Fernkampf",
     "player": "Spieler",
     "discord": "Zwietracht",
-    "firstChoice": "1. Wahl",
-    "secondChoice": "2. Wahl",
-    "thirdChoice": "3. Wahl",
+    "firstChoice": "1. Auswahl",
+    "secondChoice": "2. Auswahl",
+    "thirdChoice": "3. Auswahl",
     "comments": "Kommentare",
     "exportCSV": "CSV exportieren",
     "exportSuccess": "Export erfolgreich",
@@ -261,8 +261,8 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "clear": "Klar",
     "validation": "Validierung",
     "classesCount": "Klassen",
-    "commitment": "Verpflichtung",
-    "allCommitments": "Alle Verpflichtungen",
+    "commitment": "Zusage",
+    "allCommitments": "Alle Zusagen",
     "minWishes": "Min. W\u00fcnsche",
     "minWishesPlaceholder": "Mindestw\u00fcnsche",
     "range": "Reichweite",
@@ -273,8 +273,8 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "wishesMin": "\u2265{{count}} W\u00fcnsche",
     "wishesCount": "W\u00fcnsche",
     "additionalWishes": "Zus\u00e4tzliche W\u00fcnsche",
-    "addWish": "F\u00fcgen Sie einen Wunsch hinzu",
-    "table": "Tisch",
+    "addWish": "F\u00fcge einen Wunsch hinzu",
+    "table": "Tabelle",
     "analytics": "Analytik",
     "classDistribution": "Klassenverteilung",
     "specDistribution": "Spezifikationsverteilung",
@@ -314,7 +314,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "language": "Sprache",
     "characters": "Meine Charaktere",
     "addCharacter": "Charakter hinzuf\u00fcgen",
-    "noCharacters": "Keine Zeichen hinzugef\u00fcgt",
+    "noCharacters": "Keine Charaktere hinzugef\u00fcgt",
     "characterName": "Name",
     "characterClass": "Klasse",
     "characterLevel": "Ebene",
@@ -334,7 +334,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
       "confirmDescription": "Diese Aktion ist irreversibel. Alle Ihre Daten werden dauerhaft gel\u00f6scht:",
       "dataList": {
         "profile": "Ihr Profil und Avatar",
-        "characters": "Ihre WoW Zeichen",
+        "characters": "Ihre WoW Charaktere",
         "wishes": "Ihre Klassenw\u00fcnsche",
         "forumPosts": "Ihre Forenbeitr\u00e4ge"
       },
@@ -590,18 +590,18 @@ export const translationsDe: Translations = createLocaleTranslations(translation
   "guildNav": {
     "dashboard": "Ubersicht",
     "overview": "\u00dcberblick",
-    "myWishes": "Meine Wunsche",
+    "myWishes": "Meine W\u00fcnsche",
     "polls": "Umfragen",
     "settings": "Einstellungen",
     "activity": "Aktivitat",
     "welcome": "Willkommen",
     "myStatus": "Mein Status",
-    "guildOverview": "Gilden-Ubersicht",
+    "guildOverview": "Gilden\u00fcbersicht",
     "quickAccess": "Schnellzugriff",
     "wishesTable": "Wunschliste",
     "members": "Mitglieder",
-    "noWishApproved": "Kein Wunsch freigegeben",
-    "noWishesYet": "Noch keine Wunsche"
+    "noWishApproved": "Keine W\u00fcnsche freigegeben",
+    "noWishesYet": "Noch keine W\u00fcnsche"
   },
   "errors": {
     "generic": "Ein unerwarteter Fehler ist aufgetreten",
@@ -676,7 +676,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "editActivePoll": "Aktive Umfrage bearbeiten",
     "editActivePollDesc": "Diese Umfrage hat bereits {{count}} Antworten. W\u00e4hlen Sie die Art der Bearbeitung.",
     "editSettings": "Einstellungen bearbeiten",
-    "editSettingsDesc": "Titel, Beschreibung, Enddatum, Zielliste. Antworten bleiben erhalten.",
+    "editSettingsDesc": "Titel, Beschreibung, Enddatum, Ziel-Roster. Antworten bleiben erhalten.",
     "editStructure": "Struktur bearbeiten",
     "editStructureDesc": "Fragen und Optionen. \u26a0\ufe0f Dadurch werden alle vorhandenen Antworten zur\u00fcckgesetzt.",
     "dragToRank": "Elemente per Drag-and-Drop bewerten (1 = am besten)",
@@ -920,4 +920,6 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "status": "Status"
   }
 });
+
+
 

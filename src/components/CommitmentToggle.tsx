@@ -12,6 +12,7 @@ interface CommitmentToggleProps {
   onChange: (value: CommitmentStatus) => void;
   compact?: boolean;
   asBadge?: boolean;
+  disabled?: boolean;
 }
 
 const statusConfig = {
@@ -32,9 +33,19 @@ const statusConfig = {
   },
 };
 
-export const CommitmentToggle = ({ status, onChange, compact = false, asBadge = false }: CommitmentToggleProps) => {
+export const CommitmentToggle = ({
+  status,
+  onChange,
+  compact = false,
+  asBadge = false,
+  disabled = false,
+}: CommitmentToggleProps) => {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
+  const handleOpenChange = (value: boolean) => {
+    if (disabled) return;
+    setOpen(value);
+  };
 
   const config = statusConfig[status];
   const Icon = config.icon;
@@ -54,13 +65,15 @@ export const CommitmentToggle = ({ status, onChange, compact = false, asBadge = 
   // Badge-style dropdown (looks like read-mode badge but clickable)
   if (asBadge) {
     return (
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={disabled ? false : open} onOpenChange={handleOpenChange}>
         <PopoverTrigger asChild>
           <button
             className={cn(
               "inline-flex items-center gap-1 text-[10px] md:text-xs px-1.5 py-0.5 rounded-md border cursor-pointer transition-colors hover:opacity-80 focus:outline-none focus:ring-0",
-              config.colorClass
+              config.colorClass,
+              disabled && "opacity-60 cursor-not-allowed"
             )}
+            disabled={disabled}
           >
             <Icon className="h-3 w-3" strokeWidth={1.5} />
             <span className="hidden md:inline">{labels[status]}</span>
@@ -75,11 +88,12 @@ export const CommitmentToggle = ({ status, onChange, compact = false, asBadge = 
               return (
                 <button
                   key={s}
-                  onClick={() => { onChange(s); setOpen(false); }}
+                  onClick={() => { if (!disabled) { onChange(s); setOpen(false); } }}
                   className={cn(
                     "w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-xs transition-colors text-left focus:outline-none focus:ring-0",
                     isActive ? statusConfig[s].activeClass : "hover:bg-primary/10"
                   )}
+                  disabled={disabled}
                 >
                   <ItemIcon className="h-3.5 w-3.5" />
                   <span>{labels[s]}</span>
@@ -95,12 +109,13 @@ export const CommitmentToggle = ({ status, onChange, compact = false, asBadge = 
   // Compact dropdown version
   if (compact) {
     return (
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={disabled ? false : open} onOpenChange={handleOpenChange}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
             size="sm"
             className={cn("h-8 justify-between gap-1.5 text-xs px-2", config.colorClass)}
+            disabled={disabled}
           >
             <Icon className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">{labels[status]}</span>
@@ -115,11 +130,12 @@ export const CommitmentToggle = ({ status, onChange, compact = false, asBadge = 
               return (
                 <button
                   key={s}
-                  onClick={() => { onChange(s); setOpen(false); }}
+                  onClick={() => { if (!disabled) { onChange(s); setOpen(false); } }}
                   className={cn(
                     "w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-sm transition-colors text-left focus:outline-none focus:ring-0",
                     isActive ? statusConfig[s].activeClass : "hover:bg-primary/10"
                   )}
+                  disabled={disabled}
                 >
                   <ItemIcon className="h-4 w-4" />
                   <span>{labels[s]}</span>
@@ -145,7 +161,7 @@ export const CommitmentToggle = ({ status, onChange, compact = false, asBadge = 
             <button
               key={s}
               type="button"
-              onClick={() => onChange(s)}
+              onClick={() => { if (!disabled) onChange(s); }}
               className={cn(
                 "flex flex-col items-start gap-2 p-4 rounded-lg border transition-all duration-200 text-left outline-none",
                 "focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0",
@@ -153,6 +169,7 @@ export const CommitmentToggle = ({ status, onChange, compact = false, asBadge = 
                   ? statusConfig[s].colorClass
                   : "bg-card/50 border-border/50 hover:border-border"
               )}
+              disabled={disabled}
             >
               <div className="flex items-center gap-2">
                 <ItemIcon 

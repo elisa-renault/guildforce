@@ -305,6 +305,15 @@ export interface Translations {
     };
     specRequired: string;
     specRequiredDesc: string;
+    lockedTitle: string;
+    lockedRosterDesc: string;
+    lockedMemberDesc: string;
+    lockScheduledTitle: string;
+    lockScheduledDesc: string;
+    memberLockedToast: string;
+    memberUnlockedToast: string;
+    lockMember: string;
+    unlockMember: string;
   };
   // Dashboard
   dashboard: {
@@ -518,6 +527,19 @@ export interface Translations {
     addUserRule: string;
     noAccessWarning: string;
     noAccessMessage: string;
+    wishesLockTitle: string;
+    wishesLockedStatus: string;
+    wishesUnlockedStatus: string;
+    lockWishes: string;
+    unlockWishes: string;
+    wishesLockAtLabel: string;
+    wishesLockAtHint: string;
+    wishesLockClear: string;
+    wishesLockSchedule: string;
+    wishesLockedToast: string;
+    wishesUnlockedToast: string;
+    wishesLockScheduledToast: string;
+    wishesLockClearedToast: string;
   };
   // Forum
   forum: {
