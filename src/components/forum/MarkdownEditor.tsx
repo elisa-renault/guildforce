@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { MentionAutocomplete, renderMentions } from './MentionAutocomplete';
+import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 
 interface MarkdownEditorProps {
   value: string;
@@ -23,6 +24,7 @@ export const MarkdownEditor = ({ value, onChange, placeholder, minHeight = '150p
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const { language, t } = useLanguage();
+  const s = (key: SemanticKey) => resolveSemanticMessage({ key, language, translations: t });
   
   // Mention autocomplete state
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
@@ -61,38 +63,38 @@ export const MarkdownEditor = ({ value, onChange, placeholder, minHeight = '150p
   const toolbarGroups = [
     {
       buttons: [
-        { icon: Heading1, action: () => insertMarkdown('# ', '', true), title: t.auto.components_forum_MarkdownEditor_64 },
-        { icon: Heading2, action: () => insertMarkdown('## ', '', true), title: t.auto.components_forum_MarkdownEditor_65 },
-        { icon: Heading3, action: () => insertMarkdown('### ', '', true), title: t.auto.components_forum_MarkdownEditor_66 },
+        { icon: Heading1, action: () => insertMarkdown('# ', '', true), title: s('forum.markdown.toolbar.heading1') },
+        { icon: Heading2, action: () => insertMarkdown('## ', '', true), title: s('forum.markdown.toolbar.heading2') },
+        { icon: Heading3, action: () => insertMarkdown('### ', '', true), title: s('forum.markdown.toolbar.heading3') },
       ]
     },
     {
       buttons: [
-        { icon: Bold, action: () => insertMarkdown('**', '**'), title: t.auto.components_forum_MarkdownEditor_71 },
-        { icon: Italic, action: () => insertMarkdown('*', '*'), title: t.auto.components_forum_MarkdownEditor_72 },
-        { icon: Strikethrough, action: () => insertMarkdown('~~', '~~'), title: t.auto.components_forum_MarkdownEditor_73 },
+        { icon: Bold, action: () => insertMarkdown('**', '**'), title: s('forum.markdown.toolbar.bold') },
+        { icon: Italic, action: () => insertMarkdown('*', '*'), title: s('forum.markdown.toolbar.italic') },
+        { icon: Strikethrough, action: () => insertMarkdown('~~', '~~'), title: s('forum.markdown.toolbar.strikethrough') },
       ]
     },
     {
       buttons: [
-        { icon: List, action: () => insertMarkdown('- ', '', true), title: t.auto.components_forum_MarkdownEditor_78 },
-        { icon: ListOrdered, action: () => insertMarkdown('1. ', '', true), title: t.auto.components_forum_MarkdownEditor_79 },
-        { icon: CheckSquare, action: () => insertMarkdown('- [ ] ', '', true), title: t.auto.components_forum_MarkdownEditor_80 },
+        { icon: List, action: () => insertMarkdown('- ', '', true), title: s('forum.markdown.toolbar.list') },
+        { icon: ListOrdered, action: () => insertMarkdown('1. ', '', true), title: s('forum.markdown.toolbar.list_ordered') },
+        { icon: CheckSquare, action: () => insertMarkdown('- [ ] ', '', true), title: s('forum.markdown.toolbar.task_list') },
       ]
     },
     {
       buttons: [
-        { icon: Quote, action: () => insertMarkdown('> ', '', true), title: t.auto.components_forum_MarkdownEditor_85 },
-        { icon: Code, action: () => insertMarkdown('`', '`'), title: t.auto.components_forum_MarkdownEditor_86 },
-        { icon: Minus, action: () => insertMarkdown('\n---\n', '', true), title: t.auto.components_forum_MarkdownEditor_87 },
+        { icon: Quote, action: () => insertMarkdown('> ', '', true), title: s('forum.markdown.toolbar.quote') },
+        { icon: Code, action: () => insertMarkdown('`', '`'), title: s('forum.markdown.toolbar.code') },
+        { icon: Minus, action: () => insertMarkdown('\n---\n', '', true), title: s('forum.markdown.toolbar.separator') },
       ]
     },
     {
       buttons: [
-        { icon: Link, action: () => insertMarkdown('[', '](https://)'), title: t.auto.components_forum_MarkdownEditor_92 },
-        { icon: Image, action: () => insertMarkdown('![alt](', ')'), title: t.auto.components_forum_MarkdownEditor_93 },
-        { icon: Table, action: insertTable, title: t.auto.components_forum_MarkdownEditor_94 },
-        { icon: AtSign, action: () => insertMarkdown('@'), title: t.auto.components_forum_MarkdownEditor_95 },
+        { icon: Link, action: () => insertMarkdown('[', '](https://)'), title: s('forum.markdown.toolbar.link') },
+        { icon: Image, action: () => insertMarkdown('![alt](', ')'), title: s('forum.markdown.toolbar.image') },
+        { icon: Table, action: insertTable, title: s('forum.markdown.toolbar.table') },
+        { icon: AtSign, action: () => insertMarkdown('@'), title: s('forum.markdown.toolbar.mention') },
       ]
     },
   ];
@@ -185,11 +187,11 @@ export const MarkdownEditor = ({ value, onChange, placeholder, minHeight = '150p
           <TabsList className="h-7 bg-transparent">
             <TabsTrigger value="write" className="h-6 px-2 text-xs data-[state=active]:bg-primary/20">
               <Edit3 className="h-3 w-3 mr-1" />
-              {t.auto.components_forum_MarkdownEditor_188}
+              {s('forum.markdown.tab.write')}
             </TabsTrigger>
             <TabsTrigger value="preview" className="h-6 px-2 text-xs data-[state=active]:bg-primary/20">
               <Eye className="h-3 w-3 mr-1" />
-              {t.auto.components_forum_MarkdownEditor_192}
+              {s('forum.markdown.tab.preview')}
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -294,7 +296,7 @@ export const MarkdownEditor = ({ value, onChange, placeholder, minHeight = '150p
             </ReactMarkdown>
           ) : (
             <p className="text-muted-foreground italic">
-              {t.auto.components_forum_MarkdownEditor_297}
+              {s('forum.markdown.preview.empty')}
             </p>
           )}
         </div>

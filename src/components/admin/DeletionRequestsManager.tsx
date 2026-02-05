@@ -10,7 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
-import { Trash2, CheckCircle, XCircle, Loader2, User, AlertTriangle } from 'lucide-react';
+import { Trash2, CheckCircle, Loader2, User, AlertTriangle } from 'lucide-react';
+import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 
 interface DeletionRequest {
   id: string;
@@ -27,6 +28,7 @@ interface DeletionRequest {
 
 export function DeletionRequestsManager() {
   const { language, t } = useLanguage();
+  const s = (key: SemanticKey) => resolveSemanticMessage({ key, language, translations: t });
   const { toast } = useToast();
   const [requests, setRequests] = useState<DeletionRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,25 +43,25 @@ export function DeletionRequestsManager() {
 
       if (error) throw error;
 
-      // Fetch user profiles for each request
-      const userIds = data?.map(r => r.user_id) || [];
+      const userIds = data?.map((r) => r.user_id) || [];
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, username, avatar_url')
         .in('id', userIds);
 
-      const enrichedRequests = data?.map(r => ({
-        ...r,
-        user: profiles?.find(p => p.id === r.user_id)
-      })) || [];
+      const enrichedRequests =
+        data?.map((r) => ({
+          ...r,
+          user: profiles?.find((p) => p.id === r.user_id),
+        })) || [];
 
       setRequests(enrichedRequests);
     } catch (error) {
       log.error('Error fetching deletion requests:', error);
       toast({
-        title: t.auto.components_admin_DeletionRequestsManager_60,
-        description: t.auto.components_admin_DeletionRequestsManager_61,
-        variant: 'destructive'
+        title: s('admin.deletion.toast.fetch_error.title'),
+        description: s('admin.deletion.toast.fetch_error.description'),
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -73,38 +75,40 @@ export function DeletionRequestsManager() {
   const markAsProcessed = async (requestId: string) => {
     setProcessingId(requestId);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       const { error } = await supabase
         .from('account_deletion_requests')
         .update({
           status: 'processed',
           processed_at: new Date().toISOString(),
-          processed_by: user?.id
+          processed_by: user?.id,
         })
         .eq('id', requestId);
 
       if (error) throw error;
 
       toast({
-        title: t.auto.components_admin_DeletionRequestsManager_90,
-        description: t.auto.components_admin_DeletionRequestsManager_91
+        title: s('admin.deletion.toast.processed.title'),
+        description: s('admin.deletion.toast.processed.description'),
       });
 
       fetchRequests();
     } catch (error) {
       log.error('Error processing request:', error);
       toast({
-        title: t.auto.components_admin_DeletionRequestsManager_100,
-        variant: 'destructive'
+        title: s('admin.deletion.toast.process_error.title'),
+        variant: 'destructive',
       });
     } finally {
       setProcessingId(null);
     }
   };
 
-  const pendingRequests = requests.filter(r => r.status === 'pending');
-  const processedRequests = requests.filter(r => r.status !== 'pending');
+  const pendingRequests = requests.filter((r) => r.status === 'pending');
+  const processedRequests = requests.filter((r) => r.status !== 'pending');
 
   if (loading) {
     return (
@@ -118,25 +122,19 @@ export function DeletionRequestsManager() {
 
   return (
     <div className="space-y-6">
-      {/* Header with count */}
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-medium text-foreground">
-          {t.auto.components_admin_DeletionRequestsManager_126}
-        </h2>
+        <h2 className="text-lg font-medium text-foreground">{s('admin.deletion.title')}</h2>
         {pendingRequests.length > 0 && (
           <Badge variant="destructive" className="gap-1">
             <AlertTriangle className="h-3 w-3" />
-            {pendingRequests.length} {t.auto.components_admin_DeletionRequestsManager_131}
+            {pendingRequests.length} {s('admin.deletion.pending_count_label')}
           </Badge>
         )}
       </div>
 
-      {/* Pending requests */}
       {pendingRequests.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-sm font-medium text-muted-foreground">
-            {t.auto.components_admin_DeletionRequestsManager_140}
-          </h3>
+          <h3 className="text-sm font-medium text-muted-foreground">{s('admin.deletion.pending_section')}</h3>
           {pendingRequests.map((request) => (
             <GlowCard key={request.id} className="p-4" hoverable={false}>
               <div className="flex items-center justify-between gap-4">
@@ -149,12 +147,12 @@ export function DeletionRequestsManager() {
                   </Avatar>
                   <div className="min-w-0">
                     <p className="font-medium text-foreground truncate">
-                      {request.user?.username || 'Unknown User'}
+                      {request.user?.username || s('admin.deletion.unknown_user')}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {t.auto.components_admin_DeletionRequestsManager_157}{' '}
+                      {s('admin.deletion.requested_at_prefix')}{' '}
                       {format(new Date(request.requested_at), 'dd MMM yyyy HH:mm', {
-                        locale: DATE_LOCALE_BY_LANGUAGE[language]
+                        locale: DATE_LOCALE_BY_LANGUAGE[language],
                       })}
                     </p>
                   </div>
@@ -171,23 +169,18 @@ export function DeletionRequestsManager() {
                   ) : (
                     <CheckCircle className="h-4 w-4" />
                   )}
-                  {t.auto.components_admin_DeletionRequestsManager_176}
+                  {s('admin.deletion.mark_processed')}
                 </Button>
               </div>
-              <p className="text-xs text-amber-500 mt-3">
-                ⚠️ {t.auto.components_admin_DeletionRequestsManager_180}
-              </p>
+              <p className="text-xs text-amber-500 mt-3">?? {s('admin.deletion.warning_irreversible')}</p>
             </GlowCard>
           ))}
         </div>
       )}
 
-      {/* Processed requests */}
       {processedRequests.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-sm font-medium text-muted-foreground">
-            {t.auto.components_admin_DeletionRequestsManager_193}
-          </h3>
+          <h3 className="text-sm font-medium text-muted-foreground">{s('admin.deletion.processed_section')}</h3>
           {processedRequests.map((request) => (
             <GlowCard key={request.id} className="p-4 opacity-60" hoverable={false}>
               <div className="flex items-center justify-between gap-4">
@@ -200,24 +193,23 @@ export function DeletionRequestsManager() {
                   </Avatar>
                   <div className="min-w-0">
                     <p className="font-medium text-foreground truncate">
-                      {request.user?.username || 'Unknown User'}
+                      {request.user?.username || s('admin.deletion.unknown_user')}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {request.status === 'cancelled' 
-                        ? (t.auto.components_admin_DeletionRequestsManager_211)
-                        : (t.auto.components_admin_DeletionRequestsManager_212)
-                      }{' '}
-                      {request.processed_at && format(new Date(request.processed_at), 'dd MMM yyyy', {
-                        locale: DATE_LOCALE_BY_LANGUAGE[language]
-                      })}
+                      {request.status === 'cancelled'
+                        ? s('admin.deletion.status.cancelled_prefix')
+                        : s('admin.deletion.status.processed_prefix')}{' '}
+                      {request.processed_at &&
+                        format(new Date(request.processed_at), 'dd MMM yyyy', {
+                          locale: DATE_LOCALE_BY_LANGUAGE[language],
+                        })}
                     </p>
                   </div>
                 </div>
                 <Badge variant={request.status === 'cancelled' ? 'secondary' : 'outline'}>
-                  {request.status === 'cancelled' 
-                    ? (t.auto.components_admin_DeletionRequestsManager_222)
-                    : (t.auto.components_admin_DeletionRequestsManager_223)
-                  }
+                  {request.status === 'cancelled'
+                    ? s('admin.deletion.badge.cancelled')
+                    : s('admin.deletion.badge.processed')}
                 </Badge>
               </div>
             </GlowCard>
@@ -225,13 +217,10 @@ export function DeletionRequestsManager() {
         </div>
       )}
 
-      {/* Empty state */}
       {requests.length === 0 && (
         <GlowCard className="p-8 text-center" hoverable={false}>
           <Trash2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">
-            {t.auto.components_admin_DeletionRequestsManager_237}
-          </p>
+          <p className="text-muted-foreground">{s('admin.deletion.empty')}</p>
         </GlowCard>
       )}
     </div>

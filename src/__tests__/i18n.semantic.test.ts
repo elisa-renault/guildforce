@@ -108,6 +108,54 @@ describe('semantic i18n', () => {
     expect(value).toBe('Anonyme Antworten (legacy)');
   });
 
+  it('keeps markdown editor compatibility with legacy auto keys', () => {
+    const value = resolveSemanticMessage({
+      key: 'forum.markdown.tab.write',
+      language: 'de',
+      translations: asTranslations({
+        components_forum_MarkdownEditor_188: 'Schreiben (legacy)',
+      }),
+    });
+
+    expect(value).toBe('Schreiben (legacy)');
+  });
+
+  it('keeps admin deletion requests compatibility with legacy auto keys', () => {
+    const value = resolveSemanticMessage({
+      key: 'admin.deletion.title',
+      language: 'de',
+      translations: asTranslations({
+        components_admin_DeletionRequestsManager_126: 'Kontoloschanfragen (legacy)',
+      }),
+    });
+
+    expect(value).toBe('Kontoloschanfragen (legacy)');
+  });
+
+  it('keeps admin user manager compatibility with legacy auto keys', () => {
+    const value = resolveSemanticMessage({
+      key: 'admin.user_manager.table.username',
+      language: 'de',
+      translations: asTranslations({
+        components_admin_UserManager_375: 'Benutzername (legacy)',
+      }),
+    });
+
+    expect(value).toBe('Benutzername (legacy)');
+  });
+
+  it('keeps poll access editors compatibility with legacy auto keys', () => {
+    const value = resolveSemanticMessage({
+      key: 'polls.results_access.title',
+      language: 'de',
+      translations: asTranslations({
+        components_polls_PollResultsAccessEditor_276: 'Ergebniszugriff (legacy)',
+      }),
+    });
+
+    expect(value).toBe('Ergebniszugriff (legacy)');
+  });
+
   it('exposes semantic keys for migration checks', () => {
     expect(listSemanticKeys()).toContain('admin.legal.saved');
     expect(listSemanticKeys()).toContain('admin.documentation.search_placeholder');
@@ -119,8 +167,13 @@ describe('semantic i18n', () => {
     expect(listSemanticKeys()).toContain('polls.condition.operator.equals');
     expect(listSemanticKeys()).toContain('polls.results.anonymous_badge');
     expect(listSemanticKeys()).toContain('forum.reports.title');
+    expect(listSemanticKeys()).toContain('forum.markdown.tab.write');
     expect(listSemanticKeys()).toContain('guild.members.title');
     expect(listSemanticKeys()).toContain('admin.backup.title');
+    expect(listSemanticKeys()).toContain('admin.deletion.title');
+    expect(listSemanticKeys()).toContain('admin.user_manager.table.username');
+    expect(listSemanticKeys()).toContain('polls.results_access.title');
+    expect(listSemanticKeys()).toContain('polls.respondent.title');
     expect(listSemanticKeys()).toContain('admin.sidebar.section.dashboard');
     expect(listSemanticKeys()).toContain('settings.sidebar.section.profile');
     expect(listSemanticKeys()).toContain('ui.breadcrumb.aria_label');
