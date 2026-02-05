@@ -337,7 +337,7 @@ const ForumTopicPage = () => {
                   </UserContextMenu>
                 ) : (
                   <span className="text-sm font-medium text-foreground text-center">
-                    Inconnu
+                    {t.forum.unknownUser}
                   </span>
                 )}
                 <UserRoleBadge roles={topicAuthorRoles} size="sm" />
@@ -352,11 +352,11 @@ const ForumTopicPage = () => {
                   </span>
                   <span className="flex items-center gap-1">
                     <Eye className="h-3 w-3" />
-                    {topic.view_count} vues
+                    {topic.view_count} {t.forum.views}
                   </span>
                   <span className="flex items-center gap-1">
                     <MessageSquare className="h-3 w-3" />
-                    {topic.reply_count} réponses
+                    {topic.reply_count} {t.forum.replies}
                   </span>
                 </div>
               </div>

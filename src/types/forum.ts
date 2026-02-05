@@ -1,3 +1,5 @@
+import type { Language } from '@/i18n/translations';
+
 export interface ForumCategory {
   id: string;
   name: string;
@@ -127,11 +129,17 @@ export interface ReactionSummary {
 
 // Report reasons
 export const REPORT_REASONS = {
-  spam: { fr: 'Spam', en: 'Spam' },
-  harassment: { fr: 'Harcèlement', en: 'Harassment' },
-  inappropriate: { fr: 'Contenu inapproprié', en: 'Inappropriate content' },
-  misinformation: { fr: 'Désinformation', en: 'Misinformation' },
-  other: { fr: 'Autre', en: 'Other' },
+  spam: { en: 'Spam', fr: 'Spam', de: 'Spam' },
+  harassment: { en: 'Harassment', fr: 'Harcelement', de: 'Belaestigung' },
+  inappropriate: { en: 'Inappropriate content', fr: 'Contenu inapproprie', de: 'Unangemessene Inhalte' },
+  misinformation: { en: 'Misinformation', fr: 'Desinformation', de: 'Fehlinformation' },
+  other: { en: 'Other', fr: 'Autre', de: 'Andere' },
 } as const;
 
 export type ReportReason = keyof typeof REPORT_REASONS;
+
+export const getReportReasonLabel = (reason: string, language: Language): string => {
+  const labels = REPORT_REASONS[reason as ReportReason];
+  if (!labels) return reason;
+  return labels[language] || labels.en || reason;
+};

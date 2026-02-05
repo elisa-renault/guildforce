@@ -23,7 +23,7 @@ jobs:
         run: |
           npm ci
           npm run i18n:check:strict
-          npm run test -- src/__tests__/i18n.semantic.test.ts src/__tests__/i18n.config.test.ts src/__tests__/i18n.translations.test.ts
+          npm run test -- src/__tests__/i18n.semantic.test.ts src/__tests__/i18n.config.test.ts src/__tests__/i18n.translations.test.ts src/__tests__/i18n.de.smoke.test.tsx
           npm run build
 
       - name: Sync app to VPS

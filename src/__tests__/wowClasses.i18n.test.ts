@@ -8,12 +8,13 @@ import {
 describe('wowClasses localized labels', () => {
   it('returns localized class names with fallback', () => {
     expect(getLocalizedClassName('warrior', 'fr')).toBe('Guerrier');
-    expect(getLocalizedClassName('warrior', 'de')).toBe('Warrior');
+    expect(getLocalizedClassName('warrior', 'de')).toBe('Krieger');
   });
 
   it('resolves localized spec names including legacy aliases', () => {
     expect(getLocalizedSpecName('dk-frost', 'fr')).toBe('Givre');
     expect(getLocalizedSpecName('death-knight-frost', 'fr')).toBe('Givre');
+    expect(getLocalizedSpecName('hunter-marksmanship', 'de')).toBe('Treffsicherheit');
   });
 
   it('supports extra spec labels that are not in current class data', () => {

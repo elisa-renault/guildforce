@@ -67,14 +67,14 @@ export const GuildSubNav = ({
   const tabs = [
     {
       id: 'overview' as const,
-      label: t.common.loading === 'Chargement...' ? 'Aperçu' : 'Overview',
+      label: t.guildNav?.overview || t.dashboard?.overview || 'Overview',
       icon: LayoutDashboard,
       path: basePath,
       show: true,
     },
     {
       id: 'roster' as const,
-      label: t.common.loading === 'Chargement...' ? 'Table de vœux' : 'Wishes Table',
+      label: t.guildNav?.wishesTable || 'Wishes Table',
       icon: Table,
       path: `${basePath}/roster`,
       show: true,
@@ -88,7 +88,7 @@ export const GuildSubNav = ({
     },
     {
       id: 'members' as const,
-      label: t.common.loading === 'Chargement...' ? 'Membres' : 'Members',
+      label: t.guildNav?.members || 'Members',
       icon: Users,
       path: `${basePath}/members`,
       show: true,

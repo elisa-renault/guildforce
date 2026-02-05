@@ -6,6 +6,7 @@ const ROOT_DIR = process.cwd();
 const SRC_DIR = path.join(ROOT_DIR, 'src');
 const EN_TRANSLATIONS_PATH = path.join(ROOT_DIR, 'src/i18n/translations.en.ts');
 const FR_TRANSLATIONS_PATH = path.join(ROOT_DIR, 'src/i18n/translations.fr.ts');
+const DE_TRANSLATIONS_PATH = path.join(ROOT_DIR, 'src/i18n/translations.de.ts');
 const SEMANTIC_PATH = path.join(ROOT_DIR, 'src/i18n/semantic.ts');
 
 const args = process.argv.slice(2);
@@ -123,6 +124,33 @@ const extractAutoKeysFromTranslations = (source) => {
   return keys;
 };
 
+const parseJsonObjectBlock = (source, markerRegex) => {
+  const block = extractObjectBlock(source, markerRegex).trim();
+  try {
+    return JSON.parse(`{${block}}`);
+  } catch (error) {
+    throw new Error(`Unable to parse JSON object block for marker ${markerRegex}: ${String(error)}`);
+  }
+};
+
+const flattenObject = (value, prefix = '', acc = {}) => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    if (prefix) acc[prefix] = String(value ?? '');
+    return acc;
+  }
+
+  for (const [key, child] of Object.entries(value)) {
+    const nextPrefix = prefix ? `${prefix}.${key}` : key;
+    if (child && typeof child === 'object' && !Array.isArray(child)) {
+      flattenObject(child, nextPrefix, acc);
+    } else {
+      acc[nextPrefix] = String(child ?? '');
+    }
+  }
+
+  return acc;
+};
+
 const extractReferencedAutoKeysInSource = (sourceRoot) => {
   const filePaths = walk(sourceRoot);
   const referencedAutoKeys = new Set();
@@ -152,6 +180,18 @@ const extractLegacyKeysFromSemanticMap = (source) => {
   return keys;
 };
 
+const extractSemanticKeys = (source, markerRegex) => {
+  const block = extractObjectBlock(source, markerRegex);
+  const keyPattern = /'([^']+)'\s*:/g;
+  const keys = new Set();
+
+  for (const match of block.matchAll(keyPattern)) {
+    if (match[1]) keys.add(match[1]);
+  }
+
+  return keys;
+};
+
 const toSortedArray = (set) => [...set].sort((a, b) => a.localeCompare(b));
 
 const difference = (left, right) => {
@@ -164,6 +204,7 @@ const difference = (left, right) => {
 
 const enSource = readFile(EN_TRANSLATIONS_PATH);
 const frSource = readFile(FR_TRANSLATIONS_PATH);
+const deSource = readFile(DE_TRANSLATIONS_PATH);
 const semanticSource = readFile(SEMANTIC_PATH);
 
 const enAutoKeys = extractAutoKeysFromTranslations(enSource);
@@ -177,6 +218,76 @@ const unresolvedReferences = difference(referencedAutoKeys, enAutoKeys);
 const missingMappedLegacyKeys = difference(semanticLegacyKeys, enAutoKeys);
 const allReferencedKeys = new Set([...referencedAutoKeys, ...semanticLegacyKeys]);
 const orphanEnKeys = difference(enAutoKeys, allReferencedKeys);
+
+const deObject = parseJsonObjectBlock(deSource, /\bcreateLocaleTranslations\(translationsEn,\s*/m);
+const deFlat = flattenObject(deObject);
+const requiredDeSections = [
+  'common',
+  'routeMeta',
+  'battlenet',
+  'home',
+  'auth',
+  'guild',
+  'wishes',
+  'dashboard',
+  'permissions',
+  'rosters',
+  'polls',
+  'forum',
+  'admin',
+  'accessibility',
+  'notifications',
+  'patchnotes',
+  'legal',
+  'cookies',
+  'profile',
+];
+
+const missingDeSections = requiredDeSections.filter((section) =>
+  !Object.keys(deObject).includes(section),
+);
+
+const deCriticalDictionaryExpectations = {
+  'common.save': 'Speichern',
+  'common.cancel': 'Abbrechen',
+  'routeMeta.guildPolls': 'Umfragen',
+  'auth.loginWithBattleNet': 'Mit Battle.net anmelden',
+  'guild.guildMaster': 'Gildenmeister',
+  'wishes.title': 'Meine Klassenwünsche',
+  'dashboard.exportCSV': 'CSV exportieren',
+  'permissions.title': 'Berechtigungen',
+  'rosters.createRoster': 'Aufstellung erstellen',
+  'polls.new': 'Neue Umfrage',
+  'forum.newTopic': 'Neues Thema',
+  'admin.userManagement': 'Benutzerverwaltung',
+  'notifications.title': 'Benachrichtigungen',
+  'patchnotes.changelog': 'Änderungsprotokoll',
+  'legal.privacyPolicy': 'Datenschutzerklaerung',
+  'cookies.manageCookies': 'Cookie-Einstellungen',
+};
+
+const deDictionaryMismatches = Object.entries(deCriticalDictionaryExpectations).filter(
+  ([key, expected]) => deFlat[key] !== expected,
+);
+
+const deSemanticObject = parseJsonObjectBlock(semanticSource, /\bDE_SEMANTIC_MESSAGES\b[\s\S]*?=\s*/m);
+const deSemanticKeys = new Set(Object.keys(deSemanticObject));
+const enSemanticKeys = extractSemanticKeys(semanticSource, /\bEN_SEMANTIC_MESSAGES\s*=\s*/m);
+const missingDeSemanticKeys = [...difference(enSemanticKeys, deSemanticKeys)].sort((a, b) =>
+  a.localeCompare(b),
+);
+
+const deCriticalSemanticExpectations = {
+  'admin.documentation.title': 'Dokumentation',
+  'forum.report.dialog.title': 'Melden Sie diesen Inhalt',
+  'polls.mutations.publish_success': 'Umfrage veröffentlicht!',
+  'guild.members.title': 'Gildenmitglieder',
+  'activity.log.title': 'Aktivitätsprotokoll',
+};
+
+const deSemanticMismatches = Object.entries(deCriticalSemanticExpectations).filter(
+  ([key, expected]) => deSemanticObject[key] !== expected,
+);
 
 const report = {
   mode: strictMode ? 'strict' : 'soft',
@@ -192,12 +303,34 @@ const report = {
     unresolvedReferences: unresolvedReferences.size,
     missingMappedLegacyKeys: missingMappedLegacyKeys.size,
     orphanEnKeys: orphanEnKeys.size,
+    missingDeSections: missingDeSections.length,
+    deDictionaryMismatches: deDictionaryMismatches.length,
+    missingDeSemanticKeys: missingDeSemanticKeys.length,
+    deSemanticMismatches: deSemanticMismatches.length,
   },
   missingInFr: toSortedArray(missingInFr),
   extraInFr: toSortedArray(extraInFr),
   unresolvedReferences: toSortedArray(unresolvedReferences),
   missingMappedLegacyKeys: toSortedArray(missingMappedLegacyKeys),
   orphanEnKeys: toSortedArray(orphanEnKeys),
+  de: {
+    leafCount: Object.keys(deFlat).length,
+    sectionCount: Object.keys(deObject).length,
+    missingSections: missingDeSections,
+    dictionaryMismatches: deDictionaryMismatches.map(([key, expected]) => ({
+      key,
+      expected,
+      actual: deFlat[key] ?? '',
+    })),
+    semanticKeyCount: deSemanticKeys.size,
+    semanticReferenceKeyCount: enSemanticKeys.size,
+    missingSemanticKeys: missingDeSemanticKeys,
+    semanticMismatches: deSemanticMismatches.map(([key, expected]) => ({
+      key,
+      expected,
+      actual: deSemanticObject[key] ?? '',
+    })),
+  },
 };
 
 if (outputPath) {
@@ -221,6 +354,10 @@ console.log(
     `unresolvedReferences=${report.counts.unresolvedReferences}`,
     `missingMappedLegacyKeys=${report.counts.missingMappedLegacyKeys}`,
     `orphanEnKeys=${report.counts.orphanEnKeys}`,
+    `missingDeSections=${report.counts.missingDeSections}`,
+    `deDictionaryMismatches=${report.counts.deDictionaryMismatches}`,
+    `missingDeSemanticKeys=${report.counts.missingDeSemanticKeys}`,
+    `deSemanticMismatches=${report.counts.deSemanticMismatches}`,
   ].join(' ')
 );
 
@@ -236,6 +373,8 @@ showPreview('extraInFr', report.extraInFr);
 showPreview('unresolvedReferences', report.unresolvedReferences);
 showPreview('missingMappedLegacyKeys', report.missingMappedLegacyKeys);
 showPreview('orphanEnKeys', report.orphanEnKeys);
+showPreview('missingDeSections', report.de.missingSections);
+showPreview('missingDeSemanticKeys', report.de.missingSemanticKeys);
 
 const hasBlockingIssue =
   report.counts.unresolvedReferences > 0 ||
@@ -243,7 +382,11 @@ const hasBlockingIssue =
     (report.counts.missingInFr > 0 ||
       report.counts.extraInFr > 0 ||
       report.counts.missingMappedLegacyKeys > 0 ||
-      report.counts.orphanEnKeys > 0));
+      report.counts.orphanEnKeys > 0 ||
+      report.counts.missingDeSections > 0 ||
+      report.counts.deDictionaryMismatches > 0 ||
+      report.counts.missingDeSemanticKeys > 0 ||
+      report.counts.deSemanticMismatches > 0));
 
 if (hasBlockingIssue) {
   process.exitCode = 1;

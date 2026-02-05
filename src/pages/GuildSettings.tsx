@@ -18,6 +18,8 @@ import {
 } from '@/components/settings';
 import { Loader2 } from 'lucide-react';
 import { toSlug, getGuildPath } from '@/lib/guildSlug';
+import { resolveSemanticMessage } from '@/i18n/semantic';
+import { formatRankLabel } from '@/lib/rankLabel';
 
 interface GuildData {
   id: string;
@@ -62,6 +64,7 @@ const GuildSettings = () => {
   const initialSection = (searchParams.get('section') as SettingsSection) || 'profile';
   const initialRosterId = searchParams.get('roster');
   const { t } = useLanguage();
+  const rankLabel = resolveSemanticMessage({ key: 'guild.members.rank_label', language: t.lang, translations: t });
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   
@@ -150,7 +153,13 @@ const GuildSettings = () => {
         const uniqueRanks = new Map<number, string>();
         ranksData.forEach(r => {
           if (!uniqueRanks.has(r.rank_index)) {
-            uniqueRanks.set(r.rank_index, r.rank_name || `Rank ${r.rank_index}`);
+            const normalizedLabel = formatRankLabel({
+              rankName: r.rank_name,
+              rankIndex: r.rank_index,
+              rankLabel,
+              guildMasterLabel: t.guild.rank0,
+            });
+            uniqueRanks.set(r.rank_index, normalizedLabel);
           }
         });
 

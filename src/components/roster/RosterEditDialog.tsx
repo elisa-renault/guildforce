@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { RosterAccessEditor } from './RosterAccessEditor';
+import { resolveSemanticMessage } from '@/i18n/semantic';
+import { formatRankLabel } from '@/lib/rankLabel';
 
 interface AccessRule {
   id?: string;
@@ -36,6 +38,7 @@ interface RosterEditDialogProps {
 
 export const RosterEditDialog = ({ open, onOpenChange, rosterId, guildId, onSaved }: RosterEditDialogProps) => {
   const { t } = useLanguage();
+  const rankLabel = resolveSemanticMessage({ key: 'guild.members.rank_label', language: t.lang, translations: t });
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -119,7 +122,13 @@ export const RosterEditDialog = ({ open, onOpenChange, rosterId, guildId, onSave
           const uniqueRanks = new Map<number, string>();
           ranksData.forEach(r => {
             if (!uniqueRanks.has(r.rank_index)) {
-              uniqueRanks.set(r.rank_index, r.rank_name || `Rank ${r.rank_index}`);
+              const normalizedLabel = formatRankLabel({
+                rankName: r.rank_name,
+                rankIndex: r.rank_index,
+                rankLabel,
+                guildMasterLabel: t.guild.rank0,
+              });
+              uniqueRanks.set(r.rank_index, normalizedLabel);
             }
           });
 

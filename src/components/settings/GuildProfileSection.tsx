@@ -8,6 +8,8 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Label } from '@/components/ui/label';
 import { Upload, Trash2, Shield, Crown } from 'lucide-react';
 import { interpolateMessage } from '@/i18n/format';
+import { resolveSemanticMessage } from '@/i18n/semantic';
+import { formatRankLabel } from '@/lib/rankLabel';
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 
@@ -49,12 +51,19 @@ const OfficerRankSlider = ({ maxValue, maxRank, ranks, onChange, onCommit, disab
   const [isDragging, setIsDragging] = useState(false);
   const [localValue, setLocalValue] = useState(maxValue);
   const sortedRanks = [...ranks].sort((a, b) => a.rank_index - b.rank_index);
+  const { t } = useLanguage();
+  const rankLabel = resolveSemanticMessage({ key: 'guild.members.rank_label', language: t.lang, translations: t });
   
   const allRankIndices = Array.from({ length: maxRank + 1 }, (_, i) => i);
 
   const getRankName = (index: number) => {
     const rank = sortedRanks.find(r => r.rank_index === index);
-    return rank?.rank_name || `Rank ${index}`;
+    return formatRankLabel({
+      rankName: rank?.rank_name,
+      rankIndex: index,
+      rankLabel,
+      guildMasterLabel: t.guild.rank0,
+    });
   };
 
   const getIndexFromPosition = useCallback((clientX: number): number => {

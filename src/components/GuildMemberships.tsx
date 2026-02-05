@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { CosmicButton } from './CosmicButton';
 import { Crown, Users, Shield, Loader2, Clock } from 'lucide-react';
 import { getClassNameFromBattleNet } from '@/data/battlenetClasses';
+import { resolveSemanticMessage } from '@/i18n/semantic';
+import { formatRankLabel } from '@/lib/rankLabel';
 
 interface GuildMembership {
   id: string;
@@ -43,6 +45,14 @@ export const GuildMemberships: React.FC = () => {
   const navigate = useNavigate();
   const { profile, user } = useAuth();
   const { t } = useLanguage();
+  const rankLabel = resolveSemanticMessage({ key: 'guild.members.rank_label', language: t.lang, translations: t });
+  const getRankLabel = (rankName: string | null, index: number) =>
+    formatRankLabel({
+      rankName,
+      rankIndex: index,
+      rankLabel,
+      guildMasterLabel: t.guild.rank0,
+    });
   const [memberships, setMemberships] = useState<GuildMembership[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [appGuilds, setAppGuilds] = useState<Map<string, { id: string; role: string; hasOwner: boolean }>>(new Map());
@@ -229,7 +239,7 @@ export const GuildMemberships: React.FC = () => {
                           <span className="text-amber-500">{t.guild.rank0}</span>
                         ) : (
                           <span className="text-muted-foreground">
-                            {member.rank_name || `Rank ${member.rank_index}`}
+                            {getRankLabel(member.rank_name, member.rank_index)}
                           </span>
                         )}
                       </Badge>

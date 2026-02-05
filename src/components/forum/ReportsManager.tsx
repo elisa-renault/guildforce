@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { REPORT_REASONS, ReportReason } from '@/types/forum';
+import { getReportReasonLabel } from '@/types/forum';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -312,7 +312,7 @@ export const ReportsManager = () => {
                     <div className="flex items-center gap-2 mb-2 flex-wrap">
                       {getStatusBadge(report.status)}
                       <Badge variant="outline" className="text-xs">
-                        {REPORT_REASONS[report.reason as ReportReason]?.[language] || report.reason}
+                        {getReportReasonLabel(report.reason, language)}
                       </Badge>
                       <span className="text-xs text-muted-foreground flex items-center gap-1">
                         <Clock className="h-3 w-3" />
@@ -428,7 +428,7 @@ export const ReportsManager = () => {
                 <p className="text-sm text-muted-foreground mb-1">
                   {sm('forum.reports.dialog.reason')}{' '}
                   <span className="text-foreground">
-                    {REPORT_REASONS[selectedReport.reason as ReportReason]?.[language] || selectedReport.reason}
+                    {getReportReasonLabel(selectedReport.reason, language)}
                   </span>
                 </p>
                 {selectedReport.details && (

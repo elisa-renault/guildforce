@@ -6,6 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Plus, Trash2, Users, Crown, Eye } from 'lucide-react';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
+import { formatRankLabel } from '@/lib/rankLabel';
 
 export interface ResultsAccessRule {
   access_type: 'rank_range' | 'user';
@@ -47,13 +48,19 @@ const RankSlider = ({ maxValue, maxRank, ranks, officerRankThreshold, onChange }
   const [isDragging, setIsDragging] = useState(false);
   const { language, t } = useLanguage();
   const s = (key: SemanticKey) => resolveSemanticMessage({ key, language, translations: t });
+  const rankLabel = s('guild.members.rank_label');
   const sortedRanks = [...ranks].sort((a, b) => a.rank_index - b.rank_index);
 
   const allRankIndices = Array.from({ length: maxRank + 1 }, (_, i) => i);
 
   const getRankName = (index: number) => {
     const rank = sortedRanks.find((r) => r.rank_index === index);
-    return rank?.rank_name || `Rank ${index}`;
+    return formatRankLabel({
+      rankName: rank?.rank_name,
+      rankIndex: index,
+      rankLabel,
+      guildMasterLabel: t.guild.rank0,
+    });
   };
 
   const getDisplayName = (index: number) => {

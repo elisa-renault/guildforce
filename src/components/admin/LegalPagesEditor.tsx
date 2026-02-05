@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 
 import { MarkdownEditor } from '@/components/forum/MarkdownEditor';
 import { GlowCard } from '@/components/GlowCard';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,6 +19,7 @@ import { resolveSemanticMessage } from '@/i18n/semantic';
 import { supabase } from '@/integrations/supabase/client';
 import {
   collectPersistedTranslations,
+  isTranslationMissingOrUntranslated,
   selectContentTranslation,
   toEditableTranslationMap,
   type EditableContentTranslationMap,
@@ -46,6 +48,9 @@ interface EditableLegalPage {
   updated_by: string | null;
   translations: EditableContentTranslationMap;
 }
+
+const hasGermanTranslation = (translations: LegalPageTranslation[]): boolean =>
+  !isTranslationMissingOrUntranslated(translations, 'de');
 
 const slugLabels: Record<string, { fr: string; en: string }> = {
   'legal-notice': { fr: 'Mentions legales', en: 'Legal Notice' },
@@ -343,9 +348,16 @@ export const LegalPagesEditor = () => {
     );
   }
 
+  const missingDeCount = pages.filter((page) => !hasGermanTranslation(page.legal_page_translations || [])).length;
+
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground mb-4">{sm('admin.legal.list_help')}</p>
+      <div className="space-y-1 mb-4">
+        <p className="text-sm text-muted-foreground">{sm('admin.legal.list_help')}</p>
+        <p className="text-xs text-muted-foreground">
+          DE missing: {missingDeCount}/{pages.length}
+        </p>
+      </div>
 
       {pages.map((page) => {
         const label = getSlugLabel(page.slug, language);
@@ -353,6 +365,7 @@ export const LegalPagesEditor = () => {
           dateStyle: 'medium',
         });
         const localized = selectContentTranslation(page.legal_page_translations ?? [], language);
+        const missingDe = !hasGermanTranslation(page.legal_page_translations || []);
 
         return (
           <GlowCard key={page.id} className="p-4">
@@ -362,7 +375,14 @@ export const LegalPagesEditor = () => {
                   <FileText className="h-5 w-5 text-primary" />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="font-medium text-foreground truncate">{label}</h4>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <h4 className="font-medium text-foreground truncate">{label}</h4>
+                    {missingDe ? (
+                      <Badge variant="secondary" className="text-[10px] uppercase tracking-wide">
+                        DE missing
+                      </Badge>
+                    ) : null}
+                  </div>
                   <p className="text-xs text-muted-foreground truncate">{localized.title}</p>
                   <p className="text-xs text-muted-foreground">
                     {t.legal.lastUpdated}: {updatedAt}

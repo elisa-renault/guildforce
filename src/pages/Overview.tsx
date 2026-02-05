@@ -223,6 +223,7 @@ const Overview = () => {
 
   const statusConfig = getStatusConfig(commitmentStatus);
   const StatusIcon = statusConfig.icon;
+  const greetingName = user?.user_metadata?.username;
 
   return (
     <div className="flex-1 relative pt-16">
@@ -253,7 +254,7 @@ const Overview = () => {
         {/* Welcome Section */}
         <div className="text-center mb-8 px-2">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-display cosmic-text mb-2 break-words">
-            {t.guildNav.welcome}, {user?.user_metadata?.username || 'Aventurier'}
+            {t.guildNav.welcome}{greetingName ? `, ${greetingName}` : ''}
           </h1>
           <p className="text-muted-foreground text-sm sm:text-base">
             {guild?.name} • {guild?.server ? guild.server.charAt(0).toUpperCase() + guild.server.slice(1).toLowerCase() : ''}
