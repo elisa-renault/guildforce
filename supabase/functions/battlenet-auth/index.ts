@@ -1397,6 +1397,7 @@ Deno.serve(async (req) => {
         const guildRegion = getValidRegion(guild.region);
         const guildServerSlug = guild.server.toLowerCase().replace(/\s+/g, '-').replace(/'/g, '');
         let rosterSynced = false;
+        let reconciliation = { removed: 0, skipped: 0, candidates: 0 };
         try {
           const rosterData = await fetchPublicGuildRoster(guildRegion, guildServerSlug, guild.name);
           if (rosterData) {
@@ -1408,6 +1409,7 @@ Deno.serve(async (req) => {
             }
             await storeFullRosterForGuild(supabase, guildId, guild.name, rosterData.members || []);
             rosterSynced = true;
+            reconciliation = await reconcileGuildMembersWithRoster(supabase, guild, requesterUserId);
           }
         } catch (err) {
           log.error(`Guild-resync ${jobId}: roster sync failed for guild ${sanitizePII(guild.name, 'name')}`, err);
@@ -1418,7 +1420,7 @@ Deno.serve(async (req) => {
         const skipped = Math.max(totalMembers - membersWithValidToken, 0);
 
         log.info(
-          `Guild-resync ${jobId} completed: guild=${sanitizePII(guildId, 'id')}, total=${totalMembers}, synced=${synced}, errors=${errors}, skipped=${skipped}, rosterSynced=${rosterSynced}`
+          `Guild-resync ${jobId} completed: guild=${sanitizePII(guildId, 'id')}, total=${totalMembers}, synced=${synced}, errors=${errors}, skipped=${skipped}, rosterSynced=${rosterSynced}, reconciledRemoved=${reconciliation.removed}`
         );
 
         return {
@@ -1431,6 +1433,7 @@ Deno.serve(async (req) => {
           errors,
           skipped,
           rosterSynced,
+          reconciliation,
         };
       };
 
@@ -1907,6 +1910,161 @@ async function storeFullRosterForGuild(
     log.info(`Successfully cached ${dedupedRosterData.length} roster members for guild ${sanitizePII(guildName, 'name')}`);
   } catch (error) {
     log.error('Error storing full roster for guild:', error);
+  }
+}
+
+/**
+ * Safely reconciles app guild membership against the latest roster cache.
+ * A member is removed only when we cannot find any evidence that they are still in the guild:
+ * - no character match in latest `guild_roster_cache` for this guild, AND
+ * - no membership row in `wow_guild_memberships` for this guild.
+ *
+ * Extra safety guards:
+ * - requester user is never auto-removed in this flow;
+ * - guild owner and GM roles are skipped.
+ */
+async function reconcileGuildMembersWithRoster(
+  supabase: any,
+  guild: { id: string; name: string; server: string; owner_id: string | null },
+  requesterUserId: string
+) {
+  try {
+    const { data: members, error: membersError } = await supabase
+      .from('guild_members')
+      .select('id, user_id, role')
+      .eq('guild_id', guild.id);
+
+    if (membersError) {
+      log.error('Failed to load guild members for reconciliation:', membersError);
+      return { removed: 0, skipped: 0, candidates: 0 };
+    }
+
+    if (!members || members.length === 0) {
+      return { removed: 0, skipped: 0, candidates: 0 };
+    }
+
+    const { data: rosterRows, error: rosterError } = await supabase
+      .from('guild_roster_cache')
+      .select('character_name, character_realm_slug')
+      .eq('guild_id', guild.id);
+
+    if (rosterError) {
+      log.error('Failed to load guild roster cache for reconciliation:', rosterError);
+      return { removed: 0, skipped: members.length, candidates: 0 };
+    }
+
+    // Do not reconcile if roster is empty; this usually means a transient upstream issue.
+    if (!rosterRows || rosterRows.length === 0) {
+      log.info(`Skipping reconciliation for guild ${sanitizePII(guild.id, 'id')} because roster cache is empty`);
+      return { removed: 0, skipped: members.length, candidates: 0 };
+    }
+
+    const rosterKeySet = new Set<string>();
+    for (const row of rosterRows) {
+      if (!row?.character_name || !row?.character_realm_slug) continue;
+      rosterKeySet.add(buildCharacterKey(row.character_name, row.character_realm_slug));
+    }
+
+    const memberUserIds = Array.from(new Set(members.map((member: { user_id: string }) => member.user_id)));
+
+    const { data: wowCharacters, error: wowCharsError } = await supabase
+      .from('wow_characters')
+      .select('user_id, name, realm_slug')
+      .in('user_id', memberUserIds);
+
+    if (wowCharsError) {
+      log.error('Failed to load wow_characters for reconciliation:', wowCharsError);
+      return { removed: 0, skipped: members.length, candidates: 0 };
+    }
+
+    const userCharacterKeys = new Map<string, Set<string>>();
+    for (const char of (wowCharacters || [])) {
+      if (!char?.user_id || !char?.name || !char?.realm_slug) continue;
+      if (!userCharacterKeys.has(char.user_id)) {
+        userCharacterKeys.set(char.user_id, new Set<string>());
+      }
+      userCharacterKeys.get(char.user_id)!.add(buildCharacterKey(char.name, char.realm_slug));
+    }
+
+    const guildServerSlug = guild.server.toLowerCase().replace(/\s+/g, '-').replace(/'/g, '');
+    const { data: wowGuildMemberships, error: wowMembershipError } = await supabase
+      .from('wow_guild_memberships')
+      .select('user_id')
+      .ilike('guild_name', guild.name)
+      .ilike('guild_realm_slug', guildServerSlug);
+
+    if (wowMembershipError) {
+      log.error('Failed to load wow_guild_memberships for reconciliation:', wowMembershipError);
+      return { removed: 0, skipped: members.length, candidates: 0 };
+    }
+
+    const wowMembershipUserIds = new Set(
+      (wowGuildMemberships || []).map((row: { user_id: string }) => row.user_id)
+    );
+
+    const candidates: Array<{ id: string; user_id: string; role: string }> = [];
+    let skipped = 0;
+
+    for (const member of members) {
+      if (!member?.id || !member?.user_id) {
+        skipped += 1;
+        continue;
+      }
+
+      if (member.user_id === requesterUserId || guild.owner_id === member.user_id || member.role === 'gm') {
+        skipped += 1;
+        continue;
+      }
+
+      const charKeys = userCharacterKeys.get(member.user_id);
+      const hasRosterCharacterMatch = !!charKeys && Array.from(charKeys).some(charKey => rosterKeySet.has(charKey));
+      const hasWowMembership = wowMembershipUserIds.has(member.user_id);
+
+      if (!hasRosterCharacterMatch && !hasWowMembership) {
+        candidates.push({
+          id: member.id,
+          user_id: member.user_id,
+          role: member.role,
+        });
+      }
+    }
+
+    let removed = 0;
+    for (const candidate of candidates) {
+      const { error: wishesDeleteError } = await supabase
+        .from('class_wishes')
+        .delete()
+        .eq('guild_id', guild.id)
+        .eq('user_id', candidate.user_id);
+
+      if (wishesDeleteError) {
+        log.error('Failed to delete wishes during guild reconciliation:', wishesDeleteError);
+        continue;
+      }
+
+      const { error: memberDeleteError } = await supabase
+        .from('guild_members')
+        .delete()
+        .eq('id', candidate.id);
+
+      if (memberDeleteError) {
+        log.error('Failed to delete guild member during guild reconciliation:', memberDeleteError);
+        continue;
+      }
+
+      removed += 1;
+    }
+
+    if (removed > 0 || candidates.length > 0) {
+      log.info(
+        `Guild reconciliation for ${sanitizePII(guild.id, 'id')}: candidates=${candidates.length}, removed=${removed}, skipped=${skipped}`
+      );
+    }
+
+    return { removed, skipped, candidates: candidates.length };
+  } catch (error) {
+    log.error('Error in reconcileGuildMembersWithRoster:', error);
+    return { removed: 0, skipped: 0, candidates: 0 };
   }
 }
 
