@@ -289,7 +289,7 @@ BEGIN
     PERFORM cron.schedule(
       'apply-roster-wish-locks',
       '* * * * *',
-      $$SELECT public.apply_scheduled_wish_locks();$$
+      $cron$SELECT public.apply_scheduled_wish_locks();$cron$
     );
   END IF;
 END $$;
