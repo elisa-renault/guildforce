@@ -1212,7 +1212,7 @@ const DE_SEMANTIC_MESSAGES: Record<keyof typeof EN_SEMANTIC_MESSAGES, string> = 
   "guild.members.not_registered": "Nicht registriert",
   "guild.members.not_registered_plural": "Nicht registriert",
   "guild.members.on_guildforce": "Auf Guildforce",
-  "guild.members.mains": "Mains",
+  "guild.members.mains": "Hauptcharaktere",
   "guild.members.alts": "Alts",
   "guild.members.main_alt": "Main/Alt",
   "guild.members.mains_only": "Nur Mains",
