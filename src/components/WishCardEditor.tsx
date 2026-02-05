@@ -5,16 +5,19 @@ import {
   getClassById,
   getLocalizedClassName,
   getLocalizedSpecName,
+  getSpecById,
   Role,
   RangeType,
   Specialization,
 } from '@/data/wowClasses';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { Check, ChevronDown, Shield, Heart, Swords, Crosshair } from 'lucide-react';
+import { moveSpecOrder } from '@/lib/wishOrder';
+import { Check, ChevronDown, ChevronUp, Shield, Heart, Swords, Crosshair } from 'lucide-react';
 
 interface WishData {
   classId: string;
@@ -49,9 +52,9 @@ export const WishCardEditor = forwardRef<HTMLDivElement, WishCardEditorProps>(
   const [specOpen, setSpecOpen] = useState(false);
 
   const selectedClass = wish.classId ? getClassById(wish.classId) : null;
-  const selectedSpecs = selectedClass 
-    ? selectedClass.specs.filter(s => wish.specIds.includes(s.id))
-    : [];
+  const selectedSpecs = wish.specIds
+    .map((specId) => selectedClass?.specs.find((spec) => spec.id === specId) || getSpecById(specId))
+    .filter(Boolean) as Specialization[];
   
   // Filter out already used classes (except the current one)
   const availableClasses = wowClasses.filter(
@@ -75,6 +78,12 @@ export const WishCardEditor = forwardRef<HTMLDivElement, WishCardEditorProps>(
     } else {
       onChange('specIds', [...wish.specIds, specId]);
     }
+  };
+
+  const handleSpecMove = (index: number, direction: 'up' | 'down') => {
+    const nextIndex = direction === 'up' ? index - 1 : index + 1;
+    if (nextIndex < 0 || nextIndex >= wish.specIds.length) return;
+    onChange('specIds', moveSpecOrder(wish.specIds, index, nextIndex));
   };
   
   const hasSpecError = wish.classId && wish.specIds.length === 0;
@@ -157,6 +166,11 @@ export const WishCardEditor = forwardRef<HTMLDivElement, WishCardEditorProps>(
                         {idx > 0 && <span className="text-muted-foreground/50">•</span>}
                         <Icon className={cn("h-4 w-4", config.color)} />
                         <span className="text-foreground">{getLocalizedSpecName(spec.id, language)}</span>
+                        {idx === 0 && (
+                          <Badge variant="secondary" className="ml-1 hidden lg:inline-flex px-1.5 py-0 text-[10px]">
+                            {t.wishes.mainSpec}
+                          </Badge>
+                        )}
                       </span>
                     );
                   })}
@@ -172,6 +186,56 @@ export const WishCardEditor = forwardRef<HTMLDivElement, WishCardEditorProps>(
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-[280px] p-1.5 bg-card border-border z-50" align="start">
+            {selectedSpecs.length > 0 && (
+              <div className="mb-2 pb-2 border-b border-border/60">
+                <div className="flex items-center justify-between text-[10px] uppercase tracking-wide text-muted-foreground px-1">
+                  <span>{t.wishes.reorderSpecs}</span>
+                  <span>{t.wishes.mainSpec}</span>
+                </div>
+                <div className="mt-1 space-y-1">
+                  {selectedSpecs.map((spec, idx) => {
+                    const config = roleConfig[spec.role];
+                    const Icon = getSpecIcon(spec);
+                    const canMoveUp = idx > 0;
+                    const canMoveDown = idx < selectedSpecs.length - 1;
+                    return (
+                      <div key={spec.id} className="flex items-center gap-2 rounded-md bg-muted/30 px-2 py-1">
+                        <span className="w-4 text-[10px] text-muted-foreground text-right">{idx + 1}</span>
+                        <Icon className={cn("h-3.5 w-3.5", config.color)} />
+                        <span className="flex-1 text-xs text-foreground truncate">
+                          {getLocalizedSpecName(spec.id, language)}
+                        </span>
+                        {idx === 0 && (
+                          <Badge variant="secondary" className="px-1.5 py-0 text-[9px]">
+                            {t.wishes.mainSpec}
+                          </Badge>
+                        )}
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleSpecMove(idx, 'up')}
+                            disabled={!canMoveUp}
+                            className="w-5 h-5 rounded bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                            title={t.wishes.moveSpecUp}
+                          >
+                            <ChevronUp className="h-3 w-3 text-muted-foreground" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleSpecMove(idx, 'down')}
+                            disabled={!canMoveDown}
+                            className="w-5 h-5 rounded bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                            title={t.wishes.moveSpecDown}
+                          >
+                            <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             <div className="flex flex-col gap-0.5">
               {selectedClass.specs.map((spec) => {
                 const isSelected = wish.specIds.includes(spec.id);

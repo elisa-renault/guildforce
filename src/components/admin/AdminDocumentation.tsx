@@ -202,8 +202,8 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Wish model',
         titleFr: 'Modèle de vœux',
-        contentEn: '`class_wishes` stores ordered class choices per roster (`choice_index`, `class_id`, `spec_ids`, comments). Members can define up to 13 class wishes, mirroring the WoW class set.',
-        contentFr: '`class_wishes` stocke les choix de classes ordonnés par roster (`choice_index`, `class_id`, `spec_ids`, commentaires). Les membres peuvent définir jusqu\'à 13 vœux de classes, alignés sur l\'ensemble des classes WoW.',
+        contentEn: '`class_wishes` stores ordered class choices per roster (`choice_index`, `class_id`, `spec_ids`, `spec_order`, comments). `spec_order` keeps the per-wish spec priority (index 1 = main). Members can define up to 13 class wishes, mirroring the WoW class set.',
+        contentFr: '`class_wishes` stocke les choix de classes ordonnés par roster (`choice_index`, `class_id`, `spec_ids`, `spec_order`, commentaires). `spec_order` conserve la priorité des spécialisations par vœu (index 1 = main). Les membres peuvent définir jusqu\'à 13 vœux de classes, alignés sur l\'ensemble des classes WoW.',
         tags: ['wishes', 'classes'],
       },
       {

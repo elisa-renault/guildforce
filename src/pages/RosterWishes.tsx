@@ -28,6 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
+import { resolveSpecOrder } from '@/lib/wishOrder';
 
 // Max wishes = number of WoW classes
 const MAX_WISHES = wowClasses.length;
@@ -264,7 +265,7 @@ const RosterWishes = () => {
       // Filter wishes by selected roster
       const { data: wishesData } = await supabase
         .from('class_wishes')
-        .select('user_id, choice_index, class_id, spec_ids, comment, validation_status, validated_by, validated_at')
+        .select('user_id, choice_index, class_id, spec_ids, spec_order, comment, validation_status, validated_by, validated_at')
         .eq('guild_id', guildId)
         .eq('roster_id', selectedRosterId);
 
@@ -279,7 +280,7 @@ const RosterWishes = () => {
         const memberWishes = wishesData?.filter(w => w.user_id === m.user_id).map(w => ({
           choice_index: w.choice_index,
           class_id: w.class_id,
-          spec_ids: w.spec_ids,
+          spec_ids: resolveSpecOrder(w.spec_ids || [], w.spec_order),
           comment: w.comment,
           validation_status: (w.validation_status || 'pending') as ValidationStatus,
           validated_by: w.validated_by,
@@ -428,6 +429,7 @@ const RosterWishes = () => {
           choice_index: i + 1,
           class_id: w.classId,
           spec_ids: w.specIds,
+          spec_order: w.specIds,
           comment: w.comment,
         }))
         .filter(w => w.class_id);
