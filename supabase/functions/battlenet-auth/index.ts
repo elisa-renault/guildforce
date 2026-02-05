@@ -1355,6 +1355,36 @@ Deno.serve(async (req) => {
           new Set((memberRows || []).map((row: { user_id: string }) => row.user_id))
         );
 
+        const refreshRosterAndReconcile = async () => {
+          const guildRegion = getValidRegion(guild.region);
+          const guildServerSlug = guild.server.toLowerCase().replace(/\s+/g, '-').replace(/'/g, '');
+          let rosterSynced = false;
+          let reconciliation = { removed: 0, skipped: 0, candidates: 0 };
+          try {
+            const rosterData = await fetchPublicGuildRoster(guildRegion, guildServerSlug, guild.name);
+            if (rosterData) {
+              if (rosterData.faction && rosterData.faction !== 'UNKNOWN') {
+                await supabase
+                  .from('guilds')
+                  .update({ faction: rosterData.faction.toLowerCase() })
+                  .eq('id', guildId);
+              }
+              await storeFullRosterForGuild(supabase, guildId, guild.name, rosterData.members || []);
+              rosterSynced = true;
+              reconciliation = await reconcileGuildMembersWithRoster(supabase, guild, requesterUserId);
+            }
+          } catch (err) {
+            log.error(`Guild-resync ${jobId}: roster sync failed for guild ${sanitizePII(guild.name, 'name')}`, err);
+          }
+
+          return { rosterSynced, reconciliation };
+        };
+
+        // Run roster reconciliation before long per-member sync to avoid timeouts skipping cleanup.
+        const initialRosterRun = await refreshRosterAndReconcile();
+        let rosterSynced = initialRosterRun.rosterSynced;
+        let reconciliation = initialRosterRun.reconciliation;
+
         const nowIso = new Date().toISOString();
         const { data: tokenRows, error: tokenRowsError } = await supabase
           .from('battlenet_tokens')
@@ -1392,27 +1422,6 @@ Deno.serve(async (req) => {
             errors += 1;
             log.error(`Guild-resync ${jobId}: sync error for member ${sanitizePII(tokenRow.user_id, 'id')}:`, err);
           }
-        }
-
-        const guildRegion = getValidRegion(guild.region);
-        const guildServerSlug = guild.server.toLowerCase().replace(/\s+/g, '-').replace(/'/g, '');
-        let rosterSynced = false;
-        let reconciliation = { removed: 0, skipped: 0, candidates: 0 };
-        try {
-          const rosterData = await fetchPublicGuildRoster(guildRegion, guildServerSlug, guild.name);
-          if (rosterData) {
-            if (rosterData.faction && rosterData.faction !== 'UNKNOWN') {
-              await supabase
-                .from('guilds')
-                .update({ faction: rosterData.faction.toLowerCase() })
-                .eq('id', guildId);
-            }
-            await storeFullRosterForGuild(supabase, guildId, guild.name, rosterData.members || []);
-            rosterSynced = true;
-            reconciliation = await reconcileGuildMembersWithRoster(supabase, guild, requesterUserId);
-          }
-        } catch (err) {
-          log.error(`Guild-resync ${jobId}: roster sync failed for guild ${sanitizePII(guild.name, 'name')}`, err);
         }
 
         const totalMembers = memberUserIds.length;
@@ -1922,6 +1931,8 @@ async function storeFullRosterForGuild(
  * Extra safety guards:
  * - requester user is never auto-removed in this flow;
  * - guild owner and GM roles are skipped.
+ * - members with a valid Battle.net token are skipped (they can still be freshly synced);
+ * - members with zero synced characters are skipped (insufficient evidence).
  */
 async function reconcileGuildMembersWithRoster(
   supabase: any,
@@ -1965,7 +1976,33 @@ async function reconcileGuildMembersWithRoster(
       rosterKeySet.add(buildCharacterKey(row.character_name, row.character_realm_slug));
     }
 
-    const memberUserIds = Array.from(new Set(members.map((member: { user_id: string }) => member.user_id)));
+    const memberUserIds = Array.from(
+      new Set(
+        members
+          .map((member: { user_id: string }) => member.user_id)
+          .filter((userId: string | null | undefined): userId is string => !!userId)
+      )
+    );
+
+    if (memberUserIds.length === 0) {
+      return { removed: 0, skipped: members.length, candidates: 0 };
+    }
+
+    const nowIso = new Date().toISOString();
+    const { data: validTokenRows, error: validTokenError } = await supabase
+      .from('battlenet_tokens')
+      .select('user_id')
+      .in('user_id', memberUserIds)
+      .gt('expires_at', nowIso);
+
+    if (validTokenError) {
+      log.error('Failed to load valid battlenet_tokens for reconciliation:', validTokenError);
+      return { removed: 0, skipped: members.length, candidates: 0 };
+    }
+
+    const validTokenUserIds = new Set(
+      (validTokenRows || []).map((row: { user_id: string }) => row.user_id)
+    );
 
     const { data: wowCharacters, error: wowCharsError } = await supabase
       .from('wow_characters')
@@ -2017,8 +2054,15 @@ async function reconcileGuildMembersWithRoster(
       }
 
       const charKeys = userCharacterKeys.get(member.user_id);
+      const hasAnyCharacterData = !!charKeys && charKeys.size > 0;
+      const hasValidToken = validTokenUserIds.has(member.user_id);
       const hasRosterCharacterMatch = !!charKeys && Array.from(charKeys).some(charKey => rosterKeySet.has(charKey));
       const hasWowMembership = wowMembershipUserIds.has(member.user_id);
+
+      if (hasValidToken || !hasAnyCharacterData) {
+        skipped += 1;
+        continue;
+      }
 
       if (!hasRosterCharacterMatch && !hasWowMembership) {
         candidates.push({
