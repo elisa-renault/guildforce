@@ -27,6 +27,7 @@ import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import { toast } from 'sonner';
 import { getRecentLogs, getErrorCount, getBrowserInfo, sanitizeUrl } from '@/lib/logCapture';
 
@@ -42,6 +43,8 @@ const BugReportButton = React.forwardRef<HTMLButtonElement, React.ComponentProps
     
     const { user, profile } = useAuth();
     const { t } = useLanguage();
+    const s = (key: SemanticKey, fallback?: string) =>
+      resolveSemanticMessage({ key, language: t.lang, translations: t, fallback });
     
     const errorCount = getErrorCount();
     const browserInfo = getBrowserInfo();
@@ -256,7 +259,7 @@ const BugReportButton = React.forwardRef<HTMLButtonElement, React.ComponentProps
                 </CollapsibleTrigger>
                 <CollapsibleContent className="mt-2 space-y-2 rounded-md border border-border bg-muted/30 p-3 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">{t.auto.components_BugReportButton_url_label}</span>
+                    <span className="text-muted-foreground">{s('bug_report.auto_info.url_label')}</span>
                     <span className="truncate max-w-[200px]">{window.location.pathname}</span>
                   </div>
                   <div className="flex justify-between">

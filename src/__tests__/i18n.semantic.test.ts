@@ -156,6 +156,42 @@ describe('semantic i18n', () => {
     expect(value).toBe('Ergebniszugriff (legacy)');
   });
 
+  it('keeps forum page/admin compatibility with legacy auto keys', () => {
+    const value = resolveSemanticMessage({
+      key: 'forum.page.empty.no_categories',
+      language: 'de',
+      translations: asTranslations({
+        pages_Forum_72: 'Noch keine Kategorien (legacy)',
+      }),
+    });
+
+    expect(value).toBe('Noch keine Kategorien (legacy)');
+  });
+
+  it('keeps public profile/overview compatibility with legacy auto keys', () => {
+    const value = resolveSemanticMessage({
+      key: 'overview.admin_read_only',
+      language: 'de',
+      translations: asTranslations({
+        pages_Overview_243: 'Admin Nur-Lese-Modus (legacy)',
+      }),
+    });
+
+    expect(value).toBe('Admin Nur-Lese-Modus (legacy)');
+  });
+
+  it('keeps final auto compatibility keys for wishes/dashboard', () => {
+    const value = resolveSemanticMessage({
+      key: 'wishes.session_expired',
+      language: 'de',
+      translations: asTranslations({
+        pages_Wishes_session_expired: 'Sitzung abgelaufen (legacy)',
+      }),
+    });
+
+    expect(value).toBe('Sitzung abgelaufen (legacy)');
+  });
+
   it('exposes semantic keys for migration checks', () => {
     expect(listSemanticKeys()).toContain('admin.legal.saved');
     expect(listSemanticKeys()).toContain('admin.documentation.search_placeholder');
@@ -181,6 +217,11 @@ describe('semantic i18n', () => {
     expect(listSemanticKeys()).toContain('footer.brand');
     expect(listSemanticKeys()).toContain('forum.new_topic.title');
     expect(listSemanticKeys()).toContain('forum.topic.toast.reply_created');
+    expect(listSemanticKeys()).toContain('forum.page.empty.no_categories');
+    expect(listSemanticKeys()).toContain('public_profile.user_not_found');
+    expect(listSemanticKeys()).toContain('overview.more_wishes');
+    expect(listSemanticKeys()).toContain('dashboard.roster_filters.clear_all');
+    expect(listSemanticKeys()).toContain('wishes.session_expired');
     expect(listSemanticKeys()).toContain('guild.polls.title');
     expect(listSemanticKeys()).toContain('activity.log.title');
   });

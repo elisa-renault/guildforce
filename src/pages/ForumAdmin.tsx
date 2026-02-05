@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsAdmin, useAdminActions } from '@/hooks/useAdmin';
+import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
 import { Button } from '@/components/ui/button';
@@ -79,6 +80,8 @@ const ForumAdmin = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { user } = useAuth();
+  const s = (key: SemanticKey, fallback?: string) =>
+    resolveSemanticMessage({ key, language: t.lang, translations: t, fallback });
   const { isAdmin, loading: adminLoading } = useIsAdmin();
   const {
     fetchCategories,
@@ -603,29 +606,29 @@ const ForumAdmin = () => {
                 name="category-name"
                 value={categoryForm.name}
                 onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
-                placeholder={t.auto.pages_ForumAdmin_category_name_placeholder}
+                placeholder={s('forum.admin.category.name_placeholder')}
                 className="bg-muted/50 border-border"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="category-slug">{t.auto.pages_ForumAdmin_slug_label}</Label>
+              <Label htmlFor="category-slug">{s('forum.admin.category.slug_label')}</Label>
               <Input
                 id="category-slug"
                 name="category-slug"
                 value={categoryForm.slug}
                 onChange={(e) => setCategoryForm({ ...categoryForm, slug: e.target.value })}
-                placeholder={t.auto.pages_ForumAdmin_category_slug_placeholder}
+                placeholder={s('forum.admin.category.slug_placeholder')}
                 className="bg-muted/50 border-border"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="category-description">{t.auto.pages_ForumAdmin_description_label}</Label>
+              <Label htmlFor="category-description">{s('forum.admin.category.description_label')}</Label>
               <Textarea
                 id="category-description"
                 name="category-description"
                 value={categoryForm.description}
                 onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
-                placeholder={t.auto.pages_ForumAdmin_category_description_placeholder}
+                placeholder={s('forum.admin.category.description_placeholder')}
                 className="bg-muted/50 border-border"
               />
             </div>
@@ -637,7 +640,7 @@ const ForumAdmin = () => {
                   name="category-icon"
                   value={categoryForm.icon}
                   onChange={(e) => setCategoryForm({ ...categoryForm, icon: e.target.value })}
-                  placeholder={t.auto.pages_ForumAdmin_category_icon_placeholder}
+                  placeholder={s('forum.admin.category.icon_placeholder')}
                   className="bg-muted/50 border-border"
                 />
               </div>

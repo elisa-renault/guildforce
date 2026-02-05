@@ -15,6 +15,7 @@ import { RosterSelector } from '@/components/roster';
 import { Loader2, Save, GripVertical, Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 import { toSlug } from '@/lib/guildSlug';
 import { interpolateMessage } from '@/i18n/format';
+import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import {
   DndContext,
   closestCenter,
@@ -63,6 +64,8 @@ interface SortableWishCardProps {
 
 const SortableWishCard = forwardRef<HTMLDivElement, SortableWishCardProps>(({ wish, index, totalWishes, onChange, onRemove, onClear, onMoveUp, onMoveDown, canRemove, choiceLabels, usedClassIds }, outerRef) => {
   const { t } = useLanguage();
+  const s = (key: SemanticKey, fallback?: string) =>
+    resolveSemanticMessage({ key, language: t.lang, translations: t, fallback });
   const {
     attributes,
     listeners,
@@ -94,7 +97,7 @@ const SortableWishCard = forwardRef<HTMLDivElement, SortableWishCardProps>(({ wi
               onClick={onMoveUp}
               disabled={!canMoveUp}
               className="w-5 h-5 rounded bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-              title={t.auto.pages_Wishes_move_up}
+              title={s('wishes.move_up')}
             >
               <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
             </button>
@@ -102,7 +105,7 @@ const SortableWishCard = forwardRef<HTMLDivElement, SortableWishCardProps>(({ wi
               onClick={onMoveDown}
               disabled={!canMoveDown}
               className="w-5 h-5 rounded bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-              title={t.auto.pages_Wishes_move_down}
+              title={s('wishes.move_down')}
             >
               <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
             </button>
@@ -111,7 +114,7 @@ const SortableWishCard = forwardRef<HTMLDivElement, SortableWishCardProps>(({ wi
             {...attributes}
             {...listeners}
             className="hidden lg:flex w-7 h-7 rounded-lg bg-muted/50 items-center justify-center cursor-grab active:cursor-grabbing hover:bg-muted transition-colors flex-shrink-0"
-            title={t.auto.pages_Wishes_drag_reorder}
+            title={s('wishes.drag_reorder')}
           >
             <GripVertical className="h-4 w-4 text-muted-foreground" />
           </button>
@@ -159,6 +162,8 @@ const Wishes = () => {
   const location = useLocation();
   const { regionSlug, serverSlug, guildSlug } = useParams();
   const { t, language } = useLanguage();
+  const s = (key: SemanticKey, fallback?: string) =>
+    resolveSemanticMessage({ key, language: t.lang, translations: t, fallback });
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const requestedRosterId = new URLSearchParams(location.search).get('rosterId');
@@ -384,7 +389,7 @@ const { data: allGuilds } = await supabase
 
   const saveWishes = async () => {
     if (!user || !guildId) {
-      toast({ title: t.errors.generic, description: t.auto.pages_Wishes_session_expired, variant: 'destructive' });
+      toast({ title: t.errors.generic, description: s('wishes.session_expired'), variant: 'destructive' });
       return;
     }
     if (!selectedRosterId) {

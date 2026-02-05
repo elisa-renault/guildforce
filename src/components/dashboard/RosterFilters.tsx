@@ -14,6 +14,7 @@ import { RosterFilters as RosterFiltersType, ValidationStatus, CommitmentFilter,
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { interpolateMessage } from '@/i18n/format';
+import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 
 interface RosterFiltersProps {
   filters: RosterFiltersType;
@@ -60,6 +61,8 @@ const defaultFilters: RosterFiltersType = {
 
 export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) => {
   const { t, language } = useLanguage();
+  const s = (key: SemanticKey, fallback?: string) =>
+    resolveSemanticMessage({ key, language: t.lang, translations: t, fallback });
   const [playersOpen, setPlayersOpen] = useState(false);
   const [wishesOpen, setWishesOpen] = useState(false);
   const [specsOpen, setSpecsOpen] = useState(false);
@@ -166,7 +169,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
     if (filters.minWishes !== null) {
       pills.push({
         key: 'minWishes',
-        label: `≥${filters.minWishes} ${t.auto.components_dashboard_RosterFilters_168}`,
+        label: `>=${filters.minWishes} ${s('dashboard.roster_filters.wishes_suffix')}`,
         onRemove: () => updateFilter('minWishes', null),
       });
     }
@@ -495,7 +498,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
             <div className="space-y-4">
               {/* Roles */}
               <div>
-                <h4 className="text-sm font-medium mb-2">{t.auto.components_dashboard_RosterFilters_497}</h4>
+                <h4 className="text-sm font-medium mb-2">{s('dashboard.roster_filters.roles_title')}</h4>
                 <div className="flex gap-1.5">
                   {(Object.keys(roleConfig) as Role[]).map((role) => {
                     const config = roleConfig[role];
@@ -549,7 +552,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
 
               {/* Classes */}
               <div>
-                <h4 className="text-sm font-medium mb-2">{t.auto.components_dashboard_RosterFilters_551}</h4>
+                <h4 className="text-sm font-medium mb-2">{s('dashboard.roster_filters.classes_title')}</h4>
                 <div className="flex flex-wrap gap-1 max-h-[200px] overflow-y-auto">
                   {wowClasses.map((cls) => {
                     const isSelected = filters.classFilters.includes(cls.id);
@@ -614,7 +617,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
       {activePills.length > 0 && (
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs text-muted-foreground">
-            {t.auto.components_dashboard_RosterFilters_616}
+            {s('dashboard.roster_filters.active_label')}
           </span>
           {activePills.map((pill) => (
             <Badge
@@ -634,7 +637,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
             onClick={resetAllFilters}
             className="text-xs text-muted-foreground hover:text-foreground underline"
           >
-            {t.auto.components_dashboard_RosterFilters_636}
+            {s('dashboard.roster_filters.clear_all')}
           </button>
         </div>
       )}

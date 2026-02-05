@@ -27,6 +27,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
+import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import {
   Bug,
   AlertTriangle,
@@ -71,6 +72,8 @@ interface BugReport {
 
 export function BugReportsManager() {
   const { t, language } = useLanguage();
+  const s = (key: SemanticKey, fallback?: string) =>
+    resolveSemanticMessage({ key, language: t.lang, translations: t, fallback });
   const { user } = useAuth();
   const [reports, setReports] = useState<BugReport[]>([]);
   const [loading, setLoading] = useState(true);
@@ -389,7 +392,7 @@ export function BugReportsManager() {
                   </div>
                   {selectedReport.current_url && (
                     <div className="col-span-2">
-                      <Label className="text-muted-foreground">{t.auto.components_admin_BugReportsManager_url_label}</Label>
+                      <Label className="text-muted-foreground">{s('admin.bug_reports.url_label')}</Label>
                       <p className="mt-1 truncate text-xs font-mono">{selectedReport.current_url}</p>
                     </div>
                   )}

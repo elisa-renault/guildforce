@@ -27,6 +27,7 @@ import { CommitmentStatus } from '@/components/CommitmentToggle';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { interpolateMessage } from '@/i18n/format';
+import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 
 // Max wishes = number of WoW classes
 const MAX_WISHES = wowClasses.length;
@@ -42,6 +43,8 @@ const RosterWishes = () => {
   const navigate = useNavigate();
   const { regionSlug, serverSlug, guildSlug } = useParams();
   const { t, language } = useLanguage();
+  const s = (key: SemanticKey, fallback?: string) =>
+    resolveSemanticMessage({ key, language: t.lang, translations: t, fallback });
   const { user, loading: authLoading } = useAuth();
   const { isAdmin: isGlobalAdmin, loading: adminLoading } = useIsAdmin();
   const { toast } = useToast();
@@ -645,7 +648,7 @@ const RosterWishes = () => {
           <div className="flex items-center justify-center gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/30">
             <Eye className="h-4 w-4 text-amber-400" />
             <span className="text-sm text-amber-400 font-medium">
-              {t.auto.pages_RosterWishes_636}
+              {s('roster_wishes.admin_read_only')}
             </span>
           </div>
         </div>

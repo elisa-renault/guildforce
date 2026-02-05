@@ -3,6 +3,7 @@ import log from '@/lib/logger';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
+import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import { CosmicButton } from './CosmicButton';
 import { GlowCard } from './GlowCard';
 import { Badge } from '@/components/ui/badge';
@@ -40,6 +41,8 @@ interface WoWCharacter {
 export const BattleNetConnect: React.FC = () => {
   const { profile, session, refreshProfile } = useAuth();
   const { t } = useLanguage();
+  const s = (key: SemanticKey, fallback?: string) =>
+    resolveSemanticMessage({ key, language: t.lang, translations: t, fallback });
   const [isLoading, setIsLoading] = useState(false);
   const [isResyncing, setIsResyncing] = useState(false);
   const [characters, setCharacters] = useState<WoWCharacter[]>([]);
@@ -286,7 +289,7 @@ export const BattleNetConnect: React.FC = () => {
     <GlowCard className="p-6">
       <div className="flex items-center gap-3 mb-4">
         <BattleNetIcon className="w-6 h-6 text-primary" />
-        <h3 className="text-lg font-semibold text-foreground">{t.auto.components_BattleNetConnect_title}</h3>
+        <h3 className="text-lg font-semibold text-foreground">{s('battlenet.connect.title')}</h3>
         {isConnected && (
           <div className="ml-auto flex items-center gap-2">
             {connectedRegion && (

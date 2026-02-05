@@ -4,6 +4,7 @@ import { ForumTopic, REACTION_TYPES } from '@/types/forum';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Pin, Lock, MessageSquare, Eye, Clock, User } from 'lucide-react';
 import { formatDistanceFromNowLocalized } from '@/i18n/format';
+import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 
 interface ForumTopicListProps {
   topics: ForumTopic[];
@@ -13,6 +14,8 @@ interface ForumTopicListProps {
 export const ForumTopicList = ({ topics, basePath = '/forum' }: ForumTopicListProps) => {
   const navigate = useNavigate();
   const { language, t } = useLanguage();
+  const s = (key: SemanticKey, fallback?: string) =>
+    resolveSemanticMessage({ key, language: t.lang, translations: t, fallback });
 
   if (topics.length === 0) {
     return (
@@ -89,7 +92,7 @@ export const ForumTopicList = ({ topics, basePath = '/forum' }: ForumTopicListPr
               </div>
               {/* Reactions preview */}
               {topReactions.length > 0 && (
-                <div className="flex items-center gap-0.5" title={t.auto.components_forum_ForumTopicList_reactions_title}>
+                <div className="flex items-center gap-0.5" title={s('forum.topic_list.reactions_title')}>
                   {topReactions.map(([type, count]) => (
                     <span key={type} className="text-xs">
                       {REACTION_TYPES[type as keyof typeof REACTION_TYPES]}
