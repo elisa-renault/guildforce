@@ -15,6 +15,7 @@ import { CommitmentToggle, CommitmentStatus } from '@/components/CommitmentToggl
 import { MobileRosterCard } from './MobileRosterCard';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
+import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 
 type SortColumn = 'player' | 'status' | 'wish1' | 'wish2' | 'wish3' | 'wishesCount';
 type SortDirection = 'asc' | 'desc';
@@ -66,6 +67,8 @@ export const RosterTable = ({
   onValidateWish,
 }: RosterTableProps) => {
   const { t, language } = useLanguage();
+  const s = (key: SemanticKey, fallback?: string) =>
+    resolveSemanticMessage({ key, language: t.lang, translations: t, fallback });
   const navigate = useNavigate();
   const { regionSlug, serverSlug, guildSlug } = useParams();
   const isMobile = useIsMobile();
@@ -416,7 +419,7 @@ export const RosterTable = ({
                                 </Badge>
                               </TooltipTrigger>
                               <TooltipContent side="top" className="text-xs">
-                                {extraWishes + 3} {t.auto.components_dashboard_RosterTable_419}
+                                {extraWishes + 3} {s('dashboard.roster_table.total_wishes_suffix')}
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>

@@ -9,6 +9,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { useState } from 'react';
 import type { SectionFormData, QuestionFormData } from '@/types/poll';
 import { interpolateMessage } from '@/i18n/format';
+import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 
 interface PollSectionEditorProps {
   section: SectionFormData;
@@ -33,6 +34,8 @@ export const PollSectionEditor = ({
   canRemove,
 }: PollSectionEditorProps) => {
   const { t } = useLanguage();
+  const s = (key: SemanticKey, fallback?: string) =>
+    resolveSemanticMessage({ key, language: t.lang, translations: t, fallback });
   const [isOpen, setIsOpen] = useState(true);
 
   const handleAddQuestion = () => {
@@ -63,7 +66,7 @@ export const PollSectionEditor = ({
           <div className="flex items-center gap-2 pt-2 text-muted-foreground">
             <GripVertical className="h-5 w-5 cursor-grab" />
             <span className="text-sm font-medium text-primary">
-              {interpolateMessage(t.auto.components_polls_PollSectionEditor_section_label, { index: index + 1 })}
+              {interpolateMessage(s('polls.section.section_label'), { index: index + 1 })}
             </span>
           </div>
 

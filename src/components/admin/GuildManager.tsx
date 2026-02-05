@@ -57,6 +57,7 @@ import {
 import { toast } from 'sonner';
 import { interpolateMessage } from '@/i18n/format';
 import { toSlug } from '@/lib/guildSlug';
+import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 
 interface Guild {
   id: string;
@@ -90,6 +91,8 @@ const ITEMS_PER_PAGE = 10;
 
 export function GuildManager() {
   const { t } = useLanguage();
+  const s = (key: SemanticKey, fallback?: string) =>
+    resolveSemanticMessage({ key, language: t.lang, translations: t, fallback });
   const [guilds, setGuilds] = useState<Guild[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -135,7 +138,7 @@ export function GuildManager() {
       // New behavior: backend returns immediately and continues in background
       if (data?.started) {
         toast.success(
-          interpolateMessage(t.auto.components_admin_GuildManager_sync_job, { jobId: data.jobId })
+          interpolateMessage(s('admin.guild_manager.sync_job'), { jobId: data.jobId })
         );
         return;
       }
@@ -149,7 +152,7 @@ export function GuildManager() {
       fetchGuilds();
     } catch (error) {
       if (error instanceof Error && error.message === 'timeout') {
-        toast.success(t.auto.components_admin_GuildManager_sync_started);
+        toast.success(s('admin.guild_manager.sync_started'));
         return;
       }
       toast.error(t.admin.syncError);
@@ -427,7 +430,7 @@ export function GuildManager() {
                   <SortIcon columnKey="unique_members" />
                 </div>
               </TableHead>
-              <TableHead className="text-right">{t.auto.components_admin_GuildManager_actions}</TableHead>
+              <TableHead className="text-right">{s('admin.guild_manager.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

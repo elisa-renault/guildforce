@@ -12,10 +12,13 @@ import { useNotifications, ForumNotification } from '@/hooks/useNotifications';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { formatDistanceFromNowLocalized, interpolateMessage } from '@/i18n/format';
+import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 
 export function NotificationBell() {
   const navigate = useNavigate();
   const { language, t } = useLanguage();
+  const s = (key: SemanticKey, fallback?: string) =>
+    resolveSemanticMessage({ key, language: t.lang, translations: t, fallback });
   const {
     notifications,
     unreadCount,
@@ -48,11 +51,11 @@ export function NotificationBell() {
 
     switch (notif.type) {
       case 'mention':
-        return interpolateMessage(t.auto.components_forum_NotificationBell_mention, { username, topicTitle });
+        return interpolateMessage(s('forum.notifications.mention'), { username, topicTitle });
       case 'topic_reply':
-        return interpolateMessage(t.auto.components_forum_NotificationBell_topic_reply, { username, topicTitle });
+        return interpolateMessage(s('forum.notifications.topic_reply'), { username, topicTitle });
       case 'post_reply':
-        return interpolateMessage(t.auto.components_forum_NotificationBell_post_reply, { username, topicTitle });
+        return interpolateMessage(s('forum.notifications.post_reply'), { username, topicTitle });
     }
   };
 

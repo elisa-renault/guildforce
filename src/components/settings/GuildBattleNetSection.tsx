@@ -3,6 +3,7 @@ import log from '@/lib/logger';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { BattleNetIcon } from '@/components/BattleNetIcon';
@@ -18,6 +19,8 @@ export const GuildBattleNetSection = ({
   onResyncComplete,
 }: GuildBattleNetSectionProps) => {
   const { t } = useLanguage();
+  const s = (key: SemanticKey, fallback?: string) =>
+    resolveSemanticMessage({ key, language: t.lang, translations: t, fallback });
   const { toast } = useToast();
   const [syncing, setSyncing] = useState(false);
 
@@ -79,7 +82,7 @@ export const GuildBattleNetSection = ({
 
   return (
     <GlowCard className="p-6">
-      <h2 className="font-display text-lg mb-4">{t.auto.components_settings_GuildBattleNetSection_title}</h2>
+      <h2 className="font-display text-lg mb-4">{s('settings.guild_battlenet.title')}</h2>
       
       <div className="space-y-4">
         <CosmicButton

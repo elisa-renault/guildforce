@@ -8,6 +8,7 @@ import { CosmicButton } from '@/components/CosmicButton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, ArrowLeft, Loader2, Calendar } from 'lucide-react';
 import { useBattletagVisibility } from '@/hooks/useBattletagVisibility';
+import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import { formatDateLocalized, interpolateMessage } from '@/i18n/format';
 
 interface PublicProfileData {
@@ -22,6 +23,8 @@ const PublicProfile = () => {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
   const { t, language } = useLanguage();
+  const s = (key: SemanticKey, fallback?: string) =>
+    resolveSemanticMessage({ key, language: t.lang, translations: t, fallback });
   const [profile, setProfile] = useState<PublicProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -84,7 +87,7 @@ const PublicProfile = () => {
             {t.errors.notFound}
           </h1>
           <p className="text-muted-foreground text-sm mb-6">
-            {interpolateMessage(t.auto.pages_PublicProfile_user_not_found, { username: username ?? '' })}
+            {interpolateMessage(s('public_profile.user_not_found'), { username: username ?? '' })}
           </p>
           <CosmicButton onClick={() => navigate(-1)} icon={<ArrowLeft className="h-4 w-4" />}>
             {t.common.back}
@@ -123,7 +126,7 @@ const PublicProfile = () => {
             <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground border-t border-border pt-4">
               <Calendar className="h-4 w-4" />
               <span>
-                {t.auto.pages_PublicProfile_131} {memberSince}
+                {s('public_profile.member_since_prefix')} {memberSince}
               </span>
             </div>
           </GlowCard>

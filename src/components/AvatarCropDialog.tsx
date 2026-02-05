@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, RotateCcw, ZoomIn, ZoomOut } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 
 interface AvatarCropDialogProps {
   open: boolean;
@@ -49,6 +50,8 @@ export const AvatarCropDialog = ({
   loading = false,
 }: AvatarCropDialogProps) => {
   const { t } = useLanguage();
+  const s = (key: SemanticKey, fallback?: string) =>
+    resolveSemanticMessage({ key, language: t.lang, translations: t, fallback });
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<Crop>();
   const [scale, setScale] = useState(1);
@@ -138,7 +141,7 @@ export const AvatarCropDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-foreground">{t.auto.components_AvatarCropDialog_title}</DialogTitle>
+          <DialogTitle className="text-foreground">{s('avatar.crop.title')}</DialogTitle>
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
@@ -155,7 +158,7 @@ export const AvatarCropDialog = ({
               <img
                 ref={imgRef}
                 src={imageSrc}
-                alt={t.auto.components_AvatarCropDialog_crop_preview_alt}
+                alt={s('avatar.crop.preview_alt')}
                 onLoad={onImageLoad}
                 style={{
                   transform: `scale(${scale}) rotate(${rotate}deg)`,
