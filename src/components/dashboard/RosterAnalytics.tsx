@@ -325,6 +325,22 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     return wish.spec_ids.some(specId => specMatchesFilters(specId));
   };
 
+  const filteredMemberCount = useMemo(() => {
+    return filteredMembers.filter(member =>
+      member.wishes.some(wish => wishMatchesFilters(wish))
+    ).length;
+  }, [filteredMembers, maxWishIndex, roleFilter, rangeFilter, validationFilter]);
+
+  const getFirstWishSpec = (wish: MemberWish['wishes'][number]) => {
+    const specId = wish.spec_ids?.[0];
+    if (!specId) return null;
+    const spec = getSpecById(specId);
+    if (!spec) return null;
+    if (roleFilter !== 'all' && spec.role !== roleFilter) return null;
+    if (rangeFilter !== 'all' && spec.range !== rangeFilter) return null;
+    return spec;
+  };
+
   // Calculate class distribution based on filter with player names
   const classStats = useMemo(() => {
     const stats: Record<string, { wish1: number; total: number; players: Set<string> }> = {};
@@ -491,17 +507,13 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
 
     filteredMembers.forEach(m => {
       m.wishes.forEach(w => {
-        if (w.spec_ids?.length && wishMatchesFilters(w)) {
-          w.spec_ids.forEach(specId => {
-            const spec = getSpecById(specId);
-            if (spec && specMatchesFilters(specId)) {
-              if (w.choice_index === 1) {
-                stats[spec.role].wish1++;
-              } else {
-                stats[spec.role].other++;
-              }
-            }
-          });
+        if (!wishMatchesFilters(w)) return;
+        const spec = getFirstWishSpec(w);
+        if (!spec) return;
+        if (w.choice_index === 1) {
+          stats[spec.role].wish1++;
+        } else {
+          stats[spec.role].other++;
         }
       });
     });
@@ -519,14 +531,10 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
 
     filteredMembers.forEach(m => {
       m.wishes.forEach(w => {
-        if (w.spec_ids?.length && wishMatchesFilters(w)) {
-          w.spec_ids.forEach(specId => {
-            const spec = getSpecById(specId);
-            if (spec && specMatchesFilters(specId)) {
-              stats[spec.range]++;
-            }
-          });
-        }
+        if (!wishMatchesFilters(w)) return;
+        const spec = getFirstWishSpec(w);
+        if (!spec) return;
+        stats[spec.range]++;
       });
     });
 
@@ -700,7 +708,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
           <div className="flex items-center gap-3 ml-auto">
             <div className="flex items-center gap-1.5">
               <Users className="h-3.5 w-3.5 text-primary" />
-              <span className="text-xs font-medium">{filteredMembers.length}</span>
+              <span className="text-xs font-medium">{filteredMemberCount}</span>
             </div>
             <div className="flex items-center gap-1">
               <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
