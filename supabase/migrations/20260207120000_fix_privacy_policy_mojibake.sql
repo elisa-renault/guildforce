@@ -1,4 +1,4 @@
-﻿-- Fix mojibake registered trademark symbols in Privacy Policy (EN).
+-- Fix mojibake registered trademark symbols in Privacy Policy (EN).
 BEGIN;
 
 WITH privacy_page AS (
