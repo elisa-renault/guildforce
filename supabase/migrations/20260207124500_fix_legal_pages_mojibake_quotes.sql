@@ -1,0 +1,67 @@
+-- Fix mojibake curly quotes across legal pages.
+BEGIN;
+
+WITH target_pages AS (
+  SELECT id
+  FROM public.legal_pages
+  WHERE slug IN ('legal-notice', 'terms-of-service', 'privacy-policy')
+),
+replacements AS (
+  SELECT
+    CHR(195) || CHR(162) || CHR(226) || CHR(8218) || CHR(172) || CHR(197) || CHR(8220) AS double_mojibake_left,
+    CHR(195) || CHR(162) || CHR(226) || CHR(8218) || CHR(172) || CHR(194) || CHR(157) AS double_mojibake_right,
+    CHR(226) || CHR(8364) || CHR(339) AS mojibake_left,
+    CHR(226) || CHR(8364) || CHR(157) AS mojibake_right,
+    '"' AS replacement
+)
+UPDATE public.legal_page_translations lpt
+SET
+  title = REPLACE(
+    REPLACE(
+      REPLACE(
+        REPLACE(
+          lpt.title,
+          replacements.double_mojibake_left,
+          replacements.replacement
+        ),
+        replacements.double_mojibake_right,
+        replacements.replacement
+      ),
+      replacements.mojibake_left,
+      replacements.replacement
+    ),
+    replacements.mojibake_right,
+    replacements.replacement
+  ),
+  content = REPLACE(
+    REPLACE(
+      REPLACE(
+        REPLACE(
+          lpt.content,
+          replacements.double_mojibake_left,
+          replacements.replacement
+        ),
+        replacements.double_mojibake_right,
+        replacements.replacement
+      ),
+      replacements.mojibake_left,
+      replacements.replacement
+    ),
+    replacements.mojibake_right,
+    replacements.replacement
+  ),
+  updated_at = now()
+FROM replacements
+WHERE lpt.legal_page_id IN (SELECT id FROM target_pages)
+  AND (
+    lpt.title LIKE '%' || replacements.double_mojibake_left || '%'
+    OR lpt.title LIKE '%' || replacements.double_mojibake_right || '%'
+    OR lpt.title LIKE '%' || replacements.mojibake_left || '%'
+    OR lpt.title LIKE '%' || replacements.mojibake_right || '%'
+    OR lpt.content LIKE '%' || replacements.double_mojibake_left || '%'
+    OR lpt.content LIKE '%' || replacements.double_mojibake_right || '%'
+    OR lpt.content LIKE '%' || replacements.mojibake_left || '%'
+    OR lpt.content LIKE '%' || replacements.mojibake_right || '%'
+  );
+
+COMMIT;
