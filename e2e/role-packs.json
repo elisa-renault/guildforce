@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "packs": {
+    "core": {
+      "description": "Core authenticated coverage for member and admin roles.",
+      "entries": [
+        {
+          "role": "member",
+          "routes": [
+            "/guilds",
+            "/forum",
+            "/profile"
+          ]
+        },
+        {
+          "role": "admin",
+          "routes": [
+            "/guilds",
+            "/forum",
+            "/forum/admin",
+            "/admin",
+            "/profile"
+          ]
+        }
+      ]
+    },
+    "member_core": {
+      "description": "Member-only authenticated coverage.",
+      "entries": [
+        {
+          "role": "member",
+          "routes": [
+            "/guilds",
+            "/forum",
+            "/profile"
+          ]
+        }
+      ]
+    },
+    "admin_core": {
+      "description": "Admin-only authenticated coverage.",
+      "entries": [
+        {
+          "role": "admin",
+          "routes": [
+            "/guilds",
+            "/forum",
+            "/forum/admin",
+            "/admin",
+            "/profile"
+          ]
+        }
+      ]
+    }
+  }
+}

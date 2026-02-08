@@ -22,8 +22,7 @@ coverage/
 .csv
 
 # Local assistant/workflow notes
-AGENTS.md
-tasks/
+/tasks/
 
 # Editor directories and files
 .vscode/*
@@ -40,3 +39,7 @@ Thumbs.db
 # Supabase temp
 /supabase/.temp/
 /supabase/.branches/
+
+# Local E2E auth/session snapshots
+/e2e/.auth/*.json
+/e2e/artifacts/
