@@ -704,6 +704,11 @@ export interface Translations {
     stats: {
       users: string;
       guilds: string;
+      activeUsers30d: string;
+      activeGuilds30d: string;
+      dauUsers: string;
+      wauUsers: string;
+      mauUsers: string;
       topics: string;
       posts: string;
       pendingReports: string;
@@ -727,8 +732,16 @@ export interface Translations {
       groupForum: string;
       groupModeration: string;
       groupPolls: string;
+      groupActivation: string;
+      vsPreviousPeriod: string;
+      deltaNoBaseline: string;
       usersTooltip: string;
       guildsTooltip: string;
+      activeUsers30dTooltip: string;
+      activeGuilds30dTooltip: string;
+      dauUsersTooltip: string;
+      wauUsersTooltip: string;
+      mauUsersTooltip: string;
       topicsTooltip: string;
       postsTooltip: string;
       pendingReportsTooltip: string;

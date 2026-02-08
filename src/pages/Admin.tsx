@@ -41,7 +41,24 @@ interface AdminStats {
   activePolls: number;
   closedPolls: number;
   pollVoters: number;
+  dauUsers: number;
+  wauUsers: number;
+  mauUsers: number;
+  wauMauRatio: number | null;
+  dauDeltaPct: number | null;
+  wauDeltaPct: number | null;
+  mauDeltaPct: number | null;
+  activeUsers30d: number;
+  activeUsers30dDeltaPct: number | null;
+  activeGuilds30d: number;
+  activeGuilds30dDeltaPct: number | null;
 }
+
+const toNullableFiniteNumber = (value: unknown): number | null => {
+  if (value === null || value === undefined) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -95,7 +112,7 @@ export default function Admin() {
       if (!isModerator) return;
       
       try {
-        const { data, error } = await supabase.rpc('get_admin_dashboard_stats' as any);
+        const { data, error } = await supabase.rpc('get_admin_dashboard_stats');
         if (error) throw error;
         const statsRow = Array.isArray(data) ? data[0] : data;
         if (!statsRow) throw new Error('Missing admin dashboard stats');
@@ -120,6 +137,17 @@ export default function Admin() {
           activePolls: statsRow?.active_polls ?? 0,
           closedPolls: statsRow?.closed_polls ?? 0,
           pollVoters: statsRow?.poll_voters ?? 0,
+          dauUsers: statsRow?.dau_users ?? 0,
+          wauUsers: statsRow?.wau_users ?? 0,
+          mauUsers: statsRow?.mau_users ?? 0,
+          wauMauRatio: toNullableFiniteNumber(statsRow?.wau_mau_ratio),
+          dauDeltaPct: toNullableFiniteNumber(statsRow?.dau_delta_pct),
+          wauDeltaPct: toNullableFiniteNumber(statsRow?.wau_delta_pct),
+          mauDeltaPct: toNullableFiniteNumber(statsRow?.mau_delta_pct),
+          activeUsers30d: statsRow?.active_users_30d ?? 0,
+          activeUsers30dDeltaPct: toNullableFiniteNumber(statsRow?.active_users_30d_delta_pct),
+          activeGuilds30d: statsRow?.active_guilds_30d ?? 0,
+          activeGuilds30dDeltaPct: toNullableFiniteNumber(statsRow?.active_guilds_30d_delta_pct),
         });
       } catch (error) {
         log.error('Error fetching admin stats:', error);
@@ -216,6 +244,17 @@ export default function Admin() {
             activePolls: activePollsCount || 0,
             closedPolls: closedPollsCount || 0,
             pollVoters: pollVoters.size,
+            dauUsers: 0,
+            wauUsers: 0,
+            mauUsers: 0,
+            wauMauRatio: null,
+            dauDeltaPct: null,
+            wauDeltaPct: null,
+            mauDeltaPct: null,
+            activeUsers30d: 0,
+            activeUsers30dDeltaPct: null,
+            activeGuilds30d: 0,
+            activeGuilds30dDeltaPct: null,
           });
         } catch (legacyError) {
           log.error('Error fetching legacy admin stats:', legacyError);

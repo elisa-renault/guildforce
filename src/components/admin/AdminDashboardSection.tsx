@@ -2,7 +2,13 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { GlowCard } from '@/components/GlowCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  formatPercentValue,
+  formatSignedPercentDelta,
+  getDeltaColorClass,
+} from './adminDashboardMetrics';
 import { 
+  Activity,
   Users, 
   Shield, 
   MessageSquare, 
@@ -40,6 +46,17 @@ interface AdminStats {
   activePolls: number;
   closedPolls: number;
   pollVoters: number;
+  dauUsers: number;
+  wauUsers: number;
+  mauUsers: number;
+  wauMauRatio: number | null;
+  dauDeltaPct: number | null;
+  wauDeltaPct: number | null;
+  mauDeltaPct: number | null;
+  activeUsers30d: number;
+  activeUsers30dDeltaPct: number | null;
+  activeGuilds30d: number;
+  activeGuilds30dDeltaPct: number | null;
 }
 
 interface AdminDashboardSectionProps {
@@ -56,139 +73,166 @@ export const AdminDashboardSection = ({
   onNavigateToSection,
 }: AdminDashboardSectionProps) => {
   const { t } = useLanguage();
+  const countFormatter = new Intl.NumberFormat();
+  const formatCount = (value: number | null | undefined) =>
+    value === null || value === undefined ? '-' : countFormatter.format(value);
 
   const statMap = {
-    users: {
-      label: t.admin.stats.users,
-      value: stats?.totalUsers ?? '-',
+    activeUsers30d: {
+      label: t.admin.stats.activeUsers30d,
+      value: formatCount(stats?.activeUsers30d),
       icon: Users,
       color: 'text-blue-400',
-      tooltip: t.admin.stats.usersTooltip,
+      tooltip: t.admin.stats.activeUsers30dTooltip,
+      deltaPct: stats?.activeUsers30dDeltaPct ?? null,
     },
-    guilds: {
-      label: t.admin.stats.guilds,
-      value: stats?.totalGuilds ?? '-',
+    activeGuilds30d: {
+      label: t.admin.stats.activeGuilds30d,
+      value: formatCount(stats?.activeGuilds30d),
       icon: Shield,
       color: 'text-green-400',
-      tooltip: t.admin.stats.guildsTooltip,
+      tooltip: t.admin.stats.activeGuilds30dTooltip,
+      deltaPct: stats?.activeGuilds30dDeltaPct ?? null,
+    },
+    dauUsers: {
+      label: t.admin.stats.dauUsers,
+      value: formatCount(stats?.dauUsers),
+      icon: Activity,
+      color: 'text-cyan-400',
+      tooltip: t.admin.stats.dauUsersTooltip,
+      deltaPct: stats?.dauDeltaPct ?? null,
+    },
+    wauUsers: {
+      label: t.admin.stats.wauUsers,
+      value: formatCount(stats?.wauUsers),
+      icon: Activity,
+      color: 'text-indigo-400',
+      tooltip: t.admin.stats.wauUsersTooltip,
+      deltaPct: stats?.wauDeltaPct ?? null,
+    },
+    mauUsers: {
+      label: t.admin.stats.mauUsers,
+      value: formatCount(stats?.mauUsers),
+      icon: Activity,
+      color: 'text-violet-400',
+      tooltip: t.admin.stats.mauUsersTooltip,
+      deltaPct: stats?.mauDeltaPct ?? null,
     },
     guildsWithTwoMembers: {
       label: t.admin.stats.guildsWithTwoMembers,
-      value: stats?.guildsWithTwoMembers ?? '-',
+      value: formatCount(stats?.guildsWithTwoMembers),
       icon: Users,
       color: 'text-sky-300',
       tooltip: t.admin.stats.guildsWithTwoMembersTooltip,
     },
     uniqueWishUsers: {
       label: t.admin.stats.uniqueWishUsers,
-      value: stats?.uniqueWishUsers ?? '-',
+      value: formatCount(stats?.uniqueWishUsers),
       icon: Sparkles,
       color: 'text-primary',
       tooltip: t.admin.stats.uniqueWishUsersTooltip,
     },
     totalWishes: {
       label: t.admin.stats.totalWishes,
-      value: stats?.totalWishes ?? '-',
+      value: formatCount(stats?.totalWishes),
       icon: Sparkles,
       color: 'text-primary/70',
       tooltip: t.admin.stats.totalWishesTooltip,
     },
     guildsWithWishes: {
       label: t.admin.stats.guildsWithWishes,
-      value: stats?.guildsWithWishes ?? '-',
+      value: formatCount(stats?.guildsWithWishes),
       icon: Shield,
       color: 'text-primary/50',
       tooltip: t.admin.stats.guildsWithWishesTooltip,
     },
     engagementRate: {
       label: t.admin.stats.engagementRate,
-      value: stats && stats.totalUsers > 0
-        ? `${Math.round((stats.uniqueWishUsers / stats.totalUsers) * 100)}%`
-        : '-',
+      value: formatPercentValue(stats?.wauMauRatio, 1),
       icon: Sparkles,
       color: 'text-amber-400',
       tooltip: t.admin.stats.engagementRateTooltip,
     },
     guildEngagementRate: {
       label: t.admin.stats.guildEngagementRate,
-      value: stats ? `${stats.guildEngagementRate}%` : '-',
+      value: formatPercentValue(stats?.guildEngagementRate, 0),
       icon: Shield,
       color: 'text-amber-300',
       tooltip: t.admin.stats.guildEngagementRateTooltip,
     },
     guildsWithTwoWishUsers: {
       label: t.admin.stats.guildsWithTwoWishUsers,
-      value: stats?.guildsWithTwoWishUsers ?? '-',
+      value: formatCount(stats?.guildsWithTwoWishUsers),
       icon: Sparkles,
       color: 'text-amber-200',
       tooltip: t.admin.stats.guildsWithTwoWishUsersTooltip,
     },
     topics: {
       label: t.admin.stats.topics,
-      value: stats?.totalTopics ?? '-',
+      value: formatCount(stats?.totalTopics),
       icon: MessageSquare,
       color: 'text-purple-400',
       tooltip: t.admin.stats.topicsTooltip,
     },
     posts: {
       label: t.admin.stats.posts,
-      value: stats?.totalPosts ?? '-',
+      value: formatCount(stats?.totalPosts),
       icon: MessageSquare,
       color: 'text-indigo-400',
       tooltip: t.admin.stats.postsTooltip,
     },
     pendingReports: {
       label: t.admin.stats.pendingReports,
-      value: stats?.pendingReports ?? '-',
+      value: formatCount(stats?.pendingReports),
       icon: AlertTriangle,
       color: stats?.pendingReports && stats.pendingReports > 0 ? 'text-amber-400' : 'text-muted-foreground',
       tooltip: t.admin.stats.pendingReportsTooltip,
     },
     activeSanctions: {
       label: t.admin.stats.activeSanctions,
-      value: stats?.activeSanctions ?? '-',
+      value: formatCount(stats?.activeSanctions),
       icon: AlertTriangle,
       color: stats?.activeSanctions && stats.activeSanctions > 0 ? 'text-red-400' : 'text-muted-foreground',
       tooltip: t.admin.stats.activeSanctionsTooltip,
     },
     openBugs: {
       label: t.admin.stats.openBugs,
-      value: stats?.openBugs ?? '-',
+      value: formatCount(stats?.openBugs),
       icon: Bug,
       color: stats?.openBugs && stats.openBugs > 0 ? 'text-red-400' : 'text-muted-foreground',
       tooltip: t.admin.stats.openBugsTooltip,
     },
     pendingDeletions: {
       label: t.admin.stats.pendingDeletions,
-      value: stats?.pendingDeletions ?? '-',
+      value: formatCount(stats?.pendingDeletions),
       icon: Trash2,
       color: stats?.pendingDeletions && stats.pendingDeletions > 0 ? 'text-red-400' : 'text-muted-foreground',
       tooltip: t.admin.stats.pendingDeletionsTooltip,
     },
     totalPolls: {
       label: t.admin.stats.totalPolls,
-      value: stats?.totalPolls ?? '-',
+      value: formatCount(stats?.totalPolls),
       icon: ClipboardList,
       color: 'text-sky-400',
       tooltip: t.admin.stats.totalPollsTooltip,
     },
     activePolls: {
       label: t.admin.stats.activePolls,
-      value: stats?.activePolls ?? '-',
+      value: formatCount(stats?.activePolls),
       icon: PlayCircle,
       color: 'text-emerald-400',
       tooltip: t.admin.stats.activePollsTooltip,
     },
     closedPolls: {
       label: t.admin.stats.closedPolls,
-      value: stats?.closedPolls ?? '-',
+      value: formatCount(stats?.closedPolls),
       icon: CheckCircle2,
       color: 'text-teal-400',
       tooltip: t.admin.stats.closedPollsTooltip,
     },
     pollVoters: {
       label: t.admin.stats.pollVoters,
-      value: stats?.pollVoters ?? '-',
+      value: formatCount(stats?.pollVoters),
       icon: BarChart2,
       color: 'text-cyan-400',
       tooltip: t.admin.stats.pollVotersTooltip,
@@ -198,7 +242,11 @@ export const AdminDashboardSection = ({
   const statGroups: Array<{ title: string; stats: Array<keyof typeof statMap> }> = [
     {
       title: t.admin.stats.groupCommunity,
-      stats: ['users', 'guilds', 'guildsWithTwoMembers'],
+      stats: ['activeUsers30d', 'activeGuilds30d', 'guildsWithTwoMembers', 'engagementRate'],
+    },
+    {
+      title: t.admin.stats.groupActivation,
+      stats: ['dauUsers', 'wauUsers', 'mauUsers'],
     },
     {
       title: t.admin.stats.groupWishes,
@@ -206,7 +254,6 @@ export const AdminDashboardSection = ({
         'uniqueWishUsers',
         'totalWishes',
         'guildsWithWishes',
-        'engagementRate',
         'guildEngagementRate',
         'guildsWithTwoWishUsers',
       ],
@@ -297,6 +344,9 @@ export const AdminDashboardSection = ({
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {group.stats.map((statKey) => {
                   const stat = statMap[statKey];
+                  const hasDelta = 'deltaPct' in stat;
+                  const deltaValue = 'deltaPct' in stat ? stat.deltaPct : null;
+                  const deltaText = formatSignedPercentDelta(deltaValue);
                   return (
                     <GlowCard key={statKey} className="p-4">
                       <div className="flex items-start justify-between gap-3">
@@ -323,6 +373,15 @@ export const AdminDashboardSection = ({
                           <span className="text-2xl font-bold text-foreground mt-1 block">
                             {loading ? <Skeleton className="h-8 w-12" /> : stat.value}
                           </span>
+                          {!loading && hasDelta && (
+                            <span
+                              className={`mt-1 block text-[11px] font-medium ${getDeltaColorClass(deltaValue)}`}
+                            >
+                              {deltaText
+                                ? `${deltaText} ${t.admin.stats.vsPreviousPeriod}`
+                                : t.admin.stats.deltaNoBaseline}
+                            </span>
+                          )}
                         </div>
                         <stat.icon className={`h-5 w-5 ${stat.color} mt-0.5`} />
                       </div>

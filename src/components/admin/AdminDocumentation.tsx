@@ -364,6 +364,13 @@ const DOCUMENTATION: DocSection[] = [
         tags: ['security', 'rpc', 'permissions'],
       },
       {
+        titleEn: 'Admin analytics RPC guardrails',
+        titleFr: 'Garde-fous RPC analytics admin',
+        contentEn: '`get_admin_dashboard_stats()` is `SECURITY DEFINER` and role-gated (`admin` or `moderator` via `has_role`). It exposes aggregated dashboard KPIs (DAU/WAU/MAU, active guilds/users, deltas) without returning raw member-level sensitive records to the client.',
+        contentFr: '`get_admin_dashboard_stats()` est `SECURITY DEFINER` et protege par role (`admin` ou `moderator` via `has_role`). La fonction expose des KPI agreges (DAU/WAU/MAU, guildes/utilisateurs actifs, deltas) sans renvoyer de donnees sensibles brutes au client.',
+        tags: ['security', 'rpc', 'admin', 'analytics'],
+      },
+      {
         titleEn: 'Privacy controls',
         titleFr: 'Contrôles de confidentialité',
         contentEn: 'Privacy-related controls include BattleTag visibility preferences, account deletion requests, cookie consent, and legal page governance. Keep user-facing copy synchronized across supported locales, with EN fallback.',
@@ -406,6 +413,13 @@ const DOCUMENTATION: DocSection[] = [
         contentEn: '- `user_roles`\n- `bug_reports`\n- `legal_pages`, `legal_page_translations`\n- `patch_notes`, `patch_note_translations`\n- `account_deletion_requests`',
         contentFr: '- `user_roles`\n- `bug_reports`\n- `legal_pages`, `legal_page_translations`\n- `patch_notes`, `patch_note_translations`\n- `account_deletion_requests`',
         tags: ['database', 'admin'],
+      },
+      {
+        titleEn: 'Analytics RPC',
+        titleFr: 'RPC analytics',
+        contentEn: 'Admin metrics are served by `get_admin_dashboard_stats()` (all-time totals + activity windows DAU/WAU/MAU + active guilds/users over 30 days + period deltas). Keep dashboard labels/tooltips aligned with these formulas.',
+        contentFr: 'Les metriques admin sont exposees via `get_admin_dashboard_stats()` (totaux historiques + fenetres DAU/WAU/MAU + guildes/utilisateurs actifs sur 30 jours + deltas de periode). Maintenir les labels/tooltips dashboard alignes avec ces formules.',
+        tags: ['database', 'analytics', 'admin'],
       },
     ],
   },
@@ -564,3 +578,4 @@ export const AdminDocumentation = () => {
     </div>
   );
 };
+
