@@ -110,6 +110,10 @@ describe('i18n translations loader', () => {
       'admin.server',
       'admin.region',
       'admin.stats.groupForum',
+      'admin.stats.groupModeration',
+      'admin.stats.dauUsers',
+      'admin.stats.wauUsers',
+      'admin.stats.mauUsers',
       'patchnotes.version',
       'patchnotes.status',
     ]);
