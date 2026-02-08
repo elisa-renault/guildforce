@@ -56,6 +56,13 @@ npm run dev
 - `npm run preview` - preview the production build locally.
 - `npm run lint` - run ESLint.
 - `npm run test` - run Vitest suite.
+- `npm run e2e:install` - install Playwright Chromium.
+- `npm run e2e:auth:record member` - record one OAuth session state.
+- `npm run e2e:snapshots` - capture authenticated screenshots by role.
+- `npm run e2e:snapshots:rolepack` - run predefined role screenshot packs.
+
+Role snapshots runbook: `docs/e2e-role-snapshots.md`
+Permissions matrix: `docs/permissions-matrix.md`
 
 ## Supabase
 

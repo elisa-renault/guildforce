@@ -14,16 +14,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
       - name: Validate i18n and build
+        env:
+          SCHEMA_TRIAD_BASE: ${{ github.event.before }}
+          SCHEMA_TRIAD_HEAD: ${{ github.sha }}
         run: |
           npm ci
-          npm run i18n:check:strict
-          npm run test -- src/__tests__/i18n.semantic.test.ts src/__tests__/i18n.config.test.ts src/__tests__/i18n.translations.test.ts src/__tests__/i18n.de.smoke.test.tsx
+          npm run ci:schema-triad
+          npm run verify:quick
           npm run build
 
       - name: Sync app to VPS
