@@ -3,7 +3,6 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { toSlug } from '@/lib/guildSlug';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GuildSubNav } from '@/components/guild';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
@@ -15,6 +14,7 @@ import { AlertTriangle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { formatRankLabel } from '@/lib/rankLabel';
+import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -74,26 +74,32 @@ const GuildPollNew = () => {
       if (!user || !regionSlug || !serverSlug || !guildSlug) return;
 
       try {
-        const { data: allGuilds, error: guildsError } = await supabase
-          .from('guilds')
-          .select('id, name, server, region, officer_rank_threshold');
-
-        if (guildsError) throw guildsError;
-
-        const matchedGuild = allGuilds?.find((g) =>
-          toSlug(g.region || 'eu') === regionSlug &&
-          toSlug(g.server) === serverSlug &&
-          toSlug(g.name) === guildSlug
-        );
+        const matchedBase = await findGuildByRouteSlugs({
+          supabase,
+          regionSlug,
+          serverSlug,
+          guildSlug,
+        });
 
         // Only redirect to /guilds when the guild truly doesn't exist.
         // (Network hiccups should not kick the user out of an editing screen.)
-        if (!matchedGuild) {
+        if (!matchedBase) {
           navigate('/guilds', { replace: true });
           return;
         }
 
         if (cancelled) return;
+
+        const { data: matchedGuild, error: guildError } = await supabase
+          .from('guilds')
+          .select('id, name, server, region, officer_rank_threshold')
+          .eq('id', matchedBase.id)
+          .maybeSingle();
+
+        if (guildError || !matchedGuild) {
+          navigate('/guilds', { replace: true });
+          return;
+        }
 
         setGuildId(matchedGuild.id);
         setGuild({

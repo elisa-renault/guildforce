@@ -11,9 +11,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Loader2 } from 'lucide-react';
 import { useGuildPolls, usePollMutations } from '@/hooks/useGuildPolls';
 import { toast } from 'sonner';
-import { toSlug } from '@/lib/guildSlug';
 import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
 import { resolveSemanticMessage } from '@/i18n/semantic';
+import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
 
 const GuildPolls = () => {
   const { regionSlug, serverSlug, guildSlug } = useParams();
@@ -40,15 +40,12 @@ const GuildPolls = () => {
     const loadGuild = async () => {
       if (!regionSlug || !serverSlug || !guildSlug || !user) return;
       
-      const { data: allGuilds } = await supabase
-        .from('guilds')
-        .select('id, name, server, region, avatar_url');
-
-      const matchedGuild = allGuilds?.find(g =>
-        toSlug(g.region || 'eu') === regionSlug &&
-        toSlug(g.server) === serverSlug &&
-        toSlug(g.name) === guildSlug
-      );
+      const matchedGuild = await findGuildByRouteSlugs({
+        supabase,
+        regionSlug,
+        serverSlug,
+        guildSlug,
+      });
 
       if (matchedGuild) {
         setGuildId(matchedGuild.id);

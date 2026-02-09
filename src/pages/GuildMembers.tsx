@@ -28,6 +28,7 @@ import { getLocalizedClassName, wowClasses } from '@/data/wowClasses';
 import { BATTLENET_CLASS_MAP } from '@/data/battlenetClasses';
 import { formatDistanceFromNowLocalized } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
+import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
 import { formatRankLabel } from '@/lib/rankLabel';
 
 interface RosterMember {
@@ -185,13 +186,22 @@ const GuildMembers = () => {
       if (adminLoading) return;
 
       try {
-        // Get guild info using ilike matching on slugs
+        const matchedGuild = await findGuildByRouteSlugs({
+          supabase,
+          regionSlug,
+          serverSlug,
+          guildSlug,
+        });
+
+        if (!matchedGuild) {
+          navigate('/guilds');
+          return;
+        }
+
         const { data: guildData, error: guildError } = await supabase
           .from('guilds')
           .select('id, name, server, region, avatar_url, officer_rank_threshold')
-          .ilike('region', regionSlug)
-          .ilike('server', serverSlug.replace(/-/g, '%'))
-          .ilike('name', guildSlug.replace(/-/g, '%'))
+          .eq('id', matchedGuild.id)
           .maybeSingle();
 
         if (guildError || !guildData) {

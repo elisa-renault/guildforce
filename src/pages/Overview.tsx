@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import { resolveSpecOrder } from '@/lib/wishOrder';
+import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
 
 interface WishSummary {
   choice_index: number;
@@ -68,16 +69,12 @@ const Overview = () => {
     if (adminLoading) return;
 
     const fetchData = async () => {
-      // Find guild by slugified region, server and name
-      const { data: allGuilds } = await supabase
-        .from('guilds')
-        .select('id, name, server, region, faction, avatar_url');
-
-      const matchedGuild = allGuilds?.find(g =>
-        toSlug(g.region || 'eu') === regionSlug &&
-        toSlug(g.server) === serverSlug &&
-        toSlug(g.name) === guildSlug
-      );
+      const matchedGuild = await findGuildByRouteSlugs({
+        supabase,
+        regionSlug,
+        serverSlug,
+        guildSlug,
+      });
 
       if (!matchedGuild) {
         navigate('/guilds');

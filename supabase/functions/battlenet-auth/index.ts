@@ -193,6 +193,20 @@ function toGuildSlugUnicode(guildName: string): string {
     .replace(/\s+/g, '-');
 }
 
+/**
+ * Normalize a realm/server identifier into a Blizzard realm slug.
+ * Some stored values may be realm names (spaces/accents) rather than the canonical slug.
+ */
+function toRealmSlug(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove diacritical marks
+    .replace(/\s+/g, '-')
+    .replace(/'/g, '')
+    .replace(/[^a-z0-9-]/g, '');
+}
+
 function normalizeCharacterKey(value: string): string {
   return value.normalize('NFC').toLowerCase();
 }
@@ -575,16 +589,38 @@ async function fetchPublicGuildRoster(
   realmSlug: string,
   guildName: string
 ): Promise<{ members: any[]; faction: string } | null> {
+  const { data } = await fetchPublicGuildRosterWithDiagnostics(region, realmSlug, guildName);
+  return data;
+}
+
+type PublicGuildRosterFailure = {
+  status: number;
+  bodySnippet: string;
+  rosterUrl: string;
+  namespace: string;
+  slugType: string;
+  realmSlug: string;
+};
+
+async function fetchPublicGuildRosterWithDiagnostics(
+  region: BattleNetRegion,
+  realmSlug: string,
+  guildName: string
+): Promise<{
+  data: { members: any[]; faction: string } | null;
+  failure: PublicGuildRosterFailure | null;
+  attempts?: PublicGuildRosterFailure[];
+}> {
   try {
     const clientToken = await getClientCredentialsToken(region);
     if (!clientToken) {
       log.error('Could not get client token for public roster fetch');
-      return null;
+      return { data: null, failure: null };
     }
 
     const apiUrl = BATTLENET_API_URLS[region];
     const locale = BATTLENET_LOCALES[region];
-    const serverSlug = realmSlug.toLowerCase().replace(/\s+/g, '-').replace(/'/g, '');
+    const serverSlug = toRealmSlug(realmSlug);
 
     // Try multiple slug formats - some guilds need normalized, others need unicode
     const slugsToTry = [
@@ -599,47 +635,86 @@ async function fetchPublicGuildRoster(
     // Targeted logging for problematic guilds
     const isTargetedGuild = ['álcool finder', 'hero al pull', 'rennosti', 'r í p', 'exöde'].includes(guildName.toLowerCase());
 
+    const attempts: PublicGuildRosterFailure[] = [];
     let lastFailure: { status: number; body: string; rosterUrl: string; namespace: string; slugType: string } | null = null;
 
-    for (const { slug: guildSlug, type: slugType } of slugsToTry) {
-      for (const namespace of namespacesToTry) {
-        const rosterUrl = `${apiUrl}/data/wow/guild/${serverSlug}/${encodeURIComponent(guildSlug)}/roster?namespace=${namespace}&locale=${locale}`;
+    const tryFetchForRealmSlug = async (tryRealmSlug: string): Promise<{ members: any[]; faction: string } | null> => {
+      const tryServerSlug = toRealmSlug(tryRealmSlug);
+      for (const { slug: guildSlug, type: slugType } of slugsToTry) {
+        for (const namespace of namespacesToTry) {
+          const rosterUrl = `${apiUrl}/data/wow/guild/${tryServerSlug}/${encodeURIComponent(guildSlug)}/roster?namespace=${namespace}&locale=${locale}`;
         
-        if (isTargetedGuild) {
-          log.info(`[TARGETED] Trying ${guildName}: slugType=${slugType}, slug="${guildSlug}", url=${rosterUrl}`);
-        } else {
-          log.debug(`Fetching public roster from: ${rosterUrl}`);
-        }
-
-        // Use retryWithBackoff for transient Blizzard API failures
-        const rosterResponse = await retryWithBackoff(
-          () => fetch(rosterUrl, {
-            headers: { 'Authorization': `Bearer ${clientToken}` },
-          }),
-          { maxAttempts: 3, initialDelayMs: 1000, multiplier: 2 }
-        );
-
-        if (!rosterResponse.ok) {
-          const body = await rosterResponse.text();
-          lastFailure = { status: rosterResponse.status, body, rosterUrl, namespace, slugType };
           if (isTargetedGuild) {
-            log.info(`[TARGETED] ${guildName} failed: ${rosterResponse.status} (${slugType}/${namespace}) - ${body.slice(0, 150)}`);
+            log.info(`[TARGETED] Trying ${guildName}: realm=${tryServerSlug} slugType=${slugType}, slug="${guildSlug}", url=${rosterUrl}`);
+          } else {
+            log.debug(`Fetching public roster from: ${rosterUrl}`);
           }
-          // Try the next namespace/slug combination
-          continue;
+
+          // Use retryWithBackoff for transient Blizzard API failures
+          const rosterResponse = await retryWithBackoff(
+            () => fetch(rosterUrl, {
+              headers: { 'Authorization': `Bearer ${clientToken}` },
+            }),
+            { maxAttempts: 3, initialDelayMs: 1000, multiplier: 2 }
+          );
+
+          if (!rosterResponse.ok) {
+            const body = await rosterResponse.text();
+            lastFailure = { status: rosterResponse.status, body, rosterUrl, namespace, slugType };
+            attempts.push({
+              status: rosterResponse.status,
+              bodySnippet: String(body ?? '').slice(0, 200),
+              rosterUrl,
+              namespace,
+              slugType,
+              realmSlug: tryServerSlug,
+            });
+            if (isTargetedGuild) {
+              log.info(`[TARGETED] ${guildName} failed: ${rosterResponse.status} (${slugType}/${namespace}) - ${body.slice(0, 150)}`);
+            }
+            // Try the next namespace/slug combination
+            continue;
+          }
+
+          const roster = await rosterResponse.json();
+          const faction = roster.guild?.faction?.type || 'UNKNOWN';
+
+          if (isTargetedGuild) {
+            log.info(`[TARGETED] ${guildName} SUCCESS with ${slugType}/${namespace}: ${roster.members?.length || 0} members`);
+          }
+
+          return {
+            members: roster.members || [],
+            faction,
+          };
         }
+      }
+      return null;
+    };
 
-        const roster = await rosterResponse.json();
-        const faction = roster.guild?.faction?.type || 'UNKNOWN';
+    // First try with the provided realm slug.
+    const primaryData = await tryFetchForRealmSlug(serverSlug);
+    if (primaryData) {
+      return { data: primaryData, failure: null, attempts };
+    }
 
-        if (isTargetedGuild) {
-          log.info(`[TARGETED] ${guildName} SUCCESS with ${slugType}/${namespace}: ${roster.members?.length || 0} members`);
+    // If 404, try other connected realms: guilds may be attributed to a different realm slug within the connected realm set.
+    const lastStatus = lastFailure?.status ?? null;
+    if (lastStatus === 404) {
+      const connectedRealmSlugs = await resolveConnectedRealmSlugs({
+        apiUrl,
+        locale,
+        region,
+        realmSlug: serverSlug,
+        accessToken: clientToken,
+      });
+
+      for (const altRealmSlug of connectedRealmSlugs) {
+        if (!altRealmSlug || altRealmSlug === serverSlug) continue;
+        const altData = await tryFetchForRealmSlug(altRealmSlug);
+        if (altData) {
+          return { data: altData, failure: null, attempts };
         }
-
-        return {
-          members: roster.members || [],
-          faction,
-        };
       }
     }
 
@@ -653,10 +728,61 @@ async function fetchPublicGuildRoster(
       log.info(`Public roster fetch failed for ${guildName} on ${serverSlug} (${region.toUpperCase()}): no combinations tried`);
     }
 
-    return null;
+    return {
+      data: null,
+      failure: lastFailure
+        ? {
+            status: lastFailure.status,
+            bodySnippet: String(lastFailure.body ?? '').slice(0, 200),
+            rosterUrl: lastFailure.rosterUrl,
+            namespace: lastFailure.namespace,
+            slugType: lastFailure.slugType,
+            realmSlug: serverSlug,
+          }
+        : null,
+      attempts,
+    };
   } catch (error) {
     log.error('Error fetching public guild roster:', error);
-    return null;
+    return { data: null, failure: null };
+  }
+}
+
+async function resolveConnectedRealmSlugs(args: {
+  apiUrl: string;
+  locale: string;
+  region: BattleNetRegion;
+  realmSlug: string;
+  accessToken: string;
+}): Promise<string[]> {
+  const { apiUrl, locale, region, realmSlug, accessToken } = args;
+  try {
+    const namespace = BATTLENET_DYNAMIC_NAMESPACES[region];
+    const realmUrl = `${apiUrl}/data/wow/realm/${encodeURIComponent(realmSlug)}?namespace=${namespace}&locale=${locale}`;
+    const realmRes = await fetch(realmUrl, {
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+    });
+    if (!realmRes.ok) return [];
+    const realmJson = await realmRes.json().catch(() => null);
+    const href = realmJson?.connected_realm?.href as string | undefined;
+    if (!href) return [];
+
+    const match = href.match(/\/data\/wow\/connected-realm\/(\d+)/);
+    const connectedRealmId = match?.[1];
+    if (!connectedRealmId) return [];
+
+    const connectedUrl = `${apiUrl}/data/wow/connected-realm/${connectedRealmId}?namespace=${namespace}&locale=${locale}`;
+    const connectedRes = await fetch(connectedUrl, {
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+    });
+    if (!connectedRes.ok) return [];
+    const connectedJson = await connectedRes.json().catch(() => null);
+    const realmSlugs = (connectedJson?.realms || [])
+      .map((r: any) => (typeof r?.slug === 'string' ? r.slug : null))
+      .filter((v: string | null): v is string => !!v);
+    return realmSlugs;
+  } catch {
+    return [];
   }
 }
 
@@ -1275,7 +1401,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Resync all guild members for a specific guild (GM/owner only)
+    // Resync all guild members for a specific guild (owner/GM/admin only)
     if (path === 'guild-resync' && req.method === 'POST') {
       const authHeader = req.headers.get('Authorization');
       if (!authHeader) {
@@ -1330,9 +1456,16 @@ Deno.serve(async (req) => {
 
       const isOwner = guild.owner_id === requesterUserId;
       const isGM = !!gmMembership;
+      const { data: adminRole } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', requesterUserId)
+        .eq('role', 'admin')
+        .maybeSingle();
+      const isAdmin = !!adminRole;
 
-      if (!isOwner && !isGM) {
-        return new Response(JSON.stringify({ error: 'Only guild owner or GM can trigger guild sync' }), {
+      if (!isOwner && !isGM && !isAdmin) {
+        return new Response(JSON.stringify({ error: 'Only guild owner, GM, or admin can trigger guild sync' }), {
           status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
@@ -1359,7 +1492,7 @@ Deno.serve(async (req) => {
 
         const refreshRosterAndReconcile = async () => {
           const guildRegion = getValidRegion(guild.region);
-          const guildServerSlug = guild.server.toLowerCase().replace(/\s+/g, '-').replace(/'/g, '');
+          const guildServerSlug = toRealmSlug(guild.server);
           let rosterSynced = false;
           let reconciliation = { removed: 0, skipped: 0, candidates: 0 };
           try {
@@ -1469,6 +1602,437 @@ Deno.serve(async (req) => {
       } catch (err) {
         log.error(`Guild-resync job ${jobId} failed (inline):`, err);
         return new Response(JSON.stringify({ error: 'Guild sync failed', jobId }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    // Refresh Blizzard guild member cache (guild_roster_cache) for a specific guild (owner/GM/admin only).
+    // This is intentionally "fast": it updates the cached member list and returns counts inline.
+    if (path === 'guild-members-cache-sync' && req.method === 'POST') {
+      const authHeader = req.headers.get('Authorization');
+      if (!authHeader) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const payload = await req.json().catch(() => ({}));
+      const guildId = typeof payload?.guildId === 'string' ? payload.guildId : '';
+      if (!guildId) {
+        return new Response(JSON.stringify({ error: 'Missing guildId' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      const token = authHeader.replace('Bearer ', '');
+      const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+
+      if (claimsError || !claimsData?.claims) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const requesterUserId = claimsData.claims.sub as string;
+
+      const { data: guild, error: guildError } = await supabase
+        .from('guilds')
+        .select('id, name, server, region, owner_id')
+        .eq('id', guildId)
+        .maybeSingle();
+
+      if (guildError || !guild) {
+        return new Response(JSON.stringify({ error: 'Guild not found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const { data: gmMembership } = await supabase
+        .from('guild_members')
+        .select('id')
+        .eq('guild_id', guildId)
+        .eq('user_id', requesterUserId)
+        .eq('role', 'gm')
+        .maybeSingle();
+
+      const isOwner = guild.owner_id === requesterUserId;
+      const isGM = !!gmMembership;
+      const { data: adminRole } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', requesterUserId)
+        .eq('role', 'admin')
+        .maybeSingle();
+      const isAdmin = !!adminRole;
+
+      if (!isOwner && !isGM && !isAdmin) {
+        return new Response(JSON.stringify({ error: 'Only guild owner, GM, or admin can trigger guild cache sync' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const startedAt = Date.now();
+      const guildRegion = getValidRegion(guild.region);
+      const guildServerSlug = toRealmSlug(guild.server);
+
+      try {
+        const diagnostics = await fetchPublicGuildRosterWithDiagnostics(guildRegion, guildServerSlug, guild.name);
+        const guildData = diagnostics.data;
+        const failure = diagnostics.failure;
+        if (!guildData) {
+          return new Response(JSON.stringify({
+            error: 'Failed to fetch guild members from Blizzard',
+            details: {
+              ...(failure ?? {}),
+              attempts: diagnostics.attempts ?? [],
+            },
+          }), {
+            status: 502,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        if (guildData.faction && guildData.faction !== 'UNKNOWN') {
+          await supabase
+            .from('guilds')
+            .update({ faction: guildData.faction.toLowerCase() })
+            .eq('id', guildId);
+        }
+
+        await storeFullRosterForGuild(supabase, guildId, guild.name, guildData.members || []);
+
+        const { data: countsData } = await supabase
+          .rpc('get_guild_member_counts', { p_guild_ids: [guildId] });
+
+        const countsRow = Array.isArray(countsData) ? countsData[0] : null;
+        const cachedMembers = Number(countsRow?.total_count ?? 0);
+        const cachedGuildforceUsers = Number(countsRow?.unique_users ?? 0);
+
+        return new Response(JSON.stringify({
+          success: true,
+          guildId,
+          cachedMembers,
+          cachedGuildforceUsers,
+          durationMs: Date.now() - startedAt,
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } catch (err) {
+        log.error(`Guild members cache sync failed for guild ${sanitizePII(guild.name, 'name')}:`, err);
+        return new Response(JSON.stringify({ error: 'Guild cache sync failed' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    // Manual rename reconciliation for a specific guild (owner/GM/admin only).
+    // Validates the new name against Blizzard before updating `guilds.name`, stores an alias row,
+    // and refreshes the cached member list for the guild.
+    if (path === 'guild-rename' && req.method === 'POST') {
+      const authHeader = req.headers.get('Authorization');
+      if (!authHeader) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const payload = await req.json().catch(() => ({}));
+      const guildId = typeof payload?.guildId === 'string' ? payload.guildId : '';
+      const newName = typeof payload?.newName === 'string' ? payload.newName.trim() : '';
+      if (!guildId) {
+        return new Response(JSON.stringify({ error: 'Missing guildId' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      if (!newName) {
+        return new Response(JSON.stringify({ error: 'Missing newName' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      const token = authHeader.replace('Bearer ', '');
+      const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+
+      if (claimsError || !claimsData?.claims) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const requesterUserId = claimsData.claims.sub as string;
+
+      const { data: guild, error: guildError } = await supabase
+        .from('guilds')
+        .select('id, name, server, region, owner_id')
+        .eq('id', guildId)
+        .maybeSingle();
+
+      if (guildError || !guild) {
+        return new Response(JSON.stringify({ error: 'Guild not found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const oldName = String(guild.name || '').trim();
+      if (oldName.toLowerCase() === newName.toLowerCase()) {
+        return new Response(JSON.stringify({ error: 'New name is the same as current name' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const { data: gmMembership } = await supabase
+        .from('guild_members')
+        .select('id')
+        .eq('guild_id', guildId)
+        .eq('user_id', requesterUserId)
+        .eq('role', 'gm')
+        .maybeSingle();
+
+      const isOwner = guild.owner_id === requesterUserId;
+      const isGM = !!gmMembership;
+      const { data: adminRole } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', requesterUserId)
+        .eq('role', 'admin')
+        .maybeSingle();
+      const isAdmin = !!adminRole;
+
+      if (!isOwner && !isGM && !isAdmin) {
+        return new Response(JSON.stringify({ error: 'Only guild owner, GM, or admin can rename guild' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Avoid breaking the unique key (region, server, name).
+      const { data: conflictGuild } = await supabase
+        .from('guilds')
+        .select('id')
+        .eq('region', guild.region)
+        .eq('server', guild.server)
+        .eq('name', newName)
+        .maybeSingle();
+
+      if (conflictGuild && conflictGuild.id !== guildId) {
+        return new Response(JSON.stringify({ error: 'Guild name already exists on this realm', conflictGuildId: conflictGuild.id }), {
+          status: 409,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const startedAt = Date.now();
+      const guildRegion = getValidRegion(guild.region);
+      const guildServerSlug = toRealmSlug(guild.server);
+
+      try {
+        // Validate that Blizzard recognizes the guild with the new name (and fetch members for cache refresh).
+        const diagnostics = await fetchPublicGuildRosterWithDiagnostics(guildRegion, guildServerSlug, newName);
+        const guildData = diagnostics.data;
+        const failure = diagnostics.failure;
+        if (!guildData) {
+          return new Response(JSON.stringify({
+            error: 'Failed to fetch guild members from Blizzard',
+            details: {
+              ...(failure ?? {}),
+              attempts: diagnostics.attempts ?? [],
+              realmSlug: guildServerSlug,
+            },
+          }), {
+            status: 502,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // Safety gate:
+        // - Non-admin users must be the *current* GM of the target guild name on Blizzard.
+        //   This prevents former GMs/owners from renaming a guild to a different existing guild name.
+        // - Admin users may proceed, but only when we can establish strong member overlap between the old cached guild
+        //   and the Blizzard roster for the new name (to avoid "disband + new guild" false positives).
+        const rosterMembers = Array.isArray(guildData.members) ? guildData.members : [];
+        const normalizeKey = (name: string | null | undefined, realmSlug: string | null | undefined) => {
+          const n = String(name ?? '').trim().toLowerCase();
+          const r = String(realmSlug ?? '').trim().toLowerCase();
+          if (!n || n === 'unknown') return null;
+          if (!r || r === 'unknown') return null;
+          return `${n}-${r}`;
+        };
+
+        let requesterIsGMOfTargetGuild = false;
+        try {
+          const { data: requesterChars, error: requesterCharsError } = await supabase
+            .from('wow_characters')
+            .select('name, realm_slug')
+            .eq('user_id', requesterUserId);
+
+          if (requesterCharsError) {
+            log.error('Failed to load requester wow_characters for guild rename validation:', requesterCharsError);
+          } else {
+            const requesterKeys = new Set<string>();
+            for (const ch of (requesterChars || [])) {
+              const key = normalizeKey((ch as any)?.name, (ch as any)?.realm_slug);
+              if (key) requesterKeys.add(key);
+            }
+
+            if (requesterKeys.size > 0) {
+              for (const m of rosterMembers) {
+                const rankIndex = Number((m as any)?.rank ?? 99);
+                if (rankIndex !== 0) continue;
+                const key = normalizeKey((m as any)?.character?.name, (m as any)?.character?.realm?.slug);
+                if (key && requesterKeys.has(key)) {
+                  requesterIsGMOfTargetGuild = true;
+                  break;
+                }
+              }
+            }
+          }
+        } catch (err) {
+          log.error('Unexpected error validating requester GM status for guild rename:', err);
+        }
+
+        if (!requesterIsGMOfTargetGuild) {
+          if (!isAdmin) {
+            return new Response(JSON.stringify({
+              error: 'Only the current guild owner or GM can confirm a rename',
+            }), {
+              status: 403,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
+
+          // Admin fallback: require strong overlap between cached old members and the new Blizzard roster.
+          const cachedOldMembers = await fetchAllGuildRosterCacheMembersForOverlap(supabase, guildId);
+          const oldSet = new Set<string>();
+          for (const row of cachedOldMembers) {
+            const key = normalizeKey((row as any)?.character_name, (row as any)?.character_realm_slug);
+            if (key) oldSet.add(key);
+          }
+
+          const newSet = new Set<string>();
+          for (const m of rosterMembers) {
+            const key = normalizeKey((m as any)?.character?.name, (m as any)?.character?.realm?.slug);
+            if (key) newSet.add(key);
+          }
+
+          const sizeOfIntersection = (a: Set<string>, b: Set<string>) => {
+            let count = 0;
+            const [small, big] = a.size <= b.size ? [a, b] : [b, a];
+            for (const v of small) {
+              if (big.has(v)) count++;
+            }
+            return count;
+          };
+
+          const oldCount = oldSet.size;
+          const newCount = newSet.size;
+          const intersection = sizeOfIntersection(oldSet, newSet);
+
+          if (oldCount === 0 || newCount === 0) {
+            return new Response(JSON.stringify({
+              error: 'Admin rename blocked: insufficient member evidence',
+              details: { oldCount, newCount, intersection },
+            }), {
+              status: 412,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
+
+          const minCount = Math.min(oldCount, newCount);
+          const maxCount = Math.max(oldCount, newCount);
+          const overlapOfSmaller = minCount > 0 ? intersection / minCount : 0;
+          const sizeRatio = maxCount > 0 ? minCount / maxCount : 0;
+
+          const strongOverlap =
+            (minCount < 10
+              ? minCount >= 2 && intersection === minCount && sizeRatio >= 0.7
+              : intersection >= 10 && overlapOfSmaller >= 0.8 && sizeRatio >= 0.7);
+
+          if (!strongOverlap) {
+            return new Response(JSON.stringify({
+              error: 'Admin rename blocked: weak member overlap',
+              details: { oldCount, newCount, intersection, overlapOfSmaller, sizeRatio },
+            }), {
+              status: 412,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
+        }
+
+        // Store alias best-effort (may fail if old name has been reused by a different guild).
+        const { error: aliasError } = await supabase
+          .from('guild_aliases')
+          .insert({
+            guild_id: guildId,
+            old_name: oldName,
+            server: guild.server,
+            region: guild.region,
+          });
+
+        if (aliasError) {
+          log.info(
+            `Guild alias insert skipped/failed for guild ${sanitizePII(guildId, 'id')} oldName=${sanitizePII(oldName, 'name')}: ${aliasError.message}`
+          );
+        }
+
+        // Update guild name (and faction if reliable)
+        const patch: any = { name: newName };
+        if (guildData.faction && guildData.faction !== 'UNKNOWN') {
+          patch.faction = String(guildData.faction).toLowerCase();
+        }
+
+        const { error: updateError } = await supabase
+          .from('guilds')
+          .update(patch)
+          .eq('id', guildId);
+
+        if (updateError) {
+          log.error('Failed to update guild name:', updateError);
+          return new Response(JSON.stringify({ error: 'Failed to rename guild' }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // Refresh cached member list for this guild id using the new name roster.
+        await storeFullRosterForGuild(supabase, guildId, newName, guildData.members || []);
+
+        const { data: countsData } = await supabase
+          .rpc('get_guild_member_counts', { p_guild_ids: [guildId] });
+
+        const countsRow = Array.isArray(countsData) ? countsData[0] : null;
+        const cachedMembers = Number(countsRow?.total_count ?? 0);
+        const cachedGuildforceUsers = Number(countsRow?.unique_users ?? 0);
+
+        return new Response(JSON.stringify({
+          success: true,
+          guildId,
+          oldName,
+          newName,
+          cachedMembers,
+          cachedGuildforceUsers,
+          durationMs: Date.now() - startedAt,
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } catch (err) {
+        log.error(`Guild rename failed for guild ${sanitizePII(guildId, 'id')}:`, err);
+        return new Response(JSON.stringify({ error: 'Guild rename failed' }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
@@ -1587,7 +2151,7 @@ Deno.serve(async (req) => {
         for (const guild of (allGuilds || [])) {
           try {
             const region = getValidRegion(guild.region);
-            const serverSlug = guild.server.toLowerCase().replace(/\s+/g, '-').replace(/'/g, '');
+            const serverSlug = toRealmSlug(guild.server);
             const rosterData = await fetchPublicGuildRoster(region, serverSlug, guild.name);
 
             if (!rosterData) {
@@ -1700,6 +2264,36 @@ async function fetchAllWowCharactersForMatching(supabase: any): Promise<Array<{ 
 
   log.debug(`Fetched ${allChars.length} total wow_characters for matching`);
   return allChars;
+}
+
+async function fetchAllGuildRosterCacheMembersForOverlap(
+  supabase: any,
+  guildId: string
+): Promise<Array<{ character_name: string; character_realm_slug: string }>> {
+  const pageSize = 1000;
+  const allMembers: Array<{ character_name: string; character_realm_slug: string }> = [];
+  let from = 0;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from('guild_roster_cache')
+      .select('character_name, character_realm_slug')
+      .eq('guild_id', guildId)
+      .range(from, from + pageSize - 1);
+
+    if (error) {
+      log.error('Failed to fetch guild_roster_cache members for overlap:', error);
+      break;
+    }
+
+    const rows = data || [];
+    allMembers.push(...rows);
+
+    if (rows.length < pageSize) break;
+    from += pageSize;
+  }
+
+  return allMembers;
 }
 
 function dedupeRosterEntries(rosterData: any[]) {
@@ -2714,7 +3308,7 @@ async function cleanupLeftGuilds(
       const guild = membership.guilds;
       if (!guild) continue;
 
-      const serverSlug = guild.server.toLowerCase().replace(/\s+/g, '-').replace(/'/g, '');
+      const serverSlug = toRealmSlug(guild.server);
       const guildKey = `${guild.name.toLowerCase()}-${serverSlug}`;
 
       if (!currentWoWGuilds.has(guildKey)) {
@@ -2814,6 +3408,221 @@ async function cleanupOrphanWishes(
 }
 
 /**
+ * Best-effort reconciliation for WoW guild renames.
+ *
+ * Problem: the app historically keyed guilds by (region, serverSlug, name). If a WoW guild is renamed,
+ * the user would appear to have "left" the old guild and "joined" a new one, orphaning data.
+ *
+ * Strategy: when a user is GM in WoW for a guild we cannot find by the current name, try to locate an
+ * existing app guild on the same realm that is strongly associated with that user (owner/GM).
+ * If exactly one candidate is found, rename that app guild to the current WoW name so we keep the same guild_id.
+ */
+async function reconcileRenamedGuildIfPossible(
+  supabase: any,
+  userId: string,
+  guildInfo: Pick<GuildInfo, 'name' | 'server' | 'region' | 'faction'>
+): Promise<string | null> {
+  try {
+    // Owner candidates (strongest signal: this is the guild whose data the GM cares about).
+    const { data: ownerCandidates, error: ownerCandidatesError } = await supabase
+      .from('guilds')
+      .select('id, name, owner_id, faction')
+      .eq('region', guildInfo.region)
+      .eq('server', guildInfo.server)
+      .eq('owner_id', userId)
+      .neq('name', guildInfo.name);
+
+    if (ownerCandidatesError) {
+      log.error('Error loading owner candidates for rename reconciliation:', ownerCandidatesError);
+    }
+
+    // GM candidates via guild_members (works when membership still exists).
+    const { data: gmMembershipRows, error: gmMembershipError } = await supabase
+      .from('guild_members')
+      .select('guild_id, guilds(id, name, server, region, faction)')
+      .eq('user_id', userId)
+      .eq('role', 'gm');
+
+    if (gmMembershipError) {
+      log.error('Error loading GM membership candidates for rename reconciliation:', gmMembershipError);
+    }
+
+    const gmGuildCandidates = (gmMembershipRows || [])
+      .map((row: any) => row.guilds)
+      .filter(Boolean)
+      .filter((g: any) =>
+        String(g.region).toLowerCase() === String(guildInfo.region).toLowerCase() &&
+        String(g.server).toLowerCase() === String(guildInfo.server).toLowerCase() &&
+        String(g.name) !== String(guildInfo.name)
+      )
+      .map((g: any) => ({
+        id: g.id,
+        name: g.name,
+        faction: g.faction ?? null,
+      }));
+
+    const byId = new Map<string, any>();
+    for (const c of ([...(ownerCandidates || []), ...gmGuildCandidates] as any[])) {
+      if (!c?.id) continue;
+      byId.set(c.id, c);
+    }
+
+    const candidates = Array.from(byId.values());
+    if (candidates.length === 0) return null;
+
+    if (candidates.length > 1) {
+      const candidateList = candidates
+        .map((c) => `${sanitizePII(c.name, 'name')}(${sanitizePII(c.id, 'id')})`)
+        .join(', ');
+      log.info(
+        `Rename reconciliation skipped for ${sanitizePII(guildInfo.name, 'name')} on ${sanitizePII(guildInfo.server, 'name')}: multiple candidates (${candidates.length}): ${candidateList}`
+      );
+      return null;
+    }
+
+    const candidate = candidates[0];
+
+    const normalizeNameKey = (name: string | null | undefined) => {
+      const n = String(name ?? '').trim().toLowerCase();
+      if (!n || n === 'unknown') return null;
+      return n;
+    };
+
+    const normalizeFullKey = (name: string | null | undefined, realmSlug: string | null | undefined) => {
+      const nameKey = normalizeNameKey(name);
+      const realmKey = String(realmSlug ?? '').trim().toLowerCase();
+      if (!nameKey) return null;
+      if (!realmKey || realmKey === 'unknown') return null;
+      return `${nameKey}-${realmKey}`;
+    };
+
+    const sizeOfIntersection = (a: Set<string>, b: Set<string>) => {
+      let count = 0;
+      const [small, big] = a.size <= b.size ? [a, b] : [b, a];
+      for (const v of small) {
+        if (big.has(v)) count++;
+      }
+      return count;
+    };
+
+    // Extra safety: ensure the *old* guild name is actually not found on Blizzard.
+    // If it is found, it likely represents a different, still-existing guild on the same realm.
+    const candidateCheck = await fetchPublicGuildRosterWithDiagnostics(
+      guildInfo.region,
+      guildInfo.server,
+      candidate.name
+    );
+
+    if (candidateCheck.data) {
+      log.info(
+        `Rename reconciliation skipped: candidate guild still exists on Blizzard (${sanitizePII(candidate.name, 'name')} on ${sanitizePII(guildInfo.server, 'name')}).`
+      );
+      return null;
+    }
+
+    if (candidateCheck.failure?.status !== 404) {
+      log.info(
+        `Rename reconciliation skipped: could not confirm old-name 404 on Blizzard for ${sanitizePII(candidate.name, 'name')} (status=${candidateCheck.failure?.status ?? 'unknown'}).`
+      );
+      return null;
+    }
+
+    // Extra safety: ensure the new guild shares a strong member overlap with the cached old guild.
+    // This reduces false positives for "disband + new guild" scenarios.
+    const cachedOldMembers = await fetchAllGuildRosterCacheMembersForOverlap(supabase, candidate.id);
+    const oldNameSet = new Set<string>();
+    const oldFullSet = new Set<string>();
+    for (const row of cachedOldMembers) {
+      const nameKey = normalizeNameKey(row.character_name);
+      if (nameKey) oldNameSet.add(nameKey);
+      const fullKey = normalizeFullKey(row.character_name, row.character_realm_slug);
+      if (fullKey) oldFullSet.add(fullKey);
+    }
+
+    const newRoster = await fetchPublicGuildRosterWithDiagnostics(
+      guildInfo.region,
+      guildInfo.server,
+      guildInfo.name
+    );
+
+    if (!newRoster.data) {
+      log.info(
+        `Rename reconciliation skipped: could not fetch new guild members for ${sanitizePII(guildInfo.name, 'name')} on ${sanitizePII(guildInfo.server, 'name')}.`
+      );
+      return null;
+    }
+
+    const newNameSet = new Set<string>();
+    const newFullSet = new Set<string>();
+    for (const m of (newRoster.data.members || [])) {
+      const name = m?.character?.name;
+      const realmSlug = m?.character?.realm?.slug;
+      const nameKey = normalizeNameKey(name);
+      if (nameKey) newNameSet.add(nameKey);
+      const fullKey = normalizeFullKey(name, realmSlug);
+      if (fullKey) newFullSet.add(fullKey);
+    }
+
+    const useFullKeys = oldFullSet.size >= 10 && newFullSet.size >= 10;
+    const oldSet = useFullKeys ? oldFullSet : oldNameSet;
+    const newSet = useFullKeys ? newFullSet : newNameSet;
+
+    const oldCount = oldSet.size;
+    const newCount = newSet.size;
+    const intersection = sizeOfIntersection(oldSet, newSet);
+
+    if (oldCount === 0 || newCount === 0) {
+      log.info(
+        `Rename reconciliation skipped: insufficient member evidence (old=${oldCount}, new=${newCount}) for ${sanitizePII(candidate.name, 'name')} -> ${sanitizePII(guildInfo.name, 'name')}.`
+      );
+      return null;
+    }
+
+    const minCount = Math.min(oldCount, newCount);
+    const maxCount = Math.max(oldCount, newCount);
+    const overlapOfSmaller = minCount > 0 ? intersection / minCount : 0;
+    const sizeRatio = maxCount > 0 ? minCount / maxCount : 0;
+
+    const strongOverlap =
+      // Small guilds: require near-identical size and full containment
+      (minCount < 10
+        ? minCount >= 2 && intersection === minCount && sizeRatio >= 0.7
+        : intersection >= 10 && overlapOfSmaller >= 0.8 && sizeRatio >= 0.7);
+
+    if (!strongOverlap) {
+      log.info(
+        `Rename reconciliation skipped: weak member overlap (${useFullKeys ? 'fullKey' : 'nameKey'}) ` +
+          `old=${oldCount} new=${newCount} intersection=${intersection} overlapOfSmaller=${overlapOfSmaller.toFixed(2)} sizeRatio=${sizeRatio.toFixed(2)} ` +
+          `candidate=${sanitizePII(candidate.name, 'name')} newName=${sanitizePII(guildInfo.name, 'name')}`
+      );
+      return null;
+    }
+
+    log.info(
+      `Reconciling renamed guild: ${sanitizePII(candidate.name, 'name')} -> ${sanitizePII(guildInfo.name, 'name')} on ${sanitizePII(guildInfo.server, 'name')} (id=${sanitizePII(candidate.id, 'id')})`
+    );
+
+    const { error: renameError } = await supabase
+      .from('guilds')
+      .update({
+        name: guildInfo.name,
+        faction: guildInfo.faction,
+      })
+      .eq('id', candidate.id);
+
+    if (renameError) {
+      log.error('Failed to reconcile renamed guild (update failed):', renameError);
+      return null;
+    }
+
+    return candidate.id;
+  } catch (error) {
+    log.error('Error in reconcileRenamedGuildIfPossible:', error);
+    return null;
+  }
+}
+
+/**
  * Auto-creates or joins app guilds based on WoW guild memberships.
  * Handles ownership based on GM status - Battle.net is the source of truth.
  * 
@@ -2853,21 +3662,16 @@ async function autoJoinGuilds(
     }
 
     const currentWoWGuilds = new Set<string>(uniqueGuilds.keys());
-    if (allowCleanup) {
-      await cleanupLeftGuilds(supabase, userId, currentWoWGuilds);
-    } else {
-      log.info(`Skipping guild membership cleanup for user ${sanitizePII(userId, 'id')} due to missing character detail fetch results`);
-    }
-
     log.debug(`Processing ${uniqueGuilds.size} unique guilds for auto-join...`);
 
     for (const [guildKey, guildInfo] of uniqueGuilds) {
       try {
-        const { data: existingGuild, error: guildLookupError } = await supabase
+        const { data: existingGuildInitial, error: guildLookupError } = await supabase
           .from('guilds')
           .select('id, owner_id, faction')
           .eq('name', guildInfo.name)
           .eq('server', guildInfo.server)
+          .eq('region', guildInfo.region)
           .maybeSingle();
 
         if (guildLookupError) {
@@ -2875,7 +3679,27 @@ async function autoJoinGuilds(
           continue;
         }
 
+        let existingGuild = existingGuildInitial;
         let guildId: string;
+
+        if (!existingGuild && guildInfo.isGM) {
+          // Attempt to reconcile renamed guilds BEFORE we create a new record.
+          // This prevents orphaning existing data when Blizzard guild names change.
+          const reconciledGuildId = await reconcileRenamedGuildIfPossible(supabase, userId, guildInfo);
+          if (reconciledGuildId) {
+            const { data: reconciledGuild, error: reconciledGuildError } = await supabase
+              .from('guilds')
+              .select('id, owner_id, faction')
+              .eq('id', reconciledGuildId)
+              .maybeSingle();
+
+            if (reconciledGuildError) {
+              log.error('Error reloading reconciled guild:', reconciledGuildError);
+            } else {
+              existingGuild = reconciledGuild;
+            }
+          }
+        }
 
         if (existingGuild) {
           guildId = existingGuild.id;
@@ -2985,6 +3809,12 @@ async function autoJoinGuilds(
       } catch (err) {
         log.error(`Error processing guild ${sanitizePII(guildInfo.name, 'name')}:`, err);
       }
+    }
+
+    if (allowCleanup) {
+      await cleanupLeftGuilds(supabase, userId, currentWoWGuilds);
+    } else {
+      log.info(`Skipping guild membership cleanup for user ${sanitizePII(userId, 'id')} due to missing character detail fetch results`);
     }
 
     await cleanupOrphanWishes(supabase, userId);

@@ -3,9 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { toSlug } from '@/lib/guildSlug';
 import { CosmicBackground } from '@/components/CosmicBackground';
-import { GuildSubNav } from '@/components/guild';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { PollResponse, PollResults } from '@/components/polls';
 import { usePoll, usePollResults, usePollMutations } from '@/hooks/useGuildPolls';
@@ -15,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import type { ResponseValue } from '@/types/poll';
 import { formatDateLocalized } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
+import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
 
 const GuildPollView = () => {
   const navigate = useNavigate();
@@ -72,15 +71,12 @@ const GuildPollView = () => {
     const fetchData = async () => {
       if (!user || !regionSlug || !serverSlug || !guildSlug) return;
 
-      const { data: allGuilds } = await supabase
-        .from('guilds')
-        .select('id, name, server, region');
-
-      const matchedGuild = allGuilds?.find(g =>
-        toSlug(g.region || 'eu') === regionSlug &&
-        toSlug(g.server) === serverSlug &&
-        toSlug(g.name) === guildSlug
-      );
+      const matchedGuild = await findGuildByRouteSlugs({
+        supabase,
+        regionSlug,
+        serverSlug,
+        guildSlug,
+      });
 
       if (!matchedGuild) {
         navigate('/guilds');

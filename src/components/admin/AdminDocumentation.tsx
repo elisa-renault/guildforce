@@ -59,8 +59,8 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Functional map',
         titleFr: 'Carte fonctionnelle',
-        contentEn: '- Battle.net sync for characters, guild memberships, and roster cache\n- Multi-roster wish management with validation workflow\n- Advanced guild polls (sections, targeting, conditional logic)\n- Full forum with moderation, sanctions, and realtime notifications\n- Admin back office for users, guilds, legal pages, patch notes, backups, and support queues',
-        contentFr: '- Synchronisation Battle.net des personnages, appartenances de guilde et cache de roster\n- Gestion multi-rosters des vœux avec workflow de validation\n- Sondages de guilde avancés (sections, ciblage, logique conditionnelle)\n- Forum complet avec modération, sanctions et notifications temps réel\n- Back office admin pour utilisateurs, guildes, pages légales, patch notes, sauvegardes et files de support',
+        contentEn: '- Battle.net sync for characters, guild memberships, and guild member cache\n- Multi-roster wish management with validation workflow\n- Advanced guild polls (sections, targeting, conditional logic)\n- Full forum with moderation, sanctions, and realtime notifications\n- Admin back office for users, guilds, legal pages, patch notes, backups, and support queues',
+        contentFr: '- Synchronisation Battle.net des personnages, appartenances de guilde et cache des membres\n- Gestion multi-rosters des vœux avec workflow de validation\n- Sondages de guilde avancés (sections, ciblage, logique conditionnelle)\n- Forum complet avec modération, sanctions et notifications temps réel\n- Back office admin pour utilisateurs, guildes, pages légales, patch notes, sauvegardes et files de support',
         tags: ['features', 'platform'],
       },
       {
@@ -117,11 +117,11 @@ const DOCUMENTATION: DocSection[] = [
         tags: ['battlenet', 'sync', 'characters'],
       },
       {
-        titleEn: 'Guild roster cache',
-        titleFr: 'Cache de roster de guilde',
-        contentEn: '`guild_roster_cache` stores the full Blizzard roster per guild with rank data and character matching (`matched_user_id`, `matched_character_id`). Manual resync is available and scheduled sync endpoints are provided for background refresh.',
-        contentFr: '`guild_roster_cache` stocke le roster Blizzard complet par guilde avec les rangs et le matching de personnages (`matched_user_id`, `matched_character_id`). Une resynchronisation manuelle est disponible et des endpoints de sync planifiée existent pour le rafraîchissement en arrière-plan.',
-        tags: ['battlenet', 'sync', 'roster'],
+        titleEn: 'Guild member cache',
+        titleFr: 'Cache des membres de guilde',
+        contentEn: '`guild_roster_cache` stores the full Blizzard guild member list per guild with rank data and character matching (`matched_user_id`, `matched_character_id`). Manual resync is available and scheduled sync endpoints are provided for background refresh.',
+        contentFr: '`guild_roster_cache` stocke la liste complète des membres Blizzard par guilde avec les rangs et le matching de personnages (`matched_user_id`, `matched_character_id`). Une resynchronisation manuelle est disponible et des endpoints de sync planifiée existent pour le rafraîchissement en arrière-plan.',
+        tags: ['battlenet', 'sync', 'members'],
       },
       {
         titleEn: 'Spell/effect data sync',
@@ -147,10 +147,17 @@ const DOCUMENTATION: DocSection[] = [
         tags: ['guilds', 'ownership'],
       },
       {
+        titleEn: 'Guild renames (reconciliation)',
+        titleFr: 'Renommage de guilde (réconciliation)',
+        contentEn: 'On Blizzard, a guild is identified by (region, realm, guild name). If a WoW guild is renamed, a naive sync would treat it as a different guild and risk orphaning the existing `guilds.id` (and all linked data).\n\nTo prevent data loss, when a user is GM in WoW and the current guild name cannot be found in `guilds`, Guildforce attempts a safe reconciliation: it searches for an existing guild on the same realm that is strongly linked to that user (owner or GM). If exactly one candidate is found, that guild can be renamed to the current WoW name to preserve the same `guild_id`.\n\nSafety gates:\n- The old guild name must no longer exist on Blizzard (404).\n- The cached old member list must strongly overlap the new Blizzard member list (to avoid accidental merges for disband + new guild scenarios).\n\nIf checks fail (or multiple candidates exist), reconciliation is skipped and admin/manual resolution is required.',
+        contentFr: 'Côté Blizzard, une guilde est identifiée par (région, royaume, nom de guilde). Si une guilde WoW est renommée, une synchronisation naïve peut la traiter comme une guilde différente et risquer de rendre orphelin le `guilds.id` existant (et toutes les données liées).\n\nPour éviter la perte de données, quand un utilisateur est GM en WoW et que le nom actuel n\'est pas trouvé dans `guilds`, Guildforce tente une réconciliation sécurisée : recherche d\'une guilde existante sur le même royaume fortement liée à cet utilisateur (owner ou GM). Si un seul candidat est trouvé, la guilde peut être renommée avec le nom WoW actuel afin de conserver le même `guild_id`.\n\nGarde-fous:\n- L\'ancien nom ne doit plus exister côté Blizzard (404).\n- Le cache des membres de l\'ancienne guilde doit fortement recouper la liste Blizzard de la nouvelle guilde (pour éviter les fusions accidentelles en cas de guilde supprimée puis recréée).\n\nSi les vérifications échouent (ou s\'il y a plusieurs candidats), la réconciliation est ignorée et une résolution admin/manuelle est nécessaire.',
+        tags: ['guilds', 'battlenet', 'sync', 'rename', 'data-integrity'],
+      },
+      {
         titleEn: 'Guild members and statuses',
         titleFr: 'Membres et statuts',
-        contentEn: '`guild_members` links users to guilds and tracks role/status (`confirmed`, `potential`, `withdrawn`). This status is used by member-facing features and roster visibility policies.',
-        contentFr: '`guild_members` relie les utilisateurs aux guildes et suit rôle/statut (`confirmed`, `potential`, `withdrawn`). Ce statut est utilisé par les fonctionnalités membres et les politiques de visibilité roster.',
+        contentEn: '`guild_members` links users to guilds and tracks role/status (`confirmed`, `potential`, `withdrawn`). This status is used by member-facing features and guild member cache visibility policies.',
+        contentFr: '`guild_members` relie les utilisateurs aux guildes et suit rôle/statut (`confirmed`, `potential`, `withdrawn`). Ce statut est utilisé par les fonctionnalités membres et les politiques de visibilité du cache des membres.',
         tags: ['guilds', 'members'],
       },
       {
@@ -389,8 +396,8 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Core tables',
         titleFr: 'Tables cœur',
-        contentEn: '- `profiles`, `battlenet_tokens`\n- `wow_characters`, `wow_guild_memberships`\n- `guilds`, `guild_members` (includes `wishes_locked`), `guild_roster_cache`',
-        contentFr: '- `profiles`, `battlenet_tokens`\n- `wow_characters`, `wow_guild_memberships`\n- `guilds`, `guild_members` (inclut `wishes_locked`), `guild_roster_cache`',
+        contentEn: '- `profiles`, `battlenet_tokens`\n- `wow_characters`, `wow_guild_memberships`\n- `guilds`, `guild_members` (includes `wishes_locked`), `guild_roster_cache`, `guild_aliases`',
+        contentFr: '- `profiles`, `battlenet_tokens`\n- `wow_characters`, `wow_guild_memberships`\n- `guilds`, `guild_members` (inclut `wishes_locked`), `guild_roster_cache`, `guild_aliases`',
         tags: ['database', 'core'],
       },
       {
