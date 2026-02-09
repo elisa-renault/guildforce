@@ -7,13 +7,18 @@
  * Convert a string to a URL-friendly slug
  */
 export const toSlug = (str: string): string => {
+  // Keep Unicode letters/numbers so non-Latin guild names (e.g. Cyrillic) produce a non-empty slug.
+  // Browsers will percent-encode the path segment as needed.
   return str
+    .trim()
     .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // Remove accents
-    .replace(/[^a-z0-9]+/g, '-') // Replace non-alphanumeric with hyphens
-    .replace(/^-+|-+$/g, '') // Trim hyphens from start/end
-    .replace(/-+/g, '-'); // Replace multiple hyphens with single
+    .normalize('NFKD')
+    .replace(/\p{M}+/gu, '') // Remove combining marks (accents/diacritics)
+    .replace(/['’]/g, '') // Drop apostrophes
+    .replace(/[\s_]+/g, '-') // Whitespace/underscores to hyphen
+    .replace(/[^\p{L}\p{N}-]+/gu, '-') // Non letters/numbers to hyphen
+    .replace(/-+/g, '-') // Collapse multiple hyphens
+    .replace(/^-+|-+$/g, ''); // Trim hyphens from start/end
 };
 
 /**
