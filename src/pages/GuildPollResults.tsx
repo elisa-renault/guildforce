@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { toSlug } from '@/lib/guildSlug';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GuildSubNav } from '@/components/guild';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
@@ -11,6 +10,7 @@ import { PollResults } from '@/components/polls';
 import { usePollResults, usePollMutations } from '@/hooks/useGuildPolls';
 import { Loader2, ArrowLeft, Lock } from 'lucide-react';
 import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
+import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
 
 const GuildPollResultsPage = () => {
   const navigate = useNavigate();
@@ -41,15 +41,12 @@ const GuildPollResultsPage = () => {
     const fetchData = async () => {
       if (!user || !regionSlug || !serverSlug || !guildSlug) return;
 
-      const { data: allGuilds } = await supabase
-        .from('guilds')
-        .select('id, name, server, region');
-
-      const matchedGuild = allGuilds?.find(g =>
-        toSlug(g.region || 'eu') === regionSlug &&
-        toSlug(g.server) === serverSlug &&
-        toSlug(g.name) === guildSlug
-      );
+      const matchedGuild = await findGuildByRouteSlugs({
+        supabase,
+        regionSlug,
+        serverSlug,
+        guildSlug,
+      });
 
       if (!matchedGuild) {
         navigate('/guilds');

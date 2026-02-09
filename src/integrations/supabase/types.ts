@@ -1127,6 +1127,41 @@ export type Database = {
           },
         ]
       }
+      guild_aliases: {
+        Row: {
+          created_at: string
+          guild_id: string
+          id: string
+          old_name: string
+          region: string
+          server: string
+        }
+        Insert: {
+          created_at?: string
+          guild_id: string
+          id?: string
+          old_name: string
+          region: string
+          server: string
+        }
+        Update: {
+          created_at?: string
+          guild_id?: string
+          id?: string
+          old_name?: string
+          region?: string
+          server?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_aliases_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guild_roster_cache: {
         Row: {
           character_class_id: number

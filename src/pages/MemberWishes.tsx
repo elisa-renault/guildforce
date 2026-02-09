@@ -8,7 +8,8 @@ import { GlowCard } from '@/components/GlowCard';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Shield, Heart, Swords, Crosshair, CheckCircle, HelpCircle, XCircle, Pencil, ArrowLeft, Lock, Unlock } from 'lucide-react';
 import { CosmicButton } from '@/components/CosmicButton';
-import { toSlug, getGuildPath } from '@/lib/guildSlug';
+import { getGuildPath } from '@/lib/guildSlug';
+import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
 import {
   getClassById,
   getLocalizedClassName,
@@ -86,16 +87,12 @@ const MemberWishes = () => {
     }
 
     const fetchData = async () => {
-      // Find guild by slugified region, server and name
-      const { data: allGuilds } = await supabase
-        .from('guilds')
-        .select('id, name, server, region, faction');
-      
-      const matchedGuild = allGuilds?.find(g => 
-        toSlug(g.region || 'eu') === regionSlug &&
-        toSlug(g.server) === serverSlug && 
-        toSlug(g.name) === guildSlug
-      );
+      const matchedGuild = await findGuildByRouteSlugs({
+        supabase,
+        regionSlug,
+        serverSlug,
+        guildSlug,
+      });
       
       if (!matchedGuild) {
         navigate('/guilds');

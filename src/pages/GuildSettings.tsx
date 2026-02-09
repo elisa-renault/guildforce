@@ -17,7 +17,8 @@ import {
   type SettingsSection 
 } from '@/components/settings';
 import { Loader2 } from 'lucide-react';
-import { toSlug, getGuildPath } from '@/lib/guildSlug';
+import { getGuildPath } from '@/lib/guildSlug';
+import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { formatRankLabel } from '@/lib/rankLabel';
 
@@ -180,17 +181,24 @@ const GuildSettings = () => {
     }
 
     const loadGuildAndCheckAccess = async () => {
-      // Find the guild by matching slugified region, server and name
-      const { data: allGuilds } = await supabase
+      const matchedBase = await findGuildByRouteSlugs({
+        supabase,
+        regionSlug: regionSlug || '',
+        serverSlug: serverSlug || '',
+        guildSlug: guildSlug || '',
+      });
+      
+      if (!matchedBase) {
+        navigate('/guilds');
+        return;
+      }
+
+      const { data: matchedGuild } = await supabase
         .from('guilds')
-        .select('id, name, server, region, faction, avatar_url, officer_rank_threshold');
-      
-      const matchedGuild = allGuilds?.find(g => 
-        toSlug(g.region || 'eu') === regionSlug && 
-        toSlug(g.server) === serverSlug && 
-        toSlug(g.name) === guildSlug
-      );
-      
+        .select('id, name, server, region, faction, avatar_url, officer_rank_threshold')
+        .eq('id', matchedBase.id)
+        .maybeSingle();
+
       if (!matchedGuild) {
         navigate('/guilds');
         return;
@@ -348,6 +356,7 @@ const GuildSettings = () => {
         return (
           <GuildBattleNetSection
             guildId={guild.id}
+            isOwnerOrGM={isGM}
             onResyncComplete={handleResyncComplete}
           />
         );

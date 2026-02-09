@@ -22,7 +22,8 @@ import { RosterSelector, RosterEditDialog } from '@/components/roster';
 import { MemberWish, WishData, RosterFilters as RosterFiltersType, ValidationStatus } from '@/types/guild';
 import { Loader2, Sparkles, Settings, TableIcon, BarChart3, Download, Eye, Lock, Unlock, Clock } from 'lucide-react';
 import { exportWishesToCSV } from '@/lib/exportWishes';
-import { toSlug, getGuildWishesPath } from '@/lib/guildSlug';
+import { getGuildWishesPath } from '@/lib/guildSlug';
+import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
 import { CommitmentStatus } from '@/components/CommitmentToggle';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatDateTimeLocalized, interpolateMessage } from '@/i18n/format';
@@ -186,16 +187,12 @@ const RosterWishes = () => {
   const fetchData = async () => {
     if (!user || !regionSlug || !serverSlug || !guildSlug) return;
 
-    // First, find the guild by matching slugified region, server and name
-    const { data: allGuilds } = await supabase
-      .from('guilds')
-      .select('id, name, server, region, faction, avatar_url');
-
-    const matchedGuild = allGuilds?.find(g =>
-      toSlug(g.region || 'eu') === regionSlug &&
-      toSlug(g.server) === serverSlug &&
-      toSlug(g.name) === guildSlug
-    );
+    const matchedGuild = await findGuildByRouteSlugs({
+      supabase,
+      regionSlug,
+      serverSlug,
+      guildSlug,
+    });
 
     if (!matchedGuild) {
       navigate('/guilds');

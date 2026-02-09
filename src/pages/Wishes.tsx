@@ -13,7 +13,8 @@ import { CosmicButton } from '@/components/CosmicButton';
 import { GuildSubNav } from '@/components/guild';
 import { RosterSelector } from '@/components/roster';
 import { Loader2, Save, GripVertical, Plus, Trash2, ChevronUp, ChevronDown, Lock, Clock } from 'lucide-react';
-import { toSlug } from '@/lib/guildSlug';
+
+import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
 import { resolveSpecOrder } from '@/lib/wishOrder';
 import { formatDateTimeLocalized, interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
@@ -229,16 +230,12 @@ const Wishes = () => {
     }
 
     const fetchData = async () => {
-      // Find guild by slugified region, server and name
-const { data: allGuilds } = await supabase
-        .from('guilds')
-        .select('id, name, server, region, faction, avatar_url');
-      
-      const matchedGuild = allGuilds?.find(g => 
-        toSlug(g.region || 'eu') === regionSlug &&
-        toSlug(g.server) === serverSlug && 
-        toSlug(g.name) === guildSlug
-      );
+      const matchedGuild = await findGuildByRouteSlugs({
+        supabase,
+        regionSlug,
+        serverSlug,
+        guildSlug,
+      });
       
       if (!matchedGuild) {
         navigate('/guilds');
