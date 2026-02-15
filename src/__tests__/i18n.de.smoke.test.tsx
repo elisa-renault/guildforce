@@ -20,7 +20,7 @@ describe('DE i18n smoke', () => {
     expect(de.polls.new).toBe('Neue Umfrage');
     expect(de.forum.newTopic).toBe('Neues Thema');
     expect(de.admin.userManagement).toBe('Benutzerverwaltung');
-    expect(de.legal.privacyPolicy).toBe('Datenschutzerklaerung');
+    expect(de.legal.privacyPolicy).toBe('Datenschutzerklärung');
     expect(de.cookies.manageCookies).toBe('Cookie-Einstellungen');
   });
 

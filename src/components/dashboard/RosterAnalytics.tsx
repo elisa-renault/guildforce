@@ -586,7 +586,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     if (n === 1) return t.dashboard.wishRange1;
     if (n === 13) return t.dashboard.allWishes;
     const template = t.auto?.components_dashboard_RosterAnalytics_wish_range;
-    return template ? interpolateMessage(template, { n }) : `Voeux 1-${n}`;
+    return template ? interpolateMessage(template, { n }) : `Vœux 1-${n}`;
   };
 
   // Calculate totals for KPI bar

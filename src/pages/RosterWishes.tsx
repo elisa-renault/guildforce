@@ -646,7 +646,7 @@ const RosterWishes = () => {
 
       toast({
         title: language === 'fr'
-          ? 'Voeu externe enregistre'
+          ? 'Vœu externe enregistré'
           : 'External wish saved',
       });
       setExternalDialogOpen(false);
@@ -669,7 +669,7 @@ const RosterWishes = () => {
         ? `Supprimer la ligne externe de ${member.username} ?`
         : `Remove external row for ${member.username}?`)
       : (language === 'fr'
-        ? `Supprimer ${member.username} de la guilde et effacer ses voeux ?`
+        ? `Supprimer ${member.username} de la guilde et effacer ses vœux ?`
         : `Remove ${member.username} from the guild and delete their wishes?`);
     if (!window.confirm(confirmMessage)) return;
 
@@ -686,7 +686,7 @@ const RosterWishes = () => {
       if (error) throw error;
       toast({
         title: language === 'fr'
-          ? 'Membre retire de la table des voeux'
+          ? 'Membre retiré de la table des vœux'
           : 'Member removed from wishes table',
       });
       await fetchWishes();
@@ -766,12 +766,12 @@ const RosterWishes = () => {
       const dbStatus = editStatus === 'withdrawn' ? 'withdrawn' : (editStatus === 'confirmed' ? 'confirmed' : 'potential');
       if (isEditingExternal) {
         if (!canEditExternalAsManager || !currentMember.rosterCacheId) {
-          throw new Error(language === 'fr' ? 'Edition externe non autorisee' : 'External edit not authorized');
+          throw new Error(language === 'fr' ? 'Édition externe non autorisée' : 'External edit not authorized');
         }
 
         const primaryWish = editWishes.find((w) => !!w.classId);
         if (!primaryWish) {
-          throw new Error(language === 'fr' ? 'Le premier voeu est requis' : 'First wish is required');
+          throw new Error(language === 'fr' ? 'Le premier vœu est requis' : 'First wish is required');
         }
 
         const { error } = await supabase.rpc('upsert_external_member_wish', {
@@ -1230,7 +1230,7 @@ const RosterWishes = () => {
                   onChange={(e) => setExternalCandidateId(e.target.value)}
                 >
                   <option value="">
-                    {language === 'fr' ? 'Selectionner un membre' : 'Select a member'}
+                    {language === 'fr' ? 'Sélectionner un membre' : 'Select a member'}
                   </option>
                   {externalCandidates.map((candidate) => (
                     <option key={candidate.id} value={candidate.id}>
@@ -1242,7 +1242,7 @@ const RosterWishes = () => {
 
               <div className="space-y-2">
                 <label className="text-sm text-muted-foreground">
-                  {language === 'fr' ? 'Premier voeu (classe)' : 'First wish (class)'}
+                  {language === 'fr' ? 'Premier vœu (classe)' : 'First wish (class)'}
                 </label>
                 <select
                   className="w-full h-9 rounded-md border border-border bg-background px-3 text-sm"
@@ -1250,7 +1250,7 @@ const RosterWishes = () => {
                   onChange={(e) => setExternalClassId(e.target.value)}
                 >
                   <option value="">
-                    {language === 'fr' ? 'Selectionner une classe' : 'Select a class'}
+                    {language === 'fr' ? 'Sélectionner une classe' : 'Select a class'}
                   </option>
                   {wowClasses.map((cls) => (
                     <option key={cls.id} value={cls.id}>

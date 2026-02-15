@@ -53,7 +53,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "auth": "Anmeldung",
     "guilds": "Gilden",
     "profile": "Profil",
-    "publicProfile": "Offentliches Profil",
+    "publicProfile": "Öffentliches Profil",
     "forum": "Forum",
     "forumAdmin": "Forum-Admin",
     "admin": "Verwaltung",
@@ -85,13 +85,13 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "connectDescription": "Verbinde dein Battle.net-Konto, um deine WoW-Charaktere automatisch zu importieren.",
     "yourCharacters": "Deine Charaktere",
     "noCharacters": "Keine Charaktere gefunden",
-    "noCharactersHint": "Prufe, ob deine WoW-Lizenz aktiv ist und ob du die richtige Region gewahlt hast. Wenn das Problem bleibt, verbinde dein Battle.net-Konto erneut.",
+    "noCharactersHint": "Prüfe, ob deine WoW-Lizenz aktiv ist und ob du die richtige Region gewählt hast. Wenn das Problem bleibt, verbinde dein Battle.net-Konto erneut.",
     "main": "Main",
     "mainSet": "Main-Charakter gesetzt",
     "refresh": "Aktualisieren",
     "connecting": "Verbinde mit Battle.net...",
     "region": "Region",
-    "selectRegion": "Region auswahlen",
+    "selectRegion": "Region auswählen",
     "connectedTo": "Verbunden mit",
     "resync": "Charaktere neu synchronisieren",
     "resyncSuccess": "Charaktere erfolgreich synchronisiert",
@@ -102,8 +102,8 @@ export const translationsDe: Translations = createLocaleTranslations(translation
   },
   "home": {
     "title": "Guildforce",
-    "subtitle": "Plane dein Raid-Roster fur die nachste Erweiterung",
-    "description": "Sammle Klassen- und Spezialisierungswunsche deiner Gildenmitglieder, um das perfekte Roster aufzubauen.",
+    "subtitle": "Plane dein Raid-Roster für die nächste Erweiterung",
+    "description": "Sammle Klassen- und Spezialisierungswünsche deiner Gildenmitglieder, um das perfekte Roster aufzubauen.",
     "createGuild": "Meine Gilde verwalten",
     "joinGuild": "Meiner Gilde beitreten",
     "features": {
@@ -117,12 +117,12 @@ export const translationsDe: Translations = createLocaleTranslations(translation
       },
       "export": {
         "title": "Daten exportieren",
-        "description": "Als CSV fur Tabellen oder weitere Analysen exportieren."
+        "description": "Als CSV für Tabellen oder weitere Analysen exportieren."
       }
     }
   },
   "auth": {
-    "loginTitle": "Willkommen zuruck",
+    "loginTitle": "Willkommen zurück",
     "signupTitle": "Konto erstellen",
     "loginDescription": "Melde dich mit deinem Konto an",
     "signupDescription": "Erstelle dein Guildforce-Konto",
@@ -131,20 +131,20 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "pseudo": "Benutzername",
     "pseudoPlaceholder": "Dein Benutzername",
     "forgotPassword": "Passwort vergessen",
-    "invalidEmail": "Ungultige E-Mail-Adresse",
+    "invalidEmail": "Ungültige E-Mail-Adresse",
     "passwordTooShort": "Passwort zu kurz",
-    "passwordsDontMatch": "Passworter stimmen nicht uberein",
+    "passwordsDontMatch": "Passwörter stimmen nicht überein",
     "userAlreadyExists": "Benutzer existiert bereits",
-    "invalidCredentials": "Ungultige Zugangsdaten",
+    "invalidCredentials": "Ungültige Zugangsdaten",
     "orContinueWith": "Oder fortfahren mit",
     "loginWithBattleNet": "Mit Battle.net anmelden",
     "signupWithBattleNet": "Mit Battle.net registrieren",
     "battlenetError": "Battle.net-Verbindungsfehler",
     "bnetRequired": "Battle.net-Verbindung erforderlich",
-    "bnetNote": "Battle.net ist fur die WoW-Synchronisation erforderlich",
+    "bnetNote": "Battle.net ist für die WoW-Synchronisation erforderlich",
     "accountCreated": "Konto erfolgreich erstellt",
-    "welcomeBack": "Willkommen zuruck!",
-    "existingAccountsOnly": "Nur fur bestehende Konten"
+    "welcomeBack": "Willkommen zurück!",
+    "existingAccountsOnly": "Nur für bestehende Konten"
   },
   "guild": {
     "create": "Erstelle eine Gilde",
@@ -634,7 +634,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
   },
   "legal": {
     "legalNotice": "Impressum",
-    "privacyPolicy": "Datenschutzerklaerung",
+    "privacyPolicy": "Datenschutzerklärung",
     "termsOfService": "Nutzungsbedingungen",
     "lastUpdated": "Zuletzt aktualisiert",
     "editLegalPages": "Verwalten Sie rechtliche Seiten",

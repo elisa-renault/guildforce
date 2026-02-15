@@ -53,8 +53,8 @@ const hasGermanTranslation = (translations: LegalPageTranslation[]): boolean =>
   !isTranslationMissingOrUntranslated(translations, 'de');
 
 const slugLabels: Record<string, { fr: string; en: string }> = {
-  'legal-notice': { fr: 'Mentions legales', en: 'Legal Notice' },
-  'privacy-policy': { fr: 'Politique de confidentialite', en: 'Privacy Policy' },
+  'legal-notice': { fr: 'Mentions légales', en: 'Legal Notice' },
+  'privacy-policy': { fr: 'Politique de confidentialité', en: 'Privacy Policy' },
   'terms-of-service': { fr: 'CGU', en: 'Terms of Service' },
 };
 
