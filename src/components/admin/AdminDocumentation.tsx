@@ -230,8 +230,8 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Wish locking and deadlines',
         titleFr: 'Verrouillage des vœux et deadlines',
-        contentEn: 'Roster locks use `rosters.wishes_locked` with optional scheduling via `wishes_lock_at`. Member overrides live in `guild_members.wishes_locked`. RLS enforcement relies on `can_edit_wishes()`, while admin RPCs `lock_roster_wishes`, `unlock_roster_wishes`, `schedule_roster_wishes_lock`, and `set_member_wishes_locked` power manual controls. Scheduled locks run via `apply_scheduled_wish_locks()`.',
-        contentFr: 'Les verrous roster utilisent `rosters.wishes_locked` avec planification via `wishes_lock_at`. Les verrous membres sont stockés dans `guild_members.wishes_locked`. La RLS s\'appuie sur `can_edit_wishes()` et les RPCs `lock_roster_wishes`, `unlock_roster_wishes`, `schedule_roster_wishes_lock`, `set_member_wishes_locked` pour les actions manuelles. Les verrous programmés passent par `apply_scheduled_wish_locks()`.',
+        contentEn: 'Roster locks use `rosters.wishes_locked` with optional scheduling via `wishes_lock_at`. Member overrides live in `guild_members.wishes_locked`. RLS enforcement relies on `can_edit_wishes()`, while admin RPCs `lock_roster_wishes`, `unlock_roster_wishes`, `schedule_roster_wishes_lock`, `set_member_wishes_locked`, and `remove_guild_member_with_wishes` power manual controls. Scheduled locks run via `apply_scheduled_wish_locks()`.',
+        contentFr: 'Les verrous roster utilisent `rosters.wishes_locked` avec planification via `wishes_lock_at`. Les verrous membres sont stockés dans `guild_members.wishes_locked`. La RLS s\'appuie sur `can_edit_wishes()` et les RPCs `lock_roster_wishes`, `unlock_roster_wishes`, `schedule_roster_wishes_lock`, `set_member_wishes_locked` et `remove_guild_member_with_wishes` pour les actions manuelles. Les verrous programmés passent par `apply_scheduled_wish_locks()`.',
         tags: ['wishes', 'rosters', 'security', 'scheduling'],
       },
     ],

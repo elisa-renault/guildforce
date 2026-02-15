@@ -82,6 +82,7 @@ const RosterWishes = () => {
   ]);
   const [editStatus, setEditStatus] = useState<CommitmentStatus>('undecided');
   const [saving, setSaving] = useState(false);
+  const [deletingMemberId, setDeletingMemberId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'table' | 'analytics'>('table');
 
   // Roster state
@@ -321,8 +322,13 @@ const RosterWishes = () => {
         ? await supabase.from('profiles').select('id, username').in('id', validatorIds)
         : { data: [] };
 
-      const mergedMembers: MemberWish[] = membersData.map(m => {
-        const profile = profiles?.find(p => p.id === m.user_id);
+      const profilesById = new Map((profiles || []).map((p) => [p.id, p]));
+
+      // Keep only members that still have an active profile.
+      // This avoids showing stale lines for accounts that were removed.
+      const mergedMembers: MemberWish[] = membersData.flatMap(m => {
+        const profile = profilesById.get(m.user_id);
+        if (!profile) return [];
         const memberWishes = wishesData?.filter(w => w.user_id === m.user_id).map(w => ({
           choice_index: w.choice_index,
           class_id: w.class_id,
@@ -489,6 +495,36 @@ const RosterWishes = () => {
       toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
     } finally {
       setLockingMemberId(null);
+    }
+  };
+
+  const handleRemoveMember = async (memberId: string) => {
+    if (!guildId || !canManageWishes || memberId === user?.id) return;
+    const member = members.find((m) => m.id === memberId);
+    if (!member) return;
+
+    const confirmMessage = language === 'fr'
+      ? `Supprimer ${member.username} de la guilde et effacer ses voeux ?`
+      : `Remove ${member.username} from the guild and delete their wishes?`;
+    if (!window.confirm(confirmMessage)) return;
+
+    setDeletingMemberId(memberId);
+    try {
+      const { error } = await supabase.rpc('remove_guild_member_with_wishes', {
+        p_guild_id: guildId,
+        p_member_id: memberId,
+      });
+      if (error) throw error;
+      toast({
+        title: language === 'fr'
+          ? 'Membre retire de la table des voeux'
+          : 'Member removed from wishes table',
+      });
+      await fetchWishes();
+    } catch (error: any) {
+      toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
+    } finally {
+      setDeletingMemberId(null);
     }
   };
 
@@ -953,6 +989,8 @@ const RosterWishes = () => {
               onValidateWish={validateWish}
               onToggleMemberLock={canManageWishes && !isAdminReadOnly ? handleToggleMemberLock : undefined}
               lockingMemberId={lockingMemberId}
+              onRemoveMember={canManageWishes && !isAdminReadOnly ? handleRemoveMember : undefined}
+              deletingMemberId={deletingMemberId}
             />
           </TabsContent>
 

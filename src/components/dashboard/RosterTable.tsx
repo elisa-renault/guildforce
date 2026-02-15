@@ -48,6 +48,8 @@ interface RosterTableProps {
   onValidateWish?: (userId: string, choiceIndex: number, status: ValidationStatus) => void;
   onToggleMemberLock?: (memberId: string, locked: boolean) => void;
   lockingMemberId?: string | null;
+  onRemoveMember?: (memberId: string) => void;
+  deletingMemberId?: string | null;
 }
 
 // Role config for icons
@@ -79,6 +81,8 @@ export const RosterTable = ({
   onValidateWish,
   onToggleMemberLock,
   lockingMemberId = null,
+  onRemoveMember,
+  deletingMemberId = null,
 }: RosterTableProps) => {
   const { t, language } = useLanguage();
   const s = (key: SemanticKey, fallback?: string) =>
@@ -387,6 +391,8 @@ export const RosterTable = ({
               onClick={handleCardClick}
               onToggleMemberLock={onToggleMemberLock}
               lockingMemberId={lockingMemberId}
+              onRemoveMember={onRemoveMember}
+              deletingMemberId={deletingMemberId}
             />
           );
         })}
@@ -423,6 +429,14 @@ export const RosterTable = ({
                   : '';
 
               const rowActions = [
+                ...(isGM && onRemoveMember && !isOwnRow ? [{
+                  key: 'delete',
+                  label: t.common.delete,
+                  icon: Trash2,
+                  onClick: () => onRemoveMember(member.id),
+                  loading: deletingMemberId === member.id,
+                  disabled: false,
+                }] : []),
                 ...(isGM && onToggleMemberLock ? [{
                   key: 'lock',
                   label: memberLocked ? t.wishes.unlockMember : t.wishes.lockMember,
