@@ -274,6 +274,7 @@ export type Database = {
           choice_index: number
           class_id: string
           comment: string | null
+          commitment_status: string
           created_at: string
           created_by: string | null
           guild_id: string
@@ -291,6 +292,7 @@ export type Database = {
           choice_index?: number
           class_id: string
           comment?: string | null
+          commitment_status?: string
           created_at?: string
           created_by?: string | null
           guild_id: string
@@ -308,6 +310,7 @@ export type Database = {
           choice_index?: number
           class_id?: string
           comment?: string | null
+          commitment_status?: string
           created_at?: string
           created_by?: string | null
           guild_id?: string
@@ -2094,6 +2097,7 @@ export type Database = {
         Args: {
           p_class_id: string
           p_comment?: string | null
+          p_commitment_status?: string
           p_roster_cache_id: string
           p_roster_id: string
           p_spec_ids?: string[]

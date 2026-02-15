@@ -93,6 +93,10 @@ export const RosterTable = ({
   const [validatingWish, setValidatingWish] = useState<string | null>(null);
   const [sortColumn, setSortColumn] = useState<SortColumn | null>('wishesCount');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const manualEntryLabel = language === 'fr' ? 'Ajout manuel' : 'Manual entry';
+  const manualEntryHelp = language === 'fr'
+    ? 'Ce personnage a ete ajoute manuellement. Le badge disparaitra une fois le personnage claim via Guildforce.'
+    : 'This character was added manually. The badge disappears once the character is claimed via Guildforce.';
 
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
@@ -446,7 +450,7 @@ export const RosterTable = ({
                   loading: lockingMemberId === member.id,
                   disabled: false,
                 }] : []),
-                ...(isOwnRow ? [{
+                ...((isOwnRow || (isGM && !!member.isExternal)) ? [{
                   key: 'edit',
                   label: isEditing ? t.common.save : t.common.edit,
                   icon: isEditing ? Save : Pencil,
@@ -485,6 +489,20 @@ export const RosterTable = ({
                       <div className="flex flex-col gap-0.5">
                         <div className="flex items-center gap-1.5">
                           <span className="truncate">{member.username}</span>
+                          {member.isExternal && (
+                            <TooltipProvider delayDuration={200}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Badge variant="outline" className="text-[10px] px-1 py-0 border-primary/40 text-primary">
+                                    {manualEntryLabel}
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="text-xs max-w-[240px]">
+                                  {manualEntryHelp}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
                           {effectiveLocked && (
                             <TooltipProvider delayDuration={200}>
                               <Tooltip>

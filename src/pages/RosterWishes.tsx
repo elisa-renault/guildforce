@@ -59,6 +59,7 @@ interface ExternalWishRow {
   spec_ids: string[];
   spec_order: string[];
   comment: string | null;
+  commitment_status: 'confirmed' | 'potential' | 'withdrawn';
   validation_status: ValidationStatus;
   validated_by: string | null;
   validated_at: string | null;
@@ -382,7 +383,7 @@ const RosterWishes = () => {
     // External wishes and candidate pool (members in roster cache not yet linked to a Guildforce account)
     const { data: externalWishesData } = await supabase
       .from('external_member_wishes')
-      .select('id, roster_cache_id, class_id, spec_ids, spec_order, comment, validation_status, validated_by, validated_at')
+      .select('id, roster_cache_id, class_id, spec_ids, spec_order, comment, commitment_status, validation_status, validated_by, validated_at')
       .eq('guild_id', guildId)
       .eq('roster_id', selectedRosterId);
 
@@ -440,7 +441,7 @@ const RosterWishes = () => {
           id: `external:${ext.id}`,
           username: row.character_name,
           mainCharacterName: formatRealmDisplayName(row.character_realm, row.character_realm_slug),
-          status: 'potential',
+          status: ext.commitment_status || 'potential',
           wishes_locked: false,
           isExternal: true,
           externalWishId: ext.id,
@@ -496,7 +497,9 @@ const RosterWishes = () => {
 
 
   const startEditing = (member: MemberWish) => {
-    if (member.id !== user?.id) return;
+    const canEditOwn = member.id === user?.id;
+    const canEditExternalAsManager = !!member.isExternal && canManageWishes;
+    if (!canEditOwn && !canEditExternalAsManager) return;
 
     // Check if user has access to this roster
     const currentRoster = rosters.find(r => r.id === selectedRosterId);
@@ -505,22 +508,25 @@ const RosterWishes = () => {
       return;
     }
 
-    const lockState = resolveWishLockState({
-      rosterLocked: currentRoster?.wishes_locked,
-      rosterLockAt: currentRoster?.wishes_lock_at,
-      memberLocked: member.wishes_locked,
-    });
-    if (lockState.isLocked) {
-      toast({
-        title: t.wishes.lockedTitle,
-        description: lockState.reason === 'member' ? t.wishes.lockedMemberDesc : t.wishes.lockedRosterDesc,
-        variant: 'destructive',
+    // Managers can edit external entries even when member/roster lock would block self-edits.
+    if (!canEditExternalAsManager) {
+      const lockState = resolveWishLockState({
+        rosterLocked: currentRoster?.wishes_locked,
+        rosterLockAt: currentRoster?.wishes_lock_at,
+        memberLocked: member.wishes_locked,
       });
-      return;
+      if (lockState.isLocked) {
+        toast({
+          title: t.wishes.lockedTitle,
+          description: lockState.reason === 'member' ? t.wishes.lockedMemberDesc : t.wishes.lockedRosterDesc,
+          variant: 'destructive',
+        });
+        return;
+      }
     }
 
     // Load all wishes from member, ensuring at least 3 slots
-    const wishCount = Math.max(3, member.wishes.length);
+    const wishCount = member.isExternal ? 1 : Math.max(3, member.wishes.length);
     const loadedWishes: WishData[] = Array.from({ length: wishCount }, () => ({
       classId: '',
       specIds: [],
@@ -634,6 +640,7 @@ const RosterWishes = () => {
         p_class_id: externalClassId,
         p_spec_ids: [],
         p_comment: externalComment.trim() || null,
+        p_commitment_status: 'potential',
       });
       if (error) throw error;
 
@@ -722,12 +729,15 @@ const RosterWishes = () => {
 
     const currentRoster = rosters.find(r => r.id === selectedRosterId);
     const currentMember = members.find(m => m.id === editingUserId);
+    if (!currentMember) return;
+    const isEditingExternal = !!currentMember.isExternal;
+    const canEditExternalAsManager = isEditingExternal && canManageWishes;
     const lockState = resolveWishLockState({
       rosterLocked: currentRoster?.wishes_locked,
       rosterLockAt: currentRoster?.wishes_lock_at,
       memberLocked: currentMember?.wishes_locked,
     });
-    if (lockState.isLocked) {
+    if (!canEditExternalAsManager && lockState.isLocked) {
       toast({
         title: t.wishes.lockedTitle,
         description: lockState.reason === 'member' ? t.wishes.lockedMemberDesc : t.wishes.lockedRosterDesc,
@@ -753,41 +763,61 @@ const RosterWishes = () => {
     setSaving(true);
 
     try {
-      // Map CommitmentStatus to DB status
       const dbStatus = editStatus === 'withdrawn' ? 'withdrawn' : (editStatus === 'confirmed' ? 'confirmed' : 'potential');
-      await supabase
-        .from('guild_members')
-        .update({ status: dbStatus })
-        .eq('guild_id', guildId)
-        .eq('user_id', user.id);
+      if (isEditingExternal) {
+        if (!canEditExternalAsManager || !currentMember.rosterCacheId) {
+          throw new Error(language === 'fr' ? 'Edition externe non autorisee' : 'External edit not authorized');
+        }
 
-      // Delete all existing wishes for this user/guild/roster first
-      await supabase
-        .from('class_wishes')
-        .delete()
-        .eq('guild_id', guildId)
-        .eq('user_id', user.id)
-        .eq('roster_id', selectedRosterId);
+        const primaryWish = editWishes.find((w) => !!w.classId);
+        if (!primaryWish) {
+          throw new Error(language === 'fr' ? 'Le premier voeu est requis' : 'First wish is required');
+        }
 
-      // Insert all non-empty wishes with roster_id
-      const wishesToInsert = editWishes
-        .map((w, i) => ({
-          guild_id: guildId,
-          user_id: user.id,
-          roster_id: selectedRosterId,
-          choice_index: i + 1,
-          class_id: w.classId,
-          spec_ids: w.specIds,
-          spec_order: w.specIds,
-          comment: w.comment,
-        }))
-        .filter(w => w.class_id);
-
-      if (wishesToInsert.length > 0) {
-        const { error } = await supabase
-          .from('class_wishes')
-          .insert(wishesToInsert);
+        const { error } = await supabase.rpc('upsert_external_member_wish', {
+          p_roster_id: selectedRosterId,
+          p_roster_cache_id: currentMember.rosterCacheId,
+          p_class_id: primaryWish.classId,
+          p_spec_ids: primaryWish.specIds,
+          p_comment: primaryWish.comment || null,
+          p_commitment_status: dbStatus,
+        });
         if (error) throw error;
+      } else {
+        await supabase
+          .from('guild_members')
+          .update({ status: dbStatus })
+          .eq('guild_id', guildId)
+          .eq('user_id', user.id);
+
+        // Delete all existing wishes for this user/guild/roster first
+        await supabase
+          .from('class_wishes')
+          .delete()
+          .eq('guild_id', guildId)
+          .eq('user_id', user.id)
+          .eq('roster_id', selectedRosterId);
+
+        // Insert all non-empty wishes with roster_id
+        const wishesToInsert = editWishes
+          .map((w, i) => ({
+            guild_id: guildId,
+            user_id: user.id,
+            roster_id: selectedRosterId,
+            choice_index: i + 1,
+            class_id: w.classId,
+            spec_ids: w.specIds,
+            spec_order: w.specIds,
+            comment: w.comment,
+          }))
+          .filter(w => w.class_id);
+
+        if (wishesToInsert.length > 0) {
+          const { error } = await supabase
+            .from('class_wishes')
+            .insert(wishesToInsert);
+          if (error) throw error;
+        }
       }
 
       toast({ title: t.wishes.wishesSaved });
@@ -981,11 +1011,13 @@ const RosterWishes = () => {
     memberLocked: false,
   });
   const currentMember = members.find(m => m.id === user?.id);
+  const editingMember = members.find(m => m.id === editingUserId);
   const currentMemberLockState = resolveWishLockState({
     rosterLocked: currentRoster?.wishes_locked,
     rosterLockAt: currentRoster?.wishes_lock_at,
-    memberLocked: currentMember?.wishes_locked,
+    memberLocked: editingMember?.wishes_locked ?? currentMember?.wishes_locked,
   });
+  const isEditingLocked = editingMember?.isExternal && canManageWishes ? false : currentMemberLockState.isLocked;
   const rosterScheduledLabel =
     rosterLockState.isScheduled && rosterLockState.scheduledAt
       ? formatDateTimeLocalized(rosterLockState.scheduledAt, language, { dateStyle: 'medium', timeStyle: 'short' })
@@ -1153,7 +1185,7 @@ const RosterWishes = () => {
               maxWishes={MAX_WISHES}
               isGM={canManageWishes}
               isRosterLocked={rosterLockState.isLocked}
-              isEditingLocked={currentMemberLockState.isLocked}
+              isEditingLocked={isEditingLocked}
               onStartEditing={startEditing}
               onUpdateEditWish={updateEditWish}
               onEditStatusChange={setEditStatus}
