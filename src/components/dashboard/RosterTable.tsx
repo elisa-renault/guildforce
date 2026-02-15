@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { CheckCircle, HelpCircle, XCircle, Pencil, Save, Shield, Heart, Sword, Swords, Crosshair, MessageSquare, Plus, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Lock, Unlock, MoreVertical, Loader2 } from 'lucide-react';
+import { CheckCircle, HelpCircle, XCircle, Pencil, Save, Shield, Heart, Sword, Swords, Crosshair, MessageSquare, Plus, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Lock, Unlock, MoreVertical, Loader2, UserPlus } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getClassById, getLocalizedClassName, getLocalizedSpecName, getSpecById } from '@/data/wowClasses';
 import { MemberWish, WishData, WishChoice, ValidationStatus } from '@/types/guild';
@@ -93,10 +93,9 @@ export const RosterTable = ({
   const [validatingWish, setValidatingWish] = useState<string | null>(null);
   const [sortColumn, setSortColumn] = useState<SortColumn | null>('wishesCount');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-  const manualEntryLabel = language === 'fr' ? 'Ajout manuel' : 'Manual entry';
   const manualEntryHelp = language === 'fr'
-    ? 'Ce personnage a ete ajoute manuellement. Le badge disparaitra une fois le personnage claim via Guildforce.'
-    : 'This character was added manually. The badge disappears once the character is claimed via Guildforce.';
+    ? 'Ce personnage a été ajouté manuellement. L’icône disparaîtra une fois le personnage claim via Guildforce.'
+    : 'This character was added manually. The icon will disappear once the character is claimed via Guildforce.';
 
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
@@ -493,9 +492,9 @@ export const RosterTable = ({
                             <TooltipProvider delayDuration={200}>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Badge variant="outline" className="text-[10px] px-1 py-0 border-primary/40 text-primary">
-                                    {manualEntryLabel}
-                                  </Badge>
+                                  <span className="inline-flex items-center justify-center h-5 w-5 rounded-full border border-primary/40 text-primary bg-primary/10">
+                                    <UserPlus className="h-3 w-3" />
+                                  </span>
                                 </TooltipTrigger>
                                 <TooltipContent side="top" className="text-xs max-w-[240px]">
                                   {manualEntryHelp}

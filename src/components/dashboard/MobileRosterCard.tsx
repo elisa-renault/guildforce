@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { CosmicButton } from '@/components/CosmicButton';
-import { CheckCircle, HelpCircle, XCircle, Pencil, Shield, Heart, Sword, Swords, Crosshair, MessageSquare, Lock, Unlock, MoreVertical, Loader2, Trash2 } from 'lucide-react';
+import { CheckCircle, HelpCircle, XCircle, Pencil, Shield, Heart, Sword, Swords, Crosshair, MessageSquare, Lock, Unlock, MoreVertical, Loader2, Trash2, UserPlus } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getClassById, getLocalizedClassName, getSpecById } from '@/data/wowClasses';
 import { MemberWish, WishChoice, ValidationStatus } from '@/types/guild';
@@ -149,9 +149,13 @@ export const MobileRosterCard = ({
           <div className="flex items-center gap-2">
             <span className="font-medium text-foreground">{member.username}</span>
             {member.isExternal && (
-              <Badge variant="outline" className="text-[10px] px-1 py-0 border-primary/40 text-primary">
-                {manualEntryLabel}
-              </Badge>
+              <span
+                className="inline-flex items-center justify-center h-5 w-5 rounded-full border border-primary/40 text-primary bg-primary/10"
+                title={manualEntryLabel}
+                aria-label={manualEntryLabel}
+              >
+                <UserPlus className="h-3 w-3" />
+              </span>
             )}
             {effectiveLocked && <Lock className="h-3.5 w-3.5 text-amber-400" />}
             <Badge 
