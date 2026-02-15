@@ -59,7 +59,7 @@ describe('contentTranslations', () => {
     const missing = isTranslationMissingOrUntranslated(
       [
         { language: 'en', title: 'Privacy Policy', content: 'English content' },
-        { language: 'de', title: 'Datenschutzerklaerung', content: 'English content' },
+        { language: 'de', title: 'Datenschutzerklärung', content: 'English content' },
       ],
       'de',
     );
@@ -71,8 +71,8 @@ describe('contentTranslations', () => {
     const missing = isTranslationMissingOrUntranslated(
       [
         { language: 'en', title: 'Privacy Policy', content: 'English content' },
-        { language: 'fr', title: 'Politique de confidentialite', content: 'Contenu francais' },
-        { language: 'de', title: 'Datenschutzerklaerung', content: 'Deutscher Inhalt' },
+        { language: 'fr', title: 'Politique de confidentialité', content: 'Contenu français' },
+        { language: 'de', title: 'Datenschutzerklärung', content: 'Deutscher Inhalt' },
       ],
       'de',
     );

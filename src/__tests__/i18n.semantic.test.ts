@@ -114,11 +114,11 @@ describe('semantic i18n', () => {
       key: 'polls.mutations.publish_success',
       language: 'it',
       translations: asTranslations({
-        hooks_useGuildPolls_publish_success: 'Umfrage veroffentlicht (legacy)',
+        hooks_useGuildPolls_publish_success: 'Umfrage veröffentlicht (legacy)',
       }),
     });
 
-    expect(value).toBe('Umfrage veroffentlicht (legacy)');
+    expect(value).toBe('Umfrage veröffentlicht (legacy)');
   });
 
   it('keeps poll editor compatibility with legacy auto keys', () => {

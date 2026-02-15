@@ -5,7 +5,7 @@ import { MemberWish, ValidationStatus } from '@/types/guild';
 
 const filenameSuffixByLanguage: Partial<Record<Language, string>> = {
   en: 'wishes',
-  fr: 'voeux',
+  fr: 'vœux',
   de: 'wuensche',
   es: 'deseos',
   'pt-BR': 'desejos',

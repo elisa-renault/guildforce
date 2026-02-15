@@ -24,9 +24,11 @@
     "task:guard": "node scripts/tasks/check-index-size.mjs",
     "i18n:auto-audit": "node scripts/i18n/audit-auto-keys.mjs",
     "i18n:check:encoding": "node scripts/i18n/check-mojibake.mjs",
+    "i18n:check:diacritics": "node scripts/i18n/check-i18n-diacritics.mjs",
+    "i18n:check:fr": "npm run i18n:check:diacritics",
     "i18n:check": "node scripts/i18n/check-health.mjs",
     "i18n:check:strict": "node scripts/i18n/check-health.mjs --strict",
-    "verify:quick": "npm run task:guard && npm run lint:changed && npm run i18n:check:encoding && npm run i18n:check:strict && npm run test -- src/__tests__/i18n.semantic.test.ts src/__tests__/i18n.config.test.ts src/__tests__/i18n.translations.test.ts src/__tests__/i18n.de.smoke.test.tsx"
+    "verify:quick": "npm run task:guard && npm run lint:changed && npm run i18n:check:encoding && npm run i18n:check:diacritics && npm run i18n:check:strict && npm run test -- src/__tests__/i18n.semantic.test.ts src/__tests__/i18n.config.test.ts src/__tests__/i18n.translations.test.ts src/__tests__/i18n.de.smoke.test.tsx"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

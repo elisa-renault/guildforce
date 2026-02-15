@@ -1214,7 +1214,7 @@ export const translationsFr: Translations = {
       pages_GuildPolls_211: 'Aucun sondage clôturé',
       pages_GuildPolls_89: 'Sondage dupliqué en brouillon',
       pages_Overview_243: 'Mode lecture admin',
-      pages_Overview_more_wishes: '+{{count}} autres voeux',
+      pages_Overview_more_wishes: '+{{count}} autres vœux',
       pages_PublicProfile_131: 'Membre depuis',
       pages_RosterWishes_636: 'Mode lecture admin',
       components_AvatarCropDialog_crop_preview_alt: 'Aperçu du recadrage',
