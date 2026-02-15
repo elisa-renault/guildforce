@@ -21,7 +21,7 @@ Audit snapshot (repository state reviewed on 2026-02-03):
 - `src/contexts`: `AuthContext`, `LanguageContext`
 - `src/hooks`: data hooks (`useGuildPermissions`, `useGuildPolls`, `useNotifications`, etc.)
 - `src/integrations/supabase`: typed Supabase client and generated DB types
-- `src/i18n`: bilingual FR/EN translation sources
+- `src/i18n`: translation sources
 - `src/routes.tsx`: canonical route map and breadcrumbs
 
 ### Backend structure
@@ -116,7 +116,8 @@ Note: a legacy `characters` table still exists in migrations; avoid adding new p
 - `src/components/admin/AdminDocumentation.tsx` is the canonical product documentation UI in-app.
 - This component is presentation-only (no business logic).
 - Any major feature or policy change must add/update a documented subsection.
-- Keep entries bilingual by always filling both FR and EN content/title fields.
+- Keep entries multilingual by always filling all languages content/title fields.
+- Make sure every language has their specific characters, be it accents "ê",  or special letters, "ç", etc.
 - Use searchable tags (`auth`, `battlenet`, `wishes`, `polls`, `forum`, `security`, etc.).
 
 ## Workflow Orchestration
