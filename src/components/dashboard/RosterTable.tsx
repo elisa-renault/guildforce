@@ -186,7 +186,7 @@ export const RosterTable = ({
     setValidatingWish(null);
   };
 
-  const renderWishCell = (memberId: string, wishes: WishChoice[], choiceIndex: number) => {
+  const renderWishCell = (memberId: string, wishes: WishChoice[], choiceIndex: number, isExternal = false) => {
     const wish = wishes.find(w => w.choice_index === choiceIndex);
     
     // Empty state matching editor structure
@@ -245,7 +245,7 @@ export const RosterTable = ({
             status={validationStatus}
             validatedBy={wish.validated_by_username}
             validatedAt={wish.validated_at}
-            isGM={isGM}
+            isGM={isGM && !isExternal}
             onValidate={(status) => handleValidation(memberId, choiceIndex, status)}
             loading={isValidating}
             compact
@@ -350,7 +350,7 @@ export const RosterTable = ({
 
   if (members.length === 0) {
     return (
-      <GlowCard className="overflow-hidden" hoverable={false}>
+      <GlowCard className="overflow-hidden">
         <div className="text-center py-16 text-muted-foreground">{t.dashboard.noData}</div>
       </GlowCard>
     );
@@ -364,6 +364,7 @@ export const RosterTable = ({
           const isOwnRow = member.id === currentUserId;
 
           const handleCardClick = () => {
+            if (member.isExternal) return;
             if (regionSlug && serverSlug && guildSlug) {
               navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/member/${member.id}`);
             }
@@ -401,7 +402,7 @@ export const RosterTable = ({
   }
   // Desktop view - table layout
   return (
-    <GlowCard className="overflow-hidden" hoverable={false}>
+    <GlowCard className="overflow-hidden">
       <div className="overflow-x-auto">
         <Table className="table-fixed">
           <TableHeader>
@@ -437,7 +438,7 @@ export const RosterTable = ({
                   loading: deletingMemberId === member.id,
                   disabled: false,
                 }] : []),
-                ...(isGM && onToggleMemberLock ? [{
+                ...(isGM && onToggleMemberLock && !member.isExternal ? [{
                   key: 'lock',
                   label: memberLocked ? t.wishes.unlockMember : t.wishes.lockMember,
                   icon: memberLocked ? Unlock : Lock,
@@ -464,6 +465,7 @@ export const RosterTable = ({
               const handleRowClick = () => {
                 // Navigate to member wishes page (read-only view) for all members
                 if (!isEditing && regionSlug && serverSlug && guildSlug) {
+                  if (member.isExternal) return;
                   navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/member/${member.id}`);
                 }
               };
@@ -552,13 +554,13 @@ export const RosterTable = ({
                       <span className="text-sm text-muted-foreground">{member.wishes.filter(w => w.class_id).length}</span>
                     </TableCell>
                     <TableCell className="py-2 px-2 md:px-3">
-                      {isEditing ? renderEditWishCell(0, editWishes.length > 1) : renderWishCell(member.id, member.wishes, 1)}
+                      {isEditing ? renderEditWishCell(0, editWishes.length > 1) : renderWishCell(member.id, member.wishes, 1, !!member.isExternal)}
                     </TableCell>
                     <TableCell className="py-2 px-2 md:px-3">
-                      {isEditing ? renderEditWishCell(1, editWishes.length > 1) : renderWishCell(member.id, member.wishes, 2)}
+                      {isEditing ? renderEditWishCell(1, editWishes.length > 1) : renderWishCell(member.id, member.wishes, 2, !!member.isExternal)}
                     </TableCell>
                     <TableCell className="py-2 px-2 md:px-3">
-                      {isEditing ? renderEditWishCell(2, editWishes.length > 1) : renderWishCell(member.id, member.wishes, 3)}
+                      {isEditing ? renderEditWishCell(2, editWishes.length > 1) : renderWishCell(member.id, member.wishes, 3, !!member.isExternal)}
                     </TableCell>
                     <TableCell className="py-1 pl-0 pr-1">
                       <div className="flex justify-end gap-1">
