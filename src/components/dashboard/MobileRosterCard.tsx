@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { CosmicButton } from '@/components/CosmicButton';
-import { CheckCircle, HelpCircle, XCircle, Pencil, Shield, Heart, Sword, Swords, Crosshair, MessageSquare, Lock, Unlock, MoreVertical, Loader2 } from 'lucide-react';
+import { CheckCircle, HelpCircle, XCircle, Pencil, Shield, Heart, Sword, Swords, Crosshair, MessageSquare, Lock, Unlock, MoreVertical, Loader2, Trash2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getClassById, getLocalizedClassName, getSpecById } from '@/data/wowClasses';
 import { MemberWish, WishChoice, ValidationStatus } from '@/types/guild';
@@ -23,6 +23,8 @@ interface MobileRosterCardProps {
   onClick: () => void;
   onToggleMemberLock?: (memberId: string, locked: boolean) => void;
   lockingMemberId?: string | null;
+  onRemoveMember?: (memberId: string) => void;
+  deletingMemberId?: string | null;
 }
 
 const roleConfig: Record<string, { icon: typeof Shield; color: string }> = {
@@ -41,6 +43,8 @@ export const MobileRosterCard = ({
   onClick,
   onToggleMemberLock,
   lockingMemberId = null,
+  onRemoveMember,
+  deletingMemberId = null,
 }: MobileRosterCardProps) => {
   const { t, language } = useLanguage();
 
@@ -92,6 +96,14 @@ export const MobileRosterCard = ({
   const memberLocked = Boolean(member.wishes_locked);
   const effectiveLocked = isRosterLocked || memberLocked;
   const actionItems = [
+    ...(isGM && onRemoveMember && !isOwnRow ? [{
+      key: 'delete',
+      label: t.common.delete,
+      icon: Trash2,
+      onClick: () => onRemoveMember(member.id),
+      loading: deletingMemberId === member.id,
+      disabled: false,
+    }] : []),
     ...(isGM && onToggleMemberLock ? [{
       key: 'lock',
       label: memberLocked ? t.wishes.unlockMember : t.wishes.lockMember,

@@ -1971,6 +1971,10 @@ export type Database = {
         Args: { new_id: string; old_id: string }
         Returns: undefined
       }
+      remove_guild_member_with_wishes: {
+        Args: { p_guild_id: string; p_member_id: string }
+        Returns: undefined
+      }
       set_member_wishes_locked: {
         Args: { p_guild_id: string; p_member_id: string; p_locked: boolean }
         Returns: undefined
