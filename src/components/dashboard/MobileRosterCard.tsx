@@ -84,7 +84,7 @@ export const MobileRosterCard = ({
           status={validationStatus}
           validatedBy={wish.validated_by_username}
           validatedAt={wish.validated_at}
-          isGM={isGM}
+          isGM={isGM && !member.isExternal}
           onValidate={(status) => onValidateWish?.(member.id, wish.choice_index, status)}
           compact
         />
@@ -104,7 +104,7 @@ export const MobileRosterCard = ({
       loading: deletingMemberId === member.id,
       disabled: false,
     }] : []),
-    ...(isGM && onToggleMemberLock ? [{
+    ...(isGM && onToggleMemberLock && !member.isExternal ? [{
       key: 'lock',
       label: memberLocked ? t.wishes.unlockMember : t.wishes.lockMember,
       icon: memberLocked ? Unlock : Lock,

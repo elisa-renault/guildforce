@@ -209,8 +209,8 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Wish model',
         titleFr: 'Modèle de vœux',
-        contentEn: '`class_wishes` stores ordered class choices per roster (`choice_index`, `class_id`, `spec_ids`, `spec_order`, comments). `spec_order` keeps the per-wish spec priority (index 1 = main). Members can define up to 13 class wishes, mirroring the WoW class set.',
-        contentFr: '`class_wishes` stocke les choix de classes ordonnés par roster (`choice_index`, `class_id`, `spec_ids`, `spec_order`, commentaires). `spec_order` conserve la priorité des spécialisations par vœu (index 1 = main). Les membres peuvent définir jusqu\'à 13 vœux de classes, alignés sur l\'ensemble des classes WoW.',
+        contentEn: '`class_wishes` stores ordered class choices per roster (`choice_index`, `class_id`, `spec_ids`, `spec_order`, comments). `spec_order` keeps the per-wish spec priority (index 1 = main). Members can define up to 13 class wishes, mirroring the WoW class set. For guild members not yet on Guildforce, `external_member_wishes` stores manual entries linked to `guild_roster_cache` and auto-transfers them to `class_wishes` once character matching resolves.',
+        contentFr: '`class_wishes` stocke les choix de classes ordonnés par roster (`choice_index`, `class_id`, `spec_ids`, `spec_order`, commentaires). `spec_order` conserve la priorité des spécialisations par vœu (index 1 = main). Les membres peuvent définir jusqu\'à 13 vœux de classes, alignés sur l\'ensemble des classes WoW. Pour les membres de guilde non encore inscrits sur Guildforce, `external_member_wishes` stocke les entrées manuelles liées à `guild_roster_cache` puis les transfère automatiquement vers `class_wishes` dès que le matching personnage/utilisateur est résolu.',
         tags: ['wishes', 'classes'],
       },
       {
@@ -230,8 +230,8 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Wish locking and deadlines',
         titleFr: 'Verrouillage des vœux et deadlines',
-        contentEn: 'Roster locks use `rosters.wishes_locked` with optional scheduling via `wishes_lock_at`. Member overrides live in `guild_members.wishes_locked`. RLS enforcement relies on `can_edit_wishes()`, while admin RPCs `lock_roster_wishes`, `unlock_roster_wishes`, `schedule_roster_wishes_lock`, `set_member_wishes_locked`, and `remove_guild_member_with_wishes` power manual controls. Scheduled locks run via `apply_scheduled_wish_locks()`.',
-        contentFr: 'Les verrous roster utilisent `rosters.wishes_locked` avec planification via `wishes_lock_at`. Les verrous membres sont stockés dans `guild_members.wishes_locked`. La RLS s\'appuie sur `can_edit_wishes()` et les RPCs `lock_roster_wishes`, `unlock_roster_wishes`, `schedule_roster_wishes_lock`, `set_member_wishes_locked` et `remove_guild_member_with_wishes` pour les actions manuelles. Les verrous programmés passent par `apply_scheduled_wish_locks()`.',
+        contentEn: 'Roster locks use `rosters.wishes_locked` with optional scheduling via `wishes_lock_at`. Member overrides live in `guild_members.wishes_locked`. RLS enforcement relies on `can_edit_wishes()`, while admin RPCs `lock_roster_wishes`, `unlock_roster_wishes`, `schedule_roster_wishes_lock`, `set_member_wishes_locked`, `remove_guild_member_with_wishes`, `upsert_external_member_wish`, and `delete_external_member_wish` power manual controls. Scheduled locks run via `apply_scheduled_wish_locks()`.',
+        contentFr: 'Les verrous roster utilisent `rosters.wishes_locked` avec planification via `wishes_lock_at`. Les verrous membres sont stockés dans `guild_members.wishes_locked`. La RLS s\'appuie sur `can_edit_wishes()` et les RPCs `lock_roster_wishes`, `unlock_roster_wishes`, `schedule_roster_wishes_lock`, `set_member_wishes_locked`, `remove_guild_member_with_wishes`, `upsert_external_member_wish` et `delete_external_member_wish` pour les actions manuelles. Les verrous programmés passent par `apply_scheduled_wish_locks()`.',
         tags: ['wishes', 'rosters', 'security', 'scheduling'],
       },
     ],
@@ -403,8 +403,8 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Feature tables',
         titleFr: 'Tables de fonctionnalités',
-        contentEn: '- Roster/wishes: `rosters` (wishes_locked, wishes_lock_at), `roster_access_rules`, `class_wishes`\n- Permissions/activity: `guild_permissions`, `guild_activity_logs`\n- Polls: `guild_polls`, `guild_poll_sections`, `guild_poll_questions`, `guild_poll_responses`, `poll_respondent_rules`, `poll_results_access_rules`\n- Composition metadata: `raid_effects`, `wow_spells`',
-        contentFr: '- Rosters/vœux : `rosters` (wishes_locked, wishes_lock_at), `roster_access_rules`, `class_wishes`\n- Permissions/activité : `guild_permissions`, `guild_activity_logs`\n- Sondages : `guild_polls`, `guild_poll_sections`, `guild_poll_questions`, `guild_poll_responses`, `poll_respondent_rules`, `poll_results_access_rules`\n- Métadonnées de composition : `raid_effects`, `wow_spells`',
+        contentEn: '- Roster/wishes: `rosters` (wishes_locked, wishes_lock_at), `roster_access_rules`, `class_wishes`, `external_member_wishes`\n- Permissions/activity: `guild_permissions`, `guild_activity_logs`\n- Polls: `guild_polls`, `guild_poll_sections`, `guild_poll_questions`, `guild_poll_responses`, `poll_respondent_rules`, `poll_results_access_rules`\n- Composition metadata: `raid_effects`, `wow_spells`',
+        contentFr: '- Rosters/vœux : `rosters` (wishes_locked, wishes_lock_at), `roster_access_rules`, `class_wishes`, `external_member_wishes`\n- Permissions/activité : `guild_permissions`, `guild_activity_logs`\n- Sondages : `guild_polls`, `guild_poll_sections`, `guild_poll_questions`, `guild_poll_responses`, `poll_respondent_rules`, `poll_results_access_rules`\n- Métadonnées de composition : `raid_effects`, `wow_spells`',
         tags: ['database', 'features'],
       },
       {

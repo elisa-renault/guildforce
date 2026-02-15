@@ -20,7 +20,7 @@ import { GuildSubNav } from '@/components/guild';
 import { RosterFilters, RosterTable, RosterAnalytics } from '@/components/dashboard';
 import { RosterSelector, RosterEditDialog } from '@/components/roster';
 import { MemberWish, WishData, RosterFilters as RosterFiltersType, ValidationStatus } from '@/types/guild';
-import { Loader2, Sparkles, Settings, TableIcon, BarChart3, Download, Eye, Lock, Unlock, Clock } from 'lucide-react';
+import { Loader2, Sparkles, Settings, TableIcon, BarChart3, Download, Eye, Lock, Unlock, Clock, UserPlus } from 'lucide-react';
 import { exportWishesToCSV } from '@/lib/exportWishes';
 import { getGuildWishesPath } from '@/lib/guildSlug';
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
@@ -44,6 +44,53 @@ interface RosterData {
   wishes_locked?: boolean | null;
   wishes_lock_at?: string | null;
 }
+
+interface ExternalRosterCandidate {
+  id: string;
+  character_name: string;
+  character_realm: string;
+}
+
+interface ExternalWishRow {
+  id: string;
+  roster_cache_id: string;
+  class_id: string;
+  spec_ids: string[];
+  spec_order: string[];
+  comment: string | null;
+  validation_status: ValidationStatus;
+  validated_by: string | null;
+  validated_at: string | null;
+}
+
+const FR_REALM_DISPLAY_MAP: Record<string, string> = {
+  archimonde: 'Archimonde',
+  'les-clairvoyants': 'Les Clairvoyants',
+  'les clairvoyants': 'Les Clairvoyants',
+  'marecage-de-zangar': 'Marécage de Zangar',
+  'marecage de zangar': 'Marécage de Zangar',
+};
+
+const formatRealmDisplayName = (raw?: string | null) => {
+  if (!raw) return '';
+  const trimmed = raw.trim();
+  if (!trimmed) return '';
+
+  const key = trimmed
+    .toLowerCase()
+    .replace(/_/g, ' ')
+    .replace(/-/g, ' ')
+    .replace(/\s+/g, ' ');
+  if (FR_REALM_DISPLAY_MAP[key]) return FR_REALM_DISPLAY_MAP[key];
+
+  const slugKey = key.replace(/\s+/g, '-');
+  if (FR_REALM_DISPLAY_MAP[slugKey]) return FR_REALM_DISPLAY_MAP[slugKey];
+
+  return key
+    .split(' ')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+};
 
 const RosterWishes = () => {
   const navigate = useNavigate();
@@ -94,6 +141,12 @@ const RosterWishes = () => {
   const [lockingRoster, setLockingRoster] = useState(false);
   const [schedulingLock, setSchedulingLock] = useState(false);
   const [lockingMemberId, setLockingMemberId] = useState<string | null>(null);
+  const [externalCandidates, setExternalCandidates] = useState<ExternalRosterCandidate[]>([]);
+  const [externalDialogOpen, setExternalDialogOpen] = useState(false);
+  const [externalCandidateId, setExternalCandidateId] = useState('');
+  const [externalClassId, setExternalClassId] = useState('');
+  const [externalComment, setExternalComment] = useState('');
+  const [savingExternalWish, setSavingExternalWish] = useState(false);
 
   const isMobile = useIsMobile();
 
@@ -301,56 +354,112 @@ const RosterWishes = () => {
       .select('user_id, status, wishes_locked')
       .eq('guild_id', guildId);
 
-    if (membersData) {
-      const userIds = membersData.map(m => m.user_id);
+    const safeMembers = membersData || [];
+    const userIds = safeMembers.map(m => m.user_id);
 
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, username, main_character_name')
-        .in('id', userIds);
+    const { data: profiles } = userIds.length > 0
+      ? await supabase
+          .from('profiles')
+          .select('id, username, main_character_name')
+          .in('id', userIds)
+      : { data: [] };
 
-      // Filter wishes by selected roster
-      const { data: wishesData } = await supabase
-        .from('class_wishes')
-        .select('user_id, choice_index, class_id, spec_ids, spec_order, comment, validation_status, validated_by, validated_at')
-        .eq('guild_id', guildId)
-        .eq('roster_id', selectedRosterId);
+    // Filter wishes by selected roster
+    const { data: wishesData } = await supabase
+      .from('class_wishes')
+      .select('user_id, choice_index, class_id, spec_ids, spec_order, comment, validation_status, validated_by, validated_at')
+      .eq('guild_id', guildId)
+      .eq('roster_id', selectedRosterId);
 
-      // Fetch validator profiles if there are any
-      const validatorIds = [...new Set(wishesData?.filter(w => w.validated_by).map(w => w.validated_by) || [])];
-      const { data: validatorProfiles } = validatorIds.length > 0
-        ? await supabase.from('profiles').select('id, username').in('id', validatorIds)
-        : { data: [] };
+    // External wishes and candidate pool (members in roster cache not yet linked to a Guildforce account)
+    const { data: externalWishesData } = await supabase
+      .from('external_member_wishes')
+      .select('id, roster_cache_id, class_id, spec_ids, spec_order, comment, validation_status, validated_by, validated_at')
+      .eq('guild_id', guildId)
+      .eq('roster_id', selectedRosterId);
 
-      const profilesById = new Map((profiles || []).map((p) => [p.id, p]));
+    const { data: rosterCacheData } = await supabase
+      .from('guild_roster_cache')
+      .select('id, character_name, character_realm, matched_user_id')
+      .eq('guild_id', guildId);
 
-      // Keep only members that still have an active profile.
-      // This avoids showing stale lines for accounts that were removed.
-      const mergedMembers: MemberWish[] = membersData.flatMap(m => {
-        const profile = profilesById.get(m.user_id);
-        if (!profile) return [];
-        const memberWishes = wishesData?.filter(w => w.user_id === m.user_id).map(w => ({
-          choice_index: w.choice_index,
-          class_id: w.class_id,
-          spec_ids: resolveSpecOrder(w.spec_ids || [], w.spec_order),
-          comment: w.comment,
-          validation_status: (w.validation_status || 'pending') as ValidationStatus,
-          validated_by: w.validated_by,
-          validated_at: w.validated_at,
-          validated_by_username: validatorProfiles?.find(p => p.id === w.validated_by)?.username || null,
-        })) || [];
-        return {
-          id: m.user_id,
-          username: profile?.username || 'Unknown',
-          mainCharacterName: getMainCharacterName(profile?.main_character_name),
-          status: m.status,
-          wishes_locked: m.wishes_locked,
-          wishes: memberWishes.sort((a, b) => a.choice_index - b.choice_index),
-        };
+    // Fetch validator profiles if there are any
+    const validatorIds = [
+      ...new Set([
+        ...(wishesData?.filter(w => w.validated_by).map(w => w.validated_by) || []),
+        ...(externalWishesData?.filter(w => w.validated_by).map(w => w.validated_by) || []),
+      ]),
+    ];
+    const { data: validatorProfiles } = validatorIds.length > 0
+      ? await supabase.from('profiles').select('id, username').in('id', validatorIds)
+      : { data: [] };
+
+    const profilesById = new Map((profiles || []).map((p) => [p.id, p]));
+    const validatorById = new Map((validatorProfiles || []).map((p) => [p.id, p.username]));
+
+    // Keep only members that still have an active profile.
+    // This avoids showing stale lines for accounts that were removed.
+    const mergedMembers: MemberWish[] = safeMembers.flatMap(m => {
+      const profile = profilesById.get(m.user_id);
+      if (!profile) return [];
+      const memberWishes = wishesData?.filter(w => w.user_id === m.user_id).map(w => ({
+        choice_index: w.choice_index,
+        class_id: w.class_id,
+        spec_ids: resolveSpecOrder(w.spec_ids || [], w.spec_order),
+        comment: w.comment,
+        validation_status: (w.validation_status || 'pending') as ValidationStatus,
+        validated_by: w.validated_by,
+        validated_at: w.validated_at,
+        validated_by_username: w.validated_by ? validatorById.get(w.validated_by) || null : null,
+      })) || [];
+      return {
+        id: m.user_id,
+        username: profile?.username || 'Unknown',
+        mainCharacterName: getMainCharacterName(profile?.main_character_name),
+        status: m.status,
+        wishes_locked: m.wishes_locked,
+        wishes: memberWishes.sort((a, b) => a.choice_index - b.choice_index),
+      };
+    });
+
+    const externalByCache = new Map((externalWishesData || []).map((w) => [w.roster_cache_id, w as ExternalWishRow]));
+    const externalMembers: MemberWish[] = (rosterCacheData || [])
+      .filter((row) => !row.matched_user_id)
+      .flatMap((row) => {
+        const ext = externalByCache.get(row.id);
+        if (!ext) return [];
+        return [{
+          id: `external:${ext.id}`,
+          username: row.character_name,
+          mainCharacterName: formatRealmDisplayName(row.character_realm),
+          status: 'potential',
+          wishes_locked: false,
+          isExternal: true,
+          externalWishId: ext.id,
+          rosterCacheId: row.id,
+          wishes: [{
+            choice_index: 1,
+            class_id: ext.class_id,
+            spec_ids: resolveSpecOrder(ext.spec_ids || [], ext.spec_order),
+            comment: ext.comment,
+            validation_status: (ext.validation_status || 'approved') as ValidationStatus,
+            validated_by: ext.validated_by,
+            validated_at: ext.validated_at,
+            validated_by_username: ext.validated_by ? validatorById.get(ext.validated_by) || null : null,
+          }],
+        }];
       });
 
-      setMembers(mergedMembers);
-    }
+    setMembers([...mergedMembers, ...externalMembers]);
+
+    const candidates: ExternalRosterCandidate[] = (rosterCacheData || [])
+      .filter((row) => !row.matched_user_id)
+      .map((row) => ({
+        id: row.id,
+        character_name: row.character_name,
+        character_realm: formatRealmDisplayName(row.character_realm),
+      }));
+    setExternalCandidates(candidates);
   };
 
   useEffect(() => {
@@ -498,22 +607,66 @@ const RosterWishes = () => {
     }
   };
 
+  const resetExternalForm = () => {
+    setExternalCandidateId('');
+    setExternalClassId('');
+    setExternalComment('');
+  };
+
+  const handleSaveExternalWish = async () => {
+    if (!guildId || !selectedRosterId || !canManageWishes) return;
+    if (!externalCandidateId || !externalClassId) return;
+
+    setSavingExternalWish(true);
+    try {
+      const { error } = await supabase.rpc('upsert_external_member_wish', {
+        p_roster_id: selectedRosterId,
+        p_roster_cache_id: externalCandidateId,
+        p_class_id: externalClassId,
+        p_spec_ids: [],
+        p_comment: externalComment.trim() || null,
+      });
+      if (error) throw error;
+
+      toast({
+        title: language === 'fr'
+          ? 'Voeu externe enregistre'
+          : 'External wish saved',
+      });
+      setExternalDialogOpen(false);
+      resetExternalForm();
+      await fetchWishes();
+    } catch (error: any) {
+      toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
+    } finally {
+      setSavingExternalWish(false);
+    }
+  };
+
   const handleRemoveMember = async (memberId: string) => {
     if (!guildId || !canManageWishes || memberId === user?.id) return;
     const member = members.find((m) => m.id === memberId);
     if (!member) return;
 
-    const confirmMessage = language === 'fr'
-      ? `Supprimer ${member.username} de la guilde et effacer ses voeux ?`
-      : `Remove ${member.username} from the guild and delete their wishes?`;
+    const confirmMessage = member.isExternal
+      ? (language === 'fr'
+        ? `Supprimer la ligne externe de ${member.username} ?`
+        : `Remove external row for ${member.username}?`)
+      : (language === 'fr'
+        ? `Supprimer ${member.username} de la guilde et effacer ses voeux ?`
+        : `Remove ${member.username} from the guild and delete their wishes?`);
     if (!window.confirm(confirmMessage)) return;
 
     setDeletingMemberId(memberId);
     try {
-      const { error } = await supabase.rpc('remove_guild_member_with_wishes', {
-        p_guild_id: guildId,
-        p_member_id: memberId,
-      });
+      const { error } = member.isExternal && member.externalWishId
+        ? await supabase.rpc('delete_external_member_wish', {
+            p_external_wish_id: member.externalWishId,
+          })
+        : await supabase.rpc('remove_guild_member_with_wishes', {
+            p_guild_id: guildId,
+            p_member_id: memberId,
+          });
       if (error) throw error;
       toast({
         title: language === 'fr'
@@ -899,6 +1052,19 @@ const RosterWishes = () => {
             {canManageWishes && !isAdminReadOnly && selectedRosterId && (
               <CosmicButton
                 size="sm"
+                variant="outline"
+                onClick={() => setExternalDialogOpen(true)}
+                icon={<UserPlus className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />}
+                className="h-7 w-7 md:h-8 md:w-auto p-0 md:px-3"
+              >
+                <span className="hidden md:inline">
+                  {language === 'fr' ? 'Ajouter externe' : 'Add external'}
+                </span>
+              </CosmicButton>
+            )}
+            {canManageWishes && !isAdminReadOnly && selectedRosterId && (
+              <CosmicButton
+                size="sm"
                 variant={rosterLockState.isLocked ? "default" : "outline"}
                 onClick={() => setLockDialogOpen(true)}
                 icon={<Lock className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />}
@@ -999,6 +1165,88 @@ const RosterWishes = () => {
           </TabsContent>
         </Tabs>
       </main>
+
+      {selectedRosterId && (
+        <Dialog
+          open={externalDialogOpen}
+          onOpenChange={(open) => {
+            setExternalDialogOpen(open);
+            if (!open) resetExternalForm();
+          }}
+        >
+          <DialogContent className="bg-card border-border max-w-md">
+            <DialogHeader>
+              <DialogTitle>{language === 'fr' ? 'Ajouter un membre externe' : 'Add external member'}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm text-muted-foreground">
+                  {language === 'fr' ? 'Membre de guilde (non inscrit)' : 'Guild member (not registered)'}
+                </label>
+                <select
+                  className="w-full h-9 rounded-md border border-border bg-background px-3 text-sm"
+                  value={externalCandidateId}
+                  onChange={(e) => setExternalCandidateId(e.target.value)}
+                >
+                  <option value="">
+                    {language === 'fr' ? 'Selectionner un membre' : 'Select a member'}
+                  </option>
+                  {externalCandidates.map((candidate) => (
+                    <option key={candidate.id} value={candidate.id}>
+                      {candidate.character_name} - {candidate.character_realm}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm text-muted-foreground">
+                  {language === 'fr' ? 'Premier voeu (classe)' : 'First wish (class)'}
+                </label>
+                <select
+                  className="w-full h-9 rounded-md border border-border bg-background px-3 text-sm"
+                  value={externalClassId}
+                  onChange={(e) => setExternalClassId(e.target.value)}
+                >
+                  <option value="">
+                    {language === 'fr' ? 'Selectionner une classe' : 'Select a class'}
+                  </option>
+                  {wowClasses.map((cls) => (
+                    <option key={cls.id} value={cls.id}>
+                      {getLocalizedClassName(cls.id, language)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm text-muted-foreground">
+                  {language === 'fr' ? 'Commentaire (optionnel)' : 'Comment (optional)'}
+                </label>
+                <Input
+                  value={externalComment}
+                  onChange={(e) => setExternalComment(e.target.value)}
+                  placeholder={language === 'fr' ? 'Ex: recrute pour heal' : 'E.g. recruited for healer role'}
+                />
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <CosmicButton size="sm" variant="outline" onClick={() => setExternalDialogOpen(false)}>
+                  {t.common.cancel}
+                </CosmicButton>
+                <CosmicButton
+                  size="sm"
+                  onClick={handleSaveExternalWish}
+                  loading={savingExternalWish}
+                  disabled={!externalCandidateId || !externalClassId}
+                >
+                  {language === 'fr' ? 'Enregistrer' : 'Save'}
+                </CosmicButton>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {selectedRosterId && (
         <Dialog open={lockDialogOpen} onOpenChange={setLockDialogOpen}>

@@ -269,6 +269,96 @@ export type Database = {
           },
         ]
       }
+      external_member_wishes: {
+        Row: {
+          choice_index: number
+          class_id: string
+          comment: string | null
+          created_at: string
+          created_by: string | null
+          guild_id: string
+          id: string
+          roster_cache_id: string
+          roster_id: string
+          spec_ids: string[]
+          spec_order: string[]
+          updated_at: string
+          validated_at: string | null
+          validated_by: string | null
+          validation_status: string
+        }
+        Insert: {
+          choice_index?: number
+          class_id: string
+          comment?: string | null
+          created_at?: string
+          created_by?: string | null
+          guild_id: string
+          id?: string
+          roster_cache_id: string
+          roster_id: string
+          spec_ids?: string[]
+          spec_order?: string[]
+          updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
+          validation_status?: string
+        }
+        Update: {
+          choice_index?: number
+          class_id?: string
+          comment?: string | null
+          created_at?: string
+          created_by?: string | null
+          guild_id?: string
+          id?: string
+          roster_cache_id?: string
+          roster_id?: string
+          spec_ids?: string[]
+          spec_order?: string[]
+          updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
+          validation_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "external_member_wishes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "external_member_wishes_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "external_member_wishes_roster_cache_id_fkey"
+            columns: ["roster_cache_id"]
+            isOneToOne: false
+            referencedRelation: "guild_roster_cache"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "external_member_wishes_roster_id_fkey"
+            columns: ["roster_id"]
+            isOneToOne: false
+            referencedRelation: "rosters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "external_member_wishes_validated_by_fkey"
+            columns: ["validated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forum_categories: {
         Row: {
           color: string | null
@@ -1948,6 +2038,10 @@ export type Database = {
           table_name: string
         }[]
       }
+      delete_external_member_wish: {
+        Args: { p_external_wish_id: string }
+        Returns: undefined
+      }
       lock_roster_wishes: {
         Args: { p_roster_id: string }
         Returns: undefined
@@ -1996,6 +2090,16 @@ export type Database = {
         Returns: boolean
       }
       try_fix_mojibake: { Args: { input: string }; Returns: string }
+      upsert_external_member_wish: {
+        Args: {
+          p_class_id: string
+          p_comment?: string | null
+          p_roster_cache_id: string
+          p_roster_id: string
+          p_spec_ids?: string[]
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

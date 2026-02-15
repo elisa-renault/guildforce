@@ -26,6 +26,9 @@ export interface MemberWish {
   status: 'confirmed' | 'potential' | string;
   wishes: WishChoice[];
   wishes_locked?: boolean;
+  isExternal?: boolean;
+  externalWishId?: string | null;
+  rosterCacheId?: string | null;
 }
 
 /**

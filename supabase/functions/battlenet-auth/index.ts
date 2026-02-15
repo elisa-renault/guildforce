@@ -3257,6 +3257,49 @@ async function fetchAndStoreCharacters(
         }
 
         if (!matched) {
+          // Fallback: some cached rows may have an incorrect realm slug fallback
+          // but still expose the realm name. Re-match by character_name + normalized realm name
+          // and fix character_realm_slug while linking.
+          const normalizedExpectedRealm = toRealmSlug(rawRealmSlug);
+          if (normalizedExpectedRealm) {
+            const { data: realmNameRows, error: realmNameError } = await supabase
+              .from('guild_roster_cache')
+              .select('id, character_realm, character_realm_slug')
+              .ilike('character_name', rawName);
+
+            if (!realmNameError && realmNameRows && realmNameRows.length > 0) {
+              const matchingIds = realmNameRows
+                .filter((row: any) => {
+                  const realmFromName = toRealmSlug((row?.character_realm || '').trim());
+                  const realmFromSlug = toRealmSlug((row?.character_realm_slug || '').trim());
+                  return realmFromName === normalizedExpectedRealm || realmFromSlug === normalizedExpectedRealm;
+                })
+                .map((row: any) => row.id)
+                .filter(Boolean);
+
+              if (matchingIds.length > 0) {
+                const { data: fallbackMatchedRows, error: fallbackUpdateError } = await supabase
+                  .from('guild_roster_cache')
+                  .update({
+                    matched_user_id: userId,
+                    matched_character_id: char.id,
+                    character_realm_slug: rawRealmSlug,
+                  })
+                  .in('id', matchingIds)
+                  .select('id');
+
+                if (!fallbackUpdateError && fallbackMatchedRows && fallbackMatchedRows.length > 0) {
+                  matched = true;
+                  log.info(
+                    `Realm-name fallback re-match succeeded for ${sanitizePII(char.name, 'name')} on ${sanitizePII(rawRealmSlug, 'name')} (${fallbackMatchedRows.length} row(s))`
+                  );
+                }
+              }
+            }
+          }
+        }
+
+        if (!matched) {
           log.info(
             `No guild_roster_cache rows matched for character ${sanitizePII(char.name, 'name')} (${sanitizePII(char.realm_slug, 'name')})`
           );
