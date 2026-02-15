@@ -47,6 +47,7 @@ export const MobileRosterCard = ({
   deletingMemberId = null,
 }: MobileRosterCardProps) => {
   const { t, language } = useLanguage();
+  const manualEntryLabel = language === 'fr' ? 'Ajout manuel' : 'Manual entry';
 
   const renderWishBadge = (wish: WishChoice) => {
     const cls = getClassById(wish.class_id);
@@ -147,6 +148,11 @@ export const MobileRosterCard = ({
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-2">
             <span className="font-medium text-foreground">{member.username}</span>
+            {member.isExternal && (
+              <Badge variant="outline" className="text-[10px] px-1 py-0 border-primary/40 text-primary">
+                {manualEntryLabel}
+              </Badge>
+            )}
             {effectiveLocked && <Lock className="h-3.5 w-3.5 text-amber-400" />}
             <Badge 
               variant={member.status === 'confirmed' ? 'default' : 'outline'}
