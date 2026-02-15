@@ -163,7 +163,7 @@ type ValidationFilter = 'all' | 'pending' | 'approved' | 'rejected';
 
 export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   const { t, language } = useLanguage();
-  const [maxWishIndex, setMaxWishIndex] = useState<number>(1);
+  const [maxWishIndex, setMaxWishIndex] = useState<number>(13);
   const [hoveredClass, setHoveredClass] = useState<string | null>(null);
   const [commitmentFilter, setCommitmentFilter] = useState<CommitmentFilter>('confirmed');
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
