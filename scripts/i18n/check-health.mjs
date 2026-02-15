@@ -262,7 +262,7 @@ const deCriticalDictionaryExpectations = {
   'admin.userManagement': 'Benutzerverwaltung',
   'notifications.title': 'Benachrichtigungen',
   'patchnotes.changelog': 'Änderungsprotokoll',
-  'legal.privacyPolicy': 'Datenschutzerklaerung',
+  'legal.privacyPolicy': 'Datenschutzerklärung',
   'cookies.manageCookies': 'Cookie-Einstellungen',
 };
 
