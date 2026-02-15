@@ -17,15 +17,16 @@
     "e2e:snapshots:rolepack": "node scripts/e2e/rolepack.mjs",
     "lint:changed": "node scripts/ci/lint-changed.mjs",
     "ci:schema-triad": "node scripts/ci/check-schema-triad.mjs",
-    "verify:quick": "npm run task:guard && npm run lint:changed && npm run i18n:check:strict && npm run test -- src/__tests__/i18n.semantic.test.ts src/__tests__/i18n.config.test.ts src/__tests__/i18n.translations.test.ts src/__tests__/i18n.de.smoke.test.tsx",
     "verify:full": "npm run lint && npm run test && npm run build",
     "task:new": "node scripts/tasks/new.mjs",
     "task:close": "node scripts/tasks/close.mjs",
     "task:archive": "node scripts/tasks/archive.mjs",
     "task:guard": "node scripts/tasks/check-index-size.mjs",
     "i18n:auto-audit": "node scripts/i18n/audit-auto-keys.mjs",
+    "i18n:check:encoding": "node scripts/i18n/check-mojibake.mjs",
     "i18n:check": "node scripts/i18n/check-health.mjs",
-    "i18n:check:strict": "node scripts/i18n/check-health.mjs --strict"
+    "i18n:check:strict": "node scripts/i18n/check-health.mjs --strict",
+    "verify:quick": "npm run task:guard && npm run lint:changed && npm run i18n:check:encoding && npm run i18n:check:strict && npm run test -- src/__tests__/i18n.semantic.test.ts src/__tests__/i18n.config.test.ts src/__tests__/i18n.translations.test.ts src/__tests__/i18n.de.smoke.test.tsx"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
