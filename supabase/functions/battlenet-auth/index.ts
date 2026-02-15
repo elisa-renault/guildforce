@@ -2374,7 +2374,7 @@ async function storeFullRoster(
     // Prepare roster data
     const rosterData = rosterMembers.map((member: any) => {
       const charName = member.character?.name || 'Unknown';
-      const charRealm = member.character?.realm?.name || guildRealmSlug;
+      const charRealm = member.character?.realm?.name || member.character?.realm?.slug || guildRealmSlug;
       const charRealmSlug = member.character?.realm?.slug || guildRealmSlug;
       const charClassId = member.character?.playable_class?.id || 0;
       const charLevel = member.character?.level || 1;
@@ -2464,7 +2464,7 @@ async function storeFullRosterForGuild(
     // Prepare roster data
     const rosterData = rosterMembers.map((member: any) => {
       const charName = member.character?.name || 'Unknown';
-      const charRealm = member.character?.realm?.name || 'Unknown';
+      const charRealm = member.character?.realm?.name || member.character?.realm?.slug || 'unknown';
       const charRealmSlug = member.character?.realm?.slug || 'unknown';
       const charClassId = member.character?.playable_class?.id || 0;
       const charLevel = member.character?.level || 1;
@@ -3283,6 +3283,7 @@ async function fetchAndStoreCharacters(
                   .update({
                     matched_user_id: userId,
                     matched_character_id: char.id,
+                    character_realm: rawRealmSlug,
                     character_realm_slug: rawRealmSlug,
                   })
                   .in('id', matchingIds)

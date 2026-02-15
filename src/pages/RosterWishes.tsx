@@ -49,6 +49,7 @@ interface ExternalRosterCandidate {
   id: string;
   character_name: string;
   character_realm: string;
+  character_realm_slug: string;
 }
 
 interface ExternalWishRow {
@@ -65,26 +66,33 @@ interface ExternalWishRow {
 
 const FR_REALM_DISPLAY_MAP: Record<string, string> = {
   archimonde: 'Archimonde',
+  hyjal: 'Hyjal',
   'les-clairvoyants': 'Les Clairvoyants',
   'les clairvoyants': 'Les Clairvoyants',
   'marecage-de-zangar': 'Marécage de Zangar',
   'marecage de zangar': 'Marécage de Zangar',
 };
 
-const formatRealmDisplayName = (raw?: string | null) => {
-  if (!raw) return '';
-  const trimmed = raw.trim();
-  if (!trimmed) return '';
-
-  const key = trimmed
+const normalizeRealmKey = (value?: string | null) => {
+  if (!value) return '';
+  return value
+    .trim()
     .toLowerCase()
     .replace(/_/g, ' ')
     .replace(/-/g, ' ')
     .replace(/\s+/g, ' ');
+};
+
+const formatRealmDisplayName = (rawName?: string | null, rawSlug?: string | null) => {
+  const slugKey = normalizeRealmKey(rawSlug);
+  const nameKey = normalizeRealmKey(rawName);
+  const key = slugKey || nameKey;
+  if (!key) return '';
+
   if (FR_REALM_DISPLAY_MAP[key]) return FR_REALM_DISPLAY_MAP[key];
 
-  const slugKey = key.replace(/\s+/g, '-');
-  if (FR_REALM_DISPLAY_MAP[slugKey]) return FR_REALM_DISPLAY_MAP[slugKey];
+  const dashedKey = key.replace(/\s+/g, '-');
+  if (FR_REALM_DISPLAY_MAP[dashedKey]) return FR_REALM_DISPLAY_MAP[dashedKey];
 
   return key
     .split(' ')
@@ -380,7 +388,7 @@ const RosterWishes = () => {
 
     const { data: rosterCacheData } = await supabase
       .from('guild_roster_cache')
-      .select('id, character_name, character_realm, matched_user_id')
+      .select('id, character_name, character_realm, character_realm_slug, matched_user_id')
       .eq('guild_id', guildId);
 
     // Fetch validator profiles if there are any
@@ -431,7 +439,7 @@ const RosterWishes = () => {
         return [{
           id: `external:${ext.id}`,
           username: row.character_name,
-          mainCharacterName: formatRealmDisplayName(row.character_realm),
+          mainCharacterName: formatRealmDisplayName(row.character_realm, row.character_realm_slug),
           status: 'potential',
           wishes_locked: false,
           isExternal: true,
@@ -457,7 +465,8 @@ const RosterWishes = () => {
       .map((row) => ({
         id: row.id,
         character_name: row.character_name,
-        character_realm: formatRealmDisplayName(row.character_realm),
+        character_realm: formatRealmDisplayName(row.character_realm, row.character_realm_slug),
+        character_realm_slug: row.character_realm_slug || '',
       }));
     setExternalCandidates(candidates);
   };
