@@ -227,6 +227,102 @@ interface TokenResponse {
   refresh_token?: string; // Available when offline_access scope is requested
 }
 
+interface StoredBattleNetToken {
+  access_token: string;
+  refresh_token: string | null;
+  expires_at: string;
+  region: string | null;
+}
+
+async function refreshBattleNetAccessToken(refreshToken: string): Promise<TokenResponse | null> {
+  try {
+    const tokenResponse = await fetch(`${BATTLENET_OAUTH_URL}/token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Basic ${btoa(`${BATTLENET_CLIENT_ID}:${BATTLENET_CLIENT_SECRET}`)}`,
+      },
+      body: new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken,
+      }),
+    });
+
+    if (!tokenResponse.ok) {
+      const errorText = await tokenResponse.text().catch(() => '');
+      log.info(`Battle.net token refresh failed: ${tokenResponse.status} ${errorText.slice(0, 160)}`);
+      return null;
+    }
+
+    const tokenData: TokenResponse = await tokenResponse.json();
+    if (!tokenData?.access_token || !tokenData?.expires_in) {
+      log.error('Battle.net token refresh returned incomplete payload');
+      return null;
+    }
+
+    return tokenData;
+  } catch (error) {
+    log.error('Battle.net token refresh request failed:', error);
+    return null;
+  }
+}
+
+async function getUsableBattleNetTokenForUser(
+  supabase: any,
+  userId: string
+): Promise<
+  | { ok: true; accessToken: string; region: BattleNetRegion }
+  | { ok: false; reason: 'missing' | 'expired' }
+> {
+  const { data: tokenData, error: tokenError } = await supabase
+    .from('battlenet_tokens')
+    .select('access_token, refresh_token, expires_at, region')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (tokenError || !tokenData) {
+    log.error('No Battle.net token found for user');
+    return { ok: false, reason: 'missing' };
+  }
+
+  const tokenRow = tokenData as StoredBattleNetToken;
+  const preferredRegion = getValidRegion(tokenRow.region ?? undefined);
+  const isExpired = new Date(tokenRow.expires_at).getTime() <= Date.now();
+
+  if (!isExpired) {
+    return { ok: true, accessToken: tokenRow.access_token, region: preferredRegion };
+  }
+
+  if (!tokenRow.refresh_token) {
+    log.info(`Battle.net token expired and no refresh token exists for user ${sanitizePII(userId, 'id')}`);
+    return { ok: false, reason: 'expired' };
+  }
+
+  log.info(`Battle.net token expired for user ${sanitizePII(userId, 'id')}, attempting refresh`);
+  const refreshedToken = await refreshBattleNetAccessToken(tokenRow.refresh_token);
+  if (!refreshedToken) {
+    return { ok: false, reason: 'expired' };
+  }
+
+  const refreshedExpiresAt = new Date(Date.now() + refreshedToken.expires_in * 1000).toISOString();
+  const nextRefreshToken = refreshedToken.refresh_token || tokenRow.refresh_token;
+
+  const { error: updateError } = await supabase
+    .from('battlenet_tokens')
+    .update({
+      access_token: refreshedToken.access_token,
+      refresh_token: nextRefreshToken,
+      expires_at: refreshedExpiresAt,
+    })
+    .eq('user_id', userId);
+
+  if (updateError) {
+    log.error('Failed to persist refreshed Battle.net token:', updateError);
+  }
+
+  return { ok: true, accessToken: refreshedToken.access_token, region: preferredRegion };
+}
+
 interface WowProfileFetchResult {
   success: boolean;
   profile?: WoWProfile;
@@ -1329,14 +1425,8 @@ Deno.serve(async (req) => {
       }
 
       try {
-        // Get stored Battle.net token
-        const { data: tokenData, error: tokenError } = await supabase
-          .from('battlenet_tokens')
-          .select('access_token, expires_at')
-          .eq('user_id', userId)
-          .maybeSingle();
-
-        if (tokenError || !tokenData) {
+        const usableToken = await getUsableBattleNetTokenForUser(supabase, userId);
+        if (!usableToken.ok && usableToken.reason === 'missing') {
           log.error('No Battle.net token found for user');
           return new Response(JSON.stringify({ error: 'No Battle.net account linked. Please connect your Battle.net account first.' }), {
             status: 400,
@@ -1344,8 +1434,7 @@ Deno.serve(async (req) => {
           });
         }
 
-        // Check if token is expired
-        if (new Date(tokenData.expires_at) < new Date()) {
+        if (!usableToken.ok && usableToken.reason === 'expired') {
           log.error('Battle.net token expired');
           return new Response(JSON.stringify({ error: 'Battle.net session expired. Please reconnect your Battle.net account.' }), {
             status: 401,
@@ -1353,18 +1442,19 @@ Deno.serve(async (req) => {
           });
         }
 
-        // Get user's region from battlenet_tokens (stored during OAuth callback)
-        const { data: tokenInfo } = await supabase
-          .from('battlenet_tokens')
-          .select('region')
-          .eq('user_id', userId)
-          .maybeSingle();
+        if (!usableToken.ok) {
+          log.error('Unexpected token state while resyncing');
+          return new Response(JSON.stringify({ error: 'Failed to sync characters' }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
 
-        const preferredRegion = getValidRegion(tokenInfo?.region);
+        const preferredRegion = usableToken.region;
         log.info(`Resync using preferred region: ${preferredRegion.toUpperCase()}`);
 
         // Re-fetch characters and guilds with multi-region fallback
-        const syncResult = await fetchAndStoreCharacters(supabase, tokenData.access_token, userId, preferredRegion);
+        const syncResult = await fetchAndStoreCharacters(supabase, usableToken.accessToken, userId, preferredRegion);
 
         if (!syncResult.success) {
           log.error(`Resync failed for user ${sanitizePII(userId, 'id')}: ${syncResult.error}`);
