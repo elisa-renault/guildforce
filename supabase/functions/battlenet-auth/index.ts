@@ -2507,12 +2507,20 @@ async function storeFullRoster(
     });
 
     const dedupedRosterData = dedupeRosterEntries(rosterData);
+    const incomingRosterKeys = new Set(
+      dedupedRosterData.map(row => buildCharacterKey(row.character_name, row.character_realm_slug))
+    );
 
-    // Delete old roster cache for this guild and insert new data
-    await supabase
+    // Load existing cache rows once so we can remove only stale members.
+    // This preserves stable row IDs for unchanged members and avoids cascading
+    // deletion of external_member_wishes on each roster refresh.
+    const { data: existingCacheRows, error: existingCacheError } = await supabase
       .from('guild_roster_cache')
-      .delete()
+      .select('id, character_name, character_realm_slug')
       .eq('guild_id', guildId);
+    if (existingCacheError) {
+      log.error('Failed to load existing guild_roster_cache rows:', existingCacheError);
+    }
 
     // Insert in batches of 100 to avoid payload limits
     const batchSize = 100;
@@ -2524,6 +2532,27 @@ async function storeFullRoster(
 
       if (insertError) {
         log.error(`Error inserting roster batch ${i / batchSize + 1}:`, insertError);
+      }
+    }
+
+    // Delete only stale cache rows (members no longer present in latest roster).
+    const staleRowIds = (existingCacheRows || [])
+      .filter((row: { id: string; character_name: string; character_realm_slug: string }) => {
+        const existingKey = buildCharacterKey(row.character_name, row.character_realm_slug);
+        return !incomingRosterKeys.has(existingKey);
+      })
+      .map((row: { id: string }) => row.id);
+
+    if (staleRowIds.length > 0) {
+      for (let i = 0; i < staleRowIds.length; i += batchSize) {
+        const idBatch = staleRowIds.slice(i, i + batchSize);
+        const { error: deleteError } = await supabase
+          .from('guild_roster_cache')
+          .delete()
+          .in('id', idBatch);
+        if (deleteError) {
+          log.error(`Error deleting stale roster batch ${i / batchSize + 1}:`, deleteError);
+        }
       }
     }
 
@@ -2597,12 +2626,17 @@ async function storeFullRosterForGuild(
     });
 
     const dedupedRosterData = dedupeRosterEntries(rosterData);
+    const incomingRosterKeys = new Set(
+      dedupedRosterData.map(row => buildCharacterKey(row.character_name, row.character_realm_slug))
+    );
 
-    // Delete old roster cache for this guild and insert new data
-    await supabase
+    const { data: existingCacheRows, error: existingCacheError } = await supabase
       .from('guild_roster_cache')
-      .delete()
+      .select('id, character_name, character_realm_slug')
       .eq('guild_id', guildId);
+    if (existingCacheError) {
+      log.error('Failed to load existing guild_roster_cache rows (scheduled sync):', existingCacheError);
+    }
 
     // Insert in batches of 100 to avoid payload limits
     const batchSize = 100;
@@ -2614,6 +2648,26 @@ async function storeFullRosterForGuild(
 
       if (insertError) {
         log.error(`Error inserting roster batch ${i / batchSize + 1}:`, insertError);
+      }
+    }
+
+    const staleRowIds = (existingCacheRows || [])
+      .filter((row: { id: string; character_name: string; character_realm_slug: string }) => {
+        const existingKey = buildCharacterKey(row.character_name, row.character_realm_slug);
+        return !incomingRosterKeys.has(existingKey);
+      })
+      .map((row: { id: string }) => row.id);
+
+    if (staleRowIds.length > 0) {
+      for (let i = 0; i < staleRowIds.length; i += batchSize) {
+        const idBatch = staleRowIds.slice(i, i + batchSize);
+        const { error: deleteError } = await supabase
+          .from('guild_roster_cache')
+          .delete()
+          .in('id', idBatch);
+        if (deleteError) {
+          log.error(`Error deleting stale roster batch ${i / batchSize + 1}:`, deleteError);
+        }
       }
     }
 
