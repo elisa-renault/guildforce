@@ -2921,21 +2921,46 @@ async function fetchAndStoreCharacters(
       return { success: true, detectedRegion: region };
     }
 
-    // Get the current main character before deletion to preserve user's choice
-    const { data: currentMain, error: mainError } = await supabase
-      .from('wow_characters')
-      .select('name, realm_slug')
-      .eq('user_id', userId)
-      .eq('is_main', true)
+    // Resolve previous main character key before deletion.
+    // Priority:
+    // 1) profiles.main_character_name (user-selected canonical value),
+    // 2) wow_characters where is_main=true (fallback).
+    const { data: profileMainRow } = await supabase
+      .from('profiles')
+      .select('main_character_name')
+      .eq('id', userId)
       .maybeSingle();
-    
-    if (mainError) {
-      log.info(`Note: No current main character found (new user or first sync)`);
+
+    let previousMainKey: string | null = null;
+    const profileMainCharacterName = typeof profileMainRow?.main_character_name === 'string'
+      ? profileMainRow.main_character_name.trim()
+      : '';
+
+    if (profileMainCharacterName) {
+      const separatorIndex = profileMainCharacterName.indexOf('-');
+      if (separatorIndex > 0 && separatorIndex < profileMainCharacterName.length - 1) {
+        const profileMainName = profileMainCharacterName.slice(0, separatorIndex);
+        const profileMainRealmSlug = profileMainCharacterName.slice(separatorIndex + 1);
+        previousMainKey = buildCharacterKey(profileMainName, profileMainRealmSlug);
+      }
     }
 
-    const previousMainKey = currentMain 
-      ? `${currentMain.name.toLowerCase()}-${currentMain.realm_slug.toLowerCase()}` 
-      : null;
+    if (!previousMainKey) {
+      const { data: currentMainRows, error: mainError } = await supabase
+        .from('wow_characters')
+        .select('name, realm_slug')
+        .eq('user_id', userId)
+        .eq('is_main', true);
+
+      if (mainError) {
+        log.info('Note: No current main character found (new user or first sync)');
+      } else if (currentMainRows && currentMainRows.length > 0) {
+        if (currentMainRows.length > 1) {
+          log.info(`Multiple main characters found for user ${sanitizePII(userId, 'id')}, using first row`);
+        }
+        previousMainKey = buildCharacterKey(currentMainRows[0].name, currentMainRows[0].realm_slug);
+      }
+    }
 
     if (previousMainKey) {
       log.debug(`Previous main character: ${previousMainKey}`);
@@ -2962,7 +2987,7 @@ async function fetchAndStoreCharacters(
 
     // Insert characters - preserve previous main if it exists, otherwise default to highest level
     const insertData = characters.map((char, index) => {
-      const charKey = `${char.name.toLowerCase()}-${char.realmSlug.toLowerCase()}`;
+      const charKey = buildCharacterKey(char.name, char.realmSlug);
       
       // Preserve previous main if it exists in the new character list
       const isMain = previousMainKey 
