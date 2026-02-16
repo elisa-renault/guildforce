@@ -121,12 +121,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        const profileData = await fetchProfile(session.user.id);
-
-        // Trigger background sync if user has Battle.net linked
-        if (profileData?.battlenet_id && session.access_token) {
-          triggerBattleNetSync(session.access_token);
-        }
+        await fetchProfile(session.user.id);
       } else {
         setProfile(null);
       }

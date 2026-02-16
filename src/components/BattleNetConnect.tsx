@@ -38,6 +38,11 @@ interface WoWCharacter {
   is_main: boolean;
 }
 
+type FunctionInvokeError = {
+  context?: Response;
+  message?: string;
+};
+
 export const BattleNetConnect: React.FC = () => {
   const { profile, session, refreshProfile } = useAuth();
   const { t } = useLanguage();
@@ -115,7 +120,7 @@ export const BattleNetConnect: React.FC = () => {
     }
   };
 
-  const handleConnect = async () => {
+  const handleConnect = async (regionOverride?: BattleNetRegion) => {
     if (!session?.access_token) {
       toast.error(t.errors.unauthorized);
       return;
@@ -123,13 +128,14 @@ export const BattleNetConnect: React.FC = () => {
 
     setIsLoading(true);
     try {
+      const region = regionOverride ?? selectedRegion;
       const state = generateOAuthState();
-      storeOAuthParams(state, selectedRegion);
+      storeOAuthParams(state, region);
 
       const redirectUri = getRedirectUri();
 
       const { data, error } = await supabase.functions.invoke('battlenet-auth/auth-url', {
-        body: { redirectUri, state, region: selectedRegion },
+        body: { redirectUri, state, region },
       });
 
       if (error) throw error;
@@ -275,7 +281,33 @@ export const BattleNetConnect: React.FC = () => {
       await Promise.all([fetchCharacters(), refreshProfile()]);
     } catch (error) {
       log.error('Error resyncing characters:', error);
-      toast.error(t.battlenet.resyncError);
+
+      const invokeError = error as FunctionInvokeError;
+      let backendError = '';
+      let backendErrorCode = '';
+
+      if (invokeError?.context) {
+        try {
+          const payload = await invokeError.context.clone().json() as { error?: string; errorCode?: string };
+          backendError = payload?.error || '';
+          backendErrorCode = payload?.errorCode || '';
+        } catch {
+          // Ignore non-JSON responses and keep generic fallback below.
+        }
+      }
+
+      const mustReconnect =
+        backendErrorCode === 'TOKEN_EXPIRED_NO_REFRESH' ||
+        backendError.toLowerCase().includes('cannot be refreshed');
+
+      if (mustReconnect) {
+        toast.error(t.battlenet.resyncTokenExpired);
+        await handleDisconnect();
+        await handleConnect(connectedRegion ?? selectedRegion);
+        return;
+      }
+
+      toast.error(backendError || t.battlenet.resyncError);
     } finally {
       setIsResyncing(false);
     }
