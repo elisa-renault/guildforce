@@ -272,7 +272,7 @@ async function getUsableBattleNetTokenForUser(
   userId: string
 ): Promise<
   | { ok: true; accessToken: string; region: BattleNetRegion }
-  | { ok: false; reason: 'missing' | 'expired' }
+  | { ok: false; reason: 'missing' | 'expired' | 'expired_no_refresh' }
 > {
   const { data: tokenData, error: tokenError } = await supabase
     .from('battlenet_tokens')
@@ -295,7 +295,7 @@ async function getUsableBattleNetTokenForUser(
 
   if (!tokenRow.refresh_token) {
     log.info(`Battle.net token expired and no refresh token exists for user ${sanitizePII(userId, 'id')}`);
-    return { ok: false, reason: 'expired' };
+    return { ok: false, reason: 'expired_no_refresh' };
   }
 
   log.info(`Battle.net token expired for user ${sanitizePII(userId, 'id')}, attempting refresh`);
@@ -906,6 +906,7 @@ Deno.serve(async (req) => {
       authUrl.searchParams.set('redirect_uri', redirectUri);
       authUrl.searchParams.set('response_type', 'code');
       authUrl.searchParams.set('scope', 'wow.profile openid offline_access');
+      authUrl.searchParams.set('prompt', 'consent');
       authUrl.searchParams.set('state', JSON.stringify({ state, mode, region }));
 
       log.debug(`Generated auth URL for redirect (region: ${region})`);
@@ -1436,7 +1437,21 @@ Deno.serve(async (req) => {
 
         if (!usableToken.ok && usableToken.reason === 'expired') {
           log.error('Battle.net token expired');
-          return new Response(JSON.stringify({ error: 'Battle.net session expired. Please reconnect your Battle.net account.' }), {
+          return new Response(JSON.stringify({ 
+            error: 'Battle.net session expired. Please reconnect your Battle.net account.',
+            errorCode: 'TOKEN_EXPIRED',
+          }), {
+            status: 401,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        if (!usableToken.ok && usableToken.reason === 'expired_no_refresh') {
+          log.error('Battle.net token expired and refresh token is missing');
+          return new Response(JSON.stringify({ 
+            error: 'Battle.net session expired and cannot be refreshed. Please reconnect your Battle.net account.',
+            errorCode: 'TOKEN_EXPIRED_NO_REFRESH',
+          }), {
             status: 401,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
