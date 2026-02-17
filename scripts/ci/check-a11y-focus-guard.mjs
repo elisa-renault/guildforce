@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import path from 'node:path';
 
 const SOURCE_FILE_RE = /^src\/(components|pages)\/.*\.(ts|tsx)$/i;
 const EXCLUDED_RE = /^src\/components\/ui\//i;
@@ -11,6 +12,22 @@ const readLines = (value) =>
     .filter(Boolean);
 
 const runGit = (args) => execFileSync('git', args, { encoding: 'utf8' }).trim();
+const isFullScan = process.argv.includes('--full');
+
+const walkFiles = (dir, out = []) => {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      walkFiles(fullPath, out);
+      continue;
+    }
+    const normalizedPath = fullPath.replace(/\\/g, '/');
+    if (!SOURCE_FILE_RE.test(normalizedPath)) continue;
+    if (EXCLUDED_RE.test(normalizedPath)) continue;
+    out.push(normalizedPath);
+  }
+  return out;
+};
 
 const getChangedFiles = () => {
   const tracked = readLines(runGit(['diff', '--name-only', '--diff-filter=ACMR', 'HEAD']));
@@ -33,29 +50,37 @@ const trackedSet = new Set(
   readLines(runGit(['diff', '--name-only', '--diff-filter=ACMR', 'HEAD'])),
 );
 
-const changedFiles = getChangedFiles()
-  .filter((filePath) => SOURCE_FILE_RE.test(filePath))
-  .filter((filePath) => !EXCLUDED_RE.test(filePath))
-  .filter((filePath) => fs.existsSync(filePath) && fs.statSync(filePath).isFile());
+const changedFiles = isFullScan
+  ? walkFiles('src')
+  : getChangedFiles()
+      .filter((filePath) => SOURCE_FILE_RE.test(filePath))
+      .filter((filePath) => !EXCLUDED_RE.test(filePath))
+      .filter((filePath) => fs.existsSync(filePath) && fs.statSync(filePath).isFile());
 
 if (changedFiles.length === 0) {
-  console.log('No changed component/page TSX files to check for focus visibility regressions.');
+  console.log(
+    isFullScan
+      ? 'No component/page TSX files to check for focus visibility regressions.'
+      : 'No changed component/page TSX files to check for focus visibility regressions.',
+  );
   process.exit(0);
 }
 
 const violations = [];
 
 for (const filePath of changedFiles) {
-  const addedLines = trackedSet.has(filePath)
-    ? getAddedLinesForTrackedFile(filePath)
-    : getAddedLinesForUntrackedFile(filePath);
+  const lines = isFullScan
+    ? fs.readFileSync(filePath, 'utf8').split(/\r?\n/)
+    : trackedSet.has(filePath)
+      ? getAddedLinesForTrackedFile(filePath)
+      : getAddedLinesForUntrackedFile(filePath);
 
-  addedLines.forEach((line, index) => {
+  lines.forEach((line, index) => {
     const hasFocusRingZero = /\bfocus(?::visible)?:ring-0\b/.test(line);
     if (hasFocusRingZero) {
       violations.push({
         filePath,
-        addedLineIndex: index + 1,
+        lineIndex: index + 1,
         reason: 'Do not suppress focus rings with focus:ring-0/focus-visible:ring-0.',
         line: line.trim(),
       });
@@ -67,7 +92,7 @@ for (const filePath of changedFiles) {
     if (hasFocusOutlineNone && !hasVisibleFallback) {
       violations.push({
         filePath,
-        addedLineIndex: index + 1,
+        lineIndex: index + 1,
         reason: 'focus:outline-none requires a matching focus-visible style in the same class string.',
         line: line.trim(),
       });
@@ -82,7 +107,8 @@ if (violations.length === 0) {
 
 console.error('\nA11y focus guard failed. Problematic focus styles detected:\n');
 for (const violation of violations) {
-  console.error(`- ${violation.filePath} (+line ${violation.addedLineIndex})`);
+  const linePrefix = isFullScan ? 'line' : '+line';
+  console.error(`- ${violation.filePath} (${linePrefix} ${violation.lineIndex})`);
   console.error(`  ${violation.reason}`);
   console.error(`  ${violation.line}`);
 }

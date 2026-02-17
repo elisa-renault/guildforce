@@ -31,7 +31,7 @@ import { formatDistanceFromNowLocalized } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
 import { formatRankLabel } from '@/lib/rankLabel';
-import { toneCalloutClass, toneTextClass } from '@/lib/design-tokens';
+import { toneCalloutClass, toneTextClass, wowClassColorValue } from '@/lib/design-tokens';
 
 interface RosterMember {
   id: string;
@@ -156,8 +156,7 @@ const GuildMembers = () => {
   const getClassColor = (battlenetClassId: number): string => {
     const classKey = BATTLENET_CLASS_MAP[battlenetClassId];
     if (!classKey) return 'hsl(var(--muted-foreground))';
-    const wowClass = wowClasses.find(c => c.id === classKey);
-    return wowClass?.color || 'hsl(var(--muted-foreground))';
+    return wowClassColorValue(classKey);
   };
 
   const getClassName = (battlenetClassId: number): string => {
@@ -610,7 +609,7 @@ const GuildMembers = () => {
                           "flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left",
                           isSelected ? "bg-primary/20" : "hover:bg-primary/10"
                         )}
-                        style={{ color: cls.color }}
+                        style={{ color: wowClassColorValue(cls.id) }}
                       >
                         {isSelected && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
                         <span>{getLocalizedClassName(cls.id, language)}</span>

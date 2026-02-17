@@ -1,7 +1,29 @@
 {
-  "generatedAt": "2026-02-17T14:49:55.093Z",
-  "documentedCount": 34,
-  "usedCount": 34,
+  "generatedAt": "2026-02-17T23:22:16.379Z",
+  "sharedThreshold": 5,
+  "documentedCount": 44,
+  "usedCount": 44,
   "coveragePct": 100,
-  "missingModules": []
+  "missingModules": [],
+  "scopeRules": {
+    "prefixes": [
+      "ui/",
+      "layout/"
+    ],
+    "alwaysInclude": [
+      "GlowCard",
+      "CosmicButton",
+      "CosmicBackground",
+      "guild/GuildSubNav",
+      "layout/PageContainer",
+      "layout/SectionHeader",
+      "roster/RosterSelector",
+      "BattleNetIcon",
+      "Breadcrumbs",
+      "CommitmentToggle"
+    ],
+    "topLevelSharedMinUsage": 5,
+    "sharedCandidateMinUsage": 2
+  },
+  "unscopedSharedCandidates": []
 }

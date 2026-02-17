@@ -100,13 +100,13 @@ export const GlobalNav = () => {
         <div className="flex items-center gap-2">
           <button 
             onClick={() => navigate('/')}
-            className="group inline-flex items-center gap-2 font-display text-lg text-foreground hover:text-primary-foreground hover:drop-shadow-[0_0_12px_hsl(292,63%,50%)] transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded px-1"
+            className="group inline-flex items-center gap-2 font-display text-lg text-foreground hover:text-primary-foreground hover:drop-shadow-[0_0_12px_hsl(var(--primary)/0.6)] transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded px-1"
             aria-label={sm('globalnav.home.aria_label')}
           >
             <img
               src="/logos/logo-white.svg"
               alt=""
-              className="h-5 w-5 transition-all duration-300 group-hover:drop-shadow-[0_0_12px_hsl(292,63%,50%)]"
+              className="h-5 w-5 transition-all duration-300 group-hover:drop-shadow-[0_0_12px_hsl(var(--primary)/0.6)]"
               aria-hidden="true"
             />
             Guildforce

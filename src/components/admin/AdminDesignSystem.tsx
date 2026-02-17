@@ -19,7 +19,9 @@ import {
 } from 'lucide-react';
 
 import { GlowCard } from '@/components/GlowCard';
+import { BattleNetIcon } from '@/components/BattleNetIcon';
 import { CosmicButton } from '@/components/CosmicButton';
+import { CosmicBackground } from '@/components/CosmicBackground';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { CommitmentToggle, type CommitmentStatus } from '@/components/CommitmentToggle';
 import { GuildSubNav } from '@/components/guild/GuildSubNav';
@@ -249,6 +251,7 @@ export const AdminDesignSystem = () => {
 
   return (
     <div className="space-y-6">
+      <CosmicBackground />
       <GlowCard className="p-4 md:p-6">
         <div className="flex flex-col gap-3">
           <Breadcrumb>
@@ -334,6 +337,12 @@ export const AdminDesignSystem = () => {
                   <Badge className="bg-dps/20 text-dps">DPS</Badge>
                   <Badge variant="outline">Alliance</Badge>
                   <Badge variant="outline">Horde</Badge>
+                </div>
+                <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                  <span className="inline-flex items-center gap-1.5"><BattleNetIcon className="h-4 w-4 text-primary" /> Battle.net</span>
+                  <span className="inline-flex items-center gap-1.5"><Shield className="h-4 w-4 text-tank" /> Tank marker</span>
+                  <span className="inline-flex items-center gap-1.5"><Sparkles className="h-4 w-4 text-healer" /> Healer marker</span>
+                  <span className="inline-flex items-center gap-1.5"><Users className="h-4 w-4 text-dps" /> DPS marker</span>
                 </div>
               </div>
               <DoDont
@@ -435,6 +444,9 @@ export const AdminDesignSystem = () => {
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground/80">
                     {t({ en: 'Coverage data can be refreshed with `npm run ds:audit:coverage`.', fr: 'La couverture peut être recalculée avec `npm run ds:audit:coverage`.' })}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground/80">
+                    {t({ en: 'Governance rule: review `unscopedSharedCandidates` in `tmp/design-system-coverage.json` and either document/factorize them, or explicitly keep them out of scope.', fr: 'Règle de gouvernance : vérifier les `unscopedSharedCandidates` dans `tmp/design-system-coverage.json`, puis soit les documenter/factoriser, soit confirmer explicitement leur exclusion du scope.' })}
                   </p>
                 </div>
               </div>
@@ -633,10 +645,10 @@ export const AdminDesignSystem = () => {
                   <Input id="event-date" type="datetime-local" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Role select</Label>
+                  <Label htmlFor="ds-role-select">Role select</Label>
                   <Select defaultValue="healer">
-                    <SelectTrigger>
-                      <SelectValue />
+                    <SelectTrigger id="ds-role-select" aria-label="Role select">
+                      <SelectValue placeholder="Select a role" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="tank">Tank</SelectItem>
@@ -883,8 +895,8 @@ export const AdminDesignSystem = () => {
                     <Toggle aria-label="Compact mode" variant="outline" size="sm">Compact mode</Toggle>
                   </div>
                   <div className="space-y-2">
-                    <Slider value={sliderValue} onValueChange={setSliderValue} max={100} step={5} />
-                    <Progress value={progressValue} />
+                    <Slider aria-label="Threshold slider" value={sliderValue} onValueChange={setSliderValue} max={100} step={5} />
+                    <Progress aria-label="Progress preview" value={progressValue} />
                     <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
                       <span>Threshold {sliderValue[0]}%</span>
                       <Button
@@ -1019,8 +1031,8 @@ export const AdminDesignSystem = () => {
                 </div>
                 <div className="grid gap-2 md:grid-cols-3">
                   <Input placeholder="Search players" />
-                  <Select defaultValue="all"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All roles</SelectItem><SelectItem value="healer">Healer</SelectItem></SelectContent></Select>
-                  <Select defaultValue="pending"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="pending">Pending</SelectItem><SelectItem value="approved">Approved</SelectItem></SelectContent></Select>
+                  <Select defaultValue="all"><SelectTrigger aria-label="Filter by role"><SelectValue placeholder="All roles" /></SelectTrigger><SelectContent><SelectItem value="all">All roles</SelectItem><SelectItem value="healer">Healer</SelectItem></SelectContent></Select>
+                  <Select defaultValue="pending"><SelectTrigger aria-label="Filter by status"><SelectValue placeholder="Pending" /></SelectTrigger><SelectContent><SelectItem value="pending">Pending</SelectItem><SelectItem value="approved">Approved</SelectItem></SelectContent></Select>
                 </div>
               </div>
             </GlowCard>

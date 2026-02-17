@@ -19,7 +19,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
           cancelButton: "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
           success: "group-[.toaster]:border-primary/30",
           error: "group-[.toaster]:border-destructive/30",
-          warning: "group-[.toaster]:border-yellow-500/30",
+          warning: "group-[.toaster]:border-status-warning/30",
           info: "group-[.toaster]:border-primary/30",
         },
       }}

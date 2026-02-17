@@ -93,62 +93,61 @@ export const CookieBanner: React.FC = () => {
   return (
     <>
       {/* Main Banner - sticky at bottom, stays above footer */}
-      <div
-        className={[
-          "fixed bottom-0 left-0 right-0 z-50 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]",
-          "bg-card/95 backdrop-blur-md border-t border-b border-border shadow-lg",
-          "transition-opacity duration-200",
-          bannerVisible ? "opacity-100" : "opacity-0 pointer-events-none",
-        ].join(" ")}
-        aria-hidden={!bannerVisible}
-      >
-        <div className="container mx-auto max-w-4xl">
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
-            <div className="flex items-start gap-3 flex-1">
-              <Cookie className="h-6 w-6 text-primary shrink-0 mt-0.5" />
-              <div className="space-y-1">
-                <p className="text-sm text-foreground font-medium">
-                  {t.cookies.title}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {t.cookies.description}{' '}
-                  <Link to="/privacy" className="text-foreground underline underline-offset-2 decoration-foreground/60 hover:decoration-foreground">
-                    {t.cookies.learnMore}
-                  </Link>
-                </p>
+      {bannerVisible ? (
+        <div
+          className={[
+            "fixed bottom-0 left-0 right-0 z-50 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]",
+            "bg-card/95 backdrop-blur-md border-t border-b border-border shadow-lg",
+          ].join(" ")}
+        >
+          <div className="container mx-auto max-w-4xl">
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+              <div className="flex items-start gap-3 flex-1">
+                <Cookie className="h-6 w-6 text-primary shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="text-sm text-foreground font-medium">
+                    {t.cookies.title}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {t.cookies.description}{' '}
+                    <Link to="/privacy" className="text-foreground underline underline-offset-2 decoration-foreground/60 hover:decoration-foreground">
+                      {t.cookies.learnMore}
+                    </Link>
+                  </p>
+                </div>
               </div>
-            </div>
 
-            <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowPreferences(true)}
-                className="flex-1 md:flex-none"
-              >
-                <Settings className="h-4 w-4 mr-1" />
-                {t.cookies.customize}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={rejectAll}
-                className="flex-1 md:flex-none"
-              >
-                {t.cookies.rejectAll}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={acceptAll}
-                className="flex-1 md:flex-none"
-              >
-                {t.cookies.acceptAll}
-              </Button>
+              <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowPreferences(true)}
+                  className="flex-1 md:flex-none"
+                >
+                  <Settings className="h-4 w-4 mr-1" />
+                  {t.cookies.customize}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={rejectAll}
+                  className="flex-1 md:flex-none"
+                >
+                  {t.cookies.rejectAll}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={acceptAll}
+                  className="flex-1 md:flex-none"
+                >
+                  {t.cookies.acceptAll}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      ) : null}
 
       {/* Preferences Dialog */}
       <Dialog open={showPreferences} onOpenChange={setShowPreferences}>
