@@ -361,8 +361,8 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'RLS-first policy model',
         titleFr: 'Modèle RLS-first',
-        contentEn: 'All business tables run with RLS enabled. Client code must rely on policies instead of bypass logic. Sensitive tables (especially `battlenet_tokens`) are locked down to self access or privileged backend contexts.',
-        contentFr: 'Toutes les tables métiers fonctionnent avec RLS activé. Le code client doit s\'appuyer sur les politiques au lieu de contourner la sécurité. Les tables sensibles (notamment `battlenet_tokens`) sont strictement limitées à l\'auto-accès ou aux contextes backend privilégiés.',
+        contentEn: 'All business tables run with RLS enabled. Client code must rely on policies instead of bypass logic. Sensitive tables (especially battlenet_tokens) are locked down to self access or privileged backend contexts. Guild deletion allows owner or app admin, and audit logging now safely skips inserts when cascading delete removes the parent guild row first.',
+        contentFr: 'Toutes les tables métiers fonctionnent avec RLS activé. Le code client doit s\'appuyer sur les politiques au lieu de contourner la sécurité. Les tables sensibles (notamment battlenet_tokens) sont strictement limitées à l\'auto-accès ou aux contextes backend privilégiés. La suppression de guilde autorise le propriétaire ou un admin applicatif, et le journal d\'activité ignore désormais proprement les insertions quand une suppression en cascade retire d\'abord la guilde parente.',
         tags: ['security', 'rls'],
       },
       {

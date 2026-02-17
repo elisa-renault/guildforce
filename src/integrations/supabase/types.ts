@@ -2058,7 +2058,7 @@ export type Database = {
           p_target_user_id?: string
           p_user_id: string
         }
-        Returns: string
+        Returns: string | null
       }
       schedule_roster_wishes_lock: {
         Args: { p_lock_at: string | null; p_roster_id: string }
