@@ -1,5 +1,6 @@
 import { LayoutDashboard, Users, Shield, FileText, Bug, Trash2, MessageSquare, Settings, BookOpen, ScrollText, Download } from 'lucide-react';
 import { useLayoutEffect, useState, RefObject } from 'react';
+import { Link } from 'react-router-dom';
 
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -57,6 +58,7 @@ export const AdminSettingsSidebar = ({
   const { language, t } = useLanguage();
   const isMobile = useIsMobile();
   const [tabsTop, setTabsTop] = useState<number>(64);
+  const designSystemLabel = language === 'fr' ? 'Design System global' : 'Global Design System';
   const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
     resolveSemanticMessage({ key, language, translations: t });
 
@@ -127,6 +129,13 @@ export const AdminSettingsSidebar = ({
                 </button>
               );
             })}
+            <Link
+              to="/admin/design-system"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted/50"
+            >
+              <BookOpen className="h-3.5 w-3.5" />
+              <span>{designSystemLabel}</span>
+            </Link>
           </div>
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
@@ -173,6 +182,15 @@ export const AdminSettingsSidebar = ({
             </div>
           );
         })}
+        <div className="pt-2 border-t border-border/40">
+          <Link
+            to="/admin/design-system"
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors text-left text-muted-foreground hover:text-foreground hover:bg-muted/50"
+          >
+            <BookOpen className="h-4 w-4 flex-shrink-0" />
+            <span>{designSystemLabel}</span>
+          </Link>
+        </div>
       </nav>
     </aside>
   );

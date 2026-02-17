@@ -43,6 +43,7 @@ const ForumNewTopic = lazy(() => import("./pages/ForumNewTopic"));
 const ForumTopic = lazy(() => import("./pages/ForumTopic"));
 const ForumAdmin = lazy(() => import("./pages/ForumAdmin"));
 const Admin = lazy(() => import("./pages/Admin"));
+const AdminDesignSystemPage = lazy(() => import("./pages/AdminDesignSystemPage"));
 const LegalPage = lazy(() => import("./pages/LegalPage"));
 const Changelog = lazy(() => import("./pages/Changelog"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -105,6 +106,12 @@ export const appRoutes: AppRoute[] = [
     requiresAuth: true,
     navLabel: "admin",
     showInNav: true,
+  },
+  {
+    path: "/admin/design-system",
+    element: <AdminDesignSystemPage />,
+    title: "admin",
+    requiresAuth: true,
   },
   {
     path: "/legal",
