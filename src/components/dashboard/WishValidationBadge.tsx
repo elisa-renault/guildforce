@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ValidationStatus } from '@/types/guild';
+import { toneTextClass } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 
 interface WishValidationBadgeProps {
@@ -31,23 +32,23 @@ export const WishValidationBadge = ({
   const statusConfig = {
     pending: {
       icon: Clock,
-      color: 'text-amber-400',
-      bgColor: 'bg-amber-400/10',
-      borderColor: 'border-amber-400/30',
+      color: toneTextClass('warning'),
+      bgColor: 'bg-status-warning/10',
+      borderColor: 'border-status-warning/30',
       label: t.wishes.validation.pending,
     },
     approved: {
       icon: CheckCircle2,
-      color: 'text-healer',
-      bgColor: 'bg-healer/15',
-      borderColor: 'border-healer/40',
+      color: 'text-status-success',
+      bgColor: 'bg-status-success/15',
+      borderColor: 'border-status-success/40',
       label: t.wishes.validation.approved,
     },
     rejected: {
       icon: XCircle,
-      color: 'text-destructive',
-      bgColor: 'bg-destructive/15',
-      borderColor: 'border-destructive/40',
+      color: 'text-status-error',
+      bgColor: 'bg-status-error/15',
+      borderColor: 'border-status-error/40',
       label: t.wishes.validation.rejected,
     },
   };
@@ -95,8 +96,8 @@ export const WishValidationBadge = ({
             className={cn(
               "h-5 w-5 p-0 rounded transition-colors",
               status === 'approved' 
-                ? "bg-healer/30 text-healer" 
-                : "hover:bg-healer/20 hover:text-healer text-muted-foreground"
+                ? "bg-status-success/30 text-status-success" 
+                : "hover:bg-status-success/20 hover:text-status-success text-muted-foreground"
             )}
             onClick={(e) => {
               e.stopPropagation();
@@ -116,8 +117,8 @@ export const WishValidationBadge = ({
             className={cn(
               "h-5 w-5 p-0 rounded transition-colors",
               status === 'rejected' 
-                ? "bg-destructive/30 text-destructive" 
-                : "hover:bg-destructive/20 hover:text-destructive text-muted-foreground"
+                ? "bg-status-error/30 text-status-error" 
+                : "hover:bg-status-error/20 hover:text-status-error text-muted-foreground"
             )}
             onClick={(e) => {
               e.stopPropagation();
@@ -135,7 +136,7 @@ export const WishValidationBadge = ({
             <Button
               variant="ghost"
               size="sm"
-              className="h-5 w-5 p-0 rounded hover:bg-amber-400/20 hover:text-amber-400 text-muted-foreground transition-colors"
+              className="h-5 w-5 p-0 rounded hover:bg-status-warning/20 hover:text-status-warning text-muted-foreground transition-colors"
               onClick={(e) => {
                 e.stopPropagation();
                 onValidate('pending');

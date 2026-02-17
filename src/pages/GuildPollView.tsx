@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { PollResponse, PollResults } from '@/components/polls';
 import { usePoll, usePollResults, usePollMutations } from '@/hooks/useGuildPolls';
 import { Loader2, BarChart3, ArrowLeft, Lock, Edit } from 'lucide-react';
@@ -34,6 +35,8 @@ const GuildPollView = () => {
   const { submitAllResponses, checkCanViewResults, saving } = usePollMutations();
   const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
     resolveSemanticMessage({ key, language, translations: t });
+  const getErrorMessage = (error: unknown) =>
+    error instanceof Error ? error.message : t.polls?.error || 'Error';
 
   const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
 
@@ -115,8 +118,8 @@ const GuildPollView = () => {
       setIsEditing(false);
       refetch();
       refetchResults();
-    } catch (error: any) {
-      toast({ title: t.polls?.error || 'Error', description: error.message, variant: 'destructive' });
+    } catch (error: unknown) {
+      toast({ title: t.polls?.error || 'Error', description: getErrorMessage(error), variant: 'destructive' });
     }
   };
 
@@ -143,7 +146,7 @@ const GuildPollView = () => {
     <div className="flex-1 relative pt-16">
       <CosmicBackground />
 
-      <div className="container mx-auto px-4 py-8 max-w-3xl relative z-10">
+      <PageContainer className="relative z-10 py-8 max-w-3xl" width="contained">
         {/* Header */}
         <div className="flex flex-col gap-4 mb-6">
           <div className="flex items-start gap-4">
@@ -251,7 +254,7 @@ const GuildPollView = () => {
             alreadyResponded={hasResponded}
           />
         )}
-      </div>
+      </PageContainer>
     </div>
   );
 };

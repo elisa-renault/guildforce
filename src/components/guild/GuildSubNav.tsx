@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { navItemClass } from '@/lib/nav-styles';
 import { LayoutDashboard, Table, BarChart3, Settings, ArrowLeft, Users } from 'lucide-react';
 
 interface GuildSubNavProps {
@@ -129,12 +131,12 @@ export const GuildSubNav = ({
 
   return (
     <div data-guild-subnav className="sticky z-40 bg-background/80 backdrop-blur-lg border-b border-border/50 w-full" style={{ top: subNavTop }}>
-      <div className="max-w-full overflow-hidden px-3 md:container md:mx-auto md:px-4">
+      <PageContainer className="max-w-full overflow-hidden px-3 md:px-4" width="wide">
         <div className="flex items-center gap-2 py-2">
           {/* Back button - uses browser history or fallback */}
           <button
             onClick={handleBack}
-            className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors shrink-0"
+            className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             title={t.common.back}
           >
             <ArrowLeft className="h-4 w-4 text-muted-foreground" />
@@ -166,12 +168,7 @@ export const GuildSubNav = ({
                 <button
                   key={tab.id}
                   onClick={() => navigate(tab.path)}
-                  className={cn(
-                    "flex items-center justify-center gap-1.5 p-2 md:px-3 md:py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap shrink-0",
-                    isActive
-                      ? "bg-primary/20 text-foreground ring-1 ring-primary/50"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                  )}
+                  className={cn(navItemClass({ active: isActive, size: 'guild' }), 'shrink-0')}
                   title={tab.label}
                 >
                   <Icon className="h-4 w-4" />
@@ -181,7 +178,7 @@ export const GuildSubNav = ({
             })}
           </nav>
         </div>
-      </div>
+      </PageContainer>
     </div>
   );
 };

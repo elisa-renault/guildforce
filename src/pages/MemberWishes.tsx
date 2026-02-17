@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Shield, Heart, Swords, Crosshair, CheckCircle, HelpCircle, XCircle, Pencil, ArrowLeft, Lock, Unlock } from 'lucide-react';
 import { CosmicButton } from '@/components/CosmicButton';
@@ -24,6 +25,7 @@ import { toast } from 'sonner';
 import { useBattletagVisibility } from '@/hooks/useBattletagVisibility';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { resolveSpecOrder } from '@/lib/wishOrder';
+import { toneBadgeClass, toneCalloutClass, toneTextClass } from '@/lib/design-tokens';
 
 interface WishChoice {
   choice_index: number;
@@ -62,6 +64,8 @@ const MemberWishes = () => {
   const [memberWishesLocked, setMemberWishesLocked] = useState(false);
   const [lockingMember, setLockingMember] = useState(false);
   const [validatingWish, setValidatingWish] = useState<number | null>(null);
+  const getErrorMessage = (error: unknown) =>
+    error instanceof Error ? error.message : t.errors.generic;
   
   // Use the centralized hook for BattleTag visibility
   // skipSelfCheck: true ensures user sees what OTHERS would see on their member page
@@ -244,8 +248,8 @@ const MemberWishes = () => {
       const nextLocked = !memberWishesLocked;
       setMemberWishesLocked(nextLocked);
       toast.success(nextLocked ? t.wishes.memberLockedToast : t.wishes.memberUnlockedToast);
-    } catch (error: any) {
-      toast.error(error?.message || t.errors.generic);
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error));
     } finally {
       setLockingMember(false);
     }
@@ -272,11 +276,11 @@ const MemberWishes = () => {
 
       {/* Header bar */}
       <div className="sticky top-14 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50">
-        <div className="container mx-auto px-3 md:px-4 py-3 flex items-center justify-between">
+        <PageContainer className="px-3 md:px-4 py-3 flex items-center justify-between" width="wide">
           <div className="flex items-center gap-2">
             <button
               onClick={handleBack}
-              className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
+              className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               title={t.common.back}
             >
               <ArrowLeft className="h-4 w-4 text-muted-foreground" />
@@ -300,7 +304,7 @@ const MemberWishes = () => {
                     ? 'bg-healer/20 text-healer border-healer/30' 
                     : member.status === 'withdrawn'
                     ? 'bg-destructive/20 text-destructive border-destructive/30'
-                    : 'bg-amber-500/20 text-amber-500 border-amber-500/30'
+                    : toneBadgeClass('warning')
                 )}
               >
                 {member.status === 'confirmed' ? (
@@ -316,7 +320,7 @@ const MemberWishes = () => {
             {memberWishesLocked && (
               <Badge
                 variant="outline"
-                className="text-xs px-2 py-1 bg-amber-500/10 text-amber-500 border-amber-500/30 flex items-center gap-1"
+                className={cn("text-xs px-2 py-1 flex items-center gap-1", toneBadgeClass('warning'))}
               >
                 <Lock className="h-3.5 w-3.5" strokeWidth={1.5} />
                 {t.wishes.lockedTitle}
@@ -347,10 +351,10 @@ const MemberWishes = () => {
               </CosmicButton>
             )}
           </div>
-        </div>
+        </PageContainer>
       </div>
 
-      <main className="container mx-auto px-3 md:px-4 py-4 relative z-10">
+      <PageContainer as="main" className="px-3 md:px-4 py-4 relative z-10" width="wide">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-display cosmic-text">
             {user?.id === memberId 
@@ -361,11 +365,11 @@ const MemberWishes = () => {
         </div>
 
         {memberWishesLocked && (
-          <div className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 flex items-start gap-2 text-amber-200">
-            <Lock className="h-4 w-4 mt-0.5 text-amber-400" />
+          <div className={cn("mb-4 rounded-lg border p-3 flex items-start gap-2", toneCalloutClass('warning'))}>
+            <Lock className={cn("h-4 w-4 mt-0.5", toneTextClass('warning'))} />
             <div className="text-sm">
               <div className="font-medium">{t.wishes.lockedTitle}</div>
-              <div className="text-amber-200/80">{t.wishes.lockedMemberDesc}</div>
+              <div className={cn("opacity-80", toneTextClass('warning'))}>{t.wishes.lockedMemberDesc}</div>
             </div>
           </div>
         )}
@@ -468,7 +472,7 @@ const MemberWishes = () => {
             })}
           </div>
         )}
-      </main>
+      </PageContainer>
     </div>
   );
 };

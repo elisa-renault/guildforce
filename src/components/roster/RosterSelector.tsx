@@ -1,6 +1,7 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Layers, Lock } from 'lucide-react';
+import { toneTextClass } from '@/lib/design-tokens';
 import { resolveWishLockState } from '@/lib/wishLock';
 
 interface Roster {
@@ -50,7 +51,7 @@ export const RosterSelector = ({
           <span className="text-xs text-muted-foreground flex-shrink-0">({t.rosters?.default || 'Default'})</span>
         )}
         {showWishesLockIndicator && selectedLockState?.isLocked && (
-          <Lock className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" />
+          <Lock className={`h-3.5 w-3.5 flex-shrink-0 ${toneTextClass('warning')}`} />
         )}
       </div>
     );
@@ -86,7 +87,7 @@ export const RosterSelector = ({
                     <Lock className="h-3.5 w-3.5 text-destructive flex-shrink-0" />
                   )}
                   {showWishesLockIndicator && lockState.isLocked && (
-                    <Lock className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" />
+                    <Lock className={`h-3.5 w-3.5 flex-shrink-0 ${toneTextClass('warning')}`} />
                   )}
                 </span>
               </SelectItem>
@@ -95,7 +96,7 @@ export const RosterSelector = ({
         </SelectContent>
       </Select>
       {showWishesLockIndicator && selectedLockState?.isLocked && (
-        <Lock className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" />
+        <Lock className={`h-3.5 w-3.5 flex-shrink-0 ${toneTextClass('warning')}`} />
       )}
     </div>
   );

@@ -172,7 +172,7 @@ export function DeletionRequestsManager() {
                   {s('admin.deletion.mark_processed')}
                 </Button>
               </div>
-              <p className="text-xs text-amber-500 mt-3">?? {s('admin.deletion.warning_irreversible')}</p>
+              <p className="text-xs text-status-warning mt-3">?? {s('admin.deletion.warning_irreversible')}</p>
             </GlowCard>
           ))}
         </div>
@@ -226,3 +226,4 @@ export function DeletionRequestsManager() {
     </div>
   );
 }
+

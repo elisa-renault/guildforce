@@ -1,4 +1,5 @@
 import { useLanguage } from '@/contexts/LanguageContext';
+import { toneBadgeClass } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { CheckCircle2, HelpCircle, XCircle, ChevronDown } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -23,8 +24,8 @@ const statusConfig = {
   },
   undecided: {
     icon: HelpCircle,
-    colorClass: 'bg-amber-500/20 border-amber-500/50 text-amber-500',
-    activeClass: 'bg-amber-500/20 text-amber-500',
+    colorClass: toneBadgeClass('warning'),
+    activeClass: 'bg-warning/20 text-warning',
   },
   withdrawn: {
     icon: XCircle,
@@ -69,7 +70,7 @@ export const CommitmentToggle = ({
         <PopoverTrigger asChild>
           <button
             className={cn(
-              "inline-flex items-center gap-1 text-[10px] md:text-xs px-1.5 py-0.5 rounded-md border cursor-pointer transition-colors hover:opacity-80 focus:outline-none focus:ring-0",
+              "inline-flex items-center gap-1 text-[10px] md:text-xs px-1.5 py-0.5 rounded-md border cursor-pointer transition-colors hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               config.colorClass,
               disabled && "opacity-60 cursor-not-allowed"
             )}
@@ -90,7 +91,7 @@ export const CommitmentToggle = ({
                   key={s}
                   onClick={() => { if (!disabled) { onChange(s); setOpen(false); } }}
                   className={cn(
-                    "w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-xs transition-colors text-left focus:outline-none focus:ring-0",
+                    "w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-xs transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                     isActive ? statusConfig[s].activeClass : "hover:bg-primary/10"
                   )}
                   disabled={disabled}
@@ -132,7 +133,7 @@ export const CommitmentToggle = ({
                   key={s}
                   onClick={() => { if (!disabled) { onChange(s); setOpen(false); } }}
                   className={cn(
-                    "w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-sm transition-colors text-left focus:outline-none focus:ring-0",
+                    "w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-sm transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                     isActive ? statusConfig[s].activeClass : "hover:bg-primary/10"
                   )}
                   disabled={disabled}
@@ -164,7 +165,7 @@ export const CommitmentToggle = ({
               onClick={() => { if (!disabled) onChange(s); }}
               className={cn(
                 "flex flex-col items-start gap-2 p-4 rounded-lg border transition-all duration-200 text-left outline-none",
-                "focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 isActive 
                   ? statusConfig[s].colorClass
                   : "bg-card/50 border-border/50 hover:border-border"

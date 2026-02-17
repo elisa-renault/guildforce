@@ -33,11 +33,11 @@ export function NotificationBell() {
   const getNotificationIcon = (type: ForumNotification['type']) => {
     switch (type) {
       case 'mention':
-        return <AtSign className="h-4 w-4 text-violet-400" />;
+        return <AtSign className="h-4 w-4 text-primary" />;
       case 'topic_reply':
-        return <MessageSquare className="h-4 w-4 text-blue-400" />;
+        return <MessageSquare className="h-4 w-4 text-info" />;
       case 'post_reply':
-        return <Reply className="h-4 w-4 text-green-400" />;
+        return <Reply className="h-4 w-4 text-healer" />;
     }
   };
 
@@ -189,3 +189,4 @@ export function NotificationBell() {
     </Popover>
   );
 }
+

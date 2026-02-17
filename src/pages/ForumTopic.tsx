@@ -9,6 +9,7 @@ import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { ForumPost, MarkdownEditor, ReactionPicker, UserRoleBadge, TopicSubscriptionButton, ReportDialog, UserContextMenu } from '@/components/forum';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { ForumPost as ForumPostType, ReactionType } from '@/types/forum';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -218,7 +219,7 @@ const ForumTopicPage = () => {
     <div className="flex-1 relative pt-16">
       <CosmicBackground />
 
-      <main className="container mx-auto px-4 py-8 relative z-10 max-w-5xl">
+      <PageContainer as="main" className="relative z-10 py-8" width="contained">
         {/* Breadcrumbs */}
         <Breadcrumbs 
           items={[
@@ -238,14 +239,14 @@ const ForumTopicPage = () => {
         <div className="flex items-start gap-3 mb-6">
           <button
             onClick={() => navigate(`/forum/category/${topic.category?.slug}`)}
-            className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors flex-shrink-0 mt-1"
+            className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors flex-shrink-0 mt-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <ChevronLeft className="h-4 w-4 text-muted-foreground" />
           </button>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               {topic.is_pinned && <Pin className="h-4 w-4 text-primary" />}
-              {topic.is_locked && <Lock className="h-4 w-4 text-amber-500" />}
+              {topic.is_locked && <Lock className="h-4 w-4 text-warning" />}
               <h1 className="font-display text-xl md:text-2xl text-foreground truncate">
                 {topic.title}
               </h1>
@@ -273,7 +274,7 @@ const ForumTopicPage = () => {
                   <Pin className={`h-4 w-4 ${topic.is_pinned ? 'text-primary' : ''}`} />
                 </Button>
                 <Button variant="outline" size="sm" onClick={handleToggleLock}>
-                  <Lock className={`h-4 w-4 ${topic.is_locked ? 'text-amber-500' : ''}`} />
+                  <Lock className={`h-4 w-4 ${topic.is_locked ? 'text-warning' : ''}`} />
                 </Button>
                 <Button 
                   variant="outline" 
@@ -503,12 +504,12 @@ const ForumTopicPage = () => {
         )}
 
         {topic.is_locked && (
-          <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 text-center">
+          <div className="p-4 rounded-lg bg-warning/10 border border-warning/30 text-warning text-center">
             <Lock className="h-5 w-5 inline-block mr-2" />
             {t.forum?.topicLocked}
           </div>
         )}
-      </main>
+      </PageContainer>
 
       {/* Delete confirmation */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

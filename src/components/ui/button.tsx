@@ -17,12 +17,15 @@ const buttonVariants = cva(
           // Ghost buttons are often used for icon-only actions; give them a visible base color.
           ghost: "text-foreground/90 hover:bg-accent/40 hover:text-foreground",
           link: "text-primary underline-offset-4 hover:underline",
+          cosmic: "primary-button text-white",
+          cosmicOutline: "glass-button text-foreground hover:-translate-y-0.5",
         },
       size: {
         default: "h-10 px-4 py-2",
         sm: "h-9 rounded-md px-3",
         lg: "h-11 rounded-md px-8",
         icon: "h-10 w-10",
+        none: "",
       },
     },
     defaultVariants: {

@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Shield, Crown, Loader2, Link as LinkIcon, Users, MapPin, Settings } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -253,7 +254,7 @@ const GuildList = () => {
     <div className="flex-1 relative pt-16">
       <CosmicBackground />
 
-      <main className="container mx-auto px-4 py-8 relative z-10">
+      <PageContainer as="main" className="relative z-10 py-8" width="wide">
         <h1 className="font-display text-3xl text-foreground mb-8 text-center">{t.common.myGuilds}</h1>
 
         {loading || isConnecting ? (
@@ -298,26 +299,34 @@ const GuildList = () => {
               guilds.map((guild) => (
                 <div 
                   key={guild.id}
-                  className={`grid grid-cols-[auto_1fr_auto] md:grid-cols-[auto_1fr_auto_auto] items-center gap-3 md:gap-6 px-4 py-3 rounded-lg border cursor-pointer transition-colors ${
+                  className={`grid grid-cols-[auto_1fr_auto] md:grid-cols-[auto_1fr_auto_auto] items-center gap-3 md:gap-6 px-4 py-3 rounded-lg border cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
                     guild.hasMain 
                       ? 'bg-primary/10 border-primary/30 hover:border-primary/50' 
                       : 'bg-card/50 border-border/50 hover:border-border hover:bg-card/80'
                   }`}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => navigate(getGuildPath(guild.region, guild.server, guild.name))}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      navigate(getGuildPath(guild.region, guild.server, guild.name));
+                    }
+                  }}
                 >
                   {/* Guild avatar or faction icon */}
                   <Avatar className={`h-10 w-10 flex-shrink-0 ${
                     !guild.avatar_url ? (guild.faction === 'horde' 
-                      ? 'bg-red-500/20' 
-                      : 'bg-blue-500/20') : ''
+                      ? 'bg-horde/20' 
+                      : 'bg-alliance/20') : ''
                   }`}>
                     {guild.avatar_url ? (
                       <AvatarImage src={guild.avatar_url} alt={guild.name} />
                     ) : (
                       <AvatarFallback className={`${
                         guild.faction === 'horde' 
-                          ? 'bg-red-500/20 text-red-400' 
-                          : 'bg-blue-500/20 text-blue-400'
+                          ? 'bg-horde/20 text-horde' 
+                          : 'bg-alliance/20 text-alliance'
                       }`}>
                         <Shield className="h-5 w-5" strokeWidth={1.5} />
                       </AvatarFallback>
@@ -363,12 +372,12 @@ const GuildList = () => {
                             e.stopPropagation();
                             navigate(getGuildSettingsPath(guild.region, guild.server, guild.name));
                           }}
-                          className="w-7 h-7 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
+                          className="w-7 h-7 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                           title={t.guildSettings.title}
                         >
                           <Settings className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
                         </button>
-                        <Crown className="h-4 w-4 text-amber-500" strokeWidth={1.5} />
+                        <Crown className="h-4 w-4 text-warning" strokeWidth={1.5} />
                       </>
                     )}
                   </div>
@@ -382,9 +391,10 @@ const GuildList = () => {
             )}
           </div>
         )}
-      </main>
+      </PageContainer>
     </div>
   );
 };
 
 export default GuildList;
+

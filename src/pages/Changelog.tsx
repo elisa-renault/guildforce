@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { selectContentTranslation } from '@/lib/contentTranslations';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollText, Calendar } from 'lucide-react';
@@ -54,7 +55,7 @@ export default function Changelog() {
     <div className="flex-1 relative pt-20 md:pt-24 pb-8">
       <CosmicBackground />
 
-      <div className="container max-w-3xl mx-auto px-4 relative z-10">
+      <PageContainer className="relative z-10 max-w-3xl" width="contained">
         {/* Header */}
         <div className="mb-8 text-center">
           <div className="flex items-center justify-center gap-3 mb-3">
@@ -170,7 +171,7 @@ export default function Changelog() {
             })}
           </div>
         )}
-      </div>
+      </PageContainer>
     </div>
   );
 }

@@ -21,8 +21,8 @@ describe('adminDashboardMetrics', () => {
   });
 
   it('returns semantic color classes for delta values', () => {
-    expect(getDeltaColorClass(3)).toBe('text-emerald-400');
-    expect(getDeltaColorClass(-1)).toBe('text-red-400');
+    expect(getDeltaColorClass(3)).toBe('text-status-success');
+    expect(getDeltaColorClass(-1)).toBe('text-status-error');
     expect(getDeltaColorClass(0)).toBe('text-muted-foreground');
     expect(getDeltaColorClass(null)).toBe('text-muted-foreground');
   });

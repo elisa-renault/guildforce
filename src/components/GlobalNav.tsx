@@ -3,12 +3,14 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 import { CosmicButton } from '@/components/CosmicButton';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { NotificationBell } from '@/components/forum/NotificationBell';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useIsAdmin } from '@/hooks/useAdmin';
 import { resolveSemanticMessage } from '@/i18n/semantic';
+import { navItemClass } from '@/lib/nav-styles';
 import { getRouteMeta } from '@/routes';
 
 export const GlobalNav = () => {
@@ -27,10 +29,6 @@ export const GlobalNav = () => {
   const isActive = (path: string) => location.pathname === path;
   const startsWithPath = (path: string) => location.pathname.startsWith(path);
 
-  const navButtonBase = "inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background";
-  const navButtonInactive = "text-muted-foreground hover:text-foreground hover:bg-accent/20";
-  const navButtonActive = "text-foreground bg-primary/20 ring-1 ring-primary/40";
-
   const handleNavigation = (path: string) => {
     navigate(path);
     setMobileMenuOpen(false);
@@ -40,11 +38,12 @@ export const GlobalNav = () => {
     <>
       <button
         onClick={() => handleNavigation('/guilds')}
-        className={`${navButtonBase} ${mobile ? 'w-full justify-start' : ''} ${
-          isActive('/guilds') || startsWithPath('/guild/')
-            ? navButtonActive
-            : navButtonInactive
-        }`}
+        className={navItemClass({
+          active: isActive('/guilds') || startsWithPath('/guild/'),
+          hover: 'accent',
+          fullWidth: mobile,
+          justifyStart: mobile,
+        })}
         aria-current={isActive('/guilds') || startsWithPath('/guild/') ? 'page' : undefined}
       >
         <Shield className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
@@ -52,11 +51,12 @@ export const GlobalNav = () => {
       </button>
       <button
         onClick={() => handleNavigation('/forum')}
-        className={`${navButtonBase} ${mobile ? 'w-full justify-start' : ''} ${
-          startsWithPath('/forum')
-            ? navButtonActive
-            : navButtonInactive
-        }`}
+        className={navItemClass({
+          active: startsWithPath('/forum'),
+          hover: 'accent',
+          fullWidth: mobile,
+          justifyStart: mobile,
+        })}
         aria-current={startsWithPath('/forum') ? 'page' : undefined}
       >
         <MessageSquare className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
@@ -64,11 +64,12 @@ export const GlobalNav = () => {
       </button>
       <button
         onClick={() => handleNavigation('/profile')}
-        className={`${navButtonBase} ${mobile ? 'w-full justify-start' : ''} ${
-          isActive('/profile')
-            ? navButtonActive
-            : navButtonInactive
-        }`}
+        className={navItemClass({
+          active: isActive('/profile'),
+          hover: 'accent',
+          fullWidth: mobile,
+          justifyStart: mobile,
+        })}
         aria-current={isActive('/profile') ? 'page' : undefined}
       >
         <User className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
@@ -77,11 +78,12 @@ export const GlobalNav = () => {
       {isAdmin && (
         <button
           onClick={() => handleNavigation('/admin')}
-          className={`${navButtonBase} ${mobile ? 'w-full justify-start' : ''} ${
-            isActive('/admin') || startsWithPath('/forum/admin')
-              ? navButtonActive
-              : navButtonInactive
-          }`}
+          className={navItemClass({
+            active: isActive('/admin') || startsWithPath('/forum/admin'),
+            hover: 'accent',
+            fullWidth: mobile,
+            justifyStart: mobile,
+          })}
           aria-current={isActive('/admin') ? 'page' : undefined}
         >
           <Crown className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
@@ -93,7 +95,7 @@ export const GlobalNav = () => {
 
   return (
     <header data-global-nav className="fixed top-0 left-0 right-0 z-50 glass-header h-16" role="banner">
-      <div className="container mx-auto px-4 h-full flex items-center justify-between">
+      <PageContainer className="h-full flex items-center justify-between" width="wide">
         {/* Left side - Logo */}
         <div className="flex items-center gap-2">
           <button 
@@ -128,7 +130,7 @@ export const GlobalNav = () => {
             <>
               <button 
                 onClick={signOut} 
-                className={`hidden sm:flex ${navButtonBase} ${navButtonInactive}`}
+                className={navItemClass({ hover: 'accent', className: 'hidden sm:flex' })}
                 aria-label={t.common.logout}
               >
                 <LogOut className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
@@ -139,7 +141,7 @@ export const GlobalNav = () => {
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>
                   <button 
-                    className={`md:hidden ${navButtonBase} ${navButtonInactive} p-2`}
+                    className={navItemClass({ hover: 'accent', className: 'md:hidden p-2' })}
                     aria-label={sm('globalnav.menu.aria_label')}
                   >
                     <Menu className="h-5 w-5" strokeWidth={1.5} />
@@ -159,7 +161,7 @@ export const GlobalNav = () => {
                           signOut();
                           setMobileMenuOpen(false);
                         }} 
-                        className={`w-full ${navButtonBase} ${navButtonInactive} justify-start`}
+                        className={navItemClass({ hover: 'accent', fullWidth: true, justifyStart: true })}
                       >
                         <LogOut className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
                         <span>{t.common.logout}</span>
@@ -178,7 +180,7 @@ export const GlobalNav = () => {
             </CosmicButton>
           )}
         </div>
-      </div>
+      </PageContainer>
     </header>
   );
 };

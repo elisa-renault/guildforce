@@ -500,8 +500,8 @@ export function GuildManager() {
 
   const getFactionColor = (faction: string) => {
     switch (faction.toLowerCase()) {
-      case 'alliance': return 'text-blue-400';
-      case 'horde': return 'text-red-400';
+      case 'alliance': return 'text-alliance';
+      case 'horde': return 'text-horde';
       default: return 'text-muted-foreground';
     }
   };
@@ -864,3 +864,4 @@ export function GuildManager() {
     </div>
   );
 }
+

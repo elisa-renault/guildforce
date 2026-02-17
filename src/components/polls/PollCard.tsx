@@ -9,6 +9,7 @@ import { BarChart3, Clock, Edit, Eye, Users, Lock, Trash2, Play, User, Settings,
 import type { GuildPoll } from '@/types/poll';
 import { EditActivePollDialog } from './EditActivePollDialog';
 import { formatDistanceFromNowLocalized } from '@/i18n/format';
+import { toneBadgeClass } from '@/lib/design-tokens';
 
 interface PollCardProps {
   poll: GuildPoll;
@@ -45,8 +46,8 @@ export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
 
   const statusColors = {
     draft: 'bg-muted text-muted-foreground',
-    active: 'bg-green-500/20 text-green-400 border-green-500/30',
-    closed: 'bg-red-500/20 text-red-400 border-red-500/30',
+    active: toneBadgeClass('success'),
+    closed: toneBadgeClass('error'),
   };
 
   const statusLabels = {
@@ -97,7 +98,7 @@ export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
             {statusLabels[poll.status]}
           </Badge>
           {poll.is_anonymous && (
-            <Badge variant="outline" className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+            <Badge variant="outline" className={toneBadgeClass('info')}>
               <Lock className="h-3 w-3 mr-1" />
               <span className="hidden sm:inline">{t.polls?.anonymous}</span>
             </Badge>
@@ -166,7 +167,7 @@ export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
                   <Button 
                     size="sm" 
                     onClick={() => onPublish?.(poll.id)}
-                    className="bg-green-600 hover:bg-green-700"
+                    className="bg-healer hover:bg-healer/80"
                   >
                     <Play className="h-4 w-4 sm:mr-1.5" />
                     <span className="hidden sm:inline">{t.common.publish}</span>
@@ -188,7 +189,7 @@ export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
                     size="sm" 
                     variant="outline"
                     onClick={() => onClose?.(poll.id)}
-                    className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+                    className="border-destructive/30 text-destructive hover:bg-destructive/10"
                   >
                     <Lock className="h-4 w-4 sm:mr-1.5" />
                     <span className="hidden sm:inline">{t.common.close}</span>
@@ -240,3 +241,4 @@ export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
 });
 
 PollCard.displayName = 'PollCard';
+

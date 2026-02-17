@@ -19,6 +19,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { BattleNetConnect } from '@/components/BattleNetConnect';
 import { AvatarCropDialog } from '@/components/AvatarCropDialog';
 
@@ -43,6 +44,8 @@ const Profile = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [requestingDeletion, setRequestingDeletion] = useState(false);
+  const getErrorMessage = (error: unknown) =>
+    error instanceof Error ? error.message : t.errors.generic;
 
   const ui = t.profile.ui;
 
@@ -70,8 +73,10 @@ const Profile = () => {
   useEffect(() => {
     if (!profile) return;
     form.reset({ username: profile.username || '' });
-    // @ts-ignore - battletag_visibility may not be in type yet
-    setBattletagVisibility((profile.battletag_visibility as BattletagVisibility) || 'everyone');
+    const visibility = (
+      profile as { battletag_visibility?: BattletagVisibility } | null
+    )?.battletag_visibility;
+    setBattletagVisibility(visibility || 'everyone');
   }, [profile, form]);
 
   // Check for pending deletion request
@@ -112,8 +117,8 @@ const Profile = () => {
       } else {
         toast({ title: t.common.save, description: ui.updateSuccessDesc });
       }
-    } catch (error: any) {
-      toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
+    } catch (error: unknown) {
+      toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -154,8 +159,8 @@ const Profile = () => {
         title: ui.requestDeletionTitle,
         description: ui.requestDeletionDesc,
       });
-    } catch (error: any) {
-      toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
+    } catch (error: unknown) {
+      toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
     } finally {
       setRequestingDeletion(false);
     }
@@ -177,8 +182,8 @@ const Profile = () => {
         title: ui.cancelDeletionTitle,
         description: ui.cancelDeletionDesc,
       });
-    } catch (error: any) {
-      toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
+    } catch (error: unknown) {
+      toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
     }
   };
 
@@ -238,8 +243,8 @@ const Profile = () => {
       setCropDialogOpen(false);
       setSelectedImageSrc(null);
       toast({ title: ui.avatarUpdated });
-    } catch (error: any) {
-      toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
+    } catch (error: unknown) {
+      toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
     } finally {
       setUploadingAvatar(false);
     }
@@ -266,8 +271,8 @@ const Profile = () => {
 
       await refreshProfile();
       toast({ title: ui.avatarRemoved });
-    } catch (error: any) {
-      toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
+    } catch (error: unknown) {
+      toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
     } finally {
       setUploadingAvatar(false);
     }
@@ -359,7 +364,7 @@ const Profile = () => {
     <div className="flex-1 relative pt-16">
       <CosmicBackground />
 
-      <main className="container mx-auto px-4 py-6 relative z-10">
+      <PageContainer as="main" className="relative z-10 py-6" width="wide">
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
           <h1 className="font-display text-2xl text-foreground">{t.profile.title}</h1>
           <Button
@@ -666,7 +671,7 @@ const Profile = () => {
             loading={uploadingAvatar}
           />
         )}
-      </main>
+      </PageContainer>
     </div>
   );
 };

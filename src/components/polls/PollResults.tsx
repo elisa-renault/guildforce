@@ -366,7 +366,7 @@ export const PollResults = ({
                                     key={i}
                                     className={cn(
                                       'h-3 w-3 stroke-[1.5]',
-                                      i < rating ? 'fill-amber-500 text-amber-500' : 'text-muted-foreground/30'
+                                      i < rating ? 'fill-warning text-warning' : 'text-muted-foreground/30'
                                     )}
                                   />
                                 ))}
@@ -628,9 +628,9 @@ export const PollResults = ({
                           className="flex items-center gap-3 p-2 rounded-lg bg-background border border-border"
                         >
                           <div className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${
-                            index === 0 ? 'bg-yellow-500/20 text-yellow-500' :
+                            index === 0 ? 'bg-warning/20 text-warning' :
                             index === 1 ? 'bg-gray-400/20 text-gray-400' :
-                            index === 2 ? 'bg-amber-600/20 text-amber-600' :
+                            index === 2 ? 'bg-warning/20 text-warning' :
                             'bg-muted text-muted-foreground'
                           }`}>
                             {index + 1}
@@ -660,3 +660,4 @@ export const PollResults = ({
     </div>
   );
 };
+

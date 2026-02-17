@@ -1,4 +1,4 @@
-import React, { useState, forwardRef } from 'react';
+﻿import React, { useState, forwardRef } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
   wowClasses,
@@ -27,7 +27,7 @@ interface WishData {
 
 interface WishCardEditorProps {
   wish: WishData;
-  onChange: (field: keyof WishData, value: any) => void;
+  onChange: <K extends keyof WishData>(field: K, value: WishData[K]) => void;
   usedClassIds?: string[];
   disabled?: boolean;
 }
@@ -169,7 +169,7 @@ export const WishCardEditor = forwardRef<HTMLDivElement, WishCardEditorProps>(
                     const Icon = getSpecIcon(spec);
                     return (
                       <span key={spec.id} className="flex items-center gap-1">
-                        {idx > 0 && <span className="text-muted-foreground/50">•</span>}
+                        {idx > 0 && <span className="text-muted-foreground/50">|</span>}
                         <Icon className={cn("h-4 w-4", config.color)} />
                         <span className="text-foreground">{getLocalizedSpecName(spec.id, language)}</span>
                         {idx === 0 && (
@@ -221,7 +221,7 @@ export const WishCardEditor = forwardRef<HTMLDivElement, WishCardEditorProps>(
                             type="button"
                             onClick={() => handleSpecMove(idx, 'up')}
                             disabled={!canMoveUp}
-                            className="w-5 h-5 rounded bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                            className="w-5 h-5 rounded bg-muted/50 flex items-center justify-center transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-background disabled:opacity-30 disabled:cursor-not-allowed"
                             title={t.wishes.moveSpecUp}
                           >
                             <ChevronUp className="h-3 w-3 text-muted-foreground" />
@@ -230,7 +230,7 @@ export const WishCardEditor = forwardRef<HTMLDivElement, WishCardEditorProps>(
                             type="button"
                             onClick={() => handleSpecMove(idx, 'down')}
                             disabled={!canMoveDown}
-                            className="w-5 h-5 rounded bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                            className="w-5 h-5 rounded bg-muted/50 flex items-center justify-center transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-background disabled:opacity-30 disabled:cursor-not-allowed"
                             title={t.wishes.moveSpecDown}
                           >
                             <ChevronDown className="h-3 w-3 text-muted-foreground" />
@@ -253,8 +253,7 @@ export const WishCardEditor = forwardRef<HTMLDivElement, WishCardEditorProps>(
                     key={spec.id}
                     onClick={() => handleSpecToggle(spec.id)}
                     disabled={disabled || (isSelected && wish.specIds.length <= 1)}
-                    className={cn(
-                      "w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-colors text-left",
+                    className={cn("w-full flex items-center gap-3 px-3 py-2 rounded text-sm transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                       isSelected 
                         ? "bg-primary/20" 
                         : "hover:bg-primary/10",
@@ -287,10 +286,12 @@ export const WishCardEditor = forwardRef<HTMLDivElement, WishCardEditorProps>(
         value={wish.comment}
         onChange={(e) => onChange('comment', e.target.value)}
         disabled={disabled}
-        className="h-9 w-full lg:flex-1 rounded-md border border-border bg-card/50 px-3 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50"
+        className="h-9 w-full lg:flex-1 rounded-md border border-border bg-card/50 px-3 text-sm placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-background"
       />
     </div>
   );
 });
 
 WishCardEditor.displayName = 'WishCardEditor';
+
+

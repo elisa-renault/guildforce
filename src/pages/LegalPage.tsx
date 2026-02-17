@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { selectContentTranslation } from '@/lib/contentTranslations';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft } from 'lucide-react';
@@ -73,7 +74,7 @@ const LegalPage = () => {
     <div className="flex-1 flex flex-col pt-16 relative">
       <CosmicBackground />
 
-      <main className="container mx-auto px-4 py-8 relative z-10 flex-1">
+      <PageContainer as="main" className="relative z-10 flex-1 py-8" width="wide">
         <div className="max-w-3xl mx-auto">
           <Button
             variant="ghost"
@@ -148,7 +149,7 @@ const LegalPage = () => {
             </GlowCard>
           )}
         </div>
-      </main>
+      </PageContainer>
     </div>
   );
 };

@@ -37,9 +37,12 @@ export const UserContextMenu = ({
 
   return (
     <>
-      <DropdownMenu modal={false}>
+        <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
-          <button className="cursor-pointer focus:outline-none">
+          <button
+            type="button"
+            className="cursor-pointer rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
             {children}
           </button>
         </DropdownMenuTrigger>

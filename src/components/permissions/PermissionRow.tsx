@@ -261,7 +261,7 @@ export const PermissionRow = ({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger>
-                    <ShieldAlert className="h-3.5 w-3.5 text-orange-500 flex-shrink-0" />
+                    <ShieldAlert className="h-3.5 w-3.5 text-warning flex-shrink-0" />
                   </TooltipTrigger>
                   <TooltipContent side="top">
                     <p className="text-xs max-w-[200px]">
@@ -357,3 +357,4 @@ export const PermissionRow = ({
     </div>
   );
 };
+

@@ -6,6 +6,7 @@ import { useForumCategories, useForumActions } from '@/hooks/useForum';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { MarkdownEditor } from '@/components/forum';
 import { Input } from '@/components/ui/input';
 import { Loader2, ChevronLeft } from 'lucide-react';
@@ -92,7 +93,7 @@ const ForumNewTopic = () => {
     <div className="flex-1 relative pt-16">
       <CosmicBackground />
 
-      <main className="container mx-auto px-4 py-8 relative z-10 max-w-3xl">
+      <PageContainer as="main" className="relative z-10 py-8 max-w-3xl" width="contained">
         {/* Breadcrumbs */}
         <Breadcrumbs 
           items={[
@@ -107,7 +108,7 @@ const ForumNewTopic = () => {
         <div className="flex items-start gap-3 mb-8">
           <button
             onClick={() => navigate(`/forum/category/${categorySlug}`)}
-            className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors flex-shrink-0 mt-1"
+            className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors flex-shrink-0 mt-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <ChevronLeft className="h-4 w-4 text-muted-foreground" />
           </button>
@@ -165,7 +166,7 @@ const ForumNewTopic = () => {
             </CosmicButton>
           </div>
         </div>
-      </main>
+      </PageContainer>
     </div>
   );
 };

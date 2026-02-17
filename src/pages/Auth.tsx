@@ -6,6 +6,7 @@ import { BattleNetIcon } from '@/components/BattleNetIcon';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
 import { GlowCard } from '@/components/GlowCard';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
@@ -41,6 +42,8 @@ const Auth = () => {
   const [emailFormOpen, setEmailFormOpen] = useState(false);
   const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
     resolveSemanticMessage({ key, language, translations: t });
+  const getErrorMessage = (error: unknown) =>
+    error instanceof Error ? error.message : t.errors.generic;
 
   // Check for Battle.net callback - only process once
   useEffect(() => {
@@ -110,7 +113,13 @@ const Auth = () => {
         }
       } else if (data.verifyToken) {
         const token_hash = data.verifyToken as string;
-        const type = (data.tokenType || 'magiclink') as any;
+        const type = (data.tokenType || 'magiclink') as
+          | 'signup'
+          | 'magiclink'
+          | 'recovery'
+          | 'invite'
+          | 'email'
+          | 'email_change';
         const { error } = await supabase.auth.verifyOtp({ token_hash, type });
         if (error) throw error;
 
@@ -128,11 +137,11 @@ const Auth = () => {
           navigate('/guilds', { replace: true });
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       log.error('Battle.net callback error:', error);
       toast({
         title: t.auth.battlenetError,
-        description: error.message,
+        description: getErrorMessage(error),
         variant: 'destructive',
       });
       navigate('/auth', { replace: true });
@@ -159,11 +168,11 @@ const Auth = () => {
       } else {
         throw new Error('Failed to get auth URL');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       log.error('Battle.net auth error:', error);
       toast({
         title: t.auth.battlenetError,
-        description: error.message,
+        description: getErrorMessage(error),
         variant: 'destructive',
       });
       setBnetLoading(false);
@@ -176,10 +185,10 @@ const Auth = () => {
     try {
       const { error } = await signIn(email, password);
       if (error) throw error;
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: t.common.error,
-        description: error.message,
+        description: getErrorMessage(error),
         variant: 'destructive',
       });
     } finally {
@@ -205,7 +214,7 @@ const Auth = () => {
       <CosmicBackground />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 pt-20 relative z-10">
+      <PageContainer width="full" className="flex-1 flex flex-col items-center justify-center py-8 pt-20 relative z-10">
         {/* Grid for Card alignment only */}
         <div className="w-full max-w-5xl grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
           
@@ -351,7 +360,7 @@ const Auth = () => {
             </div>
           </div>
         </div>
-      </div>
+      </PageContainer>
     </div>
   );
 };

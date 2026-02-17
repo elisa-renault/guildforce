@@ -1,5 +1,6 @@
 ﻿import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
 import {
   AlertCircle,
   BookOpen,
@@ -19,7 +20,11 @@ import {
 
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
+import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { CommitmentToggle, type CommitmentStatus } from '@/components/CommitmentToggle';
+import { GuildSubNav } from '@/components/guild/GuildSubNav';
+import { PageContainer } from '@/components/layout/PageContainer';
+import { SectionHeader } from '@/components/layout/SectionHeader';
 import { RosterSelector } from '@/components/roster';
 import {
   Breadcrumb,
@@ -34,6 +39,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   AlertDialog,
@@ -56,6 +62,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { LoadingScreen } from '@/components/ui/loading-screen';
 import { Label } from '@/components/ui/label';
 import {
   Pagination,
@@ -68,7 +75,11 @@ import {
 } from '@/components/ui/pagination';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { Slider } from '@/components/ui/slider';
+import { StarRating } from '@/components/ui/star-rating';
 import { Switch } from '@/components/ui/switch';
+import { Progress } from '@/components/ui/progress';
 import {
   Sheet,
   SheetContent,
@@ -78,15 +89,36 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { Toggle } from '@/components/ui/toggle';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { toast } from '@/components/ui/sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { wowClasses } from '@/data/wowClasses';
+import { toneCalloutClass, toneTextClass } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
 
 type Copy = { en: string; fr: string };
 
@@ -94,10 +126,10 @@ const copy = (language: string, value: Copy) => (language === 'fr' ? value.fr : 
 
 const COLORS = [
   { label: 'Primary', cls: 'bg-primary', token: '--primary', usage: { en: 'Main action', fr: 'Action principale' } },
-  { label: 'Success', cls: 'bg-healer', token: '--healer', usage: { en: 'Validation states', fr: 'États valides' } },
-  { label: 'Error', cls: 'bg-destructive', token: '--destructive', usage: { en: 'Blocking issues', fr: 'Erreurs bloquantes' } },
-  { label: 'Warning', cls: 'bg-amber-500', token: '--warning', usage: { en: 'Risk or lock warning', fr: 'Risque ou verrou' } },
-  { label: 'Info', cls: 'bg-sky-500', token: '--info', usage: { en: 'Contextual help', fr: 'Aide contextuelle' } },
+  { label: 'Success', cls: 'bg-status-success', token: '--status-success', usage: { en: 'Validation states', fr: 'États valides' } },
+  { label: 'Error', cls: 'bg-status-error', token: '--status-error', usage: { en: 'Blocking issues', fr: 'Erreurs bloquantes' } },
+  { label: 'Warning', cls: 'bg-status-warning', token: '--status-warning', usage: { en: 'Risk or lock warning', fr: 'Risque ou verrou' } },
+  { label: 'Info', cls: 'bg-status-info', token: '--status-info', usage: { en: 'Contextual help', fr: 'Aide contextuelle' } },
 ];
 
 const SECTION_LINKS = [
@@ -153,6 +185,16 @@ const CODE_EXAMPLES = {
     <TooltipContent>Read-only helper</TooltipContent>
   </Tooltip>
 </TooltipProvider>`,
+  advanced: `<DropdownMenu>
+  <DropdownMenuTrigger asChild><Button variant="outline">Actions</Button></DropdownMenuTrigger>
+  <DropdownMenuContent>
+    <DropdownMenuItem>Sync roster</DropdownMenuItem>
+  </DropdownMenuContent>
+</DropdownMenu>
+
+<Slider value={[65]} max={100} />
+<Progress value={68} />
+<StarRating value={3.5} onChange={setValue} />`,
 };
 
 const SectionTitle = ({ id, title, description }: { id: string; title: string; description: string }) => (
@@ -170,8 +212,8 @@ const CodePreview = ({ code }: { code: string }) => (
 
 const DoDont = ({ doText, dontText }: { doText: string; dontText: string }) => (
   <div className="grid gap-2 md:grid-cols-2 text-xs">
-    <div className="rounded-md border border-healer/30 bg-healer/10 p-2 text-healer">Do: {doText}</div>
-    <div className="rounded-md border border-destructive/30 bg-destructive/10 p-2 text-destructive">Don't: {dontText}</div>
+    <div className="rounded-md border border-status-success/30 bg-status-success/10 p-2 text-status-success">Do: {doText}</div>
+    <div className="rounded-md border border-status-error/30 bg-status-error/10 p-2 text-status-error">Don't: {dontText}</div>
   </div>
 );
 
@@ -183,6 +225,16 @@ export const AdminDesignSystem = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [attendance, setAttendance] = useState<CommitmentStatus>('undecided');
   const [rosterId, setRosterId] = useState('main');
+  const [sliderValue, setSliderValue] = useState([65]);
+  const [ratingValue, setRatingValue] = useState(3.5);
+  const [progressValue, setProgressValue] = useState(68);
+  const [showLoadingPreview, setShowLoadingPreview] = useState(false);
+  const [menuPinned, setMenuPinned] = useState(true);
+
+  const dsForm = useForm<{ raidNote: string }>({
+    defaultValues: { raidNote: '' },
+    mode: 'onSubmit',
+  });
 
   const rosterItems = useMemo(
     () => [
@@ -353,6 +405,17 @@ export const AdminDesignSystem = () => {
                     <Badge>Tooltip</Badge>
                     <Badge>AlertDialog</Badge>
                     <Badge>Collapsible</Badge>
+                    <Badge>Accordion</Badge>
+                    <Badge>DropdownMenu</Badge>
+                    <Badge>ScrollArea</Badge>
+                    <Badge>Separator</Badge>
+                    <Badge>Slider</Badge>
+                    <Badge>StarRating</Badge>
+                    <Badge>Progress</Badge>
+                    <Badge>Toggle</Badge>
+                    <Badge>Form</Badge>
+                    <Badge>LoadingScreen</Badge>
+                    <Badge>Sonner</Badge>
                     <Badge>Wishes</Badge>
                     <Badge>Rosters</Badge>
                     <Badge>Events</Badge>
@@ -369,6 +432,9 @@ export const AdminDesignSystem = () => {
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">
                     {t({ en: 'These patterns exist in pages but are not yet centralized as reusable components.', fr: 'Ces patterns existent dans les pages mais ne sont pas encore centralisés en composants réutilisables.' })}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground/80">
+                    {t({ en: 'Coverage data can be refreshed with `npm run ds:audit:coverage`.', fr: 'La couverture peut être recalculée avec `npm run ds:audit:coverage`.' })}
                   </p>
                 </div>
               </div>
@@ -394,6 +460,9 @@ export const AdminDesignSystem = () => {
             />
             <GlowCard className="space-y-4 p-4">
               <h3 className="text-base font-semibold">Width strategy</h3>
+              <p className="text-sm text-muted-foreground">
+                {t({ en: 'Use `PageContainer` as the default wrapper and choose width by content density.', fr: 'Utiliser `PageContainer` comme wrapper par défaut et choisir la largeur selon la densité du contenu.' })}
+              </p>
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="rounded-md border border-border/50 p-3">
                   <p className="font-medium text-sm mb-2">Contained (`max-w-*`)</p>
@@ -442,18 +511,59 @@ export const AdminDesignSystem = () => {
                   </div>
                 </div>
               </div>
+
+              <div className="rounded-md border border-border/50 p-3 space-y-3">
+                <p className="font-medium text-sm">Canonical layout primitives</p>
+                <div className="rounded border border-border/40 bg-background/50 p-2">
+                  <PageContainer width="contained" spacing="sm" className="rounded border border-dashed border-border/50 bg-muted/30">
+                    <div className="text-xs text-muted-foreground text-center">PageContainer width=&quot;contained&quot;</div>
+                  </PageContainer>
+                  <PageContainer width="wide" spacing="sm" className="mt-2 rounded border border-dashed border-border/50 bg-muted/30">
+                    <div className="text-xs text-muted-foreground text-center">PageContainer width=&quot;wide&quot;</div>
+                  </PageContainer>
+                </div>
+                <div className="rounded border border-border/40 bg-background/50 p-3">
+                  <SectionHeader
+                    title="Roster operations"
+                    description="Use SectionHeader for major page-level headings."
+                    icon={Users}
+                  />
+                </div>
+                <div className="rounded border border-border/40 bg-background/50 p-3">
+                  <Breadcrumbs
+                    items={[
+                      { label: 'Guilds', href: '/guilds' },
+                      { label: 'Midnight', href: '/guild/123' },
+                      { label: 'Roster' },
+                    ]}
+                  />
+                </div>
+                <div className="rounded border border-border/40 bg-background/50 p-2">
+                  <div className="pointer-events-none overflow-hidden rounded border border-border/40">
+                    <GuildSubNav
+                      guild={{ name: 'Midnight', server: 'Tarren Mill', region: 'EU' }}
+                      basePath="/guild/123"
+                      isGM={false}
+                      hasSettingsPermission
+                      activeTab="roster"
+                    />
+                  </div>
+                  <p className="mt-2 text-[11px] text-muted-foreground">GuildSubNav preview (interaction disabled in docs).</p>
+                </div>
+              </div>
+
               <DoDont
                 doText={t({ en: 'Use sidebar only when section switching is frequent.', fr: 'Utiliser la sidebar quand les changements de section sont fréquents.' })}
                 dontText={t({ en: 'Do not add deep sidebars for pages with 1-2 actions only.', fr: 'Ne pas ajouter de sidebar profonde pour les pages avec 1 à 2 actions.' })}
               />
               <CodePreview
-                code={`<main className="mx-auto w-full p-4 md:p-6 md:max-w-6xl lg:max-w-7xl">
-  {/* contained docs/forms */}
-</main>
+                code={`<PageContainer as="main" width="contained" spacing="md">
+  {/* forms, docs, legal pages */}
+</PageContainer>
 
-<main className="w-full p-4 md:p-6">
-  {/* full-width tables/operations */}
-</main>`}
+<PageContainer as="main" width="wide" spacing="md">
+  {/* admin tools, roster tables, dashboards */}
+</PageContainer>`}
               />
             </GlowCard>
           </section>
@@ -631,10 +741,10 @@ export const AdminDesignSystem = () => {
               <h3 className="text-base font-semibold">Feedback and states</h3>
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 rounded-md border border-healer/30 bg-healer/10 p-2 text-sm text-healer"><CheckCircle2 className="h-4 w-4" /> Success state</div>
-                  <div className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/10 p-2 text-sm text-destructive"><XCircle className="h-4 w-4" /> Error state</div>
-                  <div className="flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-2 text-sm text-amber-400"><TriangleAlert className="h-4 w-4" /> Warning state</div>
-                  <div className="flex items-center gap-2 rounded-md border border-sky-500/30 bg-sky-500/10 p-2 text-sm text-sky-300"><Info className="h-4 w-4" /> Informational state</div>
+                  <div className="flex items-center gap-2 rounded-md border border-status-success/30 bg-status-success/10 p-2 text-sm text-status-success"><CheckCircle2 className="h-4 w-4" /> Success state</div>
+                  <div className="flex items-center gap-2 rounded-md border border-status-error/30 bg-status-error/10 p-2 text-sm text-status-error"><XCircle className="h-4 w-4" /> Error state</div>
+                  <div className={cn("flex items-center gap-2 rounded-md border p-2 text-sm", toneCalloutClass('warning'))}><TriangleAlert className={cn("h-4 w-4", toneTextClass('warning'))} /> Warning state</div>
+                  <div className={cn("flex items-center gap-2 rounded-md border p-2 text-sm", toneCalloutClass('info'))}><Info className={cn("h-4 w-4", toneTextClass('info'))} /> Informational state</div>
                   <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>Alert component</AlertTitle>
@@ -726,6 +836,107 @@ export const AdminDesignSystem = () => {
               </div>
               <CodePreview code={CODE_EXAMPLES.overlays} />
             </GlowCard>
+
+            <GlowCard className="space-y-4 p-4">
+              <h3 className="text-base font-semibold">Extended primitives</h3>
+              <p className="text-sm text-muted-foreground">
+                {t({ en: 'Advanced primitives used in forum editors, polls, and operational dashboards.', fr: 'Primitives avancées utilisées dans les éditeurs forum, sondages et dashboards opérationnels.' })}
+              </p>
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="rounded-md border border-border/50 p-3 space-y-3">
+                  <p className="text-sm font-medium">ScrollArea + Separator + Accordion</p>
+                  <ScrollArea className="h-28 rounded-md border border-border/50 p-2">
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">Recent guild activity feed</p>
+                      <Separator />
+                      <p className="text-sm">Recruitment post updated</p>
+                      <p className="text-sm">Roster lock scheduled</p>
+                      <p className="text-sm">Forum moderation action applied</p>
+                    </div>
+                  </ScrollArea>
+                  <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="a11y">
+                      <AccordionTrigger className="py-2 text-sm">Implementation notes</AccordionTrigger>
+                      <AccordionContent className="text-xs text-muted-foreground">
+                        Keep advanced controls collapsed by default on dense pages.
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                </div>
+
+                <div className="rounded-md border border-border/50 p-3 space-y-3">
+                  <p className="text-sm font-medium">Dropdown + Toggle + Slider + Progress + Rating</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm">Quick actions</Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuLabel>Roster ops</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem>Sync now</DropdownMenuItem>
+                        <DropdownMenuCheckboxItem checked={menuPinned} onCheckedChange={(checked) => setMenuPinned(Boolean(checked))}>
+                          Pin panel
+                        </DropdownMenuCheckboxItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <Toggle aria-label="Compact mode" variant="outline" size="sm">Compact mode</Toggle>
+                  </div>
+                  <div className="space-y-2">
+                    <Slider value={sliderValue} onValueChange={setSliderValue} max={100} step={5} />
+                    <Progress value={progressValue} />
+                    <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                      <span>Threshold {sliderValue[0]}%</span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setProgressValue((previous) => (previous >= 95 ? 20 : previous + 15))}
+                      >
+                        Simulate progress
+                      </Button>
+                    </div>
+                    <StarRating value={ratingValue} onChange={setRatingValue} size="sm" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-md border border-border/50 p-3 space-y-3">
+                <p className="text-sm font-medium">Form + LoadingScreen + Sonner toast</p>
+                <Form {...dsForm}>
+                  <form
+                    onSubmit={dsForm.handleSubmit(() => {
+                      setShowLoadingPreview(true);
+                      toast.success('Note saved in design-system example');
+                      setTimeout(() => setShowLoadingPreview(false), 900);
+                    })}
+                    className="space-y-2"
+                  >
+                    <FormField
+                      control={dsForm.control}
+                      name="raidNote"
+                      rules={{
+                        required: 'Raid note is required.',
+                        minLength: { value: 5, message: 'Minimum 5 characters.' },
+                      }}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Raid note</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Healers rotate externals on phase 2." {...field} />
+                          </FormControl>
+                          <FormDescription>Use form wrappers to align labels, hints, and errors.</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button size="sm" type="submit" variant="outline">Submit note</Button>
+                  </form>
+                </Form>
+                {showLoadingPreview && <LoadingScreen className="min-h-[120px] py-4" message="Syncing roster..." />}
+              </div>
+
+              <CodePreview code={CODE_EXAMPLES.advanced} />
+            </GlowCard>
           </section>
 
           <section className="space-y-4">
@@ -780,14 +991,14 @@ export const AdminDesignSystem = () => {
                     <TableRow>
                       <TableCell>#1</TableCell>
                       <TableCell>Holy Priest</TableCell>
-                      <TableCell><Badge className="bg-healer/20 text-healer">Approved</Badge></TableCell>
-                      <TableCell><Lock className="h-4 w-4 text-amber-400" /></TableCell>
+                      <TableCell><Badge className="bg-status-success/20 text-status-success">Approved</Badge></TableCell>
+                      <TableCell><Lock className={cn("h-4 w-4", toneTextClass('warning'))} /></TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell>#2</TableCell>
                       <TableCell>Mistweaver Monk</TableCell>
                       <TableCell><Badge variant="secondary">Pending</Badge></TableCell>
-                      <TableCell><Clock3 className="h-4 w-4 text-sky-300" /></TableCell>
+                      <TableCell><Clock3 className={cn("h-4 w-4", toneTextClass('info'))} /></TableCell>
                     </TableRow>
                   </TableBody>
                 </Table>
@@ -892,9 +1103,9 @@ export const AdminDesignSystem = () => {
                   <p className="text-xs text-muted-foreground">Error and success states should include text, not icon-only feedback.</p>
                 </div>
               </div>
-              <div className="rounded-md border border-sky-500/40 bg-sky-500/10 p-3 text-sm text-sky-200">
+              <div className={cn("rounded-md border p-3 text-sm", toneCalloutClass('info'))}>
                 <div className="flex items-center gap-2 font-medium"><AlertCircle className="h-4 w-4" /> Maintenance note</div>
-                <p className="mt-1 text-sky-100/90">When new components or patterns are introduced, update this page in the same PR to keep design and implementation aligned.</p>
+                <p className={cn("mt-1 opacity-90", toneTextClass('info'))}>When new components or patterns are introduced, update this page in the same PR to keep design and implementation aligned.</p>
               </div>
             </GlowCard>
           </section>
@@ -916,4 +1127,11 @@ export const AdminDesignSystem = () => {
     </div>
   );
 };
+
+
+
+
+
+
+
 

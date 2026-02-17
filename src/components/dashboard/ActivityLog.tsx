@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import { formatDistanceFromNowLocalized, interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
+import { toneBadgeClass } from '@/lib/design-tokens';
 
 interface ActivityLogProps {
   guildId: string;
@@ -58,20 +59,20 @@ const ACTION_ICONS: Record<ActionType, React.ReactNode> = {
 };
 
 const ACTION_COLORS: Record<ActionType, string> = {
-  wish_validation: 'bg-primary/20 text-primary',
-  wish_created: 'bg-emerald-500/20 text-emerald-400',
-  wish_updated: 'bg-amber-500/20 text-amber-400',
-  wish_deleted: 'bg-red-500/20 text-red-400',
-  member_joined: 'bg-cyan-500/20 text-cyan-400',
-  commitment_changed: 'bg-violet-500/20 text-violet-400',
-  roster_wishes_locked: 'bg-amber-500/20 text-amber-400',
-  roster_wishes_unlocked: 'bg-emerald-500/20 text-emerald-400',
-  member_wishes_locked: 'bg-amber-500/20 text-amber-400',
-  member_wishes_unlocked: 'bg-emerald-500/20 text-emerald-400',
-  roster_created: 'bg-blue-500/20 text-blue-400',
-  roster_updated: 'bg-amber-500/20 text-amber-400',
-  roster_deleted: 'bg-red-500/20 text-red-400',
-  permissions_updated: 'bg-orange-500/20 text-orange-400',
+  wish_validation: toneBadgeClass('info'),
+  wish_created: toneBadgeClass('success'),
+  wish_updated: toneBadgeClass('warning'),
+  wish_deleted: toneBadgeClass('error'),
+  member_joined: toneBadgeClass('info'),
+  commitment_changed: toneBadgeClass('info'),
+  roster_wishes_locked: toneBadgeClass('warning'),
+  roster_wishes_unlocked: toneBadgeClass('success'),
+  member_wishes_locked: toneBadgeClass('warning'),
+  member_wishes_unlocked: toneBadgeClass('success'),
+  roster_created: toneBadgeClass('info'),
+  roster_updated: toneBadgeClass('warning'),
+  roster_deleted: toneBadgeClass('error'),
+  permissions_updated: toneBadgeClass('warning'),
 };
 
 export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
@@ -173,9 +174,9 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
   };
 
   const getValidationStatusIcon = (status: string): React.ReactNode => {
-    if (status === 'approved') return <CheckCircle2 className="h-3 w-3 text-emerald-400" />;
-    if (status === 'rejected') return <XCircle className="h-3 w-3 text-red-400" />;
-    return <Clock className="h-3 w-3 text-amber-400" />;
+    if (status === 'approved') return <CheckCircle2 className="h-3 w-3 text-status-success" />;
+    if (status === 'rejected') return <XCircle className="h-3 w-3 text-status-error" />;
+    return <Clock className="h-3 w-3 text-status-warning" />;
   };
 
   const renderLogDetails = (log: typeof logs[0]) => {
@@ -217,7 +218,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
               <span className="text-muted-foreground">{getValidationStatusLabel(oldStatus)}</span>
               <span className="text-muted-foreground">-&gt;</span>
               {getValidationStatusIcon(newStatus)}
-              <span className={newStatus === 'approved' ? 'text-emerald-400' : newStatus === 'rejected' ? 'text-red-400' : 'text-amber-400'}>
+              <span className={newStatus === 'approved' ? 'text-status-success' : newStatus === 'rejected' ? 'text-status-error' : 'text-status-warning'}>
                 {getValidationStatusLabel(newStatus)}
               </span>
             </div>
@@ -353,9 +354,9 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
         };
 
         const getStatusColor = (status: string) => {
-          if (status === 'confirmed') return 'text-healer';
-          if (status === 'withdrawn') return 'text-destructive';
-          return 'text-amber-500';
+          if (status === 'confirmed') return 'text-status-success';
+          if (status === 'withdrawn') return 'text-status-error';
+          return 'text-status-warning';
         };
 
         return (
@@ -367,7 +368,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
               </span>
             </div>
             <div className="flex items-center gap-2 text-sm">
-              <span className={`${getStatusColor(oldStatus)} opacity-60`}>{getStatusLabel(oldStatus)}</span>
+          <span className={`${getStatusColor(oldStatus)} opacity-60`}>{getStatusLabel(oldStatus)}</span>
               <span className="text-muted-foreground">-&gt;</span>
               <span className={getStatusColor(newStatus)}>{getStatusLabel(newStatus)}</span>
             </div>
@@ -452,7 +453,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
       case 'roster_deleted':
         return (
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="bg-red-500/10 text-red-400">
+            <Badge variant="outline" className={toneBadgeClass('error')}>
               {details.name as string}
             </Badge>
             <span className="text-muted-foreground text-sm">
@@ -481,7 +482,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
             {changedTypes.length > 0 && (
               <div className="flex flex-wrap gap-1 text-xs">
                 {changedTypes.map(type => (
-                  <Badge key={type} variant="outline" className="bg-orange-500/10 text-orange-400">
+                  <Badge key={type} variant="outline" className={toneBadgeClass('warning')}>
                     {getPermissionLabel(type)}
                   </Badge>
                 ))}

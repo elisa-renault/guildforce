@@ -248,11 +248,11 @@ export const ReportsManager = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Badge variant="secondary" className="bg-amber-500/20 text-amber-400">
+        return <Badge variant="secondary" className="bg-warning/20 text-warning">
           {sm('forum.reports.status.pending')}
         </Badge>;
       case 'resolved':
-        return <Badge variant="secondary" className="bg-green-500/20 text-green-400">
+        return <Badge variant="secondary" className="bg-healer/20 text-healer">
           {sm('forum.reports.status.resolved')}
         </Badge>;
       case 'dismissed':
@@ -466,7 +466,7 @@ export const ReportsManager = () => {
             <Button
               onClick={() => handleResolve('resolved')}
               disabled={resolving}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-healer hover:bg-healer/80"
             >
               {resolving ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -481,3 +481,4 @@ export const ReportsManager = () => {
     </Card>
   );
 };
+

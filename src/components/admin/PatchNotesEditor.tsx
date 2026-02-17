@@ -502,15 +502,15 @@ export const PatchNotesEditor = () => {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <span className="flex items-center gap-1.5">
-            <CheckCircle className="h-4 w-4 text-green-500" />
+            <CheckCircle className="h-4 w-4 text-status-success" />
             {publishedCount} {t.patchnotes.published.toLowerCase()}
           </span>
           <span className="flex items-center gap-1.5">
-            <FileEdit className="h-4 w-4 text-yellow-500" />
+            <FileEdit className="h-4 w-4 text-status-warning" />
             {draftCount} {t.patchnotes.draft.toLowerCase()}
           </span>
           <span className="flex items-center gap-1.5">
-            <ScrollText className="h-4 w-4 text-orange-500" />
+            <ScrollText className="h-4 w-4 text-status-warning" />
             DE missing: {missingDeCount}
           </span>
         </div>
@@ -546,7 +546,7 @@ export const PatchNotesEditor = () => {
                       <span className="font-mono font-semibold text-foreground">v{note.version}</span>
                       <Badge
                         variant={note.status === 'published' ? 'default' : 'secondary'}
-                        className={note.status === 'published' ? 'bg-green-500/20 text-green-400 border-green-500/30' : ''}
+                        className={note.status === 'published' ? 'bg-status-success/20 text-status-success border-status-success/30' : ''}
                       >
                         {note.status === 'published' ? t.patchnotes.published : t.patchnotes.draft}
                       </Badge>
@@ -573,7 +573,7 @@ export const PatchNotesEditor = () => {
                     </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-status-error hover:text-status-error">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </AlertDialogTrigger>
@@ -602,3 +602,4 @@ export const PatchNotesEditor = () => {
     </div>
   );
 };
+
