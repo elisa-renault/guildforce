@@ -1,4 +1,4 @@
-import { useLanguage } from '@/contexts/LanguageContext';
+﻿import { useLanguage } from '@/contexts/LanguageContext';
 import { GlowCard } from '@/components/GlowCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -82,7 +82,7 @@ export const AdminDashboardSection = ({
       label: t.admin.stats.activeUsers30d,
       value: formatCount(stats?.activeUsers30d),
       icon: Users,
-      color: 'text-blue-400',
+      color: 'text-status-info',
       tooltip: t.admin.stats.activeUsers30dTooltip,
       deltaPct: stats?.activeUsers30dDeltaPct ?? null,
     },
@@ -90,7 +90,7 @@ export const AdminDashboardSection = ({
       label: t.admin.stats.activeGuilds30d,
       value: formatCount(stats?.activeGuilds30d),
       icon: Shield,
-      color: 'text-green-400',
+      color: 'text-status-success',
       tooltip: t.admin.stats.activeGuilds30dTooltip,
       deltaPct: stats?.activeGuilds30dDeltaPct ?? null,
     },
@@ -98,7 +98,7 @@ export const AdminDashboardSection = ({
       label: t.admin.stats.dauUsers,
       value: formatCount(stats?.dauUsers),
       icon: Activity,
-      color: 'text-cyan-400',
+      color: 'text-status-info',
       tooltip: t.admin.stats.dauUsersTooltip,
       deltaPct: stats?.dauDeltaPct ?? null,
     },
@@ -106,7 +106,7 @@ export const AdminDashboardSection = ({
       label: t.admin.stats.wauUsers,
       value: formatCount(stats?.wauUsers),
       icon: Activity,
-      color: 'text-indigo-400',
+      color: 'text-status-info',
       tooltip: t.admin.stats.wauUsersTooltip,
       deltaPct: stats?.wauDeltaPct ?? null,
     },
@@ -114,7 +114,7 @@ export const AdminDashboardSection = ({
       label: t.admin.stats.mauUsers,
       value: formatCount(stats?.mauUsers),
       icon: Activity,
-      color: 'text-violet-400',
+      color: 'text-primary',
       tooltip: t.admin.stats.mauUsersTooltip,
       deltaPct: stats?.mauDeltaPct ?? null,
     },
@@ -122,7 +122,7 @@ export const AdminDashboardSection = ({
       label: t.admin.stats.guildsWithTwoMembers,
       value: formatCount(stats?.guildsWithTwoMembers),
       icon: Users,
-      color: 'text-sky-300',
+      color: 'text-status-info',
       tooltip: t.admin.stats.guildsWithTwoMembersTooltip,
     },
     uniqueWishUsers: {
@@ -150,91 +150,91 @@ export const AdminDashboardSection = ({
       label: t.admin.stats.engagementRate,
       value: formatPercentValue(stats?.wauMauRatio, 1),
       icon: Sparkles,
-      color: 'text-amber-400',
+      color: 'text-status-warning',
       tooltip: t.admin.stats.engagementRateTooltip,
     },
     guildEngagementRate: {
       label: t.admin.stats.guildEngagementRate,
       value: formatPercentValue(stats?.guildEngagementRate, 0),
       icon: Shield,
-      color: 'text-amber-300',
+      color: 'text-status-warning',
       tooltip: t.admin.stats.guildEngagementRateTooltip,
     },
     guildsWithTwoWishUsers: {
       label: t.admin.stats.guildsWithTwoWishUsers,
       value: formatCount(stats?.guildsWithTwoWishUsers),
       icon: Sparkles,
-      color: 'text-amber-200',
+      color: 'text-status-warning',
       tooltip: t.admin.stats.guildsWithTwoWishUsersTooltip,
     },
     topics: {
       label: t.admin.stats.topics,
       value: formatCount(stats?.totalTopics),
       icon: MessageSquare,
-      color: 'text-purple-400',
+      color: 'text-primary',
       tooltip: t.admin.stats.topicsTooltip,
     },
     posts: {
       label: t.admin.stats.posts,
       value: formatCount(stats?.totalPosts),
       icon: MessageSquare,
-      color: 'text-indigo-400',
+      color: 'text-status-info',
       tooltip: t.admin.stats.postsTooltip,
     },
     pendingReports: {
       label: t.admin.stats.pendingReports,
       value: formatCount(stats?.pendingReports),
       icon: AlertTriangle,
-      color: stats?.pendingReports && stats.pendingReports > 0 ? 'text-amber-400' : 'text-muted-foreground',
+      color: stats?.pendingReports && stats.pendingReports > 0 ? 'text-status-warning' : 'text-muted-foreground',
       tooltip: t.admin.stats.pendingReportsTooltip,
     },
     activeSanctions: {
       label: t.admin.stats.activeSanctions,
       value: formatCount(stats?.activeSanctions),
       icon: AlertTriangle,
-      color: stats?.activeSanctions && stats.activeSanctions > 0 ? 'text-red-400' : 'text-muted-foreground',
+      color: stats?.activeSanctions && stats.activeSanctions > 0 ? 'text-status-error' : 'text-muted-foreground',
       tooltip: t.admin.stats.activeSanctionsTooltip,
     },
     openBugs: {
       label: t.admin.stats.openBugs,
       value: formatCount(stats?.openBugs),
       icon: Bug,
-      color: stats?.openBugs && stats.openBugs > 0 ? 'text-red-400' : 'text-muted-foreground',
+      color: stats?.openBugs && stats.openBugs > 0 ? 'text-status-error' : 'text-muted-foreground',
       tooltip: t.admin.stats.openBugsTooltip,
     },
     pendingDeletions: {
       label: t.admin.stats.pendingDeletions,
       value: formatCount(stats?.pendingDeletions),
       icon: Trash2,
-      color: stats?.pendingDeletions && stats.pendingDeletions > 0 ? 'text-red-400' : 'text-muted-foreground',
+      color: stats?.pendingDeletions && stats.pendingDeletions > 0 ? 'text-status-error' : 'text-muted-foreground',
       tooltip: t.admin.stats.pendingDeletionsTooltip,
     },
     totalPolls: {
       label: t.admin.stats.totalPolls,
       value: formatCount(stats?.totalPolls),
       icon: ClipboardList,
-      color: 'text-sky-400',
+      color: 'text-status-info',
       tooltip: t.admin.stats.totalPollsTooltip,
     },
     activePolls: {
       label: t.admin.stats.activePolls,
       value: formatCount(stats?.activePolls),
       icon: PlayCircle,
-      color: 'text-emerald-400',
+      color: 'text-status-success',
       tooltip: t.admin.stats.activePollsTooltip,
     },
     closedPolls: {
       label: t.admin.stats.closedPolls,
       value: formatCount(stats?.closedPolls),
       icon: CheckCircle2,
-      color: 'text-teal-400',
+      color: 'text-status-success',
       tooltip: t.admin.stats.closedPollsTooltip,
     },
     pollVoters: {
       label: t.admin.stats.pollVoters,
       value: formatCount(stats?.pollVoters),
       icon: BarChart2,
-      color: 'text-cyan-400',
+      color: 'text-status-info',
       tooltip: t.admin.stats.pollVotersTooltip,
     },
   } as const;
@@ -278,7 +278,7 @@ export const AdminDashboardSection = ({
       description: t.admin.stats.forumAdminDesc,
       icon: MessageSquare,
       onClick: () => onNavigateToSection('forum'),
-      color: 'text-purple-400',
+      color: 'text-primary',
       allowsModerator: true,
     },
     {
@@ -286,7 +286,7 @@ export const AdminDashboardSection = ({
       description: t.admin?.userManagementDesc,
       icon: Users,
       onClick: () => onNavigateToSection('users'),
-      color: 'text-blue-400',
+      color: 'text-status-info',
       requiresAdmin: true,
     },
     {
@@ -294,7 +294,7 @@ export const AdminDashboardSection = ({
       description: t.admin?.guildManagementDesc,
       icon: Shield,
       onClick: () => onNavigateToSection('guilds'),
-      color: 'text-green-400',
+      color: 'text-status-success',
       requiresAdmin: true,
     },
     {
@@ -302,7 +302,7 @@ export const AdminDashboardSection = ({
       description: t.admin?.legalPagesDesc,
       icon: FileText,
       onClick: () => onNavigateToSection('legal'),
-      color: 'text-amber-400',
+      color: 'text-status-warning',
       requiresAdmin: true,
     },
     {
@@ -310,7 +310,7 @@ export const AdminDashboardSection = ({
       description: t.admin?.deletionRequestsDesc,
       icon: Trash2,
       onClick: () => onNavigateToSection('deletions'),
-      color: 'text-red-400',
+      color: 'text-status-error',
       requiresAdmin: true,
     },
     {
@@ -318,7 +318,7 @@ export const AdminDashboardSection = ({
       description: t.admin?.bugReportsDesc,
       icon: Bug,
       onClick: () => onNavigateToSection('bugs'),
-      color: 'text-red-400',
+      color: 'text-status-error',
       allowsModerator: true,
     },
   ];
@@ -359,7 +359,7 @@ export const AdminDashboardSection = ({
                                   <button
                                     type="button"
                                     aria-label={stat.label}
-                                    className="inline-flex items-center bg-transparent p-0 text-muted-foreground/70 hover:text-foreground transition focus:outline-none"
+                                    className="inline-flex items-center rounded-sm bg-transparent p-0 text-muted-foreground/70 transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                                   >
                                     <Info className="h-3.5 w-3.5" />
                                   </button>
@@ -425,3 +425,5 @@ export const AdminDashboardSection = ({
     </div>
   );
 };
+
+

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +10,7 @@ import { CosmicButton } from '@/components/CosmicButton';
 import { GlowCard } from '@/components/GlowCard';
 import { GuildSubNav } from '@/components/guild';
 import { ActivePollWidget } from '@/components/polls';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Loader2, Sparkles, Users, CheckCircle2, Shield, Heart, Swords, ChevronDown, Eye } from 'lucide-react';
@@ -20,6 +21,7 @@ import { interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import { resolveSpecOrder } from '@/lib/wishOrder';
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
+import { toneCalloutClass, toneTextClass, wowClassTextClass } from '@/lib/design-tokens';
 
 interface WishSummary {
   choice_index: number;
@@ -203,22 +205,22 @@ const Overview = () => {
       case 'confirmed':
         return {
           label: t.wishes.commitment.confirmed,
-          color: 'text-green-400',
-          bgColor: 'bg-green-500/10 border-green-500/30',
+          color: toneTextClass('success'),
+          bgColor: toneCalloutClass('success'),
           icon: CheckCircle2,
         };
       case 'withdrawn':
         return {
           label: t.wishes.commitment.withdrawn,
-          color: 'text-red-400',
-          bgColor: 'bg-red-500/10 border-red-500/30',
+          color: toneTextClass('error'),
+          bgColor: toneCalloutClass('error'),
           icon: Shield,
         };
       default:
         return {
           label: t.wishes.commitment.undecided,
-          color: 'text-yellow-400',
-          bgColor: 'bg-yellow-500/10 border-yellow-500/30',
+          color: toneTextClass('warning'),
+          bgColor: toneCalloutClass('warning'),
           icon: Heart,
         };
     }
@@ -243,12 +245,12 @@ const Overview = () => {
         />
       )}
 
-      <main className="container mx-auto px-3 md:px-4 py-6 relative z-10 overflow-x-hidden">
+      <PageContainer as="main" className="relative z-10 overflow-x-hidden py-6" width="contained">
         {/* Admin read-only banner */}
         {isAdminReadOnly && (
-          <div className="flex items-center justify-center gap-2 mb-4 p-2 rounded-lg bg-amber-500/10 border border-amber-500/30">
-            <Eye className="h-4 w-4 text-amber-400" />
-            <span className="text-sm text-amber-400 font-medium">
+          <div className={cn("flex items-center justify-center gap-2 mb-4 p-2 rounded-lg border", toneCalloutClass('warning'))}>
+            <Eye className={cn("h-4 w-4", toneTextClass('warning'))} />
+            <span className={cn("text-sm font-medium", toneTextClass('warning'))}>
               {s('overview.admin_read_only')}
             </span>
           </div>
@@ -279,9 +281,9 @@ const Overview = () => {
                   if (firstApproved) {
                     const wowClass = getClassById(firstApproved.class_id);
                     return (
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border bg-green-500/10 border-green-500/30 shrink-0">
-                        <CheckCircle2 className="h-4 w-4 text-green-400" />
-                        <span className="text-sm font-medium text-green-400">
+                      <div className={cn("flex items-center gap-2 px-3 py-1.5 rounded-full border shrink-0", toneCalloutClass('success'))}>
+                        <CheckCircle2 className={cn("h-4 w-4", toneTextClass('success'))} />
+                        <span className={cn("text-sm font-medium", toneTextClass('success'))}>
                           {t.wishes.choice} #{firstApproved.choice_index}
                           {wowClass && (
                             <span className="ml-1 opacity-80">
@@ -320,7 +322,7 @@ const Overview = () => {
                             {wish.choice_index}
                           </div>
                           {wowClass && (
-                            <span className={cn("text-sm font-medium", `text-${wowClass.color}`)}>
+                            <span className={cn("text-sm font-medium", wowClassTextClass(wowClass.id))}>
                               {getLocalizedClassName(wowClass.id, language)}
                             </span>
                           )}
@@ -355,7 +357,7 @@ const Overview = () => {
                                   {wish.choice_index}
                                 </div>
                                 {wowClass && (
-                                  <span className={cn("text-sm font-medium", `text-${wowClass.color}`)}>
+                                  <span className={cn("text-sm font-medium", wowClassTextClass(wowClass.id))}>
                                     {getLocalizedClassName(wowClass.id, language)}
                                   </span>
                                 )}
@@ -410,8 +412,8 @@ const Overview = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                    <CheckCircle2 className="h-5 w-5 text-green-400" />
+                  <div className="w-10 h-10 rounded-lg bg-healer/10 flex items-center justify-center">
+                    <CheckCircle2 className="h-5 w-5 text-healer" />
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-foreground">{confirmedMembers}</p>
@@ -462,9 +464,10 @@ const Overview = () => {
             </GlowCard>
           </div>
         </div>
-      </main>
+      </PageContainer>
     </div>
   );
 };
 
 export default Overview;
+

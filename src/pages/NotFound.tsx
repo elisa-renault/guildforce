@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { CosmicBackground } from "@/components/CosmicBackground";
 import { GlowCard } from "@/components/GlowCard";
 import { CosmicButton } from "@/components/CosmicButton";
+import { PageContainer } from "@/components/layout/PageContainer";
 import { Home, AlertCircle } from "lucide-react";
 
 const NotFound = () => {
@@ -12,7 +13,7 @@ const NotFound = () => {
   // 404 errors are handled silently - no console logging in production
 
   return (
-    <div className="flex-1 flex items-center justify-center p-4 relative">
+    <PageContainer width="full" className="flex-1 flex items-center justify-center py-4 relative">
       <CosmicBackground />
 
       <GlowCard className="w-full max-w-md p-8 text-center relative z-10">
@@ -32,7 +33,7 @@ const NotFound = () => {
           Return to Home
         </CosmicButton>
       </GlowCard>
-    </div>
+    </PageContainer>
   );
 };
 

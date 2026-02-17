@@ -38,6 +38,20 @@
 
     --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 100%;
+    --warning: 39 96% 53%;
+    --warning-foreground: 240 10% 8%;
+    --info: 199 89% 48%;
+    --info-foreground: 240 10% 8%;
+
+    /* Canonical semantic status aliases */
+    --status-success: var(--healer);
+    --status-success-foreground: 240 10% 8%;
+    --status-warning: var(--warning);
+    --status-warning-foreground: var(--warning-foreground);
+    --status-error: var(--destructive);
+    --status-error-foreground: var(--destructive-foreground);
+    --status-info: var(--info);
+    --status-info-foreground: var(--info-foreground);
 
     --border: 240 10% 24%;
     --input: 240 10% 14%;

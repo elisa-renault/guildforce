@@ -203,14 +203,14 @@ export const AdminPermissionsManager = () => {
   const getRoleBadge = (role: AppRole) => {
     if (role === 'admin') {
       return (
-        <Badge variant="default" className="bg-red-500/20 text-red-400 border-red-500/30">
+        <Badge variant="default" className="bg-status-error/20 text-status-error border-status-error/30">
           <ShieldCheck className="h-3 w-3 mr-1" />
           Admin
         </Badge>
       );
     }
     return (
-      <Badge variant="default" className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+      <Badge variant="default" className="bg-status-info/20 text-status-info border-status-info/30">
         <Shield className="h-3 w-3 mr-1" />
         {t.admin.moderators}
       </Badge>
@@ -272,7 +272,7 @@ export const AdminPermissionsManager = () => {
                       size="sm"
                       variant="outline"
                       onClick={() => confirmRoleChange(user, 'moderator', 'add')}
-                      className="text-blue-400 border-blue-400/30 hover:bg-blue-400/10"
+                      className="text-status-info border-status-info/30 hover:bg-status-info/10"
                     >
                       <Plus className="h-3 w-3 mr-1" />
                       {t.admin.moderators}
@@ -283,7 +283,7 @@ export const AdminPermissionsManager = () => {
                       size="sm"
                       variant="outline"
                       onClick={() => confirmRoleChange(user, 'admin', 'add')}
-                      className="text-red-400 border-red-400/30 hover:bg-red-400/10"
+                      className="text-status-error border-status-error/30 hover:bg-status-error/10"
                     >
                       <Plus className="h-3 w-3 mr-1" />
                       Admin
@@ -341,7 +341,7 @@ export const AdminPermissionsManager = () => {
                       size="sm"
                       variant="ghost"
                       onClick={() => confirmRoleChange(user, 'moderator', 'remove')}
-                      className="text-muted-foreground hover:text-destructive"
+                      className="text-muted-foreground hover:text-status-error"
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -351,7 +351,7 @@ export const AdminPermissionsManager = () => {
                       size="sm"
                       variant="ghost"
                       onClick={() => confirmRoleChange(user, 'admin', 'remove')}
-                      className="text-muted-foreground hover:text-destructive"
+                      className="text-muted-foreground hover:text-status-error"
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -386,3 +386,4 @@ export const AdminPermissionsManager = () => {
     </div>
   );
 };
+

@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { BattleNetIcon } from '@/components/BattleNetIcon';
 import { Shield } from 'lucide-react';
 import {
@@ -28,6 +29,8 @@ const Index = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
   const { toast } = useToast();
+  const getErrorMessage = (error: unknown) =>
+    error instanceof Error ? error.message : t.auth.battlenetError;
   const [bnetLoading, setBnetLoading] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState<BattleNetRegion>('eu');
 
@@ -53,11 +56,11 @@ const Index = () => {
       } else {
         throw new Error('Failed to get auth URL');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       log.error('Battle.net auth error:', error);
       toast({
         title: t.auth.battlenetError,
-        description: error.message,
+        description: getErrorMessage(error),
         variant: 'destructive',
       });
       setBnetLoading(false);
@@ -70,7 +73,7 @@ const Index = () => {
 
       {/* Hero */}
       <main className="flex-1 flex items-center justify-center relative z-10 py-8 md:py-0">
-        <div className="text-center max-w-4xl mx-auto px-6">
+        <PageContainer width="full" className="text-center max-w-4xl mx-auto px-6">
           {/* Title with gradient */}
           <h1 className="font-display text-5xl md:text-7xl mb-8 leading-tight min-h-[7.5rem] md:min-h-[10rem]">
             <span className="text-foreground">{t.home.subtitle.split(' ').slice(0, 2).join(' ')}</span>
@@ -112,7 +115,7 @@ const Index = () => {
               {user ? t.common.myGuilds : t.auth.loginWithBattleNet}
             </CosmicButton>
           </div>
-        </div>
+        </PageContainer>
       </main>
     </div>
   );

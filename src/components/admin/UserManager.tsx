@@ -524,13 +524,13 @@ export function UserManager() {
                   <TableCell>
                     <div className="flex items-center gap-1">
                       {user.roles.includes('admin') && (
-                        <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 gap-1">
+                        <Badge className="bg-status-warning/20 text-status-warning border-status-warning/30 gap-1">
                           <Crown className="h-3 w-3" />
                           Admin
                         </Badge>
                       )}
                       {user.roles.includes('moderator') && (
-                        <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 gap-1">
+                        <Badge className="bg-status-info/20 text-status-info border-status-info/30 gap-1">
                           <ShieldCheck className="h-3 w-3" />
                           Mod
                         </Badge>
@@ -618,3 +618,4 @@ export function UserManager() {
     </div>
   );
 }
+

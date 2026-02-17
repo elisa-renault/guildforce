@@ -65,7 +65,7 @@ export const ForumTopicList = ({ topics, basePath = '/forum' }: ForumTopicListPr
                   <Pin className="h-4 w-4 text-primary flex-shrink-0" />
                 )}
                 {topic.is_locked && (
-                  <Lock className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                  <Lock className="h-4 w-4 text-warning flex-shrink-0" />
                 )}
                 <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate">
                   {topic.title}
@@ -124,3 +124,4 @@ export const ForumTopicList = ({ topics, basePath = '/forum' }: ForumTopicListPr
     </div>
   );
 };
+

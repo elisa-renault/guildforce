@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GuildSubNav } from '@/components/guild';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { PollEditor, type ResultsAccessRule, type RespondentAccessRule } from '@/components/polls';
 import { usePollMutations } from '@/hooks/useGuildPolls';
 import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
@@ -36,6 +37,39 @@ interface GuildRank {
   rank_name: string;
 }
 
+interface PollSectionRow {
+  id: string;
+  title: string | null;
+  description: string | null;
+  display_order: number | null;
+}
+
+interface PollQuestionRow {
+  id: string;
+  section_id: string | null;
+  question_text: string | null;
+  question_type: QuestionFormData['question_type'];
+  is_required: boolean | null;
+  options: string[] | null;
+  scale_config: QuestionFormData['scale_config'];
+  allow_other: boolean | null;
+  condition: QuestionFormData['condition'];
+  display_order: number | null;
+}
+
+interface ExistingPollData {
+  id: string;
+  status: string | null;
+  title: string | null;
+  description: string | null;
+  is_anonymous: boolean | null;
+  allow_multiple_responses: boolean | null;
+  roster_id: string | null;
+  ends_at: string | null;
+  sections?: PollSectionRow[];
+  questions?: PollQuestionRow[];
+}
+
 const GuildPollNew = () => {
   const navigate = useNavigate();
   const { regionSlug, serverSlug, guildSlug, pollId } = useParams();
@@ -45,6 +79,8 @@ const GuildPollNew = () => {
   const rankLabel = resolveSemanticMessage({ key: 'guild.members.rank_label', language, translations: t });
   const { user } = useAuth();
   const { toast } = useToast();
+  const getErrorMessage = (error: unknown) =>
+    error instanceof Error ? error.message : t.polls?.error || 'Error';
   const [loading, setLoading] = useState(true);
   const [guildId, setGuildId] = useState<string | null>(null);
   const [guild, setGuild] = useState<{ name: string; server: string; region: string; avatar_url: string | null; officer_rank_threshold: number } | null>(null);
@@ -52,7 +88,7 @@ const GuildPollNew = () => {
   const [rosters, setRosters] = useState<{ id: string; name: string }[]>([]);
   const [members, setMembers] = useState<GuildMember[]>([]);
   const [ranks, setRanks] = useState<GuildRank[]>([]);
-  const [existingPoll, setExistingPoll] = useState<any>(null);
+  const [existingPoll, setExistingPoll] = useState<ExistingPollData | null>(null);
   const [initialAccessRules, setInitialAccessRules] = useState<ResultsAccessRule[]>([]);
   const [initialRespondentRules, setInitialRespondentRules] = useState<RespondentAccessRule[]>([]);
   const [confirmResetDialog, setConfirmResetDialog] = useState(false);
@@ -199,7 +235,7 @@ const GuildPollNew = () => {
             }
           }
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         toast({
           title: t.polls?.unstableConnection || 'Unstable connection',
           description: t.polls?.unstableConnectionDesc || "Some poll data couldn't be loaded.",
@@ -246,8 +282,8 @@ const GuildPollNew = () => {
         toast({ title: t.polls?.draftSaved || 'Draft saved' });
       }
       navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/polls`);
-    } catch (error: any) {
-      toast({ title: t.polls?.error || 'Error', description: error.message, variant: 'destructive' });
+    } catch (error: unknown) {
+      toast({ title: t.polls?.error || 'Error', description: getErrorMessage(error), variant: 'destructive' });
     }
   };
 
@@ -263,8 +299,8 @@ const GuildPollNew = () => {
       
       toast({ title: t.polls?.updated || 'Poll updated' });
       navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/polls`);
-    } catch (error: any) {
-      toast({ title: t.polls?.error || 'Error', description: error.message, variant: 'destructive' });
+    } catch (error: unknown) {
+      toast({ title: t.polls?.error || 'Error', description: getErrorMessage(error), variant: 'destructive' });
     } finally {
       setConfirmResetDialog(false);
       setPendingFullEditData(null);
@@ -290,8 +326,8 @@ const GuildPollNew = () => {
         toast({ title: t.polls?.published || 'Poll published!' });
         navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/polls`);
       }
-    } catch (error: any) {
-      toast({ title: t.polls?.error || 'Error', description: error.message, variant: 'destructive' });
+    } catch (error: unknown) {
+      toast({ title: t.polls?.error || 'Error', description: getErrorMessage(error), variant: 'destructive' });
     }
   };
 
@@ -319,7 +355,7 @@ const GuildPollNew = () => {
     return null;
   }
 
-  const toPollFormData = (poll: any): PollFormData => {
+  const toPollFormData = (poll: ExistingPollData): PollFormData => {
     const rawSections = Array.isArray(poll?.sections) ? poll.sections : [];
     const rawQuestions = Array.isArray(poll?.questions) ? poll.questions : [];
 
@@ -327,8 +363,8 @@ const GuildPollNew = () => {
     const sectionIndexById = new Map<string, number>();
     const sections: SectionFormData[] = rawSections
       .slice()
-      .sort((a: any, b: any) => (a.display_order ?? 0) - (b.display_order ?? 0))
-      .map((s: any, index: number) => {
+      .sort((a: PollSectionRow, b: PollSectionRow) => (a.display_order ?? 0) - (b.display_order ?? 0))
+      .map((s: PollSectionRow, index: number) => {
         const section: SectionFormData = {
           id: s.id,
           title: s.title || '',
@@ -344,7 +380,7 @@ const GuildPollNew = () => {
 
     const sortedQuestions = rawQuestions
       .slice()
-      .sort((a: any, b: any) => (a.display_order ?? 0) - (b.display_order ?? 0));
+      .sort((a: PollQuestionRow, b: PollQuestionRow) => (a.display_order ?? 0) - (b.display_order ?? 0));
 
     const generalQuestions: QuestionFormData[] = [];
     const questionIdToEditorId: Record<string, string> = {};
@@ -432,7 +468,7 @@ const GuildPollNew = () => {
         />
       )}
 
-      <div className="container mx-auto px-1 py-5 sm:py-8 max-w-4xl">
+      <PageContainer className="py-5 sm:py-8 max-w-4xl px-1 sm:px-4" width="contained">
         <Breadcrumbs items={breadcrumbs} className="mb-4 px-8" />
         <h1 className="text-2xl font-bold mb-6 px-8">
           {existingPoll ? t.polls?.edit : t.polls?.new}
@@ -440,12 +476,12 @@ const GuildPollNew = () => {
 
         {isActivePoll && (
           <div className={`mb-6 p-4 rounded-lg border ${isMetadataOnly 
-            ? 'bg-blue-500/10 border-blue-500/30' 
-            : 'bg-yellow-500/10 border-yellow-500/30'}`}
+            ? 'bg-info/10 border-info/30' 
+            : 'bg-warning/10 border-warning/30'}`}
           >
           <div className="flex items-center gap-2">
-              <AlertTriangle className={`h-5 w-5 ${isMetadataOnly ? 'text-blue-400' : 'text-yellow-400'}`} />
-              <span className={`font-medium ${isMetadataOnly ? 'text-blue-400' : 'text-yellow-400'}`}>
+              <AlertTriangle className={`h-5 w-5 ${isMetadataOnly ? 'text-info' : 'text-warning'}`} />
+              <span className={`font-medium ${isMetadataOnly ? 'text-info' : 'text-warning'}`}>
                 {isMetadataOnly ? t.polls?.settingsOnlyMode : t.polls?.fullEditMode}
               </span>
             </div>
@@ -468,7 +504,7 @@ const GuildPollNew = () => {
           saving={saving}
           metadataOnly={isMetadataOnly}
         />
-      </div>
+      </PageContainer>
 
       <AlertDialog open={confirmResetDialog} onOpenChange={setConfirmResetDialog}>
         <AlertDialogContent>
@@ -499,3 +535,4 @@ const GuildPollNew = () => {
 };
 
 export default GuildPollNew;
+

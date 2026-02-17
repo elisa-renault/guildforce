@@ -243,6 +243,8 @@ export const GuildProfileSection = ({
 }: GuildProfileSectionProps) => {
   const { t, language } = useLanguage();
   const { toast } = useToast();
+  const getErrorMessage = (error: unknown) =>
+    error instanceof Error ? error.message : t.errors.generic;
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [uploading, setUploading] = useState(false);
@@ -306,10 +308,10 @@ export const GuildProfileSection = ({
 
       onGuildUpdate({ ...guild, avatar_url: avatarUrl });
       toast({ title: t.guildSettings.avatarUpdated });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: t.guildSettings.uploadError,
-        description: error.message,
+        description: getErrorMessage(error),
         variant: 'destructive',
       });
     } finally {
@@ -340,10 +342,10 @@ export const GuildProfileSection = ({
 
       onGuildUpdate({ ...guild, avatar_url: null });
       toast({ title: t.guildSettings.avatarRemoved });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: t.errors.generic,
-        description: error.message,
+        description: getErrorMessage(error),
         variant: 'destructive',
       });
     } finally {
@@ -365,9 +367,10 @@ export const GuildProfileSection = ({
       onOfficerRankChange(newRank);
       onGuildUpdate({ ...guild, officer_rank_threshold: newRank });
       toast({ title: t.guildSettings.officerRankUpdated });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: t.errors.generic,
+        description: getErrorMessage(error),
         variant: 'destructive',
       });
       setLocalOfficerRank(officerRank);
@@ -391,8 +394,8 @@ export const GuildProfileSection = ({
               ) : (
                 <AvatarFallback className={`${
                   guild.faction === 'horde' 
-                    ? 'bg-red-500/20 text-red-400' 
-                    : 'bg-blue-500/20 text-blue-400'
+                    ? 'bg-horde/20 text-horde' 
+                    : 'bg-alliance/20 text-alliance'
                 }`}>
                   <Shield className="h-8 w-8 md:h-10 md:w-10 lg:h-12 lg:w-12" strokeWidth={1.5} />
                 </AvatarFallback>
@@ -454,7 +457,7 @@ export const GuildProfileSection = ({
             <div className="flex justify-between gap-2 py-2 border-b border-border/50">
               <span className="text-muted-foreground text-sm">{t.guild.faction}</span>
               <span className={`font-medium text-right ${
-                guild.faction === 'horde' ? 'text-red-400' : 'text-blue-400'
+                guild.faction === 'horde' ? 'text-horde' : 'text-alliance'
               }`}>
                 {guild.faction === 'horde' ? t.guild.horde : t.guild.alliance}
               </span>
@@ -468,7 +471,7 @@ export const GuildProfileSection = ({
           {/* Officer Rank Threshold */}
           <div className="mt-4 md:mt-6">
             <div className="flex items-center gap-2 mb-1.5 md:mb-2">
-              <Crown className="h-4 w-4 text-amber-400" />
+              <Crown className="h-4 w-4 text-warning" />
               <Label className="text-xs md:text-sm font-medium">
                 {t.permissions.officers}
               </Label>
@@ -507,3 +510,4 @@ export const GuildProfileSection = ({
     </div>
   );
 };
+

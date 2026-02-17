@@ -39,7 +39,11 @@ interface RosterTableProps {
   isRosterLocked?: boolean;
   isEditingLocked?: boolean;
   onStartEditing: (member: MemberWish) => void;
-  onUpdateEditWish: (index: number, field: keyof WishData, value: any) => void;
+  onUpdateEditWish: (
+    index: number,
+    field: keyof WishData,
+    value: WishData[keyof WishData]
+  ) => void;
   onEditStatusChange: (status: CommitmentStatus) => void;
   onSaveEditing: () => void;
   onAddWish: () => void;
@@ -140,11 +144,12 @@ export const RosterTable = ({
         case 'wish3':
           comparison = getWishClassName(a.wishes, 3).localeCompare(getWishClassName(b.wishes, 3));
           break;
-        case 'wishesCount':
+        case 'wishesCount': {
           const countA = a.wishes.filter(w => w.class_id).length;
           const countB = b.wishes.filter(w => w.class_id).length;
           comparison = countA - countB;
           break;
+        }
       }
 
       // Apply sort direction to primary comparison
@@ -506,7 +511,7 @@ export const RosterTable = ({
                             <TooltipProvider delayDuration={200}>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Lock className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" />
+                                  <Lock className="h-3.5 w-3.5 text-warning flex-shrink-0" />
                                 </TooltipTrigger>
                                 <TooltipContent side="top" className="text-xs max-w-[220px]">
                                   {lockTooltip}
@@ -554,7 +559,7 @@ export const RosterTable = ({
                               ? 'bg-healer/20 text-healer border-healer/30' 
                               : member.status === 'withdrawn'
                               ? 'bg-destructive/20 text-destructive border-destructive/30'
-                              : 'bg-amber-500/20 text-amber-500 border-amber-500/30'
+                              : 'bg-warning/20 text-warning border-warning/30'
                           )}
                         >
                           {member.status === 'confirmed' ? (
@@ -706,3 +711,4 @@ export const RosterTable = ({
     </GlowCard>
   );
 };
+

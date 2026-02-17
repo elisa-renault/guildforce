@@ -180,7 +180,7 @@ export const GuildMemberships: React.FC = () => {
                 className={`p-4 rounded-lg border transition-colors ${
                   isInApp
                     ? isAppGM
-                      ? 'border-amber-500/50 bg-amber-500/10'
+                      ? 'border-warning/50 bg-warning/10'
                       : 'border-primary/50 bg-primary/10'
                     : 'border-border/50 bg-background/30'
                 }`}
@@ -188,7 +188,7 @@ export const GuildMemberships: React.FC = () => {
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     {guild.is_gm ? (
-                      <Crown className="w-5 h-5 text-amber-500" />
+                      <Crown className="w-5 h-5 text-warning" />
                     ) : (
                       <Users className="w-5 h-5 text-muted-foreground" />
                     )}
@@ -205,13 +205,13 @@ export const GuildMemberships: React.FC = () => {
                       {guild.guild_faction === 'HORDE' ? 'Horde' : 'Alliance'}
                     </Badge>
                     {guild.is_gm && (
-                      <Badge variant="secondary" className="bg-amber-500/20 text-amber-500 border-amber-500/50">
+                      <Badge variant="secondary" className="bg-warning/20 text-warning border-warning/50">
                         <Crown className="w-3 h-3 mr-1" />
                         {t.guild.guildMaster}
                       </Badge>
                     )}
                     {isOrphan && (
-                      <Badge variant="secondary" className="bg-orange-500/20 text-orange-400 border-orange-500/50">
+                      <Badge variant="secondary" className="bg-warning/20 text-warning border-warning/50">
                         <Clock className="w-3 h-3 mr-1" />
                         {t.guild.awaitingGM}
                       </Badge>
@@ -236,7 +236,7 @@ export const GuildMemberships: React.FC = () => {
                       </div>
                       <Badge variant="outline" className="text-xs">
                         {member.is_guild_master ? (
-                          <span className="text-amber-500">{t.guild.rank0}</span>
+                          <span className="text-warning">{t.guild.rank0}</span>
                         ) : (
                           <span className="text-muted-foreground">
                             {getRankLabel(member.rank_name, member.rank_index)}
@@ -281,3 +281,4 @@ export const GuildMemberships: React.FC = () => {
     </GlowCard>
   );
 };
+

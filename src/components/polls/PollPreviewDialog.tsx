@@ -319,7 +319,7 @@ export const PollPreviewDialog = ({
             {t.polls?.preview || 'Preview'}
           </DialogTitle>
           <DialogDescription>
-            <div className="flex items-center gap-2 p-3 mt-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm">
+            <div className="flex items-center gap-2 p-3 mt-2 rounded-lg bg-warning/10 border border-warning/30 text-warning text-sm">
               <AlertTriangle className="h-4 w-4 shrink-0" />
               {t.polls?.previewNote || 'This is a preview. Your responses will not be saved.'}
             </div>
@@ -339,7 +339,7 @@ export const PollPreviewDialog = ({
 
           {/* Anonymous badge */}
           {formData.is_anonymous && (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-300 text-sm">
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/30 text-primary text-sm">
               <Lock className="h-4 w-4" />
               {t.polls?.anonymousDesc}
             </div>
@@ -657,3 +657,4 @@ export const PollPreviewDialog = ({
     </Dialog>
   );
 };
+

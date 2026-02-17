@@ -8,6 +8,7 @@ import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
 import { ForumCategoryList } from '@/components/forum';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { Button } from '@/components/ui/button';
 import { Loader2, Plus, MessageSquare, Settings } from 'lucide-react';
 
@@ -33,7 +34,7 @@ const Forum = () => {
     <div className="flex-1 relative pt-16">
       <CosmicBackground />
 
-      <main className="container mx-auto px-4 py-8 relative z-10 max-w-5xl">
+      <PageContainer as="main" className="relative z-10 py-8" width="contained">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -77,7 +78,7 @@ const Forum = () => {
             </p>
           </div>
         )}
-      </main>
+      </PageContainer>
     </div>
   );
 };

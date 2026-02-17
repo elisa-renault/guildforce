@@ -29,20 +29,20 @@ const roleConfig: Record<Role, { icon: typeof Shield; color: string }> = {
 };
 
 const validationConfig: Record<ValidationStatus, { icon: typeof Clock; color: string; bgColor: string }> = {
-  pending: { icon: Clock, color: 'text-amber-400', bgColor: 'bg-amber-400/10' },
-  approved: { icon: CheckCircle2, color: 'text-healer', bgColor: 'bg-healer/10' },
-  rejected: { icon: XCircle, color: 'text-destructive', bgColor: 'bg-destructive/10' },
+  pending: { icon: Clock, color: 'text-status-warning', bgColor: 'bg-status-warning/10' },
+  approved: { icon: CheckCircle2, color: 'text-status-success', bgColor: 'bg-status-success/10' },
+  rejected: { icon: XCircle, color: 'text-status-error', bgColor: 'bg-status-error/10' },
 };
 
 const commitmentConfig: Record<CommitmentFilter, { icon: typeof UserCheck; color: string; labelKey: 'confirmed' | 'undecided' | 'withdrawn' }> = {
-  confirmed: { icon: UserCheck, color: 'text-healer', labelKey: 'confirmed' },
-  undecided: { icon: UserMinus, color: 'text-amber-400', labelKey: 'undecided' },
-  withdrawn: { icon: UserX, color: 'text-destructive', labelKey: 'withdrawn' },
+  confirmed: { icon: UserCheck, color: 'text-status-success', labelKey: 'confirmed' },
+  undecided: { icon: UserMinus, color: 'text-status-warning', labelKey: 'undecided' },
+  withdrawn: { icon: UserX, color: 'text-status-error', labelKey: 'withdrawn' },
 };
 
 const rangeConfig: Record<RangeFilter, { icon: typeof Swords; color: string }> = {
-  melee: { icon: Swords, color: 'text-orange-400' },
-  ranged: { icon: Crosshair, color: 'text-sky-400' },
+  melee: { icon: Swords, color: 'text-warning' },
+  ranged: { icon: Crosshair, color: 'text-info' },
 };
 
 // Default/empty filter state
@@ -644,3 +644,4 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
     </div>
   );
 };
+

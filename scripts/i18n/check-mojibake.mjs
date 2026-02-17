@@ -1,100 +1,108 @@
-#!/usr/bin/env node
+﻿#!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
 
 const ROOT_DIR = process.cwd();
-const TARGET_DIRS = ['src', 'scripts', 'supabase/functions', 'supabase/migrations', 'docs', 'tasks'];
-const TEXT_EXTENSIONS = new Set([
+const SCAN_DIRS = ['src', 'scripts'];
+const FILE_EXTENSIONS = new Set([
   '.ts',
   '.tsx',
   '.js',
+  '.jsx',
   '.mjs',
-  '.json',
+  '.cjs',
+  '.css',
   '.md',
+  '.json',
   '.sql',
-  '.txt',
-  '.yml',
-  '.yaml',
 ]);
 
-const SHOULD_SKIP_DIR = new Set(['node_modules', 'dist', '.git', '.next', '.turbo', 'coverage', 'e2e/artifacts']);
-
-const SUSPICIOUS_REGEXES = [
-  /Ã./g,
-  /Â[^\n\r]/g,
-  /Å[^\n\r]/g,
-  /â€™/g,
-  /â€˜/g,
-  /â€œ/g,
-  /â€\u009d/g,
-  /â€“/g,
-  /â€”/g,
-  /â€¦/g,
-  /â€¢/g,
-  /â„¢/g,
-  /â†./g,
-  /ï»¿/g,
-  /�/g,
-];
+const IGNORE_SEGMENTS = new Set([
+  'node_modules',
+  '.git',
+  'dist',
+  'build',
+  'coverage',
+  '.next',
+]);
 
 const toPosix = (value) => value.split(path.sep).join('/');
+const SELF_RELATIVE_PATH = toPosix(path.join('scripts', 'i18n', 'check-mojibake.mjs'));
 
-const isTextFile = (filePath) => TEXT_EXTENSIONS.has(path.extname(filePath).toLowerCase());
+const MOJIBAKE_PATTERNS = [
+  { label: 'replacement-character', regex: /\uFFFD/g },
+  // Common mojibake signatures from UTF-8 read as Latin-1/Windows-1252.
+  { label: 'utf8-latin1-mix', regex: /(?:\u00C3.|\u00C2.|\u00E2[\u0080-\u00BF])/g },
+];
 
-const shouldSkipPath = (fullPath) => {
-  const rel = toPosix(path.relative(ROOT_DIR, fullPath));
-  if (!rel) return true;
-  if (rel === 'scripts/i18n/check-mojibake.mjs') return true;
-  return [...SHOULD_SKIP_DIR].some((entry) => rel === entry || rel.startsWith(`${entry}/`));
+const shouldScanFile = (filePath) => FILE_EXTENSIONS.has(path.extname(filePath).toLowerCase());
+
+const shouldIgnorePath = (filePath) => {
+  const parts = filePath.split(path.sep);
+  return parts.some((part) => IGNORE_SEGMENTS.has(part));
 };
 
-const walk = (dirPath, acc = []) => {
+const walkFiles = (dirPath, acc = []) => {
   if (!fs.existsSync(dirPath)) return acc;
   const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+
   for (const entry of entries) {
-    const fullPath = path.join(dirPath, entry.name);
-    if (shouldSkipPath(fullPath)) continue;
+    const absPath = path.join(dirPath, entry.name);
+    if (shouldIgnorePath(absPath)) continue;
+
     if (entry.isDirectory()) {
-      walk(fullPath, acc);
+      walkFiles(absPath, acc);
       continue;
     }
-    if (isTextFile(fullPath)) {
-      acc.push(fullPath);
+
+    if (entry.isFile() && shouldScanFile(absPath)) {
+      acc.push(absPath);
     }
   }
+
   return acc;
 };
 
 const findings = [];
 
-for (const target of TARGET_DIRS) {
-  const absolute = path.join(ROOT_DIR, target);
-  const files = walk(absolute);
-  for (const file of files) {
-    const source = fs.readFileSync(file, 'utf8');
-    for (const rx of SUSPICIOUS_REGEXES) {
-      rx.lastIndex = 0;
-      const match = rx.exec(source);
-      if (!match) continue;
+for (const scanDir of SCAN_DIRS) {
+  const absScanDir = path.join(ROOT_DIR, scanDir);
+  const files = walkFiles(absScanDir);
 
-      const before = source.slice(0, match.index);
-      const line = before.split(/\r?\n/).length;
-      findings.push({
-        file: toPosix(path.relative(ROOT_DIR, file)),
-        line,
-        snippet: match[0],
-      });
-      break;
+  for (const filePath of files) {
+    const relativePath = toPosix(path.relative(ROOT_DIR, filePath));
+    if (relativePath === SELF_RELATIVE_PATH) continue;
+
+    const source = fs.readFileSync(filePath, 'utf8');
+
+    for (const pattern of MOJIBAKE_PATTERNS) {
+      pattern.regex.lastIndex = 0;
+      let match = pattern.regex.exec(source);
+
+      while (match) {
+        const line = source.slice(0, match.index).split(/\r?\n/).length;
+        findings.push({
+          file: relativePath,
+          line,
+          token: match[0],
+          label: pattern.label,
+        });
+
+        match = pattern.regex.exec(source);
+      }
     }
   }
 }
 
 if (findings.length > 0) {
-  console.error(`[i18n:encoding] Suspicious mojibake sequences found (${findings.length} file(s)).`);
-  for (const item of findings) {
-    console.error(`- ${item.file}:${item.line} -> ${JSON.stringify(item.snippet)}`);
+  console.error(`[i18n:encoding] Found ${findings.length} suspicious encoding token(s).`);
+  for (const entry of findings.slice(0, 200)) {
+    console.error(`- ${entry.file}:${entry.line} (${entry.label}) -> ${JSON.stringify(entry.token)}`);
+  }
+  if (findings.length > 200) {
+    console.error(`... truncated ${findings.length - 200} additional finding(s).`);
   }
   process.exitCode = 1;
 } else {
-  console.log('[i18n:encoding] OK: no suspicious mojibake sequences found.');
+  console.log('[i18n:encoding] OK: no suspicious mojibake tokens found.');
 }

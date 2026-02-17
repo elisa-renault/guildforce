@@ -8,6 +8,7 @@ import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { GuildSubNav } from '@/components/guild/GuildSubNav';
 import { RosterManager } from '@/components/roster';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { GuildPermissionsEditor, MyPermissionsCard } from '@/components/permissions';
 import { 
   GuildSettingsSidebar, 
@@ -396,8 +397,10 @@ const GuildSettings = () => {
         />
 
         {/* Main Content */}
-        <main className="flex-1 p-3 md:p-6 md:max-w-5xl overflow-x-hidden min-w-0">
-          {renderSectionContent()}
+        <main className="flex-1 overflow-x-hidden min-w-0">
+          <PageContainer width="wide" className="py-3 md:py-6">
+            {renderSectionContent()}
+          </PageContainer>
         </main>
       </div>
     </div>

@@ -156,7 +156,7 @@ export const PollResponse = ({
     const initial: Record<string, string> = {};
     questions.forEach((q) => {
       if (q.my_response) {
-        const resp = q.my_response.response_value as any;
+        const resp = q.my_response.response_value as ResponseValue & { other_text?: string };
         if (resp.other_text) {
           initial[q.id] = resp.other_text;
         }
@@ -243,7 +243,7 @@ export const PollResponse = ({
   return (
     <div className="space-y-6">
       {isAnonymous && (
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-300 text-sm">
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/30 text-primary text-sm">
           <Lock className="h-4 w-4" />
           {t.polls?.anonymousDesc}
         </div>
@@ -528,7 +528,7 @@ export const PollResponse = ({
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3">
         {alreadyResponded && (
-          <div className="flex items-center gap-2 text-green-400 text-sm sm:mr-auto">
+          <div className="flex items-center gap-2 text-healer text-sm sm:mr-auto">
             <CheckCircle className="h-4 w-4 shrink-0" />
             <span>{t.polls?.alreadyResponded}</span>
           </div>
@@ -551,3 +551,4 @@ export const PollResponse = ({
     </div>
   );
 };
+

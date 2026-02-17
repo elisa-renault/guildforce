@@ -124,7 +124,7 @@ export const ForumCategoryList = forwardRef<HTMLDivElement, ForumCategoryListPro
       {guildCategories.length > 0 && (
         <div>
           <h2 className="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
-            <MessageSquare className="h-5 w-5 text-amber-500" />
+            <MessageSquare className="h-5 w-5 text-warning" />
             {t.forum.guildForum}
           </h2>
           <div className="space-y-2">
@@ -137,3 +137,4 @@ export const ForumCategoryList = forwardRef<HTMLDivElement, ForumCategoryListPro
 });
 
 ForumCategoryList.displayName = 'ForumCategoryList';
+

@@ -19,6 +19,8 @@ import { AdminPermissionsManager } from '@/components/admin/AdminPermissionsMana
 import { AdminForumSection } from '@/components/admin/AdminForumSection';
 import { AdminDocumentation } from '@/components/admin/AdminDocumentation';
 import { AdminBackupSection } from '@/components/admin/AdminBackupSection';
+import { PageContainer } from '@/components/layout/PageContainer';
+import { SectionHeader } from '@/components/layout/SectionHeader';
 import { Crown, Loader2 } from 'lucide-react';
 
 interface AdminStats {
@@ -364,27 +366,19 @@ export default function Admin() {
           
           {/* Header */}
           <div className="border-b border-border/50 bg-background/80 backdrop-blur-sm">
-            <div className="container max-w-6xl mx-auto px-4 py-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/20 ring-1 ring-primary/50">
-                  <Crown className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                <h1 className="text-2xl md:text-3xl font-display text-foreground">
-                  {t.admin.administration}
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  {isAdmin ? t.admin.adminDashboard : t.admin.moderatorDashboard}
-                </p>
-              </div>
-              </div>
-            </div>
+            <PageContainer className="py-4" width="wide">
+              <SectionHeader
+                icon={Crown}
+                title={t.admin.administration}
+                description={isAdmin ? t.admin.adminDashboard : t.admin.moderatorDashboard}
+              />
+            </PageContainer>
           </div>
 
           {/* Section content */}
-          <div className="mx-auto w-full p-4 md:p-6 md:max-w-6xl lg:max-w-7xl xl:max-w-screen-2xl 2xl:max-w-[1600px]">
+          <PageContainer className="py-4 md:py-6" width="wide">
             {renderSectionContent()}
-          </div>
+          </PageContainer>
         </main>
       </div>
     </div>

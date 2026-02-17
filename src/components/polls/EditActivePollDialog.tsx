@@ -32,7 +32,7 @@ export const EditActivePollDialog = forwardRef<HTMLDivElement, EditActivePollDia
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-yellow-500" />
+            <AlertTriangle className="h-5 w-5 text-warning" />
             {t.polls.editActivePoll}
           </DialogTitle>
           <DialogDescription>
@@ -79,3 +79,4 @@ export const EditActivePollDialog = forwardRef<HTMLDivElement, EditActivePollDia
 });
 
 EditActivePollDialog.displayName = 'EditActivePollDialog';
+

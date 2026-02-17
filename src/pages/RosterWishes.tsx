@@ -16,6 +16,7 @@ import {
 } from '@/data/wowClasses';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { GuildSubNav } from '@/components/guild';
 import { RosterFilters, RosterTable, RosterAnalytics } from '@/components/dashboard';
 import { RosterSelector, RosterEditDialog } from '@/components/roster';
@@ -30,6 +31,7 @@ import { formatDateTimeLocalized, interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import { resolveSpecOrder } from '@/lib/wishOrder';
 import { resolveWishLockState } from '@/lib/wishLock';
+import { toneCalloutClass, toneTextClass } from '@/lib/design-tokens';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 
@@ -140,6 +142,8 @@ const RosterWishes = () => {
   const [saving, setSaving] = useState(false);
   const [deletingMemberId, setDeletingMemberId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'table' | 'analytics'>('table');
+  const getErrorMessage = (error: unknown) =>
+    error instanceof Error ? error.message : t.errors.generic;
 
   // Roster state
   const [rosters, setRosters] = useState<RosterData[]>([]);
@@ -574,8 +578,8 @@ const RosterWishes = () => {
         updateRosterLockState(selectedRosterId, { wishes_locked: false, wishes_lock_at: null });
         toast({ title: t.rosters.wishesUnlockedToast });
       }
-    } catch (error: any) {
-      toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
+    } catch (error: unknown) {
+      toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
     } finally {
       setLockingRoster(false);
     }
@@ -596,8 +600,8 @@ const RosterWishes = () => {
       if (!lockAtIso) {
         setLockAtInput('');
       }
-    } catch (error: any) {
-      toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
+    } catch (error: unknown) {
+      toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
     } finally {
       setSchedulingLock(false);
     }
@@ -615,8 +619,8 @@ const RosterWishes = () => {
       if (error) throw error;
       setMembers(prev => prev.map(m => (m.id === memberId ? { ...m, wishes_locked: locked } : m)));
       toast({ title: locked ? t.wishes.memberLockedToast : t.wishes.memberUnlockedToast });
-    } catch (error: any) {
-      toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
+    } catch (error: unknown) {
+      toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
     } finally {
       setLockingMemberId(null);
     }
@@ -652,8 +656,8 @@ const RosterWishes = () => {
       setExternalDialogOpen(false);
       resetExternalForm();
       await fetchWishes();
-    } catch (error: any) {
-      toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
+    } catch (error: unknown) {
+      toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
     } finally {
       setSavingExternalWish(false);
     }
@@ -690,8 +694,8 @@ const RosterWishes = () => {
           : 'Member removed from wishes table',
       });
       await fetchWishes();
-    } catch (error: any) {
-      toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
+    } catch (error: unknown) {
+      toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
     } finally {
       setDeletingMemberId(null);
     }
@@ -715,7 +719,11 @@ const RosterWishes = () => {
   };
 
 
-  const updateEditWish = (index: number, field: keyof WishData, value: any) => {
+  const updateEditWish = (
+    index: number,
+    field: keyof WishData,
+    value: WishData[keyof WishData],
+  ) => {
     const updated = [...editWishes];
     updated[index] = { ...updated[index], [field]: value };
     if (field === 'classId') {
@@ -823,8 +831,8 @@ const RosterWishes = () => {
       toast({ title: t.wishes.wishesSaved });
       setEditingUserId(null);
       await fetchWishes();
-    } catch (error: any) {
-      toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
+    } catch (error: unknown) {
+      toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -880,8 +888,8 @@ const RosterWishes = () => {
 
       // Refresh wishes to sync validated_by_username, timestamps, etc.
       await fetchWishes();
-    } catch (error: any) {
-      toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
+    } catch (error: unknown) {
+      toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
     }
   };
 
@@ -1042,14 +1050,14 @@ const RosterWishes = () => {
 
       {/* Admin read-only banner */}
       {isAdminReadOnly && (
-        <div className="container mx-auto px-3 md:px-4 py-2">
-          <div className="flex items-center justify-center gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/30">
-            <Eye className="h-4 w-4 text-amber-400" />
-            <span className="text-sm text-amber-400 font-medium">
+        <PageContainer className="px-3 md:px-4 py-2" width="wide">
+          <div className={cn("flex items-center justify-center gap-2 p-2 rounded-lg border", toneCalloutClass('warning'))}>
+            <Eye className={cn("h-4 w-4", toneTextClass('warning'))} />
+            <span className={cn("text-sm font-medium", toneTextClass('warning'))}>
               {s('roster_wishes.admin_read_only')}
             </span>
           </div>
-        </div>
+        </PageContainer>
       )}
 
       {/* Roster controls bar */}
@@ -1058,7 +1066,7 @@ const RosterWishes = () => {
         className={`${isMobile ? 'fixed left-0 right-0' : 'sticky'} z-30 bg-background/80 backdrop-blur-lg border-b border-border/50`}
         style={{ top: controlsTop }}
       >
-        <div className="container mx-auto px-3 md:px-4 py-2 flex items-center justify-between">
+        <PageContainer className="px-3 md:px-4 py-2 flex items-center justify-between" width="wide">
           <RosterSelector
             rosters={rosters}
             selectedRosterId={selectedRosterId}
@@ -1120,13 +1128,13 @@ const RosterWishes = () => {
               </CosmicButton>
             )}
           </div>
-        </div>
+        </PageContainer>
       </div>
       {isMobile && controlsSpacerH > 0 && (
         <div aria-hidden="true" style={{ height: controlsSpacerH }} />
       )}
 
-      <main className="container mx-auto px-3 md:px-4 py-4 md:py-6 relative z-10">
+      <PageContainer as="main" className="px-3 md:px-4 py-4 md:py-6 relative z-10" width="wide">
         {/* Access warning */}
         {currentRoster && !currentRoster.hasAccess && (
           <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive">
@@ -1135,21 +1143,21 @@ const RosterWishes = () => {
         )}
 
         {currentRoster && rosterLockState.isLocked && (
-          <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-sm text-amber-200 flex items-start gap-2">
-            <Lock className="h-4 w-4 mt-0.5 text-amber-400" />
+          <div className={cn("mb-4 p-3 rounded-lg border text-sm flex items-start gap-2", toneCalloutClass('warning'))}>
+            <Lock className={cn("h-4 w-4 mt-0.5", toneTextClass('warning'))} />
             <div>
               <div className="font-medium">{t.wishes.lockedTitle}</div>
-              <div className="text-amber-200/80">{t.wishes.lockedRosterDesc}</div>
+              <div className={cn("opacity-80", toneTextClass('warning'))}>{t.wishes.lockedRosterDesc}</div>
             </div>
           </div>
         )}
 
         {currentRoster && !rosterLockState.isLocked && rosterScheduledLabel && (
-          <div className="mb-4 p-3 rounded-lg bg-sky-500/10 border border-sky-500/30 text-sm text-sky-200 flex items-start gap-2">
-            <Clock className="h-4 w-4 mt-0.5 text-sky-400" />
+          <div className={cn("mb-4 p-3 rounded-lg border text-sm flex items-start gap-2", toneCalloutClass('info'))}>
+            <Clock className={cn("h-4 w-4 mt-0.5", toneTextClass('info'))} />
             <div>
               <div className="font-medium">{t.wishes.lockScheduledTitle}</div>
-              <div className="text-sky-200/80">
+              <div className={cn("opacity-80", toneTextClass('info'))}>
                 {interpolateMessage(t.wishes.lockScheduledDesc, { date: rosterScheduledLabel })}
               </div>
             </div>
@@ -1205,7 +1213,7 @@ const RosterWishes = () => {
             <RosterAnalytics members={members} />
           </TabsContent>
         </Tabs>
-      </main>
+      </PageContainer>
 
       {selectedRosterId && (
         <Dialog

@@ -30,38 +30,32 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { interpolateMessage } from '@/i18n/format';
 import { getBilingualContentLanguage } from '@/i18n/config';
+import {
+  rangeColorValue,
+  roleColorValue,
+  tierTokenColorValue,
+  tierTokenGradientValue,
+  type TierTokenGroupId,
+  wowClassColorValue,
+} from '@/lib/design-tokens';
 
-// Color mapping from Tailwind class to CSS variable
-const classColorMap: Record<string, string> = {
-  'class-warrior': 'hsl(var(--class-warrior))',
-  'class-paladin': 'hsl(var(--class-paladin))',
-  'class-hunter': 'hsl(var(--class-hunter))',
-  'class-rogue': 'hsl(var(--class-rogue))',
-  'class-priest': 'hsl(var(--class-priest))',
-  'class-death-knight': 'hsl(var(--class-death-knight))',
-  'class-shaman': 'hsl(var(--class-shaman))',
-  'class-mage': 'hsl(var(--class-mage))',
-  'class-warlock': 'hsl(var(--class-warlock))',
-  'class-monk': 'hsl(var(--class-monk))',
-  'class-druid': 'hsl(var(--class-druid))',
-  'class-demon-hunter': 'hsl(var(--class-demon-hunter))',
-  'class-evoker': 'hsl(var(--class-evoker))',
-};
+const resolveClassColor = (classToken: string): string =>
+  wowClassColorValue(classToken.replace(/^class-/, ''));
 
 // Role color mapping for distinctive visualization
 const roleColorMap: Record<Role, string> = {
-  tank: 'hsl(210, 70%, 50%)',
-  healer: 'hsl(142, 70%, 45%)',
-  dps: 'hsl(0, 70%, 55%)',
+  tank: roleColorValue('tank'),
+  healer: roleColorValue('healer'),
+  dps: roleColorValue('dps'),
 };
 
 // Range color mapping
 const rangeColorMap: Record<RangeType, string> = {
-  melee: 'hsl(210, 70%, 55%)',
-  ranged: 'hsl(280, 70%, 55%)',
+  melee: rangeColorValue('melee'),
+  ranged: rangeColorValue('ranged'),
 };
 
-type TokenGroupId = 'dreadful' | 'mystic' | 'venerated' | 'zenith';
+type TokenGroupId = TierTokenGroupId;
 
 const tokenGroupConfig: { id: TokenGroupId; classIds: string[] }[] = [
   { id: 'dreadful', classIds: ['priest', 'mage', 'warlock'] },
@@ -71,24 +65,24 @@ const tokenGroupConfig: { id: TokenGroupId; classIds: string[] }[] = [
 ];
 
 const tokenColorMap: Record<TokenGroupId, string> = {
-  dreadful: '#c4b5fd', // cloth - light violet
-  mystic: '#fb923c', // leather - orange
-  venerated: '#0070de', // mail - shaman blue
-  zenith: '#f472b6', // plate - pink
+  dreadful: tierTokenColorValue('dreadful'),
+  mystic: tierTokenColorValue('mystic'),
+  venerated: tierTokenColorValue('venerated'),
+  zenith: tierTokenColorValue('zenith'),
 };
 
 const tokenTextColorMap: Record<TokenGroupId, string> = {
-  dreadful: '#c4b5fd',
-  mystic: '#fb923c',
-  venerated: '#0070de',
-  zenith: '#f472b6',
+  dreadful: tierTokenColorValue('dreadful'),
+  mystic: tierTokenColorValue('mystic'),
+  venerated: tierTokenColorValue('venerated'),
+  zenith: tierTokenColorValue('zenith'),
 };
 
 const tokenGradientMap: Record<TokenGroupId, string> = {
-  dreadful: 'linear-gradient(90deg, #c4b5fd, #c4b5fd)',
-  mystic: 'linear-gradient(90deg, #fb923c, #fb923c)',
-  venerated: 'linear-gradient(90deg, #0070de, #0070de)',
-  zenith: 'linear-gradient(90deg, #f472b6, #f472b6)',
+  dreadful: tierTokenGradientValue('dreadful'),
+  mystic: tierTokenGradientValue('mystic'),
+  venerated: tierTokenGradientValue('venerated'),
+  zenith: tierTokenGradientValue('zenith'),
 };
 
 interface RosterAnalyticsProps {
@@ -576,7 +570,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   // Rank number with colors for top 3
   const getRankDisplay = (index: number) => {
     const rank = index + 1;
-    const colors = ['text-amber-400', 'text-slate-300', 'text-amber-600'];
+    const colors = ['text-warning', 'text-slate-300', 'text-warning'];
     const colorClass = index < 3 ? colors[index] : 'text-muted-foreground';
     return <span className={`text-xs font-bold ${colorClass}`}>{rank}</span>;
   };
@@ -711,7 +705,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
               <span className="text-xs font-medium">{filteredMemberCount}</span>
             </div>
             <div className="flex items-center gap-1">
-              <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+              <CheckCircle2 className="h-3.5 w-3.5 text-status-success" />
               <span className="text-xs font-medium">{representedClasses.length}/13</span>
             </div>
             <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-border/50">
@@ -835,7 +829,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                     >
                       <div 
                         className="w-20 text-xs font-medium truncate transition-all duration-200"
-                        style={{ color: classColorMap[stat.color] || 'inherit' }}
+                        style={{ color: resolveClassColor(stat.color) }}
                       >
                         {stat.name}
                       </div>
@@ -844,7 +838,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                           className="absolute inset-y-0 left-0 rounded-full transition-all duration-300"
                           style={{ 
                             width: `${(stat.total / maxClassTotal) * 100}%`,
-                            backgroundColor: classColorMap[stat.color] || 'hsl(var(--primary))',
+                            backgroundColor: resolveClassColor(stat.color),
                             opacity: hoveredClass === stat.id ? 1 : 0.85,
                           }}
                         />
@@ -855,7 +849,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                     </div>
                   </TooltipTrigger>
                   <TooltipContent sideOffset={8} className="max-w-[180px]">
-                    <p className="font-semibold text-xs mb-1" style={{ color: classColorMap[stat.color] }}>
+                    <p className="font-semibold text-xs mb-1" style={{ color: resolveClassColor(stat.color) }}>
                       {stat.name}
                     </p>
                     <div className="flex flex-wrap gap-1">
@@ -886,12 +880,12 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                     <div className="w-4 flex justify-center">
                       {getRankDisplay(index)}
                     </div>
-                    <span style={{ color: classColorMap[stat.classColor] || 'inherit' }}>
+                    <span style={{ color: resolveClassColor(stat.classColor) }}>
                       {getRoleIcon(stat.role, "h-3 w-3")}
                     </span>
                     <span 
                       className="flex-1 text-xs font-medium truncate"
-                      style={{ color: classColorMap[stat.classColor] || 'inherit' }}
+                      style={{ color: resolveClassColor(stat.classColor) }}
                     >
                       {stat.specName}
                     </span>
@@ -946,8 +940,8 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                           variant="outline"
                           className="text-[10px] px-1.5 py-0"
                           style={{
-                            color: classColorMap[cls.color],
-                            borderColor: classColorMap[cls.color],
+                            color: resolveClassColor(cls.color),
+                            borderColor: resolveClassColor(cls.color),
                           }}
                         >
                           {cls.name}
@@ -977,11 +971,11 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                           <TooltipTrigger asChild>
                             <div className="flex items-center gap-2 text-xs cursor-default">
                               <span
-                                className={`w-5 text-right tabular-nums ${buff.count === 0 ? 'text-red-500' : 'text-muted-foreground'}`}
+                                className={`w-5 text-right tabular-nums ${buff.count === 0 ? 'text-status-error' : 'text-muted-foreground'}`}
                               >
                                 {buff.count}
                               </span>
-                              <span className={`font-medium ${buff.count === 0 ? 'text-red-500' : ''}`}>
+                              <span className={`font-medium ${buff.count === 0 ? 'text-status-error' : ''}`}>
                                 {buff.name}
                               </span>
                             </div>
@@ -1007,11 +1001,11 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                           <TooltipTrigger asChild>
                             <div className="flex items-center gap-2 text-xs cursor-default">
                               <span
-                                className={`w-5 text-right tabular-nums ${debuff.count === 0 ? 'text-red-500' : 'text-muted-foreground'}`}
+                                className={`w-5 text-right tabular-nums ${debuff.count === 0 ? 'text-status-error' : 'text-muted-foreground'}`}
                               >
                                 {debuff.count}
                               </span>
-                              <span className={`font-medium ${debuff.count === 0 ? 'text-red-500' : ''}`}>
+                              <span className={`font-medium ${debuff.count === 0 ? 'text-status-error' : ''}`}>
                                 {debuff.name}
                               </span>
                             </div>
@@ -1033,10 +1027,10 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
 
         {/* Missing/All Classes Alert - Compact */}
         {missingClasses.length > 0 ? (
-          <div className="flex items-start gap-2 p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-            <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
+          <div className="flex items-start gap-2 p-2.5 bg-status-warning/10 border border-status-warning/30 rounded-lg">
+            <AlertTriangle className="h-4 w-4 text-status-warning flex-shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
-              <span className="text-xs font-medium text-amber-500">{t.dashboard.missingClasses}:</span>
+              <span className="text-xs font-medium text-status-warning">{t.dashboard.missingClasses}:</span>
               <div className="flex flex-wrap gap-1 mt-1">
                 {missingClasses.map(stat => (
                   <Badge
@@ -1044,8 +1038,8 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                     variant="outline"
                     className="text-[10px] px-1.5 py-0"
                     style={{ 
-                      color: classColorMap[stat.color],
-                      borderColor: classColorMap[stat.color],
+                      color: resolveClassColor(stat.color),
+                      borderColor: resolveClassColor(stat.color),
                     }}
                   >
                     {stat.name}
@@ -1055,12 +1049,13 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
             </div>
           </div>
         ) : (
-          <div className="flex items-center gap-2 p-2 bg-green-500/10 border border-green-500/30 rounded-lg">
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
-            <span className="text-xs text-green-500">{t.dashboard.allClassesRepresented}</span>
+          <div className="flex items-center gap-2 p-2 bg-status-success/10 border border-status-success/30 rounded-lg">
+            <CheckCircle2 className="h-4 w-4 text-status-success" />
+            <span className="text-xs text-status-success">{t.dashboard.allClassesRepresented}</span>
           </div>
         )}
       </div>
     </TooltipProvider>
   );
 };
+

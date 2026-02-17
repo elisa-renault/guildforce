@@ -22,12 +22,13 @@ export const getDeltaColorClass = (value: number | null | undefined): string => 
   }
 
   if (value > 0) {
-    return 'text-emerald-400';
+    return 'text-status-success';
   }
 
   if (value < 0) {
-    return 'text-red-400';
+    return 'text-status-error';
   }
 
   return 'text-muted-foreground';
 };
+

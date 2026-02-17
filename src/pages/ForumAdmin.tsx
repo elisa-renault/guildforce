@@ -6,6 +6,7 @@ import { useIsAdmin, useAdminActions } from '@/hooks/useAdmin';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -297,12 +298,12 @@ const ForumAdmin = () => {
     <div className="flex-1 relative pt-16">
       <CosmicBackground />
 
-      <main className="container mx-auto px-4 py-8 relative z-10 max-w-5xl">
+      <PageContainer as="main" className="relative z-10 py-8" width="contained">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <button
             onClick={() => navigate('/forum')}
-            className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
+            className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <ArrowLeft className="h-4 w-4 text-muted-foreground" />
           </button>
@@ -588,7 +589,7 @@ const ForumAdmin = () => {
             <SanctionsManager />
           </TabsContent>
         </Tabs>
-      </main>
+      </PageContainer>
 
       {/* Category Dialog */}
       <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>

@@ -157,7 +157,7 @@ export const MobileRosterCard = ({
                 <UserPlus className="h-3 w-3" />
               </span>
             )}
-            {effectiveLocked && <Lock className="h-3.5 w-3.5 text-amber-400" />}
+            {effectiveLocked && <Lock className="h-3.5 w-3.5 text-warning" />}
             <Badge 
               variant={member.status === 'confirmed' ? 'default' : 'outline'}
               className={cn(
@@ -166,7 +166,7 @@ export const MobileRosterCard = ({
                   ? 'bg-healer/20 text-healer border-healer/30' 
                   : member.status === 'withdrawn'
                   ? 'bg-destructive/20 text-destructive border-destructive/30'
-                  : 'bg-amber-500/20 text-amber-500 border-amber-500/30'
+                  : 'bg-warning/20 text-warning border-warning/30'
               )}
             >
               {member.status === 'confirmed' ? (
@@ -262,3 +262,4 @@ export const MobileRosterCard = ({
     </div>
   );
 };
+

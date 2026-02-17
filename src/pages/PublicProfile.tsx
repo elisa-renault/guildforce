@@ -5,6 +5,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, ArrowLeft, Loader2, Calendar } from 'lucide-react';
 import { useBattletagVisibility } from '@/hooks/useBattletagVisibility';
@@ -103,7 +104,7 @@ const PublicProfile = () => {
     <div className="flex-1 relative pt-16">
       <CosmicBackground />
 
-      <main className="container mx-auto px-4 py-6 relative z-10">
+      <PageContainer as="main" className="relative z-10 py-6" width="contained">
         <div className="max-w-md mx-auto">
           <GlowCard className="p-6" hoverable={false}>
             {/* Avatar and username */}
@@ -142,7 +143,7 @@ const PublicProfile = () => {
             </CosmicButton>
           </div>
         </div>
-      </main>
+      </PageContainer>
     </div>
   );
 };

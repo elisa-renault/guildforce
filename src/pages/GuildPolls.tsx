@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GuildSubNav } from '@/components/guild';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { PollCard } from '@/components/polls';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -117,7 +118,7 @@ const GuildPolls = () => {
         />
       )}
 
-      <main className="container mx-auto px-3 md:px-4 py-6 md:py-8 relative z-10 overflow-x-hidden">
+      <PageContainer as="main" className="relative z-10 overflow-x-hidden py-6 md:py-8" width="wide">
         <div className="max-w-4xl mx-auto">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
             <h1 className="text-xl md:text-2xl font-bold">
@@ -215,7 +216,7 @@ const GuildPolls = () => {
             </Tabs>
           )}
         </div>
-      </main>
+      </PageContainer>
     </div>
   );
 };

@@ -10,6 +10,7 @@ import { CommitmentToggle, CommitmentStatus } from '@/components/CommitmentToggl
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { GuildSubNav } from '@/components/guild';
 import { RosterSelector } from '@/components/roster';
 import { Loader2, Save, GripVertical, Plus, Trash2, ChevronUp, ChevronDown, Lock, Clock } from 'lucide-react';
@@ -20,6 +21,7 @@ import { formatDateTimeLocalized, interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import { resolveWishLockState } from '@/lib/wishLock';
 import { cn } from '@/lib/utils';
+import { toneCalloutClass, toneTextClass } from '@/lib/design-tokens';
 import {
   DndContext,
   closestCenter,
@@ -58,7 +60,10 @@ interface SortableWishCardProps {
   wish: WishData;
   index: number;
   totalWishes: number;
-  onChange: (field: keyof Omit<WishData, 'id'>, value: any) => void;
+  onChange: (
+    field: keyof Omit<WishData, 'id'>,
+    value: Omit<WishData, 'id'>[keyof Omit<WishData, 'id'>]
+  ) => void;
   onRemove: () => void;
   onClear: () => void;
   onMoveUp: () => void;
@@ -365,7 +370,11 @@ const Wishes = () => {
     fetchWishes();
   }, [guildId, selectedRosterId, user]);
 
-  const updateWish = (index: number, field: keyof Omit<WishData, 'id'>, value: any) => {
+  const updateWish = (
+    index: number,
+    field: keyof Omit<WishData, 'id'>,
+    value: Omit<WishData, 'id'>[keyof Omit<WishData, 'id'>]
+  ) => {
     if (lockState?.isLocked) return;
     const updated = [...wishes];
     updated[index] = { ...updated[index], [field]: value };
@@ -493,8 +502,8 @@ const Wishes = () => {
       }
 
       toast({ title: t.wishes.wishesSaved });
-    } catch (error: any) {
-      toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
+    } catch (error: unknown) {
+      toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -546,7 +555,7 @@ const Wishes = () => {
 
       {/* Roster + Save controls */}
       <div className="sticky top-[104px] z-30 bg-background/80 backdrop-blur-lg border-b border-border/50">
-        <div className="container mx-auto px-3 md:px-4 py-3 flex items-center justify-between">
+        <PageContainer className="px-3 md:px-4 py-3 flex items-center justify-between" width="wide">
           <RosterSelector
             rosters={accessibleRosters}
             selectedRosterId={selectedRosterId}
@@ -562,30 +571,30 @@ const Wishes = () => {
           >
             {t.wishes.saveWishes}
           </CosmicButton>
-        </div>
+        </PageContainer>
       </div>
 
-      <main className="container mx-auto px-3 md:px-4 py-4 relative z-10">
+      <PageContainer as="main" className="px-3 md:px-4 py-4 relative z-10" width="wide">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-display cosmic-text">{t.wishes.title}</h2>
         </div>
 
         {lockState.isLocked && (
-          <div className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 flex items-start gap-2 text-amber-200">
-            <Lock className="h-4 w-4 mt-0.5 text-amber-400" />
+          <div className={cn("mb-4 rounded-lg border p-3 flex items-start gap-2", toneCalloutClass('warning'))}>
+            <Lock className={cn("h-4 w-4 mt-0.5", toneTextClass('warning'))} />
             <div className="text-sm">
               <div className="font-medium">{t.wishes.lockedTitle}</div>
-              <div className="text-amber-200/80">{lockMessage}</div>
+              <div className={cn("opacity-80", toneTextClass('warning'))}>{lockMessage}</div>
             </div>
           </div>
         )}
 
         {!lockState.isLocked && scheduledLabel && (
-          <div className="mb-4 rounded-lg border border-sky-500/30 bg-sky-500/10 p-3 flex items-start gap-2 text-sky-200">
-            <Clock className="h-4 w-4 mt-0.5 text-sky-400" />
+          <div className={cn("mb-4 rounded-lg border p-3 flex items-start gap-2", toneCalloutClass('info'))}>
+            <Clock className={cn("h-4 w-4 mt-0.5", toneTextClass('info'))} />
             <div className="text-sm">
               <div className="font-medium">{t.wishes.lockScheduledTitle}</div>
-              <div className="text-sky-200/80">
+              <div className={cn("opacity-80", toneTextClass('info'))}>
                 {interpolateMessage(t.wishes.lockScheduledDesc, { date: scheduledLabel })}
               </div>
             </div>
@@ -665,9 +674,11 @@ const Wishes = () => {
             {t.wishes.saveWishes}
           </CosmicButton>
         </div>
-      </main>
+      </PageContainer>
     </div>
   );
 };
 
 export default Wishes;
+  const getErrorMessage = (error: unknown) =>
+    error instanceof Error ? error.message : t.errors.generic;

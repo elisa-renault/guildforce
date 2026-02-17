@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GuildSubNav } from '@/components/guild';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { PollResults } from '@/components/polls';
 import { usePollResults, usePollMutations } from '@/hooks/useGuildPolls';
 import { Loader2, ArrowLeft, Lock } from 'lucide-react';
@@ -104,11 +105,11 @@ const GuildPollResultsPage = () => {
     return (
       <div className="flex-1 relative pt-16">
         <CosmicBackground />
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <PageContainer className="py-8" width="contained">
           <div className="flex items-center gap-4 mb-6">
             <button
               onClick={handleBack}
-              className="w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
+              className="w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               <ArrowLeft className="h-5 w-5 text-muted-foreground" />
             </button>
@@ -125,7 +126,7 @@ const GuildPollResultsPage = () => {
               {t.polls.resultsRestricted}
             </p>
           </div>
-        </div>
+        </PageContainer>
       </div>
     );
   }
@@ -135,11 +136,11 @@ const GuildPollResultsPage = () => {
     <div className="flex-1 relative pt-16">
       <CosmicBackground />
 
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <PageContainer className="py-8" width="contained">
         <div className="flex items-center gap-4 mb-6">
           <button
             onClick={handleBack}
-            className="w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
+            className="w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <ArrowLeft className="h-5 w-5 text-muted-foreground" />
           </button>
@@ -156,7 +157,7 @@ const GuildPollResultsPage = () => {
           isAnonymous={poll.is_anonymous}
           totalResponses={poll.response_count || 0}
         />
-      </div>
+      </PageContainer>
     </div>
   );
 };

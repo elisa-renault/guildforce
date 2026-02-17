@@ -1,0 +1,41 @@
+{
+  "mode": "strict",
+  "scannedFiles": 232,
+  "totals": {
+    "enAutoKeys": 326,
+    "frAutoKeys": 326,
+    "referencedAutoKeys": 0
+  },
+  "counts": {
+    "missingInFr": 0,
+    "extraInFr": 0,
+    "unresolvedReferences": 0,
+    "missingMappedLegacyKeys": 0,
+    "orphanEnKeys": 0,
+    "missingDeSections": 0,
+    "deDictionaryMismatches": 1,
+    "missingDeSemanticKeys": 0,
+    "deSemanticMismatches": 0
+  },
+  "missingInFr": [],
+  "extraInFr": [],
+  "unresolvedReferences": [],
+  "missingMappedLegacyKeys": [],
+  "orphanEnKeys": [],
+  "de": {
+    "leafCount": 862,
+    "sectionCount": 24,
+    "missingSections": [],
+    "dictionaryMismatches": [
+      {
+        "key": "legal.privacyPolicy",
+        "expected": "Datenschutzerklaerung",
+        "actual": "Datenschutzerklärung"
+      }
+    ],
+    "semanticKeyCount": 484,
+    "semanticReferenceKeyCount": 484,
+    "missingSemanticKeys": [],
+    "semanticMismatches": []
+  }
+}

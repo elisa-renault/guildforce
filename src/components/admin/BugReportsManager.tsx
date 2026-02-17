@@ -208,9 +208,9 @@ export function BugReportsManager() {
   const getPriorityBadge = (priority: string) => {
     const colors: Record<string, string> = {
       low: 'bg-muted text-muted-foreground',
-      medium: 'bg-amber-500/20 text-amber-500',
-      high: 'bg-orange-500/20 text-orange-500',
-      critical: 'bg-destructive/20 text-destructive'
+      medium: 'bg-status-warning/20 text-status-warning',
+      high: 'bg-status-warning/20 text-status-warning',
+      critical: 'bg-status-error/20 text-status-error'
     };
     
     return (
@@ -242,7 +242,7 @@ export function BugReportsManager() {
             </CardTitle>
             <CardDescription>
               {criticalCount > 0 && (
-                <span className="text-destructive flex items-center gap-1 mt-1">
+                <span className="text-status-error flex items-center gap-1 mt-1">
                   <AlertTriangle className="h-4 w-4" />
                   {criticalCount} {t.bugReport.admin.criticalPending}
                 </span>
@@ -416,7 +416,7 @@ export function BugReportsManager() {
                           if (typeof log !== 'object' || log === null) return null;
                           const typedLog = log as { level: string; message: string; timestamp: string };
                           return (
-                            <div key={idx} className={typedLog.level === 'error' ? 'text-destructive' : 'text-amber-500'}>
+                            <div key={idx} className={typedLog.level === 'error' ? 'text-status-error' : 'text-status-warning'}>
                               [{typedLog.level.toUpperCase()}] {typedLog.message}
                             </div>
                           );
@@ -478,8 +478,8 @@ export function BugReportsManager() {
 
                 {/* Resolution */}
                 {selectedReport.resolved_at && (
-                  <div className="rounded-md bg-green-500/10 border border-green-500/20 p-3">
-                    <div className="flex items-center gap-2 text-green-500 mb-2">
+                  <div className="rounded-md bg-status-success/10 border border-status-success/20 p-3">
+                    <div className="flex items-center gap-2 text-status-success mb-2">
                       <CheckCircle className="h-4 w-4" />
                       <span className="font-medium">{t.bugReport.admin.resolvedBy}: {selectedReport.resolver?.username}</span>
                     </div>
@@ -554,3 +554,4 @@ export function BugReportsManager() {
     </Card>
   );
 }
+

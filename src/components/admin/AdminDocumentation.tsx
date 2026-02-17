@@ -49,7 +49,7 @@ const DOCUMENTATION: DocSection[] = [
     titleEn: 'Overview',
     titleFr: 'Vue d\'ensemble',
     icon: BookOpen,
-    color: 'text-blue-400',
+    color: 'text-status-info',
     subsections: [
       {
         titleEn: 'What is Guildforce?',
@@ -79,7 +79,7 @@ const DOCUMENTATION: DocSection[] = [
     titleEn: 'Authentication',
     titleFr: 'Authentification',
     icon: Lock,
-    color: 'text-green-400',
+    color: 'text-status-success',
     subsections: [
       {
         titleEn: 'Battle.net login flow',
@@ -109,7 +109,7 @@ const DOCUMENTATION: DocSection[] = [
     titleEn: 'Battle.net Synchronization',
     titleFr: 'Synchronisation Battle.net',
     icon: RefreshCw,
-    color: 'text-cyan-400',
+    color: 'text-status-info',
     subsections: [
       {
         titleEn: 'Characters and guild memberships',
@@ -139,7 +139,7 @@ const DOCUMENTATION: DocSection[] = [
     titleEn: 'Guild System',
     titleFr: 'Système de guildes',
     icon: Shield,
-    color: 'text-violet-400',
+    color: 'text-primary',
     subsections: [
       {
         titleEn: 'Auto-creation and ownership',
@@ -176,7 +176,7 @@ const DOCUMENTATION: DocSection[] = [
     titleEn: 'Roster System',
     titleFr: 'Système de rosters',
     icon: Layers,
-    color: 'text-orange-400',
+    color: 'text-status-warning',
     subsections: [
       {
         titleEn: 'Multi-roster model',
@@ -206,7 +206,7 @@ const DOCUMENTATION: DocSection[] = [
     titleEn: 'Wish System',
     titleFr: 'Système de vœux',
     icon: ClipboardList,
-    color: 'text-yellow-400',
+    color: 'text-status-warning',
     subsections: [
       {
         titleEn: 'Wish model',
@@ -243,7 +243,7 @@ const DOCUMENTATION: DocSection[] = [
     titleEn: 'Poll System',
     titleFr: 'Système de sondages',
     icon: BarChart3,
-    color: 'text-pink-400',
+    color: 'text-primary',
     subsections: [
       {
         titleEn: 'Data model and lifecycle',
@@ -273,7 +273,7 @@ const DOCUMENTATION: DocSection[] = [
     titleEn: 'Forum System',
     titleFr: 'Système de forum',
     icon: MessageSquare,
-    color: 'text-indigo-400',
+    color: 'text-status-info',
     subsections: [
       {
         titleEn: 'Structure',
@@ -303,7 +303,7 @@ const DOCUMENTATION: DocSection[] = [
     titleEn: 'Notifications',
     titleFr: 'Notifications',
     icon: Bell,
-    color: 'text-red-400',
+    color: 'text-status-error',
     subsections: [
       {
         titleEn: 'Notification model',
@@ -326,7 +326,7 @@ const DOCUMENTATION: DocSection[] = [
     titleEn: 'Administration',
     titleFr: 'Administration',
     icon: Crown,
-    color: 'text-amber-400',
+    color: 'text-status-warning',
     subsections: [
       {
         titleEn: 'App-level roles',
@@ -356,7 +356,7 @@ const DOCUMENTATION: DocSection[] = [
     titleEn: 'Security & RLS',
     titleFr: 'Sécurité et RLS',
     icon: Key,
-    color: 'text-emerald-400',
+    color: 'text-status-success',
     subsections: [
       {
         titleEn: 'RLS-first policy model',
@@ -486,7 +486,7 @@ export const AdminDocumentation = () => {
               placeholder={sm('admin.documentation.search_placeholder')}
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
-              className="w-full px-3 py-2 text-sm rounded-md border border-border/50 bg-background/50 placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+              className="w-full px-3 py-2 text-sm rounded-md border border-border/50 bg-background/50 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-background"
             />
             {searchQuery && (
               <button
@@ -595,4 +595,5 @@ export const AdminDocumentation = () => {
     </div>
   );
 };
+
 

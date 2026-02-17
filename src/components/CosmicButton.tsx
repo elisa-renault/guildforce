@@ -1,6 +1,7 @@
 import { forwardRef, ButtonHTMLAttributes, ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface CosmicButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children?: ReactNode;
@@ -23,14 +24,14 @@ export const CosmicButton = forwardRef<HTMLButtonElement, CosmicButtonProps>(({
   const baseStyles = 'relative overflow-hidden font-normal transition-all duration-300 inline-flex items-center justify-center gap-2';
   
   const variantStyles = {
-    default: 'primary-button text-white',
-    outline: 'glass-button text-foreground hover:-translate-y-0.5',
+    default: 'cosmic' as const,
+    outline: 'cosmicOutline' as const,
   };
 
   const sizeStyles = {
-    sm: 'px-4 py-2 text-sm rounded',
-    md: 'px-6 py-3 text-base rounded',
-    lg: 'px-8 py-4 text-lg rounded',
+    sm: 'h-9 px-4 text-sm rounded-md',
+    md: 'h-10 px-6 text-base rounded-md',
+    lg: 'h-11 px-8 text-lg rounded-md',
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -42,12 +43,14 @@ export const CosmicButton = forwardRef<HTMLButtonElement, CosmicButtonProps>(({
   };
 
   return (
-    <button
+    <Button
       ref={ref}
+      type={props.type ?? 'button'}
+      variant={variantStyles[variant]}
+      size="none"
       disabled={disabled || loading}
       className={cn(
         baseStyles,
-        variantStyles[variant],
         sizeStyles[size],
         disabled && 'opacity-50 cursor-not-allowed hover:transform-none hover:shadow-none',
         className
@@ -62,7 +65,7 @@ export const CosmicButton = forwardRef<HTMLButtonElement, CosmicButtonProps>(({
         <span className="flex-shrink-0">{icon}</span>
       ) : null}
       {children}
-    </button>
+    </Button>
   );
 });
 

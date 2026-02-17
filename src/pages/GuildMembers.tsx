@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { GuildSubNav } from '@/components/guild/GuildSubNav';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { CosmicBackground } from '@/components/CosmicBackground';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,7 @@ import { formatDistanceFromNowLocalized } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
 import { formatRankLabel } from '@/lib/rankLabel';
+import { toneCalloutClass, toneTextClass } from '@/lib/design-tokens';
 
 interface RosterMember {
   id: string;
@@ -50,6 +52,14 @@ interface RosterMember {
     avatar_url: string | null;
   } | null;
 }
+
+type WowCharacterLite = {
+  name: string | null;
+  realm: string | null;
+  realm_slug: string | null;
+  level: number | null;
+  class_id: number | null;
+};
 
 interface GuildInfo {
   id: string;
@@ -246,7 +256,7 @@ const GuildMembers = () => {
             .filter(m => m.matched_user_id)
             .map(m => m.matched_user_id as string);
           
-          let profilesMap: Record<string, { id: string; username: string; avatar_url: string | null }> = {};
+          const profilesMap: Record<string, { id: string; username: string; avatar_url: string | null }> = {};
           if (userIds.length > 0) {
             const { data: profiles } = await supabase
               .from('profiles')
@@ -325,7 +335,7 @@ const GuildMembers = () => {
           // Get profiles for all user_ids
           const userIds = [...new Set(wowMembers?.map(m => m.user_id) || [])];
           
-          let profilesMap: Record<string, { id: string; username: string; avatar_url: string | null }> = {};
+          const profilesMap: Record<string, { id: string; username: string; avatar_url: string | null }> = {};
           if (userIds.length > 0) {
             const { data: profiles } = await supabase
               .from('profiles')
@@ -339,7 +349,7 @@ const GuildMembers = () => {
 
           // Build member list
           const memberList: RosterMember[] = (wowMembers || []).map(m => {
-            const char = m.wow_characters as any;
+            const char = m.wow_characters as WowCharacterLite | null;
             return {
               id: m.id,
               character_name: char?.name || 'Unknown',
@@ -443,14 +453,14 @@ const GuildMembers = () => {
     return (
       <div className="flex-1 relative pt-16">
         <CosmicBackground />
-        <div className="container mx-auto px-4 pt-20 pb-8">
+        <PageContainer className="pt-20 pb-8" width="wide">
           <Skeleton className="h-12 w-1/3 mb-6" />
           <div className="space-y-3">
             {Array.from({ length: 10 }).map((_, i) => (
               <Skeleton key={i} className="h-12 w-full" />
             ))}
           </div>
-        </div>
+        </PageContainer>
       </div>
     );
   }
@@ -479,12 +489,12 @@ const GuildMembers = () => {
         activeTab="members"
       />
 
-      <main className="container mx-auto px-3 md:px-4 py-4 md:py-6">
+      <PageContainer as="main" className="px-3 md:px-4 py-4 md:py-6" width="wide">
         {/* Admin read-only banner */}
         {isAdminReadOnly && (
-          <div className="flex items-center justify-center gap-2 mb-4 p-2 rounded-lg bg-amber-500/10 border border-amber-500/30">
-            <Eye className="h-4 w-4 text-amber-400" />
-            <span className="text-sm text-amber-400 font-medium">
+          <div className={cn("flex items-center justify-center gap-2 mb-4 p-2 rounded-lg border", toneCalloutClass('warning'))}>
+            <Eye className={cn("h-4 w-4", toneTextClass('warning'))} />
+            <span className={cn("text-sm font-medium", toneTextClass('warning'))}>
               {memberUi.adminReadOnly}
             </span>
           </div>
@@ -661,10 +671,10 @@ const GuildMembers = () => {
                         )}
                       >
                         {isSelected && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
-                        {isGMRank && <Crown className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" />}
+                        {isGMRank && <Crown className="h-3.5 w-3.5 text-warning flex-shrink-0" />}
                         {!isGMRank && isOfficer && <Shield className="h-3.5 w-3.5 text-primary flex-shrink-0" />}
                         <span className={cn(
-                          isGMRank && "text-amber-400",
+                          isGMRank && "text-warning",
                           !isGMRank && isOfficer && "text-primary"
                         )}>
                           {getRankLabel(rank.name, rank.index)}
@@ -754,8 +764,8 @@ const GuildMembers = () => {
                   )}
                 >
                   {mainFilter === 'main-only' && (
-                    <span className="flex items-center gap-1.5 text-amber-400">
-                      <Star className="h-4 w-4 fill-amber-400" />
+                    <span className="flex items-center gap-1.5 text-warning">
+                      <Star className="h-4 w-4 fill-warning" />
                       <span>{memberUi.mains}</span>
                     </span>
                   )}
@@ -787,8 +797,8 @@ const GuildMembers = () => {
                     )}
                   >
                     {mainFilter === 'main-only' && <Check className="h-3.5 w-3.5 flex-shrink-0" />}
-                    <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-                    <span className="text-amber-400">{memberUi.mainsOnly}</span>
+                    <Star className="h-4 w-4 text-warning fill-warning" />
+                    <span className="text-warning">{memberUi.mainsOnly}</span>
                   </button>
                   <button
                     onClick={() => { setMainFilter('alts-only'); setMainOpen(false); setCurrentPage(1); }}
@@ -864,7 +874,7 @@ const GuildMembers = () => {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {member.is_guild_master && (
-                          <Crown className="h-4 w-4 text-amber-400" />
+                          <Crown className="h-4 w-4 text-warning" />
                         )}
                         {!member.is_guild_master && member.rank_index <= (guild?.officer_rank_threshold ?? 2) && (
                           <Shield className="h-4 w-4 text-primary" />
@@ -876,7 +886,7 @@ const GuildMembers = () => {
                           {member.character_name}
                         </span>
                         {member.is_main_character && (
-                          <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
+                          <Star className="h-3.5 w-3.5 text-warning fill-warning" />
                         )}
                         {member.character_level > 0 && (
                           <span className="text-xs text-muted-foreground">
@@ -913,7 +923,7 @@ const GuildMembers = () => {
                         variant="outline"
                         className={cn(
                           "text-xs",
-                          member.is_guild_master && "bg-amber-500/20 text-amber-400 border-amber-500/30",
+                          member.is_guild_master && "bg-warning/20 text-warning border-warning/30",
                           !member.is_guild_master && member.rank_index <= (guild?.officer_rank_threshold ?? 2) && "bg-primary/20 text-primary border-primary/30"
                         )}
                       >
@@ -970,9 +980,10 @@ const GuildMembers = () => {
             </div>
           </div>
         )}
-      </main>
+      </PageContainer>
     </div>
   );
 };
 
 export default GuildMembers;
+
