@@ -489,8 +489,9 @@ export function GuildManager() {
       toast.success(t.admin.guildDeleted);
       setDeletingGuild(null);
       fetchGuilds();
-    } catch (error) {
-      toast.error(t.admin.guildDeleteError);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : '';
+      toast.error(message ? `${t.admin.guildDeleteError}: ${message}` : t.admin.guildDeleteError);
     } finally {
       setDeleting(false);
     }

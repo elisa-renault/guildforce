@@ -3101,12 +3101,27 @@ async function fetchAndStoreCharacters(
       }
     }
 
-    const insertedCharMap = new Map<string, { id: string; name: string; realm_slug: string }>();
-    if (insertedChars) {
-      for (const insertedChar of insertedChars) {
-        if (!insertedChar?.name || !insertedChar?.realm_slug) continue;
-        insertedCharMap.set(buildCharacterKey(insertedChar.name, insertedChar.realm_slug), insertedChar);
-      }
+    // Do not rely only on upsert return payload for downstream matching. Depending on
+    // PostgREST behavior, upsert can return fewer rows than provided input.
+    const { data: persistedChars, error: persistedCharsError } = await supabase
+      .from('wow_characters')
+      .select('id, name, realm_slug')
+      .eq('user_id', userId);
+
+    if (persistedCharsError) {
+      log.warn(`Failed to reload persisted characters after upsert: ${persistedCharsError.message}`);
+    }
+
+    const syncChars = (persistedChars && persistedChars.length > 0)
+      ? persistedChars
+      : (insertedChars || []);
+
+    const syncCharByKey = new Map<string, { id: string; name: string; realm_slug: string }>();
+    const syncCharById = new Map<string, { id: string; name: string; realm_slug: string }>();
+    for (const syncChar of syncChars) {
+      if (!syncChar?.id || !syncChar?.name || !syncChar?.realm_slug) continue;
+      syncCharByKey.set(buildCharacterKey(syncChar.name, syncChar.realm_slug), syncChar);
+      syncCharById.set(syncChar.id, syncChar);
     }
 
     // Sync profiles.main_character_name if not already set
@@ -3175,7 +3190,7 @@ async function fetchAndStoreCharacters(
           const guildRealmSlug = charDetail.guild.realm?.slug || char.realmSlug;
           const guildFaction = charDetail.guild.faction?.type || 'UNKNOWN';
           
-          const insertedChar = insertedCharMap.get(buildCharacterKey(char.name, char.realmSlug));
+          const insertedChar = syncCharByKey.get(buildCharacterKey(char.name, char.realmSlug));
           
           if (insertedChar) {
             await supabase
@@ -3247,7 +3262,7 @@ async function fetchAndStoreCharacters(
         );
 
         for (const charId of guildInfo.characterIds) {
-          const insertedChar = insertedChars?.find((ic: any) => ic.id === charId);
+          const insertedChar = syncCharById.get(charId);
           if (!insertedChar) continue;
 
           const charName = insertedChar.name?.toLowerCase();
@@ -3389,10 +3404,10 @@ async function fetchAndStoreCharacters(
 
     // Re-establish matched_user_id links in guild_roster_cache for this user's characters
     // This fixes the issue where syncing a user's characters would clear the links
-    if (insertedChars && insertedChars.length > 0) {
-      log.info(`Re-matching ${insertedChars.length} characters in guild_roster_cache...`);
+    if (syncChars.length > 0) {
+      log.info(`Re-matching ${syncChars.length} characters in guild_roster_cache...`);
       
-      for (const char of insertedChars) {
+      for (const char of syncChars) {
         // Blizzard APIs may return strings with different Unicode normalization (NFC vs NFD).
         // Postgres string equality/ILIKE is normalization-sensitive, so we try a few variants.
         const rawName = (char.name || '').trim();
