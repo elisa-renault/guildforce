@@ -14,10 +14,12 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { useState, type ElementType } from 'react';
+import { Link } from 'react-router-dom';
 
 import { GlowCard } from '@/components/GlowCard';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getBilingualValue } from '@/i18n/config';
@@ -471,22 +473,30 @@ export const AdminDocumentation = () => {
           </p>
         </div>
 
-        <div className="relative w-full sm:w-64">
-          <input
-            type="text"
-            placeholder={sm('admin.documentation.search_placeholder')}
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            className="w-full px-3 py-2 text-sm rounded-md border border-border/50 bg-background/50 placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            >
-              x
-            </button>
-          )}
+        <div className="flex w-full sm:w-auto items-center gap-2">
+          <Button asChild variant="outline" size="sm" className="shrink-0">
+            <Link to="/admin/design-system">
+              <BookOpen className="h-4 w-4 mr-1.5" />
+              {language === 'fr' ? 'Design System global' : 'Global Design System'}
+            </Link>
+          </Button>
+          <div className="relative w-full sm:w-64">
+            <input
+              type="text"
+              placeholder={sm('admin.documentation.search_placeholder')}
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              className="w-full px-3 py-2 text-sm rounded-md border border-border/50 bg-background/50 placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                x
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
