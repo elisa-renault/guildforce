@@ -590,7 +590,7 @@ export const PollEditor = ({
     if (!isCrossContainer || !isTarget) return null;
     return (
       <div className="flex items-center gap-2 py-0.5" aria-hidden="true">
-        <div className="h-0.5 w-full rounded-full bg-primary/70 shadow-[0_0_6px_rgba(139,92,246,0.3)]" />
+        <div className="h-0.5 w-full rounded-full bg-primary/70 shadow-[0_0_6px_hsl(var(--primary)/0.3)]" />
       </div>
     );
   };
@@ -946,7 +946,7 @@ export const PollEditor = ({
       </GlowCard>
 
       {/* Sticky actions */}
-      <div className="sticky bottom-2 z-40 mx-2 rounded-lg sm:mx-0 px-3 pt-3 pr-16 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pr-4 sm:pb-3 sm:px-4 sm:py-3 bg-gradient-to-br from-background/95 via-background/85 to-primary/10 backdrop-blur border border-primary/20 shadow-[0_12px_30px_-20px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.04)]">
+      <div className="sticky bottom-2 z-40 mx-2 rounded-lg sm:mx-0 px-3 pt-3 pr-16 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pr-4 sm:pb-3 sm:px-4 sm:py-3 bg-gradient-to-br from-background/95 via-background/85 to-primary/10 backdrop-blur border border-primary/20 shadow-[0_12px_30px_-20px_hsl(var(--background)/0.7),0_0_0_1px_hsl(var(--foreground)/0.04)]">
         {/* Validation feedback */}
         {!isValid && formData.title.trim() && (
           <div className="mb-2 text-sm text-muted-foreground">

@@ -299,67 +299,64 @@ const GuildList = () => {
               guilds.map((guild) => (
                 <div 
                   key={guild.id}
-                  className={`grid grid-cols-[auto_1fr_auto] md:grid-cols-[auto_1fr_auto_auto] items-center gap-3 md:gap-6 px-4 py-3 rounded-lg border cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                  className={`grid grid-cols-[auto_1fr_auto] md:grid-cols-[auto_1fr_auto_auto] items-center gap-3 md:gap-6 px-4 py-3 rounded-lg border transition-colors ${
                     guild.hasMain 
                       ? 'bg-primary/10 border-primary/30 hover:border-primary/50' 
                       : 'bg-card/50 border-border/50 hover:border-border hover:bg-card/80'
                   }`}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => navigate(getGuildPath(guild.region, guild.server, guild.name))}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      navigate(getGuildPath(guild.region, guild.server, guild.name));
-                    }
-                  }}
                 >
-                  {/* Guild avatar or faction icon */}
-                  <Avatar className={`h-10 w-10 flex-shrink-0 ${
-                    !guild.avatar_url ? (guild.faction === 'horde' 
-                      ? 'bg-horde/20' 
-                      : 'bg-alliance/20') : ''
-                  }`}>
-                    {guild.avatar_url ? (
-                      <AvatarImage src={guild.avatar_url} alt={guild.name} />
-                    ) : (
-                      <AvatarFallback className={`${
-                        guild.faction === 'horde' 
-                          ? 'bg-horde/20 text-horde' 
-                          : 'bg-alliance/20 text-alliance'
-                      }`}>
-                        <Shield className="h-5 w-5" strokeWidth={1.5} />
-                      </AvatarFallback>
-                    )}
-                  </Avatar>
-                  
-                  {/* Guild name and server */}
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-foreground truncate">{guild.name}</h3>
-                      {guild.hasMain && (
-                        <span className="text-[10px] uppercase tracking-wider text-primary font-medium px-1.5 py-0.5 rounded bg-primary/20 flex-shrink-0">
-                          Main
-                        </span>
+                  <button
+                    type="button"
+                    className="col-span-2 md:col-span-3 grid grid-cols-[auto_1fr_auto] md:grid-cols-[auto_1fr_auto] items-center gap-3 md:gap-6 text-left rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                    onClick={() => navigate(getGuildPath(guild.region, guild.server, guild.name))}
+                  >
+                    {/* Guild avatar or faction icon */}
+                    <Avatar className={`h-10 w-10 flex-shrink-0 ${
+                      !guild.avatar_url ? (guild.faction === 'horde' 
+                        ? 'bg-horde/20' 
+                        : 'bg-alliance/20') : ''
+                    }`}>
+                      {guild.avatar_url ? (
+                        <AvatarImage src={guild.avatar_url} alt={guild.name} />
+                      ) : (
+                        <AvatarFallback className={`${
+                          guild.faction === 'horde' 
+                            ? 'bg-horde/20 text-horde' 
+                            : 'bg-alliance/20 text-alliance'
+                        }`}>
+                          <Shield className="h-5 w-5" strokeWidth={1.5} />
+                        </AvatarFallback>
                       )}
+                    </Avatar>
+                    
+                    {/* Guild name and server */}
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-foreground truncate">{guild.name}</h3>
+                        {guild.hasMain && (
+                          <span className="text-[10px] uppercase tracking-wider text-primary font-medium px-1.5 py-0.5 rounded bg-primary/20 flex-shrink-0">
+                            Main
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {guild.server.charAt(0).toUpperCase() + guild.server.slice(1)}
+                        </span>
+                        <span className="uppercase">{guild.region}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        {guild.server.charAt(0).toUpperCase() + guild.server.slice(1)}
-                      </span>
-                      <span className="uppercase">{guild.region}</span>
-                    </div>
-                  </div>
 
-                  {/* Members - hidden on mobile */}
-                  <div className="hidden md:flex items-center gap-1.5 text-sm text-muted-foreground min-w-[60px]">
-                    <Users className="h-4 w-4" />
-                    <span>{guild.memberCount} {guild.memberCount === 1 ? t.guild.member : t.guild.memberPlural}</span>
-                  </div>
+                    {/* Members - hidden on mobile */}
+                    <div className="hidden md:flex items-center gap-1.5 text-sm text-muted-foreground min-w-[60px]">
+                      <Users className="h-4 w-4" />
+                      <span>{guild.memberCount} {guild.memberCount === 1 ? t.guild.member : t.guild.memberPlural}</span>
+                    </div>
+                  </button>
                   
                   {/* Role badge and settings */}
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="col-span-1 flex items-center justify-end gap-2 flex-shrink-0">
                     {/* Mobile: show member count */}
                     <span className="md:hidden flex items-center gap-1 text-xs text-muted-foreground">
                       <Users className="h-3 w-3" />
