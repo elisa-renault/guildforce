@@ -2,11 +2,14 @@
 import { GlowCard } from '@/components/GlowCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Line, LineChart, ResponsiveContainer } from 'recharts';
 import {
   formatPercentValue,
   formatSignedPercentDelta,
   getDeltaColorClass,
 } from './adminDashboardMetrics';
+import { AdminDashboardCharts } from './AdminDashboardCharts';
+import type { AdminTimeseriesPoint } from './adminDashboardTimeseries';
 import { 
   Activity,
   Users, 
@@ -65,6 +68,7 @@ interface AdminStats {
 
 interface AdminDashboardSectionProps {
   stats: AdminStats | null;
+  timeseries: AdminTimeseriesPoint[];
   loading: boolean;
   isAdmin: boolean;
   onNavigateToSection: (section: AdminSection) => void;
@@ -72,6 +76,7 @@ interface AdminDashboardSectionProps {
 
 export const AdminDashboardSection = ({
   stats,
+  timeseries,
   loading,
   isAdmin,
   onNavigateToSection,
@@ -241,6 +246,18 @@ export const AdminDashboardSection = ({
       color: stats?.pendingDeletions && stats.pendingDeletions > 0 ? 'text-status-error' : 'text-muted-foreground',
       tooltip: t.admin.stats.pendingDeletionsTooltip,
     },
+    criticalIssues: {
+      label: t.admin.stats.criticalIssues,
+      value: formatCount(
+        (stats?.pendingReports ?? 0) + (stats?.openBugs ?? 0) + (stats?.pendingDeletions ?? 0),
+      ),
+      icon: AlertTriangle,
+      color:
+        (stats?.pendingReports ?? 0) + (stats?.openBugs ?? 0) + (stats?.pendingDeletions ?? 0) > 0
+          ? 'text-status-error'
+          : 'text-status-success',
+      tooltip: t.admin.stats.criticalIssuesTooltip,
+    },
     totalPolls: {
       label: t.admin.stats.totalPolls,
       value: formatCount(stats?.totalPolls),
@@ -271,36 +288,68 @@ export const AdminDashboardSection = ({
     },
   } as const;
 
-  const statGroups: Array<{ title: string; stats: Array<keyof typeof statMap> }> = [
+  const dashboardSections: Array<{
+    title: string;
+    description: string;
+    groups: Array<{ title: string; stats: Array<keyof typeof statMap> }>;
+  }> = [
     {
-      title: t.admin.stats.groupCommunity,
-      stats: ['activeUsers30d', 'activeGuilds30d', 'guildsWithTwoMembers', 'engagementRate'],
-    },
-    {
-      title: t.admin.stats.groupActivation,
-      stats: ['dauUsers', 'wauUsers', 'mauUsers', 'newSignups7d', 'activationRate7d', 'retentionD7', 'retentionD30'],
-    },
-    {
-      title: t.admin.stats.groupWishes,
-      stats: [
-        'uniqueWishUsers',
-        'totalWishes',
-        'guildsWithWishes',
-        'guildEngagementRate',
-        'guildsWithTwoWishUsers',
+      title: t.admin.stats.sectionExecutiveTitle,
+      description: t.admin.stats.sectionExecutiveDesc,
+      groups: [
+        {
+          title: t.admin.stats.groupCommunity,
+          stats: ['wauUsers', 'mauUsers', 'engagementRate', 'criticalIssues'],
+        },
       ],
     },
     {
-      title: t.admin.stats.groupForum,
-      stats: ['topics', 'posts'],
+      title: t.admin.stats.sectionAcquisitionTitle,
+      description: t.admin.stats.sectionAcquisitionDesc,
+      groups: [
+        {
+          title: t.admin.stats.groupActivation,
+          stats: ['newSignups7d', 'activationRate7d', 'dauUsers', 'activeUsers30d'],
+        },
+      ],
     },
     {
-      title: t.admin.stats.groupModeration,
-      stats: ['pendingReports', 'activeSanctions', 'openBugs', 'pendingDeletions'],
+      title: t.admin.stats.sectionEngagementTitle,
+      description: t.admin.stats.sectionEngagementDesc,
+      groups: [
+        {
+          title: t.admin.stats.groupActivation,
+          stats: ['retentionD7', 'retentionD30', 'wauUsers', 'mauUsers'],
+        },
+      ],
     },
     {
-      title: t.admin.stats.groupPolls,
-      stats: ['totalPolls', 'activePolls', 'closedPolls', 'pollVoters'],
+      title: t.admin.stats.sectionCommunityTitle,
+      description: t.admin.stats.sectionCommunityDesc,
+      groups: [
+        {
+          title: t.admin.stats.groupWishes,
+          stats: ['activeGuilds30d', 'guildsWithTwoMembers', 'guildsWithWishes', 'guildEngagementRate'],
+        },
+        {
+          title: t.admin.stats.groupPolls,
+          stats: ['totalPolls', 'activePolls', 'closedPolls', 'pollVoters'],
+        },
+      ],
+    },
+    {
+      title: t.admin.stats.sectionOperationsTitle,
+      description: t.admin.stats.sectionOperationsDesc,
+      groups: [
+        {
+          title: t.admin.stats.groupForum,
+          stats: ['topics', 'posts', 'pendingReports', 'activeSanctions'],
+        },
+        {
+          title: t.admin.stats.groupModeration,
+          stats: ['openBugs', 'pendingDeletions', 'criticalIssues', 'guildsWithTwoWishUsers'],
+        },
+      ],
     },
   ];
 
@@ -360,66 +409,106 @@ export const AdminDashboardSection = ({
     return section.allowsModerator;
   });
 
+  const sparklineSeries = {
+    newSignups7d: timeseries.slice(-14).map((point) => ({ value: point.newSignups })),
+    activationRate7d: timeseries
+      .slice(-14)
+      .filter((point) => point.activationRate7dPct !== null)
+      .map((point) => ({ value: point.activationRate7dPct })),
+  } as const;
+
   return (
     <div className="space-y-6">
+      <AdminDashboardCharts timeseries={timeseries} loading={loading} />
+
       {/* Stats Grid */}
       <TooltipProvider delayDuration={150}>
-        <div className="space-y-5">
-          {statGroups.map((group) => (
-            <div key={group.title} className="space-y-3">
-              <div className="flex items-center gap-3">
-                <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                  {group.title}
+        <div className="space-y-7">
+          {dashboardSections.map((section) => (
+            <div key={section.title} className="space-y-4">
+              <div className="space-y-1">
+                <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  {section.title}
                 </h3>
-                <div className="h-px flex-1 bg-border/60" />
+                <p className="text-sm text-muted-foreground/90">{section.description}</p>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {group.stats.map((statKey) => {
-                  const stat = statMap[statKey];
-                  const hasDelta = 'deltaPct' in stat;
-                  const deltaValue = 'deltaPct' in stat ? stat.deltaPct : null;
-                  const deltaText = formatSignedPercentDelta(deltaValue);
-                  return (
-                    <GlowCard key={statKey} className="p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <span className="truncate">{stat.label}</span>
-                            {stat.tooltip && (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    type="button"
-                                    aria-label={stat.label}
-                                    className="inline-flex items-center rounded-sm bg-transparent p-0 text-muted-foreground/70 transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+
+              <div className="space-y-4">
+                {section.groups.map((group) => (
+                  <div key={`${section.title}-${group.title}`} className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                        {group.title}
+                      </h4>
+                      <div className="h-px flex-1 bg-border/60" />
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {group.stats.map((statKey) => {
+                        const stat = statMap[statKey];
+                        const hasDelta = 'deltaPct' in stat;
+                        const deltaValue = 'deltaPct' in stat ? stat.deltaPct : null;
+                        const deltaText = formatSignedPercentDelta(deltaValue);
+                        return (
+                          <GlowCard key={`${group.title}-${statKey}`} className="p-4">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                  <span className="truncate">{stat.label}</span>
+                                  {stat.tooltip && (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <button
+                                          type="button"
+                                          aria-label={stat.label}
+                                          className="inline-flex items-center rounded-sm bg-transparent p-0 text-muted-foreground/70 transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                        >
+                                          <Info className="h-3.5 w-3.5" />
+                                        </button>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="top" className="max-w-[220px] text-xs">
+                                        {stat.tooltip}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  )}
+                                </div>
+                                <span className="text-2xl font-bold text-foreground mt-1 block">
+                                  {loading ? <Skeleton className="h-8 w-12" /> : stat.value}
+                                </span>
+                                {!loading && hasDelta && (
+                                  <span
+                                    className={`mt-1 block text-[11px] font-medium ${getDeltaColorClass(deltaValue)}`}
                                   >
-                                    <Info className="h-3.5 w-3.5" />
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent side="top" className="max-w-[220px] text-xs">
-                                  {stat.tooltip}
-                                </TooltipContent>
-                              </Tooltip>
-                            )}
-                          </div>
-                          <span className="text-2xl font-bold text-foreground mt-1 block">
-                            {loading ? <Skeleton className="h-8 w-12" /> : stat.value}
-                          </span>
-                          {!loading && hasDelta && (
-                            <span
-                              className={`mt-1 block text-[11px] font-medium ${getDeltaColorClass(deltaValue)}`}
-                            >
-                              {deltaText
-                                ? `${deltaText} ${t.admin.stats.vsPreviousPeriod}`
-                                : t.admin.stats.deltaNoBaseline}
-                            </span>
-                          )}
-                        </div>
-                        <stat.icon className={`h-5 w-5 ${stat.color} mt-0.5`} />
-                      </div>
-                    </GlowCard>
-                  );
-                })}
+                                    {deltaText
+                                      ? `${deltaText} ${t.admin.stats.vsPreviousPeriod}`
+                                      : t.admin.stats.deltaNoBaseline}
+                                  </span>
+                                )}
+                                {!loading && (statKey === 'newSignups7d' || statKey === 'activationRate7d') && (
+                                  <div className="mt-2 h-8 w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                      <LineChart
+                                        data={statKey === 'newSignups7d' ? sparklineSeries.newSignups7d : sparklineSeries.activationRate7d}
+                                      >
+                                        <Line
+                                          dataKey="value"
+                                          type="monotone"
+                                          stroke="hsl(var(--primary))"
+                                          strokeWidth={1.8}
+                                          dot={false}
+                                        />
+                                      </LineChart>
+                                    </ResponsiveContainer>
+                                  </div>
+                                )}
+                              </div>
+                              <stat.icon className={`h-5 w-5 ${stat.color} mt-0.5`} />
+                            </div>
+                          </GlowCard>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           ))}
