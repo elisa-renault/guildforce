@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "defaultPack": "ds_critical",
+  "packs": {
+    "ds_critical": {
+      "description": "Design-system critical runtime coverage across public, player, guild, forum, and admin surfaces.",
+      "publicRoutes": [
+        "/",
+        "/auth",
+        "/legal",
+        "/privacy",
+        "/terms",
+        "/changelog"
+      ],
+      "privateRoutes": [
+        "/guilds",
+        "/profile",
+        "/forum",
+        "/forum/admin",
+        "/forum/category/general",
+        "/forum/category/general/new",
+        "/forum/topic/1",
+        "/admin",
+        "/admin/design-system",
+        "/guild/eu/tarren-mill/example",
+        "/guild/eu/tarren-mill/example/members",
+        "/guild/eu/tarren-mill/example/wishes",
+        "/guild/eu/tarren-mill/example/roster",
+        "/guild/eu/tarren-mill/example/settings",
+        "/guild/eu/tarren-mill/example/member/1",
+        "/guild/eu/tarren-mill/example/polls",
+        "/guild/eu/tarren-mill/example/polls/new",
+        "/guild/eu/tarren-mill/example/polls/1/edit",
+        "/guild/eu/tarren-mill/example/poll/1",
+        "/guild/eu/tarren-mill/example/poll/1/results"
+      ]
+    },
+    "smoke": {
+      "description": "Minimal smoke pack.",
+      "publicRoutes": [
+        "/",
+        "/auth"
+      ],
+      "privateRoutes": [
+        "/guilds",
+        "/forum",
+        "/admin",
+        "/admin/design-system"
+      ]
+    }
+  }
+}

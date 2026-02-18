@@ -397,17 +397,22 @@ const Profile = () => {
                 </div>
 
                 <div className="flex flex-col gap-2 w-full">
-                  <Button type="button" variant="outline" size="sm" className="relative w-full" disabled={uploadingAvatar}>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileSelect}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      disabled={uploadingAvatar}
-                    />
+                  <input
+                    id="profile-avatar-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    className="sr-only"
+                    disabled={uploadingAvatar}
+                  />
+                  <Label
+                    htmlFor="profile-avatar-upload"
+                    className="inline-flex h-9 w-full cursor-pointer items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+                    aria-disabled={uploadingAvatar}
+                  >
                     <Upload className="h-4 w-4 mr-2" strokeWidth={1.5} />
                     {t.profile.uploadAvatar}
-                  </Button>
+                  </Label>
                   
                   {profile?.avatar_url && (
                     <Button
@@ -416,7 +421,7 @@ const Profile = () => {
                       size="sm"
                       onClick={handleDeleteAvatar}
                       disabled={uploadingAvatar}
-                      className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                      className="w-full text-status-error hover:text-status-error hover:bg-status-error/10"
                     >
                       <Trash2 className="h-4 w-4 mr-2" strokeWidth={1.5} />
                       {t.profile.removeAvatar}
@@ -578,8 +583,8 @@ const Profile = () => {
 
             {/* Danger Zone */}
             <GlowCard className="p-5 border-destructive/30" hoverable={false}>
-              <h2 className="text-sm font-medium text-destructive mb-4 flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4" strokeWidth={1.5} />
+              <h2 className="text-sm font-medium text-status-error mb-4 flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-status-error" strokeWidth={1.5} />
                 {ui.dangerZoneTitle}
               </h2>
 
@@ -603,7 +608,7 @@ const Profile = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="w-full text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30 whitespace-normal text-left h-auto py-2"
+                      className="w-full text-status-error hover:text-status-error hover:bg-status-error/10 border-status-error/30 whitespace-normal text-left h-auto py-2"
                     >
                       <Trash2 className="h-4 w-4 mr-2 shrink-0" />
                       <span>{t.profile.deletion.requestDeletion}</span>

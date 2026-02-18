@@ -2,7 +2,6 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Bold, Italic, Link, List, ListOrdered, Quote, Code, 
   Eye, Edit3, Heading1, Heading2, Heading3, Strikethrough,
@@ -183,18 +182,28 @@ export const MarkdownEditor = ({ value, onChange, placeholder, minHeight = '150p
             </div>
           ))}
         </div>
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'write' | 'preview')}>
-          <TabsList className="h-7 bg-transparent">
-            <TabsTrigger value="write" className="h-6 px-2 text-xs data-[state=active]:bg-primary/20">
-              <Edit3 className="h-3 w-3 mr-1" />
-              {s('forum.markdown.tab.write')}
-            </TabsTrigger>
-            <TabsTrigger value="preview" className="h-6 px-2 text-xs data-[state=active]:bg-primary/20">
-              <Eye className="h-3 w-3 mr-1" />
-              {s('forum.markdown.tab.preview')}
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="inline-flex h-7 items-center rounded-md border border-border/60 bg-transparent p-0.5">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className={`h-6 px-2 text-xs ${activeTab === 'write' ? 'bg-primary/20' : ''}`}
+            onClick={() => setActiveTab('write')}
+          >
+            <Edit3 className="h-3 w-3 mr-1" />
+            {s('forum.markdown.tab.write')}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className={`h-6 px-2 text-xs ${activeTab === 'preview' ? 'bg-primary/20' : ''}`}
+            onClick={() => setActiveTab('preview')}
+          >
+            <Eye className="h-3 w-3 mr-1" />
+            {s('forum.markdown.tab.preview')}
+          </Button>
+        </div>
       </div>
 
       {activeTab === 'write' ? (

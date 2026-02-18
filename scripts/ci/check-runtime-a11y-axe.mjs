@@ -7,6 +7,13 @@ import AxeBuilder from '@axe-core/playwright';
 const DEFAULT_BASE_URL = process.env.E2E_BASE_URL ?? 'http://localhost:8080';
 const DEFAULT_PUBLIC_ROUTES = ['/', '/auth'];
 const DEFAULT_PRIVATE_ROUTES = ['/guilds', '/forum', '/admin', '/admin/design-system'];
+const DEFAULT_ROUTES_PACK_FILE = path.resolve(
+  process.cwd(),
+  'scripts',
+  'ci',
+  'runtime-route-packs.json',
+);
+const DEFAULT_ROUTES_PACK = 'ds_critical';
 const DEFAULT_TIMEOUT_MS = 30000;
 const DEFAULT_WAIT_MS = Number(process.env.E2E_WAIT_MS ?? 600);
 const DEFAULT_AUTH_STATE = path.resolve(process.cwd(), 'e2e', '.auth', 'admin.json');
@@ -47,6 +54,22 @@ const fileExists = async filePath => {
   } catch {
     return false;
   }
+};
+
+const loadRoutesPack = async (packFilePath, packName) => {
+  const raw = await fs.readFile(packFilePath, 'utf8');
+  const parsed = JSON.parse(raw);
+  const packs = parsed?.packs || {};
+  const resolvedPackName = packName || parsed?.defaultPack || DEFAULT_ROUTES_PACK;
+  const pack = packs[resolvedPackName];
+  if (!pack) {
+    throw new Error(`Unknown routes pack "${resolvedPackName}" in ${path.relative(process.cwd(), packFilePath)}`);
+  }
+  return {
+    packName: resolvedPackName,
+    publicRoutes: splitRoutes((pack.publicRoutes || []).join(',')),
+    privateRoutes: splitRoutes((pack.privateRoutes || []).join(',')),
+  };
 };
 
 const summarizeViolations = violations =>
@@ -95,12 +118,21 @@ const main = async () => {
   const baseUrl = args['base-url'] ?? DEFAULT_BASE_URL;
   const timeoutMs = Number(args['timeout-ms'] ?? DEFAULT_TIMEOUT_MS);
   const waitMs = Number(args['wait-ms'] ?? DEFAULT_WAIT_MS);
+  const routesPackFile = path.resolve(
+    process.cwd(),
+    args['routes-pack-file'] ?? DEFAULT_ROUTES_PACK_FILE,
+  );
+  const routesPack = args['routes-pack'] ?? DEFAULT_ROUTES_PACK;
+  const usingLegacyRouteArgs = Boolean(args['public-routes'] || args['private-routes']);
+  const packRoutes = usingLegacyRouteArgs
+    ? null
+    : await loadRoutesPack(routesPackFile, routesPack);
   const publicRoutes = args['public-routes']
     ? splitRoutes(args['public-routes'])
-    : DEFAULT_PUBLIC_ROUTES;
+    : packRoutes?.publicRoutes ?? DEFAULT_PUBLIC_ROUTES;
   const privateRoutes = args['private-routes']
     ? splitRoutes(args['private-routes'])
-    : DEFAULT_PRIVATE_ROUTES;
+    : packRoutes?.privateRoutes ?? DEFAULT_PRIVATE_ROUTES;
   const authStatePath = path.resolve(process.cwd(), args['auth-state'] ?? DEFAULT_AUTH_STATE);
 
   const report = {
@@ -110,6 +142,7 @@ const main = async () => {
       failOnImpact: IMPACT_LEVELS,
       tags: ['wcag2a', 'wcag2aa'],
     },
+    routesPack: packRoutes ? packRoutes.packName : 'custom',
     public: { routes: [], skipped: [] },
     admin: { routes: [], skipped: [] },
     strictViolationCount: 0,
