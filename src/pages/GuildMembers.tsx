@@ -1,19 +1,17 @@
+import { Crown, Shield, Search, Users, CheckCircle2, XCircle, RefreshCw, ChevronDown, ChevronLeft, ChevronRight, Check, X, Star, Eye } from 'lucide-react';
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { useIsAdmin } from '@/hooks/useAdmin';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { supabase } from '@/integrations/supabase/client';
-import { GuildSubNav } from '@/components/guild/GuildSubNav';
+
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { CosmicBackground } from '@/components/CosmicBackground';
+import { GuildSubNav } from '@/components/guild/GuildSubNav';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -22,16 +20,19 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { cn } from '@/lib/utils';
-import { Crown, Shield, Search, Users, CheckCircle2, XCircle, RefreshCw, ChevronDown, ChevronLeft, ChevronRight, Check, X, Star, Eye } from 'lucide-react';
-import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
-import { getLocalizedClassName, wowClasses } from '@/data/wowClasses';
+import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { BATTLENET_CLASS_MAP } from '@/data/battlenetClasses';
+import { getLocalizedClassName, wowClasses } from '@/data/wowClasses';
+import { useIsAdmin } from '@/hooks/useAdmin';
+import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
 import { formatDistanceFromNowLocalized } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
+import { supabase } from '@/integrations/supabase/client';
+import { toneCalloutClass, toneTextClass, wowClassColorValue } from '@/lib/design-tokens';
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
 import { formatRankLabel } from '@/lib/rankLabel';
-import { toneCalloutClass, toneTextClass, wowClassColorValue } from '@/lib/design-tokens';
+import { cn } from '@/lib/utils';
 
 interface RosterMember {
   id: string;
@@ -72,6 +73,7 @@ interface GuildInfo {
 
 const ITEMS_PER_PAGE = 20;
 
+// eslint-disable-next-line complexity
 const GuildMembers = () => {
   const { regionSlug, serverSlug, guildSlug } = useParams();
   const navigate = useNavigate();
@@ -186,6 +188,7 @@ const GuildMembers = () => {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line complexity
     const loadData = async () => {
       if (!regionSlug || !serverSlug || !guildSlug || !user) {
         setLoading(false);
@@ -367,7 +370,7 @@ const GuildMembers = () => {
 
           setMembers(memberList);
         }
-      } catch (error) {
+      } catch {
         // Guild members loading error handled silently
       } finally {
         setLoading(false);
@@ -379,6 +382,7 @@ const GuildMembers = () => {
 
   // Filter members
   const filteredMembers = useMemo(() => {
+    // eslint-disable-next-line complexity
     return members.filter(member => {
       // Search filter
       const characterName = member.character_name?.toLowerCase() || '';

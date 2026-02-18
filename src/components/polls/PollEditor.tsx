@@ -1,17 +1,3 @@
-import { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { GlowCard } from '@/components/GlowCard';
-import { SortableQuestion } from './SortableQuestion';
-import { PollPreviewDialog } from './PollPreviewDialog';
-import { Plus, Save, Play, Loader2, Layers, GripHorizontal, Trash2, ChevronUp, ChevronDown, Eye } from 'lucide-react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   DndContext,
   DragEndEvent,
@@ -33,11 +19,28 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import type { PollFormData, QuestionFormData, SectionFormData } from '@/types/poll';
-import { PollResultsAccessEditor, type ResultsAccessRule } from './PollResultsAccessEditor';
+import { Plus, Save, Play, Loader2, Layers, GripHorizontal, Trash2, ChevronUp, ChevronDown, Eye } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+
+import { PollPreviewDialog } from './PollPreviewDialog';
 import { PollRespondentEditor, type RespondentAccessRule } from './PollRespondentEditor';
-import { resolveSemanticMessage } from '@/i18n/semantic';
+import { PollResultsAccessEditor, type ResultsAccessRule } from './PollResultsAccessEditor';
+import { SortableQuestion } from './SortableQuestion';
+import type { PollFormData, QuestionFormData, SectionFormData } from '@/types/poll';
+
+import { GlowCard } from '@/components/GlowCard';
+import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { interpolateMessage } from '@/i18n/format';
+import { resolveSemanticMessage } from '@/i18n/semantic';
+
 
 interface Roster {
   id: string;
@@ -185,6 +188,7 @@ const SortableSectionHeader = ({
   );
 };
 
+// eslint-disable-next-line complexity
 export const PollEditor = ({
   initialData,
   rosters,

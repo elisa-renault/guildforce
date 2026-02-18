@@ -279,7 +279,7 @@ export const ReportsManager = () => {
           )}
         </CardTitle>
         <Select value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
-          <SelectTrigger className="w-40 bg-background/50">
+          <SelectTrigger aria-label={sm('forum.reports.filter.all')} className="w-40 bg-background/50">
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="bg-card border-border">

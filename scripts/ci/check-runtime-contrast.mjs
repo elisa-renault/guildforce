@@ -1,0 +1,386 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+
+import { chromium } from 'playwright';
+
+const DEFAULT_BASE_URL = process.env.E2E_BASE_URL ?? 'http://localhost:8080';
+const DEFAULT_PUBLIC_ROUTES = ['/', '/auth'];
+const DEFAULT_PRIVATE_ROUTES = ['/guilds', '/forum', '/admin', '/admin/design-system'];
+const DEFAULT_ROUTES_PACK_FILE = path.resolve(
+  process.cwd(),
+  'scripts',
+  'ci',
+  'runtime-route-packs.json',
+);
+const DEFAULT_ROUTES_PACK = 'ds_critical';
+const DEFAULT_TIMEOUT_MS = 30000;
+const DEFAULT_WAIT_MS = Number(process.env.E2E_WAIT_MS ?? 600);
+const DEFAULT_AUTH_STATE = path.resolve(process.cwd(), 'e2e', '.auth', 'admin.json');
+const REPORT_PATH = path.resolve(process.cwd(), 'tmp', 'contrast-runtime-report.json');
+const MAX_FINDINGS_PER_ROUTE = 40;
+
+const CHECKS = [
+  {
+    id: 'status',
+    description: 'Status text and status badges',
+    selector:
+      '.text-status-success, .text-status-warning, .text-status-error, .text-status-info, [class*="bg-status-"]',
+    mode: 'self',
+  },
+  {
+    id: 'alerts',
+    description: 'Alert containers',
+    selector: '[role="alert"]',
+    mode: 'descendants',
+  },
+  {
+    id: 'nav',
+    description: 'Main and sub navigation areas',
+    selector: '[data-global-nav], [data-guild-subnav], nav[role="navigation"]',
+    mode: 'descendants',
+  },
+  {
+    id: 'glass',
+    description: 'Glass surfaces',
+    selector: '.glass-card, .cosmic-glass, .glass-header',
+    mode: 'descendants',
+  },
+];
+
+const parseArgs = argv => {
+  const args = {};
+  for (let index = 0; index < argv.length; index += 1) {
+    const token = argv[index];
+    if (!token.startsWith('--')) continue;
+    const key = token.slice(2);
+    const next = argv[index + 1];
+    if (next && !next.startsWith('--')) {
+      args[key] = next;
+      index += 1;
+    } else {
+      args[key] = 'true';
+    }
+  }
+  return args;
+};
+
+const splitRoutes = value =>
+  String(value)
+    .split(',')
+    .map(route => route.trim())
+    .filter(Boolean)
+    .map(route => (route.startsWith('/') ? route : `/${route}`));
+
+const routeUrl = (baseUrl, route) => new URL(route, baseUrl).toString();
+
+const fileExists = async filePath => {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const loadRoutesPack = async (packFilePath, packName) => {
+  const raw = await fs.readFile(packFilePath, 'utf8');
+  const parsed = JSON.parse(raw);
+  const packs = parsed?.packs || {};
+  const resolvedPackName = packName || parsed?.defaultPack || DEFAULT_ROUTES_PACK;
+  const pack = packs[resolvedPackName];
+  if (!pack) {
+    throw new Error(`Unknown routes pack "${resolvedPackName}" in ${path.relative(process.cwd(), packFilePath)}`);
+  }
+  return {
+    packName: resolvedPackName,
+    publicRoutes: splitRoutes((pack.publicRoutes || []).join(',')),
+    privateRoutes: splitRoutes((pack.privateRoutes || []).join(',')),
+  };
+};
+
+const analyzeContrastForRoute = async ({ page, baseUrl, route, timeoutMs, waitMs }) => {
+  const url = routeUrl(baseUrl, route);
+  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: timeoutMs });
+  await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => undefined);
+  if (waitMs > 0) await page.waitForTimeout(waitMs);
+
+  const findings = await page.evaluate(
+    ({ checks, maxFindings }) => {
+      const parseColor = value => {
+        if (!value || value === 'transparent') return null;
+        const match = value.match(
+          /rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*[,/]\s*([\d.]+))?\s*\)/i,
+        );
+        if (!match) return null;
+        const r = Number(match[1]);
+        const g = Number(match[2]);
+        const b = Number(match[3]);
+        const a = match[4] === undefined ? 1 : Number(match[4]);
+        if ([r, g, b, a].some(Number.isNaN)) return null;
+        return { r, g, b, a };
+      };
+
+      const blend = (fg, bg) => {
+        const outA = fg.a + bg.a * (1 - fg.a);
+        if (outA <= 0) return { r: 0, g: 0, b: 0, a: 0 };
+        return {
+          r: (fg.r * fg.a + bg.r * bg.a * (1 - fg.a)) / outA,
+          g: (fg.g * fg.a + bg.g * bg.a * (1 - fg.a)) / outA,
+          b: (fg.b * fg.a + bg.b * bg.a * (1 - fg.a)) / outA,
+          a: outA,
+        };
+      };
+
+      const srgbToLinear = value => {
+        const channel = value / 255;
+        return channel <= 0.03928
+          ? channel / 12.92
+          : ((channel + 0.055) / 1.055) ** 2.4;
+      };
+
+      const luminance = color =>
+        0.2126 * srgbToLinear(color.r) +
+        0.7152 * srgbToLinear(color.g) +
+        0.0722 * srgbToLinear(color.b);
+
+      const contrastRatio = (a, b) => {
+        const la = luminance(a);
+        const lb = luminance(b);
+        const lighter = Math.max(la, lb);
+        const darker = Math.min(la, lb);
+        return (lighter + 0.05) / (darker + 0.05);
+      };
+
+      const bodyBg = parseColor(getComputedStyle(document.body).backgroundColor) || {
+        r: 10,
+        g: 10,
+        b: 10,
+        a: 1,
+      };
+
+      const isVisible = el => {
+        if (!el || !(el instanceof HTMLElement)) return false;
+        const style = getComputedStyle(el);
+        if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0) {
+          return false;
+        }
+        const rect = el.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0;
+      };
+
+      const textSelectors = 'h1,h2,h3,h4,h5,h6,p,span,a,button,label,li,td,th,small,strong,em';
+
+      const getEffectiveBackground = el => {
+        const layers = [];
+        let current = el;
+        while (current) {
+          if (current instanceof HTMLElement) {
+            const bg = parseColor(getComputedStyle(current).backgroundColor);
+            if (bg && bg.a > 0) layers.push(bg);
+          }
+          current = current.parentElement;
+        }
+        let composite = bodyBg;
+        for (let index = layers.length - 1; index >= 0; index -= 1) {
+          composite = blend(layers[index], composite);
+        }
+        return composite;
+      };
+
+      const normalizeText = value => value.replace(/\s+/g, ' ').trim();
+
+      const isLargeText = style => {
+        const size = Number.parseFloat(style.fontSize);
+        if (Number.isNaN(size)) return false;
+        const weightRaw = style.fontWeight;
+        const weight = Number.parseInt(weightRaw, 10);
+        const isBold =
+          (!Number.isNaN(weight) && weight >= 700) ||
+          String(weightRaw).toLowerCase() === 'bold';
+        if (size >= 24) return true;
+        if (size >= 18.66 && isBold) return true;
+        return false;
+      };
+
+      const findingsOut = [];
+
+      for (const check of checks) {
+        const roots = [...document.querySelectorAll(check.selector)].filter(isVisible).slice(0, 120);
+        const candidates = [];
+
+        for (const root of roots) {
+          if (check.mode === 'self') {
+            candidates.push(root);
+            continue;
+          }
+          candidates.push(
+            ...[...root.querySelectorAll(textSelectors)].filter(node => node instanceof HTMLElement),
+          );
+        }
+
+        const uniqueCandidates = [...new Set(candidates)]
+          .filter(isVisible)
+          .slice(0, 300);
+
+        for (const element of uniqueCandidates) {
+          if (!(element instanceof HTMLElement)) continue;
+          const text = normalizeText(element.innerText || element.textContent || '');
+          if (!text) continue;
+
+          const style = getComputedStyle(element);
+          const fgRaw = parseColor(style.color);
+          if (!fgRaw || fgRaw.a <= 0) continue;
+
+          const bg = getEffectiveBackground(element);
+          const fg = fgRaw.a < 1 ? blend(fgRaw, bg) : fgRaw;
+          const ratio = contrastRatio(fg, bg);
+          const minRatio = isLargeText(style) ? 3 : 4.5;
+
+          if (ratio + 1e-9 < minRatio) {
+            findingsOut.push({
+              checkId: check.id,
+              checkDescription: check.description,
+              ratio: Number(ratio.toFixed(2)),
+              minRatio,
+              textSample: text.slice(0, 120),
+              selector: element.tagName.toLowerCase(),
+              className: element.className || '',
+              color: style.color,
+              backgroundColor: style.backgroundColor,
+            });
+            if (findingsOut.length >= maxFindings) break;
+          }
+        }
+
+        if (findingsOut.length >= maxFindings) break;
+      }
+
+      return findingsOut;
+    },
+    { checks: CHECKS, maxFindings: MAX_FINDINGS_PER_ROUTE },
+  );
+
+  return {
+    route,
+    url,
+    finalUrl: page.url(),
+    failureCount: findings.length,
+    failures: findings,
+  };
+};
+
+const main = async () => {
+  const args = parseArgs(process.argv.slice(2));
+  const baseUrl = args['base-url'] ?? DEFAULT_BASE_URL;
+  const timeoutMs = Number(args['timeout-ms'] ?? DEFAULT_TIMEOUT_MS);
+  const waitMs = Number(args['wait-ms'] ?? DEFAULT_WAIT_MS);
+  const routesPackFile = path.resolve(
+    process.cwd(),
+    args['routes-pack-file'] ?? DEFAULT_ROUTES_PACK_FILE,
+  );
+  const routesPack = args['routes-pack'] ?? DEFAULT_ROUTES_PACK;
+  const usingLegacyRouteArgs = Boolean(args['public-routes'] || args['private-routes']);
+  const packRoutes = usingLegacyRouteArgs
+    ? null
+    : await loadRoutesPack(routesPackFile, routesPack);
+  const publicRoutes = args['public-routes']
+    ? splitRoutes(args['public-routes'])
+    : packRoutes?.publicRoutes ?? DEFAULT_PUBLIC_ROUTES;
+  const privateRoutes = args['private-routes']
+    ? splitRoutes(args['private-routes'])
+    : packRoutes?.privateRoutes ?? DEFAULT_PRIVATE_ROUTES;
+  const authStatePath = path.resolve(process.cwd(), args['auth-state'] ?? DEFAULT_AUTH_STATE);
+
+  const report = {
+    generatedAt: new Date().toISOString(),
+    baseUrl,
+    checks: CHECKS,
+    routesPack: packRoutes ? packRoutes.packName : 'custom',
+    public: { routes: [], skipped: [] },
+    admin: { routes: [], skipped: [] },
+    failureCount: 0,
+  };
+
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const publicContext = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    const publicPage = await publicContext.newPage();
+    for (const route of publicRoutes) {
+      try {
+        const result = await analyzeContrastForRoute({ page: publicPage, baseUrl, route, timeoutMs, waitMs });
+        report.public.routes.push(result);
+      } catch (error) {
+        report.public.skipped.push({
+          route,
+          reason: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+    await publicContext.close();
+
+    const hasAdminAuth = await fileExists(authStatePath);
+    if (hasAdminAuth) {
+      const adminContext = await browser.newContext({
+        storageState: authStatePath,
+        viewport: { width: 1440, height: 900 },
+      });
+      const adminPage = await adminContext.newPage();
+      for (const route of privateRoutes) {
+        try {
+          const result = await analyzeContrastForRoute({ page: adminPage, baseUrl, route, timeoutMs, waitMs });
+          const redirectedToAuth = new URL(result.finalUrl).pathname === '/auth';
+          if (redirectedToAuth) {
+            report.admin.skipped.push({
+              route,
+              reason: 'redirected_to_auth',
+              finalUrl: result.finalUrl,
+            });
+            continue;
+          }
+          report.admin.routes.push(result);
+        } catch (error) {
+          report.admin.skipped.push({
+            route,
+            reason: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+      await adminContext.close();
+    } else {
+      report.admin.skipped.push({
+        route: '*',
+        reason: `missing_auth_state:${path.relative(process.cwd(), authStatePath)}`,
+      });
+    }
+  } finally {
+    await browser.close();
+  }
+
+  const allRouteResults = [...report.public.routes, ...report.admin.routes];
+  report.failureCount = allRouteResults.reduce((sum, route) => sum + route.failureCount, 0);
+
+  await fs.mkdir(path.dirname(REPORT_PATH), { recursive: true });
+  await fs.writeFile(REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
+
+  console.log(`[contrast-runtime] Report written to ${path.relative(process.cwd(), REPORT_PATH)}`);
+  console.log(
+    `[contrast-runtime] Routes audited: ${allRouteResults.length} (public: ${report.public.routes.length}, admin: ${report.admin.routes.length})`,
+  );
+  if (report.admin.skipped.length > 0 || report.public.skipped.length > 0) {
+    console.log(
+      `[contrast-runtime] Skipped routes: ${report.public.skipped.length + report.admin.skipped.length}`,
+    );
+  }
+
+  if (report.failureCount > 0) {
+    console.error(`[contrast-runtime] Failed: ${report.failureCount} contrast failure(s) detected.`);
+    process.exit(1);
+  }
+
+  console.log('[contrast-runtime] Passed: no contrast failures detected on targeted runtime checks.');
+};
+
+main().catch(error => {
+  console.error(`[contrast-runtime] ${error instanceof Error ? error.message : String(error)}`);
+  process.exit(1);
+});

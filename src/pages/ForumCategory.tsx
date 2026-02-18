@@ -67,6 +67,7 @@ const ForumCategory = () => {
           <div className="flex items-start gap-3">
             <button
               onClick={() => navigate('/forum')}
+              aria-label={t.forum.backToForum}
               className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors flex-shrink-0 mt-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               <ArrowLeft className="h-4 w-4 text-muted-foreground" />

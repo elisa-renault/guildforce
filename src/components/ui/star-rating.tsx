@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react';
 import { Star } from 'lucide-react';
+import { useState, useCallback } from 'react';
+
 import { cn } from '@/lib/utils';
 
 interface StarRatingProps {
@@ -78,7 +79,6 @@ export const StarRating = ({
       onMouseLeave={handleMouseLeave}
     >
       {Array.from({ length: max }, (_, index) => {
-        const starValue = index + 1;
         const fillPercentage = Math.max(0, Math.min(1, displayValue - index));
 
         return (

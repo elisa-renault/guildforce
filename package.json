@@ -22,6 +22,7 @@
     "ci:a11y-focus-guard:full": "node scripts/ci/check-a11y-focus-guard.mjs --full",
     "ci:a11y-runtime-axe": "node scripts/ci/check-runtime-a11y-axe.mjs",
     "ci:contrast-guard": "node scripts/ci/check-token-contrast.mjs",
+    "ci:contrast-runtime": "node scripts/ci/check-runtime-contrast.mjs",
     "ci:pagecontainer-guard": "node scripts/ci/check-pagecontainer-usage.mjs",
     "ci:nav-style-guard": "node scripts/ci/check-nav-style-adoption.mjs",
     "ci:ds-coverage": "node scripts/ci/audit-design-system-coverage.mjs --fail-under 100 --out tmp/design-system-coverage.json",
@@ -39,7 +40,7 @@
     "i18n:check:fr": "npm run i18n:check:diacritics",
     "i18n:check": "node scripts/i18n/check-health.mjs",
     "i18n:check:strict": "node scripts/i18n/check-health.mjs --strict",
-    "verify:quick": "npm run task:guard && npm run lint:changed && npm run ci:design-token-guard && npm run ci:a11y-focus-guard && npm run ci:contrast-guard && npm run ci:pagecontainer-guard && npm run ci:nav-style-guard && npm run ci:ds-coverage && npm run i18n:check:encoding && npm run i18n:check:diacritics && npm run i18n:check:strict && npm run test -- src/__tests__/i18n.semantic.test.ts src/__tests__/i18n.config.test.ts src/__tests__/i18n.translations.test.ts src/__tests__/i18n.de.smoke.test.tsx"
+    "verify:quick": "npm run task:guard && npm run lint:changed && npm run ci:design-token-guard && npm run ci:a11y-focus-guard && npm run ci:a11y-runtime-axe && npm run ci:contrast-guard && npm run ci:contrast-runtime && npm run ci:pagecontainer-guard && npm run ci:nav-style-guard && npm run ci:ds-coverage:strict && npm run i18n:check:encoding && npm run i18n:check:diacritics && npm run i18n:check:strict && npm run test -- src/__tests__/i18n.semantic.test.ts src/__tests__/i18n.config.test.ts src/__tests__/i18n.translations.test.ts src/__tests__/i18n.de.smoke.test.tsx"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

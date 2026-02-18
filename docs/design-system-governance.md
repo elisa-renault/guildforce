@@ -14,8 +14,12 @@ This document defines the guardrails that prevent design-system drift across pub
 : Ensures core nav components use shared `navItemClass` helper.
 - `npm run ci:ds-coverage`
 : Requires `AdminDesignSystem` UI coverage to stay at `100%`.
+- `npm run ci:ds-coverage:strict`
+: Requires `100%` coverage and fails when shared DS candidates remain outside explicit scope.
+- `npm run ci:contrast-runtime`
+: Runs runtime contrast checks (Playwright) on status badges/text, alerts, nav, and glass surfaces across key routes.
 
-All these checks are included in `npm run verify:quick`.
+`npm run verify:quick` is the blocking baseline and now includes `ci:ds-coverage:strict` and `ci:contrast-runtime`.
 
 ## Review Checklist (PR)
 

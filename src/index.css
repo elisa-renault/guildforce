@@ -48,8 +48,9 @@
     --status-success-foreground: 240 10% 8%;
     --status-warning: var(--warning);
     --status-warning-foreground: var(--warning-foreground);
-    --status-error: var(--destructive);
-    --status-error-foreground: var(--destructive-foreground);
+    /* Keep destructive for destructive surfaces, use a brighter error tone for text/icons */
+    --status-error: 0 82% 62%;
+    --status-error-foreground: 240 10% 8%;
     --status-info: var(--info);
     --status-info-foreground: var(--info-foreground);
     /* Short semantic aliases kept for consistency in tooling/docs */

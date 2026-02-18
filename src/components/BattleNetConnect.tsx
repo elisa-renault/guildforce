@@ -381,7 +381,11 @@ export const BattleNetConnect: React.FC = () => {
               <p className="text-sm text-muted-foreground mb-2">
                 {t.battlenet.yourCharacters} ({characters.length})
               </p>
-              <div className="max-h-64 overflow-y-auto space-y-2 pr-2">
+              <div
+                className="max-h-64 overflow-y-auto space-y-2 pr-2"
+                tabIndex={0}
+                aria-label={t.battlenet.yourCharacters}
+              >
                 {[...characters].sort((a, b) => (b.is_main ? 1 : 0) - (a.is_main ? 1 : 0)).map((char) => (
                   <div
                     key={char.id}
@@ -429,7 +433,7 @@ export const BattleNetConnect: React.FC = () => {
             <button
               onClick={handleDisconnect}
               disabled={isLoading}
-              className="text-sm text-destructive hover:underline flex items-center gap-1"
+              className="text-sm text-status-error hover:underline flex items-center gap-1"
             >
               <Unlink className="w-3 h-3" />
               {t.battlenet.disconnect}
@@ -437,7 +441,7 @@ export const BattleNetConnect: React.FC = () => {
             <button
               onClick={handleResync}
               disabled={isResyncing}
-              className="text-sm text-primary hover:underline flex items-center gap-1"
+              className="text-sm text-status-info hover:underline flex items-center gap-1"
             >
               {isResyncing ? (
                 <Loader2 className="w-3 h-3 animate-spin" />
