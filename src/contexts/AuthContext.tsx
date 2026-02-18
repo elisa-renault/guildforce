@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import log from '@/lib/logger';
 import type { User, Session } from '@supabase/supabase-js';
+import { trackProductEvent } from '@/lib/productEvents';
 
 let supabaseModulePromise: Promise<typeof import('@/integrations/supabase/client')> | null = null;
 
@@ -150,6 +151,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               if (event === 'SIGNED_IN' && profileData?.battlenet_id && newSession.access_token) {
                 triggerBattleNetSync(newSession.access_token);
               }
+
+              if (event === 'SIGNED_IN') {
+                const { supabase } = await loadSupabase();
+                await trackProductEvent(supabase, 'first_login', { source: 'auth_context' });
+              }
             }, 0);
           } else {
             setProfile(null);
@@ -209,8 +215,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     try {
       await supabase.auth.signOut();
-    } catch (error: any) {
-      log.warn('Sign out error (ignored):', error?.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      log.warn('Sign out error (ignored):', message);
     }
     
     // Clear any stored session data to ensure clean state
