@@ -114,8 +114,8 @@ const BugReportButton = React.forwardRef<HTMLButtonElement, React.ComponentProps
         });
 
         if (response.status === 429) {
-          const data = await response.json();
-          toast.error(t.bugReport.rateLimitError || 'Too many reports submitted. Please try again later.');
+          await response.json();
+          toast.error(t.bugReport.rateLimitError);
           return;
         }
 

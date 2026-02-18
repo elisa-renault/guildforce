@@ -129,11 +129,11 @@ export interface ReactionSummary {
 
 // Report reasons
 export const REPORT_REASONS = {
-  spam: { en: 'Spam', fr: 'Spam', de: 'Spam' },
-  harassment: { en: 'Harassment', fr: 'Harcelement', de: 'Belaestigung' },
-  inappropriate: { en: 'Inappropriate content', fr: 'Contenu inapproprie', de: 'Unangemessene Inhalte' },
-  misinformation: { en: 'Misinformation', fr: 'Desinformation', de: 'Fehlinformation' },
-  other: { en: 'Other', fr: 'Autre', de: 'Andere' },
+  spam: { en: 'Spam', fr: 'Spam', de: 'Spam', ru: 'Спам' },
+  harassment: { en: 'Harassment', fr: 'Harcelement', de: 'Belaestigung', ru: 'Домогательства' },
+  inappropriate: { en: 'Inappropriate content', fr: 'Contenu inapproprie', de: 'Unangemessene Inhalte', ru: 'Неприемлемый контент' },
+  misinformation: { en: 'Misinformation', fr: 'Desinformation', de: 'Fehlinformation', ru: 'Дезинформация' },
+  other: { en: 'Other', fr: 'Autre', de: 'Andere', ru: 'Другое' },
 } as const;
 
 export type ReportReason = keyof typeof REPORT_REASONS;

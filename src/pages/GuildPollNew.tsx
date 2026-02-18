@@ -80,7 +80,7 @@ const GuildPollNew = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const getErrorMessage = (error: unknown) =>
-    error instanceof Error ? error.message : t.polls?.error || 'Error';
+    error instanceof Error ? error.message : t.polls.error;
   const [loading, setLoading] = useState(true);
   const [guildId, setGuildId] = useState<string | null>(null);
   const [guild, setGuild] = useState<{ name: string; server: string; region: string; avatar_url: string | null; officer_rank_threshold: number } | null>(null);
@@ -237,8 +237,8 @@ const GuildPollNew = () => {
         }
       } catch (error: unknown) {
         toast({
-          title: t.polls?.unstableConnection || 'Unstable connection',
-          description: t.polls?.unstableConnectionDesc || "Some poll data couldn't be loaded.",
+          title: t.polls.unstableConnection,
+          description: t.polls.unstableConnectionDesc,
           variant: 'destructive',
         });
       } finally {
@@ -272,18 +272,18 @@ const GuildPollNew = () => {
           await updatePollQuestions(existingPoll.id, data);
         }
         
-        toast({ title: t.polls?.saved || 'Poll saved' });
+        toast({ title: t.polls.saved });
       } else {
         const newPollId = await createPoll(guildId, data);
         if (newPollId) {
           if (accessRules) await saveResultsAccessRules(newPollId, accessRules);
           if (respondentRules) await saveRespondentRules(newPollId, respondentRules);
         }
-        toast({ title: t.polls?.draftSaved || 'Draft saved' });
+        toast({ title: t.polls.draftSaved });
       }
       navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/polls`);
     } catch (error: unknown) {
-      toast({ title: t.polls?.error || 'Error', description: getErrorMessage(error), variant: 'destructive' });
+      toast({ title: t.polls.error, description: getErrorMessage(error), variant: 'destructive' });
     }
   };
 
@@ -297,10 +297,10 @@ const GuildPollNew = () => {
       if (pendingFullEditData.rules) await saveResultsAccessRules(existingPoll.id, pendingFullEditData.rules);
       if (pendingFullEditData.respondentRules) await saveRespondentRules(existingPoll.id, pendingFullEditData.respondentRules);
       
-      toast({ title: t.polls?.updated || 'Poll updated' });
+      toast({ title: t.polls.updated });
       navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/polls`);
     } catch (error: unknown) {
-      toast({ title: t.polls?.error || 'Error', description: getErrorMessage(error), variant: 'destructive' });
+      toast({ title: t.polls.error, description: getErrorMessage(error), variant: 'destructive' });
     } finally {
       setConfirmResetDialog(false);
       setPendingFullEditData(null);
@@ -323,11 +323,11 @@ const GuildPollNew = () => {
         if (accessRules) await saveResultsAccessRules(pollIdToPublish, accessRules);
         if (respondentRules) await saveRespondentRules(pollIdToPublish, respondentRules);
         await publishPoll(pollIdToPublish);
-        toast({ title: t.polls?.published || 'Poll published!' });
+        toast({ title: t.polls.published });
         navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/polls`);
       }
     } catch (error: unknown) {
-      toast({ title: t.polls?.error || 'Error', description: getErrorMessage(error), variant: 'destructive' });
+      toast({ title: t.polls.error, description: getErrorMessage(error), variant: 'destructive' });
     }
   };
 
@@ -451,7 +451,7 @@ const GuildPollNew = () => {
 
   const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
   const breadcrumbs = [
-    { label: t.guildNav?.polls || 'Polls', href: `${basePath}/polls` },
+    { label: t.guildNav.polls, href: `${basePath}/polls` },
     { label: existingPoll ? t.common.edit : t.common.new },
   ];
 
@@ -471,7 +471,7 @@ const GuildPollNew = () => {
       <PageContainer className="py-5 sm:py-8 max-w-4xl px-1 sm:px-4" width="contained">
         <Breadcrumbs items={breadcrumbs} className="mb-4 px-8" />
         <h1 className="text-2xl font-bold mb-6 px-8">
-          {existingPoll ? t.polls?.edit : t.polls?.new}
+          {existingPoll ? t.polls.edit : t.polls.new}
         </h1>
 
         {isActivePoll && (
@@ -482,11 +482,11 @@ const GuildPollNew = () => {
           <div className="flex items-center gap-2">
               <AlertTriangle className={`h-5 w-5 ${isMetadataOnly ? 'text-info' : 'text-warning'}`} />
               <span className={`font-medium ${isMetadataOnly ? 'text-info' : 'text-warning'}`}>
-                {isMetadataOnly ? t.polls?.settingsOnlyMode : t.polls?.fullEditMode}
+                {isMetadataOnly ? t.polls.settingsOnlyMode : t.polls.fullEditMode}
               </span>
             </div>
             <p className="text-sm text-muted-foreground mt-1 ml-7">
-              {isMetadataOnly ? t.polls?.settingsOnlyDesc : t.polls?.fullEditDesc}
+              {isMetadataOnly ? t.polls.settingsOnlyDesc : t.polls.fullEditDesc}
             </p>
           </div>
         )}
@@ -511,10 +511,10 @@ const GuildPollNew = () => {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-destructive" />
-              {t.polls?.confirmReset}
+              {t.polls.confirmReset}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {t.polls?.resetDescription}
+              {t.polls.resetDescription}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -525,7 +525,7 @@ const GuildPollNew = () => {
               onClick={handleConfirmFullEdit}
               className="bg-destructive hover:bg-destructive/90"
             >
-              {t.polls?.resetAndSave}
+              {t.polls.resetAndSave}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

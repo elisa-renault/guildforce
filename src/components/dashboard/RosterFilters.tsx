@@ -494,12 +494,12 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
               <ChevronDown className="h-3.5 w-3.5 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-72 p-3 bg-card border-border z-50" align="start">
+          <PopoverContent className="w-[22rem] max-w-[calc(100vw-1rem)] p-3 bg-card border-border z-50" align="start">
             <div className="space-y-4">
               {/* Roles */}
               <div>
                 <h4 className="text-sm font-medium mb-2">{s('dashboard.roster_filters.roles_title')}</h4>
-                <div className="flex gap-1.5">
+                <div className="grid grid-cols-3 gap-1.5">
                   {(Object.keys(roleConfig) as Role[]).map((role) => {
                     const config = roleConfig[role];
                     const Icon = config.icon;
@@ -510,7 +510,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
                         key={role}
                         variant={isSelected ? "default" : "outline"}
                         size="sm"
-                        className={cn("h-8 gap-1.5", !isSelected && config.color)}
+                        className={cn("h-8 w-full min-w-0 gap-1.5 px-2", !isSelected && config.color)}
                         onClick={() => toggleRole(role)}
                       >
                         <Icon className="h-4 w-4" />
@@ -526,7 +526,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
               {/* Range */}
               <div>
                 <h4 className="text-sm font-medium mb-2">{t.dashboard.range}</h4>
-                <div className="flex gap-1.5">
+                <div className="grid grid-cols-2 gap-1.5">
                   {(['melee', 'ranged'] as RangeFilter[]).map((range) => {
                     const config = rangeConfig[range];
                     const Icon = config.icon;
@@ -537,7 +537,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
                         key={range}
                         variant={isSelected ? "default" : "outline"}
                         size="sm"
-                        className={cn("h-8 gap-1.5", !isSelected && config.color)}
+                        className={cn("h-8 w-full min-w-0 gap-1.5 px-2", !isSelected && config.color)}
                         onClick={() => toggleRange(range)}
                       >
                         <Icon className="h-4 w-4" />

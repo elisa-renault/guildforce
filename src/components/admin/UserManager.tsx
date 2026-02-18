@@ -249,10 +249,7 @@ export function UserManager() {
             : u
         ));
         
-        const removedTemplate = t.auto?.components_admin_UserManager_role_removed;
-        toast.success(
-          removedTemplate ? interpolateMessage(removedTemplate, { role }) : role
-        );
+        toast.success(interpolateMessage(s('admin.user_manager.toast.role_removed'), { role }));
       } else {
         // Add role
         const { error } = await supabase
@@ -267,10 +264,7 @@ export function UserManager() {
             : u
         ));
         
-        const assignedTemplate = t.auto?.components_admin_UserManager_role_assigned;
-        toast.success(
-          assignedTemplate ? interpolateMessage(assignedTemplate, { role }) : role
-        );
+        toast.success(interpolateMessage(s('admin.user_manager.toast.role_assigned'), { role }));
       }
     } catch (error) {
       log.error('Error toggling role:', error);
@@ -587,8 +581,8 @@ export function UserManager() {
               language,
               count: totalCount,
               forms: {
-                one: t.auto?.components_admin_UserManager_total_users_single || '{{count}} user',
-                other: t.auto?.components_admin_UserManager_total_users_plural || '{{count}} users',
+                one: s('admin.user_manager.total_users_single'),
+                other: s('admin.user_manager.total_users_plural'),
               },
             })}
           </span>

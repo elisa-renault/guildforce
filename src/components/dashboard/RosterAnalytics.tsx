@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
   wowClasses,
@@ -30,6 +30,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { interpolateMessage } from '@/i18n/format';
 import { getBilingualContentLanguage } from '@/i18n/config';
+import { resolveSemanticMessage } from '@/i18n/semantic';
 import {
   rangeColorValue,
   roleColorValue,
@@ -157,6 +158,8 @@ type ValidationFilter = 'all' | 'pending' | 'approved' | 'rejected';
 
 export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   const { t, language } = useLanguage();
+  const s = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
+    resolveSemanticMessage({ key, language, translations: t });
   const [maxWishIndex, setMaxWishIndex] = useState<number>(13);
   const [hoveredClass, setHoveredClass] = useState<string | null>(null);
   const [commitmentFilter, setCommitmentFilter] = useState<CommitmentFilter>('confirmed');
@@ -579,8 +582,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   const getWishRangeLabel = (n: number) => {
     if (n === 1) return t.dashboard.wishRange1;
     if (n === 13) return t.dashboard.allWishes;
-    const template = t.auto?.components_dashboard_RosterAnalytics_wish_range;
-    return template ? interpolateMessage(template, { n }) : `Vœux 1-${n}`;
+    return interpolateMessage(s('dashboard.roster_analytics.wish_range'), { n });
   };
 
   // Calculate totals for KPI bar
@@ -1058,4 +1060,5 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     </TooltipProvider>
   );
 };
+
 

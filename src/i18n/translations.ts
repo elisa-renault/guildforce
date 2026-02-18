@@ -360,6 +360,16 @@ export interface Translations {
     wishesCount: string;
     additionalWishes: string;
     addWish: string;
+    externalMember: {
+      addButton: string;
+      title: string;
+      memberLabel: string;
+      memberPlaceholder: string;
+      firstWishClassLabel: string;
+      classPlaceholder: string;
+      commentOptional: string;
+      commentPlaceholder: string;
+    };
     // Analytics tabs and sections
     table: string;
     analytics: string;

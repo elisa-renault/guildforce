@@ -36,7 +36,7 @@ const GuildPollView = () => {
   const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
     resolveSemanticMessage({ key, language, translations: t });
   const getErrorMessage = (error: unknown) =>
-    error instanceof Error ? error.message : t.polls?.error || 'Error';
+    error instanceof Error ? error.message : t.polls.error;
 
   const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
 
@@ -119,7 +119,7 @@ const GuildPollView = () => {
       refetch();
       refetchResults();
     } catch (error: unknown) {
-      toast({ title: t.polls?.error || 'Error', description: getErrorMessage(error), variant: 'destructive' });
+      toast({ title: t.polls.error, description: getErrorMessage(error), variant: 'destructive' });
     }
   };
 
@@ -136,7 +136,7 @@ const GuildPollView = () => {
     return (
       <div className="flex-1 flex items-center justify-center">
         <CosmicBackground />
-        <p className="text-muted-foreground">{t.polls?.notFound}</p>
+        <p className="text-muted-foreground">{t.polls.notFound}</p>
       </div>
     );
   }
@@ -175,7 +175,7 @@ const GuildPollView = () => {
               onClick={() => setShowResults(!showResults)}
             >
               <BarChart3 className="h-4 w-4 mr-2" />
-              {showResults ? t.polls?.hideResults : t.polls?.viewResults}
+              {showResults ? t.polls.hideResults : t.polls.viewResults}
             </Button>
           )}
         </div>
@@ -188,10 +188,10 @@ const GuildPollView = () => {
             </span>
           )}
           {poll.ends_at && (
-          <span className={isClosed ? 'text-destructive' : ''}>
+            <span className={isClosed ? 'text-destructive' : ''}>
               {isClosed 
-                ? t.polls?.closed 
-                : `${t.polls?.endsOn}: ${formatDateLocalized(poll.ends_at, language, { dateStyle: 'medium' })}`
+                ? t.polls.closed 
+                : `${t.polls.endsOn}: ${formatDateLocalized(poll.ends_at, language, { dateStyle: 'medium' })}`
               }
             </span>
           )}
@@ -203,7 +203,7 @@ const GuildPollView = () => {
             {hasResponded && !isClosed && (
               <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 flex items-center justify-between">
               <p className="text-primary">
-                  {t.polls?.alreadyResponded}
+                  {t.polls.alreadyResponded}
                 </p>
                 <Button
                   variant="outline"
@@ -225,7 +225,7 @@ const GuildPollView = () => {
           <div className="space-y-6">
             <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 flex items-center justify-between">
               <p className="text-primary">
-                  {t.polls?.alreadyResponded}
+                  {t.polls.alreadyResponded}
                 </p>
               {!isClosed && (
                 <Button
@@ -241,7 +241,7 @@ const GuildPollView = () => {
             <div className="bg-muted/30 border border-muted rounded-lg p-8 text-center">
               <Lock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">
-                {t.polls?.resultsRestricted}
+                {t.polls.resultsRestricted}
               </p>
             </div>
           </div>

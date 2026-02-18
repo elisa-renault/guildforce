@@ -40,7 +40,7 @@ const Forum = () => {
           <div>
             <h1 className="font-display text-3xl text-foreground flex items-center gap-3">
               <MessageSquare className="h-8 w-8" />
-              Forum
+              {t.forum.title}
             </h1>
             <p className="text-muted-foreground mt-1">
               {t.forum.subtitle || 'Community discussions and updates'}
@@ -53,7 +53,7 @@ const Forum = () => {
               className="border-border hover:bg-muted"
             >
               <Settings className="h-4 w-4 mr-2" />
-              Admin
+              {t.common.admin}
             </Button>
           )}
         </div>

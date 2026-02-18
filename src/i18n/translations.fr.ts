@@ -283,6 +283,16 @@ export const translationsFr: Translations = {
       wishesCount: 'Vœux',
       additionalWishes: 'Vœux supplémentaires',
       addWish: 'Ajouter un vœu',
+      externalMember: {
+        addButton: 'Ajouter externe',
+        title: 'Ajouter un membre externe',
+        memberLabel: 'Membre de guilde (non inscrit)',
+        memberPlaceholder: 'Sélectionner un membre',
+        firstWishClassLabel: 'Premier vœu (classe)',
+        classPlaceholder: 'Sélectionner une classe',
+        commentOptional: 'Commentaire (optionnel)',
+        commentPlaceholder: 'Ex: recruté pour rôle heal',
+      },
       // Analytics tabs and sections
       table: 'Tableau',
       analytics: 'Analytique',

@@ -283,6 +283,16 @@ export const translationsEn: Translations = {
       wishesCount: 'Wishes',
       additionalWishes: 'Additional wishes',
       addWish: 'Add a wish',
+      externalMember: {
+        addButton: 'Add external',
+        title: 'Add external member',
+        memberLabel: 'Guild member (not registered)',
+        memberPlaceholder: 'Select a member',
+        firstWishClassLabel: 'First wish (class)',
+        classPlaceholder: 'Select a class',
+        commentOptional: 'Comment (optional)',
+        commentPlaceholder: 'E.g. recruited for healer role',
+      },
       // Analytics tabs and sections
       table: 'Table',
       analytics: 'Analytics',
