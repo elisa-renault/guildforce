@@ -1,14 +1,14 @@
 // Internationalization translations
+import type { Language } from './config';
+import type { translationsDe } from './translations.de';
 import { translationsEn } from './translations.en';
 import type { translationsEs } from './translations.es';
-import type { translationsDe } from './translations.de';
+import type { translationsFr } from './translations.fr';
 import type { translationsIt } from './translations.it';
 import type { translationsKo } from './translations.ko';
 import type { translationsPtBr } from './translations.pt-BR';
 import type { translationsRu } from './translations.ru';
 import type { translationsZhCn } from './translations.zh-CN';
-import type { translationsFr } from './translations.fr';
-import type { Language } from './config';
 export type { Language } from './config';
 
 export interface Translations {
@@ -752,6 +752,8 @@ export interface Translations {
       chartActivityTrendDesc: string;
       chartCriticalIssuesTitle: string;
       chartCriticalIssuesDesc: string;
+      chartCriticalBacklogLegend: string;
+      chartCriticalCreatedLegend: string;
       chartSignupActivationTitle: string;
       chartSignupActivationDesc: string;
       chartEngagementTrendTitle: string;
@@ -759,6 +761,7 @@ export interface Translations {
       chartRetentionTitle: string;
       chartRetentionInsufficient: string;
       chartsInsufficientHistory: string;
+      chartNoIncidentsPeriod: string;
       vsPreviousPeriod: string;
       deltaNoBaseline: string;
       usersTooltip: string;

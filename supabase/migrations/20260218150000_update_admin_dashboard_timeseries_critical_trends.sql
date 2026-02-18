@@ -1,4 +1,4 @@
--- Admin dashboard time-series RPC for trend visualizations
+-- Extend admin dashboard time-series with critical issue creation trends.
 DROP FUNCTION IF EXISTS public.get_admin_dashboard_timeseries(integer);
 
 CREATE OR REPLACE FUNCTION public.get_admin_dashboard_timeseries(p_days integer DEFAULT 84)
@@ -15,7 +15,11 @@ RETURNS TABLE (
   pending_reports bigint,
   open_bugs bigint,
   pending_deletions bigint,
-  critical_issues bigint
+  critical_issues bigint,
+  created_reports bigint,
+  created_bugs bigint,
+  created_deletions bigint,
+  critical_created_issues bigint
 )
 LANGUAGE plpgsql
 STABLE
@@ -286,7 +290,47 @@ BEGIN
         WHERE adr.status = 'pending'
           AND COALESCE(adr.requested_at, adr.created_at) < (b.bucket_date::timestamp + interval '1 day')
       )
-    ) AS critical_issues
+    ) AS critical_issues,
+    (
+      SELECT COUNT(*)::bigint
+      FROM public.forum_reports fr
+      WHERE fr.created_at >= b.bucket_date::timestamp
+        AND fr.created_at < (b.bucket_date::timestamp + interval '1 day')
+    ) AS created_reports,
+    (
+      SELECT COUNT(*)::bigint
+      FROM public.bug_reports br
+      WHERE br.created_at >= b.bucket_date::timestamp
+        AND br.created_at < (b.bucket_date::timestamp + interval '1 day')
+    ) AS created_bugs,
+    (
+      SELECT COUNT(*)::bigint
+      FROM public.account_deletion_requests adr
+      WHERE COALESCE(adr.requested_at, adr.created_at) >= b.bucket_date::timestamp
+        AND COALESCE(adr.requested_at, adr.created_at) < (b.bucket_date::timestamp + interval '1 day')
+    ) AS created_deletions,
+    (
+      (
+        SELECT COUNT(*)::bigint
+        FROM public.forum_reports fr
+        WHERE fr.created_at >= b.bucket_date::timestamp
+          AND fr.created_at < (b.bucket_date::timestamp + interval '1 day')
+      )
+      +
+      (
+        SELECT COUNT(*)::bigint
+        FROM public.bug_reports br
+        WHERE br.created_at >= b.bucket_date::timestamp
+          AND br.created_at < (b.bucket_date::timestamp + interval '1 day')
+      )
+      +
+      (
+        SELECT COUNT(*)::bigint
+        FROM public.account_deletion_requests adr
+        WHERE COALESCE(adr.requested_at, adr.created_at) >= b.bucket_date::timestamp
+          AND COALESCE(adr.requested_at, adr.created_at) < (b.bucket_date::timestamp + interval '1 day')
+      )
+    ) AS critical_created_issues
   FROM buckets b
   ORDER BY b.bucket_date ASC;
 END;

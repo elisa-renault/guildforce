@@ -12,6 +12,11 @@ export interface AdminTimeseriesPoint {
   openBugs: number;
   pendingDeletions: number;
   criticalIssues: number;
+  createdReports: number;
+  createdBugs: number;
+  createdDeletions: number;
+  criticalCreated: number;
+  criticalBacklog: number;
 }
 
 const toNumber = (value: unknown, fallback = 0): number => {
@@ -39,6 +44,10 @@ interface RawTimeseriesRow {
   open_bugs: number;
   pending_deletions: number;
   critical_issues: number;
+  created_reports: number;
+  created_bugs: number;
+  created_deletions: number;
+  critical_created_issues: number;
 }
 
 export const mapAdminTimeseriesRows = (rows: RawTimeseriesRow[] | null | undefined): AdminTimeseriesPoint[] => {
@@ -59,6 +68,11 @@ export const mapAdminTimeseriesRows = (rows: RawTimeseriesRow[] | null | undefin
       openBugs: toNumber(row.open_bugs),
       pendingDeletions: toNumber(row.pending_deletions),
       criticalIssues: toNumber(row.critical_issues),
+      createdReports: toNumber(row.created_reports),
+      createdBugs: toNumber(row.created_bugs),
+      createdDeletions: toNumber(row.created_deletions),
+      criticalCreated: toNumber(row.critical_created_issues),
+      criticalBacklog: toNumber(row.critical_issues),
     }))
     .sort((a, b) => a.date.localeCompare(b.date));
 };
@@ -67,4 +81,3 @@ export const getRecentTimeseries = (points: AdminTimeseriesPoint[], days: number
   if (days <= 0) return [];
   return points.slice(-days);
 };
-

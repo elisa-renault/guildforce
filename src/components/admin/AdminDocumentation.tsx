@@ -375,8 +375,8 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Admin analytics RPC guardrails',
         titleFr: 'Garde-fous RPC analytics admin',
-        contentEn: '`get_admin_dashboard_stats()` and `get_admin_dashboard_timeseries()` are `SECURITY DEFINER` and role-gated (`admin` or `moderator` via `has_role`). They expose aggregated dashboard KPIs and UTC time-series (DAU/WAU/MAU rolling windows, WAU/MAU engagement, activation 7D, active guilds 30D, critical issues) without returning raw member-level sensitive records to the client.',
-        contentFr: '`get_admin_dashboard_stats()` et `get_admin_dashboard_timeseries()` sont `SECURITY DEFINER` et protégées par rôle (`admin` ou `moderator` via `has_role`). Elles exposent des KPI agrégés et des séries temporelles UTC (fenêtres glissantes DAU/WAU/MAU, engagement WAU/MAU, activation 7j, guildes actives 30j, points critiques) sans renvoyer de données sensibles brutes au client.',
+        contentEn: '`get_admin_dashboard_stats()` and `get_admin_dashboard_timeseries()` are `SECURITY DEFINER` and role-gated (`admin` or `moderator` via `has_role`). They expose aggregated dashboard KPIs and UTC time-series (DAU/WAU/MAU rolling windows, WAU/MAU engagement, activation 7D, active guilds 30D, critical backlog, and incident creation volume) without returning raw member-level sensitive records to the client.',
+        contentFr: '`get_admin_dashboard_stats()` et `get_admin_dashboard_timeseries()` sont `SECURITY DEFINER` et protégées par rôle (`admin` ou `moderator` via `has_role`). Elles exposent des KPI agrégés et des séries temporelles UTC (fenêtres glissantes DAU/WAU/MAU, engagement WAU/MAU, activation 7j, guildes actives 30j, backlog critique et volume d’incidents créés) sans renvoyer de données sensibles brutes au client.',
         tags: ['security', 'rpc', 'admin', 'analytics'],
       },
       {
@@ -433,8 +433,8 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Analytics RPC',
         titleFr: 'RPC analytics',
-        contentEn: 'Admin metrics are served by `get_admin_dashboard_stats()` (snapshot KPIs) and `get_admin_dashboard_timeseries(p_days)` (daily UTC trend points, bounded 14-180 days). Formula highlights: DAU/WAU/MAU rolling windows from core actions, WAU/MAU engagement %, activation 7D by signup-day cohort, active guilds 30D, and critical issues (`pending_reports + open_bugs + pending_deletions`). Keep dashboard labels/tooltips aligned with these formulas.',
-        contentFr: 'Les métriques admin sont exposées via `get_admin_dashboard_stats()` (KPI snapshot) et `get_admin_dashboard_timeseries(p_days)` (points de tendance quotidiens UTC, bornés entre 14 et 180 jours). Formules clés : fenêtres glissantes DAU/WAU/MAU basées sur les actions cœur, engagement WAU/MAU %, activation 7j par cohorte de jour d\'inscription, guildes actives 30j et points critiques (`pending_reports + open_bugs + pending_deletions`). Maintenir les labels/tooltips dashboard alignés avec ces formules.',
+        contentEn: 'Admin metrics are served by `get_admin_dashboard_stats()` (snapshot KPIs) and `get_admin_dashboard_timeseries(p_days)` (daily UTC trend points, bounded 14-180 days). Formula highlights: DAU/WAU/MAU rolling windows from core actions, WAU/MAU engagement %, activation 7D by signup-day cohort, active guilds 30D, open critical backlog (`pending_reports + open_bugs + pending_deletions`), and daily incident creation volume (`created_reports + created_bugs + created_deletions`). Keep dashboard labels/tooltips aligned with these formulas.',
+        contentFr: 'Les métriques admin sont exposées via `get_admin_dashboard_stats()` (KPI snapshot) et `get_admin_dashboard_timeseries(p_days)` (points de tendance quotidiens UTC, bornés entre 14 et 180 jours). Formules clés : fenêtres glissantes DAU/WAU/MAU basées sur les actions cœur, engagement WAU/MAU %, activation 7j par cohorte de jour d\'inscription, guildes actives 30j, backlog critique ouvert (`pending_reports + open_bugs + pending_deletions`) et volume quotidien d’incidents créés (`created_reports + created_bugs + created_deletions`). Maintenir les labels/tooltips dashboard alignés avec ces formules.',
         tags: ['database', 'analytics', 'admin'],
       },
     ],

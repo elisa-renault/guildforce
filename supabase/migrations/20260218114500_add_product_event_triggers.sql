@@ -1,4 +1,4 @@
-﻿-- Auto-capture core product events for activation and feature analytics
+-- Auto-capture core product events for activation and feature analytics
 
 CREATE OR REPLACE FUNCTION public.log_product_event_from_wish()
 RETURNS trigger
