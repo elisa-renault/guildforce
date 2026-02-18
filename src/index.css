@@ -58,6 +58,12 @@
     --success-foreground: var(--status-success-foreground);
     --error: var(--status-error);
     --error-foreground: var(--status-error-foreground);
+    /* Generic chart palette for shared recharts wrappers */
+    --chart-1: 199 89% 56%;
+    --chart-2: 39 96% 55%;
+    --chart-3: 30 15% 92%;
+    --chart-4: 267 84% 68%;
+    --chart-5: 145 60% 45%;
 
     --border: 240 10% 24%;
     --input: 240 10% 14%;

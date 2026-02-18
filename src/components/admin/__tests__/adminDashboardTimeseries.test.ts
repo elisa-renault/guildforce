@@ -19,6 +19,10 @@ describe('adminDashboardTimeseries', () => {
         open_bugs: 3,
         pending_deletions: 0,
         critical_issues: 4,
+        created_reports: 1,
+        created_bugs: 2,
+        created_deletions: 0,
+        critical_created_issues: 3,
       },
       {
         bucket_date: '2026-02-17',
@@ -34,6 +38,10 @@ describe('adminDashboardTimeseries', () => {
         open_bugs: 2,
         pending_deletions: 1,
         critical_issues: 3,
+        created_reports: 0,
+        created_bugs: 1,
+        created_deletions: 1,
+        critical_created_issues: 2,
       },
     ]);
 
@@ -41,6 +49,8 @@ describe('adminDashboardTimeseries', () => {
     expect(mapped[1].date).toBe('2026-02-18');
     expect(mapped[0].activationRate7dPct).toBeNull();
     expect(mapped[1].criticalIssues).toBe(4);
+    expect(mapped[1].criticalBacklog).toBe(4);
+    expect(mapped[1].criticalCreated).toBe(3);
   });
 
   it('returns recent N points only', () => {
@@ -59,6 +69,10 @@ describe('adminDashboardTimeseries', () => {
         open_bugs: 0,
         pending_deletions: 0,
         critical_issues: 0,
+        created_reports: 0,
+        created_bugs: 0,
+        created_deletions: 0,
+        critical_created_issues: 0,
       },
       {
         bucket_date: '2026-02-16',
@@ -74,6 +88,10 @@ describe('adminDashboardTimeseries', () => {
         open_bugs: 0,
         pending_deletions: 0,
         critical_issues: 0,
+        created_reports: 0,
+        created_bugs: 0,
+        created_deletions: 0,
+        critical_created_issues: 0,
       },
       {
         bucket_date: '2026-02-17',
@@ -89,6 +107,10 @@ describe('adminDashboardTimeseries', () => {
         open_bugs: 0,
         pending_deletions: 0,
         critical_issues: 0,
+        created_reports: 0,
+        created_bugs: 0,
+        created_deletions: 0,
+        critical_created_issues: 0,
       },
     ]);
 
@@ -98,4 +120,3 @@ describe('adminDashboardTimeseries', () => {
     expect(recent[1].date).toBe('2026-02-17');
   });
 });
-

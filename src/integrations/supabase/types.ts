@@ -2012,10 +2012,14 @@ export type Database = {
       get_admin_dashboard_timeseries: {
         Args: { p_days?: number }
         Returns: {
+          created_bugs: number
+          created_deletions: number
+          created_reports: number
           activated_users_7d: number | null
           activation_rate_7d_pct: number | null
           active_guilds_30d: number
           bucket_date: string
+          critical_created_issues: number
           critical_issues: number
           dau_users: number
           engagement_wau_mau_pct: number | null
