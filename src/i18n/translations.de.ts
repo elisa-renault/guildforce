@@ -284,6 +284,16 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "wishesCount": "W\u00fcnsche",
     "additionalWishes": "Zus\u00e4tzliche W\u00fcnsche",
     "addWish": "F\u00fcge einen Wunsch hinzu",
+    "externalMember": {
+      "addButton": "Externen hinzufügen",
+      "title": "Externes Mitglied hinzufügen",
+      "memberLabel": "Gildenmitglied (nicht registriert)",
+      "memberPlaceholder": "Mitglied auswählen",
+      "firstWishClassLabel": "Erster Wunsch (Klasse)",
+      "classPlaceholder": "Klasse auswählen",
+      "commentOptional": "Kommentar (optional)",
+      "commentPlaceholder": "Z. B. für Heilerrolle rekrutiert"
+    },
     "table": "Tabelle",
     "analytics": "Analytik",
     "classDistribution": "Klassenverteilung",

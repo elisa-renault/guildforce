@@ -1107,7 +1107,7 @@ const RosterWishes = () => {
                 className="h-7 w-7 md:h-8 md:w-auto p-0 md:px-3"
               >
                 <span className="hidden md:inline">
-                  {language === 'fr' ? 'Ajouter externe' : 'Add external'}
+                  {t.dashboard.externalMember.addButton}
                 </span>
               </CosmicButton>
             )}
@@ -1225,12 +1225,12 @@ const RosterWishes = () => {
         >
           <DialogContent className="bg-card border-border max-w-md">
             <DialogHeader>
-              <DialogTitle>{language === 'fr' ? 'Ajouter un membre externe' : 'Add external member'}</DialogTitle>
+              <DialogTitle>{t.dashboard.externalMember.title}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm text-muted-foreground">
-                  {language === 'fr' ? 'Membre de guilde (non inscrit)' : 'Guild member (not registered)'}
+                  {t.dashboard.externalMember.memberLabel}
                 </label>
                 <select
                   className="w-full h-9 rounded-md border border-border bg-background px-3 text-sm"
@@ -1238,7 +1238,7 @@ const RosterWishes = () => {
                   onChange={(e) => setExternalCandidateId(e.target.value)}
                 >
                   <option value="">
-                    {language === 'fr' ? 'Sélectionner un membre' : 'Select a member'}
+                    {t.dashboard.externalMember.memberPlaceholder}
                   </option>
                   {externalCandidates.map((candidate) => (
                     <option key={candidate.id} value={candidate.id}>
@@ -1250,7 +1250,7 @@ const RosterWishes = () => {
 
               <div className="space-y-2">
                 <label className="text-sm text-muted-foreground">
-                  {language === 'fr' ? 'Premier vœu (classe)' : 'First wish (class)'}
+                  {t.dashboard.externalMember.firstWishClassLabel}
                 </label>
                 <select
                   className="w-full h-9 rounded-md border border-border bg-background px-3 text-sm"
@@ -1258,7 +1258,7 @@ const RosterWishes = () => {
                   onChange={(e) => setExternalClassId(e.target.value)}
                 >
                   <option value="">
-                    {language === 'fr' ? 'Sélectionner une classe' : 'Select a class'}
+                    {t.dashboard.externalMember.classPlaceholder}
                   </option>
                   {wowClasses.map((cls) => (
                     <option key={cls.id} value={cls.id}>
@@ -1270,12 +1270,12 @@ const RosterWishes = () => {
 
               <div className="space-y-2">
                 <label className="text-sm text-muted-foreground">
-                  {language === 'fr' ? 'Commentaire (optionnel)' : 'Comment (optional)'}
+                  {t.dashboard.externalMember.commentOptional}
                 </label>
                 <Input
                   value={externalComment}
                   onChange={(e) => setExternalComment(e.target.value)}
-                  placeholder={language === 'fr' ? 'Ex: recrute pour heal' : 'E.g. recruited for healer role'}
+                  placeholder={t.dashboard.externalMember.commentPlaceholder}
                 />
               </div>
 
@@ -1289,7 +1289,7 @@ const RosterWishes = () => {
                   loading={savingExternalWish}
                   disabled={!externalCandidateId || !externalClassId}
                 >
-                  {language === 'fr' ? 'Enregistrer' : 'Save'}
+                  {t.common.save}
                 </CosmicButton>
               </div>
             </div>

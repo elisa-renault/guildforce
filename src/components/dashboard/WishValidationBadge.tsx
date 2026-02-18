@@ -55,12 +55,14 @@ export const WishValidationBadge = ({
 
   const config = statusConfig[status];
   const Icon = config.icon;
+  const compactBadgeWidth = 'w-[88px]';
 
   // Loading state - same size as normal badge
   if (loading) {
     return (
       <div className={cn(
-        "flex items-center justify-center w-[72px] h-7 rounded-md border",
+        "flex items-center justify-center h-7 rounded-md border",
+        compactBadgeWidth,
         config.bgColor,
         config.borderColor
       )}>
@@ -78,7 +80,7 @@ export const WishValidationBadge = ({
 
     return (
       <div 
-        className="relative w-[72px] h-7"
+        className={cn("relative h-7", compactBadgeWidth)}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         onClick={handleContainerClick}
@@ -151,14 +153,16 @@ export const WishValidationBadge = ({
 
         {/* Status badge */}
         <div className={cn(
-          "absolute inset-0 flex items-center justify-center gap-1 rounded-md border transition-opacity duration-150",
+          "absolute inset-0 flex items-center justify-center gap-1 rounded-md border transition-opacity duration-150 overflow-hidden px-1",
           config.bgColor,
           config.borderColor,
           config.color,
           isHovered ? "opacity-0 pointer-events-none" : "opacity-100 cursor-pointer"
         )}>
           <Icon className="h-3.5 w-3.5" strokeWidth={2} />
-          <span className="text-[10px] font-medium">{config.label}</span>
+          <span className="text-[10px] font-medium leading-none whitespace-nowrap truncate">
+            {config.label}
+          </span>
         </div>
       </div>
     );
