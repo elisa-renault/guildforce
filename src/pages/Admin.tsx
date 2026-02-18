@@ -19,6 +19,7 @@ import { AdminPermissionsManager } from '@/components/admin/AdminPermissionsMana
 import { AdminForumSection } from '@/components/admin/AdminForumSection';
 import { AdminDocumentation } from '@/components/admin/AdminDocumentation';
 import { AdminBackupSection } from '@/components/admin/AdminBackupSection';
+import { mapAdminTimeseriesRows, type AdminTimeseriesPoint } from '@/components/admin/adminDashboardTimeseries';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { SectionHeader } from '@/components/layout/SectionHeader';
 import { Crown, Loader2 } from 'lucide-react';
@@ -66,6 +67,8 @@ const toNullableFiniteNumber = (value: unknown): number | null => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
+const ADMIN_TIMESERIES_DAYS = 84;
+
 export default function Admin() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -73,6 +76,7 @@ export default function Admin() {
   const { user, loading: authLoading } = useAuth();
   const { isAdmin, isModerator, loading: rolesLoading } = useAdminRoles();
   const [stats, setStats] = useState<AdminStats | null>(null);
+  const [timeseries, setTimeseries] = useState<AdminTimeseriesPoint[]>([]);
   const [loadingStats, setLoadingStats] = useState(true);
   const [activeSection, setActiveSection] = useState<AdminSection>(() => {
     const section = searchParams.get('section') as AdminSection;
@@ -118,10 +122,15 @@ export default function Admin() {
       if (!isModerator) return;
       
       try {
-        const { data, error } = await supabase.rpc('get_admin_dashboard_stats');
+        const [{ data, error }, { data: timeseriesData, error: timeseriesError }] = await Promise.all([
+          supabase.rpc('get_admin_dashboard_stats'),
+          supabase.rpc('get_admin_dashboard_timeseries', { p_days: ADMIN_TIMESERIES_DAYS }),
+        ]);
         if (error) throw error;
+        if (timeseriesError) throw timeseriesError;
         const statsRow = Array.isArray(data) ? data[0] : data;
         if (!statsRow) throw new Error('Missing admin dashboard stats');
+        setTimeseries(mapAdminTimeseriesRows(timeseriesData));
 
         setStats({
           totalUsers: statsRow?.total_users ?? 0,
@@ -270,8 +279,10 @@ export default function Admin() {
             newSignups7d: 0,
             activationRate7dPct: null,
           });
+          setTimeseries([]);
         } catch (legacyError) {
           log.error('Error fetching legacy admin stats:', legacyError);
+          setTimeseries([]);
         }
       } finally {
         setLoadingStats(false);
@@ -308,6 +319,7 @@ export default function Admin() {
         return (
           <AdminDashboardSection
             stats={stats}
+            timeseries={timeseries}
             loading={loadingStats}
             isAdmin={isAdmin}
             onNavigateToSection={handleSectionChange}

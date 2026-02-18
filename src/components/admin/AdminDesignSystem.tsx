@@ -54,6 +54,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   Dialog,
@@ -117,6 +118,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Toggle } from '@/components/ui/toggle';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { wowClasses } from '@/data/wowClasses';
 import { toneCalloutClass, toneTextClass } from '@/lib/design-tokens';
@@ -945,6 +947,26 @@ export const AdminDesignSystem = () => {
                   </form>
                 </Form>
                 {showLoadingPreview && <LoadingScreen className="min-h-[120px] py-4" message="Syncing roster..." />}
+              </div>
+
+              <div className="rounded-md border border-border/50 p-3 space-y-3">
+                <p className="text-sm font-medium">Chart primitives</p>
+                <p className="text-xs text-muted-foreground">
+                  Use `ui/chart` wrappers for dashboard trends and KPI visualizations.
+                </p>
+                <ChartContainer
+                  className="h-36 w-full"
+                  config={{
+                    signups: { label: 'Signups', color: 'hsl(var(--chart-1))' },
+                  }}
+                >
+                  <BarChart data={[{ day: 'Mon', signups: 4 }, { day: 'Tue', signups: 6 }, { day: 'Wed', signups: 5 }, { day: 'Thu', signups: 8 }, { day: 'Fri', signups: 7 }]}>
+                    <CartesianGrid vertical={false} />
+                    <XAxis dataKey="day" tickLine={false} axisLine={false} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="signups" name="signups" fill="var(--color-signups)" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ChartContainer>
               </div>
 
               <CodePreview code={CODE_EXAMPLES.advanced} />

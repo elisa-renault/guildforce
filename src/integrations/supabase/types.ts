@@ -2009,6 +2009,24 @@ export type Database = {
           wau_users: number
         }[]
       }
+      get_admin_dashboard_timeseries: {
+        Args: { p_days?: number }
+        Returns: {
+          activated_users_7d: number | null
+          activation_rate_7d_pct: number | null
+          active_guilds_30d: number
+          bucket_date: string
+          critical_issues: number
+          dau_users: number
+          engagement_wau_mau_pct: number | null
+          mau_users: number
+          new_signups: number
+          open_bugs: number
+          pending_deletions: number
+          pending_reports: number
+          wau_users: number
+        }[]
+      }
       get_guild_member_counts: {
         Args: { p_guild_ids: string[] }
         Returns: {
@@ -2093,6 +2111,18 @@ export type Database = {
       lock_roster_wishes: {
         Args: { p_roster_id: string }
         Returns: undefined
+      }
+      log_product_event_from_forum_post: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown
+      }
+      log_product_event_from_poll_response: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown
+      }
+      log_product_event_from_wish: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown
       }
       log_guild_activity: {
         Args: {

@@ -375,15 +375,15 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Admin analytics RPC guardrails',
         titleFr: 'Garde-fous RPC analytics admin',
-        contentEn: '`get_admin_dashboard_stats()` is `SECURITY DEFINER` and role-gated (`admin` or `moderator` via `has_role`). It exposes aggregated dashboard KPIs (DAU/WAU/MAU, active guilds/users, cohort retention D7/D30, activation 7D, deltas) without returning raw member-level sensitive records to the client.',
-        contentFr: '`get_admin_dashboard_stats()` est `SECURITY DEFINER` et protégé par rôle (`admin` ou `moderator` via `has_role`). La fonction expose des KPI agrégés (DAU/WAU/MAU, guildes/utilisateurs actifs, rétention de cohorte J7/J30, activation 7j, deltas) sans renvoyer de données sensibles brutes au client.',
+        contentEn: '`get_admin_dashboard_stats()` and `get_admin_dashboard_timeseries()` are `SECURITY DEFINER` and role-gated (`admin` or `moderator` via `has_role`). They expose aggregated dashboard KPIs and UTC time-series (DAU/WAU/MAU rolling windows, WAU/MAU engagement, activation 7D, active guilds 30D, critical issues) without returning raw member-level sensitive records to the client.',
+        contentFr: '`get_admin_dashboard_stats()` et `get_admin_dashboard_timeseries()` sont `SECURITY DEFINER` et protégées par rôle (`admin` ou `moderator` via `has_role`). Elles exposent des KPI agrégés et des séries temporelles UTC (fenêtres glissantes DAU/WAU/MAU, engagement WAU/MAU, activation 7j, guildes actives 30j, points critiques) sans renvoyer de données sensibles brutes au client.',
         tags: ['security', 'rpc', 'admin', 'analytics'],
       },
       {
         titleEn: 'Event instrumentation guardrails',
         titleFr: "Garde-fous d'instrumentation des événements",
-        contentEn: '`track_product_event()` is `SECURITY DEFINER` and accepts only whitelisted event names. It always attributes events to `auth.uid()` to prevent spoofing and is intended for activation/retention analytics.',
-        contentFr: '`track_product_event()` est `SECURITY DEFINER` et n\'accepte que des noms d\'événements autorisés. Les événements sont toujours attribués à `auth.uid()` pour éviter l\'usurpation et alimenter les analyses d\'activation/rétention.',
+        contentEn: '`track_product_event()` is `SECURITY DEFINER` and accepts only whitelisted event names. It always attributes events to `auth.uid()` to prevent spoofing and is intended for activation/retention analytics. Core feature events (`wish_created`, `poll_voted`, `forum_post_created`) are also captured server-side via DB triggers into `product_events`.',
+        contentFr: '`track_product_event()` est `SECURITY DEFINER` et n\'accepte que des noms d\'événements autorisés. Les événements sont toujours attribués à `auth.uid()` pour éviter l\'usurpation et alimenter les analyses d\'activation/rétention. Les événements cœur (`wish_created`, `poll_voted`, `forum_post_created`) sont aussi capturés côté serveur via des triggers DB dans `product_events`.',
         tags: ['security', 'analytics', 'events'],
       },
       {
@@ -433,8 +433,8 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Analytics RPC',
         titleFr: 'RPC analytics',
-        contentEn: 'Admin metrics are served by `get_admin_dashboard_stats()` (all-time totals + activity windows DAU/WAU/MAU + active guilds/users over 30 days + retention D7/D30 + activation rate 7D + period deltas). Keep dashboard labels/tooltips aligned with these formulas.',
-        contentFr: 'Les métriques admin sont exposées via `get_admin_dashboard_stats()` (totaux historiques + fenêtres DAU/WAU/MAU + guildes/utilisateurs actifs sur 30 jours + rétention J7/J30 + taux d\'activation 7j + deltas de période). Maintenir les labels/tooltips dashboard alignés avec ces formules.',
+        contentEn: 'Admin metrics are served by `get_admin_dashboard_stats()` (snapshot KPIs) and `get_admin_dashboard_timeseries(p_days)` (daily UTC trend points, bounded 14-180 days). Formula highlights: DAU/WAU/MAU rolling windows from core actions, WAU/MAU engagement %, activation 7D by signup-day cohort, active guilds 30D, and critical issues (`pending_reports + open_bugs + pending_deletions`). Keep dashboard labels/tooltips aligned with these formulas.',
+        contentFr: 'Les métriques admin sont exposées via `get_admin_dashboard_stats()` (KPI snapshot) et `get_admin_dashboard_timeseries(p_days)` (points de tendance quotidiens UTC, bornés entre 14 et 180 jours). Formules clés : fenêtres glissantes DAU/WAU/MAU basées sur les actions cœur, engagement WAU/MAU %, activation 7j par cohorte de jour d\'inscription, guildes actives 30j et points critiques (`pending_reports + open_bugs + pending_deletions`). Maintenir les labels/tooltips dashboard alignés avec ces formules.',
         tags: ['database', 'analytics', 'admin'],
       },
     ],
