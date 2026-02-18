@@ -27,6 +27,7 @@ jobs:
           SCHEMA_TRIAD_HEAD: ${{ github.sha }}
         run: |
           npm ci
+          npm run e2e:install
           npm run ci:schema-triad
           npm run verify:quick
           npm run build
