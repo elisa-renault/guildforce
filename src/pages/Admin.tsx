@@ -54,6 +54,10 @@ interface AdminStats {
   activeUsers30dDeltaPct: number | null;
   activeGuilds30d: number;
   activeGuilds30dDeltaPct: number | null;
+  retentionD7Pct: number | null;
+  retentionD30Pct: number | null;
+  newSignups7d: number;
+  activationRate7dPct: number | null;
 }
 
 const toNullableFiniteNumber = (value: unknown): number | null => {
@@ -150,6 +154,10 @@ export default function Admin() {
           activeUsers30dDeltaPct: toNullableFiniteNumber(statsRow?.active_users_30d_delta_pct),
           activeGuilds30d: statsRow?.active_guilds_30d ?? 0,
           activeGuilds30dDeltaPct: toNullableFiniteNumber(statsRow?.active_guilds_30d_delta_pct),
+          retentionD7Pct: toNullableFiniteNumber(statsRow?.retention_d7_pct),
+          retentionD30Pct: toNullableFiniteNumber(statsRow?.retention_d30_pct),
+          newSignups7d: statsRow?.new_signups_7d ?? 0,
+          activationRate7dPct: toNullableFiniteNumber(statsRow?.activation_rate_7d_pct),
         });
       } catch (error) {
         log.error('Error fetching admin stats:', error);
@@ -257,6 +265,10 @@ export default function Admin() {
             activeUsers30dDeltaPct: null,
             activeGuilds30d: 0,
             activeGuilds30dDeltaPct: null,
+            retentionD7Pct: null,
+            retentionD30Pct: null,
+            newSignups7d: 0,
+            activationRate7dPct: null,
           });
         } catch (legacyError) {
           log.error('Error fetching legacy admin stats:', legacyError);

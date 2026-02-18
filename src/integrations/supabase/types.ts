@@ -1633,6 +1633,47 @@ export type Database = {
         }
         Relationships: []
       }
+      product_events: {
+        Row: {
+          created_at: string
+          event_context: Json
+          event_name: string
+          event_source: string | null
+          guild_id: string | null
+          id: number
+          occurred_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_context?: Json
+          event_name: string
+          event_source?: string | null
+          guild_id?: string | null
+          id?: number
+          occurred_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_context?: Json
+          event_name?: string
+          event_source?: string | null
+          guild_id?: string | null
+          id?: number
+          occurred_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_events_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       raid_effects: {
         Row: {
           category: string
@@ -1933,6 +1974,7 @@ export type Database = {
         Args: never
         Returns: {
           active_polls: number
+          activation_rate_7d_pct: number | null
           active_guilds_30d: number
           active_guilds_30d_delta_pct: number | null
           active_sanctions: number
@@ -1949,9 +1991,12 @@ export type Database = {
           mau_delta_pct: number | null
           mau_users: number
           open_bugs: number
+          new_signups_7d: number
           pending_deletions: number
           pending_reports: number
           poll_voters: number
+          retention_d30_pct: number | null
+          retention_d7_pct: number | null
           total_guilds: number
           total_polls: number
           total_posts: number
@@ -2082,6 +2127,16 @@ export type Database = {
       }
       set_main_character_by_key: {
         Args: { p_name: string; p_realm_slug: string }
+        Returns: undefined
+      }
+      track_product_event: {
+        Args: {
+          p_event_context?: Json
+          p_event_name: string
+          p_event_source?: string
+          p_guild_id?: string
+          p_occurred_at?: string
+        }
         Returns: undefined
       }
       unlock_roster_wishes: {

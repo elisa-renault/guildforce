@@ -375,9 +375,16 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Admin analytics RPC guardrails',
         titleFr: 'Garde-fous RPC analytics admin',
-        contentEn: '`get_admin_dashboard_stats()` is `SECURITY DEFINER` and role-gated (`admin` or `moderator` via `has_role`). It exposes aggregated dashboard KPIs (DAU/WAU/MAU, active guilds/users, deltas) without returning raw member-level sensitive records to the client.',
-        contentFr: '`get_admin_dashboard_stats()` est `SECURITY DEFINER` et protégé par rôle (`admin` ou `moderator` via `has_role`). La fonction expose des KPI agrégés (DAU/WAU/MAU, guildes/utilisateurs actifs, deltas) sans renvoyer de données sensibles brutes au client.',
+        contentEn: '`get_admin_dashboard_stats()` is `SECURITY DEFINER` and role-gated (`admin` or `moderator` via `has_role`). It exposes aggregated dashboard KPIs (DAU/WAU/MAU, active guilds/users, cohort retention D7/D30, activation 7D, deltas) without returning raw member-level sensitive records to the client.',
+        contentFr: '`get_admin_dashboard_stats()` est `SECURITY DEFINER` et protégé par rôle (`admin` ou `moderator` via `has_role`). La fonction expose des KPI agrégés (DAU/WAU/MAU, guildes/utilisateurs actifs, rétention de cohorte J7/J30, activation 7j, deltas) sans renvoyer de données sensibles brutes au client.',
         tags: ['security', 'rpc', 'admin', 'analytics'],
+      },
+      {
+        titleEn: 'Event instrumentation guardrails',
+        titleFr: "Garde-fous d'instrumentation des événements",
+        contentEn: '`track_product_event()` is `SECURITY DEFINER` and accepts only whitelisted event names. It always attributes events to `auth.uid()` to prevent spoofing and is intended for activation/retention analytics.',
+        contentFr: '`track_product_event()` est `SECURITY DEFINER` et n\'accepte que des noms d\'événements autorisés. Les événements sont toujours attribués à `auth.uid()` pour éviter l\'usurpation et alimenter les analyses d\'activation/rétention.',
+        tags: ['security', 'analytics', 'events'],
       },
       {
         titleEn: 'Privacy controls',
@@ -405,8 +412,8 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Feature tables',
         titleFr: 'Tables de fonctionnalités',
-        contentEn: '- Roster/wishes: `rosters` (wishes_locked, wishes_lock_at), `roster_access_rules`, `class_wishes`, `external_member_wishes`\n- Permissions/activity: `guild_permissions`, `guild_activity_logs`\n- Polls: `guild_polls`, `guild_poll_sections`, `guild_poll_questions`, `guild_poll_responses`, `poll_respondent_rules`, `poll_results_access_rules`\n- Composition metadata: `raid_effects`, `wow_spells`',
-        contentFr: '- Rosters/vœux : `rosters` (wishes_locked, wishes_lock_at), `roster_access_rules`, `class_wishes`, `external_member_wishes`\n- Permissions/activité : `guild_permissions`, `guild_activity_logs`\n- Sondages : `guild_polls`, `guild_poll_sections`, `guild_poll_questions`, `guild_poll_responses`, `poll_respondent_rules`, `poll_results_access_rules`\n- Métadonnées de composition : `raid_effects`, `wow_spells`',
+        contentEn: '- Roster/wishes: `rosters` (wishes_locked, wishes_lock_at), `roster_access_rules`, `class_wishes`, `external_member_wishes`\n- Permissions/activity: `guild_permissions`, `guild_activity_logs`\n- Polls: `guild_polls`, `guild_poll_sections`, `guild_poll_questions`, `guild_poll_responses`, `poll_respondent_rules`, `poll_results_access_rules`\n- Product analytics events: `product_events` (+ RPC `track_product_event`)\n- Composition metadata: `raid_effects`, `wow_spells`',
+        contentFr: '- Rosters/vœux : `rosters` (wishes_locked, wishes_lock_at), `roster_access_rules`, `class_wishes`, `external_member_wishes`\n- Permissions/activité : `guild_permissions`, `guild_activity_logs`\n- Sondages : `guild_polls`, `guild_poll_sections`, `guild_poll_questions`, `guild_poll_responses`, `poll_respondent_rules`, `poll_results_access_rules`\n- Événements analytics produit : `product_events` (+ RPC `track_product_event`)\n- Métadonnées de composition : `raid_effects`, `wow_spells`',
         tags: ['database', 'features'],
       },
       {
@@ -426,8 +433,8 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Analytics RPC',
         titleFr: 'RPC analytics',
-        contentEn: 'Admin metrics are served by `get_admin_dashboard_stats()` (all-time totals + activity windows DAU/WAU/MAU + active guilds/users over 30 days + period deltas). Keep dashboard labels/tooltips aligned with these formulas.',
-        contentFr: 'Les métriques admin sont exposées via `get_admin_dashboard_stats()` (totaux historiques + fenêtres DAU/WAU/MAU + guildes/utilisateurs actifs sur 30 jours + deltas de période). Maintenir les labels/tooltips dashboard alignés avec ces formules.',
+        contentEn: 'Admin metrics are served by `get_admin_dashboard_stats()` (all-time totals + activity windows DAU/WAU/MAU + active guilds/users over 30 days + retention D7/D30 + activation rate 7D + period deltas). Keep dashboard labels/tooltips aligned with these formulas.',
+        contentFr: 'Les métriques admin sont exposées via `get_admin_dashboard_stats()` (totaux historiques + fenêtres DAU/WAU/MAU + guildes/utilisateurs actifs sur 30 jours + rétention J7/J30 + taux d\'activation 7j + deltas de période). Maintenir les labels/tooltips dashboard alignés avec ces formules.',
         tags: ['database', 'analytics', 'admin'],
       },
     ],

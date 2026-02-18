@@ -709,6 +709,10 @@ export interface Translations {
       dauUsers: string;
       wauUsers: string;
       mauUsers: string;
+      newSignups7d: string;
+      activationRate7d: string;
+      retentionD7: string;
+      retentionD30: string;
       topics: string;
       posts: string;
       pendingReports: string;
@@ -742,6 +746,10 @@ export interface Translations {
       dauUsersTooltip: string;
       wauUsersTooltip: string;
       mauUsersTooltip: string;
+      newSignups7dTooltip: string;
+      activationRate7dTooltip: string;
+      retentionD7Tooltip: string;
+      retentionD30Tooltip: string;
       topicsTooltip: string;
       postsTooltip: string;
       pendingReportsTooltip: string;

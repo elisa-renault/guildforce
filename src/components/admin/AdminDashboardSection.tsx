@@ -57,6 +57,10 @@ interface AdminStats {
   activeUsers30dDeltaPct: number | null;
   activeGuilds30d: number;
   activeGuilds30dDeltaPct: number | null;
+  retentionD7Pct: number | null;
+  retentionD30Pct: number | null;
+  newSignups7d: number;
+  activationRate7dPct: number | null;
 }
 
 interface AdminDashboardSectionProps {
@@ -117,6 +121,34 @@ export const AdminDashboardSection = ({
       color: 'text-primary',
       tooltip: t.admin.stats.mauUsersTooltip,
       deltaPct: stats?.mauDeltaPct ?? null,
+    },
+    newSignups7d: {
+      label: t.admin.stats.newSignups7d,
+      value: formatCount(stats?.newSignups7d),
+      icon: Users,
+      color: 'text-status-info',
+      tooltip: t.admin.stats.newSignups7dTooltip,
+    },
+    activationRate7d: {
+      label: t.admin.stats.activationRate7d,
+      value: formatPercentValue(stats?.activationRate7dPct, 1),
+      icon: Activity,
+      color: 'text-status-success',
+      tooltip: t.admin.stats.activationRate7dTooltip,
+    },
+    retentionD7: {
+      label: t.admin.stats.retentionD7,
+      value: formatPercentValue(stats?.retentionD7Pct, 1),
+      icon: Activity,
+      color: 'text-status-warning',
+      tooltip: t.admin.stats.retentionD7Tooltip,
+    },
+    retentionD30: {
+      label: t.admin.stats.retentionD30,
+      value: formatPercentValue(stats?.retentionD30Pct, 1),
+      icon: Activity,
+      color: 'text-status-warning',
+      tooltip: t.admin.stats.retentionD30Tooltip,
     },
     guildsWithTwoMembers: {
       label: t.admin.stats.guildsWithTwoMembers,
@@ -246,7 +278,7 @@ export const AdminDashboardSection = ({
     },
     {
       title: t.admin.stats.groupActivation,
-      stats: ['dauUsers', 'wauUsers', 'mauUsers'],
+      stats: ['dauUsers', 'wauUsers', 'mauUsers', 'newSignups7d', 'activationRate7d', 'retentionD7', 'retentionD30'],
     },
     {
       title: t.admin.stats.groupWishes,
