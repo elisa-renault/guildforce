@@ -155,9 +155,6 @@ export const GuildSubNav = ({
             </span>
           </div>
 
-          {/* Divider */}
-          <div className="h-5 md:h-6 w-px bg-border/50 shrink-0 hidden md:block" />
-
           {/* Navigation tabs - icons only on mobile, icons + text on desktop */}
           <nav className="flex items-center gap-0.5 md:gap-1 ml-auto overflow-x-auto scrollbar-hide">
             {visibleTabs.map((tab) => {
