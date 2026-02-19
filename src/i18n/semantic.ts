@@ -918,7 +918,7 @@ const FR_SEMANTIC_MESSAGES: Record<keyof typeof EN_SEMANTIC_MESSAGES, string> = 
   'dashboard.roster_filters.classes_title': 'Classes',
   'dashboard.roster_filters.active_label': 'Actifs :',
   'dashboard.roster_filters.clear_all': 'Tout effacer',
-  'dashboard.roster_analytics.wish_range': 'Voeux 1-{{n}}',
+  'dashboard.roster_analytics.wish_range': 'Vœux 1-{{n}}',
   'dashboard.roster_table.total_wishes_suffix': 'vœux au total',
   'admin.guild_manager.sync_job': 'Sync lancee (job {{jobId}}). Rafraichis dans 1-2 min.',
   'admin.guild_manager.sync_started': 'Sync lancee, ca peut prendre quelques minutes (rafraichis ensuite).',
