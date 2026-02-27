@@ -698,8 +698,8 @@ export const RosterTable = ({
                         
                         return (
                           <TableRow key={`extra-${rowIdx}`} className="border-border/10 bg-primary/[0.03]">
-                            {/* colSpan=3 covers: Player + Status + WishesCount */}
-                            <TableCell colSpan={3} className="py-2 px-2 md:px-3">
+                            {/* colSpan=4 covers: Player + Status + Roster decision + WishesCount */}
+                            <TableCell colSpan={4} className="py-2 px-2 md:px-3">
                               <span className="text-xs text-muted-foreground">
                                 {t.dashboard.additionalWishes} ({startIdx + 1}-{Math.min(startIdx + 3, editWishes.length)})
                               </span>
@@ -723,7 +723,7 @@ export const RosterTable = ({
                   {/* Add wish button row when editing */}
                   {isEditing && editWishes.length < maxWishes && (
                     <TableRow className="border-border/10 bg-primary/[0.02]">
-                      <TableCell colSpan={7} className="py-2 px-2 md:px-3">
+                      <TableCell colSpan={8} className="py-2 px-2 md:px-3">
                         <button
                           onClick={onAddWish}
                           disabled={isEditingLocked}
