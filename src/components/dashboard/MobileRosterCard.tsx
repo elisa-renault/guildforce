@@ -49,6 +49,31 @@ export const MobileRosterCard = ({
   const { t, language } = useLanguage();
   const manualEntryLabel = language === 'fr' ? 'Ajout manuel' : 'Manual entry';
 
+  const getRosterDecisionBadge = (selectionStatus: MemberWish['selectionStatus']) => {
+    switch (selectionStatus) {
+      case 'selected':
+        return {
+          label: t.wishes.rosterDecision.selected,
+          className: 'bg-healer/20 text-healer border-healer/30',
+        };
+      case 'bench':
+        return {
+          label: t.wishes.rosterDecision.bench,
+          className: 'bg-warning/20 text-warning border-warning/30',
+        };
+      case 'not_selected':
+        return {
+          label: t.wishes.rosterDecision.notSelected,
+          className: 'bg-destructive/20 text-destructive border-destructive/30',
+        };
+      default:
+        return {
+          label: t.wishes.rosterDecision.undecided,
+          className: 'bg-muted text-muted-foreground border-border',
+        };
+    }
+  };
+
   const renderWishBadge = (wish: WishChoice) => {
     const cls = getClassById(wish.class_id);
     if (!cls) return null;
@@ -240,6 +265,16 @@ export const MobileRosterCard = ({
         </div>
       </div>
 
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        <span className="text-[11px] uppercase tracking-wide text-muted-foreground">{t.wishes.rosterDecision.title}</span>
+        <Badge
+          variant="outline"
+          className={cn('text-[10px] px-1.5 py-0', getRosterDecisionBadge(member.selectionStatus).className)}
+        >
+          {getRosterDecisionBadge(member.selectionStatus).label}
+        </Badge>
+      </div>
+
       {/* Wishes list */}
       <div className="space-y-0.5">
         {filledWishes.length > 0 ? (
@@ -259,6 +294,10 @@ export const MobileRosterCard = ({
           </div>
         )}
       </div>
+
+      <p className="pt-2 text-[11px] text-muted-foreground">
+        {t.wishes.rosterDecision.hint}
+      </p>
     </div>
   );
 };
