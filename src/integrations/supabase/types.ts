@@ -2138,6 +2138,7 @@ export type Database = {
           updated_at: string
         }[]
       }
+      // Global admins may call this RPC in read-only mode; signature is unchanged.
       get_user_forum_sanction: {
         Args: { p_user_id: string }
         Returns: {
