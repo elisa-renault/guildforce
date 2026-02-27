@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Download, Loader2, ShieldAlert } from 'lucide-react';
+import { getSupabaseUrl } from '@/lib/supabaseConfig';
 
 export function AdminBackupSection() {
   const { language, t } = useLanguage();
@@ -32,7 +33,7 @@ export function AdminBackupSection() {
       const token = sessionData.session?.access_token;
       if (!token) throw new Error('Missing session token');
 
-      const baseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+      const baseUrl = getSupabaseUrl();
       if (!baseUrl) throw new Error('Missing backend URL');
 
       const res = await fetch(`${baseUrl}/functions/v1/${path}`, {
