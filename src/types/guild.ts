@@ -1,9 +1,16 @@
-import { Role } from '@/data/wowClasses';
-
 /**
  * Represents a member's wish for a single choice
  */
 export type ValidationStatus = 'pending' | 'approved' | 'rejected';
+export type RosterSelectionStatus = 'undecided' | 'selected' | 'bench' | 'not_selected';
+export type RosterSelectionReasonCode =
+  | 'role_fit'
+  | 'composition'
+  | 'attendance'
+  | 'performance'
+  | 'trial'
+  | 'conflict'
+  | 'other';
 
 export interface WishChoice {
   choice_index: number;
@@ -29,6 +36,12 @@ export interface MemberWish {
   isExternal?: boolean;
   externalWishId?: string | null;
   rosterCacheId?: string | null;
+  selectionStatus?: RosterSelectionStatus;
+  selectionReasonCode?: RosterSelectionReasonCode | null;
+  selectionComment?: string | null;
+  selectionDecidedBy?: string | null;
+  selectionDecidedAt?: string | null;
+  selectionUpdatedAt?: string | null;
 }
 
 /**
