@@ -101,6 +101,31 @@ export const RosterTable = ({
     ? 'Ce personnage a été ajouté manuellement. L’icône disparaîtra une fois le personnage claim via Guildforce.'
     : 'This character was added manually. The icon will disappear once the character is claimed via Guildforce.';
 
+  const getRosterDecisionBadge = (selectionStatus: MemberWish['selectionStatus']) => {
+    switch (selectionStatus) {
+      case 'selected':
+        return {
+          label: t.wishes.rosterDecision.selected,
+          className: 'bg-healer/20 text-healer border-healer/30',
+        };
+      case 'bench':
+        return {
+          label: t.wishes.rosterDecision.bench,
+          className: 'bg-warning/20 text-warning border-warning/30',
+        };
+      case 'not_selected':
+        return {
+          label: t.wishes.rosterDecision.notSelected,
+          className: 'bg-destructive/20 text-destructive border-destructive/30',
+        };
+      default:
+        return {
+          label: t.wishes.rosterDecision.undecided,
+          className: 'bg-muted text-muted-foreground border-border',
+        };
+    }
+  };
+
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
       setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
@@ -374,7 +399,8 @@ export const RosterTable = ({
           const handleCardClick = () => {
             if (member.isExternal) return;
             if (regionSlug && serverSlug && guildSlug) {
-              navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/member/${member.id}`);
+              const qp = selectedRosterId ? `?rosterId=${encodeURIComponent(selectedRosterId)}` : '';
+              navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/member/${member.id}${qp}`);
             }
           };
 
@@ -417,6 +443,7 @@ export const RosterTable = ({
             <TableRow className="border-border/30 hover:bg-transparent">
               <SortableHeader column="player" className="w-[120px] md:w-[140px]">{t.dashboard.player}</SortableHeader>
               <SortableHeader column="status" className="w-[110px] md:w-[130px]">{t.wishes.status}</SortableHeader>
+              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3 w-[130px] md:w-[150px]">{t.wishes.rosterDecision.title}</TableHead>
               <SortableHeader column="wishesCount" className="w-[80px] md:w-[90px]"><span className="hidden md:inline">{t.dashboard.wishesCount}</span><span className="md:hidden">#</span></SortableHeader>
               <SortableHeader column="wish1"><span className="hidden md:inline">{t.dashboard.firstChoice}</span><span className="md:hidden">#1</span></SortableHeader>
               <SortableHeader column="wish2"><span className="hidden md:inline">{t.dashboard.secondChoice}</span><span className="md:hidden">#2</span></SortableHeader>
@@ -474,7 +501,8 @@ export const RosterTable = ({
                 // Navigate to member wishes page (read-only view) for all members
                 if (!isEditing && regionSlug && serverSlug && guildSlug) {
                   if (member.isExternal) return;
-                  navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/member/${member.id}`);
+                  const qp = selectedRosterId ? `?rosterId=${encodeURIComponent(selectedRosterId)}` : '';
+                  navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/member/${member.id}${qp}`);
                 }
               };
               
@@ -571,6 +599,14 @@ export const RosterTable = ({
                           )}
                         </Badge>
                       )}
+                    </TableCell>
+                    <TableCell className="py-2 px-2 md:px-3">
+                      <Badge
+                        variant="outline"
+                        className={cn('text-[10px] md:text-xs px-1.5 py-0.5', getRosterDecisionBadge(member.selectionStatus).className)}
+                      >
+                        {getRosterDecisionBadge(member.selectionStatus).label}
+                      </Badge>
                     </TableCell>
                     <TableCell className="py-2 px-2 md:px-3 text-center">
                       <span className="text-sm text-muted-foreground">{member.wishes.filter(w => w.class_id).length}</span>
@@ -707,6 +743,9 @@ export const RosterTable = ({
             })}
           </TableBody>
         </Table>
+      </div>
+      <div className="px-3 md:px-4 py-2 border-t border-border/30 bg-muted/20 text-xs text-muted-foreground">
+        {t.wishes.rosterDecision.hint}
       </div>
     </GlowCard>
   );

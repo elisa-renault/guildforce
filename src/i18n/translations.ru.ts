@@ -242,6 +242,16 @@ export const translationsRu: Translations = createLocaleTranslations(translation
     memberUnlockedToast: 'Пожелания участника разблокированы',
     lockMember: 'Заблокировать участника',
     unlockMember: 'Разблокировать участника',
+    rosterDecision: {
+      title: 'Решение по составу',
+      summaryTitle: 'Сводка решения по составу',
+      validationDetailsTitle: 'Детали валидации моих пожеланий',
+      selected: 'Выбран',
+      bench: 'Запас',
+      notSelected: 'Не выбран',
+      undecided: 'Не решено',
+      hint: 'Отклонение пожелания не означает автоматически, что игрок не попал в состав.',
+    },
   },
   dashboard: {
     title: 'Панель состава',

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,7 +19,7 @@ import {
   Specialization,
 } from '@/data/wowClasses';
 import { WishValidationBadge } from '@/components/dashboard/WishValidationBadge';
-import { ValidationStatus } from '@/types/guild';
+import { RosterSelectionStatus, ValidationStatus } from '@/types/guild';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useBattletagVisibility } from '@/hooks/useBattletagVisibility';
@@ -53,11 +53,12 @@ const roleConfig: Record<string, { color: string }> = {
 const MemberWishes = () => {
   const navigate = useNavigate();
   const { regionSlug, serverSlug, guildSlug, memberId } = useParams();
+  const [searchParams] = useSearchParams();
   const { t, language } = useLanguage();
   const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [guild, setGuild] = useState<{ id: string; name: string; server: string; region: string } | null>(null);
-  const [member, setMember] = useState<{ username: string; battletag: string | null; status: string } | null>(null);
+  const [member, setMember] = useState<{ username: string; battletag: string | null; status: string; rosterDecision: RosterSelectionStatus } | null>(null);
   const [wishes, setWishes] = useState<WishChoice[]>([]);
   const [isGM, setIsGM] = useState(false);
   const [canManageWishes, setCanManageWishes] = useState(false);
@@ -148,6 +149,7 @@ const MemberWishes = () => {
           username: profileData.username,
           battletag: profileData.battletag,
           status: memberData.status,
+          rosterDecision: 'undecided',
         });
       }
 
@@ -173,11 +175,20 @@ const MemberWishes = () => {
         })));
       }
 
+      const rosterId = searchParams.get('rosterId');
+      if (rosterId) {
+        const { data: selectionRows } = await supabase.rpc('get_roster_member_selection', { p_roster_id: rosterId });
+        const memberSelection = (selectionRows || []).find((row) => row.user_id === memberId);
+        if (memberSelection?.selection_status) {
+          setMember((prev) => prev ? { ...prev, rosterDecision: memberSelection.selection_status as RosterSelectionStatus } : prev);
+        }
+      }
+
       setLoading(false);
     };
 
     fetchData();
-  }, [user, authLoading, regionSlug, serverSlug, guildSlug, memberId, navigate]);
+  }, [user, authLoading, regionSlug, serverSlug, guildSlug, memberId, navigate, searchParams]);
 
   // Handle validation
   const handleValidation = async (choiceIndex: number, status: ValidationStatus) => {
@@ -252,6 +263,31 @@ const MemberWishes = () => {
       toast.error(getErrorMessage(error));
     } finally {
       setLockingMember(false);
+    }
+  };
+
+  const getRosterDecisionBadge = (selectionStatus: RosterSelectionStatus | undefined) => {
+    switch (selectionStatus) {
+      case 'selected':
+        return {
+          label: t.wishes.rosterDecision.selected,
+          className: 'bg-healer/20 text-healer border-healer/30',
+        };
+      case 'bench':
+        return {
+          label: t.wishes.rosterDecision.bench,
+          className: toneBadgeClass('warning'),
+        };
+      case 'not_selected':
+        return {
+          label: t.wishes.rosterDecision.notSelected,
+          className: 'bg-destructive/20 text-destructive border-destructive/30',
+        };
+      default:
+        return {
+          label: t.wishes.rosterDecision.undecided,
+          className: 'bg-muted text-muted-foreground border-border',
+        };
     }
   };
 
@@ -373,6 +409,23 @@ const MemberWishes = () => {
             </div>
           </div>
         )}
+
+        <GlowCard className="p-4 mb-4" hoverable={false}>
+          <div className="space-y-2">
+            <div className="text-sm uppercase tracking-wide text-muted-foreground">{t.wishes.rosterDecision.summaryTitle}</div>
+            <Badge
+              variant="outline"
+              className={cn('text-xs px-2 py-1', getRosterDecisionBadge(member?.rosterDecision).className)}
+            >
+              {getRosterDecisionBadge(member?.rosterDecision).label}
+            </Badge>
+            <p className="text-xs text-muted-foreground">{t.wishes.rosterDecision.hint}</p>
+          </div>
+        </GlowCard>
+
+        <div className="mb-3">
+          <h3 className="text-sm font-medium text-foreground">{t.wishes.rosterDecision.validationDetailsTitle}</h3>
+        </div>
 
         {wishes.length === 0 ? (
           <GlowCard className="p-6 text-center" hoverable={false}>

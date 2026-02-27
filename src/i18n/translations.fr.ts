@@ -240,6 +240,16 @@ export const translationsFr: Translations = {
       memberUnlockedToast: 'Vœux du membre déverrouillés',
       lockMember: 'Verrouiller le membre',
       unlockMember: 'Déverrouiller le membre',
+      rosterDecision: {
+        title: 'Décision roster',
+        summaryTitle: 'Décision roster',
+        validationDetailsTitle: 'Détail de validation de mes vœux',
+        selected: 'Retenu',
+        bench: 'Remplaçant',
+        notSelected: 'Non retenu',
+        undecided: 'Indécis',
+        hint: 'Rejet d’un vœu ≠ non retenu pour le roster.',
+      },
     },
     dashboard: {
       title: 'Tableau de bord du roster',

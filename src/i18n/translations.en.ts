@@ -240,6 +240,16 @@ export const translationsEn: Translations = {
       memberUnlockedToast: 'Member wishes unlocked',
       lockMember: 'Lock member',
       unlockMember: 'Unlock member',
+      rosterDecision: {
+        title: 'Roster decision',
+        summaryTitle: 'Roster decision summary',
+        validationDetailsTitle: 'Validation details for my wishes',
+        selected: 'Selected',
+        bench: 'Bench',
+        notSelected: 'Not selected',
+        undecided: 'Undecided',
+        hint: 'Rejecting a wish does not automatically mean the member is not selected for the roster.',
+      },
     },
     dashboard: {
       title: 'Roster Dashboard',
