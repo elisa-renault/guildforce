@@ -164,6 +164,7 @@ const RosterWishes = () => {
   const [lockingRoster, setLockingRoster] = useState(false);
   const [schedulingLock, setSchedulingLock] = useState(false);
   const [lockingMemberId, setLockingMemberId] = useState<string | null>(null);
+  const [updatingSelectionMemberId, setUpdatingSelectionMemberId] = useState<string | null>(null);
   const [externalCandidates, setExternalCandidates] = useState<ExternalRosterCandidate[]>([]);
   const [externalDialogOpen, setExternalDialogOpen] = useState(false);
   const [externalCandidateId, setExternalCandidateId] = useState('');
@@ -726,6 +727,56 @@ const RosterWishes = () => {
     }
   };
 
+
+  const handleSelectionStatusChange = async (memberId: string, status: MemberWish['selectionStatus']) => {
+    if (!selectedRosterId || !user || !canManageWishes) return;
+    if (!status) return;
+
+    const currentMember = members.find((m) => m.id === memberId);
+    if (!currentMember || currentMember.isExternal) return;
+
+    setUpdatingSelectionMemberId(memberId);
+
+    const now = new Date().toISOString();
+    const nextStatus = status;
+    setMembers((prev) =>
+      prev.map((m) =>
+        m.id === memberId
+          ? {
+              ...m,
+              selectionStatus: nextStatus,
+              selectionDecidedBy: user.id,
+              selectionDecidedAt: now,
+            }
+          : m
+      )
+    );
+
+    try {
+      const { error } = await supabase
+        .from('roster_member_selection')
+        .upsert(
+          {
+            roster_id: selectedRosterId,
+            user_id: memberId,
+            selection_status: nextStatus,
+            reason_code: currentMember.selectionReasonCode ?? null,
+            comment: currentMember.selectionComment ?? null,
+            decided_by: user.id,
+            decided_at: now,
+          },
+          { onConflict: 'roster_id,user_id' }
+        );
+      if (error) throw error;
+
+      await fetchWishes();
+    } catch (error: unknown) {
+      toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
+    } finally {
+      setUpdatingSelectionMemberId(null);
+    }
+  };
+
   const addWish = () => {
     if (editWishes.length >= MAX_WISHES) return;
     setEditWishes([...editWishes, { classId: '', specIds: [], comment: '' }]);
@@ -1211,6 +1262,8 @@ const RosterWishes = () => {
               lockingMemberId={lockingMemberId}
               onRemoveMember={canManageWishes && !isAdminReadOnly ? handleRemoveMember : undefined}
               deletingMemberId={deletingMemberId}
+              onSelectionStatusChange={canManageWishes && !isAdminReadOnly ? handleSelectionStatusChange : undefined}
+              updatingSelectionMemberId={updatingSelectionMemberId}
             />
           </TabsContent>
 
