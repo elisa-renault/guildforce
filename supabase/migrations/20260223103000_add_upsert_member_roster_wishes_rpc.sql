@@ -52,16 +52,16 @@ BEGIN
     RAISE EXCEPTION 'Member not found in guild';
   END IF;
 
+  IF NOT public.has_roster_access(p_roster_id, v_actor) THEN
+    RAISE EXCEPTION 'No access to roster';
+  END IF;
+
   IF v_actor <> p_member_id THEN
     v_can_manage := public.is_guild_gm(p_guild_id, v_actor)
       OR public.has_guild_permission(p_guild_id, v_actor, 'manage_wishes');
 
     IF NOT v_can_manage THEN
       RAISE EXCEPTION 'Not authorized';
-    END IF;
-
-    IF NOT public.has_roster_access(p_roster_id, v_actor) THEN
-      RAISE EXCEPTION 'No access to roster';
     END IF;
   END IF;
 
