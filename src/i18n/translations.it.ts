@@ -1,8 +1,26 @@
-import { translationsEn } from './translations.en';
-import { createLocaleTranslations } from './createLocaleTranslations';
+﻿import { createLocaleTranslations } from './createLocaleTranslations';
 import type { Translations } from './translations';
+import { translationsEn } from './translations.en';
 
 export const translationsIt: Translations = createLocaleTranslations(translationsEn, {
+  dashboard: {
+    selectedValidatedView: 'Selezione validata',
+    selectedValidatedSubtitle: 'Membri confermati, selezionati per il roster, con almeno un desiderio approvato.',
+    selectedValidatedSummary: 'Confermati | Selezionato/a | Desideri approvati',
+    selectedValidatedEmpty: 'Nessun membro selezionato con desideri approvati in questo roster.',
+    selectedValidatedEmptyDescription: 'Questa vista mostra solo membri confermati, selezionati per il roster e con almeno un desiderio approvato.',
+    selectedValidatedMembersCount: '{{count}} membri',
+    selectedValidatedWishesTotal: '{{count}} desideri approvati',
+    selectedValidatedShowPrimary: 'Solo 1\u00b0 desiderio approvato',
+    selectedValidatedShowAll: 'Mostra tutti i desideri approvati',
+    selectedValidatedGroupTanks: 'Tank',
+    selectedValidatedGroupHealers: 'Healer',
+    selectedValidatedGroupMelee: 'Mischia',
+    selectedValidatedGroupRanged: 'Distanza',
+    approvedWishSingular: '1 desiderio approvato',
+    approvedWishPlural: '{{count}} desideri approvati',
+    firstApprovedWish: '1\u00b0 desiderio approvato',
+  },
   common: {
     loading: 'Caricamento',
     open: 'Apri',
@@ -177,3 +195,5 @@ export const translationsIt: Translations = createLocaleTranslations(translation
     deleted: 'Eliminato',
   },
 });
+
+

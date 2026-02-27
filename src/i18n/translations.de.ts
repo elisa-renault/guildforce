@@ -1,4 +1,4 @@
-import { createLocaleTranslations } from './createLocaleTranslations';
+﻿import { createLocaleTranslations } from './createLocaleTranslations';
 import type { Translations } from './translations';
 import { translationsEn } from './translations.en';
 
@@ -53,7 +53,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "auth": "Anmeldung",
     "guilds": "Gilden",
     "profile": "Profil",
-    "publicProfile": "Öffentliches Profil",
+    "publicProfile": "\u00d6ffentliches Profil",
     "forum": "Forum",
     "forumAdmin": "Forum-Admin",
     "admin": "Verwaltung",
@@ -85,13 +85,13 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "connectDescription": "Verbinde dein Battle.net-Konto, um deine WoW-Charaktere automatisch zu importieren.",
     "yourCharacters": "Deine Charaktere",
     "noCharacters": "Keine Charaktere gefunden",
-    "noCharactersHint": "Prüfe, ob deine WoW-Lizenz aktiv ist und ob du die richtige Region gewählt hast. Wenn das Problem bleibt, verbinde dein Battle.net-Konto erneut.",
+    "noCharactersHint": "Pr\u00fcfe, ob deine WoW-Lizenz aktiv ist und ob du die richtige Region gew\u00e4hlt hast. Wenn das Problem bleibt, verbinde dein Battle.net-Konto erneut.",
     "main": "Main",
     "mainSet": "Main-Charakter gesetzt",
     "refresh": "Aktualisieren",
     "connecting": "Verbinde mit Battle.net...",
     "region": "Region",
-    "selectRegion": "Region auswählen",
+    "selectRegion": "Region ausw\u00e4hlen",
     "connectedTo": "Verbunden mit",
     "resync": "Charaktere neu synchronisieren",
     "resyncSuccess": "Charaktere erfolgreich synchronisiert",
@@ -102,8 +102,8 @@ export const translationsDe: Translations = createLocaleTranslations(translation
   },
   "home": {
     "title": "Guildforce",
-    "subtitle": "Plane dein Raid-Roster für die nächste Erweiterung",
-    "description": "Sammle Klassen- und Spezialisierungswünsche deiner Gildenmitglieder, um das perfekte Roster aufzubauen.",
+    "subtitle": "Plane dein Raid-Roster f\u00fcr die n\u00e4chste Erweiterung",
+    "description": "Sammle Klassen- und Spezialisierungsw\u00fcnsche deiner Gildenmitglieder, um das perfekte Roster aufzubauen.",
     "createGuild": "Meine Gilde verwalten",
     "joinGuild": "Meiner Gilde beitreten",
     "features": {
@@ -117,12 +117,12 @@ export const translationsDe: Translations = createLocaleTranslations(translation
       },
       "export": {
         "title": "Daten exportieren",
-        "description": "Als CSV für Tabellen oder weitere Analysen exportieren."
+        "description": "Als CSV f\u00fcr Tabellen oder weitere Analysen exportieren."
       }
     }
   },
   "auth": {
-    "loginTitle": "Willkommen zurück",
+    "loginTitle": "Willkommen zur\u00fcck",
     "signupTitle": "Konto erstellen",
     "loginDescription": "Melde dich mit deinem Konto an",
     "signupDescription": "Erstelle dein Guildforce-Konto",
@@ -131,20 +131,20 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "pseudo": "Benutzername",
     "pseudoPlaceholder": "Dein Benutzername",
     "forgotPassword": "Passwort vergessen",
-    "invalidEmail": "Ungültige E-Mail-Adresse",
+    "invalidEmail": "Ung\u00fcltige E-Mail-Adresse",
     "passwordTooShort": "Passwort zu kurz",
-    "passwordsDontMatch": "Passwörter stimmen nicht überein",
+    "passwordsDontMatch": "Passw\u00f6rter stimmen nicht \u00fcberein",
     "userAlreadyExists": "Benutzer existiert bereits",
-    "invalidCredentials": "Ungültige Zugangsdaten",
+    "invalidCredentials": "Ung\u00fcltige Zugangsdaten",
     "orContinueWith": "Oder fortfahren mit",
     "loginWithBattleNet": "Mit Battle.net anmelden",
     "signupWithBattleNet": "Mit Battle.net registrieren",
     "battlenetError": "Battle.net-Verbindungsfehler",
     "bnetRequired": "Battle.net-Verbindung erforderlich",
-    "bnetNote": "Battle.net ist für die WoW-Synchronisation erforderlich",
+    "bnetNote": "Battle.net ist f\u00fcr die WoW-Synchronisation erforderlich",
     "accountCreated": "Konto erfolgreich erstellt",
-    "welcomeBack": "Willkommen zurück!",
-    "existingAccountsOnly": "Nur für bestehende Konten"
+    "welcomeBack": "Willkommen zur\u00fcck!",
+    "existingAccountsOnly": "Nur f\u00fcr bestehende Konten"
   },
   "guild": {
     "create": "Erstelle eine Gilde",
@@ -183,9 +183,9 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "awaitingGM": "Warten auf GM"
   },
   "wishes": {
-    "title": "Meine Klassenw\u00fcnsche",
+    "title": "Externes Mitglied hinzuf\u00fcgen",
     "wishesOf": "W\u00fcnsche von",
-    "subtitle": "W\u00e4hle bis zu 3 Klassen aus, die du in der n\u00e4chsten Erweiterung spielen m\u00f6chtest",
+    "subtitle": "Plane dein Raid-Roster f\u00fcr die n\u00e4chste Erweiterung",
     "choice": "Wahl",
     "choiceNumber": "Wahl #{{number}}",
     "selectClass": "W\u00e4hle eine Klasse aus",
@@ -195,7 +195,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "moveSpecUp": "Spezialisierung nach oben",
     "moveSpecDown": "Spezialisierung nach unten",
     "comment": "Kommentar",
-    "commentPlaceholder": "Weitere Informationen",
+    "commentPlaceholder": "Z. B. f\u00fcr Heilerrolle rekrutiert",
     "status": "Zusage",
     "confirmed": "Best\u00e4tigt f\u00fcr die n\u00e4chste Season",
     "potential": "Potenzial / Ungewiss",
@@ -213,7 +213,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "removeWish": "Entfernen",
     "noRosterSelected": "Kein Aufstellung ausgew\u00e4hlt. Bitte w\u00e4hlen Sie zun\u00e4chst einen Aufstellung aus.",
     "commitment": {
-      "title": "Mythische Raid-Zusage",
+      "title": "Externes Mitglied hinzuf\u00fcgen",
       "confirmed": "Best\u00e4tigt",
       "confirmedDesc": "Ich werde regelm\u00e4\u00dfig f\u00fcr mythische Raids verf\u00fcgbar sein",
       "undecided": "Unentschlossen",
@@ -243,18 +243,18 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "lockMember": "Mitglied sperren",
     "unlockMember": "Mitglied entsperren",
     "rosterDecision": {
-      "title": "Roster-Entscheidung",
+      "title": "Externes Mitglied hinzuf\u00fcgen",
       "summaryTitle": "Zusammenfassung der Roster-Entscheidung",
-      "validationDetailsTitle": "Validierungsdetails meiner Wünsche",
-      "selected": "Ausgewählt",
+      "validationDetailsTitle": "Validierungsdetails meiner W\u00fcnsche",
+      "selected": "Ausgew\u00e4hlt",
       "bench": "Bank",
-      "notSelected": "Nicht ausgewählt",
+      "notSelected": "Nicht ausgew\u00e4hlt",
       "undecided": "Unentschieden",
-      "hint": "Die Ablehnung eines Wunsches bedeutet nicht automatisch, dass das Mitglied nicht für das Roster ausgewählt wurde."
+      "hint": "Die Ablehnung eines Wunsches bedeutet nicht automatisch, dass das Mitglied nicht f\u00fcr das Roster ausgew\u00e4hlt wurde."
     }
   },
   "dashboard": {
-    "title": "Aufstellung-Dashboard",
+    "title": "Externes Mitglied hinzuf\u00fcgen",
     "overview": "\u00dcberblick",
     "roster": "Aufstellung",
     "filters": "Filter",
@@ -295,22 +295,34 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "additionalWishes": "Zus\u00e4tzliche W\u00fcnsche",
     "addWish": "F\u00fcge einen Wunsch hinzu",
     "externalMember": {
-      "addButton": "Externen hinzufügen",
-      "title": "Externes Mitglied hinzufügen",
+      "addButton": "Externen hinzuf\u00fcgen",
+      "title": "Externes Mitglied hinzuf\u00fcgen",
       "memberLabel": "Gildenmitglied (nicht registriert)",
-      "memberPlaceholder": "Mitglied auswählen",
+      "memberPlaceholder": "Mitglied ausw\u00e4hlen",
       "firstWishClassLabel": "Erster Wunsch (Klasse)",
-      "classPlaceholder": "Klasse auswählen",
+      "classPlaceholder": "Klasse ausw\u00e4hlen",
       "commentOptional": "Kommentar (optional)",
-      "commentPlaceholder": "Z. B. für Heilerrolle rekrutiert"
+      "commentPlaceholder": "Z. B. f\u00fcr Heilerrolle rekrutiert"
     },
     "table": "Tabelle",
-    "analytics": "Analytik",
-    "classDistribution": "Klassenverteilung",
-    "specDistribution": "Spezifikationsverteilung",
-    "topSpecs": "Beliebtheit der Spezialisierung",
-    "rolesByPriority": "Rollen",
-    "wish1": "Wunsch 1",
+    "selectedValidatedView": "Validierte Auswahl",
+    "selectedValidatedSubtitle": "Best\u00e4tigte Mitglieder, f\u00fcr das Roster ausgew\u00e4hlt, mit mindestens einem genehmigten Wunsch.",
+    "selectedValidatedSummary": "Best\u00e4tigt | Ausgew\u00e4hlt | Genehmigte W\u00fcnsche",
+    "selectedValidatedEmpty": "Keine ausgew\u00e4hlten Mitglieder mit genehmigten W\u00fcnschen in diesem Roster.",
+    "selectedValidatedEmptyDescription": "Diese Ansicht zeigt nur best\u00e4tigte Mitglieder, die ausgew\u00e4hlt sind und mindestens einen genehmigten Wunsch haben.",
+    "selectedValidatedMembersCount": "{{count}} Mitglieder",
+    "selectedValidatedWishesTotal": "{{count}} genehmigte W\u00fcnsche",
+    "selectedValidatedShowPrimary": "Nur erster genehmigter Wunsch",
+    "selectedValidatedShowAll": "Alle genehmigten W\u00fcnsche anzeigen",
+    "selectedValidatedGroupTanks": "Tanks",
+    "selectedValidatedGroupHealers": "Heiler",
+    "selectedValidatedGroupMelee": "Nahkampf",
+    "selectedValidatedGroupRanged": "Fernkampf",
+    "approvedWishesCount": "genehmigt",
+    "approvedWishSingular": "1 genehmigter Wunsch",
+    "approvedWishPlural": "{{count}} genehmigte W\u00fcnsche",
+    "approvedChoices": "Genehmigte Wahlen",
+    "viewFullTable": "Gesamte Tabelle anzeigen",
     "otherWishes": "Andere W\u00fcnsche",
     "tokenDistribution": "Token-Verteilung",
     "tokenCloth": "Tuch",
@@ -332,10 +344,11 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "wishRangeFilter": "Ber\u00fccksichtigen Sie W\u00fcnsche",
     "wishRange1": "Nur Wunsch 1",
     "wishRangeN": "W\u00fcnsche 1-{{n}}",
-    "allWishes": "Alle W\u00fcnsche"
+    "allWishes": "Alle W\u00fcnsche",
+    "firstApprovedWish": "Erster genehmigter Wunsch"
   },
   "profile": {
-    "title": "Mein Profil",
+    "title": "Externes Mitglied hinzuf\u00fcgen",
     "editProfile": "Profil bearbeiten",
     "battletag": "BattleTag",
     "battletagPlaceholder": "IhrName#1234",
@@ -423,7 +436,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     }
   },
   "guildSettings": {
-    "title": "Gildeneinstellungen",
+    "title": "Externes Mitglied hinzuf\u00fcgen",
     "avatar": "Gilden-Avatar",
     "uploadAvatar": "Hochladen",
     "removeAvatar": "Entfernen",
@@ -444,7 +457,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "officerRankUpdated": "Offiziersrang aktualisiert"
   },
   "rosters": {
-    "title": "Dienstpl\u00e4ne",
+    "title": "Externes Mitglied hinzuf\u00fcgen",
     "createRoster": "Aufstellung erstellen",
     "editRoster": "Aufstellung bearbeiten",
     "rosterName": "Name",
@@ -482,8 +495,8 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "wishesLockClearedToast": "Roster-Sperrplanung entfernt"
   },
   "forum": {
-    "title": "Forum",
-    "subtitle": "Diskussionen und Neuigkeiten",
+    "title": "Externes Mitglied hinzuf\u00fcgen",
+    "subtitle": "Plane dein Raid-Roster f\u00fcr die n\u00e4chste Erweiterung",
     "categories": "Kategorien",
     "topics": "Themen",
     "posts": "Beitr\u00e4ge",
@@ -562,7 +575,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "quoteFrom": "Zitat von"
   },
   "notifications": {
-    "title": "Benachrichtigungen",
+    "title": "Externes Mitglied hinzuf\u00fcgen",
     "empty": "Keine Benachrichtigungen",
     "markAllRead": "Alle als gelesen markieren",
     "mention": "hat dich erwaehnt",
@@ -579,7 +592,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "clickToUnsubscribe": "Klicken zum Abbestellen"
   },
   "activityLog": {
-    "title": "Aktivit\u00e4tsprotokoll",
+    "title": "Externes Mitglied hinzuf\u00fcgen",
     "all": "Alle",
     "validations": "Validierungen",
     "members": "Mitglieder",
@@ -593,8 +606,8 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "deleted": "Gel\u00f6scht"
   },
   "permissions": {
-    "title": "Berechtigungen",
-    "description": "Delegieren Sie bestimmte Verwaltungsrechte an Mitglieder basierend auf ihrem Battle.net-Rang oder einzeln. GMs haben immer alle Berechtigungen.",
+    "title": "Externes Mitglied hinzuf\u00fcgen",
+    "description": "Sammle Klassen- und Spezialisierungsw\u00fcnsche deiner Gildenmitglieder, um das perfekte Roster aufzubauen.",
     "noRules": "Nur GMs haben diese Berechtigung",
     "saved": "Berechtigungen gespeichert",
     "addRankRule": "Nach Rang hinzuf\u00fcgen",
@@ -654,15 +667,15 @@ export const translationsDe: Translations = createLocaleTranslations(translation
   },
   "legal": {
     "legalNotice": "Impressum",
-    "privacyPolicy": "Datenschutzerklärung",
+    "privacyPolicy": "Datenschutzerkl\u00e4rung",
     "termsOfService": "Nutzungsbedingungen",
     "lastUpdated": "Zuletzt aktualisiert",
     "editLegalPages": "Verwalten Sie rechtliche Seiten",
     "editLegalPagesDesc": "Bearbeiten Sie den Inhalt obligatorischer rechtlicher Seiten"
   },
   "cookies": {
-    "title": "Wir verwenden Cookies",
-    "description": "Wir verwenden Cookies, um Ihr Erlebnis zu verbessern und den Website-Verkehr zu analysieren. Sie k\u00f6nnen w\u00e4hlen, welche Cookies Sie akzeptieren m\u00f6chten.",
+    "title": "Externes Mitglied hinzuf\u00fcgen",
+    "description": "Sammle Klassen- und Spezialisierungsw\u00fcnsche deiner Gildenmitglieder, um das perfekte Roster aufzubauen.",
     "learnMore": "Erfahren Sie mehr \u00fcber unsere Datenschutzrichtlinie",
     "acceptAll": "Akzeptiere alles",
     "rejectAll": "Alles ablehnen",
@@ -748,8 +761,8 @@ export const translationsDe: Translations = createLocaleTranslations(translation
   },
   "bugReport": {
     "button": "Melden Sie einen Fehler",
-    "title": "Fehlerbericht",
-    "subtitle": "Helfen Sie uns, uns zu verbessern, indem Sie Probleme melden",
+    "title": "Externes Mitglied hinzuf\u00fcgen",
+    "subtitle": "Plane dein Raid-Roster f\u00fcr die n\u00e4chste Erweiterung",
     "titleField": "Titel",
     "titlePlaceholder": "Kurze Beschreibung des Problems",
     "descriptionField": "Beschreibung",
@@ -787,7 +800,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "rateLimitError": "Zu viele Berichte eingereicht. Bitte versuchen Sie es sp\u00e4ter noch einmal.",
     "anonymous": "Anonym",
     "admin": {
-      "title": "Fehlerberichte",
+      "title": "Externes Mitglied hinzuf\u00fcgen",
       "criticalPending": "kritisch ausstehend",
       "noReports": "Noch keine Fehlerberichte",
       "fetchError": "Fehler beim Laden der Berichte",
@@ -994,7 +1007,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "changelogDesc": "Alle Updates und Verbesserungen zu Guildforce",
     "newVersion": "Neue Version",
     "version": "Version",
-    "title": "Titel",
+    "title": "Externes Mitglied hinzuf\u00fcgen",
     "content": "Inhalt",
     "draft": "Entwurf",
     "published": "Ver\u00f6ffentlicht",
@@ -1010,6 +1023,4 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "status": "Status"
   }
 });
-
-
 

@@ -1,4 +1,4 @@
-import { createLocaleTranslations } from './createLocaleTranslations';
+﻿import { createLocaleTranslations } from './createLocaleTranslations';
 import type { Translations } from './translations';
 import { translationsEn } from './translations.en';
 
@@ -305,6 +305,24 @@ export const translationsRu: Translations = createLocaleTranslations(translation
       commentPlaceholder: 'Например: набор на роль лекаря',
     },
     table: 'Таблица',
+    selectedValidatedView: 'Утверждённый состав',
+    selectedValidatedSubtitle: 'Подтверждённые участники, выбранные в состав, с хотя бы одним одобренным пожеланием.',
+    selectedValidatedSummary: 'Подтверждено | Выбран(а) | Одобренные пожелания',
+    selectedValidatedEmpty: 'В этом составе нет отобранных участников с одобренными пожеланиями.',
+    selectedValidatedEmptyDescription: 'Эта вкладка показывает только подтверждённых участников, выбранных в состав, с хотя бы одним одобренным пожеланием.',
+    selectedValidatedMembersCount: '{{count}} участников',
+    selectedValidatedWishesTotal: '{{count}} одобренных пожеланий',
+    selectedValidatedShowPrimary: 'Только первое одобренное пожелание',
+    selectedValidatedShowAll: 'Показать все одобренные пожелания',
+    selectedValidatedGroupTanks: 'Танки',
+    selectedValidatedGroupHealers: 'Лекари',
+    selectedValidatedGroupMelee: 'Ближний бой',
+    selectedValidatedGroupRanged: 'Дальний бой',
+    approvedWishesCount: 'одобрено',
+    approvedWishSingular: '1 одобренное пожелание',
+    approvedWishPlural: '{{count}} одобренных пожеланий',
+    approvedChoices: 'Одобренные выборы',
+    viewFullTable: 'Показать полную таблицу',
     analytics: 'Аналитика',
     classDistribution: 'Распределение классов',
     specDistribution: 'Распределение специализаций',
@@ -333,6 +351,7 @@ export const translationsRu: Translations = createLocaleTranslations(translation
     wishRange1: 'Только пожелание 1',
     wishRangeN: 'Пожелания 1-{{n}}',
     allWishes: 'Все пожелания',
+    firstApprovedWish: 'Первое одобренное пожелание',
   },
   profile: {
     title: 'Мой профиль',
