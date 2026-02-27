@@ -13,7 +13,7 @@ const makeMember = (overrides: Partial<MemberWish>): MemberWish => ({
 });
 
 describe('getSelectedValidatedMembers', () => {
-  it('keeps only confirmed selected linked members with at least one approved wish', () => {
+  it('keeps only confirmed selected members with at least one approved wish, including externals', () => {
     const members: MemberWish[] = [
       makeMember({
         id: 'keep',
@@ -105,9 +105,11 @@ describe('getSelectedValidatedMembers', () => {
 
     const result = getSelectedValidatedMembers(members);
 
-    expect(result).toHaveLength(1);
-    expect(result[0]?.id).toBe('keep');
+    expect(result).toHaveLength(2);
+    expect(result.map((member) => member.id)).toEqual(['keep', 'external']);
     expect(result[0]?.wishes.map((wish) => wish.choice_index)).toEqual([2, 3]);
     expect(result[0]?.wishes.every((wish) => wish.validation_status === 'approved')).toBe(true);
+    expect(result[1]?.isExternal).toBe(true);
+    expect(result[1]?.wishes.map((wish) => wish.choice_index)).toEqual([1]);
   });
 });

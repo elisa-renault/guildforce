@@ -3,7 +3,6 @@ import type { MemberWish } from '@/types/guild';
 export const getSelectedValidatedMembers = (members: MemberWish[]): MemberWish[] =>
   members
     .filter((member) => {
-      if (member.isExternal) return false;
       if (member.status !== 'confirmed') return false;
       if ((member.selectionStatus || 'undecided') !== 'selected') return false;
 
