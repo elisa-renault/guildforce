@@ -8,7 +8,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { CheckCircle, HelpCircle, XCircle, Pencil, Save, Shield, Heart, Sword, Swords, Crosshair, MessageSquare, Plus, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Lock, Unlock, MoreVertical, Loader2, UserPlus } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getClassById, getLocalizedClassName, getLocalizedSpecName, getSpecById } from '@/data/wowClasses';
-import { MemberWish, WishData, WishChoice, ValidationStatus } from '@/types/guild';
+import { MemberWish, RosterSelectionStatus, WishData, WishChoice, ValidationStatus } from '@/types/guild';
 import { InlineWishEditor } from './InlineWishEditor';
 import { WishValidationBadge } from './WishValidationBadge';
 import { CommitmentToggle, CommitmentStatus } from '@/components/CommitmentToggle';
@@ -22,6 +22,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type SortColumn = 'player' | 'status' | 'wish1' | 'wish2' | 'wish3' | 'wishesCount';
 type SortDirection = 'asc' | 'desc';
@@ -54,6 +55,8 @@ interface RosterTableProps {
   lockingMemberId?: string | null;
   onRemoveMember?: (memberId: string) => void;
   deletingMemberId?: string | null;
+  onSelectionStatusChange?: (memberId: string, status: RosterSelectionStatus) => void;
+  updatingSelectionMemberId?: string | null;
 }
 
 // Role config for icons
@@ -87,6 +90,8 @@ export const RosterTable = ({
   lockingMemberId = null,
   onRemoveMember,
   deletingMemberId = null,
+  onSelectionStatusChange,
+  updatingSelectionMemberId = null,
 }: RosterTableProps) => {
   const { t, language } = useLanguage();
   const s = (key: SemanticKey, fallback?: string) =>
@@ -407,11 +412,14 @@ export const RosterTable = ({
           // Mobile doesn't support inline editing in the roster table.
           // So we redirect the user to the dedicated Wishes editor page.
           const handleStartEditing = () => {
-            if (!isOwnRow) return;
-            if (!regionSlug || !serverSlug || !guildSlug) return;
+            if (!regionSlug || !serverSlug || !guildSlug || member.isExternal) return;
 
             const qp = selectedRosterId ? `?rosterId=${encodeURIComponent(selectedRosterId)}` : '';
-            navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/wishes${qp}`);
+            if (isOwnRow && !isGM) {
+              navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/wishes${qp}`);
+              return;
+            }
+            navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/member/${member.id}${qp}`);
           };
 
           return (
@@ -428,6 +436,8 @@ export const RosterTable = ({
               lockingMemberId={lockingMemberId}
               onRemoveMember={onRemoveMember}
               deletingMemberId={deletingMemberId}
+              onSelectionStatusChange={onSelectionStatusChange}
+              updatingSelectionMemberId={updatingSelectionMemberId}
             />
           );
         })}
@@ -601,12 +611,30 @@ export const RosterTable = ({
                       )}
                     </TableCell>
                     <TableCell className="py-2 px-2 md:px-3">
-                      <Badge
-                        variant="outline"
-                        className={cn('text-[10px] md:text-xs px-1.5 py-0.5', getRosterDecisionBadge(member.selectionStatus).className)}
-                      >
-                        {getRosterDecisionBadge(member.selectionStatus).label}
-                      </Badge>
+                      {isGM && onSelectionStatusChange && !member.isExternal ? (
+                        <Select
+                          value={member.selectionStatus || 'undecided'}
+                          onValueChange={(value) => onSelectionStatusChange(member.id, value as RosterSelectionStatus)}
+                          disabled={updatingSelectionMemberId === member.id}
+                        >
+                          <SelectTrigger className="h-7 text-[10px] md:text-xs px-1.5">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="undecided">{t.wishes.rosterDecision.undecided}</SelectItem>
+                            <SelectItem value="selected">{t.wishes.rosterDecision.selected}</SelectItem>
+                            <SelectItem value="bench">{t.wishes.rosterDecision.bench}</SelectItem>
+                            <SelectItem value="not_selected">{t.wishes.rosterDecision.notSelected}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Badge
+                          variant="outline"
+                          className={cn('text-[10px] md:text-xs px-1.5 py-0.5', getRosterDecisionBadge(member.selectionStatus).className)}
+                        >
+                          {getRosterDecisionBadge(member.selectionStatus).label}
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell className="py-2 px-2 md:px-3 text-center">
                       <span className="text-sm text-muted-foreground">{member.wishes.filter(w => w.class_id).length}</span>

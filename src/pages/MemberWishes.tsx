@@ -26,6 +26,7 @@ import { useBattletagVisibility } from '@/hooks/useBattletagVisibility';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { resolveSpecOrder } from '@/lib/wishOrder';
 import { toneBadgeClass, toneCalloutClass, toneTextClass } from '@/lib/design-tokens';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface WishChoice {
   choice_index: number;
@@ -65,6 +66,7 @@ const MemberWishes = () => {
   const [memberWishesLocked, setMemberWishesLocked] = useState(false);
   const [lockingMember, setLockingMember] = useState(false);
   const [validatingWish, setValidatingWish] = useState<number | null>(null);
+  const [updatingRosterDecision, setUpdatingRosterDecision] = useState(false);
   const getErrorMessage = (error: unknown) =>
     error instanceof Error ? error.message : t.errors.generic;
   
@@ -255,6 +257,39 @@ const MemberWishes = () => {
     setValidatingWish(null);
   };
 
+
+  const handleRosterDecisionChange = async (status: RosterSelectionStatus) => {
+    if (!guild || !memberId || !user || !canManageWishes) return;
+    const rosterId = searchParams.get('rosterId');
+    if (!rosterId) return;
+
+    const previous = member?.rosterDecision || 'undecided';
+    const now = new Date().toISOString();
+    setUpdatingRosterDecision(true);
+    setMember((prev) => (prev ? { ...prev, rosterDecision: status } : prev));
+
+    try {
+      const { error } = await supabase
+        .from('roster_member_selection')
+        .upsert(
+          {
+            roster_id: rosterId,
+            user_id: memberId,
+            selection_status: status,
+            decided_by: user.id,
+            decided_at: now,
+          },
+          { onConflict: 'roster_id,user_id' }
+        );
+      if (error) throw error;
+    } catch (error: unknown) {
+      setMember((prev) => (prev ? { ...prev, rosterDecision: previous } : prev));
+      toast.error(getErrorMessage(error));
+    } finally {
+      setUpdatingRosterDecision(false);
+    }
+  };
+
   const handleToggleMemberLock = async () => {
     if (!guild || !memberId) return;
     setLockingMember(true);
@@ -422,12 +457,30 @@ const MemberWishes = () => {
         <GlowCard className="p-4 mb-4" hoverable={false}>
           <div className="space-y-2">
             <div className="text-sm uppercase tracking-wide text-muted-foreground">{t.wishes.rosterDecision.summaryTitle}</div>
-            <Badge
-              variant="outline"
-              className={cn('text-xs px-2 py-1', getRosterDecisionBadge(member?.rosterDecision).className)}
-            >
-              {getRosterDecisionBadge(member?.rosterDecision).label}
-            </Badge>
+            {canManageWishes && searchParams.get('rosterId') ? (
+              <Select
+                value={member?.rosterDecision || 'undecided'}
+                onValueChange={(value) => handleRosterDecisionChange(value as RosterSelectionStatus)}
+                disabled={updatingRosterDecision}
+              >
+                <SelectTrigger className="w-full sm:w-[220px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="undecided">{t.wishes.rosterDecision.undecided}</SelectItem>
+                  <SelectItem value="selected">{t.wishes.rosterDecision.selected}</SelectItem>
+                  <SelectItem value="bench">{t.wishes.rosterDecision.bench}</SelectItem>
+                  <SelectItem value="not_selected">{t.wishes.rosterDecision.notSelected}</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <Badge
+                variant="outline"
+                className={cn('text-xs px-2 py-1', getRosterDecisionBadge(member?.rosterDecision).className)}
+              >
+                {getRosterDecisionBadge(member?.rosterDecision).label}
+              </Badge>
+            )}
             <p className="text-xs text-muted-foreground">{t.wishes.rosterDecision.hint}</p>
           </div>
         </GlowCard>
