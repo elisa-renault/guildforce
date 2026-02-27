@@ -35,7 +35,7 @@ jobs:
       - name: Sync app to VPS
         uses: burnett01/rsync-deployments@6.0.0
         with:
-          switches: -avz --delete --exclude=node_modules --exclude=.git --exclude=.env
+          switches: -avz --delete --exclude=node_modules --exclude=.git --exclude=.env --exclude=supabase/.temp
           path: ./
           remote_path: /var/www/guildforce/
           remote_host: ${{ secrets.VPS_HOST }}
