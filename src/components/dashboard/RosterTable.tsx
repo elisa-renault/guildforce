@@ -612,21 +612,27 @@ export const RosterTable = ({
                     </TableCell>
                     <TableCell className="py-2 px-2 md:px-3">
                       {isGM && onSelectionStatusChange && !member.isExternal ? (
-                        <Select
-                          value={member.selectionStatus || 'undecided'}
-                          onValueChange={(value) => onSelectionStatusChange(member.id, value as RosterSelectionStatus)}
-                          disabled={updatingSelectionMemberId === member.id}
-                        >
-                          <SelectTrigger className="h-7 text-[10px] md:text-xs px-1.5">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <Select
+                            value={member.selectionStatus || 'undecided'}
+                            onValueChange={(value) => onSelectionStatusChange(member.id, value as RosterSelectionStatus)}
+                            disabled={updatingSelectionMemberId === member.id}
+                          >
+                            <SelectTrigger
+                              className="h-7 text-[10px] md:text-xs px-1.5"
+                              onClick={(e) => e.stopPropagation()}
+                              onPointerDown={(e) => e.stopPropagation()}
+                            >
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
                             <SelectItem value="undecided">{t.wishes.rosterDecision.undecided}</SelectItem>
                             <SelectItem value="selected">{t.wishes.rosterDecision.selected}</SelectItem>
                             <SelectItem value="bench">{t.wishes.rosterDecision.bench}</SelectItem>
                             <SelectItem value="not_selected">{t.wishes.rosterDecision.notSelected}</SelectItem>
-                          </SelectContent>
-                        </Select>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       ) : (
                         <Badge
                           variant="outline"
