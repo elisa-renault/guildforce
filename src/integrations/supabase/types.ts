@@ -1739,6 +1739,64 @@ export type Database = {
           },
         ]
       }
+      roster_member_selection: {
+        Row: {
+          comment: string | null
+          decided_at: string | null
+          decided_by: string | null
+          id: string
+          reason_code: Database["public"]["Enums"]["roster_selection_reason_code"] | null
+          roster_id: string
+          selection_status: Database["public"]["Enums"]["roster_selection_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          id?: string
+          reason_code?: Database["public"]["Enums"]["roster_selection_reason_code"] | null
+          roster_id: string
+          selection_status?: Database["public"]["Enums"]["roster_selection_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          id?: string
+          reason_code?: Database["public"]["Enums"]["roster_selection_reason_code"] | null
+          roster_id?: string
+          selection_status?: Database["public"]["Enums"]["roster_selection_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roster_member_selection_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "roster_member_selection_roster_id_fkey"
+            columns: ["roster_id"]
+            isOneToOne: false
+            referencedRelation: "rosters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "roster_member_selection_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rosters: {
         Row: {
           created_at: string
@@ -2056,6 +2114,18 @@ export type Database = {
           username: string
         }[]
       }
+      get_roster_member_selection: {
+        Args: { p_roster_id: string }
+        Returns: {
+          comment: string | null
+          decided_at: string | null
+          decided_by: string | null
+          reason_code: Database["public"]["Enums"]["roster_selection_reason_code"] | null
+          selection_status: Database["public"]["Enums"]["roster_selection_status"]
+          updated_at: string
+          user_id: string
+        }[]
+      }
       get_user_forum_sanction: {
         Args: { p_user_id: string }
         Returns: {
@@ -2218,6 +2288,15 @@ export type Database = {
         | "ranking"
         | "scale"
       poll_status: "draft" | "active" | "closed"
+      roster_selection_reason_code:
+        | "role_fit"
+        | "composition"
+        | "attendance"
+        | "performance"
+        | "trial"
+        | "conflict"
+        | "other"
+      roster_selection_status: "undecided" | "selected" | "bench" | "not_selected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2359,6 +2438,16 @@ export const Constants = {
         "scale",
       ],
       poll_status: ["draft", "active", "closed"],
+      roster_selection_reason_code: [
+        "role_fit",
+        "composition",
+        "attendance",
+        "performance",
+        "trial",
+        "conflict",
+        "other",
+      ],
+      roster_selection_status: ["undecided", "selected", "bench", "not_selected"],
     },
   },
 } as const
