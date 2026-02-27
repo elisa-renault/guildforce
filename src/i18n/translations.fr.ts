@@ -306,10 +306,10 @@ export const translationsFr: Translations = {
       // Analytics tabs and sections
       table: 'Tableau',
       selectedValidatedView: 'Sélection validée',
-      selectedValidatedSubtitle: 'Membres confirmés, retenu(e)s, avec au moins un vœu approuvé.',
+      selectedValidatedSubtitle: 'Membres confirmés, retenus, avec au moins un vœu approuvé.',
       selectedValidatedSummary: 'Confirmés | Retenu(e)s | Vœux approuvés',
       selectedValidatedEmpty: 'Aucun membre retenu avec des vœux approuvés dans ce roster.',
-      selectedValidatedEmptyDescription: 'Cette vue affiche uniquement les membres confirmés, retenu(e)s, avec au moins un vœu approuvé.',
+      selectedValidatedEmptyDescription: 'Cette vue affiche uniquement les membres confirmés, retenus, avec au moins un vœu approuvé.',
       selectedValidatedMembersCount: '{{count}} membres',
       selectedValidatedWishesTotal: '{{count}} vœux validés',
       selectedValidatedShowPrimary: '1er vœu validé uniquement',
