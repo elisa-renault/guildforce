@@ -265,7 +265,7 @@ export const RosterSelectedTable = ({
   selectedRosterId,
   onViewFullTable,
 }: RosterSelectedTableProps) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
   const { regionSlug, serverSlug, guildSlug } = useParams();
   const isMobile = useIsMobile();
@@ -274,7 +274,7 @@ export const RosterSelectedTable = ({
   const groupedMembers = useMemo(() => {
     const groups: Record<
       BucketKey,
-      Array<{ member: MemberWish; displayedWishes: WishChoice[]; hiddenWishCount: number }>
+      Array<{ member: MemberWish; displayedWishes: WishChoice[]; hiddenWishCount: number; sortingWish: WishChoice }>
     > = {
       tank: [],
       healer: [],
@@ -295,15 +295,38 @@ export const RosterSelectedTable = ({
         member,
         displayedWishes,
         hiddenWishCount,
+        sortingWish: firstApprovedWish,
       });
     });
 
     bucketOrder.forEach((bucket) => {
-      groups[bucket].sort((a, b) => a.member.username.localeCompare(b.member.username, undefined, { sensitivity: 'base' }));
+      groups[bucket].sort((a, b) => {
+        const aClassName = getLocalizedClassName(a.sortingWish.class_id, language);
+        const bClassName = getLocalizedClassName(b.sortingWish.class_id, language);
+        const classComparison = aClassName.localeCompare(bClassName, undefined, {
+          sensitivity: 'base',
+        });
+
+        if (classComparison !== 0) return classComparison;
+
+        const aPrimarySpecId = a.sortingWish.spec_ids[0];
+        const bPrimarySpecId = b.sortingWish.spec_ids[0];
+        const aPrimarySpecName = aPrimarySpecId ? getLocalizedSpecName(aPrimarySpecId, language) : '';
+        const bPrimarySpecName = bPrimarySpecId ? getLocalizedSpecName(bPrimarySpecId, language) : '';
+        const specComparison = aPrimarySpecName.localeCompare(bPrimarySpecName, undefined, {
+          sensitivity: 'base',
+        });
+
+        if (specComparison !== 0) return specComparison;
+
+        return a.member.username.localeCompare(b.member.username, undefined, {
+          sensitivity: 'base',
+        });
+      });
     });
 
     return groups;
-  }, [members, showAllApproved]);
+  }, [language, members, showAllApproved]);
 
   const displayedWishesCount = useMemo(
     () =>
