@@ -2127,14 +2127,14 @@ export type Database = {
       get_roster_member_selection: {
         Args: { p_roster_id: string }
         Returns: {
-          comment: string | null
-          decided_at: string | null
-          decided_by: string | null
-          reason_code: Database["public"]["Enums"]["roster_selection_reason_code"] | null
+          user_id: string | null
           roster_cache_id: string | null
           selection_status: Database["public"]["Enums"]["roster_selection_status"]
+          reason_code: Database["public"]["Enums"]["roster_selection_reason_code"] | null
+          comment: string | null
+          decided_by: string | null
+          decided_at: string | null
           updated_at: string
-          user_id: string | null
         }[]
       }
       get_user_forum_sanction: {
@@ -2462,4 +2462,3 @@ export const Constants = {
     },
   },
 } as const
-
