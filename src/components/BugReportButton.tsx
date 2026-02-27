@@ -30,6 +30,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import { toast } from 'sonner';
 import { getRecentLogs, getErrorCount, getBrowserInfo, sanitizeUrl } from '@/lib/logCapture';
+import { getSupabaseUrl } from '@/lib/supabaseConfig';
 
 const BugReportButton = React.forwardRef<HTMLButtonElement, React.ComponentPropsWithoutRef<typeof Button>>(
   (props, ref) => {
@@ -104,7 +105,7 @@ const BugReportButton = React.forwardRef<HTMLButtonElement, React.ComponentProps
         };
 
         // Call edge function with rate limiting
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseUrl = getSupabaseUrl();
         const response = await fetch(`${supabaseUrl}/functions/v1/submit-bug-report`, {
           method: 'POST',
           headers: {

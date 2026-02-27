@@ -27,6 +27,7 @@ import {
   generateOAuthState,
 } from '@/lib/battlenetOAuth';
 import log from '@/lib/logger';
+import { getSupabaseUrl } from '@/lib/supabaseConfig';
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -78,7 +79,10 @@ const Auth = () => {
       // Detect browser language for new accounts
       const browserLanguage = detectLanguageFromNavigator(navigator.language);
       
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/battlenet-auth/login`, {
+      const baseUrl = getSupabaseUrl();
+      if (!baseUrl) throw new Error('Missing Supabase URL configuration');
+
+      const response = await fetch(`${baseUrl}/functions/v1/battlenet-auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code, redirectUri, region, browserLanguage }),
@@ -156,7 +160,10 @@ const Auth = () => {
       const redirectUri = getRedirectUri('/auth');
       const state = generateOAuthState();
 
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/battlenet-auth/auth-url`, {
+      const baseUrl = getSupabaseUrl();
+      if (!baseUrl) throw new Error('Missing Supabase URL configuration');
+
+      const response = await fetch(`${baseUrl}/functions/v1/battlenet-auth/auth-url`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ redirectUri, state, mode: 'login', region: selectedRegion }),
