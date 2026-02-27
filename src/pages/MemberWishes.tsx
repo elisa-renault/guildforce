@@ -177,10 +177,19 @@ const MemberWishes = () => {
 
       const rosterId = searchParams.get('rosterId');
       if (rosterId) {
-        const { data: selectionRows } = await supabase.rpc('get_roster_member_selection', { p_roster_id: rosterId });
-        const memberSelection = (selectionRows || []).find((row) => row.user_id === memberId);
-        if (memberSelection?.selection_status) {
-          setMember((prev) => prev ? { ...prev, rosterDecision: memberSelection.selection_status as RosterSelectionStatus } : prev);
+        const { data: rosterInGuild } = await supabase
+          .from('rosters')
+          .select('id')
+          .eq('id', rosterId)
+          .eq('guild_id', matchedGuild.id)
+          .maybeSingle();
+
+        if (rosterInGuild) {
+          const { data: selectionRows } = await supabase.rpc('get_roster_member_selection', { p_roster_id: rosterId });
+          const memberSelection = (selectionRows || []).find((row) => row.user_id === memberId);
+          if (memberSelection?.selection_status) {
+            setMember((prev) => prev ? { ...prev, rosterDecision: memberSelection.selection_status as RosterSelectionStatus } : prev);
+          }
         }
       }
 
