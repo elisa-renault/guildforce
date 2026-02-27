@@ -246,7 +246,7 @@ export const translationsRu: Translations = createLocaleTranslations(translation
       title: 'Решение по составу',
       summaryTitle: 'Сводка решения по составу',
       validationDetailsTitle: 'Детали валидации моих пожеланий',
-      selected: 'Выбран',
+      selected: 'Выбран(а)',
       bench: 'Запас',
       notSelected: 'Не выбран',
       undecided: 'Не решено',
