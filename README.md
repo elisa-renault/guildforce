@@ -87,6 +87,7 @@ Deployment runs through GitHub Actions via `.github/workflows/deploy.yml`:
 - Trigger: push to `main` (or manual dispatch).
 - Syncs repository content to the VPS using `rsync`.
 - Runs `npm ci` and `npm run build` on the server.
+- The build regenerates `dist/env.js` from server env values (`.env` and process env) for runtime Supabase config.
 - Reloads Nginx service.
 
 ## Security Notes
