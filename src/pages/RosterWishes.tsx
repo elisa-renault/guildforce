@@ -55,7 +55,8 @@ interface ExternalRosterCandidate {
 }
 
 interface RosterMemberSelectionRow {
-  user_id: string;
+  user_id: string | null;
+  roster_cache_id: string | null;
   selection_status: MemberWish['selectionStatus'];
   reason_code: MemberWish['selectionReasonCode'];
   comment: string | null;
@@ -410,8 +411,16 @@ const RosterWishes = () => {
     const { data: selectionRows } = await supabase
       .rpc('get_roster_member_selection', { p_roster_id: selectedRosterId });
 
+    const selectionList = (selectionRows || []) as RosterMemberSelectionRow[];
     const selectionsByUserId = new Map(
-      ((selectionRows || []) as RosterMemberSelectionRow[]).map((row) => [row.user_id, row])
+      selectionList
+        .filter((row) => !!row.user_id)
+        .map((row) => [row.user_id as string, row])
+    );
+    const selectionsByRosterCacheId = new Map(
+      selectionList
+        .filter((row) => !!row.roster_cache_id)
+        .map((row) => [row.roster_cache_id as string, row])
     );
 
     // Fetch validator profiles if there are any
@@ -466,6 +475,7 @@ const RosterWishes = () => {
       .flatMap((row) => {
         const ext = externalByCache.get(row.id);
         if (!ext) return [];
+        const selection = selectionsByRosterCacheId.get(row.id);
         return [{
           id: `external:${ext.id}`,
           username: row.character_name,
@@ -485,6 +495,12 @@ const RosterWishes = () => {
             validated_at: ext.validated_at,
             validated_by_username: ext.validated_by ? validatorById.get(ext.validated_by) || null : null,
           }],
+          selectionStatus: selection?.selection_status || 'undecided',
+          selectionReasonCode: selection?.reason_code || null,
+          selectionComment: selection?.comment || null,
+          selectionDecidedBy: selection?.decided_by || null,
+          selectionDecidedAt: selection?.decided_at || null,
+          selectionUpdatedAt: selection?.updated_at || null,
         }];
       });
 
@@ -534,7 +550,7 @@ const RosterWishes = () => {
     // Check if user has access to this roster
     const currentRoster = rosters.find(r => r.id === selectedRosterId);
     if (!currentRoster?.hasAccess) {
-      toast({ title: t.rosters?.noAccess || 'No access to this roster', variant: 'destructive' });
+      toast({ title: t.rosters.noAccess, variant: 'destructive' });
       return;
     }
 
@@ -675,9 +691,7 @@ const RosterWishes = () => {
       if (error) throw error;
 
       toast({
-        title: language === 'fr'
-          ? 'Vœu externe enregistré'
-          : 'External wish saved',
+        title: s('roster_wishes.external_wish_saved'),
       });
       setExternalDialogOpen(false);
       resetExternalForm();
@@ -695,12 +709,8 @@ const RosterWishes = () => {
     if (!member) return;
 
     const confirmMessage = member.isExternal
-      ? (language === 'fr'
-        ? `Supprimer la ligne externe de ${member.username} ?`
-        : `Remove external row for ${member.username}?`)
-      : (language === 'fr'
-        ? `Supprimer ${member.username} de la guilde et effacer ses vœux ?`
-        : `Remove ${member.username} from the guild and delete their wishes?`);
+      ? interpolateMessage(s('roster_wishes.confirm_remove_external'), { username: member.username })
+      : interpolateMessage(s('roster_wishes.confirm_remove_member'), { username: member.username });
     if (!window.confirm(confirmMessage)) return;
 
     setDeletingMemberId(memberId);
@@ -715,9 +725,7 @@ const RosterWishes = () => {
           });
       if (error) throw error;
       toast({
-        title: language === 'fr'
-          ? 'Membre retiré de la table des vœux'
-          : 'Member removed from wishes table',
+        title: s('roster_wishes.member_removed'),
       });
       await fetchWishes();
     } catch (error: unknown) {
@@ -733,7 +741,7 @@ const RosterWishes = () => {
     if (!status) return;
 
     const currentMember = members.find((m) => m.id === memberId);
-    if (!currentMember || currentMember.isExternal) return;
+    if (!currentMember) return;
 
     const previousSelectionStatus = currentMember.selectionStatus || 'undecided';
     const previousDecidedBy = currentMember.selectionDecidedBy || null;
@@ -757,20 +765,36 @@ const RosterWishes = () => {
     );
 
     try {
-      const { error } = await supabase
-        .from('roster_member_selection')
-        .upsert(
-          {
+      const payload = currentMember.isExternal
+        ? {
             roster_id: selectedRosterId,
-            user_id: memberId,
+            user_id: null,
+            roster_cache_id: currentMember.rosterCacheId ?? null,
             selection_status: nextStatus,
             reason_code: currentMember.selectionReasonCode ?? null,
             comment: currentMember.selectionComment ?? null,
             decided_by: user.id,
             decided_at: now,
-          },
-          { onConflict: 'roster_id,user_id' }
-        );
+          }
+        : {
+            roster_id: selectedRosterId,
+            user_id: memberId,
+            roster_cache_id: null,
+            selection_status: nextStatus,
+            reason_code: currentMember.selectionReasonCode ?? null,
+            comment: currentMember.selectionComment ?? null,
+            decided_by: user.id,
+            decided_at: now,
+          };
+      const onConflict = currentMember.isExternal ? 'roster_id,roster_cache_id' : 'roster_id,user_id';
+
+      if (currentMember.isExternal && !currentMember.rosterCacheId) {
+        throw new Error(s('roster_wishes.external_edit_unauthorized'));
+      }
+
+      const { error } = await supabase
+        .from('roster_member_selection')
+        .upsert(payload, { onConflict });
       if (error) throw error;
 
       await fetchWishes();
@@ -866,12 +890,12 @@ const RosterWishes = () => {
       const dbStatus = editStatus === 'withdrawn' ? 'withdrawn' : (editStatus === 'confirmed' ? 'confirmed' : 'potential');
       if (isEditingExternal) {
         if (!canEditExternalAsManager || !currentMember.rosterCacheId) {
-          throw new Error(language === 'fr' ? 'Édition externe non autorisée' : 'External edit not authorized');
+          throw new Error(s('roster_wishes.external_edit_unauthorized'));
         }
 
         const primaryWish = editWishes.find((w) => !!w.classId);
         if (!primaryWish) {
-          throw new Error(language === 'fr' ? 'Le premier vœu est requis' : 'First wish is required');
+          throw new Error(s('roster_wishes.external_first_wish_required'));
         }
 
         const { error } = await supabase.rpc('upsert_external_member_wish', {
@@ -1210,7 +1234,7 @@ const RosterWishes = () => {
         {/* Access warning */}
         {currentRoster && !currentRoster.hasAccess && (
           <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive">
-            {t.rosters?.noAccessMessage || 'You can view this roster but cannot edit your wishes.'}
+            {t.rosters.noAccessMessage}
           </div>
         )}
 
