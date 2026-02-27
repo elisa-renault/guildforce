@@ -183,7 +183,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "awaitingGM": "Warten auf GM"
   },
   "wishes": {
-    "title": "Externes Mitglied hinzuf\u00fcgen",
+    "title": "Meine Klassenw\u00fcnsche",
     "wishesOf": "W\u00fcnsche von",
     "subtitle": "Plane dein Raid-Roster f\u00fcr die n\u00e4chste Erweiterung",
     "choice": "Wahl",
@@ -254,7 +254,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     }
   },
   "dashboard": {
-    "title": "Externes Mitglied hinzuf\u00fcgen",
+    "title": "Aufstellung-Dashboard",
     "overview": "\u00dcberblick",
     "roster": "Aufstellung",
     "filters": "Filter",
@@ -348,7 +348,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "firstApprovedWish": "Erster genehmigter Wunsch"
   },
   "profile": {
-    "title": "Externes Mitglied hinzuf\u00fcgen",
+    "title": "Mein Profil",
     "editProfile": "Profil bearbeiten",
     "battletag": "BattleTag",
     "battletagPlaceholder": "IhrName#1234",
@@ -575,7 +575,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "quoteFrom": "Zitat von"
   },
   "notifications": {
-    "title": "Externes Mitglied hinzuf\u00fcgen",
+    "title": "Benachrichtigungen",
     "empty": "Keine Benachrichtigungen",
     "markAllRead": "Alle als gelesen markieren",
     "mention": "hat dich erwaehnt",
@@ -606,7 +606,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "deleted": "Gel\u00f6scht"
   },
   "permissions": {
-    "title": "Externes Mitglied hinzuf\u00fcgen",
+    "title": "Berechtigungen",
     "description": "Sammle Klassen- und Spezialisierungsw\u00fcnsche deiner Gildenmitglieder, um das perfekte Roster aufzubauen.",
     "noRules": "Nur GMs haben diese Berechtigung",
     "saved": "Berechtigungen gespeichert",
