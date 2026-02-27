@@ -93,6 +93,7 @@ export const RosterTable = ({
   onSelectionStatusChange,
   updatingSelectionMemberId = null,
 }: RosterTableProps) => {
+  const wishColumnClassName = 'w-[320px] min-w-[320px]';
   const { t, language } = useLanguage();
   const s = (key: SemanticKey, fallback?: string) =>
     resolveSemanticMessage({ key, language: t.lang, translations: t, fallback });
@@ -455,9 +456,9 @@ export const RosterTable = ({
               <SortableHeader column="status" className="w-[110px] md:w-[130px]">{t.wishes.status}</SortableHeader>
               <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3 w-[150px] md:w-[180px]">{t.wishes.rosterDecision.title}</TableHead>
               <SortableHeader column="wishesCount" className="w-[80px] md:w-[90px]"><span className="hidden md:inline">{t.dashboard.wishesCount}</span><span className="md:hidden">#</span></SortableHeader>
-              <SortableHeader column="wish1"><span className="hidden md:inline">{t.dashboard.firstChoice}</span><span className="md:hidden">#1</span></SortableHeader>
-              <SortableHeader column="wish2"><span className="hidden md:inline">{t.dashboard.secondChoice}</span><span className="md:hidden">#2</span></SortableHeader>
-              <SortableHeader column="wish3"><span className="hidden md:inline">{t.dashboard.thirdChoice}</span><span className="md:hidden">#3</span></SortableHeader>
+              <SortableHeader column="wish1" className={wishColumnClassName}><span className="hidden md:inline">{t.dashboard.firstChoice}</span><span className="md:hidden">#1</span></SortableHeader>
+              <SortableHeader column="wish2" className={wishColumnClassName}><span className="hidden md:inline">{t.dashboard.secondChoice}</span><span className="md:hidden">#2</span></SortableHeader>
+              <SortableHeader column="wish3" className={wishColumnClassName}><span className="hidden md:inline">{t.dashboard.thirdChoice}</span><span className="md:hidden">#3</span></SortableHeader>
               <TableHead className="text-muted-foreground text-xs py-2 px-0 w-[72px]"></TableHead>
             </TableRow>
           </TableHeader>
@@ -645,13 +646,13 @@ export const RosterTable = ({
                     <TableCell className="py-2 px-2 md:px-3 text-center">
                       <span className="text-sm text-muted-foreground">{member.wishes.filter(w => w.class_id).length}</span>
                     </TableCell>
-                    <TableCell className="py-2 px-2 md:px-3">
+                    <TableCell className={cn("py-2 px-2 md:px-3", wishColumnClassName)}>
                       {isEditing ? renderEditWishCell(0, editWishes.length > 1) : renderWishCell(member.id, member.wishes, 1, !!member.isExternal)}
                     </TableCell>
-                    <TableCell className="py-2 px-2 md:px-3">
+                    <TableCell className={cn("py-2 px-2 md:px-3", wishColumnClassName)}>
                       {isEditing ? renderEditWishCell(1, editWishes.length > 1) : renderWishCell(member.id, member.wishes, 2, !!member.isExternal)}
                     </TableCell>
-                    <TableCell className="py-2 px-2 md:px-3">
+                    <TableCell className={cn("py-2 px-2 md:px-3", wishColumnClassName)}>
                       {isEditing ? renderEditWishCell(2, editWishes.length > 1) : renderWishCell(member.id, member.wishes, 3, !!member.isExternal)}
                     </TableCell>
                     <TableCell className="py-1 pl-0 pr-1">
@@ -739,13 +740,13 @@ export const RosterTable = ({
                               </span>
                             </TableCell>
                             {rowWishes.map((_, idx) => (
-                              <TableCell key={startIdx + idx} className="py-2 px-2 md:px-3">
+                              <TableCell key={startIdx + idx} className={cn("py-2 px-2 md:px-3", wishColumnClassName)}>
                                 {renderEditWishCell(startIdx + idx, editWishes.length > 1)}
                               </TableCell>
                             ))}
                             {/* Empty cells to maintain table alignment */}
                             {Array.from({ length: 3 - rowWishes.length }).map((_, i) => (
-                              <TableCell key={`empty-${i}`} className="py-2 px-2 md:px-3" />
+                              <TableCell key={`empty-${i}`} className={cn("py-2 px-2 md:px-3", wishColumnClassName)} />
                             ))}
                             <TableCell className="py-2 px-2 md:px-3" />
                           </TableRow>
