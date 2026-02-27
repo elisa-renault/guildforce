@@ -289,7 +289,7 @@ const RosterWishes = () => {
       .select('role')
       .eq('guild_id', foundGuildId)
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     // If not a member but is global admin, allow read-only access
     if (membershipError || !membershipData) {
