@@ -5,6 +5,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { getClassById, getLocalizedClassName, getSpecById } from '@/data/wowClasses';
 import { MemberWish, RosterSelectionStatus, WishChoice, ValidationStatus } from '@/types/guild';
 import { WishValidationBadge } from './WishValidationBadge';
+import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -52,7 +53,9 @@ export const MobileRosterCard = ({
   updatingSelectionMemberId = null,
 }: MobileRosterCardProps) => {
   const { t, language } = useLanguage();
-  const manualEntryLabel = language === 'fr' ? 'Ajout manuel' : 'Manual entry';
+  const s = (key: SemanticKey, fallback?: string) =>
+    resolveSemanticMessage({ key, language: t.lang, translations: t, fallback });
+  const manualEntryLabel = s('roster_wishes.manual_entry_label');
 
   const getRosterDecisionBadge = (selectionStatus: MemberWish['selectionStatus']) => {
     switch (selectionStatus) {
@@ -318,10 +321,6 @@ export const MobileRosterCard = ({
         )}
       </div>
 
-      <p className="pt-2 text-[11px] text-muted-foreground">
-        {t.wishes.rosterDecision.hint}
-      </p>
     </div>
   );
 };
-

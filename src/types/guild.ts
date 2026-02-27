@@ -89,6 +89,7 @@ export interface RosterFilters {
   roleFilters: string[];
   classFilters: string[];
   validationFilters: ValidationStatus[];
+  rosterDecisionFilters: RosterSelectionStatus[];
   searchQuery: string;
   filterMode: 'and' | 'or';
   // Extended filters

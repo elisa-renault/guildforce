@@ -4,7 +4,6 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useForumCategories } from '@/hooks/useForum';
 import { useIsAdmin } from '@/hooks/useAdmin';
-import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
 import { ForumCategoryList } from '@/components/forum';
@@ -18,8 +17,6 @@ const Forum = () => {
   const { user } = useAuth();
   const { categories, loading, error } = useForumCategories();
   const { isAdmin } = useIsAdmin();
-  const s = (key: SemanticKey, fallback?: string) =>
-    resolveSemanticMessage({ key, language: t.lang, translations: t, fallback });
 
   if (loading) {
     return (
@@ -43,7 +40,7 @@ const Forum = () => {
               {t.forum.title}
             </h1>
             <p className="text-muted-foreground mt-1">
-              {t.forum.subtitle || 'Community discussions and updates'}
+              {t.forum.subtitle}
             </p>
           </div>
           {isAdmin && (
@@ -71,10 +68,10 @@ const Forum = () => {
           <div className="text-center py-16">
             <MessageSquare className="h-16 w-16 mx-auto mb-4 text-muted-foreground/30" />
             <h2 className="text-xl font-semibold text-foreground mb-2">
-              {t.forum.empty?.noCategories || s('forum.page.empty.no_categories')}
+              {t.forum.empty.noCategories}
             </h2>
             <p className="text-muted-foreground">
-              {t.forum.empty?.being_set_up || s('forum.page.empty.being_set_up')}
+              {t.forum.empty.beingSetUp}
             </p>
           </div>
         )}

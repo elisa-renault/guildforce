@@ -968,7 +968,7 @@ export const PollEditor = ({
             size="sm"
           >
             <Eye className="h-4 w-4 mr-2" />
-            {t.polls?.preview || 'Preview'}
+            {t.polls.preview}
           </Button>
 
           <Button

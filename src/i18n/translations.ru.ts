@@ -248,7 +248,7 @@ export const translationsRu: Translations = createLocaleTranslations(translation
       validationDetailsTitle: 'Детали валидации моих пожеланий',
       selected: 'Выбран(а)',
       bench: 'Запас',
-      notSelected: 'Не выбран',
+      notSelected: 'Не выбран(а)',
       undecided: 'Не решено',
       hint: 'Отклонение пожелания не означает автоматически, что игрок не попал в состав.',
     },

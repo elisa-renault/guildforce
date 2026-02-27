@@ -42,14 +42,14 @@ export function TopicSubscriptionButton({ topicId, variant = 'icon' }: TopicSubs
 
   const getLabel = () => {
     return isSubscribed
-      ? (t.notifications?.subscribed || 'Subscribed')
-      : (t.notifications?.subscribe || 'Subscribe');
+      ? t.notifications.subscribed
+      : t.notifications.subscribe;
   };
 
   const getTooltip = () => {
     return isSubscribed
-      ? (t.notifications?.clickToUnsubscribe || 'Click to unsubscribe')
-      : (t.notifications?.clickToSubscribe || 'Click to subscribe');
+      ? t.notifications.clickToUnsubscribe
+      : t.notifications.clickToSubscribe;
   };
 
   if (variant === 'button') {

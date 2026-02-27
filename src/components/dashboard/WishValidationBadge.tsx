@@ -174,7 +174,8 @@ export const WishValidationBadge = ({
       <Tooltip>
         <TooltipTrigger asChild>
           <div className={cn(
-            "flex items-center gap-1.5 px-2 py-1 rounded-md border",
+            "h-7 flex items-center rounded-md border",
+            compact ? "w-7 justify-center px-0" : "gap-1.5 px-2",
             config.bgColor,
             config.borderColor,
             config.color

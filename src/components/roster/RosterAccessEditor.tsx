@@ -252,7 +252,7 @@ export const RosterAccessEditor = ({ accessRules, members, ranks, onChange }: Ro
     <div className="space-y-4">
       <label className="text-sm text-muted-foreground flex items-center gap-2">
         <Users className="h-4 w-4" />
-        {t.rosters?.accessRules || 'Who can submit wishes'}
+        {t.rosters.accessRules}
       </label>
 
       <div className="space-y-3">
@@ -262,7 +262,7 @@ export const RosterAccessEditor = ({ accessRules, members, ranks, onChange }: Ro
               <div className="flex-1 space-y-2">
                 <div className="flex items-center gap-2 text-sm">
                   <Crown className="h-4 w-4 text-primary" />
-                  <span>{t.rosters?.byRank || 'By Rank'}</span>
+                  <span>{t.rosters.byRank}</span>
                 </div>
                 <RankSlider
                   maxValue={rule.max_rank_index ?? 0}
@@ -275,14 +275,14 @@ export const RosterAccessEditor = ({ accessRules, members, ranks, onChange }: Ro
               <div className="flex-1">
                 <div className="flex items-center gap-2 text-sm mb-2">
                   <Users className="h-4 w-4 text-primary" />
-                  <span>{t.rosters?.byUser || 'Specific User'}</span>
+                  <span>{t.rosters.byUser}</span>
                 </div>
                 <Select
                   value={rule.user_id || ''}
                   onValueChange={(value) => updateRule(index, { user_id: value })}
                 >
                   <SelectTrigger className="w-full bg-card border-border">
-                    <SelectValue placeholder={t.rosters?.selectUser || 'Select user'} />
+                    <SelectValue placeholder={t.rosters.selectUser} />
                   </SelectTrigger>
                   <SelectContent className="bg-card border-border">
                     {members
@@ -320,13 +320,13 @@ export const RosterAccessEditor = ({ accessRules, members, ranks, onChange }: Ro
           className="text-xs"
         >
           <Plus className="h-3 w-3 mr-1" />
-          {t.rosters?.addUserRule || 'Add User'}
+          {t.rosters.addUserRule}
         </Button>
       </div>
 
       {accessRules.length === 0 && (
         <p className="text-xs text-muted-foreground">
-          {t.rosters?.noAccessWarning || 'No access rules defined. Only GMs will be able to submit wishes.'}
+          {t.rosters.noAccessWarning}
         </p>
       )}
     </div>

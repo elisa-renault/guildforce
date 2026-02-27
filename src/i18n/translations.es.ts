@@ -3,4 +3,13 @@ import { createLocaleTranslations } from './createLocaleTranslations';
 import type { Translations } from './translations';
 
 // Placeholder locale pack for progressive rollout; currently falls back to EN copy.
-export const translationsEs: Translations = createLocaleTranslations(translationsEn, {});
+export const translationsEs: Translations = createLocaleTranslations(translationsEn, {
+  wishes: {
+    rosterDecision: {
+      selected: 'Seleccionado/a',
+      bench: 'Suplente',
+      notSelected: 'No seleccionado/a',
+      undecided: 'Indeciso/a',
+    },
+  },
+});

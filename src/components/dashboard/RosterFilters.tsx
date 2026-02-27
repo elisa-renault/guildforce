@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLocalizedClassName, wowClasses, Role } from '@/data/wowClasses';
-import { RosterFilters as RosterFiltersType, ValidationStatus, CommitmentFilter, RangeFilter } from '@/types/guild';
+import { RosterFilters as RosterFiltersType, ValidationStatus, CommitmentFilter, RangeFilter, RosterSelectionStatus } from '@/types/guild';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { interpolateMessage } from '@/i18n/format';
@@ -40,6 +40,13 @@ const commitmentConfig: Record<CommitmentFilter, { icon: typeof UserCheck; color
   withdrawn: { icon: UserX, color: 'text-status-error', labelKey: 'withdrawn' },
 };
 
+const rosterDecisionConfig: Record<RosterSelectionStatus, { icon: typeof CheckCircle2; color: string; labelKey: 'selected' | 'bench' | 'notSelected' | 'undecided' }> = {
+  selected: { icon: CheckCircle2, color: 'text-status-success', labelKey: 'selected' },
+  bench: { icon: UserMinus, color: 'text-status-warning', labelKey: 'bench' },
+  not_selected: { icon: XCircle, color: 'text-status-error', labelKey: 'notSelected' },
+  undecided: { icon: Clock, color: 'text-muted-foreground', labelKey: 'undecided' },
+};
+
 const rangeConfig: Record<RangeFilter, { icon: typeof Swords; color: string }> = {
   melee: { icon: Swords, color: 'text-warning' },
   ranged: { icon: Crosshair, color: 'text-info' },
@@ -50,6 +57,7 @@ const defaultFilters: RosterFiltersType = {
   roleFilters: [],
   classFilters: [],
   validationFilters: [],
+  rosterDecisionFilters: [],
   searchQuery: '',
   filterMode: 'and',
   commitmentFilters: [],
@@ -111,6 +119,15 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
     }
   };
 
+  const toggleRosterDecision = (decision: RosterSelectionStatus) => {
+    const current = filters.rosterDecisionFilters;
+    if (current.includes(decision)) {
+      updateFilter('rosterDecisionFilters', current.filter(d => d !== decision));
+    } else {
+      updateFilter('rosterDecisionFilters', [...current, decision]);
+    }
+  };
+
   const toggleRange = (range: RangeFilter) => {
     const current = filters.rangeFilters;
     if (current.includes(range)) {
@@ -121,7 +138,7 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
   };
 
   // Count active filters per group
-  const playersFilterCount = filters.commitmentFilters.length;
+  const playersFilterCount = filters.commitmentFilters.length + filters.rosterDecisionFilters.length;
   const wishesFilterCount = 
     (filters.maxWishIndex !== null ? 1 : 0) +
     (filters.minWishes !== null ? 1 : 0) +
@@ -138,6 +155,27 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
   const hasSearchQuery = filters.searchQuery.length > 0;
   const hasAnyFilters = hasPlayersFilters || hasWishesFilters || hasSpecsFilters;
 
+  const getPillToneClass = (color?: string) => {
+    switch (color) {
+      case 'text-status-success':
+      case 'text-healer':
+        return 'bg-status-success/12 border-status-success/35';
+      case 'text-status-warning':
+      case 'text-warning':
+        return 'bg-status-warning/12 border-status-warning/35';
+      case 'text-status-error':
+        return 'bg-status-error/12 border-status-error/35';
+      case 'text-info':
+        return 'bg-info/12 border-info/35';
+      case 'text-tank':
+        return 'bg-tank/12 border-tank/35';
+      case 'text-dps':
+        return 'bg-dps/12 border-dps/35';
+      default:
+        return 'bg-muted/25 border-border/60';
+    }
+  };
+
   // Generate active filter pills for display
   const activePills = useMemo(() => {
     const pills: { key: string; label: string; color?: string; onRemove: () => void }[] = [];
@@ -150,6 +188,17 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
         label: t.wishes.commitment[config.labelKey],
         color: config.color,
         onRemove: () => toggleCommitment(c),
+      });
+    });
+
+    // Roster decision pills
+    filters.rosterDecisionFilters.forEach((decision) => {
+      const config = rosterDecisionConfig[decision];
+      pills.push({
+        key: `roster-decision-${decision}`,
+        label: t.wishes.rosterDecision[config.labelKey],
+        color: config.color,
+        onRemove: () => toggleRosterDecision(decision),
       });
     });
 
@@ -298,9 +347,35 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
                   })}
                 </div>
               </div>
+              <Separator />
+              <div>
+                <h4 className="text-sm font-medium mb-2">{t.wishes.rosterDecision.title}</h4>
+                <div className="flex flex-col gap-1">
+                  {(Object.keys(rosterDecisionConfig) as RosterSelectionStatus[]).map((decision) => {
+                    const config = rosterDecisionConfig[decision];
+                    const Icon = config.icon;
+                    const isSelected = filters.rosterDecisionFilters.includes(decision);
+
+                    return (
+                      <button
+                        key={decision}
+                        onClick={() => toggleRosterDecision(decision)}
+                        className={cn(
+                          "flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left",
+                          isSelected ? "bg-primary/20" : "hover:bg-primary/10"
+                        )}
+                      >
+                        <Icon className={cn("h-4 w-4", config.color)} />
+                        <span className={cn("flex-1", config.color)}>{t.wishes.rosterDecision[config.labelKey]}</span>
+                        {isSelected && <Check className="h-3.5 w-3.5 text-primary" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
               {hasPlayersFilters && (
                 <button
-                  onClick={() => updateFilter('commitmentFilters', [])}
+                  onClick={() => onFiltersChange({ ...filters, commitmentFilters: [], rosterDecisionFilters: [] })}
                   className="flex items-center gap-2 px-2 py-1.5 rounded text-sm text-muted-foreground hover:text-foreground hover:bg-primary/10 w-full"
                 >
                   <X className="h-3.5 w-3.5" />
@@ -622,8 +697,11 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
           {activePills.map((pill) => (
             <Badge
               key={pill.key}
-              variant="secondary"
-              className="h-6 gap-1 pl-2 pr-1 cursor-pointer hover:bg-secondary/80"
+              variant="outline"
+              className={cn(
+                "h-6 gap-1 pl-2 pr-1 cursor-pointer border transition-colors",
+                getPillToneClass(pill.color)
+              )}
               style={pill.color?.startsWith('hsl') ? { color: pill.color } : undefined}
               onClick={pill.onRemove}
             >

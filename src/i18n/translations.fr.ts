@@ -245,9 +245,9 @@ export const translationsFr: Translations = {
         summaryTitle: 'Décision roster',
         validationDetailsTitle: 'Détail de validation de mes vœux',
         selected: 'Retenu(e)',
-        bench: 'Remplaçant',
-        notSelected: 'Non retenu',
-        undecided: 'Indécis',
+        bench: 'Remplaçant(e)',
+        notSelected: 'Non retenu(e)',
+        undecided: 'Indécis(e)',
         hint: 'Rejet d’un vœu ≠ non retenu pour le roster.',
       },
     },
@@ -1342,6 +1342,5 @@ export const translationsFr: Translations = {
       pages_Wishes_session_expired: 'Session expirée',
     },
   }
-
 
 

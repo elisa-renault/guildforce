@@ -255,7 +255,7 @@ export const PollResults = ({
                   return Object.entries(stats).map(([option, data]) => {
                     const percentage = total > 0 ? (data.count / total) * 100 : 0;
                     const isOther = option === OTHER_OPTION_VALUE;
-                    const displayLabel = isOther ? (t.polls?.otherSpecify || 'Other (specify)') : option;
+                    const displayLabel = isOther ? t.polls.otherSpecify : option;
                     
                     return (
                       <div key={option} className="space-y-1">

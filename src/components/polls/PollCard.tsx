@@ -51,9 +51,9 @@ export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
   };
 
   const statusLabels = {
-    draft: t.polls?.status?.draft || 'Draft',
-    active: t.polls?.status?.active || 'Active',
-    closed: t.polls?.status?.closed || 'Closed',
+    draft: t.polls.status.draft,
+    active: t.polls.status.active,
+    closed: t.polls.status.closed,
   };
 
   const handleViewResults = () => {

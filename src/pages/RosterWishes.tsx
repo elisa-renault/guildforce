@@ -135,6 +135,7 @@ const RosterWishes = () => {
     roleFilters: [],
     classFilters: [],
     validationFilters: [],
+    rosterDecisionFilters: [],
     searchQuery: '',
     filterMode: 'or',
     commitmentFilters: [],
@@ -1012,6 +1013,12 @@ const RosterWishes = () => {
       };
       const memberCommitment = statusMap[m.status] || 'undecided';
       if (!filters.commitmentFilters.includes(memberCommitment)) return false;
+    }
+
+    // Filter by roster decision
+    if (filters.rosterDecisionFilters.length > 0) {
+      const selectionStatus = m.selectionStatus || 'undecided';
+      if (!filters.rosterDecisionFilters.includes(selectionStatus)) return false;
     }
 
     // Filter by minimum wishes (based on wishesToConsider)
