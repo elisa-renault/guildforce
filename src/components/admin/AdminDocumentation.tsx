@@ -232,8 +232,8 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Wish locking and deadlines',
         titleFr: 'Verrouillage des vœux et deadlines',
-        contentEn: 'Roster locks use `rosters.wishes_locked` with optional scheduling via `wishes_lock_at`. Member overrides live in `guild_members.wishes_locked`. RLS enforcement relies on `can_edit_wishes()`, while admin RPCs `lock_roster_wishes`, `unlock_roster_wishes`, `schedule_roster_wishes_lock`, `set_member_wishes_locked`, `remove_guild_member_with_wishes`, `upsert_external_member_wish`, and `delete_external_member_wish` power manual controls. Scheduled locks run via `apply_scheduled_wish_locks()`.',
-        contentFr: 'Les verrous roster utilisent `rosters.wishes_locked` avec planification via `wishes_lock_at`. Les verrous membres sont stockés dans `guild_members.wishes_locked`. La RLS s\'appuie sur `can_edit_wishes()` et les RPCs `lock_roster_wishes`, `unlock_roster_wishes`, `schedule_roster_wishes_lock`, `set_member_wishes_locked`, `remove_guild_member_with_wishes`, `upsert_external_member_wish` et `delete_external_member_wish` pour les actions manuelles. Les verrous programmés passent par `apply_scheduled_wish_locks()`.',
+        contentEn: 'Roster locks use `rosters.wishes_locked` with optional scheduling via `wishes_lock_at`. Member overrides live in `guild_members.wishes_locked`. RLS enforcement relies on `can_edit_wishes()`, while admin RPCs `lock_roster_wishes`, `unlock_roster_wishes`, `schedule_roster_wishes_lock`, `set_member_wishes_locked`, `upsert_member_roster_wishes`, `remove_guild_member_with_wishes`, `upsert_external_member_wish`, and `delete_external_member_wish` power manual controls. `upsert_member_roster_wishes` lets GM/wish managers update classes, specs, and commitment for roster members only when the member/roster is not locked. Scheduled locks run via `apply_scheduled_wish_locks()`.',
+        contentFr: 'Les verrous roster utilisent `rosters.wishes_locked` avec planification via `wishes_lock_at`. Les verrous membres sont stockés dans `guild_members.wishes_locked`. La RLS s\'appuie sur `can_edit_wishes()` et les RPCs `lock_roster_wishes`, `unlock_roster_wishes`, `schedule_roster_wishes_lock`, `set_member_wishes_locked`, `upsert_member_roster_wishes`, `remove_guild_member_with_wishes`, `upsert_external_member_wish` et `delete_external_member_wish` pour les actions manuelles. `upsert_member_roster_wishes` permet aux GM/gérants de vœux de modifier classes, spécialisations et engagement des membres du roster uniquement quand le roster/membre n\'est pas verrouillé. Les verrous programmés passent par `apply_scheduled_wish_locks()`.',
         tags: ['wishes', 'rosters', 'security', 'scheduling'],
       },
     ],
@@ -602,5 +602,4 @@ export const AdminDocumentation = () => {
     </div>
   );
 };
-
 
