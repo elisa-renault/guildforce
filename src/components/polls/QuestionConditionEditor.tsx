@@ -128,7 +128,7 @@ export const QuestionConditionEditor = ({
         className="text-muted-foreground hover:text-primary"
       >
         <GitBranch className="h-4 w-4 mr-1" />
-        {t.polls?.addCondition || 'Add condition'}
+        {t.polls.addCondition}
       </Button>
     );
   }
@@ -154,7 +154,7 @@ export const QuestionConditionEditor = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm text-primary font-medium">
           <GitBranch className="h-4 w-4" />
-          {t.polls?.conditionalQuestion || 'Conditional question'}
+          {t.polls.conditionalQuestion}
         </div>
         <Button
           type="button"
@@ -168,7 +168,7 @@ export const QuestionConditionEditor = ({
       </div>
 
       <div className="space-y-2">
-        <Label className="text-xs text-muted-foreground">{t.polls?.showIf || 'Show if'}</Label>
+        <Label className="text-xs text-muted-foreground">{t.polls.showIf}</Label>
         <Select value={condition.question_id} onValueChange={handleQuestionChange}>
           <SelectTrigger className="bg-background">
             <SelectValue />
@@ -189,7 +189,7 @@ export const QuestionConditionEditor = ({
       </div>
 
       <div className="space-y-2">
-        <Label className="text-xs text-muted-foreground">{t.polls?.conditionOperator || 'Condition operator'}</Label>
+        <Label className="text-xs text-muted-foreground">{t.polls.conditionOperator}</Label>
         <Select value={condition.operator} onValueChange={(value) => handleOperatorChange(value as ConditionOperator)}>
           <SelectTrigger className="bg-background">
             <SelectValue />
@@ -207,7 +207,7 @@ export const QuestionConditionEditor = ({
       {/* Choice-based value selection */}
       {selectedQuestion && isChoiceType(selectedQuestion.type) && (
         <div className="space-y-2">
-          <Label className="text-xs text-muted-foreground">{t.polls?.conditionValues || 'Condition values'}</Label>
+          <Label className="text-xs text-muted-foreground">{t.polls.conditionValues}</Label>
           <div className="space-y-1 max-h-32 overflow-y-auto">
             {selectedQuestion.options.map((option, idx) => (
               <div key={idx} className="flex items-center gap-2">
@@ -224,7 +224,7 @@ export const QuestionConditionEditor = ({
           </div>
           {condition.values.length === 0 && (
             <p className="text-xs text-destructive">
-              {t.polls?.selectAtLeastOneValue || 'Select at least one value'}
+              {t.polls.selectAtLeastOneValue}
             </p>
           )}
         </div>

@@ -1,4 +1,4 @@
-﻿import {
+import {
   AlertCircle,
   BookOpen,
   CheckCircle2,
@@ -119,30 +119,29 @@ import { Textarea } from '@/components/ui/textarea';
 import { Toggle } from '@/components/ui/toggle';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts';
-import { useLanguage } from '@/contexts/LanguageContext';
 import { wowClasses } from '@/data/wowClasses';
 import { toneCalloutClass, toneTextClass } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 
-type Copy = { en: string; fr: string };
+type Copy = { en: string };
 
-const copy = (language: string, value: Copy) => (language === 'fr' ? value.fr : value.en);
+const copy = (value: Copy) => value.en;
 
 const COLORS = [
-  { label: 'Primary', cls: 'bg-primary', token: '--primary', usage: { en: 'Main action', fr: 'Action principale' } },
-  { label: 'Success', cls: 'bg-status-success', token: '--status-success', usage: { en: 'Validation states', fr: 'États valides' } },
-  { label: 'Error', cls: 'bg-status-error', token: '--status-error', usage: { en: 'Blocking issues', fr: 'Erreurs bloquantes' } },
-  { label: 'Warning', cls: 'bg-status-warning', token: '--status-warning', usage: { en: 'Risk or lock warning', fr: 'Risque ou verrou' } },
-  { label: 'Info', cls: 'bg-status-info', token: '--status-info', usage: { en: 'Contextual help', fr: 'Aide contextuelle' } },
+  { label: 'Primary', cls: 'bg-primary', token: '--primary', usage: { en: 'Main action' } },
+  { label: 'Success', cls: 'bg-status-success', token: '--status-success', usage: { en: 'Validation states' } },
+  { label: 'Error', cls: 'bg-status-error', token: '--status-error', usage: { en: 'Blocking issues' } },
+  { label: 'Warning', cls: 'bg-status-warning', token: '--status-warning', usage: { en: 'Risk or lock warning' } },
+  { label: 'Info', cls: 'bg-status-info', token: '--status-info', usage: { en: 'Contextual help' } },
 ];
 
 const SECTION_LINKS = [
-  { id: 'foundations', label: { en: 'Foundations', fr: 'Fondations' } },
-  { id: 'coverage', label: { en: 'Coverage', fr: 'Couverture' } },
-  { id: 'layouts', label: { en: 'Layout archetypes', fr: 'Archétypes de layout' } },
-  { id: 'components', label: { en: 'Components', fr: 'Composants' } },
-  { id: 'patterns', label: { en: 'Guildforce patterns', fr: 'Patterns Guildforce' } },
-  { id: 'guidelines', label: { en: 'Guidelines', fr: 'Guidelines' } },
+  { id: 'foundations', label: { en: 'Foundations' } },
+  { id: 'coverage', label: { en: 'Coverage' } },
+  { id: 'layouts', label: { en: 'Layout archetypes' } },
+  { id: 'components', label: { en: 'Components' } },
+  { id: 'patterns', label: { en: 'Guildforce patterns' } },
+  { id: 'guidelines', label: { en: 'Guidelines' } },
 ];
 
 const CODE_EXAMPLES = {
@@ -222,7 +221,6 @@ const DoDont = ({ doText, dontText }: { doText: string; dontText: string }) => (
 );
 
 export const AdminDesignSystem = () => {
-  const { language } = useLanguage();
   const [buttonLoading, setButtonLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [notes, setNotes] = useState('');
@@ -249,7 +247,7 @@ export const AdminDesignSystem = () => {
     [],
   );
 
-  const t = (value: Copy) => copy(language, value);
+  const t = (value: Copy) => copy(value);
 
   return (
     <div className="space-y-6">
@@ -273,11 +271,11 @@ export const AdminDesignSystem = () => {
           </Breadcrumb>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h1 className="text-2xl md:text-3xl font-display text-foreground">{t({ en: 'Guildforce Design System', fr: 'Design System Guildforce' })}</h1>
-              <p className="text-sm text-muted-foreground">{t({ en: 'Single source of truth for public pages, player app, and admin.', fr: 'Source unique pour pages publiques, espace joueur et admin.' })}</p>
+              <h1 className="text-2xl md:text-3xl font-display text-foreground">{t({ en: 'Guildforce Design System' })}</h1>
+              <p className="text-sm text-muted-foreground">{t({ en: 'Single source of truth for public pages, player app, and admin.' })}</p>
             </div>
             <Button asChild variant="outline" size="sm">
-              <Link to="/admin?section=docs">{t({ en: 'Back to docs', fr: 'Retour docs' })}</Link>
+              <Link to="/admin?section=docs">{t({ en: 'Back to docs' })}</Link>
             </Button>
           </div>
         </div>
@@ -286,7 +284,7 @@ export const AdminDesignSystem = () => {
       <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
         <Card className="h-fit lg:sticky lg:top-24 bg-card/60 border-border/60">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm">{t({ en: 'On this page', fr: 'Sommaire' })}</CardTitle>
+            <CardTitle className="text-sm">{t({ en: 'On this page' })}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-1 pt-0">
             {SECTION_LINKS.map((section) => (
@@ -301,13 +299,13 @@ export const AdminDesignSystem = () => {
           <section className="space-y-4">
             <SectionTitle
               id="foundations"
-              title={t({ en: 'Foundations', fr: 'Fondations' })}
-              description={t({ en: 'Visual primitives shared by landing, in-guild pages, and admin tooling.', fr: 'Primitives visuelles communes au site public, pages guilde et admin.' })}
+              title={t({ en: 'Foundations' })}
+              description={t({ en: 'Visual primitives shared by landing, in-guild pages, and admin tooling.' })}
             />
 
             <GlowCard className="space-y-4 p-4">
-              <h3 className="text-base font-semibold">{t({ en: 'Color semantics', fr: 'Sémantique couleur' })}</h3>
-              <p className="text-sm text-muted-foreground">{t({ en: 'Use semantic intent first, then visual style.', fr: 'Partir de l’intention sémantique avant le style.' })}</p>
+              <h3 className="text-base font-semibold">{t({ en: 'Color semantics' })}</h3>
+              <p className="text-sm text-muted-foreground">{t({ en: 'Use semantic intent first, then visual style.' })}</p>
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {COLORS.map((item) => (
                   <div key={item.label} className="rounded-md border border-border/50 p-3">
@@ -321,13 +319,13 @@ export const AdminDesignSystem = () => {
                 ))}
               </div>
               <DoDont
-                doText={t({ en: 'Use success or error for data status only.', fr: 'Utiliser success/error pour des statuts de données.' })}
-                dontText={t({ en: 'Do not use warning color for primary actions.', fr: 'Ne pas utiliser warning comme action primaire.' })}
+                doText={t({ en: 'Use success or error for data status only.' })}
+                dontText={t({ en: 'Do not use warning color for primary actions.' })}
               />
             </GlowCard>
 
             <GlowCard className="space-y-4 p-4">
-              <h3 className="text-base font-semibold">{t({ en: 'Typography, spacing and recurring iconography', fr: 'Typographie, espacement et iconographie' })}</h3>
+              <h3 className="text-base font-semibold">{t({ en: 'Typography, spacing and recurring iconography' })}</h3>
               <div className="space-y-3">
                 <h1 className="text-2xl font-display">Display / Section title</h1>
                 <h2 className="text-lg font-semibold">Card title</h2>
@@ -348,14 +346,14 @@ export const AdminDesignSystem = () => {
                 </div>
               </div>
               <DoDont
-                doText={t({ en: 'Keep one display heading per section.', fr: 'Un seul gros titre par section.' })}
-                dontText={t({ en: 'Avoid caption size for body paragraphs.', fr: 'Éviter les captions pour le corps de texte.' })}
+                doText={t({ en: 'Keep one display heading per section.' })}
+                dontText={t({ en: 'Avoid caption size for body paragraphs.' })}
               />
             </GlowCard>
             <GlowCard className="space-y-4 p-4">
-              <h3 className="text-base font-semibold">{t({ en: 'WoW color tokens: classes, roles, factions', fr: 'Tokens couleurs WoW : classes, rôles, factions' })}</h3>
+              <h3 className="text-base font-semibold">{t({ en: 'WoW color tokens: classes, roles, factions' })}</h3>
               <p className="text-sm text-muted-foreground">
-                {t({ en: 'Canonical palette for class tags, role indicators and faction visuals.', fr: 'Palette canonique pour les tags de classes, indicateurs de rôles et visuels de faction.' })}
+                {t({ en: 'Canonical palette for class tags, role indicators and faction visuals.' })}
               </p>
 
               <div className="space-y-2">
@@ -381,15 +379,15 @@ export const AdminDesignSystem = () => {
                   {wowClasses.map((wowClass) => (
                     <div key={wowClass.id} className="rounded-md border border-border/50 p-2 text-xs flex items-center gap-2">
                       <span className="h-3 w-3 rounded-full" style={{ backgroundColor: `hsl(var(--class-${wowClass.id}))` }} />
-                      <span>{language === 'fr' ? wowClass.name.fr : wowClass.name.en}</span>
+                      <span>{wowClass.name.en}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
               <DoDont
-                doText={t({ en: 'Always map class labels to `--class-*` tokens.', fr: 'Toujours mapper les labels de classe aux tokens `--class-*`.' })}
-                dontText={t({ en: 'Do not hardcode random class colors in components.', fr: 'Ne pas hardcoder des couleurs de classe arbitraires dans les composants.' })}
+                doText={t({ en: 'Always map class labels to `--class-*` tokens.' })}
+                dontText={t({ en: 'Do not hardcode random class colors in components.' })}
               />
             </GlowCard>
           </section>
@@ -397,8 +395,8 @@ export const AdminDesignSystem = () => {
           <section className="space-y-4">
             <SectionTitle
               id="coverage"
-              title={t({ en: 'Coverage matrix', fr: 'Matrice de couverture' })}
-              description={t({ en: 'Quick audit of what is documented and what remains to factorize.', fr: 'Audit rapide de ce qui est documenté et de ce qui reste à factoriser.' })}
+              title={t({ en: 'Coverage matrix' })}
+              description={t({ en: 'Quick audit of what is documented and what remains to factorize.' })}
             />
             <GlowCard className="space-y-4 p-4">
               <div className="grid gap-2 md:grid-cols-2 text-sm">
@@ -442,18 +440,18 @@ export const AdminDesignSystem = () => {
                     <Badge variant="secondary">React Hook Form wrapper docs</Badge>
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">
-                    {t({ en: 'These patterns exist in pages but are not yet centralized as reusable components.', fr: 'Ces patterns existent dans les pages mais ne sont pas encore centralisés en composants réutilisables.' })}
+                    {t({ en: 'These patterns exist in pages but are not yet centralized as reusable components.' })}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground/80">
-                    {t({ en: 'Coverage data can be refreshed with `npm run ds:audit:coverage`.', fr: 'La couverture peut être recalculée avec `npm run ds:audit:coverage`.' })}
+                    {t({ en: 'Coverage data can be refreshed with `npm run ds:audit:coverage`.' })}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground/80">
-                    {t({ en: 'Governance rule: review `unscopedSharedCandidates` in `tmp/design-system-coverage.json` and either document/factorize them, or explicitly keep them out of scope.', fr: 'Règle de gouvernance : vérifier les `unscopedSharedCandidates` dans `tmp/design-system-coverage.json`, puis soit les documenter/factoriser, soit confirmer explicitement leur exclusion du scope.' })}
+                    {t({ en: 'Governance rule: review `unscopedSharedCandidates` in `tmp/design-system-coverage.json` and either document/factorize them, or explicitly keep them out of scope.' })}
                   </p>
                 </div>
               </div>
               <div className="rounded-md border border-border/50 p-3">
-                <p className="mb-2 text-sm font-medium">{t({ en: 'Page-family audit', fr: 'Audit par famille de pages' })}</p>
+                <p className="mb-2 text-sm font-medium">{t({ en: 'Page-family audit' })}</p>
                 <div className="grid gap-2 text-xs md:grid-cols-2">
                   <div className="rounded border border-border/40 p-2 flex items-center justify-between"><span>Public: Index/Auth/Legal/Changelog</span><Badge variant="secondary">Covered</Badge></div>
                   <div className="rounded border border-border/40 p-2 flex items-center justify-between"><span>Guild app: Overview/Wishes/Roster/Members</span><Badge variant="secondary">Covered</Badge></div>
@@ -469,13 +467,13 @@ export const AdminDesignSystem = () => {
           <section className="space-y-4">
             <SectionTitle
               id="layouts"
-              title={t({ en: 'Layout archetypes', fr: 'Archétypes de layout' })}
-              description={t({ en: 'Choose page width and navigation structure from content density and task depth.', fr: 'Choisir la largeur de page et la navigation selon la densité du contenu et la profondeur des tâches.' })}
+              title={t({ en: 'Layout archetypes' })}
+              description={t({ en: 'Choose page width and navigation structure from content density and task depth.' })}
             />
             <GlowCard className="space-y-4 p-4">
               <h3 className="text-base font-semibold">Width strategy</h3>
               <p className="text-sm text-muted-foreground">
-                {t({ en: 'Use `PageContainer` as the default wrapper and choose width by content density.', fr: 'Utiliser `PageContainer` comme wrapper par défaut et choisir la largeur selon la densité du contenu.' })}
+                {t({ en: 'Use `PageContainer` as the default wrapper and choose width by content density.' })}
               </p>
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="rounded-md border border-border/50 p-3">
@@ -498,8 +496,8 @@ export const AdminDesignSystem = () => {
                 </div>
               </div>
               <DoDont
-                doText={t({ en: 'Use contained width for reading and decision screens.', fr: 'Utiliser une largeur contenue pour les écrans de lecture et décision.' })}
-                dontText={t({ en: 'Avoid full width for long-form text pages.', fr: 'Éviter le full width pour les pages de texte long.' })}
+                doText={t({ en: 'Use contained width for reading and decision screens.' })}
+                dontText={t({ en: 'Avoid full width for long-form text pages.' })}
               />
             </GlowCard>
 
@@ -567,8 +565,8 @@ export const AdminDesignSystem = () => {
               </div>
 
               <DoDont
-                doText={t({ en: 'Use sidebar only when section switching is frequent.', fr: 'Utiliser la sidebar quand les changements de section sont fréquents.' })}
-                dontText={t({ en: 'Do not add deep sidebars for pages with 1-2 actions only.', fr: 'Ne pas ajouter de sidebar profonde pour les pages avec 1 à 2 actions.' })}
+                doText={t({ en: 'Use sidebar only when section switching is frequent.' })}
+                dontText={t({ en: 'Do not add deep sidebars for pages with 1-2 actions only.' })}
               />
               <CodePreview
                 code={`<PageContainer as="main" width="contained" spacing="md">
@@ -585,13 +583,13 @@ export const AdminDesignSystem = () => {
           <section className="space-y-4">
             <SectionTitle
               id="components"
-              title={t({ en: 'Components', fr: 'Composants' })}
-              description={t({ en: 'Reusable building blocks and recommended variants.', fr: 'Blocs réutilisables et variantes recommandées.' })}
+              title={t({ en: 'Components' })}
+              description={t({ en: 'Reusable building blocks and recommended variants.' })}
             />
 
             <GlowCard className="space-y-4 p-4">
               <h3 className="text-base font-semibold">Buttons</h3>
-              <p className="text-sm text-muted-foreground">{t({ en: 'Primary confirms, secondary supports, ghost is low emphasis, danger is destructive only.', fr: 'Primary confirme, secondary supporte, ghost discret, danger destructif uniquement.' })}</p>
+              <p className="text-sm text-muted-foreground">{t({ en: 'Primary confirms, secondary supports, ghost is low emphasis, danger is destructive only.' })}</p>
               <div className="flex flex-wrap gap-2">
                 <Button>Primary</Button>
                 <Button variant="secondary">Secondary</Button>
@@ -604,8 +602,8 @@ export const AdminDesignSystem = () => {
                 <CosmicButton size="sm" variant="outline" icon={<Sparkles className="h-4 w-4" />}>Cosmic</CosmicButton>
               </div>
               <DoDont
-                doText={t({ en: 'Keep a single primary action per block.', fr: 'Garder une seule action primaire par bloc.' })}
-                dontText={t({ en: 'Do not style a non-destructive action as danger.', fr: 'Ne pas utiliser danger pour une action non destructive.' })}
+                doText={t({ en: 'Keep a single primary action per block.' })}
+                dontText={t({ en: 'Do not style a non-destructive action as danger.' })}
               />
               <CodePreview code={CODE_EXAMPLES.button} />
             </GlowCard>
@@ -613,7 +611,7 @@ export const AdminDesignSystem = () => {
             <GlowCard className="space-y-4 p-4">
               <h3 className="text-base font-semibold">Guildforce custom surfaces</h3>
               <p className="text-sm text-muted-foreground">
-                {t({ en: 'GlowCard and CosmicButton are first-class UI primitives used across landing, player, and admin pages.', fr: 'GlowCard et CosmicButton sont des primitives UI de premier plan utilisées sur les pages publiques, joueur et admin.' })}
+                {t({ en: 'GlowCard and CosmicButton are first-class UI primitives used across landing, player, and admin pages.' })}
               </p>
               <div className="grid gap-3 md:grid-cols-2">
                 <GlowCard className="p-4" hoverable={false}>
@@ -633,7 +631,7 @@ export const AdminDesignSystem = () => {
 
             <GlowCard className="space-y-4 p-4">
               <h3 className="text-base font-semibold">Form inputs</h3>
-              <p className="text-sm text-muted-foreground">{t({ en: 'Text, select, search, checkbox or radio and textarea follow the same spacing and labels.', fr: 'Text, select, recherche, checkbox/radio et textarea gardent le même schéma.' })}</p>
+              <p className="text-sm text-muted-foreground">{t({ en: 'Text, select, search, checkbox or radio and textarea follow the same spacing and labels.' })}</p>
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="guild-search">Search</Label>
@@ -791,7 +789,7 @@ export const AdminDesignSystem = () => {
             <GlowCard className="space-y-4 p-4">
               <h3 className="text-base font-semibold">Overlays and disclosure primitives</h3>
               <p className="text-sm text-muted-foreground">
-                {t({ en: 'Used in guild members, forum moderation, profile and auth pages for contextual help and confirmations.', fr: 'Utilisés dans les pages membres, modération forum, profil et auth pour l’aide contextuelle et les confirmations.' })}
+                {t({ en: 'Used in guild members, forum moderation, profile and auth pages for contextual help and confirmations.' })}
               </p>
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="rounded-md border border-border/50 p-3 space-y-3">
@@ -854,7 +852,7 @@ export const AdminDesignSystem = () => {
             <GlowCard className="space-y-4 p-4">
               <h3 className="text-base font-semibold">Extended primitives</h3>
               <p className="text-sm text-muted-foreground">
-                {t({ en: 'Advanced primitives used in forum editors, polls, and operational dashboards.', fr: 'Primitives avancées utilisées dans les éditeurs forum, sondages et dashboards opérationnels.' })}
+                {t({ en: 'Advanced primitives used in forum editors, polls, and operational dashboards.' })}
               </p>
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="rounded-md border border-border/50 p-3 space-y-3">
@@ -976,13 +974,13 @@ export const AdminDesignSystem = () => {
           <section className="space-y-4">
             <SectionTitle
               id="patterns"
-              title={t({ en: 'Guildforce patterns', fr: 'Patterns Guildforce' })}
-              description={t({ en: 'Domain-specific UI for player cards, wishes, rosters, and events.', fr: 'UI métier pour fiches joueur, vœux, rosters et événements.' })}
+              title={t({ en: 'Guildforce patterns' })}
+              description={t({ en: 'Domain-specific UI for player cards, wishes, rosters, and events.' })}
             />
 
             <GlowCard className="space-y-4 p-4">
               <h3 className="text-base font-semibold">Player profile card</h3>
-              <p className="text-sm text-muted-foreground">{t({ en: 'Structure: identity, main or alt badge, role tags, ilvl and recruitment tags.', fr: 'Structure: identité, badges main/alt, rôles, ilvl et tags recrutement.' })}</p>
+              <p className="text-sm text-muted-foreground">{t({ en: 'Structure: identity, main or alt badge, role tags, ilvl and recruitment tags.' })}</p>
               <Card className="bg-card/50 border-border/50">
                 <CardHeader>
                   <div className="flex items-center justify-between gap-2">
@@ -1010,7 +1008,7 @@ export const AdminDesignSystem = () => {
 
             <GlowCard className="space-y-4 p-4">
               <h3 className="text-base font-semibold">Wish priority and lock flow</h3>
-              <p className="text-sm text-muted-foreground">{t({ en: 'Show rank order, validation, and lock visibility at row level.', fr: 'Montrer ordre, validation et verrouillage au niveau ligne.' })}</p>
+              <p className="text-sm text-muted-foreground">{t({ en: 'Show rank order, validation, and lock visibility at row level.' })}</p>
               <div className="rounded-md border border-border/50 p-3">
                 <Table>
                   <TableHeader>
@@ -1042,7 +1040,7 @@ export const AdminDesignSystem = () => {
 
             <GlowCard className="space-y-4 p-4">
               <h3 className="text-base font-semibold">Roster management panel</h3>
-              <p className="text-sm text-muted-foreground">{t({ en: 'Combine roster selector, filters, and bulk actions in one horizontal control area.', fr: 'Combiner sélection roster, filtres et actions de masse.' })}</p>
+              <p className="text-sm text-muted-foreground">{t({ en: 'Combine roster selector, filters, and bulk actions in one horizontal control area.' })}</p>
               <div className="space-y-3 rounded-md border border-border/50 p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <RosterSelector rosters={rosterItems} selectedRosterId={rosterId} onSelect={setRosterId} showAccessIndicator showWishesLockIndicator />
@@ -1061,7 +1059,7 @@ export const AdminDesignSystem = () => {
 
             <GlowCard className="space-y-4 p-4">
               <h3 className="text-base font-semibold">Event attendance workflow</h3>
-              <p className="text-sm text-muted-foreground">{t({ en: 'Attendance cards should expose status, role demand and confirmation controls.', fr: 'Les pages event montrent statut, besoin de rôles et contrôles de confirmation.' })}</p>
+              <p className="text-sm text-muted-foreground">{t({ en: 'Attendance cards should expose status, role demand and confirmation controls.' })}</p>
               <div className="grid gap-3 md:grid-cols-2">
                 <Card className="border-border/50 bg-card/60">
                   <CardHeader>
@@ -1094,8 +1092,8 @@ export const AdminDesignSystem = () => {
           <section className="space-y-4">
             <SectionTitle
               id="guidelines"
-              title={t({ en: 'Guidelines', fr: 'Guidelines' })}
-              description={t({ en: 'Decision rules for consistency and baseline accessibility.', fr: 'Règles de décision pour cohérence et accessibilité.' })}
+              title={t({ en: 'Guidelines' })}
+              description={t({ en: 'Decision rules for consistency and baseline accessibility.' })}
             />
 
             <GlowCard className="space-y-4 p-4">
@@ -1146,12 +1144,12 @@ export const AdminDesignSystem = () => {
 
           <GlowCard className="p-4">
             <div className="flex flex-col gap-2 text-sm">
-              <p className="font-medium">{t({ en: 'Documentation shortcut in admin', fr: 'Raccourci documentation admin' })}</p>
-              <p className="text-muted-foreground">{t({ en: 'Use this entry inside Admin Documentation to access the global design system route.', fr: 'Utiliser cette entrée dans la documentation admin pour ouvrir la route globale.' })}</p>
+              <p className="font-medium">{t({ en: 'Documentation shortcut in admin' })}</p>
+              <p className="text-muted-foreground">{t({ en: 'Use this entry inside Admin Documentation to access the global design system route.' })}</p>
               <Button asChild variant="outline" size="sm" className="w-fit">
                 <Link to="/admin/design-system">
                   <BookOpen className="mr-2 h-4 w-4" />
-                  {t({ en: 'Open /admin/design-system', fr: 'Ouvrir /admin/design-system' })}
+                  {t({ en: 'Open /admin/design-system' })}
                 </Link>
               </Button>
             </div>
@@ -1161,6 +1159,7 @@ export const AdminDesignSystem = () => {
     </div>
   );
 };
+
 
 
 

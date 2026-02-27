@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { FALLBACK_LANGUAGE, getBilingualContentLanguage, isSupportedLanguage, LANGUAGE_OPTIONS, type Language } from '@/i18n/config';
+import { FALLBACK_LANGUAGE, isSupportedLanguage, LANGUAGE_OPTIONS, type Language } from '@/i18n/config';
 import { formatDateLocalized } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { supabase } from '@/integrations/supabase/client';
@@ -52,16 +52,16 @@ interface EditableLegalPage {
 const hasGermanTranslation = (translations: LegalPageTranslation[]): boolean =>
   !isTranslationMissingOrUntranslated(translations, 'de');
 
-const slugLabels: Record<string, { fr: string; en: string }> = {
-  'legal-notice': { fr: 'Mentions légales', en: 'Legal Notice' },
-  'privacy-policy': { fr: 'Politique de confidentialité', en: 'Privacy Policy' },
-  'terms-of-service': { fr: 'CGU', en: 'Terms of Service' },
+const slugLabels: Record<string, string> = {
+  'legal-notice': 'Legal Notice',
+  'privacy-policy': 'Privacy Policy',
+  'terms-of-service': 'Terms of Service',
 };
 
-const getSlugLabel = (slug: string, language: Language) => {
+const getSlugLabel = (slug: string) => {
   const label = slugLabels[slug];
   if (!label) return slug;
-  return label[getBilingualContentLanguage(language)];
+  return label;
 };
 
 const getLanguageLabel = (language: Language): string =>
@@ -199,7 +199,7 @@ export const LegalPagesEditor = () => {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-medium text-foreground">{getSlugLabel(editingPage.slug, language)}</h3>
+          <h3 className="text-lg font-medium text-foreground">{getSlugLabel(editingPage.slug)}</h3>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
@@ -360,7 +360,7 @@ export const LegalPagesEditor = () => {
       </div>
 
       {pages.map((page) => {
-        const label = getSlugLabel(page.slug, language);
+        const label = getSlugLabel(page.slug);
         const updatedAt = formatDateLocalized(page.updated_at, language, {
           dateStyle: 'medium',
         });
@@ -400,3 +400,4 @@ export const LegalPagesEditor = () => {
     </div>
   );
 };
+

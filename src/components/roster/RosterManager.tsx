@@ -129,7 +129,7 @@ export const RosterManager = ({ guildId, rosters, members, ranks, onRosterChange
           if (rulesError) throw rulesError;
         }
 
-        toast({ title: t.rosters?.rosterUpdated || 'Roster updated' });
+        toast({ title: t.rosters.rosterUpdated });
       } else {
         // Create roster
         const { data: newRoster, error: createError } = await supabase
@@ -159,7 +159,7 @@ export const RosterManager = ({ guildId, rosters, members, ranks, onRosterChange
           if (rulesError) throw rulesError;
         }
 
-        toast({ title: t.rosters?.rosterCreated || 'Roster created' });
+        toast({ title: t.rosters.rosterCreated });
       }
 
       closeDialog();
@@ -182,7 +182,7 @@ export const RosterManager = ({ guildId, rosters, members, ranks, onRosterChange
 
       if (error) throw error;
 
-      toast({ title: t.rosters?.rosterDeleted || 'Roster deleted' });
+      toast({ title: t.rosters.rosterDeleted });
       onRosterChange();
     } catch (error: any) {
       toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
@@ -195,14 +195,14 @@ export const RosterManager = ({ guildId, rosters, members, ranks, onRosterChange
     <>
       <GlowCard className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display text-lg">{t.rosters?.title || 'Rosters'}</h2>
+          <h2 className="font-display text-lg">{t.rosters.title}</h2>
           <CosmicButton
             size="sm"
             variant="outline"
             onClick={openCreateDialog}
             icon={<Plus className="h-4 w-4" />}
           >
-            {t.rosters?.createRoster || 'New Roster'}
+            {t.rosters.createRoster}
           </CosmicButton>
         </div>
 
@@ -226,14 +226,14 @@ export const RosterManager = ({ guildId, rosters, members, ranks, onRosterChange
                         <span key={i}>
                           {rule.access_type === 'rank' 
                             ? (rule.max_rank_index !== undefined && rule.max_rank_index >= maxRankIndex
-                                ? (t.rosters?.everyone || 'Everyone')
-                                : `${t.rosters?.ranks || 'Ranks'} 0-${rule.max_rank_index}`)
+                                ? t.rosters.everyone
+                                : `${t.rosters.ranks} 0-${rule.max_rank_index}`)
                             : members.find(m => m.user_id === rule.user_id)?.username || 'User'}
                           {i < roster.access_rules.length - 1 && ', '}
                         </span>
                       ))
                     ) : (
-                      <span>{t.rosters?.noAccess || 'No access rules'}</span>
+                      <span>{t.rosters.noAccess}</span>
                     )}
                   </div>
                 </div>
@@ -267,32 +267,32 @@ export const RosterManager = ({ guildId, rosters, members, ranks, onRosterChange
           <DialogHeader>
             <DialogTitle>
               {editingRoster 
-                ? (t.rosters?.editRoster || 'Edit Roster')
-                : (t.rosters?.createRoster || 'New Roster')}
+                ? t.rosters.editRoster
+                : t.rosters.createRoster}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
             <div>
-              <label htmlFor="roster-create-name" className="text-sm text-muted-foreground">{t.rosters?.rosterName || 'Name'}</label>
+              <label htmlFor="roster-create-name" className="text-sm text-muted-foreground">{t.rosters.rosterName}</label>
               <Input
                 id="roster-create-name"
                 name="roster-name"
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
-                placeholder={t.rosters?.rosterNamePlaceholder || 'e.g., Mythic Roster'}
+                placeholder={t.rosters.rosterNamePlaceholder}
                 className="mt-1"
               />
             </div>
 
             <div>
-              <label htmlFor="roster-create-description" className="text-sm text-muted-foreground">{t.rosters?.rosterDescription || 'Description'}</label>
+              <label htmlFor="roster-create-description" className="text-sm text-muted-foreground">{t.rosters.rosterDescription}</label>
               <Textarea
                 id="roster-create-description"
                 name="roster-description"
                 value={formDescription}
                 onChange={(e) => setFormDescription(e.target.value)}
-                placeholder={t.rosters?.rosterDescriptionPlaceholder || 'Optional description'}
+                placeholder={t.rosters.rosterDescriptionPlaceholder}
                 className="mt-1 min-h-[60px]"
               />
             </div>

@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-02-18T00:23:26.873Z",
+  "generatedAt": "2026-02-19T00:06:02.195Z",
   "sharedThreshold": 5,
-  "documentedCount": 44,
-  "usedCount": 44,
+  "documentedCount": 45,
+  "usedCount": 45,
   "coveragePct": 100,
   "missingModules": [],
   "scopeRules": {

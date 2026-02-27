@@ -48,7 +48,7 @@ export const RosterSelector = ({
         <Layers className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
         <span className="text-sm md:text-base font-medium truncate">{selectedRoster.name}</span>
         {selectedRoster.is_default && (
-          <span className="text-xs text-muted-foreground flex-shrink-0">({t.rosters?.default || 'Default'})</span>
+          <span className="text-xs text-muted-foreground flex-shrink-0">({t.rosters.default})</span>
         )}
         {showWishesLockIndicator && selectedLockState?.isLocked && (
           <Lock className={`h-3.5 w-3.5 flex-shrink-0 ${toneTextClass('warning')}`} />
@@ -62,10 +62,10 @@ export const RosterSelector = ({
       <Layers className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
       <Select value={selectedRosterId || ''} onValueChange={onSelect}>
         <SelectTrigger
-          aria-label={t.rosters?.selectRoster || 'Select roster'}
+          aria-label={t.rosters.selectRoster}
           className="h-7 md:h-8 w-[140px] md:w-[300px] max-w-[35vw] md:max-w-[45vw] bg-card border-border text-xs md:text-sm"
         >
-          <SelectValue className="truncate" placeholder={t.rosters?.selectRoster || 'Select roster'} />
+          <SelectValue className="truncate" placeholder={t.rosters.selectRoster} />
         </SelectTrigger>
         <SelectContent className="bg-card border-border z-50">
           {rosters.map((roster) => {
@@ -84,7 +84,7 @@ export const RosterSelector = ({
                 <span className="flex items-center gap-2 min-w-0">
                   <span className="truncate">{roster.name}</span>
                   {roster.is_default && (
-                    <span className="text-xs text-muted-foreground flex-shrink-0">({t.rosters?.default || 'Default'})</span>
+                    <span className="text-xs text-muted-foreground flex-shrink-0">({t.rosters.default})</span>
                   )}
                   {showAccessIndicator && !roster.hasAccess && (
                     <Lock className="h-3.5 w-3.5 text-destructive flex-shrink-0" />

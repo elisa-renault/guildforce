@@ -316,12 +316,12 @@ export const PollPreviewDialog = ({
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            {t.polls?.preview || 'Preview'}
+            {t.polls.preview}
           </DialogTitle>
           <DialogDescription>
             <div className="flex items-center gap-2 p-3 mt-2 rounded-lg bg-warning/10 border border-warning/30 text-warning text-sm">
               <AlertTriangle className="h-4 w-4 shrink-0" />
-              {t.polls?.previewNote || 'This is a preview. Your responses will not be saved.'}
+              {t.polls.previewNote}
             </div>
           </DialogDescription>
         </DialogHeader>
@@ -330,7 +330,7 @@ export const PollPreviewDialog = ({
           {/* Poll header */}
           <div className="space-y-2">
             <h2 className="text-xl font-semibold text-foreground">
-              {formData.title || (t.polls?.sectionTitle || 'Untitled Poll')}
+              {formData.title || t.polls.sectionTitle}
             </h2>
             {formData.description && (
               <p className="text-muted-foreground">{formData.description}</p>
@@ -649,7 +649,7 @@ export const PollPreviewDialog = ({
           <div className="flex justify-center pt-4">
             <Button onClick={onClose} variant="outline" className="min-w-[200px]">
               <X className="h-4 w-4 mr-2" />
-              {t.polls?.closePreview || 'Close Preview'}
+              {t.polls.closePreview}
             </Button>
           </div>
         </div>

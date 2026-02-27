@@ -69,6 +69,14 @@ export const translationsIt: Translations = createLocaleTranslations(translation
     welcomeBack: 'Bentornato!',
     existingAccountsOnly: 'Solo account esistenti',
   },
+  wishes: {
+    rosterDecision: {
+      selected: 'Selezionato/a',
+      bench: 'Riserva',
+      notSelected: 'Non selezionato/a',
+      undecided: 'Indeciso/a',
+    },
+  },
   errors: {
     generic: 'Si è verificato un errore imprevisto',
     network: 'Errore di rete',

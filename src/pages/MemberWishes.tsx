@@ -481,7 +481,6 @@ const MemberWishes = () => {
                 {getRosterDecisionBadge(member?.rosterDecision).label}
               </Badge>
             )}
-            <p className="text-xs text-muted-foreground">{t.wishes.rosterDecision.hint}</p>
           </div>
         </GlowCard>
 

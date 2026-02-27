@@ -125,7 +125,9 @@ WITH CHECK (
   )
 );
 
-CREATE OR REPLACE FUNCTION public.get_roster_member_selection(
+DROP FUNCTION IF EXISTS public.get_roster_member_selection(UUID);
+
+CREATE FUNCTION public.get_roster_member_selection(
   p_roster_id UUID
 )
 RETURNS TABLE (

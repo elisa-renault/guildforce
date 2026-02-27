@@ -35,7 +35,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { getBilingualContentLanguage, isSupportedLanguage, LANGUAGE_OPTIONS, type Language } from '@/i18n/config';
+import { isSupportedLanguage, LANGUAGE_OPTIONS, type Language } from '@/i18n/config';
 import { formatDateLocalized } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { supabase } from '@/integrations/supabase/client';
@@ -95,16 +95,11 @@ export const PatchNotesEditor = () => {
   const [isNew, setIsNew] = useState(false);
   const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
     resolveSemanticMessage({ key, language, translations: t });
-  const smForLanguage = (
-    key: Parameters<typeof resolveSemanticMessage>[0]['key'],
-    targetLanguage: Language,
-  ) => resolveSemanticMessage({ key, language: targetLanguage, translations: t });
-  const getPatchPlaceholder = (field: 'title' | 'content', targetLanguage: Language) => {
-    const bilingual = getBilingualContentLanguage(targetLanguage);
-    const key = `admin.patch.${field}_placeholder.${bilingual}` as Parameters<
+  const getPatchPlaceholder = (field: 'title' | 'content') => {
+    const key = `admin.patch.${field}_placeholder.en` as Parameters<
       typeof resolveSemanticMessage
     >[0]['key'];
-    return smForLanguage(key, targetLanguage);
+    return resolveSemanticMessage({ key, language: 'en', translations: t });
   };
 
   const fetchNotes = useCallback(async () => {
@@ -332,13 +327,9 @@ export const PatchNotesEditor = () => {
 
   if (editingNote) {
     const currentTranslation = editingNote.translations[editLang];
-    const titlePlaceholder = getPatchPlaceholder('title', editLang);
-    const contentPlaceholder = getPatchPlaceholder('content', editLang);
-    const emptyPreview = editLang === 'fr'
-      ? '*Aucun contenu*'
-      : editLang === 'de'
-        ? '*Kein Inhalt*'
-        : '*No content*';
+    const titlePlaceholder = getPatchPlaceholder('title');
+    const contentPlaceholder = getPatchPlaceholder('content');
+    const emptyPreview = '*No content*';
 
     return (
       <div className="space-y-4">

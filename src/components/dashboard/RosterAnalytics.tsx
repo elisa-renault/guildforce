@@ -152,6 +152,7 @@ type RaidEffectWithText = RaidEffectRow & {
 };
 
 type CommitmentFilter = 'all' | 'confirmed' | 'potential' | 'withdrawn';
+type RosterDecisionFilter = 'all' | 'undecided' | 'selected' | 'bench' | 'not_selected';
 type RoleFilter = 'all' | 'tank' | 'healer' | 'dps';
 type RangeFilter = 'all' | 'melee' | 'ranged';
 type ValidationFilter = 'all' | 'pending' | 'approved' | 'rejected';
@@ -163,6 +164,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   const [maxWishIndex, setMaxWishIndex] = useState<number>(13);
   const [hoveredClass, setHoveredClass] = useState<string | null>(null);
   const [commitmentFilter, setCommitmentFilter] = useState<CommitmentFilter>('confirmed');
+  const [rosterDecisionFilter, setRosterDecisionFilter] = useState<RosterDecisionFilter>('selected');
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
   const [rangeFilter, setRangeFilter] = useState<RangeFilter>('all');
   const [validationFilter, setValidationFilter] = useState<ValidationFilter>('all');
@@ -254,9 +256,13 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     if (commitmentFilter !== 'all') {
       filtered = filtered.filter(m => m.status === commitmentFilter);
     }
+
+    if (rosterDecisionFilter !== 'all') {
+      filtered = filtered.filter((m) => (m.selectionStatus || 'undecided') === rosterDecisionFilter);
+    }
     
     return filtered;
-  }, [members, commitmentFilter]);
+  }, [members, commitmentFilter, rosterDecisionFilter]);
 
   const spellMap = useMemo(() => {
     const contentLanguage = getBilingualContentLanguage(language);
@@ -642,6 +648,25 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
               <SelectItem value="confirmed" className="text-xs">{t.wishes.commitment.confirmed}</SelectItem>
               <SelectItem value="potential" className="text-xs">{t.wishes.commitment.undecided}</SelectItem>
               <SelectItem value="withdrawn" className="text-xs">{t.wishes.commitment.withdrawn}</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={rosterDecisionFilter} onValueChange={(v) => setRosterDecisionFilter(v as RosterDecisionFilter)}>
+            <SelectTrigger className="h-7 w-auto min-w-[110px] text-xs">
+              <SelectValue>
+                {rosterDecisionFilter === 'all' ? `${t.common.all} ${t.wishes.rosterDecision.title}` :
+                 rosterDecisionFilter === 'selected' ? t.wishes.rosterDecision.selected :
+                 rosterDecisionFilter === 'bench' ? t.wishes.rosterDecision.bench :
+                 rosterDecisionFilter === 'not_selected' ? t.wishes.rosterDecision.notSelected :
+                 t.wishes.rosterDecision.undecided}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all" className="text-xs">{t.common.all}</SelectItem>
+              <SelectItem value="selected" className="text-xs">{t.wishes.rosterDecision.selected}</SelectItem>
+              <SelectItem value="bench" className="text-xs">{t.wishes.rosterDecision.bench}</SelectItem>
+              <SelectItem value="not_selected" className="text-xs">{t.wishes.rosterDecision.notSelected}</SelectItem>
+              <SelectItem value="undecided" className="text-xs">{t.wishes.rosterDecision.undecided}</SelectItem>
             </SelectContent>
           </Select>
 

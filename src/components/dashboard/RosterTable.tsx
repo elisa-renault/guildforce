@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-type SortColumn = 'player' | 'status' | 'wish1' | 'wish2' | 'wish3' | 'wishesCount';
+type SortColumn = 'player' | 'status' | 'rosterDecision' | 'wish1' | 'wish2' | 'wish3' | 'wishesCount';
 type SortDirection = 'asc' | 'desc';
 
 interface RosterTableProps {
@@ -93,7 +93,7 @@ export const RosterTable = ({
   onSelectionStatusChange,
   updatingSelectionMemberId = null,
 }: RosterTableProps) => {
-  const wishColumnClassName = 'w-[320px] min-w-[320px]';
+  const wishColumnClassName = 'w-[260px] min-w-[260px] xl:w-[280px] xl:min-w-[280px]';
   const { t, language } = useLanguage();
   const s = (key: SemanticKey, fallback?: string) =>
     resolveSemanticMessage({ key, language: t.lang, translations: t, fallback });
@@ -155,6 +155,8 @@ export const RosterTable = ({
 
     // Status priority: confirmed (0) > potential/undecided (1) > withdrawn (2)
     const statusOrder = { confirmed: 0, potential: 1, withdrawn: 2 };
+    // Roster decision priority: selected > bench > undecided > not_selected
+    const rosterDecisionOrder = { selected: 0, bench: 1, undecided: 2, not_selected: 3 } as const;
 
     return [...members].sort((a, b) => {
       let comparison = 0;
@@ -166,6 +168,12 @@ export const RosterTable = ({
         case 'status':
           comparison = (statusOrder[a.status as keyof typeof statusOrder] ?? 1) - (statusOrder[b.status as keyof typeof statusOrder] ?? 1);
           break;
+        case 'rosterDecision': {
+          const decisionA = a.selectionStatus || 'undecided';
+          const decisionB = b.selectionStatus || 'undecided';
+          comparison = (rosterDecisionOrder[decisionA] ?? 2) - (rosterDecisionOrder[decisionB] ?? 2);
+          break;
+        }
         case 'wish1':
           comparison = getWishClassName(a.wishes, 1).localeCompare(getWishClassName(b.wishes, 1));
           break;
@@ -449,12 +457,12 @@ export const RosterTable = ({
   return (
     <GlowCard className="overflow-hidden">
       <div className="overflow-x-auto">
-        <Table className="table-auto min-w-[1500px]">
+        <Table className="table-auto min-w-[1400px]">
           <TableHeader>
             <TableRow className="border-border/30 hover:bg-transparent">
               <SortableHeader column="player" className="w-[180px] md:w-[240px]">{t.dashboard.player}</SortableHeader>
-              <SortableHeader column="status" className="w-[110px] md:w-[130px]">{t.wishes.status}</SortableHeader>
-              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3 w-[150px] md:w-[180px]">{t.wishes.rosterDecision.title}</TableHead>
+              <SortableHeader column="status" className="w-[120px] md:w-[150px]">{t.wishes.status}</SortableHeader>
+              <SortableHeader column="rosterDecision" className="w-[160px] md:w-[200px]">{t.wishes.rosterDecision.title}</SortableHeader>
               <SortableHeader column="wishesCount" className="w-[80px] md:w-[90px]"><span className="hidden md:inline">{t.dashboard.wishesCount}</span><span className="md:hidden">#</span></SortableHeader>
               <SortableHeader column="wish1" className={wishColumnClassName}><span className="hidden md:inline">{t.dashboard.firstChoice}</span><span className="md:hidden">#1</span></SortableHeader>
               <SortableHeader column="wish2" className={wishColumnClassName}><span className="hidden md:inline">{t.dashboard.secondChoice}</span><span className="md:hidden">#2</span></SortableHeader>
@@ -593,7 +601,7 @@ export const RosterTable = ({
                         <Badge 
                           variant={member.status === 'confirmed' ? 'default' : 'outline'}
                           className={cn(
-                            "text-[10px] md:text-xs px-1.5 py-0.5",
+                            "text-[10px] md:text-xs px-2 py-0.5 whitespace-nowrap",
                             member.status === 'confirmed' 
                               ? 'bg-healer/20 text-healer border-healer/30' 
                               : member.status === 'withdrawn'
@@ -620,7 +628,7 @@ export const RosterTable = ({
                             disabled={updatingSelectionMemberId === member.id}
                           >
                             <SelectTrigger
-                              className="h-7 text-[10px] md:text-xs px-1.5"
+                              className="h-7 min-w-[140px] md:min-w-[170px] text-[10px] md:text-xs px-1.5"
                               onClick={(e) => e.stopPropagation()}
                               onPointerDown={(e) => e.stopPropagation()}
                             >
@@ -637,7 +645,7 @@ export const RosterTable = ({
                       ) : (
                         <Badge
                           variant="outline"
-                          className={cn('text-[10px] md:text-xs px-1.5 py-0.5', getRosterDecisionBadge(member.selectionStatus).className)}
+                          className={cn('text-[10px] md:text-xs px-2 py-0.5 whitespace-nowrap', getRosterDecisionBadge(member.selectionStatus).className)}
                         >
                           {getRosterDecisionBadge(member.selectionStatus).label}
                         </Badge>
@@ -778,9 +786,6 @@ export const RosterTable = ({
             })}
           </TableBody>
         </Table>
-      </div>
-      <div className="px-3 md:px-4 py-2 border-t border-border/30 bg-muted/20 text-xs text-muted-foreground">
-        {t.wishes.rosterDecision.hint}
       </div>
     </GlowCard>
   );

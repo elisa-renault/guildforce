@@ -178,7 +178,7 @@ export const RosterEditDialog = ({ open, onOpenChange, rosterId, guildId, onSave
         if (rulesError) throw rulesError;
       }
 
-      toast({ title: t.rosters?.rosterUpdated || 'Roster updated' });
+      toast({ title: t.rosters.rosterUpdated });
       onOpenChange(false);
       onSaved();
     } catch (error: any) {
@@ -192,7 +192,7 @@ export const RosterEditDialog = ({ open, onOpenChange, rosterId, guildId, onSave
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-card border-border max-w-lg overflow-hidden">
         <DialogHeader>
-          <DialogTitle>{t.rosters?.editRoster || 'Edit Roster'}</DialogTitle>
+          <DialogTitle>{t.rosters.editRoster}</DialogTitle>
         </DialogHeader>
 
         {loading ? (
@@ -202,25 +202,25 @@ export const RosterEditDialog = ({ open, onOpenChange, rosterId, guildId, onSave
         ) : (
           <div className="space-y-4">
             <div>
-              <label htmlFor="roster-edit-name" className="text-sm text-muted-foreground">{t.rosters?.rosterName || 'Name'}</label>
+              <label htmlFor="roster-edit-name" className="text-sm text-muted-foreground">{t.rosters.rosterName}</label>
               <Input
                 id="roster-edit-name"
                 name="roster-name"
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
-                placeholder={t.rosters?.rosterNamePlaceholder || 'e.g., Mythic Roster'}
+                placeholder={t.rosters.rosterNamePlaceholder}
                 className="mt-1"
               />
             </div>
 
             <div>
-              <label htmlFor="roster-edit-description" className="text-sm text-muted-foreground">{t.rosters?.rosterDescription || 'Description'}</label>
+              <label htmlFor="roster-edit-description" className="text-sm text-muted-foreground">{t.rosters.rosterDescription}</label>
               <Textarea
                 id="roster-edit-description"
                 name="roster-description"
                 value={formDescription}
                 onChange={(e) => setFormDescription(e.target.value)}
-                placeholder={t.rosters?.rosterDescriptionPlaceholder || 'Optional description'}
+                placeholder={t.rosters.rosterDescriptionPlaceholder}
                 className="mt-1 min-h-[60px]"
               />
             </div>

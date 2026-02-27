@@ -389,7 +389,7 @@ const Overview = () => {
                   icon={<Sparkles className="h-4 w-4" strokeWidth={1.5} />}
                   className="w-full"
                 >
-                  {t.wishes?.editMyWishes || 'Modifier mes vœux'}
+                  {t.wishes.editMyWishes}
                 </CosmicButton>
               </div>
             </GlowCard>

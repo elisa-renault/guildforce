@@ -60,9 +60,9 @@ export const AdminSettingsSidebar = ({
   const { language, t } = useLanguage();
   const isMobile = useIsMobile();
   const [tabsTop, setTabsTop] = useState<number>(64);
-  const designSystemLabel = language === 'fr' ? 'Design System global' : 'Global Design System';
   const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
     resolveSemanticMessage({ key, language, translations: t });
+  const designSystemLabel = 'Global Design System';
   const isDesignSystemRoute = location.pathname.startsWith('/admin/design-system');
 
   useLayoutEffect(() => {
