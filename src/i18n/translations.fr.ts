@@ -244,7 +244,7 @@ export const translationsFr: Translations = {
         title: 'Décision roster',
         summaryTitle: 'Décision roster',
         validationDetailsTitle: 'Détail de validation de mes vœux',
-        selected: 'Retenu',
+        selected: 'Retenu(e)',
         bench: 'Remplaçant',
         notSelected: 'Non retenu',
         undecided: 'Indécis',

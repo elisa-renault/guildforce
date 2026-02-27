@@ -448,12 +448,12 @@ export const RosterTable = ({
   return (
     <GlowCard className="overflow-hidden">
       <div className="overflow-x-auto">
-        <Table className="table-fixed">
+        <Table className="table-auto min-w-[1500px]">
           <TableHeader>
             <TableRow className="border-border/30 hover:bg-transparent">
-              <SortableHeader column="player" className="w-[120px] md:w-[140px]">{t.dashboard.player}</SortableHeader>
+              <SortableHeader column="player" className="w-[180px] md:w-[240px]">{t.dashboard.player}</SortableHeader>
               <SortableHeader column="status" className="w-[110px] md:w-[130px]">{t.wishes.status}</SortableHeader>
-              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3 w-[130px] md:w-[150px]">{t.wishes.rosterDecision.title}</TableHead>
+              <TableHead className="text-muted-foreground text-xs py-2 px-2 md:px-3 w-[150px] md:w-[180px]">{t.wishes.rosterDecision.title}</TableHead>
               <SortableHeader column="wishesCount" className="w-[80px] md:w-[90px]"><span className="hidden md:inline">{t.dashboard.wishesCount}</span><span className="md:hidden">#</span></SortableHeader>
               <SortableHeader column="wish1"><span className="hidden md:inline">{t.dashboard.firstChoice}</span><span className="md:hidden">#1</span></SortableHeader>
               <SortableHeader column="wish2"><span className="hidden md:inline">{t.dashboard.secondChoice}</span><span className="md:hidden">#2</span></SortableHeader>
@@ -611,7 +611,7 @@ export const RosterTable = ({
                       )}
                     </TableCell>
                     <TableCell className="py-2 px-2 md:px-3">
-                      {isGM && onSelectionStatusChange && !member.isExternal ? (
+                      {isGM && onSelectionStatusChange ? (
                         <div onClick={(e) => e.stopPropagation()}>
                           <Select
                             value={member.selectionStatus || 'undecided'}

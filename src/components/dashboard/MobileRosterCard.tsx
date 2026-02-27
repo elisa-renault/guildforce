@@ -272,7 +272,7 @@ export const MobileRosterCard = ({
 
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <span className="text-[11px] uppercase tracking-wide text-muted-foreground">{t.wishes.rosterDecision.title}</span>
-        {isGM && onSelectionStatusChange && !member.isExternal ? (
+        {isGM && onSelectionStatusChange ? (
           <Select
             value={member.selectionStatus || 'undecided'}
             onValueChange={(value) => onSelectionStatusChange(member.id, value as RosterSelectionStatus)}
