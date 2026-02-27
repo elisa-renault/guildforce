@@ -1739,6 +1739,7 @@ export type Database = {
           },
         ]
       }
+      // Data backfills can target roster selections without changing the table shape.
       roster_member_selection: {
         Row: {
           comment: string | null
