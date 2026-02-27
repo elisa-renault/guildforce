@@ -735,6 +735,10 @@ const RosterWishes = () => {
     const currentMember = members.find((m) => m.id === memberId);
     if (!currentMember || currentMember.isExternal) return;
 
+    const previousSelectionStatus = currentMember.selectionStatus || 'undecided';
+    const previousDecidedBy = currentMember.selectionDecidedBy || null;
+    const previousDecidedAt = currentMember.selectionDecidedAt || null;
+
     setUpdatingSelectionMemberId(memberId);
 
     const now = new Date().toISOString();
@@ -771,6 +775,18 @@ const RosterWishes = () => {
 
       await fetchWishes();
     } catch (error: unknown) {
+      setMembers((prev) =>
+        prev.map((m) =>
+          m.id === memberId
+            ? {
+                ...m,
+                selectionStatus: previousSelectionStatus,
+                selectionDecidedBy: previousDecidedBy,
+                selectionDecidedAt: previousDecidedAt,
+              }
+            : m
+        )
+      );
       toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
     } finally {
       setUpdatingSelectionMemberId(null);
