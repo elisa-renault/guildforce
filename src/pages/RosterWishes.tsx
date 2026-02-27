@@ -32,6 +32,7 @@ import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import { resolveSpecOrder } from '@/lib/wishOrder';
 import { resolveWishLockState } from '@/lib/wishLock';
 import { toneCalloutClass, toneTextClass } from '@/lib/design-tokens';
+import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 
