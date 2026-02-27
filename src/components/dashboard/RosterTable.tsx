@@ -454,7 +454,7 @@ export const RosterTable = ({
                   loading: lockingMemberId === member.id,
                   disabled: false,
                 }] : []),
-                ...((isOwnRow || (isGM && !!member.isExternal)) ? [{
+                ...((isOwnRow || isGM) ? [{
                   key: 'edit',
                   label: isEditing ? t.common.save : t.common.edit,
                   icon: isEditing ? Save : Pencil,
@@ -711,4 +711,3 @@ export const RosterTable = ({
     </GlowCard>
   );
 };
-
