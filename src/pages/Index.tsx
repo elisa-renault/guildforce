@@ -23,6 +23,7 @@ import {
   getRedirectUri,
   generateOAuthState,
 } from '@/lib/battlenetOAuth';
+import { getSupabaseUrl } from '@/lib/supabaseConfig';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -40,8 +41,11 @@ const Index = () => {
       const redirectUri = getRedirectUri('/auth');
       const state = generateOAuthState();
 
+      const baseUrl = getSupabaseUrl();
+      if (!baseUrl) throw new Error('Missing Supabase URL configuration');
+
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/battlenet-auth/auth-url`,
+        `${baseUrl}/functions/v1/battlenet-auth/auth-url`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
