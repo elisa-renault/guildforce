@@ -54,6 +54,16 @@ interface ExternalRosterCandidate {
   character_realm_slug: string;
 }
 
+interface RosterMemberSelectionRow {
+  user_id: string;
+  selection_status: MemberWish['selectionStatus'];
+  reason_code: MemberWish['selectionReasonCode'];
+  comment: string | null;
+  decided_by: string | null;
+  decided_at: string | null;
+  updated_at: string;
+}
+
 interface ExternalWishRow {
   id: string;
   roster_cache_id: string;
@@ -396,6 +406,13 @@ const RosterWishes = () => {
       .select('id, character_name, character_realm, character_realm_slug, matched_user_id')
       .eq('guild_id', guildId);
 
+    const { data: selectionRows } = await supabase
+      .rpc('get_roster_member_selection', { p_roster_id: selectedRosterId });
+
+    const selectionsByUserId = new Map(
+      ((selectionRows || []) as RosterMemberSelectionRow[]).map((row) => [row.user_id, row])
+    );
+
     // Fetch validator profiles if there are any
     const validatorIds = [
       ...new Set([
@@ -425,6 +442,7 @@ const RosterWishes = () => {
         validated_at: w.validated_at,
         validated_by_username: w.validated_by ? validatorById.get(w.validated_by) || null : null,
       })) || [];
+      const selection = selectionsByUserId.get(m.user_id);
       return {
         id: m.user_id,
         username: profile?.username || 'Unknown',
@@ -432,6 +450,12 @@ const RosterWishes = () => {
         status: m.status,
         wishes_locked: m.wishes_locked,
         wishes: memberWishes.sort((a, b) => a.choice_index - b.choice_index),
+        selectionStatus: selection?.selection_status || 'undecided',
+        selectionReasonCode: selection?.reason_code || null,
+        selectionComment: selection?.comment || null,
+        selectionDecidedBy: selection?.decided_by || null,
+        selectionDecidedAt: selection?.decided_at || null,
+        selectionUpdatedAt: selection?.updated_at || null,
       };
     });
 
