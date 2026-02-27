@@ -115,7 +115,7 @@ const MemberWishes = () => {
           .select('role')
           .eq('guild_id', matchedGuild.id)
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         const userIsGM = memberRole?.role === 'gm';
         setIsGM(userIsGM);

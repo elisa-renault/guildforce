@@ -99,7 +99,7 @@ const Overview = () => {
         .select('status')
         .eq('guild_id', foundGuildId)
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       // Track admin read-only mode locally to avoid stale closure
       let adminReadOnly = false;
@@ -470,4 +470,3 @@ const Overview = () => {
 };
 
 export default Overview;
-
