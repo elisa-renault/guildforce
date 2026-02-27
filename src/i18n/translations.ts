@@ -382,6 +382,24 @@ export interface Translations {
     };
     // Analytics tabs and sections
     table: string;
+    selectedValidatedView: string;
+    selectedValidatedSubtitle: string;
+    selectedValidatedSummary: string;
+    selectedValidatedEmpty: string;
+    selectedValidatedEmptyDescription: string;
+    selectedValidatedMembersCount: string;
+    selectedValidatedWishesTotal: string;
+    selectedValidatedShowPrimary: string;
+    selectedValidatedShowAll: string;
+    selectedValidatedGroupTanks: string;
+    selectedValidatedGroupHealers: string;
+    selectedValidatedGroupMelee: string;
+    selectedValidatedGroupRanged: string;
+    approvedWishesCount: string;
+    approvedWishSingular: string;
+    approvedWishPlural: string;
+    approvedChoices: string;
+    viewFullTable: string;
     analytics: string;
     classDistribution: string;
     specDistribution: string;
@@ -411,6 +429,7 @@ export interface Translations {
     wishRange1: string;
     wishRangeN: string;
     allWishes: string;
+    firstApprovedWish: string;
   };
   // Profile
   profile: {

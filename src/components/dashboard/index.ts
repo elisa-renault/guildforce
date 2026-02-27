@@ -7,3 +7,4 @@ export { WishValidationBadge } from './WishValidationBadge';
 export { ActivityLog } from './ActivityLog';
 export { MobileRosterCard } from './MobileRosterCard';
 export { RosterAnalytics } from './RosterAnalytics';
+export { RosterSelectedTable } from './RosterSelectedTable';

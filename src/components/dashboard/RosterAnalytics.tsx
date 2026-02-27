@@ -156,12 +156,13 @@ type RosterDecisionFilter = 'all' | 'undecided' | 'selected' | 'bench' | 'not_se
 type RoleFilter = 'all' | 'tank' | 'healer' | 'dps';
 type RangeFilter = 'all' | 'melee' | 'ranged';
 type ValidationFilter = 'all' | 'pending' | 'approved' | 'rejected';
+type WishScopeFilter = 'first_approved' | '1' | '2' | '3' | '4' | '5' | '6' | '13';
 
 export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   const { t, language } = useLanguage();
   const s = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
     resolveSemanticMessage({ key, language, translations: t });
-  const [maxWishIndex, setMaxWishIndex] = useState<number>(13);
+  const [wishScopeFilter, setWishScopeFilter] = useState<WishScopeFilter>('first_approved');
   const [hoveredClass, setHoveredClass] = useState<string | null>(null);
   const [commitmentFilter, setCommitmentFilter] = useState<CommitmentFilter>('confirmed');
   const [rosterDecisionFilter, setRosterDecisionFilter] = useState<RosterDecisionFilter>('selected');
@@ -245,6 +246,16 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     setValidationFilter(hasValidatedWishes ? 'approved' : 'all');
   }, [hasValidatedWishes, validationFilterTouched]);
 
+  const maxWishIndex = wishScopeFilter === 'first_approved' ? 13 : Number(wishScopeFilter);
+
+  const getFirstApprovedWish = (member: MemberWish) =>
+    (member.wishes || [])
+      .filter(
+        (wish) =>
+          !!wish.class_id && (wish.validation_status || 'pending') === 'approved',
+      )
+      .sort((a, b) => a.choice_index - b.choice_index)[0] || null;
+
   // Pre-filter members based on commitment and exclude those with 0 wishes
   const filteredMembers = useMemo(() => {
     let filtered = members.filter(m => {
@@ -260,7 +271,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     if (rosterDecisionFilter !== 'all') {
       filtered = filtered.filter((m) => (m.selectionStatus || 'undecided') === rosterDecisionFilter);
     }
-    
+
     return filtered;
   }, [members, commitmentFilter, rosterDecisionFilter]);
 
@@ -317,8 +328,21 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     return true;
   };
 
-  const wishMatchesFilters = (wish: MemberWish['wishes'][number]): boolean => {
+  const wishMatchesFilters = (
+    member: MemberWish,
+    wish: MemberWish['wishes'][number],
+  ): boolean => {
     if (!wish.class_id || wish.choice_index > maxWishIndex) return false;
+    if (wishScopeFilter === 'first_approved') {
+      const firstApprovedWish = getFirstApprovedWish(member);
+      if (
+        !firstApprovedWish ||
+        firstApprovedWish.choice_index !== wish.choice_index ||
+        firstApprovedWish.class_id !== wish.class_id
+      ) {
+        return false;
+      }
+    }
     const status = (wish.validation_status || 'pending') as ValidationFilter;
     if (validationFilter !== 'all' && status !== validationFilter) return false;
     if (!wish.spec_ids?.length) {
@@ -330,9 +354,9 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
 
   const filteredMemberCount = useMemo(() => {
     return filteredMembers.filter(member =>
-      member.wishes.some(wish => wishMatchesFilters(wish))
+      member.wishes.some(wish => wishMatchesFilters(member, wish))
     ).length;
-  }, [filteredMembers, maxWishIndex, roleFilter, rangeFilter, validationFilter]);
+  }, [filteredMembers, wishScopeFilter, maxWishIndex, roleFilter, rangeFilter, validationFilter]);
 
   const getFirstWishSpec = (wish: MemberWish['wishes'][number]) => {
     const specId = wish.spec_ids?.[0];
@@ -353,7 +377,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
 
     filteredMembers.forEach(m => {
       m.wishes.forEach(w => {
-        if (w.class_id && stats[w.class_id] && wishMatchesFilters(w)) {
+        if (w.class_id && stats[w.class_id] && wishMatchesFilters(m, w)) {
           stats[w.class_id].total++;
           stats[w.class_id].players.add(m.username);
           if (w.choice_index === 1) {
@@ -433,7 +457,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
 
     filteredMembers.forEach(member => {
       member.wishes.forEach(wish => {
-        if (!wishMatchesFilters(wish)) return;
+        if (!wishMatchesFilters(member, wish)) return;
         const entries = raidEffectsByClass.get(wish.class_id);
         if (!entries) return;
 
@@ -468,7 +492,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
 
     filteredMembers.forEach(m => {
       m.wishes.forEach(w => {
-        if (w.spec_ids?.length && wishMatchesFilters(w)) {
+        if (w.spec_ids?.length && wishMatchesFilters(m, w)) {
           w.spec_ids.forEach(specId => {
             if (specMatchesFilters(specId)) {
               stats[specId] = (stats[specId] || 0) + 1;
@@ -510,7 +534,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
 
     filteredMembers.forEach(m => {
       m.wishes.forEach(w => {
-        if (!wishMatchesFilters(w)) return;
+        if (!wishMatchesFilters(m, w)) return;
         const spec = getFirstWishSpec(w);
         if (!spec) return;
         if (w.choice_index === 1) {
@@ -534,7 +558,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
 
     filteredMembers.forEach(m => {
       m.wishes.forEach(w => {
-        if (!wishMatchesFilters(w)) return;
+        if (!wishMatchesFilters(m, w)) return;
         const spec = getFirstWishSpec(w);
         if (!spec) return;
         stats[spec.range]++;
@@ -585,7 +609,9 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   };
 
   // Generate wish range label for selector
-  const getWishRangeLabel = (n: number) => {
+  const getWishRangeLabel = (value: WishScopeFilter) => {
+    if (value === 'first_approved') return t.dashboard.firstApprovedWish;
+    const n = Number(value);
     if (n === 1) return t.dashboard.wishRange1;
     if (n === 13) return t.dashboard.allWishes;
     return interpolateMessage(s('dashboard.roster_analytics.wish_range'), { n });
@@ -619,18 +645,42 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
         <div className="flex flex-wrap items-center gap-2 p-2.5 bg-card/50 rounded-lg border border-border/50">
           <Filter className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           
-          <Select value={String(maxWishIndex)} onValueChange={(v) => setMaxWishIndex(Number(v))}>
+          <Select value={wishScopeFilter} onValueChange={(v) => setWishScopeFilter(v as WishScopeFilter)}>
             <SelectTrigger className="h-7 w-auto min-w-[100px] text-xs">
-              <SelectValue>{getWishRangeLabel(maxWishIndex)}</SelectValue>
+              <SelectValue>{getWishRangeLabel(wishScopeFilter)}</SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="1" className="text-xs">{getWishRangeLabel(1)}</SelectItem>
+              <SelectItem value="first_approved" className="text-xs">{getWishRangeLabel('first_approved')}</SelectItem>
+              <SelectItem value="1" className="text-xs">{getWishRangeLabel('1')}</SelectItem>
               {[2, 3, 4, 5, 6].map(n => (
                 <SelectItem key={n} value={String(n)} className="text-xs">
-                  {getWishRangeLabel(n)}
+                  {getWishRangeLabel(String(n) as WishScopeFilter)}
                 </SelectItem>
               ))}
-              <SelectItem value="13" className="text-xs">{getWishRangeLabel(13)}</SelectItem>
+              <SelectItem value="13" className="text-xs">{getWishRangeLabel('13')}</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={validationFilter}
+            onValueChange={(v) => {
+              setValidationFilterTouched(true);
+              setValidationFilter(v as ValidationFilter);
+            }}
+          >
+            <SelectTrigger className="h-7 w-auto min-w-[110px] text-xs">
+              <SelectValue>
+                {validationFilter === 'all' ? t.dashboard.allValidations :
+                 validationFilter === 'approved' ? t.wishes.validation.approved :
+                 validationFilter === 'rejected' ? t.wishes.validation.rejected :
+                 t.wishes.validation.pending}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all" className="text-xs">{t.dashboard.allValidations}</SelectItem>
+              <SelectItem value="pending" className="text-xs">{t.wishes.validation.pending}</SelectItem>
+              <SelectItem value="approved" className="text-xs">{t.wishes.validation.approved}</SelectItem>
+              <SelectItem value="rejected" className="text-xs">{t.wishes.validation.rejected}</SelectItem>
             </SelectContent>
           </Select>
 
@@ -667,29 +717,6 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
               <SelectItem value="bench" className="text-xs">{t.wishes.rosterDecision.bench}</SelectItem>
               <SelectItem value="not_selected" className="text-xs">{t.wishes.rosterDecision.notSelected}</SelectItem>
               <SelectItem value="undecided" className="text-xs">{t.wishes.rosterDecision.undecided}</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select
-            value={validationFilter}
-            onValueChange={(v) => {
-              setValidationFilterTouched(true);
-              setValidationFilter(v as ValidationFilter);
-            }}
-          >
-            <SelectTrigger className="h-7 w-auto min-w-[110px] text-xs">
-              <SelectValue>
-                {validationFilter === 'all' ? t.dashboard.allValidations :
-                 validationFilter === 'approved' ? t.wishes.validation.approved :
-                 validationFilter === 'rejected' ? t.wishes.validation.rejected :
-                 t.wishes.validation.pending}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all" className="text-xs">{t.dashboard.allValidations}</SelectItem>
-              <SelectItem value="pending" className="text-xs">{t.wishes.validation.pending}</SelectItem>
-              <SelectItem value="approved" className="text-xs">{t.wishes.validation.approved}</SelectItem>
-              <SelectItem value="rejected" className="text-xs">{t.wishes.validation.rejected}</SelectItem>
             </SelectContent>
           </Select>
 

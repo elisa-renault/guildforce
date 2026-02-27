@@ -305,6 +305,24 @@ export const translationsFr: Translations = {
       },
       // Analytics tabs and sections
       table: 'Tableau',
+      selectedValidatedView: 'Sélection validée',
+      selectedValidatedSubtitle: 'Membres confirmés, retenu(e)s, avec au moins un vœu approuvé.',
+      selectedValidatedSummary: 'Confirmés | Retenu(e)s | Vœux approuvés',
+      selectedValidatedEmpty: 'Aucun membre retenu avec des vœux approuvés dans ce roster.',
+      selectedValidatedEmptyDescription: 'Cette vue affiche uniquement les membres confirmés, retenu(e)s, avec au moins un vœu approuvé.',
+      selectedValidatedMembersCount: '{{count}} membres',
+      selectedValidatedWishesTotal: '{{count}} vœux validés',
+      selectedValidatedShowPrimary: '1er vœu validé uniquement',
+      selectedValidatedShowAll: 'Afficher tous les vœux validés',
+      selectedValidatedGroupTanks: 'Tanks',
+      selectedValidatedGroupHealers: 'Heals',
+      selectedValidatedGroupMelee: 'Mêlée',
+      selectedValidatedGroupRanged: 'Distance',
+      approvedWishesCount: 'approuvés',
+      approvedWishSingular: '1 vœu validé',
+      approvedWishPlural: '{{count}} vœux validés',
+      approvedChoices: 'Choix approuvés',
+      viewFullTable: 'Voir le tableau complet',
       analytics: 'Analytique',
       classDistribution: 'Distribution des classes',
       specDistribution: 'Distribution des specs',
@@ -334,6 +352,7 @@ export const translationsFr: Translations = {
       wishRange1: 'Vœu 1 uniquement',
       wishRangeN: 'Vœux 1-{{n}}',
       allWishes: 'Tous les vœux',
+      firstApprovedWish: '1er vœu validé',
     },
     profile: {
       title: 'Mon profil',
@@ -1342,5 +1361,3 @@ export const translationsFr: Translations = {
       pages_Wishes_session_expired: 'Session expirée',
     },
   }
-
-

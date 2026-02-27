@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,7 +18,7 @@ import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { GuildSubNav } from '@/components/guild';
-import { RosterFilters, RosterTable, RosterAnalytics } from '@/components/dashboard';
+import { RosterFilters, RosterTable, RosterAnalytics, RosterSelectedTable } from '@/components/dashboard';
 import { RosterSelector, RosterEditDialog } from '@/components/roster';
 import { MemberWish, WishData, RosterFilters as RosterFiltersType, ValidationStatus } from '@/types/guild';
 import { Loader2, Sparkles, Settings, TableIcon, BarChart3, Download, Eye, Lock, Unlock, Clock, UserPlus } from 'lucide-react';
@@ -31,6 +31,7 @@ import { formatDateTimeLocalized, interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import { resolveSpecOrder } from '@/lib/wishOrder';
 import { resolveWishLockState } from '@/lib/wishLock';
+import { getSelectedValidatedMembers } from '@/lib/selectedValidatedMembers';
 import { toneCalloutClass, toneTextClass } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -154,7 +155,7 @@ const RosterWishes = () => {
   const [editStatus, setEditStatus] = useState<CommitmentStatus>('undecided');
   const [saving, setSaving] = useState(false);
   const [deletingMemberId, setDeletingMemberId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'table' | 'analytics'>('table');
+  const [activeTab, setActiveTab] = useState<'table' | 'selected' | 'analytics'>('table');
   const getErrorMessage = (error: unknown) =>
     error instanceof Error ? error.message : t.errors.generic;
 
@@ -1105,6 +1106,11 @@ const RosterWishes = () => {
     return true;
   });
 
+  const selectedValidatedMembers = useMemo(
+    () => getSelectedValidatedMembers(members),
+    [members],
+  );
+
   // Calculate stats
 
   if (loading) {
@@ -1268,11 +1274,15 @@ const RosterWishes = () => {
           </div>
         )}
 
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'table' | 'analytics')} className="w-full">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'table' | 'selected' | 'analytics')} className="w-full">
           <TabsList className="mb-4">
             <TabsTrigger value="table" className="gap-2">
               <TableIcon className="h-4 w-4" />
               {t.dashboard.table}
+            </TabsTrigger>
+            <TabsTrigger value="selected" className="gap-2">
+              <Sparkles className="h-4 w-4" />
+              {t.dashboard.selectedValidatedView}
             </TabsTrigger>
             <TabsTrigger value="analytics" className="gap-2">
               <BarChart3 className="h-4 w-4" />
@@ -1312,6 +1322,15 @@ const RosterWishes = () => {
               deletingMemberId={deletingMemberId}
               onSelectionStatusChange={canManageWishes && !isAdminReadOnly ? handleSelectionStatusChange : undefined}
               updatingSelectionMemberId={updatingSelectionMemberId}
+            />
+          </TabsContent>
+
+          <TabsContent value="selected">
+            <RosterSelectedTable
+              members={selectedValidatedMembers}
+              currentUserId={user?.id}
+              selectedRosterId={selectedRosterId}
+              onViewFullTable={() => setActiveTab('table')}
             />
           </TabsContent>
 
