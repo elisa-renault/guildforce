@@ -2193,6 +2193,16 @@ export type Database = {
         }
         Returns: string
       }
+      upsert_member_roster_wishes: {
+        Args: {
+          p_commitment_status: string
+          p_guild_id: string
+          p_member_id: string
+          p_roster_id: string
+          p_wishes?: Json
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
@@ -2352,6 +2362,5 @@ export const Constants = {
     },
   },
 } as const
-
 
 

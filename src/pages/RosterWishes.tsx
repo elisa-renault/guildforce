@@ -502,8 +502,9 @@ const RosterWishes = () => {
 
   const startEditing = (member: MemberWish) => {
     const canEditOwn = member.id === user?.id;
-    const canEditExternalAsManager = !!member.isExternal && canManageWishes;
-    if (!canEditOwn && !canEditExternalAsManager) return;
+    const canEditAsManager = canManageWishes;
+    const canEditExternalAsManager = !!member.isExternal && canEditAsManager;
+    if (!canEditOwn && !canEditAsManager) return;
 
     // Check if user has access to this roster
     const currentRoster = rosters.find(r => r.id === selectedRosterId);
@@ -792,40 +793,20 @@ const RosterWishes = () => {
         });
         if (error) throw error;
       } else {
-        await supabase
-          .from('guild_members')
-          .update({ status: dbStatus })
-          .eq('guild_id', guildId)
-          .eq('user_id', user.id);
+        const wishesPayload = editWishes.map((w) => ({
+          class_id: w.classId,
+          spec_ids: w.specIds,
+          comment: w.comment || null,
+        }));
 
-        // Delete all existing wishes for this user/guild/roster first
-        await supabase
-          .from('class_wishes')
-          .delete()
-          .eq('guild_id', guildId)
-          .eq('user_id', user.id)
-          .eq('roster_id', selectedRosterId);
-
-        // Insert all non-empty wishes with roster_id
-        const wishesToInsert = editWishes
-          .map((w, i) => ({
-            guild_id: guildId,
-            user_id: user.id,
-            roster_id: selectedRosterId,
-            choice_index: i + 1,
-            class_id: w.classId,
-            spec_ids: w.specIds,
-            spec_order: w.specIds,
-            comment: w.comment,
-          }))
-          .filter(w => w.class_id);
-
-        if (wishesToInsert.length > 0) {
-          const { error } = await supabase
-            .from('class_wishes')
-            .insert(wishesToInsert);
-          if (error) throw error;
-        }
+        const { error } = await supabase.rpc('upsert_member_roster_wishes', {
+          p_guild_id: guildId,
+          p_roster_id: selectedRosterId,
+          p_member_id: editingUserId,
+          p_commitment_status: dbStatus,
+          p_wishes: wishesPayload,
+        });
+        if (error) throw error;
       }
 
       toast({ title: t.wishes.wishesSaved });
