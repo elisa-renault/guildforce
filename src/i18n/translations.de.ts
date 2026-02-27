@@ -241,7 +241,17 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "memberLockedToast": "Mitgliedsw\u00fcnsche gesperrt",
     "memberUnlockedToast": "Mitgliedsw\u00fcnsche entsperrt",
     "lockMember": "Mitglied sperren",
-    "unlockMember": "Mitglied entsperren"
+    "unlockMember": "Mitglied entsperren",
+    "rosterDecision": {
+      "title": "Roster-Entscheidung",
+      "summaryTitle": "Zusammenfassung der Roster-Entscheidung",
+      "validationDetailsTitle": "Validierungsdetails meiner Wünsche",
+      "selected": "Ausgewählt",
+      "bench": "Bank",
+      "notSelected": "Nicht ausgewählt",
+      "undecided": "Unentschieden",
+      "hint": "Die Ablehnung eines Wunsches bedeutet nicht automatisch, dass das Mitglied nicht für das Roster ausgewählt wurde."
+    }
   },
   "dashboard": {
     "title": "Aufstellung-Dashboard",
