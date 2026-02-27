@@ -1747,9 +1747,10 @@ export type Database = {
           id: string
           reason_code: Database["public"]["Enums"]["roster_selection_reason_code"] | null
           roster_id: string
+          roster_cache_id: string | null
           selection_status: Database["public"]["Enums"]["roster_selection_status"]
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           comment?: string | null
@@ -1758,9 +1759,10 @@ export type Database = {
           id?: string
           reason_code?: Database["public"]["Enums"]["roster_selection_reason_code"] | null
           roster_id: string
+          roster_cache_id?: string | null
           selection_status?: Database["public"]["Enums"]["roster_selection_status"]
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           comment?: string | null
@@ -1769,9 +1771,10 @@ export type Database = {
           id?: string
           reason_code?: Database["public"]["Enums"]["roster_selection_reason_code"] | null
           roster_id?: string
+          roster_cache_id?: string | null
           selection_status?: Database["public"]["Enums"]["roster_selection_status"]
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -1786,6 +1789,13 @@ export type Database = {
             columns: ["roster_id"]
             isOneToOne: false
             referencedRelation: "rosters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "roster_member_selection_roster_cache_id_fkey"
+            columns: ["roster_cache_id"]
+            isOneToOne: false
+            referencedRelation: "guild_roster_cache"
             referencedColumns: ["id"]
           },
           {
@@ -2121,9 +2131,10 @@ export type Database = {
           decided_at: string | null
           decided_by: string | null
           reason_code: Database["public"]["Enums"]["roster_selection_reason_code"] | null
+          roster_cache_id: string | null
           selection_status: Database["public"]["Enums"]["roster_selection_status"]
           updated_at: string
-          user_id: string
+          user_id: string | null
         }[]
       }
       get_user_forum_sanction: {
@@ -2451,5 +2462,4 @@ export const Constants = {
     },
   },
 } as const
-
 
