@@ -954,12 +954,12 @@ const FR_SEMANTIC_MESSAGES: Record<keyof typeof EN_SEMANTIC_MESSAGES, string> = 
   'forum.notifications.topic_reply': '{{username}} a repondu a votre sujet "{{topicTitle}}"',
   'forum.notifications.post_reply': '{{username}} a repondu dans "{{topicTitle}}"',
   'roster_wishes.admin_read_only': 'Mode lecture admin',
-  'roster_wishes.external_wish_saved': 'Voeu externe enregistre',
+  'roster_wishes.external_wish_saved': 'Vœu externe enregistre',
   'roster_wishes.confirm_remove_external': 'Supprimer la ligne externe de {{username}} ?',
-  'roster_wishes.confirm_remove_member': 'Supprimer {{username}} de la guilde et effacer ses voeux ?',
-  'roster_wishes.member_removed': 'Membre retire de la table des voeux',
+  'roster_wishes.confirm_remove_member': 'Supprimer {{username}} de la guilde et effacer ses vœux ?',
+  'roster_wishes.member_removed': 'Membre retire de la table des vœux',
   'roster_wishes.external_edit_unauthorized': 'Edition externe non autorisee',
-  'roster_wishes.external_first_wish_required': 'Le premier voeu est requis',
+  'roster_wishes.external_first_wish_required': 'Le premier vœu est requis',
   'roster_wishes.manual_entry_label': 'Ajout manuel',
   'roster_wishes.manual_entry_help': 'Ce personnage a ete ajoute manuellement. L icone disparaitra une fois le personnage claim via Guildforce.',
   'wishes.move_up': 'Monter',
@@ -2328,4 +2328,3 @@ export const listSemanticKeys = (): ReadonlyArray<SemanticKey> =>
 
 export const getLegacyAutoKeyBySemanticKey = (): Readonly<Partial<Record<SemanticKey, string>>> =>
   LEGACY_AUTO_KEY_BY_SEMANTIC_KEY;
-
