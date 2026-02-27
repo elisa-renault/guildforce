@@ -3,7 +3,7 @@ import { CosmicButton } from '@/components/CosmicButton';
 import { CheckCircle, HelpCircle, XCircle, Pencil, Shield, Heart, Sword, Swords, Crosshair, MessageSquare, Lock, Unlock, MoreVertical, Loader2, Trash2, UserPlus } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getClassById, getLocalizedClassName, getSpecById } from '@/data/wowClasses';
-import { MemberWish, WishChoice, ValidationStatus } from '@/types/guild';
+import { MemberWish, RosterSelectionStatus, WishChoice, ValidationStatus } from '@/types/guild';
 import { WishValidationBadge } from './WishValidationBadge';
 import { cn } from '@/lib/utils';
 import {
@@ -12,6 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface MobileRosterCardProps {
   member: MemberWish;
@@ -25,6 +26,8 @@ interface MobileRosterCardProps {
   lockingMemberId?: string | null;
   onRemoveMember?: (memberId: string) => void;
   deletingMemberId?: string | null;
+  onSelectionStatusChange?: (memberId: string, status: RosterSelectionStatus) => void;
+  updatingSelectionMemberId?: string | null;
 }
 
 const roleConfig: Record<string, { icon: typeof Shield; color: string }> = {
@@ -45,6 +48,8 @@ export const MobileRosterCard = ({
   lockingMemberId = null,
   onRemoveMember,
   deletingMemberId = null,
+  onSelectionStatusChange,
+  updatingSelectionMemberId = null,
 }: MobileRosterCardProps) => {
   const { t, language } = useLanguage();
   const manualEntryLabel = language === 'fr' ? 'Ajout manuel' : 'Manual entry';
@@ -267,12 +272,30 @@ export const MobileRosterCard = ({
 
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <span className="text-[11px] uppercase tracking-wide text-muted-foreground">{t.wishes.rosterDecision.title}</span>
-        <Badge
-          variant="outline"
-          className={cn('text-[10px] px-1.5 py-0', getRosterDecisionBadge(member.selectionStatus).className)}
-        >
-          {getRosterDecisionBadge(member.selectionStatus).label}
-        </Badge>
+        {isGM && onSelectionStatusChange && !member.isExternal ? (
+          <Select
+            value={member.selectionStatus || 'undecided'}
+            onValueChange={(value) => onSelectionStatusChange(member.id, value as RosterSelectionStatus)}
+            disabled={updatingSelectionMemberId === member.id}
+          >
+            <SelectTrigger className="h-7 text-[10px] px-1.5 min-w-[140px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="undecided">{t.wishes.rosterDecision.undecided}</SelectItem>
+              <SelectItem value="selected">{t.wishes.rosterDecision.selected}</SelectItem>
+              <SelectItem value="bench">{t.wishes.rosterDecision.bench}</SelectItem>
+              <SelectItem value="not_selected">{t.wishes.rosterDecision.notSelected}</SelectItem>
+            </SelectContent>
+          </Select>
+        ) : (
+          <Badge
+            variant="outline"
+            className={cn('text-[10px] px-1.5 py-0', getRosterDecisionBadge(member.selectionStatus).className)}
+          >
+            {getRosterDecisionBadge(member.selectionStatus).label}
+          </Badge>
+        )}
       </div>
 
       {/* Wishes list */}
