@@ -315,6 +315,16 @@ export interface Translations {
     memberUnlockedToast: string;
     lockMember: string;
     unlockMember: string;
+    rosterDecision: {
+      title: string;
+      summaryTitle: string;
+      validationDetailsTitle: string;
+      selected: string;
+      bench: string;
+      notSelected: string;
+      undecided: string;
+      hint: string;
+    };
   };
   // Dashboard
   dashboard: {
