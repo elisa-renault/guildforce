@@ -412,7 +412,7 @@ const DOCUMENTATION: DocSection[] = [
   {
     id: 'database',
     titleEn: 'Database Schema',
-    titleFr: 'Schéma de base de données',
+    titleFr: 'Schéma et accès',
     icon: Database,
     color: 'text-slate-400',
     subsections: [
@@ -464,14 +464,14 @@ const DOCUMENTATION: DocSection[] = [
         titleEn: 'Purpose and behavior',
         titleFr: 'But et comportement',
         contentEn: '`guild_rank_labels` lets Guild Masters assign one custom label per numeric guild rank. When present, the custom label replaces the Blizzard rank name everywhere in the UI while all permission checks still rely on `rank_index` only.',
-        contentFr: '`guild_rank_labels` permet aux GM d\'attribuer un label personnalisÃ© Ã  chaque rang numÃ©rique de la guilde. Lorsqu\'il existe, ce label remplace le nom de rang Blizzard partout dans l\'interface, tandis que toutes les permissions continuent de reposer uniquement sur `rank_index`.',
+        contentFr: '`guild_rank_labels` permet aux GM d'attribuer un label personnalisé à chaque rang numérique de la guilde. Lorsqu'il existe, ce label remplace le nom de rang Blizzard partout dans l'interface, tandis que toutes les permissions continuent de reposer uniquement sur `rank_index`.',
         tags: ['guilds', 'settings', 'permissions', 'security'],
       },
       {
         titleEn: 'Schema and access',
-        titleFr: 'SchÃ©ma et accÃ¨s',
+        titleFr: 'Schéma et accès',
         contentEn: 'The table stores (`guild_id`, `rank_index`, `label`) plus audit-friendly metadata (`created_by`, `updated_by`, timestamps). It is readable by guild members for consistent display and writable only by Guild Masters through RLS.',
-        contentFr: 'La table stocke (`guild_id`, `rank_index`, `label`) ainsi que des mÃ©tadonnÃ©es orientÃ©es audit (`created_by`, `updated_by`, horodatages). Elle est lisible par les membres de la guilde pour un affichage cohÃ©rent, et modifiable uniquement par les GM via la RLS.',
+        contentFr: 'La table stocke (`guild_id`, `rank_index`, `label`) ainsi que des métadonnées orientées audit (`created_by`, `updated_by`, horodatages). Elle est lisible par les membres de la guilde pour un affichage cohérent, et modifiable uniquement par les GM via la RLS.',
         tags: ['database', 'guilds', 'security'],
       },
     ],
