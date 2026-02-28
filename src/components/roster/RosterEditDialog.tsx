@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
+import { useGuildRankLabels } from '@/hooks/useGuildRankLabels';
 import { supabase } from '@/integrations/supabase/client';
 import { CosmicButton } from '@/components/CosmicButton';
 import { Input } from '@/components/ui/input';
@@ -40,6 +41,7 @@ export const RosterEditDialog = ({ open, onOpenChange, rosterId, guildId, onSave
   const { t } = useLanguage();
   const rankLabel = resolveSemanticMessage({ key: 'guild.members.rank_label', language: t.lang, translations: t });
   const { toast } = useToast();
+  const { rankLabels } = useGuildRankLabels({ guildId });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formName, setFormName] = useState('');
@@ -52,7 +54,7 @@ export const RosterEditDialog = ({ open, onOpenChange, rosterId, guildId, onSave
     if (open && rosterId) {
       loadRosterData();
     }
-  }, [open, rosterId]);
+  }, [open, rosterId, rankLabels]);
 
   const loadRosterData = async () => {
     setLoading(true);
@@ -127,6 +129,7 @@ export const RosterEditDialog = ({ open, onOpenChange, rosterId, guildId, onSave
                 rankIndex: r.rank_index,
                 rankLabel,
                 guildMasterLabel: t.guild.rank0,
+                customLabel: rankLabels[r.rank_index],
               });
               uniqueRanks.set(r.rank_index, normalizedLabel);
             }
@@ -137,7 +140,7 @@ export const RosterEditDialog = ({ open, onOpenChange, rosterId, guildId, onSave
             .sort((a, b) => a.rank_index - b.rank_index));
         }
       }
-    } catch (error) {
+    } catch {
       // Roster data loading error handled silently
     } finally {
       setLoading(false);
@@ -181,8 +184,12 @@ export const RosterEditDialog = ({ open, onOpenChange, rosterId, guildId, onSave
       toast({ title: t.rosters.rosterUpdated });
       onOpenChange(false);
       onSaved();
-    } catch (error: any) {
-      toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
+    } catch (error: unknown) {
+      toast({
+        title: t.errors.generic,
+        description: error instanceof Error ? error.message : t.errors.generic,
+        variant: 'destructive',
+      });
     } finally {
       setSaving(false);
     }

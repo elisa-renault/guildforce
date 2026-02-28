@@ -16,12 +16,15 @@ const PERMISSION_TYPES: PermissionType[] = [
   'manage_polls',
   'manage_rosters',
   'view_activity_log',
+  'manage_vault',
+  'view_vault_audit',
 ];
 
 export const MyPermissionsCard = ({ guildId, isGM }: MyPermissionsCardProps) => {
   const { t } = useLanguage();
   const { user } = useAuth();
   const [myPermissions, setMyPermissions] = useState<PermissionType[]>([]);
+  const [hasVaultAccess, setHasVaultAccess] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Helper to get permission label and description from translations
@@ -31,8 +34,10 @@ export const MyPermissionsCard = ({ guildId, isGM }: MyPermissionsCardProps) => 
       manage_polls: 'managePolls',
       manage_rosters: 'manageRosters',
       view_activity_log: 'viewActivityLog',
+      manage_vault: 'manageVault',
+      view_vault_audit: 'viewVaultAudit',
     };
-    return (t.permissions as any)[keyMap[type]] || type;
+    return t.permissions[keyMap[type]] || type;
   };
 
   const getPermissionDesc = (type: PermissionType): string => {
@@ -41,8 +46,10 @@ export const MyPermissionsCard = ({ guildId, isGM }: MyPermissionsCardProps) => 
       manage_polls: 'managePollsDesc',
       manage_rosters: 'manageRostersDesc',
       view_activity_log: 'viewActivityLogDesc',
+      manage_vault: 'manageVaultDesc',
+      view_vault_audit: 'viewVaultAuditDesc',
     };
-    return (t.permissions as any)[keyMap[type]] || '';
+    return t.permissions[keyMap[type]] || '';
   };
 
   useEffect(() => {
@@ -53,7 +60,7 @@ export const MyPermissionsCard = ({ guildId, isGM }: MyPermissionsCardProps) => 
       }
 
       try {
-        const permissionChecks = await Promise.all(
+        const [permissionChecks, vaultAccessResult] = await Promise.all([
           PERMISSION_TYPES.map(async (type) => {
             const { data } = await supabase.rpc('has_guild_permission', {
               p_guild_id: guildId,
@@ -61,16 +68,22 @@ export const MyPermissionsCard = ({ guildId, isGM }: MyPermissionsCardProps) => 
               p_permission: type,
             });
             return { type, hasPermission: !!data };
-          })
-        );
+          }),
+          supabase.rpc('has_any_guild_secret_access', {
+            p_guild_id: guildId,
+            p_user_id: user.id,
+          }),
+        ]);
 
         const granted = permissionChecks
           .filter((p) => p.hasPermission)
           .map((p) => p.type);
         
         setMyPermissions(granted);
-      } catch (error) {
+        setHasVaultAccess(Boolean(vaultAccessResult.data));
+      } catch {
         // Permission loading error handled silently
+        setHasVaultAccess(false);
       } finally {
         setLoading(false);
       }
@@ -114,7 +127,7 @@ export const MyPermissionsCard = ({ guildId, isGM }: MyPermissionsCardProps) => 
   }
 
   // No permissions
-  if (myPermissions.length === 0) {
+  if (myPermissions.length === 0 && !hasVaultAccess) {
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-2 mb-4">
@@ -139,7 +152,7 @@ export const MyPermissionsCard = ({ guildId, isGM }: MyPermissionsCardProps) => 
           {t.permissions.myPermissions}
         </h3>
         <Badge variant="secondary" className="text-xs">
-          {myPermissions.length}
+          {myPermissions.length + (hasVaultAccess ? 1 : 0)}
         </Badge>
       </div>
       
@@ -148,6 +161,19 @@ export const MyPermissionsCard = ({ guildId, isGM }: MyPermissionsCardProps) => 
       </p>
       
       <div className="space-y-3">
+        {hasVaultAccess && (
+          <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+            <CheckCircle className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium text-foreground">
+                {t.permissions.vaultAccess}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {t.permissions.vaultAccessDesc}
+              </p>
+            </div>
+          </div>
+        )}
         {PERMISSION_TYPES.map((type) => {
           const hasIt = myPermissions.includes(type);
           if (!hasIt) return null;

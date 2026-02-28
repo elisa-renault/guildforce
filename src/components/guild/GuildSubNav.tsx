@@ -1,11 +1,14 @@
+import { ArrowLeft, BarChart3, LayoutDashboard, LockKeyhole, Settings, Table, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useLanguage } from '@/contexts/LanguageContext';
+
 import { PageContainer } from '@/components/layout/PageContainer';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { supabase } from '@/integrations/supabase/client';
 import { navItemClass } from '@/lib/nav-styles';
-import { LayoutDashboard, Table, BarChart3, Settings, ArrowLeft, Users } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface GuildSubNavProps {
   guild: {
@@ -14,23 +17,31 @@ interface GuildSubNavProps {
     region: string;
     avatar_url?: string | null;
   };
+  guildId?: string | null;
   basePath: string;
   isGM: boolean;
   hasSettingsPermission?: boolean;
-  activeTab: 'overview' | 'roster' | 'polls' | 'settings' | 'members' | 'wishes' | 'dashboard';
+  hasVaultAccess?: boolean;
+  activeTab: 'overview' | 'roster' | 'polls' | 'settings' | 'members' | 'wishes' | 'dashboard' | 'vault';
 }
 
 export const GuildSubNav = ({
   guild,
+  guildId = null,
   basePath,
   isGM,
   hasSettingsPermission = false,
+  hasVaultAccess,
   activeTab,
 }: GuildSubNavProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
+  const userId = user?.id;
   const { t } = useLanguage();
   const [subNavTop, setSubNavTop] = useState<number>(64);
+  const [resolvedSettingsPermission, setResolvedSettingsPermission] = useState(Boolean(hasSettingsPermission));
+  const [resolvedVaultAccess, setResolvedVaultAccess] = useState(Boolean(hasVaultAccess));
 
   useEffect(() => {
     let raf = 0;
@@ -61,7 +72,110 @@ export const GuildSubNav = ({
   }, []);
 
   // Settings is shown if user is GM OR has any settings permission
-  const showSettings = isGM || hasSettingsPermission;
+  const showSettings = isGM || resolvedSettingsPermission;
+  const showVault = isGM || resolvedVaultAccess;
+
+  useEffect(() => {
+    if (typeof hasSettingsPermission === 'boolean' && hasSettingsPermission) {
+      setResolvedSettingsPermission(true);
+      return;
+    }
+
+    if (isGM) {
+      setResolvedSettingsPermission(true);
+      return;
+    }
+
+    if (!guildId || !userId) {
+      setResolvedSettingsPermission(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    Promise.all([
+      supabase.rpc('has_guild_permission', {
+        p_guild_id: guildId,
+        p_permission: 'manage_rosters',
+        p_user_id: userId,
+      }),
+      supabase.rpc('has_guild_permission', {
+        p_guild_id: guildId,
+        p_permission: 'view_activity_log',
+        p_user_id: userId,
+      }),
+      supabase.rpc('has_guild_permission', {
+        p_guild_id: guildId,
+        p_permission: 'manage_vault',
+        p_user_id: userId,
+      }),
+      supabase.rpc('has_guild_permission', {
+        p_guild_id: guildId,
+        p_permission: 'view_vault_audit',
+        p_user_id: userId,
+      }),
+    ])
+      .then(([rostersResult, activityResult, manageVaultResult, viewVaultAuditResult]) => {
+        if (!cancelled) {
+          setResolvedSettingsPermission(
+            Boolean(
+              rostersResult.data ||
+                activityResult.data ||
+                manageVaultResult.data ||
+                viewVaultAuditResult.data,
+            ),
+          );
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setResolvedSettingsPermission(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [guildId, hasSettingsPermission, isGM, userId]);
+
+  useEffect(() => {
+    if (typeof hasVaultAccess === 'boolean') {
+      setResolvedVaultAccess(hasVaultAccess);
+      return;
+    }
+
+    if (isGM) {
+      setResolvedVaultAccess(true);
+      return;
+    }
+
+    if (!guildId || !userId) {
+      setResolvedVaultAccess(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    supabase
+      .rpc('has_any_guild_secret_access', {
+        p_guild_id: guildId,
+        p_user_id: userId,
+      })
+      .then(({ data }) => {
+        if (!cancelled) {
+          setResolvedVaultAccess(Boolean(data));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setResolvedVaultAccess(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [guildId, hasVaultAccess, isGM, userId]);
 
   // Map legacy activeTab values
   const normalizedActiveTab = activeTab === 'dashboard' ? 'overview' : activeTab;
@@ -94,6 +208,13 @@ export const GuildSubNav = ({
       icon: Users,
       path: `${basePath}/members`,
       show: true,
+    },
+    {
+      id: 'vault' as const,
+      label: t.guildNav.vault,
+      icon: LockKeyhole,
+      path: `${basePath}/vault`,
+      show: showVault,
     },
     {
       id: 'settings' as const,

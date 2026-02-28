@@ -1,37 +1,30 @@
-import { useState, useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { GuildSubNav } from '@/components/guild/GuildSubNav';
-import { RosterManager } from '@/components/roster';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { GuildPermissionsEditor, MyPermissionsCard } from '@/components/permissions';
-import { 
-  GuildSettingsSidebar, 
-  GuildProfileSection, 
-  GuildBattleNetSection, 
+import { RosterManager } from '@/components/roster';
+import {
   GuildActivitySection,
-  type SettingsSection 
+  GuildBattleNetSection,
+  GuildProfileSection,
+  GuildSettingsSidebar,
+  type SettingsSection,
 } from '@/components/settings';
-import { Loader2 } from 'lucide-react';
-import { getGuildPath } from '@/lib/guildSlug';
-import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useGuildAccessState, type GuildAccessStateGuild } from '@/hooks/useGuildAccessState';
+import { useGuildRankLabels } from '@/hooks/useGuildRankLabels';
 import { resolveSemanticMessage } from '@/i18n/semantic';
+import { supabase } from '@/integrations/supabase/client';
+import { getVisibleGuildSettingsSections } from '@/lib/guildSettingsSections';
+import { getGuildPath } from '@/lib/guildSlug';
 import { formatRankLabel } from '@/lib/rankLabel';
 
-interface GuildData {
-  id: string;
-  name: string;
-  server: string;
-  region: string;
-  faction: string;
-  avatar_url: string | null;
-  officer_rank_threshold: number;
-}
+type GuildData = GuildAccessStateGuild;
 
 interface AccessRule {
   id: string;
@@ -63,247 +56,249 @@ const GuildSettings = () => {
   const navigate = useNavigate();
   const { regionSlug, serverSlug, guildSlug } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialSection = (searchParams.get('section') as SettingsSection) || 'profile';
+  const requestedSection = searchParams.get('section') as SettingsSection | null;
   const initialRosterId = searchParams.get('roster');
   const { t } = useLanguage();
   const rankLabel = resolveSemanticMessage({ key: 'guild.members.rank_label', language: t.lang, translations: t });
-  const { user, loading: authLoading } = useAuth();
-  const { toast } = useToast();
-  
-  const [loading, setLoading] = useState(true);
-  const [guild, setGuild] = useState<GuildData | null>(null);
-  const [isGM, setIsGM] = useState(false);
-  const [hasManageRosters, setHasManageRosters] = useState(false);
-  const [hasViewActivityLog, setHasViewActivityLog] = useState(false);
+  const {
+    loading,
+    requiresAuth,
+    notFound,
+    guild,
+    isGM,
+    hasManageRosters,
+    hasViewActivityLog,
+    hasManageVault,
+    hasViewVaultAudit,
+    hasVaultAccess,
+    reloadGuildAccess,
+  } = useGuildAccessState({
+    regionSlug,
+    serverSlug,
+    guildSlug,
+  });
+
+  const [displayGuild, setDisplayGuild] = useState<GuildData | null>(null);
+  const [loadingDetails, setLoadingDetails] = useState(true);
   const [officerRank, setOfficerRank] = useState<number>(2);
   const [rosters, setRosters] = useState<Roster[]>([]);
   const [members, setMembers] = useState<GuildMember[]>([]);
   const [ranks, setRanks] = useState<GuildRank[]>([]);
-  const [activeSection, setActiveSection] = useState<SettingsSection>(initialSection);
+  const [activeSection, setActiveSection] = useState<SettingsSection>('profile');
+  const { rankLabels, reload: reloadRankLabels } = useGuildRankLabels({ guildId: displayGuild?.id });
 
-  const loadRostersAndMembers = async (guildId: string) => {
-    // Load rosters with access rules
-    const { data: rostersData } = await supabase
-      .from('rosters')
-      .select('*')
-      .eq('guild_id', guildId)
-      .order('is_default', { ascending: false })
-      .order('created_at');
+  const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
+  const hasSettingsAccess =
+    isGM || hasManageRosters || hasViewActivityLog || hasManageVault || hasViewVaultAudit;
+  const hasVaultPageAccess = isGM || hasVaultAccess;
+  const visibleSections = getVisibleGuildSettingsSections({
+    gm: isGM,
+    rosters: hasManageRosters,
+    activity: hasViewActivityLog || hasManageVault || hasViewVaultAudit,
+  });
 
-    if (rostersData) {
-      const rostersWithRules: Roster[] = await Promise.all(
-        rostersData.map(async (roster) => {
-          const { data: rulesData } = await supabase
-            .from('roster_access_rules')
-            .select('*')
-            .eq('roster_id', roster.id);
+  const loadRostersAndMembers = useCallback(
+    async (guildRecord: GuildData) => {
+      setLoadingDetails(true);
 
-          return {
-            id: roster.id,
-            name: roster.name,
-            description: roster.description,
-            is_default: roster.is_default,
-            access_rules: (rulesData || []).map(r => ({
-              id: r.id,
-              access_type: r.access_type as 'user' | 'rank',
-              user_id: r.user_id ?? undefined,
-              min_rank_index: r.min_rank_index ?? undefined,
-              max_rank_index: r.max_rank_index ?? undefined,
-            })),
-          };
-        })
-      );
-      setRosters(rostersWithRules);
-    }
+      try {
+        const { data: rostersData } = await supabase
+          .from('rosters')
+          .select('*')
+          .eq('guild_id', guildRecord.id)
+          .order('is_default', { ascending: false })
+          .order('created_at');
 
-    // Load guild members with usernames
-    const { data: membersData } = await supabase
-      .from('guild_members')
-      .select('user_id')
-      .eq('guild_id', guildId);
+        if (rostersData) {
+          const rostersWithRules: Roster[] = await Promise.all(
+            rostersData.map(async (roster) => {
+              const { data: rulesData } = await supabase
+                .from('roster_access_rules')
+                .select('*')
+                .eq('roster_id', roster.id);
 
-    if (membersData) {
-      const userIds = membersData.map(m => m.user_id);
-      const { data: profilesData } = await supabase
-        .from('profiles')
-        .select('id, username')
-        .in('id', userIds);
+              return {
+                id: roster.id,
+                name: roster.name,
+                description: roster.description,
+                is_default: roster.is_default,
+                access_rules: (rulesData || []).map((rule) => ({
+                  id: rule.id,
+                  access_type: rule.access_type as 'user' | 'rank',
+                  user_id: rule.user_id ?? undefined,
+                  min_rank_index: rule.min_rank_index ?? undefined,
+                  max_rank_index: rule.max_rank_index ?? undefined,
+                })),
+              };
+            }),
+          );
 
-      const membersWithNames: GuildMember[] = membersData.map(m => ({
-        user_id: m.user_id,
-        username: profilesData?.find(p => p.id === m.user_id)?.username || 'Unknown',
-      }));
-      setMembers(membersWithNames);
-    }
+          setRosters(rostersWithRules);
+        } else {
+          setRosters([]);
+        }
 
-    // Load guild ranks from wow_guild_memberships
-    const { data: guildData } = await supabase
-      .from('guilds')
-      .select('name, server, region')
-      .eq('id', guildId)
-      .single();
+        const { data: membersData } = await supabase
+          .from('guild_members')
+          .select('user_id')
+          .eq('guild_id', guildRecord.id);
 
-    if (guildData) {
-      const { data: ranksData } = await supabase
-        .from('wow_guild_memberships')
-        .select('rank_index, rank_name')
-        .ilike('guild_name', guildData.name)
-        .ilike('guild_realm_slug', guildData.server)
-        .ilike('guild_region', guildData.region);
+        if (membersData && membersData.length > 0) {
+          const userIds = membersData.map((member) => member.user_id);
+          const { data: profilesData } = await supabase
+            .from('profiles')
+            .select('id, username')
+            .in('id', userIds);
 
-      if (ranksData) {
-        const uniqueRanks = new Map<number, string>();
-        ranksData.forEach(r => {
-          if (!uniqueRanks.has(r.rank_index)) {
-            const normalizedLabel = formatRankLabel({
-              rankName: r.rank_name,
-              rankIndex: r.rank_index,
-              rankLabel,
-              guildMasterLabel: t.guild.rank0,
-            });
-            uniqueRanks.set(r.rank_index, normalizedLabel);
-          }
-        });
+          const membersWithNames: GuildMember[] = membersData.map((member) => ({
+            user_id: member.user_id,
+            username: profilesData?.find((profile) => profile.id === member.user_id)?.username || 'Unknown',
+          }));
 
-        const ranksArray: GuildRank[] = Array.from(uniqueRanks.entries())
-          .map(([rank_index, rank_name]) => ({ rank_index, rank_name }))
-          .sort((a, b) => a.rank_index - b.rank_index);
-        
-        setRanks(ranksArray);
+          setMembers(membersWithNames);
+        } else {
+          setMembers([]);
+        }
+
+        const { data: ranksData } = await supabase
+          .from('wow_guild_memberships')
+          .select('rank_index, rank_name')
+          .ilike('guild_name', guildRecord.name)
+          .ilike('guild_realm_slug', guildRecord.server)
+          .ilike('guild_region', guildRecord.region);
+
+        if (ranksData) {
+          const uniqueRanks = new Map<number, string>();
+
+          ranksData.forEach((rank) => {
+            if (!uniqueRanks.has(rank.rank_index)) {
+              const normalizedLabel = formatRankLabel({
+                rankName: rank.rank_name,
+                rankIndex: rank.rank_index,
+                rankLabel,
+                guildMasterLabel: t.guild.rank0,
+                customLabel: rankLabels[rank.rank_index],
+              });
+              uniqueRanks.set(rank.rank_index, normalizedLabel);
+            }
+          });
+
+          const ranksArray: GuildRank[] = Array.from(uniqueRanks.entries())
+            .map(([rank_index, rank_name]) => ({ rank_index, rank_name }))
+            .sort((left, right) => left.rank_index - right.rank_index);
+
+          setRanks(ranksArray);
+        } else {
+          setRanks([]);
+        }
+      } finally {
+        setLoadingDetails(false);
       }
-    }
-  };
+    },
+    [rankLabel, rankLabels, t.guild.rank0],
+  );
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!user) {
-      navigate('/auth');
+    if (!guild) return;
+
+    setLoadingDetails(true);
+    setDisplayGuild(guild);
+    setOfficerRank(guild.officer_rank_threshold ?? 2);
+  }, [guild]);
+
+  useEffect(() => {
+    if (loading) return;
+
+    if (requiresAuth) {
+      navigate('/auth', { replace: true });
       return;
     }
 
-    const loadGuildAndCheckAccess = async () => {
-      const matchedBase = await findGuildByRouteSlugs({
-        supabase,
-        regionSlug: regionSlug || '',
-        serverSlug: serverSlug || '',
-        guildSlug: guildSlug || '',
-      });
-      
-      if (!matchedBase) {
-        navigate('/guilds');
-        return;
-      }
-
-      const { data: matchedGuild } = await supabase
-        .from('guilds')
-        .select('id, name, server, region, faction, avatar_url, officer_rank_threshold')
-        .eq('id', matchedBase.id)
-        .maybeSingle();
-
-      if (!matchedGuild) {
-        navigate('/guilds');
-        return;
-      }
-
-      // Check if user is GM
-      const { data: isOwnerOrGM } = await supabase.rpc('is_guild_owner_or_gm', {
-        _guild_id: matchedGuild.id
-      });
-      
-      const gmStatus = !!isOwnerOrGM;
-      setIsGM(gmStatus);
-
-      // Check delegated permissions
-      const [rostersPermResult, activityPermResult] = await Promise.all([
-        supabase.rpc('has_guild_permission', {
-          p_guild_id: matchedGuild.id,
-          p_permission: 'manage_rosters',
-          p_user_id: user.id,
-        }),
-        supabase.rpc('has_guild_permission', {
-          p_guild_id: matchedGuild.id,
-          p_permission: 'view_activity_log',
-          p_user_id: user.id,
-        }),
-      ]);
-
-      const hasRostersPerm = !!rostersPermResult.data;
-      const hasActivityPerm = !!activityPermResult.data;
-      
-      setHasManageRosters(hasRostersPerm);
-      setHasViewActivityLog(hasActivityPerm);
-
-      // Check if user has ANY access to settings
-      const hasAnyAccess = gmStatus || hasRostersPerm || hasActivityPerm;
-      
-      if (!hasAnyAccess) {
-        navigate(getGuildPath(matchedGuild.region || 'eu', matchedGuild.server, matchedGuild.name));
-        return;
-      }
-
-      setGuild(matchedGuild);
-      setOfficerRank(matchedGuild.officer_rank_threshold ?? 2);
-      
-      // Load rosters, members, and ranks
-      await loadRostersAndMembers(matchedGuild.id);
-      
-      // Determine first accessible section
-      const visibleSections = getVisibleSections(gmStatus, hasRostersPerm, hasActivityPerm);
-      const requestedSection = searchParams.get('section') as SettingsSection;
-      
-      if (requestedSection && visibleSections.includes(requestedSection)) {
-        setActiveSection(requestedSection);
-      } else {
-        setActiveSection(visibleSections[0] || 'profile');
-      }
-      
-      setLoading(false);
-    };
-
-    loadGuildAndCheckAccess();
-  }, [user, authLoading, regionSlug, serverSlug, guildSlug, navigate]);
-
-  const getVisibleSections = (gm: boolean, rosters: boolean, activity: boolean): SettingsSection[] => {
-    const sections: SettingsSection[] = [];
-    
-    if (gm) {
-      sections.push('profile', 'permissions', 'rosters', 'activity', 'battlenet');
-    } else {
-      // Non-GMs with any permission see "My Permissions" first
-      const hasAnyPerm = rosters || activity;
-      if (hasAnyPerm) sections.push('mypermissions');
-      if (rosters) sections.push('rosters');
-      if (activity) sections.push('activity');
+    if (notFound) {
+      navigate('/guilds', { replace: true });
+      return;
     }
-    
-    return sections;
-  };
 
-  const visibleSections = getVisibleSections(isGM, hasManageRosters, hasViewActivityLog);
+    if (!guild) {
+      return;
+    }
+
+    if (requestedSection === 'vault' && hasVaultPageAccess) {
+      navigate(`${basePath}/vault`, { replace: true });
+      return;
+    }
+
+    if (!hasSettingsAccess) {
+      navigate(getGuildPath(guild.region || 'eu', guild.server, guild.name), { replace: true });
+    }
+  }, [
+    basePath,
+    guild,
+    hasSettingsAccess,
+    hasVaultPageAccess,
+    loading,
+    navigate,
+    notFound,
+    requestedSection,
+    requiresAuth,
+  ]);
+
+  useEffect(() => {
+    if (!displayGuild || !hasSettingsAccess) return;
+
+    loadRostersAndMembers(displayGuild);
+  }, [displayGuild, hasSettingsAccess, loadRostersAndMembers]);
+
+  useEffect(() => {
+    if (loading || !displayGuild || !hasSettingsAccess) return;
+    if (requestedSection === 'vault' && hasVaultPageAccess) return;
+
+    const nextSection =
+      requestedSection && requestedSection !== 'vault' && visibleSections.includes(requestedSection)
+        ? requestedSection
+        : visibleSections[0] || 'profile';
+
+    setActiveSection((current) => (current === nextSection ? current : nextSection));
+
+    if (requestedSection !== nextSection) {
+      setSearchParams({ section: nextSection }, { replace: true });
+    }
+  }, [
+    displayGuild,
+    hasSettingsAccess,
+    hasVaultPageAccess,
+    loading,
+    requestedSection,
+    setSearchParams,
+    visibleSections,
+  ]);
 
   const handleSectionChange = (section: SettingsSection) => {
     setActiveSection(section);
-    setSearchParams({ section });
+    setSearchParams({ section }, { replace: true });
   };
 
   const handleResyncComplete = async () => {
-    if (guild) {
-      await loadRostersAndMembers(guild.id);
-      
-      // Reload guild data
-      const { data: updatedGuild } = await supabase
-        .from('guilds')
-        .select('id, name, server, region, faction, avatar_url, officer_rank_threshold')
-        .eq('id', guild.id)
-        .single();
-      
-      if (updatedGuild) {
-        setGuild(updatedGuild);
-      }
+    if (!displayGuild) return;
+
+    await reloadGuildAccess();
+    await loadRostersAndMembers(displayGuild);
+
+    const { data: updatedGuild } = await supabase
+      .from('guilds')
+      .select('id, name, server, region, faction, avatar_url, officer_rank_threshold')
+      .eq('id', displayGuild.id)
+      .single();
+
+    if (updatedGuild) {
+      setDisplayGuild(updatedGuild);
+      setOfficerRank(updatedGuild.officer_rank_threshold ?? 2);
     }
   };
 
-  if (loading) {
+  const pageLoading = loading || (hasSettingsAccess && (!displayGuild || loadingDetails));
+
+  if (pageLoading) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <CosmicBackground />
@@ -312,63 +307,71 @@ const GuildSettings = () => {
     );
   }
 
-  if (!guild) {
+  if (!displayGuild || !hasSettingsAccess) {
     return null;
   }
-
-  const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
 
   const renderSectionContent = () => {
     switch (activeSection) {
       case 'profile':
         return (
-          <GuildProfileSection
-            guild={guild}
-            ranks={ranks}
-            officerRank={officerRank}
-            onOfficerRankChange={setOfficerRank}
-            onGuildUpdate={setGuild}
-          />
+                <GuildProfileSection
+                  guild={displayGuild}
+                  ranks={ranks}
+                  officerRank={officerRank}
+                  isGM={isGM}
+                  rankLabels={rankLabels}
+                  onRankLabelsUpdate={() => {
+                    void reloadRankLabels();
+                  }}
+                  onOfficerRankChange={setOfficerRank}
+                  onGuildUpdate={setDisplayGuild}
+                />
         );
-      
+
       case 'permissions':
         return (
           <GlowCard className="p-6">
-            <GuildPermissionsEditor guildId={guild.id} />
+            <GuildPermissionsEditor guildId={displayGuild.id} />
           </GlowCard>
         );
-      
+
       case 'rosters':
         return (
           <RosterManager
-            guildId={guild.id}
+            guildId={displayGuild.id}
             rosters={rosters}
             members={members}
             ranks={ranks}
-            onRosterChange={() => loadRostersAndMembers(guild.id)}
+            onRosterChange={() => loadRostersAndMembers(displayGuild)}
             initialRosterId={initialRosterId}
           />
         );
-      
+
       case 'activity':
-        return <GuildActivitySection guildId={guild.id} />;
-      
+        return (
+          <GuildActivitySection
+            guildId={displayGuild.id}
+            showVaultAudit={isGM || hasManageVault || hasViewVaultAudit}
+          />
+        );
+
       case 'battlenet':
         return (
           <GuildBattleNetSection
-            guildId={guild.id}
+            guildId={displayGuild.id}
             isOwnerOrGM={isGM}
             onResyncComplete={handleResyncComplete}
           />
         );
-      
+
       case 'mypermissions':
         return (
           <GlowCard className="p-6">
-            <MyPermissionsCard guildId={guild.id} isGM={isGM} />
+            <MyPermissionsCard guildId={displayGuild.id} isGM={isGM} />
           </GlowCard>
         );
-      
+
       default:
         return null;
     }
@@ -378,25 +381,23 @@ const GuildSettings = () => {
     <div className="flex-1 relative pt-16 flex flex-col">
       <CosmicBackground />
 
-      {/* Guild Sub-Navigation */}
       <GuildSubNav
-        guild={guild}
+        guild={displayGuild}
+        guildId={displayGuild.id}
         basePath={basePath}
         isGM={isGM}
-        hasSettingsPermission={isGM || hasManageRosters || hasViewActivityLog}
+        hasSettingsPermission={hasSettingsAccess}
+        hasVaultAccess={hasVaultAccess}
         activeTab="settings"
       />
 
-      {/* Settings Layout */}
       <div className="flex-1 flex flex-col md:flex-row relative z-10 overflow-x-hidden">
-        {/* Sidebar - on mobile it's sticky below GuildSubNav */}
         <GuildSettingsSidebar
           activeSection={activeSection}
           onSectionChange={handleSectionChange}
           visibleSections={visibleSections}
         />
 
-        {/* Main Content */}
         <main className="flex-1 overflow-x-hidden min-w-0">
           <PageContainer width="wide" className="py-3 md:py-6">
             {renderSectionContent()}

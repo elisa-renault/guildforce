@@ -1151,6 +1151,7 @@ const RosterWishes = () => {
       {guild && (
         <GuildSubNav
           guild={guild}
+          guildId={guildId}
           basePath={basePath}
           isGM={isGM}
           hasSettingsPermission={hasSettingsPermission}

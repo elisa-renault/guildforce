@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import log from '@/lib/logger';
+
 import { supabase } from '@/integrations/supabase/client';
+import log from '@/lib/logger';
 
 export type ActionType = 
   | 'wish_validation'
@@ -8,6 +9,7 @@ export type ActionType =
   | 'wish_updated'
   | 'wish_deleted'
   | 'member_joined'
+  | 'member_removed'
   | 'commitment_changed'
   | 'roster_wishes_locked'
   | 'roster_wishes_unlocked'
@@ -16,7 +18,11 @@ export type ActionType =
   | 'roster_created'
   | 'roster_updated'
   | 'roster_deleted'
-  | 'permissions_updated';
+  | 'permissions_updated'
+  | 'vault_secret_created'
+  | 'vault_secret_archived'
+  | 'vault_secret_rotated'
+  | 'vault_access_rules_updated';
 
 export interface ActivityLog {
   id: string;
@@ -41,6 +47,7 @@ export interface ActivityLog {
   roster?: {
     name: string;
   };
+  secret_label?: string;
 }
 
 interface UseActivityLogOptions {
@@ -107,11 +114,16 @@ export const useActivityLog = ({ guildId, limit = 50, actionTypes, page = 1 }: U
       // Fetch related profiles and rosters
       const userIds = new Set<string>();
       const rosterIds = new Set<string>();
+      const secretIds = new Set<string>();
 
       logsData?.forEach(log => {
         if (log.user_id) userIds.add(log.user_id);
         if (log.target_user_id) userIds.add(log.target_user_id);
         if (log.roster_id) rosterIds.add(log.roster_id);
+        const secretId = typeof (log.action_details as Record<string, unknown>)?.secret_id === 'string'
+          ? (log.action_details as Record<string, unknown>).secret_id as string
+          : null;
+        if (secretId) secretIds.add(secretId);
       });
 
       // Fetch profiles
@@ -140,6 +152,18 @@ export const useActivityLog = ({ guildId, limit = 50, actionTypes, page = 1 }: U
         });
       }
 
+      const secretsMap = new Map<string, string>();
+      if (secretIds.size > 0) {
+        const { data: secrets } = await supabase
+          .from('guild_secrets')
+          .select('id, label')
+          .in('id', Array.from(secretIds));
+
+        secrets?.forEach((secret) => {
+          secretsMap.set(secret.id, secret.label);
+        });
+      }
+
       // Combine data
       const enrichedLogs: ActivityLog[] = (logsData || []).map(log => ({
         ...log,
@@ -148,6 +172,13 @@ export const useActivityLog = ({ guildId, limit = 50, actionTypes, page = 1 }: U
         user_profile: log.user_id ? profilesMap.get(log.user_id) : undefined,
         target_user_profile: log.target_user_id ? profilesMap.get(log.target_user_id) : undefined,
         roster: log.roster_id ? rostersMap.get(log.roster_id) : undefined,
+        secret_label:
+          (typeof (log.action_details as Record<string, unknown>)?.secret_label === 'string'
+            ? (log.action_details as Record<string, unknown>).secret_label as string
+            : undefined) ??
+          (typeof (log.action_details as Record<string, unknown>)?.secret_id === 'string'
+            ? secretsMap.get((log.action_details as Record<string, unknown>).secret_id as string)
+            : undefined),
       }));
 
       setLogs(enrichedLogs);

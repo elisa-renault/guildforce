@@ -112,6 +112,7 @@ const GuildPolls = () => {
       {guild && (
         <GuildSubNav
           guild={guild}
+          guildId={guildId}
           basePath={basePath}
           isGM={isGM}
           activeTab="polls"

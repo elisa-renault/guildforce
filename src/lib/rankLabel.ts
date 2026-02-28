@@ -8,14 +8,24 @@ interface FormatRankLabelOptions {
   rankIndex: number;
   rankLabel: string;
   guildMasterLabel?: string;
+  customLabel?: string | null;
 }
+
+export type GuildRankLabelMap = Record<number, string>;
 
 export const formatRankLabel = ({
   rankName,
   rankIndex,
   rankLabel,
   guildMasterLabel,
+  customLabel,
 }: FormatRankLabelOptions): string => {
+  const trimmedCustomLabel = (customLabel ?? '').trim();
+
+  if (trimmedCustomLabel) {
+    return trimmedCustomLabel;
+  }
+
   const trimmed = (rankName ?? '').trim();
 
   if (!trimmed) {

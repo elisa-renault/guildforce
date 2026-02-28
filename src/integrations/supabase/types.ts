@@ -1016,6 +1016,239 @@ export type Database = {
           },
         ]
       }
+      guild_secret_access_rules: {
+        Row: {
+          access_type: string
+          capability: string
+          created_at: string
+          id: string
+          max_rank_index: number | null
+          min_rank_index: number | null
+          secret_id: string
+          user_id: string | null
+        }
+        Insert: {
+          access_type: string
+          capability: string
+          created_at?: string
+          id?: string
+          max_rank_index?: number | null
+          min_rank_index?: number | null
+          secret_id: string
+          user_id?: string | null
+        }
+        Update: {
+          access_type?: string
+          capability?: string
+          created_at?: string
+          id?: string
+          max_rank_index?: number | null
+          min_rank_index?: number | null
+          secret_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_secret_access_rules_secret_id_fkey"
+            columns: ["secret_id"]
+            isOneToOne: false
+            referencedRelation: "guild_secrets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_secret_access_rules_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guild_secret_audit_events: {
+        Row: {
+          action_context: Json
+          action_type: string
+          actor_user_id: string | null
+          created_at: string
+          guild_id: string
+          id: string
+          secret_id: string
+        }
+        Insert: {
+          action_context?: Json
+          action_type: string
+          actor_user_id?: string | null
+          created_at?: string
+          guild_id: string
+          id?: string
+          secret_id: string
+        }
+        Update: {
+          action_context?: Json
+          action_type?: string
+          actor_user_id?: string | null
+          created_at?: string
+          guild_id?: string
+          id?: string
+          secret_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_secret_audit_events_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_secret_audit_events_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_secret_audit_events_secret_id_fkey"
+            columns: ["secret_id"]
+            isOneToOne: false
+            referencedRelation: "guild_secrets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guild_secret_versions: {
+        Row: {
+          created_at: string
+          created_by: string
+          encrypted_payload: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          iv: string
+          key_version: string
+          preview_mask: string
+          secret_id: string
+          version_number: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          encrypted_payload: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          iv: string
+          key_version: string
+          preview_mask: string
+          secret_id: string
+          version_number: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          encrypted_payload?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          iv?: string
+          key_version?: string
+          preview_mask?: string
+          secret_id?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_secret_versions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_secret_versions_secret_id_fkey"
+            columns: ["secret_id"]
+            isOneToOne: false
+            referencedRelation: "guild_secrets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guild_secrets: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          guild_id: string
+          id: string
+          illustration_url: string | null
+          is_archived: boolean
+          label: string
+          login_identifier_hint: string | null
+          requires_reason: boolean
+          secret_kind: string
+          service_name: string
+          service_url: string | null
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          guild_id: string
+          id?: string
+          illustration_url?: string | null
+          is_archived?: boolean
+          label: string
+          login_identifier_hint?: string | null
+          requires_reason?: boolean
+          secret_kind: string
+          service_name: string
+          service_url?: string | null
+          updated_at?: string
+          updated_by: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          guild_id?: string
+          id?: string
+          illustration_url?: string | null
+          is_archived?: boolean
+          label?: string
+          login_identifier_hint?: string | null
+          requires_reason?: boolean
+          secret_kind?: string
+          service_name?: string
+          service_url?: string | null
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_secrets_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_secrets_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_secrets_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guild_poll_questions: {
         Row: {
           allow_other: boolean
@@ -1322,6 +1555,61 @@ export type Database = {
           {
             foreignKeyName: "guild_roster_cache_matched_user_id_fkey"
             columns: ["matched_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guild_rank_labels: {
+        Row: {
+          created_at: string
+          created_by: string
+          guild_id: string
+          id: string
+          label: string
+          rank_index: number
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          guild_id: string
+          id?: string
+          label: string
+          rank_index: number
+          updated_at?: string
+          updated_by: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          guild_id?: string
+          id?: string
+          label?: string
+          rank_index?: number
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_rank_labels_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_rank_labels_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_rank_labels_updated_by_fkey"
+            columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -2033,6 +2321,10 @@ export type Database = {
         Args: { p_poll_id: string; p_user_id: string }
         Returns: boolean
       }
+      can_access_guild_secret: {
+        Args: { p_capability: string; p_secret_id: string; p_user_id: string }
+        Returns: boolean
+      }
       can_view_poll_results: {
         Args: { p_poll_id: string; p_user_id: string }
         Returns: boolean
@@ -2152,6 +2444,10 @@ export type Database = {
         Args: { p_guild_id: string; p_permission: string; p_user_id: string }
         Returns: boolean
       }
+      has_any_guild_secret_access: {
+        Args: { p_guild_id: string; p_user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2189,6 +2485,39 @@ export type Database = {
         Args: never
         Returns: {
           table_name: string
+        }[]
+      }
+      list_guild_secret_audit: {
+        Args: { p_guild_id: string; p_secret_id?: string | null }
+        Returns: {
+          action_context: Json
+          action_type: string
+          actor_user_id: string | null
+          actor_username: string | null
+          created_at: string
+          guild_id: string
+          id: string
+          secret_id: string
+          secret_label: string
+        }[]
+      }
+      list_visible_guild_secrets: {
+        Args: { p_guild_id: string }
+        Returns: {
+          can_audit: boolean
+          can_manage: boolean
+          can_reveal: boolean
+          description: string | null
+          id: string
+          illustration_url: string | null
+          label: string
+          login_identifier_hint: string | null
+          preview_mask: string
+          requires_reason: boolean
+          secret_kind: string
+          service_name: string
+          service_url: string | null
+          updated_at: string
         }[]
       }
       delete_external_member_wish: {

@@ -1,9 +1,9 @@
 {
   "mode": "strict",
-  "scannedFiles": 232,
+  "scannedFiles": 245,
   "totals": {
-    "enAutoKeys": 326,
-    "frAutoKeys": 326,
+    "enAutoKeys": 323,
+    "frAutoKeys": 323,
     "referencedAutoKeys": 0
   },
   "counts": {
@@ -13,7 +13,7 @@
     "missingMappedLegacyKeys": 0,
     "orphanEnKeys": 0,
     "missingDeSections": 0,
-    "deDictionaryMismatches": 1,
+    "deDictionaryMismatches": 2,
     "missingDeSemanticKeys": 0,
     "deSemanticMismatches": 0
   },
@@ -23,18 +23,23 @@
   "missingMappedLegacyKeys": [],
   "orphanEnKeys": [],
   "de": {
-    "leafCount": 862,
+    "leafCount": 925,
     "sectionCount": 24,
     "missingSections": [],
     "dictionaryMismatches": [
       {
-        "key": "legal.privacyPolicy",
-        "expected": "Datenschutzerklaerung",
-        "actual": "Datenschutzerklärung"
+        "key": "permissions.title",
+        "expected": "Berechtigungen",
+        "actual": "Externes Mitglied hinzufügen"
+      },
+      {
+        "key": "notifications.title",
+        "expected": "Benachrichtigungen",
+        "actual": "Externes Mitglied hinzufügen"
       }
     ],
-    "semanticKeyCount": 484,
-    "semanticReferenceKeyCount": 484,
+    "semanticKeyCount": 498,
+    "semanticReferenceKeyCount": 496,
     "missingSemanticKeys": [],
     "semanticMismatches": []
   }

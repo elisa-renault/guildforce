@@ -1,19 +1,3 @@
-import React, { useState } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { useActivityLog, ActionType } from '@/hooks/useActivityLog';
-import { getClassById, getLocalizedClassName, getLocalizedSpecName, getSpecById } from '@/data/wowClasses';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   CheckCircle2,
   XCircle,
@@ -32,7 +16,26 @@ import {
   Shield,
   Lock,
   Unlock,
+  RotateCw,
+  KeyRound,
+  UserMinus,
 } from 'lucide-react';
+import React, { useState } from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getClassById, getLocalizedClassName, getLocalizedSpecName, getSpecById } from '@/data/wowClasses';
+import { useActivityLog, ActionType } from '@/hooks/useActivityLog';
 import { formatDistanceFromNowLocalized, interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { toneBadgeClass } from '@/lib/design-tokens';
@@ -47,6 +50,7 @@ const ACTION_ICONS: Record<ActionType, React.ReactNode> = {
   wish_updated: <Edit3 className="h-4 w-4" />,
   wish_deleted: <Trash2 className="h-4 w-4" />,
   member_joined: <UserPlus className="h-4 w-4" />,
+  member_removed: <UserMinus className="h-4 w-4" />,
   commitment_changed: <UserCog className="h-4 w-4" />,
   roster_wishes_locked: <Lock className="h-4 w-4" />,
   roster_wishes_unlocked: <Unlock className="h-4 w-4" />,
@@ -56,6 +60,10 @@ const ACTION_ICONS: Record<ActionType, React.ReactNode> = {
   roster_updated: <Pencil className="h-4 w-4" />,
   roster_deleted: <Trash2 className="h-4 w-4" />,
   permissions_updated: <Shield className="h-4 w-4" />,
+  vault_secret_created: <KeyRound className="h-4 w-4" />,
+  vault_secret_archived: <Trash2 className="h-4 w-4" />,
+  vault_secret_rotated: <RotateCw className="h-4 w-4" />,
+  vault_access_rules_updated: <Shield className="h-4 w-4" />,
 };
 
 const ACTION_COLORS: Record<ActionType, string> = {
@@ -64,6 +72,7 @@ const ACTION_COLORS: Record<ActionType, string> = {
   wish_updated: toneBadgeClass('warning'),
   wish_deleted: toneBadgeClass('error'),
   member_joined: toneBadgeClass('info'),
+  member_removed: toneBadgeClass('error'),
   commitment_changed: toneBadgeClass('info'),
   roster_wishes_locked: toneBadgeClass('warning'),
   roster_wishes_unlocked: toneBadgeClass('success'),
@@ -73,6 +82,10 @@ const ACTION_COLORS: Record<ActionType, string> = {
   roster_updated: toneBadgeClass('warning'),
   roster_deleted: toneBadgeClass('error'),
   permissions_updated: toneBadgeClass('warning'),
+  vault_secret_created: toneBadgeClass('info'),
+  vault_secret_archived: toneBadgeClass('warning'),
+  vault_secret_rotated: toneBadgeClass('info'),
+  vault_access_rules_updated: toneBadgeClass('warning'),
 };
 
 export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
@@ -123,7 +136,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
       roster_updated: resolveSemanticMessage({ key: 'activity.log.action.roster_updated', language, translations: t }),
       roster_deleted: resolveSemanticMessage({ key: 'activity.log.action.roster_deleted', language, translations: t }),
       permissions_updated: resolveSemanticMessage({ key: 'activity.log.action.permissions_updated', language, translations: t }),
-    } as Record<ActionType, string>,
+    },
     filterLabels: {
       all: resolveSemanticMessage({ key: 'activity.log.filter.all', language, translations: t }),
       wish_created: resolveSemanticMessage({ key: 'activity.log.filter.wish_created', language, translations: t }),
@@ -164,7 +177,12 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
   };
 
   const getActionLabel = (actionType: ActionType): string => {
-    return ui.actionLabels[actionType] || actionType;
+    if (actionType === 'member_removed') return t.activityLog.memberRemoved;
+    if (actionType === 'vault_secret_created') return t.activityLog.vaultSecretCreated;
+    if (actionType === 'vault_secret_archived') return t.activityLog.vaultSecretArchived;
+    if (actionType === 'vault_secret_rotated') return t.activityLog.vaultSecretRotated;
+    if (actionType === 'vault_access_rules_updated') return t.activityLog.vaultAccessUpdated;
+    return ui.actionLabels[actionType as keyof typeof ui.actionLabels] || actionType;
   };
 
   const getValidationStatusLabel = (status: string): string => {
@@ -258,9 +276,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
       case 'wish_updated': {
         const oldClassData = getClassById(details.old_class_id as string);
         const newClassData = getClassById(details.new_class_id as string);
-        const oldSpecIds = (details.old_spec_ids as string[]) || [];
         const newSpecIds = (details.new_spec_ids as string[]) || [];
-        const oldSpecs = oldSpecIds.map(id => getSpecById(id)).filter(Boolean);
         const newSpecs = newSpecIds.map(id => getSpecById(id)).filter(Boolean);
         const classChanged = details.old_class_id !== details.new_class_id;
 
@@ -466,8 +482,11 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
         const changes = details.changes as Record<string, { added: number; removed: number; modified: number }>;
         const totalRules = details.total_rules as number;
         
-        const getPermissionLabel = (type: string) =>
-          ui.permissionLabels[type as keyof typeof ui.permissionLabels] || type;
+        const getPermissionLabel = (type: string) => {
+          if (type === 'manage_vault') return t.permissions.manageVault;
+          if (type === 'view_vault_audit') return t.permissions.viewVaultAudit;
+          return ui.permissionLabels[type as keyof typeof ui.permissionLabels] || type;
+        };
 
         const changedTypes = Object.keys(changes || {});
         
@@ -494,6 +513,38 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
           </div>
         );
       }
+
+      case 'member_removed':
+        return (
+          <div className="flex items-center gap-2">
+            <span className="font-medium">{log.user_profile?.username || ui.system}</span>
+            <span className="text-muted-foreground text-sm">→</span>
+            <span className="font-medium">{log.target_user_profile?.username || ui.unknown}</span>
+          </div>
+        );
+
+      case 'vault_secret_created':
+      case 'vault_secret_archived':
+      case 'vault_secret_rotated':
+      case 'vault_access_rules_updated':
+        return (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-medium">{log.user_profile?.username || ui.system}</span>
+            {log.secret_label ? (
+              <Badge variant="outline">{log.secret_label}</Badge>
+            ) : null}
+            {log.action_type === 'vault_secret_rotated' && typeof details.version_number === 'number' ? (
+              <span className="text-xs text-muted-foreground">
+                {t.activityLog.detailVersion} {details.version_number}
+              </span>
+            ) : null}
+            {log.action_type === 'vault_access_rules_updated' && typeof details.total_rules === 'number' ? (
+              <span className="text-xs text-muted-foreground">
+                {details.total_rules} {ui.rulesLabel}
+              </span>
+            ) : null}
+          </div>
+        );
 
       default:
         return null;

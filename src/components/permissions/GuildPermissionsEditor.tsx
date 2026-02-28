@@ -22,6 +22,8 @@ const PERMISSION_TYPES: { type: PermissionType; isSensitive?: boolean }[] = [
   { type: 'manage_polls' },
   { type: 'manage_rosters' },
   { type: 'view_activity_log' },
+  { type: 'manage_vault', isSensitive: true },
+  { type: 'view_vault_audit', isSensitive: true },
 ];
 
 export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps) => {
@@ -70,15 +72,15 @@ export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps)
   };
 
   const getPermissionLabel = (type: PermissionType): string => {
-    const key = type.replace(/_/g, '') as keyof typeof t.permissions;
-    // Map snake_case to camelCase keys
     const keyMap: Record<PermissionType, keyof typeof t.permissions> = {
       manage_wishes: 'manageWishes',
       manage_polls: 'managePolls',
       manage_rosters: 'manageRosters',
       view_activity_log: 'viewActivityLog',
+      manage_vault: 'manageVault',
+      view_vault_audit: 'viewVaultAudit',
     };
-    return (t.permissions as any)[keyMap[type]] || type;
+    return t.permissions[keyMap[type]] || type;
   };
 
   const getPermissionDesc = (type: PermissionType): string => {
@@ -87,8 +89,10 @@ export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps)
       manage_polls: 'managePollsDesc',
       manage_rosters: 'manageRostersDesc',
       view_activity_log: 'viewActivityLogDesc',
+      manage_vault: 'manageVaultDesc',
+      view_vault_audit: 'viewVaultAuditDesc',
     };
-    return (t.permissions as any)[keyMap[type]] || '';
+    return t.permissions[keyMap[type]] || '';
   };
 
   // Calculate summary stats

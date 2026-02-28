@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Upload, Trash2, Shield, Crown } from 'lucide-react';
 import { interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
+import type { GuildRankLabelMap } from '@/lib/rankLabel';
 import { formatRankLabel } from '@/lib/rankLabel';
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
@@ -32,6 +33,9 @@ interface GuildProfileSectionProps {
   guild: GuildData;
   ranks: GuildRank[];
   officerRank: number;
+  isGM: boolean;
+  rankLabels: GuildRankLabelMap;
+  onRankLabelsUpdate: (labels: GuildRankLabelMap) => void;
   onOfficerRankChange: (rank: number) => void;
   onGuildUpdate: (guild: GuildData) => void;
 }
@@ -238,10 +242,13 @@ export const GuildProfileSection = ({
   guild,
   ranks,
   officerRank,
+  isGM,
+  rankLabels,
+  onRankLabelsUpdate,
   onOfficerRankChange,
   onGuildUpdate,
 }: GuildProfileSectionProps) => {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const { toast } = useToast();
   const getErrorMessage = (error: unknown) =>
     error instanceof Error ? error.message : t.errors.generic;
@@ -250,7 +257,24 @@ export const GuildProfileSection = ({
   const [uploading, setUploading] = useState(false);
   const [removing, setRemoving] = useState(false);
   const [savingOfficerRank, setSavingOfficerRank] = useState(false);
+  const [savingRankLabels, setSavingRankLabels] = useState(false);
   const [localOfficerRank, setLocalOfficerRank] = useState(officerRank);
+  const [rankLabelDrafts, setRankLabelDrafts] = useState<Record<number, string>>({});
+  const rankLabel = resolveSemanticMessage({ key: 'guild.members.rank_label', language: t.lang, translations: t });
+
+  useEffect(() => {
+    setRankLabelDrafts(rankLabels);
+  }, [rankLabels]);
+
+  const getRankName = useCallback((rankIndex: number, rankName?: string | null) => {
+    return formatRankLabel({
+      rankName,
+      rankIndex,
+      rankLabel,
+      guildMasterLabel: t.guild.rank0,
+      customLabel: rankLabels[rankIndex],
+    });
+  }, [rankLabel, rankLabels, t.guild.rank0]);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -379,6 +403,103 @@ export const GuildProfileSection = ({
     }
   };
 
+  const handleRankLabelChange = (rankIndex: number, nextValue: string) => {
+    setRankLabelDrafts((current) => ({
+      ...current,
+      [rankIndex]: nextValue,
+    }));
+  };
+
+  const handleRankLabelReset = (rankIndex: number) => {
+    setRankLabelDrafts((current) => ({
+      ...current,
+      [rankIndex]: '',
+    }));
+  };
+
+  const handleSaveRankLabels = async () => {
+    setSavingRankLabels(true);
+
+    try {
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      if (authError) throw authError;
+      const userId = authData.user?.id;
+      if (!userId) throw new Error(t.errors.generic);
+
+      const nextEntries = ranks
+        .map((rank) => ({
+          rank_index: rank.rank_index,
+          label: (rankLabelDrafts[rank.rank_index] ?? '').trim(),
+        }))
+        .filter((entry) => entry.label.length > 0);
+
+      const nextMap = nextEntries.reduce<GuildRankLabelMap>((acc, entry) => {
+        acc[entry.rank_index] = entry.label;
+        return acc;
+      }, {});
+
+      const deletedRankIndices = Object.keys(rankLabels)
+        .map(Number)
+        .filter((rankIndex) => !(rankIndex in nextMap));
+
+      if (deletedRankIndices.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('guild_rank_labels')
+          .delete()
+          .eq('guild_id', guild.id)
+          .in('rank_index', deletedRankIndices);
+
+        if (deleteError) throw deleteError;
+      }
+
+      const existingRankIndices = new Set(Object.keys(rankLabels).map(Number));
+      const toInsert = nextEntries.filter((entry) => !existingRankIndices.has(entry.rank_index));
+      const toUpdate = nextEntries.filter(
+        (entry) => existingRankIndices.has(entry.rank_index) && rankLabels[entry.rank_index] !== entry.label,
+      );
+
+      if (toInsert.length > 0) {
+        const { error: insertError } = await supabase
+          .from('guild_rank_labels')
+          .insert(
+            toInsert.map((entry) => ({
+              guild_id: guild.id,
+              rank_index: entry.rank_index,
+              label: entry.label,
+              created_by: userId,
+              updated_by: userId,
+            })),
+          );
+
+        if (insertError) throw insertError;
+      }
+
+      for (const entry of toUpdate) {
+        const { error: updateError } = await supabase
+          .from('guild_rank_labels')
+          .update({
+            label: entry.label,
+            updated_by: userId,
+          })
+          .eq('guild_id', guild.id)
+          .eq('rank_index', entry.rank_index);
+
+        if (updateError) throw updateError;
+      }
+
+      onRankLabelsUpdate(nextMap);
+      toast({ title: t.guildSettings.rankLabels.saved });
+    } catch (error: unknown) {
+      toast({
+        title: t.guildSettings.rankLabels.saveError,
+        description: getErrorMessage(error),
+        variant: 'destructive',
+      });
+    } finally {
+      setSavingRankLabels(false);
+    }
+  };
+
   return (
     <div className="space-y-4 md:space-y-6 overflow-x-hidden">
       {/* Avatar + Info Grid */}
@@ -499,12 +620,88 @@ export const GuildProfileSection = ({
                     key={rank.rank_index}
                     className="px-2 py-0.5 rounded-full text-xs bg-primary/20 text-primary border border-primary/30"
                   >
-                    {rank.rank_name}
+                    {getRankName(rank.rank_index, rank.rank_name)}
                   </span>
                 ))}
               </div>
             )}
           </div>
+
+          {isGM && ranks.length > 0 && (
+            <div className="mt-5 border-t border-border/50 pt-5">
+              <div className="mb-3">
+                <h3 className="text-sm font-semibold">{t.guildSettings.rankLabels.title}</h3>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t.guildSettings.rankLabels.description}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="hidden grid-cols-[96px_minmax(0,1fr)_minmax(0,1fr)_88px] gap-3 px-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground md:grid">
+                  <span>{t.guildSettings.rankLabels.currentRank}</span>
+                  <span>{t.guildSettings.rankLabels.blizzardName}</span>
+                  <span>{t.guildSettings.rankLabels.customLabel}</span>
+                  <span />
+                </div>
+
+                {ranks.map((rank) => {
+                  const fallbackLabel = formatRankLabel({
+                    rankName: rank.rank_name,
+                    rankIndex: rank.rank_index,
+                    rankLabel,
+                    guildMasterLabel: t.guild.rank0,
+                  });
+                  const draftValue = rankLabelDrafts[rank.rank_index] ?? '';
+                  const hasCustomValue = draftValue.trim().length > 0;
+
+                  return (
+                    <div
+                      key={rank.rank_index}
+                      className="grid gap-2 rounded-lg border border-border/40 bg-background/20 p-3 md:grid-cols-[96px_minmax(0,1fr)_minmax(0,1fr)_88px] md:items-center md:p-2"
+                    >
+                      <div className="text-sm font-medium">
+                        {interpolateMessage(rankLabel, { index: rank.rank_index })}
+                      </div>
+                      <div className="text-sm text-muted-foreground">{fallbackLabel}</div>
+                      <input
+                        type="text"
+                        value={draftValue}
+                        onChange={(event) => handleRankLabelChange(rank.rank_index, event.target.value)}
+                        placeholder={t.guildSettings.rankLabels.placeholder}
+                        maxLength={60}
+                        className="h-9 rounded-md border border-border/40 bg-background/40 px-3 text-sm outline-none transition-colors focus:border-primary"
+                      />
+                      <CosmicButton
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleRankLabelReset(rank.rank_index)}
+                        disabled={!hasCustomValue}
+                      >
+                        {t.guildSettings.rankLabels.reset}
+                      </CosmicButton>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <p className="mt-3 text-xs text-muted-foreground">
+                {t.guildSettings.rankLabels.emptyFallbackHint}
+              </p>
+
+              <div className="mt-3 flex justify-end">
+                <CosmicButton
+                  type="button"
+                  size="sm"
+                  onClick={handleSaveRankLabels}
+                  disabled={savingRankLabels}
+                  loading={savingRankLabels}
+                >
+                  {savingRankLabels ? t.guildSettings.rankLabels.saving : t.guildSettings.rankLabels.save}
+                </CosmicButton>
+              </div>
+            </div>
+          )}
         </GlowCard>
       </div>
     </div>
