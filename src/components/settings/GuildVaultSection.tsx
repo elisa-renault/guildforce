@@ -244,48 +244,6 @@ export const GuildVaultSection = ({
   }, [guildId, rankLabel, rankLabels, t.guild.rank0]);
 
   useEffect(() => {
-    const manageableSecrets = secrets.filter((secret) => secret.can_manage);
-    if (manageableSecrets.length === 0) return;
-
-    let cancelled = false;
-
-    const preload = async () => {
-      for (const secret of manageableSecrets) {
-        if (cancelled || accessDrafts[secret.id] || loadingAccessRules[secret.id]) continue;
-
-        setLoadingAccessRules((current) => ({ ...current, [secret.id]: true }));
-
-        try {
-          const rules = await loadSecretAccessRules(secret.id);
-          if (!cancelled) {
-            setAccessDrafts((current) => ({
-              ...current,
-              [secret.id]: groupCompactGuildSecretAccessRules(rules),
-            }));
-          }
-        } catch {
-          if (!cancelled) {
-            setAccessDrafts((current) => ({
-              ...current,
-              [secret.id]: createEmptyGuildSecretAccessRulesCompact(),
-            }));
-          }
-        } finally {
-          if (!cancelled) {
-            setLoadingAccessRules((current) => ({ ...current, [secret.id]: false }));
-          }
-        }
-      }
-    };
-
-    void preload();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [accessDrafts, loadSecretAccessRules, loadingAccessRules, secrets]);
-
-  useEffect(() => {
     if (Object.keys(revealedSecrets).length === 0) return;
 
     const timer = window.setInterval(() => {
@@ -296,6 +254,40 @@ export const GuildVaultSection = ({
       window.clearInterval(timer);
     };
   }, [revealedSecrets]);
+
+  const loadAccessDraftForSecret = async (secretId: string) => {
+    if (accessDrafts[secretId]) {
+      return accessDrafts[secretId];
+    }
+
+    setLoadingAccessRules((current) => ({ ...current, [secretId]: true }));
+
+    try {
+      const rules = await Promise.race([
+        loadSecretAccessRules(secretId),
+        new Promise<never>((_, reject) => {
+          window.setTimeout(() => reject(new Error('timeout')), 10_000);
+        }),
+      ]);
+
+      const grouped = groupCompactGuildSecretAccessRules(rules);
+      setAccessDrafts((current) => ({
+        ...current,
+        [secretId]: grouped,
+      }));
+      return grouped;
+    } catch {
+      const fallback = createEmptyGuildSecretAccessRulesCompact();
+      setAccessDrafts((current) => ({
+        ...current,
+        [secretId]: fallback,
+      }));
+      toast.error(vault.feedback.loadAccessError);
+      return fallback;
+    } finally {
+      setLoadingAccessRules((current) => ({ ...current, [secretId]: false }));
+    }
+  };
 
   const updateForm = <K extends keyof CreateFormState>(key: K, value: CreateFormState[K]) => {
     setForm((current) => ({ ...current, [key]: value }));
@@ -382,68 +374,22 @@ export const GuildVaultSection = ({
 
   const openEditDrawer = async (secret: GuildSecretSummary) => {
     setEditingSecret(secret);
+    const nextRules = await loadAccessDraftForSecret(secret.id);
 
-    const nextRules = accessDrafts[secret.id] ?? createEmptyGuildSecretAccessRulesCompact();
-
-    if (!accessDrafts[secret.id] && !loadingAccessRules[secret.id]) {
-      setLoadingAccessRules((current) => ({ ...current, [secret.id]: true }));
-      try {
-        const rules = await loadSecretAccessRules(secret.id);
-        const grouped = groupCompactGuildSecretAccessRules(rules);
-        setAccessDrafts((current) => ({ ...current, [secret.id]: grouped }));
-        setLoadingAccessRules((current) => ({ ...current, [secret.id]: false }));
-        setForm({
-          label: secret.label,
-          serviceUrl: secret.service_url || '',
-          secretKind: secret.secret_kind,
-          credentialUsername:
-            revealedSecrets[secret.id] && 'password' in revealedSecrets[secret.id].payload
-              ? revealedSecrets[secret.id].payload.username
-              : '',
-          credentialPassword: '',
-          genericValue: '',
-          recoveryCodes: '',
-          requiresReason: secret.requires_reason,
-          accessRules: grouped,
-        });
-      } catch {
-        setLoadingAccessRules((current) => ({ ...current, [secret.id]: false }));
-        setAccessDrafts((current) => ({
-          ...current,
-          [secret.id]: createEmptyGuildSecretAccessRulesCompact(),
-        }));
-        setForm({
-          label: secret.label,
-          serviceUrl: secret.service_url || '',
-          secretKind: secret.secret_kind,
-          credentialUsername:
-            revealedSecrets[secret.id] && 'password' in revealedSecrets[secret.id].payload
-              ? revealedSecrets[secret.id].payload.username
-              : '',
-          credentialPassword: '',
-          genericValue: '',
-          recoveryCodes: '',
-          requiresReason: secret.requires_reason,
-          accessRules: createEmptyGuildSecretAccessRulesCompact(),
-        });
-        toast.error(vault.feedback.loadAccessError);
-      }
-    } else {
-      setForm({
-        label: secret.label,
-        serviceUrl: secret.service_url || '',
-        secretKind: secret.secret_kind,
-        credentialUsername:
-          revealedSecrets[secret.id] && 'password' in revealedSecrets[secret.id].payload
-            ? revealedSecrets[secret.id].payload.username
-            : '',
-        credentialPassword: '',
-        genericValue: '',
-        recoveryCodes: '',
-        requiresReason: secret.requires_reason,
-        accessRules: nextRules,
-      });
-    }
+    setForm({
+      label: secret.label,
+      serviceUrl: secret.service_url || '',
+      secretKind: secret.secret_kind,
+      credentialUsername:
+        revealedSecrets[secret.id] && 'password' in revealedSecrets[secret.id].payload
+          ? revealedSecrets[secret.id].payload.username
+          : '',
+      credentialPassword: '',
+      genericValue: '',
+      recoveryCodes: '',
+      requiresReason: secret.requires_reason,
+      accessRules: nextRules,
+    });
 
     setIllustrationFile(null);
     setIllustrationPreviewUrl(secret.illustration_url);
@@ -628,24 +574,9 @@ export const GuildVaultSection = ({
     const nextOpen = !accessEditorOpen[secretId];
     setAccessEditorOpen((current) => ({ ...current, [secretId]: nextOpen }));
 
-    if (!nextOpen || accessDrafts[secretId] || loadingAccessRules[secretId]) return;
+    if (!nextOpen || loadingAccessRules[secretId]) return;
 
-    setLoadingAccessRules((current) => ({ ...current, [secretId]: true }));
-    try {
-      const rules = await loadSecretAccessRules(secretId);
-      setAccessDrafts((current) => ({
-        ...current,
-        [secretId]: groupCompactGuildSecretAccessRules(rules),
-      }));
-    } catch {
-      setAccessDrafts((current) => ({
-        ...current,
-        [secretId]: createEmptyGuildSecretAccessRulesCompact(),
-      }));
-      toast.error(vault.feedback.loadAccessError);
-    } finally {
-      setLoadingAccessRules((current) => ({ ...current, [secretId]: false }));
-    }
+    await loadAccessDraftForSecret(secretId);
   };
 
   const handleAccessDraftChange = (secretId: string, nextValue: GuildSecretAccessRulesCompact) => {
