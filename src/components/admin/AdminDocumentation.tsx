@@ -464,7 +464,7 @@ const DOCUMENTATION: DocSection[] = [
         titleEn: 'Purpose and behavior',
         titleFr: 'But et comportement',
         contentEn: '`guild_rank_labels` lets Guild Masters assign one custom label per numeric guild rank. When present, the custom label replaces the Blizzard rank name everywhere in the UI while all permission checks still rely on `rank_index` only.',
-        contentFr: '`guild_rank_labels` permet aux GM d'attribuer un label personnalisé à chaque rang numérique de la guilde. Lorsqu'il existe, ce label remplace le nom de rang Blizzard partout dans l'interface, tandis que toutes les permissions continuent de reposer uniquement sur `rank_index`.',
+        contentFr: '`guild_rank_labels` permet aux GM d\'attribuer un label personnalisé à chaque rang numérique de la guilde. Lorsqu\'il existe, ce label remplace le nom de rang Blizzard partout dans l\'interface, tandis que toutes les permissions continuent de reposer uniquement sur `rank_index`.',
         tags: ['guilds', 'settings', 'permissions', 'security'],
       },
       {
