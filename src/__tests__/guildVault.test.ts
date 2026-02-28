@@ -176,7 +176,7 @@ describe('guild vault helpers', () => {
 
     expect(summarizeCompactAccessRules(compact)).toEqual({
       access: ['Access: Ranks 0-2, 5', 'Access: Members 2'],
-      manage: ['Manage: Global admins only'],
+      manage: ['Manage: GM and guild-level permissions only'],
     });
 
     expect(

@@ -172,7 +172,7 @@ export const translationsRu: Translations = createLocaleTranslations(translation
       byUser: 'Участники',
       addUserRule: 'Добавить',
       selectUser: 'Выберите участника',
-      empty: 'Только ГМ и глобальные администраторы',
+      empty: 'Только ГМ и глобальные права гильдии',
       summaryAccess: 'Доступ',
       summaryManage: 'Управление',
       summaryRanks: 'Ранги',
