@@ -67,6 +67,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "guildOverview": "Gilden\u00fcbersicht",
     "guildRoster": "Aufstellung",
     "guildWishes": "W\u00fcnsche",
+    "guildVault": "Gildentresor",
     "guildSettings": "Gilden-Einstellungen",
     "guildMemberWishes": "Mitglieder-W\u00fcnsche",
     "guildPolls": "Umfragen",
@@ -76,6 +77,107 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "guildPollResults": "Umfrage-Ergebnisse",
     "guildMembers": "Mitglieder",
     "notFound": "Seite nicht gefunden"
+  },
+  "guildVault": {
+    "title": "Gildentresor",
+    "subtitle": "Geteilte Gilden-Zugangsdaten und Geheimnisse. Nutze den Tresor, um Zugangsdaten, Tokens oder Notizen sicher zu teilen, mit Zugriffssteuerung nach Rang oder Mitglied.",
+    "empty": "Aktuell sind keine Geheimnisse für dich sichtbar.",
+    "addSecret": "Geheimnis hinzufügen",
+    "create": {
+      "title": "Geheimnis erstellen",
+      "description": "Füge ein geteiltes Konto, Token oder Wiederherstellungspaket hinzu, ohne die aktuelle Liste aus dem Blick zu verlieren.",
+      "submit": "Geheimnis erstellen",
+      "submitting": "Wird erstellt...",
+      "cancel": "Abbrechen"
+    },
+    "form": {
+      "label": "Name",
+      "url": "URL (optional)",
+      "urlHint": "Lass dieses Feld leer, wenn das Geheimnis nicht zu einer Website gehört.",
+      "image": "Bild (optional)",
+      "imageHint": "Füge eine kleine visuelle Markierung hinzu, um das Geheimnis schneller zu erkennen.",
+      "imageAdd": "Bild wählen",
+      "imageRemove": "Bild entfernen",
+      "imageAlt": "Illustration des Geheimnisses",
+      "kind": "Typ",
+      "username": "Benutzername",
+      "password": "Passwort",
+      "token": "Token",
+      "value": "Wert",
+      "recoveryCodes": "Codes (einer pro Zeile)",
+      "requiresReason": "Einen Grund vor dem Anzeigen oder Kopieren verlangen"
+    },
+    "types": {
+      "credential": "Zugangsdaten",
+      "token": "Token",
+      "note": "Notiz",
+      "recoveryCode": "Wiederherstellungscodes"
+    },
+    "actions": {
+      "reveal": "Anzeigen",
+      "copy": "Kopieren",
+      "rotate": "Erneuern",
+      "archive": "Archivieren",
+      "openLink": "Link öffnen",
+      "editSecret": "Geheimnis bearbeiten",
+      "more": "Mehr",
+      "editAccess": "Zugriff verwalten",
+      "hideAccess": "Zugriff ausblenden",
+      "saveAccess": "Zugriff speichern",
+      "savingAccess": "Speichert...",
+      "copyUsername": "Benutzernamen kopieren",
+      "copyPassword": "Passwort kopieren",
+      "copyValue": "Angezeigten Wert kopieren"
+    },
+    "state": {
+      "revealed": "Angezeigt",
+      "copied": "In die Zwischenablage kopiert",
+      "updated": "Aktualisiert",
+      "expiresIn": "Läuft ab in",
+      "manageBadge": "Verwalten",
+      "revealBadge": "Anzeigen"
+    },
+    "feedback": {
+      "createSuccess": "Geheimnis erstellt",
+      "createError": "Geheimnis konnte nicht erstellt werden",
+      "updateSuccess": "Geheimnis aktualisiert",
+      "updateError": "Geheimnis konnte nicht aktualisiert werden",
+      "actionError": "Tresor-Aktion fehlgeschlagen",
+      "accessSaved": "Zugriffsregeln gespeichert",
+      "accessError": "Zugriffsregeln konnten nicht gespeichert werden",
+      "loadingAccess": "Zugriffsregeln werden geladen...",
+      "loadAccessError": "Zugriffsregeln konnten nicht geladen werden",
+      "archived": "Geheimnis archiviert",
+      "rotated": "Geheimnis erneuert",
+      "imageUploadError": "Illustration konnte nicht hochgeladen werden"
+    },
+    "confirm": {
+      "archive": "Dieses Geheimnis archivieren? Es wird aus der Standardliste entfernt."
+    },
+    "prompts": {
+      "reason": "Grund für den Zugriff auf dieses Geheimnis",
+      "rotateValue": "Neuen Geheimniswert einfügen",
+      "rotateCodes": "Neue Wiederherstellungscodes einfügen, einer pro Zeile"
+    },
+    "access": {
+      "title": "Berechtigungen",
+      "accessTitle": "Wer dieses Geheimnis sehen und nutzen darf",
+      "accessHint": "Dieselben Personen sehen den Eintrag und können ihn anzeigen oder kopieren.",
+      "manageTitle": "Wer verwalten und Audit sehen darf",
+      "manageHint": "Dieselben Personen können erneuern, archivieren, Zugriffe ändern und das Audit sehen.",
+      "byRank": "Nach Rang",
+      "officerRanks": "Offiziere",
+      "memberRanks": "Mitglieder",
+      "noRanks": "Noch keine Gildenränge geladen",
+      "byUser": "Mitglieder",
+      "addUserRule": "Hinzufügen",
+      "selectUser": "Mitglied auswählen",
+      "empty": "Nur GM und globale Admins",
+      "summaryAccess": "Zugriff",
+      "summaryManage": "Verwaltung",
+      "summaryRanks": "Ränge",
+      "summaryMembers": "Mitglieder"
+    }
   },
   "battlenet": {
     "connect": "Mein Battle.net-Konto verbinden",
@@ -442,7 +544,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     }
   },
   "guildSettings": {
-    "title": "Externes Mitglied hinzuf\u00fcgen",
+    "title": "Aktivitätsprotokoll",
     "avatar": "Gilden-Avatar",
     "uploadAvatar": "Hochladen",
     "removeAvatar": "Entfernen",
@@ -460,7 +562,21 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "resyncError": "Die Synchronisierung ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
     "resyncTokenExpired": "Battle.net Sitzung abgelaufen. Bitte verkn\u00fcpfen Sie Ihr Battle.net-Konto erneut mit Ihrem Profil.",
     "syncing": "Synchronisierung...",
-    "officerRankUpdated": "Offiziersrang aktualisiert"
+    "officerRankUpdated": "Offiziersrang aktualisiert",
+    "rankLabels": {
+      "title": "Rangbezeichnungen",
+      "description": "Legen Sie gildeninterne Bezeichnungen fest, die die Blizzard-Rangnamen in Guildforce ersetzen.",
+      "currentRank": "Rang",
+      "blizzardName": "Aktueller Name",
+      "customLabel": "Eigene Bezeichnung",
+      "placeholder": "Leer lassen, um die Standardbezeichnung zu verwenden",
+      "save": "Bezeichnungen speichern",
+      "saving": "Speichern...",
+      "saved": "Rangbezeichnungen gespeichert",
+      "saveError": "Rangbezeichnungen konnten nicht gespeichert werden",
+      "reset": "Zurücksetzen",
+      "emptyFallbackHint": "Lassen Sie ein Feld leer, um den Blizzard-/Standardnamen beizubehalten."
+    }
   },
   "rosters": {
     "title": "Externes Mitglied hinzuf\u00fcgen",
@@ -609,7 +725,23 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "joinedGuild": "Gilde beigetreten",
     "newRoster": "Neues Roster",
     "updated": "Aktualisiert",
-    "deleted": "Gel\u00f6scht"
+    "deleted": "Gel\u00f6scht",
+    "by": "Von",
+    "when": "Wann",
+    "user": "Benutzer",
+    "action": "Aktion",
+    "secret": "Geheimnis",
+    "details": "Details",
+    "vaultAuditTitle": "Tresor-Audit",
+    "vaultAuditEmpty": "Keine Tresor-Audit-Ereignisse sind für dich sichtbar.",
+    "detailReasonGiven": "Grund angegeben",
+    "detailSurface": "Oberfläche",
+    "detailVersion": "Version",
+    "vaultSecretCreated": "Geheimnis erstellt",
+    "vaultSecretArchived": "Geheimnis archiviert",
+    "vaultSecretRotated": "Geheimnis erneuert",
+    "vaultAccessUpdated": "Tresor-Zugriff aktualisiert",
+    "memberRemoved": "Mitglied entfernt"
   },
   "permissions": {
     "title": "Berechtigungen",
@@ -626,6 +758,10 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "manageRostersDesc": "Erstellen und konfigurieren Sie Dienstpl\u00e4ne",
     "viewActivityLog": "Aktivit\u00e4tsprotokoll anzeigen",
     "viewActivityLogDesc": "Greifen Sie auf den Aktivit\u00e4tsverlauf der Gilde zu",
+    "manageVault": "Tresor verwalten",
+    "manageVaultDesc": "Gildengeheimnisse erstellen, rotieren, archivieren und steuern",
+    "viewVaultAudit": "Tresor-Audit anzeigen",
+    "viewVaultAuditDesc": "Zugriffe und Verwaltungsereignisse für Gildengeheimnisse einsehen",
     "manageMembers": "Mitglieder verwalten",
     "manageMembersDesc": "Bearbeiten Sie den Verpflichtungsstatus der Mitglieder",
     "delegated": "delegiert",
@@ -638,6 +774,8 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "guildMasterDesc": "Du hast Zugriff auf alle Gildenverwaltungsfunktionen.",
     "noPermissions": "Ihnen werden vom GM keine besonderen Berechtigungen gew\u00e4hrt.",
     "grantedByGm": "Diese Berechtigungen wurden Ihnen von der Gilde GM erteilt.",
+    "vaultAccess": "Gilden-Tresorzugriff",
+    "vaultAccessDesc": "Du kannst mindestens ein mit dir geteiltes Gildengeheimnis sehen.",
     "officers": "Offiziere",
     "allMembers": "Alle Mitglieder",
     "custom": "Brauch...",
@@ -659,6 +797,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "welcome": "Willkommen",
     "myStatus": "Mein Status",
     "guildOverview": "Gilden\u00fcbersicht",
+    "vault": "Tresor",
     "quickAccess": "Schnellzugriff",
     "wishesTable": "Wunschliste",
     "members": "Mitglieder",

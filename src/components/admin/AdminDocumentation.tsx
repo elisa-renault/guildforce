@@ -165,9 +165,16 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Delegated guild permissions',
         titleFr: 'Permissions de guilde déléguées',
-        contentEn: '`guild_permissions` delegates key actions (`manage_wishes`, `manage_polls`, `manage_rosters`, `view_activity_log`) with `rank` and `user` rules. GM users always keep implicit full control.',
-        contentFr: '`guild_permissions` délègue les actions clés (`manage_wishes`, `manage_polls`, `manage_rosters`, `view_activity_log`) avec des règles `rank` et `user`. Les GM gardent toujours un contrôle implicite complet.',
+        contentEn: '`guild_permissions` delegates key actions (`manage_wishes`, `manage_polls`, `manage_rosters`, `view_activity_log`, `manage_vault`, `view_vault_audit`) with `rank` and `user` rules. GM users always keep implicit full control.',
+        contentFr: '`guild_permissions` délègue les actions clés (`manage_wishes`, `manage_polls`, `manage_rosters`, `view_activity_log`, `manage_vault`, `view_vault_audit`) avec des règles `rank` et `user`. Les GM gardent toujours un contrôle implicite complet.',
         tags: ['guilds', 'permissions'],
+      },
+      {
+        titleEn: 'Guild Vault',
+        titleFr: 'Coffre de guilde',
+        contentEn: '`guild_secrets` provides a guild-scoped vault for shared operational credentials, API tokens, secure notes, and recovery codes. It is exposed as a first-class guild workspace for authorized members, separate from admin settings. Secrets are stored as encrypted versions and exposed only through server-validated reveal/copy flows. Access is split between global guild permissions (`manage_vault`, `view_vault_audit`) and per-secret capability rules (`metadata`, `reveal`, `manage`, `audit`). Secret cards can also carry an optional `illustration_url`, stored as a public storage asset while the secret value itself remains encrypted.',
+        contentFr: '`guild_secrets` fournit un coffre de guilde pour les identifiants partagés, tokens API, notes sécurisées et codes de secours. Il est exposé comme un espace principal de guilde pour les membres autorisés, distinct des réglages d’administration. Les secrets sont stockés sous forme de versions chiffrées et ne sont exposés qu\'au travers de flux reveal/copy validés côté serveur. L\'accès combine des permissions globales de guilde (`manage_vault`, `view_vault_audit`) et des règles fines par secret (`metadata`, `reveal`, `manage`, `audit`). Les cartes de secret peuvent aussi porter une `illustration_url` optionnelle, stockée comme asset public, tandis que la valeur du secret reste chiffrée.',
+        tags: ['guilds', 'vault', 'security', 'permissions'],
       },
     ],
   },
@@ -368,9 +375,16 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Helper RPC functions',
         titleFr: 'Fonctions RPC utilitaires',
-        contentEn: 'Core helpers include:\n- `has_role`, `has_guild_permission`, `has_roster_access`\n- `is_guild_member`, `is_guild_gm`\n- `are_wishes_locked`, `can_edit_wishes`\n- `can_respond_to_poll`, `can_view_poll_results`\n- `is_user_forum_sanctioned`\n- `get_roster_member_selection` (manager-only decision comments)\nUse these functions instead of duplicating permission logic in frontend code.',
-        contentFr: 'Les helpers principaux incluent :\n- `has_role`, `has_guild_permission`, `has_roster_access`\n- `is_guild_member`, `is_guild_gm`\n- `are_wishes_locked`, `can_edit_wishes`\n- `can_respond_to_poll`, `can_view_poll_results`\n- `is_user_forum_sanctioned`\n- `get_roster_member_selection` (commentaires de décision visibles seulement pour les gérants)\nUtiliser ces fonctions plutôt que de dupliquer la logique de permissions côté frontend.',
+        contentEn: 'Core helpers include:\n- `has_role`, `has_guild_permission`, `has_roster_access`\n- `is_guild_member`, `is_guild_gm`\n- `are_wishes_locked`, `can_edit_wishes`\n- `can_respond_to_poll`, `can_view_poll_results`\n- `has_any_guild_secret_access`, `can_access_guild_secret`\n- `list_visible_guild_secrets`, `list_guild_secret_audit`\n- `is_user_forum_sanctioned`\n- `get_roster_member_selection` (manager-only decision comments)\nUse these functions instead of duplicating permission logic in frontend code.',
+        contentFr: 'Les helpers principaux incluent :\n- `has_role`, `has_guild_permission`, `has_roster_access`\n- `is_guild_member`, `is_guild_gm`\n- `are_wishes_locked`, `can_edit_wishes`\n- `can_respond_to_poll`, `can_view_poll_results`\n- `has_any_guild_secret_access`, `can_access_guild_secret`\n- `list_visible_guild_secrets`, `list_guild_secret_audit`\n- `is_user_forum_sanctioned`\n- `get_roster_member_selection` (commentaires de décision visibles seulement pour les gérants)\nUtiliser ces fonctions plutôt que de dupliquer la logique de permissions côté frontend.',
         tags: ['security', 'rpc', 'permissions'],
+      },
+      {
+        titleEn: 'Secret storage and audit',
+        titleFr: 'Stockage des secrets et audit',
+        contentEn: 'Guild vault payloads are never stored in plaintext in client-readable tables. `guild_secret_versions` is backend-only and holds encrypted payloads (`AES-GCM`) plus masked previews, while `guild_secret_audit_events` captures create/reveal/copy/rotate/archive/denied-access events without logging secret values. The `list_guild_secret_audit` helper resolves actor usernames for settings-side review. The `guild-vault` edge function performs JWT validation, permission checks, encryption/decryption, and audit writes. Optional secret illustrations live in the `guild-vault-images` storage bucket and are governed by GM / `manage_vault` storage policies.',
+        contentFr: 'Les payloads du coffre de guilde ne sont jamais stockés en clair dans des tables lisibles côté client. `guild_secret_versions` reste réservé au backend et contient les valeurs chiffrées (`AES-GCM`) ainsi que des aperçus masqués, tandis que `guild_secret_audit_events` enregistre les événements create/reveal/copy/rotate/archive/access_denied sans journaliser les valeurs secrètes. Le helper `list_guild_secret_audit` résout désormais les noms d\'utilisateur des acteurs pour la revue côté settings. L\'edge function `guild-vault` assure la validation JWT, les contrôles d\'accès, le chiffrement/déchiffrement et l\'écriture de l\'audit. Les illustrations optionnelles des secrets vivent dans le bucket `guild-vault-images` avec des policies Storage réservées aux GM / `manage_vault`.',
+        tags: ['security', 'vault', 'audit', 'encryption'],
       },
       {
         titleEn: 'Admin analytics RPC guardrails',
@@ -412,8 +426,8 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Feature tables',
         titleFr: 'Tables de fonctionnalités',
-        contentEn: '- Roster/wishes: `rosters` (wishes_locked, wishes_lock_at), `roster_access_rules`, `class_wishes`, `external_member_wishes`, `roster_member_selection`\n- Permissions/activity: `guild_permissions`, `guild_activity_logs`\n- Polls: `guild_polls`, `guild_poll_sections`, `guild_poll_questions`, `guild_poll_responses`, `poll_respondent_rules`, `poll_results_access_rules`\n- Product analytics events: `product_events` (+ RPC `track_product_event`)\n- Composition metadata: `raid_effects`, `wow_spells`',
-        contentFr: '- Rosters/vœux : `rosters` (wishes_locked, wishes_lock_at), `roster_access_rules`, `class_wishes`, `external_member_wishes`, `roster_member_selection`\n- Permissions/activité : `guild_permissions`, `guild_activity_logs`\n- Sondages : `guild_polls`, `guild_poll_sections`, `guild_poll_questions`, `guild_poll_responses`, `poll_respondent_rules`, `poll_results_access_rules`\n- Événements analytics produit : `product_events` (+ RPC `track_product_event`)\n- Métadonnées de composition : `raid_effects`, `wow_spells`',
+        contentEn: '- Roster/wishes: `rosters` (wishes_locked, wishes_lock_at), `roster_access_rules`, `class_wishes`, `external_member_wishes`, `roster_member_selection`\n- Permissions/activity: `guild_permissions`, `guild_activity_logs`\n- Guild vault: `guild_secrets`, `guild_secret_versions`, `guild_secret_access_rules`, `guild_secret_audit_events`\n- Polls: `guild_polls`, `guild_poll_sections`, `guild_poll_questions`, `guild_poll_responses`, `poll_respondent_rules`, `poll_results_access_rules`\n- Product analytics events: `product_events` (+ RPC `track_product_event`)\n- Composition metadata: `raid_effects`, `wow_spells`',
+        contentFr: '- Rosters/vœux : `rosters` (wishes_locked, wishes_lock_at), `roster_access_rules`, `class_wishes`, `external_member_wishes`, `roster_member_selection`\n- Permissions/activité : `guild_permissions`, `guild_activity_logs`\n- Coffre de guilde : `guild_secrets`, `guild_secret_versions`, `guild_secret_access_rules`, `guild_secret_audit_events`\n- Sondages : `guild_polls`, `guild_poll_sections`, `guild_poll_questions`, `guild_poll_responses`, `poll_respondent_rules`, `poll_results_access_rules`\n- Événements analytics produit : `product_events` (+ RPC `track_product_event`)\n- Métadonnées de composition : `raid_effects`, `wow_spells`',
         tags: ['database', 'features'],
       },
       {
@@ -436,6 +450,29 @@ const DOCUMENTATION: DocSection[] = [
         contentEn: 'Admin metrics are served by `get_admin_dashboard_stats()` (snapshot KPIs) and `get_admin_dashboard_timeseries(p_days)` (daily UTC trend points, bounded 14-180 days). Formula highlights: DAU/WAU/MAU rolling windows from core actions, WAU/MAU engagement %, activation 7D by signup-day cohort, active guilds 30D, open critical backlog (`pending_reports + open_bugs + pending_deletions`), and daily incident creation volume (`created_reports + created_bugs + created_deletions`). Keep dashboard labels/tooltips aligned with these formulas.',
         contentFr: 'Les métriques admin sont exposées via `get_admin_dashboard_stats()` (KPI snapshot) et `get_admin_dashboard_timeseries(p_days)` (points de tendance quotidiens UTC, bornés entre 14 et 180 jours). Formules clés : fenêtres glissantes DAU/WAU/MAU basées sur les actions cœur, engagement WAU/MAU %, activation 7j par cohorte de jour d\'inscription, guildes actives 30j, backlog critique ouvert (`pending_reports + open_bugs + pending_deletions`) et volume quotidien d’incidents créés (`created_reports + created_bugs + created_deletions`). Maintenir les labels/tooltips dashboard alignés avec ces formules.',
         tags: ['database', 'analytics', 'admin'],
+      },
+    ],
+  },
+  {
+    id: 'guild-rank-labels',
+    titleEn: 'Guild Rank Labels',
+    titleFr: 'Labels de rangs',
+    icon: Crown,
+    color: 'text-primary',
+    subsections: [
+      {
+        titleEn: 'Purpose and behavior',
+        titleFr: 'But et comportement',
+        contentEn: '`guild_rank_labels` lets Guild Masters assign one custom label per numeric guild rank. When present, the custom label replaces the Blizzard rank name everywhere in the UI while all permission checks still rely on `rank_index` only.',
+        contentFr: '`guild_rank_labels` permet aux GM d\'attribuer un label personnalisÃ© Ã  chaque rang numÃ©rique de la guilde. Lorsqu\'il existe, ce label remplace le nom de rang Blizzard partout dans l\'interface, tandis que toutes les permissions continuent de reposer uniquement sur `rank_index`.',
+        tags: ['guilds', 'settings', 'permissions', 'security'],
+      },
+      {
+        titleEn: 'Schema and access',
+        titleFr: 'SchÃ©ma et accÃ¨s',
+        contentEn: 'The table stores (`guild_id`, `rank_index`, `label`) plus audit-friendly metadata (`created_by`, `updated_by`, timestamps). It is readable by guild members for consistent display and writable only by Guild Masters through RLS.',
+        contentFr: 'La table stocke (`guild_id`, `rank_index`, `label`) ainsi que des mÃ©tadonnÃ©es orientÃ©es audit (`created_by`, `updated_by`, horodatages). Elle est lisible par les membres de la guilde pour un affichage cohÃ©rent, et modifiable uniquement par les GM via la RLS.',
+        tags: ['database', 'guilds', 'security'],
       },
     ],
   },

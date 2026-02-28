@@ -6,7 +6,6 @@ import { ShieldAlert, ChevronDown, Crown } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { PermissionRule, GuildRank } from '@/hooks/useGuildPermissions';
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { formatRankLabel } from '@/lib/rankLabel';
 
@@ -221,6 +220,12 @@ export const PermissionRow = ({
   
   const currentLevel = getCurrentLevel();
   const customRankValue = rankRule?.max_rank_index ?? 0;
+
+  const getDisplayRankName = (index: number) => {
+    const rank = ranks.find((entry) => entry.rank_index === index);
+    if (rank?.rank_name) return rank.rank_name;
+    return index === 0 ? t.guild.rank0 : `${index}`;
+  };
   
   const handleLevelChange = (level: AccessLevel) => {
     if (level === 'gm_only') {
@@ -247,7 +252,7 @@ export const PermissionRow = ({
       case 'gm_only': return t.permissions.gmOnly;
       case 'officers': return t.permissions.officers;
       case 'all': return t.permissions.allMembers;
-      case 'custom': return interpolateMessage(t.permissions.ranksRange, { max: customRankValue });
+      case 'custom': return `${getDisplayRankName(0)} → ${getDisplayRankName(customRankValue)}`;
     }
   };
 

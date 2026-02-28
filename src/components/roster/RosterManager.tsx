@@ -58,6 +58,13 @@ export const RosterManager = ({ guildId, rosters, members, ranks, onRosterChange
   const [hasOpenedInitial, setHasOpenedInitial] = useState(false);
 
   const maxRankIndex = ranks.length > 0 ? Math.max(...ranks.map(r => r.rank_index)) : 9;
+  const getErrorMessage = (error: unknown) =>
+    error instanceof Error ? error.message : t.errors.generic;
+  const getRankName = (index: number) => {
+    const rank = ranks.find((entry) => entry.rank_index === index);
+    if (rank?.rank_name) return rank.rank_name;
+    return index === 0 ? t.guild.rank0 : `${index}`;
+  };
 
   // Auto-open roster dialog if initialRosterId is provided
   useEffect(() => {
@@ -164,8 +171,8 @@ export const RosterManager = ({ guildId, rosters, members, ranks, onRosterChange
 
       closeDialog();
       onRosterChange();
-    } catch (error: any) {
-      toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
+    } catch (error: unknown) {
+      toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -184,11 +191,24 @@ export const RosterManager = ({ guildId, rosters, members, ranks, onRosterChange
 
       toast({ title: t.rosters.rosterDeleted });
       onRosterChange();
-    } catch (error: any) {
-      toast({ title: t.errors.generic, description: error.message, variant: 'destructive' });
+    } catch (error: unknown) {
+      toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
     } finally {
       setDeleting(null);
     }
+  };
+
+  const getAccessRuleSummary = (rule: AccessRule) => {
+    if (rule.access_type !== 'rank') {
+      return members.find((member) => member.user_id === rule.user_id)?.username || 'User';
+    }
+
+    if (rule.max_rank_index !== undefined && rule.max_rank_index >= maxRankIndex) {
+      return t.rosters.everyone;
+    }
+
+    const maxIndex = rule.max_rank_index ?? 0;
+    return `${getRankName(0)} → ${getRankName(maxIndex)}`;
   };
 
   return (
@@ -224,11 +244,7 @@ export const RosterManager = ({ guildId, rosters, members, ranks, onRosterChange
                     {roster.access_rules.length > 0 ? (
                       roster.access_rules.map((rule, i) => (
                         <span key={i}>
-                          {rule.access_type === 'rank' 
-                            ? (rule.max_rank_index !== undefined && rule.max_rank_index >= maxRankIndex
-                                ? t.rosters.everyone
-                                : `${t.rosters.ranks} 0-${rule.max_rank_index}`)
-                            : members.find(m => m.user_id === rule.user_id)?.username || 'User'}
+                          {getAccessRuleSummary(rule)}
                           {i < roster.access_rules.length - 1 && ', '}
                         </span>
                       ))

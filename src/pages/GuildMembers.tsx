@@ -26,6 +26,7 @@ import { BATTLENET_CLASS_MAP } from '@/data/battlenetClasses';
 import { getLocalizedClassName, wowClasses } from '@/data/wowClasses';
 import { useIsAdmin } from '@/hooks/useAdmin';
 import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
+import { useGuildRankLabels } from '@/hooks/useGuildRankLabels';
 import { formatDistanceFromNowLocalized } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { supabase } from '@/integrations/supabase/client';
@@ -100,6 +101,7 @@ const GuildMembers = () => {
   const [rankOpen, setRankOpen] = useState(false);
   const [guildforceOpen, setGuildforceOpen] = useState(false);
   const [mainOpen, setMainOpen] = useState(false);
+  const { rankLabels } = useGuildRankLabels({ guildId: guild?.id });
 
   const { hasPermission: hasActivityPermission } = useHasGuildPermission(guild?.id || null, 'view_activity_log');
 
@@ -138,6 +140,7 @@ const GuildMembers = () => {
       rankIndex: index,
       rankLabel: memberUi.rankLabel,
       guildMasterLabel: t.guild.rank0,
+      customLabel: rankLabels[index],
     });
 
   // Get unique ranks for filter
@@ -486,6 +489,7 @@ const GuildMembers = () => {
 
       <GuildSubNav
         guild={guild}
+        guildId={guild.id}
         basePath={basePath}
         isGM={isGM}
         hasSettingsPermission={isGM || hasActivityPermission}

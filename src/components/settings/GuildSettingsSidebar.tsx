@@ -5,9 +5,10 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { resolveSemanticMessage } from '@/i18n/semantic';
+import type { SettingsSection } from '@/lib/guildSettingsSections';
 import { cn } from '@/lib/utils';
 
-export type SettingsSection = 'profile' | 'permissions' | 'rosters' | 'activity' | 'battlenet' | 'mypermissions';
+export type { SettingsSection } from '@/lib/guildSettingsSections';
 
 interface SectionConfig {
   id: SettingsSection;

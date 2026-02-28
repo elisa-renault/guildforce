@@ -9,6 +9,7 @@ import { CosmicButton } from './CosmicButton';
 import { Crown, Users, Shield, Loader2, Clock } from 'lucide-react';
 import { getClassNameFromBattleNet } from '@/data/battlenetClasses';
 import { resolveSemanticMessage } from '@/i18n/semantic';
+import type { GuildRankLabelMap } from '@/lib/rankLabel';
 import { formatRankLabel } from '@/lib/rankLabel';
 
 interface GuildMembership {
@@ -35,23 +36,19 @@ interface AppGuild {
   owner_id: string | null;
 }
 
-interface AppGuildMembership {
-  guild_id: string;
-  role: string;
-  guilds: AppGuild;
-}
-
 export const GuildMemberships: React.FC = () => {
   const navigate = useNavigate();
   const { profile, user } = useAuth();
   const { t } = useLanguage();
   const rankLabel = resolveSemanticMessage({ key: 'guild.members.rank_label', language: t.lang, translations: t });
-  const getRankLabel = (rankName: string | null, index: number) =>
+  const [guildRankLabels, setGuildRankLabels] = useState<Record<string, GuildRankLabelMap>>({});
+  const getRankLabel = (guildId: string | null, rankName: string | null, index: number) =>
     formatRankLabel({
       rankName,
       rankIndex: index,
       rankLabel,
       guildMasterLabel: t.guild.rank0,
+      customLabel: guildId ? guildRankLabels[guildId]?.[index] : undefined,
     });
   const [memberships, setMemberships] = useState<GuildMembership[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -65,6 +62,42 @@ export const GuildMemberships: React.FC = () => {
       fetchAppGuilds();
     }
   }, [user?.id]);
+
+  useEffect(() => {
+    if (appGuilds.size === 0) {
+      setGuildRankLabels({});
+      return;
+    }
+
+    const loadRankLabels = async () => {
+      const guildIds = Array.from(appGuilds.values()).map((guild) => guild.id);
+      const { data, error } = await supabase
+        .from('guild_rank_labels')
+        .select('guild_id, rank_index, label')
+        .in('guild_id', guildIds);
+
+      if (error) {
+        setGuildRankLabels({});
+        return;
+      }
+
+      const nextLabels = (data ?? []).reduce<Record<string, GuildRankLabelMap>>((acc, row) => {
+        const normalized = row.label.trim();
+        if (!normalized) return acc;
+
+        if (!acc[row.guild_id]) {
+          acc[row.guild_id] = {};
+        }
+
+        acc[row.guild_id][row.rank_index] = normalized;
+        return acc;
+      }, {});
+
+      setGuildRankLabels(nextLabels);
+    };
+
+    void loadRankLabels();
+  }, [appGuilds]);
 
   useEffect(() => {
     if (isConnected && user?.id) {
@@ -115,7 +148,7 @@ export const GuildMemberships: React.FC = () => {
 
       if (error) throw error;
       setMemberships(data || []);
-    } catch (error) {
+    } catch {
       // Guild memberships fetch error handled silently
     } finally {
       setIsLoading(false);
@@ -239,7 +272,7 @@ export const GuildMemberships: React.FC = () => {
                           <span className="text-warning">{t.guild.rank0}</span>
                         ) : (
                           <span className="text-muted-foreground">
-                            {getRankLabel(member.rank_name, member.rank_index)}
+                            {getRankLabel(appGuildInfo?.id ?? null, member.rank_name, member.rank_index)}
                           </span>
                         )}
                       </Badge>

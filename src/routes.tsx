@@ -29,6 +29,7 @@ const Wishes = lazy(() => import("./pages/Wishes"));
 const MemberWishes = lazy(() => import("./pages/MemberWishes"));
 const Overview = lazy(() => import("./pages/Overview"));
 const RosterWishes = lazy(() => import("./pages/RosterWishes"));
+const GuildVault = lazy(() => import("./pages/GuildVault"));
 const GuildSettings = lazy(() => import("./pages/GuildSettings"));
 const GuildPolls = lazy(() => import("./pages/GuildPolls"));
 const GuildPollNew = lazy(() => import("./pages/GuildPollNew"));
@@ -173,6 +174,12 @@ export const appRoutes: AppRoute[] = [
     path: "/guild/:regionSlug/:serverSlug/:guildSlug/settings",
     element: <GuildSettings />,
     title: "guildSettings",
+    requiresAuth: true,
+  },
+  {
+    path: "/guild/:regionSlug/:serverSlug/:guildSlug/vault",
+    element: <GuildVault />,
+    title: "guildVault",
     requiresAuth: true,
   },
   {

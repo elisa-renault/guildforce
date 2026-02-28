@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useGuildRankLabels } from '@/hooks/useGuildRankLabels';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { formatRankLabel } from '@/lib/rankLabel';
 
@@ -9,7 +10,9 @@ export type PermissionType =
   | 'manage_wishes' 
   | 'manage_polls' 
   | 'manage_rosters' 
-  | 'view_activity_log';
+  | 'view_activity_log'
+  | 'manage_vault'
+  | 'view_vault_audit';
 
 export interface PermissionRule {
   id?: string;
@@ -39,6 +42,7 @@ export function useGuildPermissions(guildId: string | null) {
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
   const { t } = useLanguage();
+  const { rankLabels } = useGuildRankLabels({ guildId });
   const rankLabel = resolveSemanticMessage({ key: 'guild.members.rank_label', language: t.lang, translations: t });
 
   const loadData = useCallback(async () => {
@@ -111,6 +115,7 @@ export function useGuildPermissions(guildId: string | null) {
                 rankIndex: r.rank_index,
                 rankLabel,
                 guildMasterLabel: t.guild.rank0,
+                customLabel: rankLabels[r.rank_index],
               });
               uniqueRanks.set(r.rank_index, normalizedLabel);
             }
@@ -123,7 +128,7 @@ export function useGuildPermissions(guildId: string | null) {
           setRanks(ranksArray);
         }
       }
-    } catch (error) {
+    } catch {
       toast({
         title: t.errors.generic,
         variant: 'destructive',
@@ -131,7 +136,7 @@ export function useGuildPermissions(guildId: string | null) {
     } finally {
       setLoading(false);
     }
-  }, [guildId, toast, t]);
+  }, [guildId, rankLabel, rankLabels, t, toast]);
 
   useEffect(() => {
     loadData();
@@ -180,7 +185,14 @@ export function useGuildPermissions(guildId: string | null) {
         // Build a summary of changes
         const changes: Record<string, { added: number; removed: number; modified: number }> = {};
         
-        const permissionTypes = ['manage_wishes', 'manage_polls', 'manage_rosters', 'view_activity_log'] as const;
+        const permissionTypes = [
+          'manage_wishes',
+          'manage_polls',
+          'manage_rosters',
+          'view_activity_log',
+          'manage_vault',
+          'view_vault_audit',
+        ] as const;
         
         permissionTypes.forEach(type => {
           const oldRules = oldPermissions.filter(p => p.permission_type === type);
@@ -212,8 +224,8 @@ export function useGuildPermissions(guildId: string | null) {
       }
 
       setPermissions(newPermissions);
-      toast({ title: (t as any).permissions?.saved || 'Permissions saved' });
-    } catch (error) {
+      toast({ title: t.common.save });
+    } catch {
       toast({
         title: t.errors.generic,
         variant: 'destructive',
@@ -275,7 +287,7 @@ export function useHasGuildPermission(guildId: string | null, permission: Permis
 
         if (error) throw error;
         setHasPermission(data || false);
-      } catch (error) {
+      } catch {
         setHasPermission(false);
       } finally {
         setLoading(false);

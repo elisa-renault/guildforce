@@ -77,6 +77,7 @@ export interface Translations {
     guildOverview: string;
     guildRoster: string;
     guildWishes: string;
+    guildVault: string;
     guildSettings: string;
     guildMemberWishes: string;
     guildPolls: string;
@@ -86,6 +87,107 @@ export interface Translations {
     guildPollResults: string;
     guildMembers: string;
     notFound: string;
+  };
+  guildVault: {
+    title: string;
+    subtitle: string;
+    empty: string;
+    addSecret: string;
+    create: {
+      title: string;
+      description: string;
+      submit: string;
+      submitting: string;
+      cancel: string;
+    };
+    form: {
+      label: string;
+      url: string;
+      urlHint: string;
+      image: string;
+      imageHint: string;
+      imageAdd: string;
+      imageRemove: string;
+      imageAlt: string;
+      kind: string;
+      username: string;
+      password: string;
+      token: string;
+      value: string;
+      recoveryCodes: string;
+      requiresReason: string;
+    };
+    types: {
+      credential: string;
+      token: string;
+      note: string;
+      recoveryCode: string;
+    };
+    actions: {
+      reveal: string;
+      copy: string;
+      rotate: string;
+      archive: string;
+      openLink: string;
+      editSecret: string;
+      more: string;
+      editAccess: string;
+      hideAccess: string;
+      saveAccess: string;
+      savingAccess: string;
+      copyUsername: string;
+      copyPassword: string;
+      copyValue: string;
+    };
+    state: {
+      revealed: string;
+      copied: string;
+      updated: string;
+      expiresIn: string;
+      manageBadge: string;
+      revealBadge: string;
+    };
+    feedback: {
+      createSuccess: string;
+      createError: string;
+      updateSuccess: string;
+      updateError: string;
+      actionError: string;
+      accessSaved: string;
+      accessError: string;
+      loadingAccess: string;
+      loadAccessError: string;
+      archived: string;
+      rotated: string;
+      imageUploadError: string;
+    };
+    confirm: {
+      archive: string;
+    };
+    prompts: {
+      reason: string;
+      rotateValue: string;
+      rotateCodes: string;
+    };
+    access: {
+      title: string;
+      accessTitle: string;
+      accessHint: string;
+      manageTitle: string;
+      manageHint: string;
+      byRank: string;
+      officerRanks: string;
+      memberRanks: string;
+      noRanks: string;
+      byUser: string;
+      addUserRule: string;
+      selectUser: string;
+      empty: string;
+      summaryAccess: string;
+      summaryManage: string;
+      summaryRanks: string;
+      summaryMembers: string;
+    };
   };
   // Bug Report
   bugReport: {
@@ -541,6 +643,20 @@ export interface Translations {
     resyncTokenExpired: string;
     syncing: string;
     officerRankUpdated: string;
+    rankLabels: {
+      title: string;
+      description: string;
+      currentRank: string;
+      blizzardName: string;
+      customLabel: string;
+      placeholder: string;
+      save: string;
+      saving: string;
+      saved: string;
+      saveError: string;
+      reset: string;
+      emptyFallbackHint: string;
+    };
   };
   // Rosters
   rosters: {
@@ -878,6 +994,22 @@ export interface Translations {
     newRoster: string;
     updated: string;
     deleted: string;
+    by: string;
+    when: string;
+    user: string;
+    action: string;
+    secret: string;
+    details: string;
+    vaultAuditTitle: string;
+    vaultAuditEmpty: string;
+    detailReasonGiven: string;
+    detailSurface: string;
+    detailVersion: string;
+    vaultSecretCreated: string;
+    vaultSecretArchived: string;
+    vaultSecretRotated: string;
+    vaultAccessUpdated: string;
+    memberRemoved: string;
   };
   // Permissions
   permissions: {
@@ -895,6 +1027,10 @@ export interface Translations {
     manageRostersDesc: string;
     viewActivityLog: string;
     viewActivityLogDesc: string;
+    manageVault: string;
+    manageVaultDesc: string;
+    viewVaultAudit: string;
+    viewVaultAuditDesc: string;
     manageMembers: string;
     manageMembersDesc: string;
     delegated: string;
@@ -907,6 +1043,8 @@ export interface Translations {
     guildMasterDesc: string;
     noPermissions: string;
     grantedByGm: string;
+    vaultAccess: string;
+    vaultAccessDesc: string;
     // PermissionRow & IndividualAccessEditor
     officers: string;
     allMembers: string;
@@ -929,6 +1067,7 @@ export interface Translations {
     welcome: string;
     myStatus: string;
     guildOverview: string;
+    vault: string;
     quickAccess: string;
     wishesTable: string;
     noWishApproved: string;

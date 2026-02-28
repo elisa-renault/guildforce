@@ -10,6 +10,7 @@ import { PageContainer } from '@/components/layout/PageContainer';
 import { PollEditor, type ResultsAccessRule, type RespondentAccessRule } from '@/components/polls';
 import { usePollMutations } from '@/hooks/useGuildPolls';
 import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
+import { useGuildRankLabels } from '@/hooks/useGuildRankLabels';
 import type { PollFormData, SectionFormData, QuestionFormData } from '@/types/poll';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -93,6 +94,7 @@ const GuildPollNew = () => {
   const [initialRespondentRules, setInitialRespondentRules] = useState<RespondentAccessRule[]>([]);
   const [confirmResetDialog, setConfirmResetDialog] = useState(false);
   const [pendingFullEditData, setPendingFullEditData] = useState<{ data: PollFormData; rules: ResultsAccessRule[]; respondentRules: RespondentAccessRule[] } | null>(null);
+  const { rankLabels } = useGuildRankLabels({ guildId });
 
   const { createPoll, updatePoll, updatePollQuestions, publishPoll, resetPollResponses, saveResultsAccessRules, fetchResultsAccessRules, saveRespondentRules, fetchRespondentRules, saving } = usePollMutations();
   const { hasPermission: hasManagePolls, loading: permLoading } = useHasGuildPermission(guildId, 'manage_polls');
@@ -198,6 +200,7 @@ const GuildPollNew = () => {
               rankIndex: r.rank_index,
               rankLabel,
               guildMasterLabel: t.guild.rank0,
+              customLabel: rankLabels[r.rank_index],
             });
             uniqueRanks.set(r.rank_index, normalizedLabel);
           }
@@ -235,7 +238,7 @@ const GuildPollNew = () => {
             }
           }
         }
-      } catch (error: unknown) {
+      } catch {
         toast({
           title: t.polls.unstableConnection,
           description: t.polls.unstableConnectionDesc,
@@ -251,7 +254,23 @@ const GuildPollNew = () => {
     return () => {
       cancelled = true;
     };
-  }, [user, regionSlug, serverSlug, guildSlug, pollId, navigate, fetchResultsAccessRules, fetchRespondentRules, toast, language]);
+  }, [
+    user,
+    regionSlug,
+    serverSlug,
+    guildSlug,
+    pollId,
+    navigate,
+    fetchResultsAccessRules,
+    fetchRespondentRules,
+    toast,
+    language,
+    rankLabels,
+    rankLabel,
+    t.guild.rank0,
+    t.polls.unstableConnection,
+    t.polls.unstableConnectionDesc,
+  ]);
 
   const handleSave = async (data: PollFormData, accessRules?: ResultsAccessRule[], respondentRules?: RespondentAccessRule[]) => {
     if (!guildId) return;
@@ -462,8 +481,9 @@ const GuildPollNew = () => {
       {guild && (
         <GuildSubNav
           guild={guild}
+          guildId={guildId}
           basePath={basePath}
-          isGM={canManagePolls}
+          isGM={isGM}
           activeTab="polls"
         />
       )}
