@@ -881,7 +881,7 @@ const FR_SEMANTIC_MESSAGES: Record<keyof typeof EN_SEMANTIC_MESSAGES, string> = 
   'settings.sidebar.section.vault': 'Coffre',
   'settings.sidebar.section.mypermissions': 'Mes permissions',
   'settings.sidebar.section.rosters': 'Rosters',
-  'settings.sidebar.section.activity': 'Activite',
+  'settings.sidebar.section.activity': 'Activité',
   'settings.sidebar.section.battlenet': 'Battle.net',
   'settings.sidebar.category.mypermissions': 'MON ACCES',
   'settings.sidebar.category.guild': 'GUILDE',
