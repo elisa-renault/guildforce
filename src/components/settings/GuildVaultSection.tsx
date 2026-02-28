@@ -153,6 +153,7 @@ export const GuildVaultSection = ({
   const [illustrationFile, setIllustrationFile] = useState<File | null>(null);
   const [illustrationPreviewUrl, setIllustrationPreviewUrl] = useState<string | null>(null);
   const illustrationInputRef = useRef<HTMLInputElement>(null);
+  const accessSummaryHydrationRef = useRef<Record<string, boolean>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -254,6 +255,52 @@ export const GuildVaultSection = ({
       window.clearInterval(timer);
     };
   }, [revealedSecrets]);
+
+  useEffect(() => {
+    const manageableSecrets = secrets.filter((secret) => secret.can_manage);
+    if (manageableSecrets.length === 0) return;
+
+    let cancelled = false;
+
+    manageableSecrets.forEach((secret) => {
+      if (accessDrafts[secret.id] || accessSummaryHydrationRef.current[secret.id]) {
+        return;
+      }
+
+      accessSummaryHydrationRef.current[secret.id] = true;
+
+      void (async () => {
+        try {
+          const rules = await Promise.race([
+            loadSecretAccessRules(secret.id),
+            new Promise<never>((_, reject) => {
+              window.setTimeout(() => reject(new Error('timeout')), 10_000);
+            }),
+          ]);
+
+          if (cancelled) return;
+
+          setAccessDrafts((current) => ({
+            ...current,
+            [secret.id]: groupCompactGuildSecretAccessRules(rules),
+          }));
+        } catch {
+          if (cancelled) return;
+
+          setAccessDrafts((current) => ({
+            ...current,
+            [secret.id]: createEmptyGuildSecretAccessRulesCompact(),
+          }));
+        } finally {
+          delete accessSummaryHydrationRef.current[secret.id];
+        }
+      })();
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [accessDrafts, loadSecretAccessRules, secrets]);
 
   const loadAccessDraftForSecret = async (secretId: string) => {
     if (accessDrafts[secretId]) {
