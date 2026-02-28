@@ -172,7 +172,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
       "byUser": "Mitglieder",
       "addUserRule": "Hinzufügen",
       "selectUser": "Mitglied auswählen",
-      "empty": "Nur GM und globale Admins",
+      "empty": "Nur GM und globale Gildenberechtigungen",
       "summaryAccess": "Zugriff",
       "summaryManage": "Verwaltung",
       "summaryRanks": "Ränge",

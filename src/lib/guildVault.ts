@@ -287,7 +287,7 @@ export function summarizeCompactAccessRules(
     manage: 'Manage',
     ranks: 'Ranks',
     members: 'Members',
-    globalOnly: 'Global admins only',
+    globalOnly: 'GM and guild-level permissions only',
   },
 ): GuildSecretAccessSummary {
   const summarizeLevel = (rules: GuildSecretAccessRuleDraft[], label: string) => {

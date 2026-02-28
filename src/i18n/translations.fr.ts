@@ -170,7 +170,7 @@ export const translationsFr: Translations = {
       byUser: 'Membres',
       addUserRule: 'Ajouter',
       selectUser: 'Sélectionner un membre',
-      empty: 'GM et admins globaux seulement',
+      empty: 'GM et permissions globales de guilde seulement',
       summaryAccess: 'Accès',
       summaryManage: 'Gestion',
       summaryRanks: 'Rangs',
