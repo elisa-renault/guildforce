@@ -71,13 +71,10 @@ export const useGuildPolls = (guildId: string | undefined) => {
             if (poll.status === 'draft') {
               return { pollId: poll.id, canAccess: false };
             }
-            // Closed polls are visible only if the user can view results
+            // Closed polls stay visible in the list for guild members.
+            // Actual results access is still enforced on the results page / RPC policies.
             if (poll.status === 'closed') {
-              const { data: canViewResults } = await supabase.rpc('can_view_poll_results', {
-                p_poll_id: poll.id,
-                p_user_id: user.id,
-              });
-              return { pollId: poll.id, canAccess: canViewResults ?? false };
+              return { pollId: poll.id, canAccess: true };
             }
             // For active polls, check targeting rules
             const { data: canRespond } = await supabase.rpc('can_respond_to_poll', {
