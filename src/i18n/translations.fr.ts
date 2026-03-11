@@ -959,7 +959,7 @@ export const translationsFr: Translations = {
         scoreValue: 'Score {{value}}',
         strongConsensus: 'Consensus fort',
         mixedSignal: 'Signal mitigé',
-        needsReview: 'À arbitrer',
+        needsReview: 'À analyser',
         contextLabel: 'Contexte',
         focusQuestion: 'Focus',
         noSummary: 'Aucun résumé disponible',
