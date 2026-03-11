@@ -884,6 +884,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "activePoll": "Aktive Umfrage",
     "ends": "Endet",
     "view": "Sicht",
+    "reviewMyResponses": "Meine Antworten ansehen",
     "allowOther": "\u201eAndere (angeben)\u201c zulassen",
     "otherSpecify": "Sonstiges (bitte angeben)",
     "otherPlaceholder": "Bitte angeben...",
