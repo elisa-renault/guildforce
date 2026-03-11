@@ -202,4 +202,11 @@ describe('PollResults', () => {
     expect(screen.getByText('Add filter')).toBeInTheDocument();
     expect(screen.getByText('No cohort filter yet. Add one or more filters to focus the analysis.')).toBeInTheDocument();
   });
+
+  it('hides the cohort analysis builder when not enabled', () => {
+    render(<PollResults poll={buildPoll()} variant="full" canUseCohortFilters={false} />);
+
+    expect(screen.queryByText('Analyze a subgroup')).not.toBeInTheDocument();
+    expect(screen.queryByText('Add filter')).not.toBeInTheDocument();
+  });
 });
