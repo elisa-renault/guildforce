@@ -1062,6 +1062,7 @@ export const translationsRu: Translations = createLocaleTranslations(translation
     activePoll: 'Активный опрос',
     ends: 'Завершение',
     view: 'Открыть',
+    reviewMyResponses: 'Просмотреть мои ответы',
     allowOther: 'Разрешить вариант "Другое"',
     otherSpecify: 'Другое (уточнить)',
     otherPlaceholder: 'Укажи значение...',

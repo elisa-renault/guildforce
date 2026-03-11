@@ -1161,6 +1161,7 @@ export interface Translations {
     activePoll: string;
     ends: string;
     view: string;
+    reviewMyResponses: string;
     // Other option
     allowOther: string;
     otherSpecify: string;
