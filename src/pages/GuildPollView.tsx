@@ -1,19 +1,20 @@
+import { Loader2, BarChart3, ArrowLeft, Lock, Edit } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+
+import type { ResponseValue } from '@/types/poll';
+
 import { CosmicBackground } from '@/components/CosmicBackground';
-import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { PollResponse, PollResults } from '@/components/polls';
-import { usePoll, usePollResults, usePollMutations } from '@/hooks/useGuildPolls';
-import { Loader2, BarChart3, ArrowLeft, Lock, Edit } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import type { ResponseValue } from '@/types/poll';
+import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useToast } from '@/hooks/use-toast';
+import { usePoll, usePollResults, usePollMutations } from '@/hooks/useGuildPolls';
 import { formatDateLocalized } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
+import { supabase } from '@/integrations/supabase/client';
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
 
 const GuildPollView = () => {
@@ -23,7 +24,6 @@ const GuildPollView = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [guildId, setGuildId] = useState<string | null>(null);
   const [isGM, setIsGM] = useState(false);
   const [hasResponded, setHasResponded] = useState(false);
   const [showResults, setShowResults] = useState(false);
@@ -85,8 +85,6 @@ const GuildPollView = () => {
         navigate('/guilds');
         return;
       }
-
-      setGuildId(matchedGuild.id);
 
       // Check GM status
       const { data: gmCheck } = await supabase.rpc('is_guild_gm', {
@@ -216,9 +214,8 @@ const GuildPollView = () => {
               </div>
             )}
             <PollResults
-              questions={pollResults?.questions || poll.questions || []}
-              isAnonymous={poll.is_anonymous}
-              totalResponses={pollResults?.response_count || 0}
+              poll={pollResults || poll}
+              variant="compact"
             />
           </div>
         ) : hasResponded && !userCanViewResults && !isEditing ? (

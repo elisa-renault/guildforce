@@ -1251,6 +1251,7 @@ export type Database = {
       }
       guild_poll_questions: {
         Row: {
+          analysis_intent: Database["public"]["Enums"]["poll_question_analysis_intent"] | null
           allow_other: boolean
           condition: Json | null
           created_at: string
@@ -1265,6 +1266,7 @@ export type Database = {
           section_id: string | null
         }
         Insert: {
+          analysis_intent?: Database["public"]["Enums"]["poll_question_analysis_intent"] | null
           allow_other?: boolean
           condition?: Json | null
           created_at?: string
@@ -1279,6 +1281,7 @@ export type Database = {
           section_id?: string | null
         }
         Update: {
+          analysis_intent?: Database["public"]["Enums"]["poll_question_analysis_intent"] | null
           allow_other?: boolean
           condition?: Json | null
           created_at?: string
@@ -1393,6 +1396,8 @@ export type Database = {
           guild_id: string
           id: string
           is_anonymous: boolean
+          results_base_audience: string
+          results_base_visibility: string
           roster_id: string | null
           starts_at: string | null
           status: Database["public"]["Enums"]["poll_status"]
@@ -1408,6 +1413,8 @@ export type Database = {
           guild_id: string
           id?: string
           is_anonymous?: boolean
+          results_base_audience?: string
+          results_base_visibility?: string
           roster_id?: string | null
           starts_at?: string | null
           status?: Database["public"]["Enums"]["poll_status"]
@@ -1423,6 +1430,8 @@ export type Database = {
           guild_id?: string
           id?: string
           is_anonymous?: boolean
+          results_base_audience?: string
+          results_base_visibility?: string
           roster_id?: string | null
           starts_at?: string | null
           status?: Database["public"]["Enums"]["poll_status"]
@@ -1840,31 +1849,46 @@ export type Database = {
       }
       poll_results_access_rules: {
         Row: {
-          access_type: string
+          audience_type: string
           created_at: string
           id: string
           max_rank_index: number | null
           min_rank_index: number | null
           poll_id: string
+          question_id: string | null
+          question_type: Database["public"]["Enums"]["poll_question_type"] | null
+          section_id: string | null
+          target_type: string
           user_id: string | null
+          visibility_level: string
         }
         Insert: {
-          access_type: string
+          audience_type?: string
           created_at?: string
           id?: string
           max_rank_index?: number | null
           min_rank_index?: number | null
           poll_id: string
+          question_id?: string | null
+          question_type?: Database["public"]["Enums"]["poll_question_type"] | null
+          section_id?: string | null
+          target_type?: string
           user_id?: string | null
+          visibility_level?: string
         }
         Update: {
-          access_type?: string
+          audience_type?: string
           created_at?: string
           id?: string
           max_rank_index?: number | null
           min_rank_index?: number | null
           poll_id?: string
+          question_id?: string | null
+          question_type?: Database["public"]["Enums"]["poll_question_type"] | null
+          section_id?: string | null
+          target_type?: string
           user_id?: string | null
+          visibility_level?: string
         }
         Relationships: [
           {
@@ -1872,6 +1896,20 @@ export type Database = {
             columns: ["poll_id"]
             isOneToOne: false
             referencedRelation: "guild_polls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "poll_results_access_rules_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "guild_poll_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "poll_results_access_rules_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "guild_poll_sections"
             referencedColumns: ["id"]
           },
         ]
@@ -2329,6 +2367,21 @@ export type Database = {
         Args: { p_poll_id: string; p_user_id: string }
         Returns: boolean
       }
+      get_poll_question_results_visibility: {
+        Args: { p_question_id: string; p_user_id: string }
+        Returns: string
+      }
+      get_poll_results_visibility_map: {
+        Args: { p_poll_id: string; p_user_id: string }
+        Returns: {
+          question_id: string
+          visibility_level: string
+        }[]
+      }
+      get_poll_results_cohort_analysis: {
+        Args: { p_filters?: Json; p_poll_id: string; p_user_id: string }
+        Returns: Json
+      }
       fix_jsonb_text_array_mojibake: { Args: { j: Json }; Returns: Json }
       fix_poll_response_value: { Args: { j: Json }; Returns: Json }
       get_admin_dashboard_stats: {
@@ -2619,6 +2672,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "moderator" | "user"
       forum_sanction_type: "timeout" | "ban"
+      poll_question_analysis_intent: "decision" | "informative"
       poll_question_type:
         | "single_choice"
         | "multiple_choice"
@@ -2768,6 +2822,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "moderator", "user"],
       forum_sanction_type: ["timeout", "ban"],
+      poll_question_analysis_intent: ["decision", "informative"],
       poll_question_type: [
         "single_choice",
         "multiple_choice",

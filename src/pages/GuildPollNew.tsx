@@ -7,7 +7,7 @@ import { CosmicBackground } from '@/components/CosmicBackground';
 import { GuildSubNav } from '@/components/guild';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { PageContainer } from '@/components/layout/PageContainer';
-import { PollEditor, type ResultsAccessRule, type RespondentAccessRule } from '@/components/polls';
+import { PollEditor, type ResultsAccessConfig, type RespondentAccessRule } from '@/components/polls';
 import { usePollMutations } from '@/hooks/useGuildPolls';
 import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
 import { useGuildRankLabels } from '@/hooks/useGuildRankLabels';
@@ -50,6 +50,7 @@ interface PollQuestionRow {
   section_id: string | null;
   question_text: string | null;
   question_type: QuestionFormData['question_type'];
+  analysis_intent: QuestionFormData['analysis_intent'];
   is_required: boolean | null;
   options: string[] | null;
   scale_config: QuestionFormData['scale_config'];
@@ -90,10 +91,14 @@ const GuildPollNew = () => {
   const [members, setMembers] = useState<GuildMember[]>([]);
   const [ranks, setRanks] = useState<GuildRank[]>([]);
   const [existingPoll, setExistingPoll] = useState<ExistingPollData | null>(null);
-  const [initialAccessRules, setInitialAccessRules] = useState<ResultsAccessRule[]>([]);
+  const [initialAccessConfig, setInitialAccessConfig] = useState<ResultsAccessConfig>({
+    base_audience: 'guild_members',
+    base_visibility: 'full',
+    rules: [],
+  });
   const [initialRespondentRules, setInitialRespondentRules] = useState<RespondentAccessRule[]>([]);
   const [confirmResetDialog, setConfirmResetDialog] = useState(false);
-  const [pendingFullEditData, setPendingFullEditData] = useState<{ data: PollFormData; rules: ResultsAccessRule[]; respondentRules: RespondentAccessRule[] } | null>(null);
+  const [pendingFullEditData, setPendingFullEditData] = useState<{ data: PollFormData; accessConfig: ResultsAccessConfig; respondentRules: RespondentAccessRule[] } | null>(null);
   const { rankLabels } = useGuildRankLabels({ guildId });
 
   const { createPoll, updatePoll, updatePollQuestions, publishPoll, resetPollResponses, saveResultsAccessRules, fetchResultsAccessRules, saveRespondentRules, fetchRespondentRules, saving } = usePollMutations();
@@ -233,7 +238,7 @@ const GuildPollNew = () => {
             const rules = await fetchResultsAccessRules(pollId);
             const respRules = await fetchRespondentRules(pollId);
             if (!cancelled) {
-              setInitialAccessRules(rules);
+              setInitialAccessConfig(rules);
               setInitialRespondentRules(respRules);
             }
           }
@@ -272,31 +277,42 @@ const GuildPollNew = () => {
     t.polls.unstableConnectionDesc,
   ]);
 
-  const handleSave = async (data: PollFormData, accessRules?: ResultsAccessRule[], respondentRules?: RespondentAccessRule[]) => {
+  const handleSave = async (data: PollFormData, accessConfig: ResultsAccessConfig, respondentRules?: RespondentAccessRule[]) => {
     if (!guildId) return;
 
     try {
       if (existingPoll) {
         if (isActivePoll && editMode === 'full') {
-          setPendingFullEditData({ data, rules: accessRules || [], respondentRules: respondentRules || [] });
+          setPendingFullEditData({ data, accessConfig, respondentRules: respondentRules || [] });
           setConfirmResetDialog(true);
           return;
         }
         
         await updatePoll(existingPoll.id, data);
-        if (accessRules) await saveResultsAccessRules(existingPoll.id, accessRules);
-        if (respondentRules) await saveRespondentRules(existingPoll.id, respondentRules);
-        
+
         if (!isActivePoll || editMode === 'full') {
           await updatePollQuestions(existingPoll.id, data);
+        }
+
+        const resultsSaved = await saveResultsAccessRules(existingPoll.id, accessConfig);
+        if (!resultsSaved) throw new Error('Failed to save poll results visibility settings.');
+
+        if (respondentRules) {
+          const respondentsSaved = await saveRespondentRules(existingPoll.id, respondentRules);
+          if (!respondentsSaved) throw new Error('Failed to save poll respondent rules.');
         }
         
         toast({ title: t.polls.saved });
       } else {
         const newPollId = await createPoll(guildId, data);
         if (newPollId) {
-          if (accessRules) await saveResultsAccessRules(newPollId, accessRules);
-          if (respondentRules) await saveRespondentRules(newPollId, respondentRules);
+          const resultsSaved = await saveResultsAccessRules(newPollId, accessConfig);
+          if (!resultsSaved) throw new Error('Failed to save poll results visibility settings.');
+
+          if (respondentRules) {
+            const respondentsSaved = await saveRespondentRules(newPollId, respondentRules);
+            if (!respondentsSaved) throw new Error('Failed to save poll respondent rules.');
+          }
         }
         toast({ title: t.polls.draftSaved });
       }
@@ -313,8 +329,13 @@ const GuildPollNew = () => {
       await resetPollResponses(existingPoll.id);
       await updatePoll(existingPoll.id, pendingFullEditData.data);
       await updatePollQuestions(existingPoll.id, pendingFullEditData.data);
-      if (pendingFullEditData.rules) await saveResultsAccessRules(existingPoll.id, pendingFullEditData.rules);
-      if (pendingFullEditData.respondentRules) await saveRespondentRules(existingPoll.id, pendingFullEditData.respondentRules);
+      const resultsSaved = await saveResultsAccessRules(existingPoll.id, pendingFullEditData.accessConfig);
+      if (!resultsSaved) throw new Error('Failed to save poll results visibility settings.');
+
+      if (pendingFullEditData.respondentRules) {
+        const respondentsSaved = await saveRespondentRules(existingPoll.id, pendingFullEditData.respondentRules);
+        if (!respondentsSaved) throw new Error('Failed to save poll respondent rules.');
+      }
       
       toast({ title: t.polls.updated });
       navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/polls`);
@@ -326,7 +347,7 @@ const GuildPollNew = () => {
     }
   };
 
-  const handlePublish = async (data: PollFormData, accessRules?: ResultsAccessRule[], respondentRules?: RespondentAccessRule[]) => {
+  const handlePublish = async (data: PollFormData, accessConfig: ResultsAccessConfig, respondentRules?: RespondentAccessRule[]) => {
     if (!guildId) return;
 
     try {
@@ -339,8 +360,13 @@ const GuildPollNew = () => {
       }
       
       if (pollIdToPublish) {
-        if (accessRules) await saveResultsAccessRules(pollIdToPublish, accessRules);
-        if (respondentRules) await saveRespondentRules(pollIdToPublish, respondentRules);
+        const resultsSaved = await saveResultsAccessRules(pollIdToPublish, accessConfig);
+        if (!resultsSaved) throw new Error('Failed to save poll results visibility settings.');
+
+        if (respondentRules) {
+          const respondentsSaved = await saveRespondentRules(pollIdToPublish, respondentRules);
+          if (!respondentsSaved) throw new Error('Failed to save poll respondent rules.');
+        }
         await publishPoll(pollIdToPublish);
         toast({ title: t.polls.published });
         navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/polls`);
@@ -428,6 +454,7 @@ const GuildPollNew = () => {
         section_id: q.section_id ?? null,
         question_text: q.question_text || '',
         question_type: q.question_type,
+        analysis_intent: q.analysis_intent ?? 'decision',
         is_required: !!q.is_required,
         options: Array.isArray(q.options) ? q.options : [],
         scale_config: q.scale_config ?? null,
@@ -515,9 +542,8 @@ const GuildPollNew = () => {
           rosters={rosters}
           members={members}
           ranks={ranks}
-          officerRankThreshold={guild?.officer_rank_threshold ?? 2}
           initialData={existingPoll ? toPollFormData(existingPoll) : undefined}
-          initialAccessRules={initialAccessRules}
+          initialAccessConfig={initialAccessConfig}
           initialRespondentRules={initialRespondentRules}
           onSave={handleSave}
           onPublish={isActivePoll ? undefined : handlePublish}

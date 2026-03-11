@@ -6,7 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GripVertical, Plus, Trash2, X, ArrowUp, ArrowDown } from 'lucide-react';
 import { QuestionConditionEditor } from './QuestionConditionEditor';
-import type { QuestionFormData, PollQuestionType, ScaleConfig, QuestionCondition } from '@/types/poll';
+import type { QuestionFormData, PollQuestionAnalysisIntent, PollQuestionType, ScaleConfig, QuestionCondition } from '@/types/poll';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 
 interface PollQuestionEditorProps {
@@ -43,6 +43,31 @@ export const PollQuestionEditor = ({
     { value: 'ranking', label: sm('polls.sortable.type.ranking') },
     { value: 'scale', label: sm('polls.sortable.type.scale') },
   ];
+
+  const analysisIntentOptions: { value: PollQuestionAnalysisIntent; label: string }[] = [
+    {
+      value: 'decision',
+      label: language === 'fr' ? 'Question de décision' : language === 'de' ? 'Entscheidungsfrage' : 'Decision question',
+    },
+    {
+      value: 'informative',
+      label: language === 'fr' ? 'Question informative' : language === 'de' ? 'Informationsfrage' : 'Informational question',
+    },
+  ];
+
+  const analysisIntentLabel =
+    language === 'fr'
+      ? 'Signal dans les résultats'
+      : language === 'de'
+        ? 'Signal in den Ergebnissen'
+        : 'Results signal';
+
+  const analysisIntentHelp =
+    language === 'fr'
+      ? 'Une question informative reste visible dans les résultats, mais n’alimente pas les signaux de consensus ou de division.'
+      : language === 'de'
+        ? 'Eine Informationsfrage bleibt in den Ergebnissen sichtbar, speist aber keine Konsens- oder Konfliktsignale.'
+        : 'An informational question stays visible in results, but does not feed consensus or divisive signals.';
 
   const needsOptions = question.question_type === 'single_choice' || 
                        question.question_type === 'multiple_choice' || 
@@ -332,6 +357,28 @@ export const PollQuestionEditor = ({
               </div>
             </div>
           )}
+
+          <div className="space-y-2 pl-4">
+            <Label className="text-xs text-muted-foreground">{analysisIntentLabel}</Label>
+            <Select
+              value={question.analysis_intent ?? 'decision'}
+              onValueChange={(value) =>
+                onChange({ ...question, analysis_intent: value as PollQuestionAnalysisIntent })
+              }
+            >
+              <SelectTrigger className="bg-background">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {analysisIntentOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">{analysisIntentHelp}</p>
+          </div>
 
           <div className="flex items-center gap-2">
             <Switch

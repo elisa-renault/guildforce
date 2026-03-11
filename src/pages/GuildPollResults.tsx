@@ -1,16 +1,15 @@
+import { Loader2, ArrowLeft, Lock } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+
 import { CosmicBackground } from '@/components/CosmicBackground';
-import { GuildSubNav } from '@/components/guild';
-import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { PollResults } from '@/components/polls';
-import { usePollResults, usePollMutations } from '@/hooks/useGuildPolls';
-import { Loader2, ArrowLeft, Lock } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
+import { usePollResults, usePollMutations } from '@/hooks/useGuildPolls';
+import { supabase } from '@/integrations/supabase/client';
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
 
 const GuildPollResultsPage = () => {
@@ -136,7 +135,7 @@ const GuildPollResultsPage = () => {
     <div className="flex-1 relative pt-16">
       <CosmicBackground />
 
-      <PageContainer className="py-8" width="contained">
+      <PageContainer className="py-8" width="wide">
         <div className="flex items-center gap-4 mb-6">
           <button
             onClick={handleBack}
@@ -144,18 +143,12 @@ const GuildPollResultsPage = () => {
           >
             <ArrowLeft className="h-5 w-5 text-muted-foreground" />
           </button>
-          <div>
-            <h1 className="text-2xl font-bold">{poll.title}</h1>
-            <p className="text-muted-foreground">
-              {t.common.results}
-            </p>
-          </div>
         </div>
 
         <PollResults
-          questions={poll.questions || []}
-          isAnonymous={poll.is_anonymous}
-          totalResponses={poll.response_count || 0}
+          poll={poll}
+          variant="full"
+          canUseCohortFilters={isGM || hasManagePolls}
         />
       </PageContainer>
     </div>
