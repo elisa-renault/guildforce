@@ -25,7 +25,7 @@ import { createPortal } from 'react-dom';
 
 import { PollPreviewDialog } from './PollPreviewDialog';
 import { PollRespondentEditor, type RespondentAccessRule } from './PollRespondentEditor';
-import { PollResultsAccessEditor, type ResultsAccessRule } from './PollResultsAccessEditor';
+import { PollResultsAccessEditor, type ResultsAccessConfig } from './PollResultsAccessEditor';
 import { SortableQuestion } from './SortableQuestion';
 import type { PollFormData, QuestionFormData, SectionFormData } from '@/types/poll';
 
@@ -62,18 +62,18 @@ interface PollEditorProps {
   rosters: Roster[];
   members?: GuildMember[];
   ranks?: GuildRank[];
-  officerRankThreshold?: number;
-  onSave: (data: PollFormData, accessRules?: ResultsAccessRule[], respondentRules?: RespondentAccessRule[]) => Promise<void>;
-  onPublish?: (data: PollFormData, accessRules?: ResultsAccessRule[], respondentRules?: RespondentAccessRule[]) => Promise<void>;
+  onSave: (data: PollFormData, accessConfig: ResultsAccessConfig, respondentRules?: RespondentAccessRule[]) => Promise<void>;
+  onPublish?: (data: PollFormData, accessConfig: ResultsAccessConfig, respondentRules?: RespondentAccessRule[]) => Promise<void>;
   saving?: boolean;
   metadataOnly?: boolean;
-  initialAccessRules?: ResultsAccessRule[];
+  initialAccessConfig?: ResultsAccessConfig;
   initialRespondentRules?: RespondentAccessRule[];
 }
 
 const defaultQuestion: QuestionFormData = {
   question_text: '',
   question_type: 'single_choice',
+  analysis_intent: 'decision',
   is_required: true,
   options: ['', ''],
 };
@@ -194,12 +194,11 @@ export const PollEditor = ({
   rosters,
   members = [],
   ranks = [],
-  officerRankThreshold = 2,
   onSave,
   onPublish,
   saving = false,
   metadataOnly = false,
-  initialAccessRules = [],
+  initialAccessConfig = { base_audience: 'guild_members', base_visibility: 'full', rules: [] },
   initialRespondentRules = [],
 }: PollEditorProps) => {
   const { language, t } = useLanguage();
@@ -212,8 +211,7 @@ export const PollEditor = ({
   const [previewOpen, setPreviewOpen] = useState(false);
   
   // Results access state
-  const [restrictResultsAccess, setRestrictResultsAccess] = useState(initialAccessRules.length > 0);
-  const [resultsAccessRules, setResultsAccessRules] = useState<ResultsAccessRule[]>(initialAccessRules);
+  const [resultsAccessConfig, setResultsAccessConfig] = useState<ResultsAccessConfig>(initialAccessConfig);
   
   // Respondent access state
   const [restrictRespondentAccess, setRestrictRespondentAccess] = useState(initialRespondentRules.length > 0);
@@ -277,19 +275,17 @@ export const PollEditor = ({
   }, [formData.questions, formData.sections, activeQuestionId]);
 
   // Only initialize access rules once on mount or when they actually change
-  const initialAccessRulesRef = useRef<ResultsAccessRule[] | null>(null);
+  const initialAccessConfigRef = useRef<ResultsAccessConfig | null>(null);
   useEffect(() => {
-    // Skip if we've already initialized and the arrays are equivalent
-    if (initialAccessRulesRef.current !== null) {
-      const currentRulesStr = JSON.stringify(initialAccessRulesRef.current);
-      const newRulesStr = JSON.stringify(initialAccessRules);
-      if (currentRulesStr === newRulesStr) return;
+    if (initialAccessConfigRef.current !== null) {
+      const currentConfigStr = JSON.stringify(initialAccessConfigRef.current);
+      const newConfigStr = JSON.stringify(initialAccessConfig);
+      if (currentConfigStr === newConfigStr) return;
     }
-    
-    initialAccessRulesRef.current = initialAccessRules;
-    setRestrictResultsAccess(initialAccessRules.length > 0);
-    setResultsAccessRules(initialAccessRules);
-  }, [initialAccessRules]);
+
+    initialAccessConfigRef.current = initialAccessConfig;
+    setResultsAccessConfig(initialAccessConfig);
+  }, [initialAccessConfig]);
 
   // Initialize respondent rules
   const initialRespondentRulesRef = useRef<RespondentAccessRule[] | null>(null);
@@ -529,16 +525,82 @@ export const PollEditor = ({
   };
 
   const handleSave = async () => {
-    const rulesToSave = restrictResultsAccess ? resultsAccessRules : [];
+    const sectionIdToEditorId: Record<string, string> = {};
+    const questionIdToEditorId: Record<string, string> = {};
+
+    formData.sections.forEach((section, sectionIndex) => {
+      if (section.id) {
+        sectionIdToEditorId[section.id] = `section-${sectionIndex}`;
+      }
+      section.questions.forEach((question, questionIndex) => {
+        if (question.id) {
+          questionIdToEditorId[question.id] = `section-${sectionIndex}-q-${questionIndex}`;
+        }
+      });
+    });
+    formData.questions.forEach((question, questionIndex) => {
+      if (question.id) {
+        questionIdToEditorId[question.id] = `general-q-${questionIndex}`;
+      }
+    });
+
+    const accessConfigToSave: ResultsAccessConfig = {
+      ...resultsAccessConfig,
+      rules: resultsAccessConfig.rules.map((rule) => ({
+        ...rule,
+        section_id:
+          rule.target_type === 'section' && rule.section_id
+            ? sectionIdToEditorId[rule.section_id] || rule.section_id
+            : rule.section_id,
+        question_id:
+          rule.target_type === 'question' && rule.question_id
+            ? questionIdToEditorId[rule.question_id] || rule.question_id
+            : rule.question_id,
+      })),
+    };
+
     const respondentRulesToSave = restrictRespondentAccess ? respondentAccessRules : [];
-    await onSave(formData, rulesToSave, respondentRulesToSave);
+    await onSave(formData, accessConfigToSave, respondentRulesToSave);
   };
 
   const handlePublish = async () => {
     if (onPublish) {
-      const rulesToSave = restrictResultsAccess ? resultsAccessRules : [];
+      const sectionIdToEditorId: Record<string, string> = {};
+      const questionIdToEditorId: Record<string, string> = {};
+
+      formData.sections.forEach((section, sectionIndex) => {
+        if (section.id) {
+          sectionIdToEditorId[section.id] = `section-${sectionIndex}`;
+        }
+        section.questions.forEach((question, questionIndex) => {
+          if (question.id) {
+            questionIdToEditorId[question.id] = `section-${sectionIndex}-q-${questionIndex}`;
+          }
+        });
+      });
+      formData.questions.forEach((question, questionIndex) => {
+        if (question.id) {
+          questionIdToEditorId[question.id] = `general-q-${questionIndex}`;
+        }
+      });
+
+      const accessConfigToSave: ResultsAccessConfig = {
+        ...resultsAccessConfig,
+        rules: resultsAccessConfig.rules.map((rule) => ({
+          ...rule,
+          section_id:
+            rule.target_type === 'section' && rule.section_id
+              ? sectionIdToEditorId[rule.section_id] || rule.section_id
+              : rule.section_id,
+          question_id:
+            rule.target_type === 'question' && rule.question_id
+              ? questionIdToEditorId[rule.question_id] || rule.question_id
+              : rule.question_id,
+        })),
+      };
+
       const respondentRulesToSave = restrictRespondentAccess ? respondentAccessRules : [];
-      await onPublish(formData, rulesToSave, respondentRulesToSave);
+      await onPublish(formData, accessConfigToSave, respondentRulesToSave);
     }
   };
 
@@ -712,13 +774,30 @@ export const PollEditor = ({
       {/* Results Access Control */}
       <GlowCard className="p-3 sm:p-6">
         <PollResultsAccessEditor
-          accessRules={resultsAccessRules}
+          config={resultsAccessConfig}
           members={members}
           ranks={ranks}
-          officerRankThreshold={officerRankThreshold}
-          onChange={setResultsAccessRules}
-          restrictAccess={restrictResultsAccess}
-          onRestrictAccessChange={setRestrictResultsAccess}
+          sections={formData.sections.map((section, sectionIndex) => ({
+            id: section.id || `section-${sectionIndex}`,
+            title: section.title || `${sm('polls.editor.section_label').replace('{{index}}', String(sectionIndex + 1))}`,
+          }))}
+          questions={[
+            ...formData.sections.flatMap((section, sectionIndex) =>
+              section.questions.map((question, questionIndex) => ({
+                id: question.id || `section-${sectionIndex}-q-${questionIndex}`,
+                section_id: section.id || `section-${sectionIndex}`,
+                question_text: question.question_text || `Q${questionIndex + 1}`,
+                question_type: question.question_type,
+              })),
+            ),
+            ...formData.questions.map((question, questionIndex) => ({
+              id: question.id || `general-q-${questionIndex}`,
+              section_id: null,
+              question_text: question.question_text || `Q${questionIndex + 1}`,
+              question_type: question.question_type,
+            })),
+          ]}
+          onChange={setResultsAccessConfig}
         />
       </GlowCard>
 

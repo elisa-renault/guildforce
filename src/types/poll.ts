@@ -1,5 +1,19 @@
 export type PollStatus = 'draft' | 'active' | 'closed';
 export type PollQuestionType = 'single_choice' | 'multiple_choice' | 'text' | 'rating' | 'date' | 'time' | 'datetime' | 'ranking' | 'scale';
+export type PollQuestionAnalysisIntent = 'decision' | 'informative';
+export type PollResultsBaseAudience = 'guild_members' | 'eligible_respondents' | 'restricted';
+export type PollResultsVisibilityLevel = 'none' | 'non_text' | 'full';
+export type PollResultsAudienceType = 'base_audience' | 'rank_range' | 'user';
+export type PollResultsTargetType = 'poll' | 'section' | 'question' | 'question_type';
+export type PollResultsCohortFilterableQuestionType =
+  | 'single_choice'
+  | 'multiple_choice'
+  | 'rating'
+  | 'date'
+  | 'time'
+  | 'datetime'
+  | 'scale';
+export type PollResultsCohortRedactionReason = 'minimum_sample' | 'text_hidden';
 
 export interface GuildPollSection {
   id: string;
@@ -53,6 +67,8 @@ export interface GuildPoll {
   ends_at: string | null;
   created_at: string;
   updated_at: string;
+  results_base_audience?: PollResultsBaseAudience;
+  results_base_visibility?: PollResultsVisibilityLevel;
   // Joined data
   creator?: {
     id: string;
@@ -75,6 +91,7 @@ export interface GuildPollQuestion {
   section_id: string | null;
   question_text: string;
   question_type: PollQuestionType;
+  analysis_intent?: PollQuestionAnalysisIntent | null;
   is_required: boolean;
   display_order: number;
   options: string[];
@@ -85,7 +102,13 @@ export interface GuildPollQuestion {
   // For responses
   responses?: GuildPollResponse[];
   my_response?: GuildPollResponse;
+  effective_visibility?: PollResultsVisibilityLevel;
+  cohort_redacted?: boolean;
+  cohort_redaction_reason?: PollResultsCohortRedactionReason | null;
+  cohort_response_count?: number;
 }
+
+export type PollResultsVariant = 'compact' | 'full';
 
 export interface GuildPollResponse {
   id: string;
@@ -136,11 +159,52 @@ export interface QuestionFormData {
   section_id?: string | null;
   question_text: string;
   question_type: PollQuestionType;
+  analysis_intent?: PollQuestionAnalysisIntent | null;
   is_required: boolean;
   options: string[];
   scale_config?: ScaleConfig | null;
   allow_other?: boolean;
   condition?: QuestionCondition | null;
+}
+
+export interface PollResultsAccessRule {
+  audience_type: PollResultsAudienceType;
+  visibility_level: PollResultsVisibilityLevel;
+  target_type: PollResultsTargetType;
+  user_id?: string;
+  min_rank_index?: number;
+  max_rank_index?: number;
+  section_id?: string;
+  question_id?: string;
+  question_type?: PollQuestionType;
+}
+
+export interface PollResultsAccessConfig {
+  base_audience: PollResultsBaseAudience;
+  base_visibility: PollResultsVisibilityLevel;
+  rules: PollResultsAccessRule[];
+}
+
+export interface PollResultsCohortFilter {
+  question_id: string;
+  question_type: PollResultsCohortFilterableQuestionType;
+  match_value: string;
+}
+
+export interface PollResultsCohortQuestionResult {
+  question_id: string;
+  response_count: number;
+  is_redacted: boolean;
+  redaction_reason?: PollResultsCohortRedactionReason | null;
+  responses: GuildPollResponse[];
+}
+
+export interface PollResultsCohortAnalysis {
+  cohort_respondent_count: number;
+  global_respondent_count: number;
+  is_anonymous_guarded: boolean;
+  filters: PollResultsCohortFilter[];
+  questions: PollResultsCohortQuestionResult[];
 }
 
 // Special value for "Other" option

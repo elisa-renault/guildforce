@@ -4,7 +4,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
-import type { GuildPoll, GuildPollQuestion, GuildPollResponse, PollFormData, ResponseValue } from '@/types/poll';
+import type {
+  GuildPoll,
+  GuildPollQuestion,
+  GuildPollResponse,
+  GuildPollSection,
+  PollFormData,
+  PollResultsAccessConfig,
+  PollResultsAccessRule,
+  PollResultsVisibilityLevel,
+  ResponseValue,
+} from '@/types/poll';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 
 export const useGuildPolls = (guildId: string | undefined) => {
@@ -81,7 +91,7 @@ export const useGuildPolls = (guildId: string | undefined) => {
       }
 
       // Fetch response counts in a single call (bypasses results access but still enforces poll visibility)
-      let responseCounts: Record<string, number> = {};
+      const responseCounts: Record<string, number> = {};
       const pollIds = filteredData.map(poll => poll.id);
       if (pollIds.length > 0) {
         const { data: counts, error: countsError } = await supabase
@@ -218,32 +228,70 @@ export const usePollResults = (pollId: string | undefined) => {
 
       if (questionsError) throw questionsError;
 
-      // Fetch all responses with user info (if not anonymous)
-      const { data: allResponses, error: allResponsesError } = await supabase
-        .from('guild_poll_responses')
-        .select(`
-          *,
-          user:profiles(id, username, avatar_url)
-        `)
-        .in('question_id', questions?.map(q => q.id) || []);
+      const { data: sections, error: sectionsError } = await supabase
+        .from('guild_poll_sections')
+        .select('*')
+        .eq('poll_id', pollId)
+        .order('display_order', { ascending: true });
 
-      if (allResponsesError) throw allResponsesError;
+      if (sectionsError) throw sectionsError;
+
+      const { data: visibilityMap, error: visibilityError } = await supabase.rpc('get_poll_results_visibility_map', {
+        p_poll_id: pollId,
+        p_user_id: user.id,
+      });
+
+      if (visibilityError) throw visibilityError;
+
+      const visibilityByQuestion = new Map<string, PollResultsVisibilityLevel>(
+        (visibilityMap || []).map((entry) => [
+          entry.question_id,
+          (entry.visibility_level as PollResultsVisibilityLevel) || 'none',
+        ]),
+      );
+
+      const visibleQuestions = (questions || []).filter((question) => {
+        const visibility = visibilityByQuestion.get(question.id) || 'none';
+        return visibility !== 'none';
+      });
+
+      let allResponses: GuildPollResponse[] = [];
+      if (visibleQuestions.length > 0) {
+        const responseQuery = pollData.is_anonymous
+          ? supabase
+              .from('guild_poll_responses')
+              .select('*')
+          : supabase
+              .from('guild_poll_responses')
+              .select(`
+                *,
+                user:profiles(id, username, avatar_url)
+              `);
+
+        const { data: fetchedResponses, error: allResponsesError } = await responseQuery
+          .in('question_id', visibleQuestions.map((question) => question.id));
+
+        if (allResponsesError) throw allResponsesError;
+        allResponses = fetchedResponses || [];
+      }
 
       // Map responses to questions
-      const questionsWithResponses = questions?.map(q => ({
+      const questionsWithResponses = visibleQuestions.map(q => ({
         ...q,
         options: q.options as string[],
         scale_config: q.scale_config as any,
         condition: q.condition as any,
         allow_other: q.allow_other ?? false,
-        responses: allResponses?.filter(r => r.question_id === q.id) as GuildPollResponse[],
+        responses: allResponses.filter(r => r.question_id === q.id) as GuildPollResponse[],
+        effective_visibility: visibilityByQuestion.get(q.id) || 'none',
       })) as GuildPollQuestion[];
 
       // Count unique respondents
-      const uniqueRespondents = new Set(allResponses?.map(r => r.user_id) || []);
+      const uniqueRespondents = new Set(allResponses.map(r => r.user_id) || []);
 
       setPoll({
         ...pollData,
+        sections: (sections || []) as GuildPollSection[],
         questions: questionsWithResponses,
         response_count: uniqueRespondents.size,
       } as GuildPoll);
@@ -349,6 +397,7 @@ export const usePollMutations = () => {
             section_id: sectionData.id,
             question_text: q.question_text,
             question_type: q.question_type,
+            analysis_intent: q.analysis_intent ?? 'decision',
             is_required: q.is_required,
             display_order: globalOrder + qIndex,
             options: q.options,
@@ -373,6 +422,7 @@ export const usePollMutations = () => {
           section_id: null,
           question_text: q.question_text,
           question_type: q.question_type,
+          analysis_intent: q.analysis_intent ?? 'decision',
           is_required: q.is_required,
           display_order: globalOrder + index,
           options: q.options,
@@ -652,6 +702,7 @@ export const usePollMutations = () => {
             section_id: sectionData.id,
             question_text: q.question_text,
             question_type: q.question_type,
+            analysis_intent: q.analysis_intent ?? 'decision',
             is_required: q.is_required,
             display_order: globalOrder + qIndex,
             options: q.options,
@@ -675,6 +726,7 @@ export const usePollMutations = () => {
           section_id: null,
           question_text: q.question_text,
           question_type: q.question_type,
+          analysis_intent: q.analysis_intent ?? 'decision',
           is_required: q.is_required,
           display_order: globalOrder + index,
           options: q.options,
@@ -823,61 +875,182 @@ export const usePollMutations = () => {
     }
   };
 
-  // Fetch poll results access rules (memoized to avoid infinite refetch loops in consumers)
-  const fetchResultsAccessRules = useCallback(async (pollId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('poll_results_access_rules')
-        .select('*')
-        .eq('poll_id', pollId);
+  const buildResolvedResultsRules = async (
+    pollId: string,
+    rules: PollResultsAccessRule[],
+  ): Promise<PollResultsAccessRule[]> => {
+    if (rules.length === 0) return [];
 
-      if (error) {
-        log.error('Error fetching results access rules:', error);
-        return [];
+    const [{ data: sections, error: sectionsError }, { data: questions, error: questionsError }] = await Promise.all([
+      supabase
+        .from('guild_poll_sections')
+        .select('id, display_order')
+        .eq('poll_id', pollId)
+        .order('display_order', { ascending: true }),
+      supabase
+        .from('guild_poll_questions')
+        .select('id, section_id, question_type, display_order')
+        .eq('poll_id', pollId)
+        .order('display_order', { ascending: true }),
+    ]);
+
+    if (sectionsError) throw sectionsError;
+    if (questionsError) throw questionsError;
+
+    const sectionMap = new Map<string, string>();
+    (sections || []).forEach((section) => {
+      sectionMap.set(section.id, section.id);
+      sectionMap.set(`section-${section.display_order}`, section.id);
+    });
+
+    const questionMap = new Map<string, string>();
+    const questionTypeById = new Map<string, GuildPollQuestion['question_type']>();
+    const sectionIndexById = new Map<string, number>();
+    (sections || []).forEach((section, sectionIndex) => {
+      sectionIndexById.set(section.id, sectionIndex);
+    });
+
+    const localQuestionIndexBySection = new Map<string, number>();
+    let generalQuestionIndex = 0;
+
+    (questions || []).forEach((question) => {
+      questionMap.set(question.id, question.id);
+      questionTypeById.set(question.id, question.question_type as GuildPollQuestion['question_type']);
+      if (question.section_id) {
+        const sectionIndex = sectionIndexById.get(question.section_id);
+        const localIndex = localQuestionIndexBySection.get(question.section_id) || 0;
+        if (sectionIndex !== undefined) {
+          questionMap.set(`section-${sectionIndex}-q-${localIndex}`, question.id);
+        }
+        localQuestionIndexBySection.set(question.section_id, localIndex + 1);
+      } else {
+        questionMap.set(`general-q-${generalQuestionIndex}`, question.id);
+        generalQuestionIndex += 1;
       }
+    });
 
-      return (
-        data?.map((rule) => ({
-          access_type: rule.access_type as 'rank_range' | 'user',
-          user_id: rule.user_id || undefined,
-          min_rank_index: rule.min_rank_index ?? undefined,
-          max_rank_index: rule.max_rank_index ?? undefined,
-        })) || []
-      );
+    return rules
+      .map((rule) => {
+        const nextRule: PollResultsAccessRule = { ...rule };
+
+        if (nextRule.target_type === 'section') {
+          if (!nextRule.section_id) return null;
+          nextRule.section_id = sectionMap.get(nextRule.section_id) || undefined;
+          if (!nextRule.section_id) return null;
+        }
+
+        if (nextRule.target_type === 'question') {
+          if (!nextRule.question_id) return null;
+          nextRule.question_id = questionMap.get(nextRule.question_id) || undefined;
+          if (!nextRule.question_id) return null;
+          nextRule.question_type = questionTypeById.get(nextRule.question_id);
+        }
+
+        if (nextRule.target_type === 'question_type' && !nextRule.question_type) {
+          return null;
+        }
+
+        if (nextRule.target_type === 'question' || nextRule.target_type === 'question_type') {
+          if (nextRule.visibility_level === 'non_text') {
+            nextRule.visibility_level = nextRule.question_type === 'text' ? 'none' : 'full';
+          }
+        }
+
+        return nextRule;
+      })
+      .filter((rule): rule is PollResultsAccessRule => Boolean(rule));
+  };
+
+  // Fetch poll results access config (memoized to avoid infinite refetch loops in consumers)
+  const fetchResultsAccessRules = useCallback(async (pollId: string): Promise<PollResultsAccessConfig> => {
+    const fallbackConfig: PollResultsAccessConfig = {
+      base_audience: 'guild_members',
+      base_visibility: 'full',
+      rules: [],
+    };
+
+    try {
+      const [{ data: pollData, error: pollError }, { data: rulesData, error: rulesError }] = await Promise.all([
+        supabase
+          .from('guild_polls')
+          .select('results_base_audience, results_base_visibility')
+          .eq('id', pollId)
+          .single(),
+        supabase
+          .from('poll_results_access_rules')
+          .select('*')
+          .eq('poll_id', pollId),
+      ]);
+
+      if (pollError) throw pollError;
+      if (rulesError) throw rulesError;
+
+      return {
+        base_audience: (pollData.results_base_audience as PollResultsAccessConfig['base_audience']) || 'guild_members',
+        base_visibility: (pollData.results_base_visibility as PollResultsAccessConfig['base_visibility']) || 'full',
+        rules:
+          rulesData?.map((rule) => ({
+            audience_type: rule.audience_type as PollResultsAccessRule['audience_type'],
+            visibility_level: rule.visibility_level as PollResultsAccessRule['visibility_level'],
+            target_type: rule.target_type as PollResultsAccessRule['target_type'],
+            user_id: rule.user_id || undefined,
+            min_rank_index: rule.min_rank_index ?? undefined,
+            max_rank_index: rule.max_rank_index ?? undefined,
+            section_id: rule.section_id || undefined,
+            question_id: rule.question_id || undefined,
+            question_type: (rule.question_type as PollResultsAccessRule['question_type']) || undefined,
+          })) || [],
+      };
     } catch (error) {
       log.error('Error fetching results access rules:', error);
-      return [];
+      return fallbackConfig;
     }
   }, []);
 
-  // Save poll results access rules
-  const saveResultsAccessRules = async (
-    pollId: string, 
-    rules: { access_type: 'rank_range' | 'user'; user_id?: string; min_rank_index?: number; max_rank_index?: number }[]
-  ): Promise<boolean> => {
+  // Save poll results access config + overrides
+  const saveResultsAccessRules = async (pollId: string, config: PollResultsAccessConfig): Promise<boolean> => {
     setSaving(true);
     try {
-      // Delete existing rules
-      await supabase
+      const { error: pollError } = await supabase
+        .from('guild_polls')
+        .update({
+          results_base_audience: config.base_audience,
+          results_base_visibility: config.base_visibility,
+        })
+        .eq('id', pollId);
+
+      if (pollError) throw pollError;
+
+      const { error: deleteError } = await supabase
         .from('poll_results_access_rules')
         .delete()
         .eq('poll_id', pollId);
 
-      // Insert new rules if any
-      if (rules.length > 0) {
-        const rulesToInsert = rules.map(rule => ({
-          poll_id: pollId,
-          access_type: rule.access_type,
-          user_id: rule.access_type === 'user' ? rule.user_id : null,
-          min_rank_index: rule.access_type === 'rank_range' ? rule.min_rank_index : null,
-          max_rank_index: rule.access_type === 'rank_range' ? rule.max_rank_index : null,
-        }));
+      if (deleteError) throw deleteError;
 
-        const { error } = await supabase
-          .from('poll_results_access_rules')
-          .insert(rulesToInsert);
+      if (config.rules.length > 0) {
+        const resolvedRules = await buildResolvedResultsRules(pollId, config.rules);
 
-        if (error) throw error;
+        if (resolvedRules.length > 0) {
+          const rulesToInsert = resolvedRules.map((rule) => ({
+            poll_id: pollId,
+            audience_type: rule.audience_type,
+            visibility_level: rule.visibility_level,
+            target_type: rule.target_type,
+            user_id: rule.audience_type === 'user' ? rule.user_id : null,
+            min_rank_index: rule.audience_type === 'rank_range' ? rule.min_rank_index ?? 0 : null,
+            max_rank_index: rule.audience_type === 'rank_range' ? rule.max_rank_index ?? 0 : null,
+            section_id: rule.target_type === 'section' ? rule.section_id : null,
+            question_id: rule.target_type === 'question' ? rule.question_id : null,
+            question_type: rule.target_type === 'question_type' ? rule.question_type : null,
+          }));
+
+          const { error: insertError } = await supabase
+            .from('poll_results_access_rules')
+            .insert(rulesToInsert);
+
+          if (insertError) throw insertError;
+        }
       }
 
       return true;
@@ -1040,6 +1213,8 @@ export const usePollMutations = () => {
           is_anonymous: originalPoll.is_anonymous,
           allow_multiple_responses: originalPoll.allow_multiple_responses,
           roster_id: originalPoll.roster_id,
+          results_base_audience: originalPoll.results_base_audience,
+          results_base_visibility: originalPoll.results_base_visibility,
           ends_at: null, // Reset end date
           status: 'draft',
         })
@@ -1082,6 +1257,7 @@ export const usePollMutations = () => {
             section_id: q.section_id ? sectionIdMap[q.section_id] : null,
             question_text: q.question_text,
             question_type: q.question_type,
+            analysis_intent: q.analysis_intent,
             is_required: q.is_required,
             display_order: q.display_order,
             options: q.options,
