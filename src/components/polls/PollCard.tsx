@@ -198,10 +198,16 @@ export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
               )}
 
               {poll.status === 'closed' && (
-                <Button size="sm" variant="outline" onClick={handleViewResults}>
-                  <Eye className="h-4 w-4 sm:mr-1.5" />
-                  <span className="hidden sm:inline">{t.polls?.viewResults}</span>
-                </Button>
+                <>
+                  <Button size="sm" variant="outline" onClick={handleEditMetadata}>
+                    <Settings className="h-4 w-4 sm:mr-1.5" />
+                    <span className="hidden sm:inline">{t.common.edit}</span>
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={handleViewResults}>
+                    <Eye className="h-4 w-4 sm:mr-1.5" />
+                    <span className="hidden sm:inline">{t.polls?.viewResults}</span>
+                  </Button>
+                </>
               )}
 
               {/* Duplicate button - available for all statuses */}
@@ -241,4 +247,3 @@ export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
 });
 
 PollCard.displayName = 'PollCard';
-
