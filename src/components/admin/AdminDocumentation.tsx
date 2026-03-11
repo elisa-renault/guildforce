@@ -282,9 +282,9 @@ const DOCUMENTATION: DocSection[] = [
       },
       {
         titleEn: 'Cohort analysis on poll results',
-        titleFr: 'Analyse de cohorte sur les rÃ©sultats',
+        titleFr: 'Analyse de cohorte sur les résultats',
         contentEn: 'Poll results now support manager-only cohort analysis through `get_poll_results_cohort_analysis()`. Guild GMs and members with `manage_polls` can filter results by prior answers using AND logic. Anonymous polls apply extra safeguards in cohort mode: no identities, no free-text answers, and redaction when the filtered sample drops below 5 respondents.',
-        contentFr: 'Les rÃ©sultats de sondage supportent dÃ©sormais une analyse de cohorte rÃ©servÃ©e aux gestionnaires via `get_poll_results_cohort_analysis()`. Les GM et membres disposant de `manage_polls` peuvent filtrer les rÃ©sultats selon des rÃ©ponses prÃ©alables en logique ET. Les sondages anonymes appliquent des garde-fous supplÃ©mentaires en mode cohorte : aucune identitÃ©, aucun texte libre, et masquage quand l\'Ã©chantillon filtrÃ© passe sous 5 rÃ©pondants.',
+        contentFr: 'Les résultats de sondage supportent désormais une analyse de cohorte réservée aux gestionnaires via `get_poll_results_cohort_analysis()`. Les GM et membres disposant de `manage_polls` peuvent filtrer les résultats selon des réponses préalables en logique ET. Les sondages anonymes appliquent des garde-fous supplémentaires en mode cohorte : aucune identité, aucun texte libre, et masquage quand l\'échantillon filtré passe sous 5 répondants.',
         tags: ['polls', 'analytics', 'security'],
       },
     ],
