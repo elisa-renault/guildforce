@@ -10,8 +10,8 @@ import { PollResponse, PollResults } from '@/components/polls';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
 import { useToast } from '@/hooks/use-toast';
+import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
 import { usePoll, usePollResults, usePollMutations } from '@/hooks/useGuildPolls';
 import { formatDateLocalized } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
@@ -153,33 +153,45 @@ const GuildPollView = () => {
       <CosmicBackground />
 
       <PageContainer className={usesFullResultsLayout ? 'relative z-10 py-8' : 'relative z-10 py-8 max-w-3xl'} width={usesFullResultsLayout ? 'wide' : 'contained'}>
+        {/* Top actions */}
+        <div className="mb-6 flex items-center justify-between gap-3">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={handleBack}
+            className="h-10 w-10 shrink-0 rounded-lg bg-muted/50 hover:bg-muted"
+          >
+            <ArrowLeft className="h-5 w-5 text-muted-foreground" />
+          </Button>
+
+          {/* Show/Hide results button - for GM or users with permission who already responded */}
+          {canToggleResults && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowResults(!showResults)}
+            >
+              <BarChart3 className="mr-2 h-4 w-4" />
+              {showResults ? t.polls.hideResults : t.polls.viewResults}
+            </Button>
+          )}
+        </div>
+
         {showOuterHeader && (
           <>
             {/* Header */}
-            <div className="flex flex-col gap-4 mb-6">
-              <div className="flex items-start gap-4">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleBack}
-                  className="w-10 h-10 shrink-0 rounded-lg bg-muted/50 hover:bg-muted"
-                >
-                  <ArrowLeft className="h-5 w-5 text-muted-foreground" />
-                </Button>
-                <div className="flex-1 min-w-0">
-                  <h1 className="text-2xl font-bold">{poll.title}</h1>
-                  {poll.description && (
-                    <p className="text-muted-foreground mt-1">{poll.description}</p>
-                  )}
-                </div>
-              </div>
+            <div className="mb-4 min-w-0">
+              <h1 className="text-2xl font-bold">{poll.title}</h1>
+              {poll.description && (
+                <p className="mt-1 text-muted-foreground">{poll.description}</p>
+              )}
             </div>
 
             {/* Poll metadata */}
-            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mb-6">
+            <div className="mb-6 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
               {poll.roster?.name && (
-                <span className="bg-muted/50 px-2 py-1 rounded">
+                <span className="rounded bg-muted/50 px-2 py-1">
                   {poll.roster.name}
                 </span>
               )}
@@ -192,20 +204,6 @@ const GuildPollView = () => {
               )}
             </div>
           </>
-        )}
-
-        {/* Show/Hide results button - for GM or users with permission who already responded */}
-        {canToggleResults && (
-          <div className={showOuterHeader ? 'flex justify-start md:justify-end mb-6' : 'flex justify-end mb-6'}>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowResults(!showResults)}
-            >
-              <BarChart3 className="h-4 w-4 mr-2" />
-              {showResults ? t.polls.hideResults : t.polls.viewResults}
-            </Button>
-          </div>
         )}
 
         {/* Show results or response form */}
