@@ -10,6 +10,7 @@ import { PollResponse, PollResults } from '@/components/polls';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
 import { useToast } from '@/hooks/use-toast';
 import { usePoll, usePollResults, usePollMutations } from '@/hooks/useGuildPolls';
 import { formatDateLocalized } from '@/i18n/format';
@@ -24,6 +25,7 @@ const GuildPollView = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [guildId, setGuildId] = useState<string | null>(null);
   const [isGM, setIsGM] = useState(false);
   const [hasResponded, setHasResponded] = useState(false);
   const [showResults, setShowResults] = useState(false);
@@ -33,6 +35,7 @@ const GuildPollView = () => {
   const { poll, loading: pollLoading, refetch } = usePoll(pollId);
   const { poll: pollResults, loading: resultsLoading, refetch: refetchResults } = usePollResults(pollId);
   const { submitAllResponses, checkCanViewResults, saving } = usePollMutations();
+  const { hasPermission: hasManagePolls } = useHasGuildPermission(guildId, 'manage_polls');
   const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
     resolveSemanticMessage({ key, language, translations: t });
   const getErrorMessage = (error: unknown) =>
@@ -52,10 +55,11 @@ const GuildPollView = () => {
   const isClosed =
     poll?.status === 'closed' || (poll?.ends_at && new Date(poll.ends_at) < new Date()) || false;
   
-  // GM always can see results, otherwise check permission
-  const userCanViewResults = isGM || canViewResults === true;
+  // GM and poll managers always can see results, otherwise check permission
+  const userCanViewResults = isGM || hasManagePolls || canViewResults === true;
   // Show results pane unless user is editing their responses
   const showResultsPane = !isEditing && (isClosed || showResults || (!isGM && hasResponded && userCanViewResults));
+  const usesFullResultsLayout = showResultsPane && userCanViewResults;
 
   // Check results access permission when poll loads
   useEffect(() => {
@@ -85,6 +89,8 @@ const GuildPollView = () => {
         navigate('/guilds');
         return;
       }
+
+      setGuildId(matchedGuild.id);
 
       // Check GM status
       const { data: gmCheck } = await supabase.rpc('is_guild_gm', {
@@ -144,7 +150,7 @@ const GuildPollView = () => {
     <div className="flex-1 relative pt-16">
       <CosmicBackground />
 
-      <PageContainer className="relative z-10 py-8 max-w-3xl" width="contained">
+      <PageContainer className={usesFullResultsLayout ? 'relative z-10 py-8' : 'relative z-10 py-8 max-w-3xl'} width={usesFullResultsLayout ? 'wide' : 'contained'}>
         {/* Header */}
         <div className="flex flex-col gap-4 mb-6">
           <div className="flex items-start gap-4">
@@ -165,7 +171,7 @@ const GuildPollView = () => {
             </div>
           </div>
           {/* Show/Hide results button - for GM or users with permission who already responded */}
-          {(isGM || (userCanViewResults && hasResponded)) && !isClosed && (
+          {(isGM || hasManagePolls || (userCanViewResults && hasResponded)) && !isClosed && (
             <Button
               variant="outline"
               size="sm"
@@ -215,7 +221,8 @@ const GuildPollView = () => {
             )}
             <PollResults
               poll={pollResults || poll}
-              variant="compact"
+              variant="full"
+              canUseCohortFilters={isGM || hasManagePolls}
             />
           </div>
         ) : hasResponded && !userCanViewResults && !isEditing ? (
