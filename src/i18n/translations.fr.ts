@@ -885,6 +885,7 @@ export const translationsFr: Translations = {
       activePoll: 'Sondage en cours',
       ends: 'Fin',
       view: 'Voir',
+      reviewMyResponses: 'Revoir mes réponses',
       allowOther: 'Permettre "Autre (préciser)"',
       otherSpecify: 'Autre (préciser)',
       otherPlaceholder: 'Veuillez préciser...',

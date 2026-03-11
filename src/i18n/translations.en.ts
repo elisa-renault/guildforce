@@ -885,6 +885,7 @@ export const translationsEn: Translations = {
       activePoll: 'Active Poll',
       ends: 'Ends',
       view: 'View',
+      reviewMyResponses: 'Review my responses',
       allowOther: 'Allow "Other (specify)"',
       otherSpecify: 'Other (specify)',
       otherPlaceholder: 'Please specify...',
