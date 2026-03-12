@@ -4,6 +4,7 @@ import type { PollFormData } from '@/types/poll';
 
 import {
   hasPollStructureChanges,
+  shouldRewriteQuestionsForPollEdit,
   shouldResetResponsesForFullPollEdit,
 } from '@/lib/pollStructureChanges';
 
@@ -54,7 +55,7 @@ describe('pollStructureChanges', () => {
     expect(hasPollStructureChanges(previous, next)).toBe(false);
     expect(
       shouldResetResponsesForFullPollEdit({
-        isActivePoll: true,
+        pollStatus: 'active',
         editMode: 'full',
         previousData: previous,
         nextData: next,
@@ -70,7 +71,7 @@ describe('pollStructureChanges', () => {
     expect(hasPollStructureChanges(previous, next)).toBe(true);
     expect(
       shouldResetResponsesForFullPollEdit({
-        isActivePoll: true,
+        pollStatus: 'active',
         editMode: 'full',
         previousData: previous,
         nextData: next,
@@ -85,7 +86,7 @@ describe('pollStructureChanges', () => {
 
     expect(
       shouldResetResponsesForFullPollEdit({
-        isActivePoll: true,
+        pollStatus: 'active',
         editMode: 'metadata',
         previousData: previous,
         nextData: next,
@@ -93,11 +94,60 @@ describe('pollStructureChanges', () => {
     ).toBe(false);
     expect(
       shouldResetResponsesForFullPollEdit({
-        isActivePoll: false,
+        pollStatus: 'draft',
         editMode: 'full',
         previousData: previous,
         nextData: next,
       }),
     ).toBe(false);
+  });
+
+  it('does not rewrite questions for closed polls when only permissions change', () => {
+    const previous = buildPollFormData();
+    const next = buildPollFormData();
+
+    expect(hasPollStructureChanges(previous, next)).toBe(false);
+    expect(
+      shouldResetResponsesForFullPollEdit({
+        pollStatus: 'closed',
+        editMode: 'metadata',
+        previousData: previous,
+        nextData: next,
+      }),
+    ).toBe(false);
+    expect(
+      shouldRewriteQuestionsForPollEdit({
+        hasStructureChanges: hasPollStructureChanges(previous, next),
+      }),
+    ).toBe(false);
+  });
+
+  it('still requires a reset for closed polls when structure changes in full edit mode', () => {
+    const previous = buildPollFormData();
+    const next = buildPollFormData();
+    next.questions.push({
+      id: 'question-3',
+      question_text: 'Would you recruit more healers?',
+      question_type: 'single_choice',
+      analysis_intent: 'decision',
+      is_required: true,
+      options: ['Yes', 'No'],
+      allow_other: false,
+      condition: null,
+    });
+
+    expect(
+      shouldResetResponsesForFullPollEdit({
+        pollStatus: 'closed',
+        editMode: 'full',
+        previousData: previous,
+        nextData: next,
+      }),
+    ).toBe(true);
+    expect(
+      shouldRewriteQuestionsForPollEdit({
+        hasStructureChanges: hasPollStructureChanges(previous, next),
+      }),
+    ).toBe(true);
   });
 });

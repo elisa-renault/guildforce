@@ -1,6 +1,7 @@
 import type { PollFormData, QuestionFormData, SectionFormData } from '@/types/poll';
 
 type PollEditMode = 'metadata' | 'full' | null;
+type PollStatus = 'draft' | 'active' | 'closed' | null;
 
 const normalizeCondition = (condition: QuestionFormData['condition']) => {
   if (!condition) return null;
@@ -38,19 +39,25 @@ export const hasPollStructureChanges = (previous: PollFormData, next: PollFormDa
   JSON.stringify(buildStructureSnapshot(previous)) !== JSON.stringify(buildStructureSnapshot(next));
 
 export const shouldResetResponsesForFullPollEdit = ({
-  isActivePoll,
+  pollStatus,
   editMode,
   previousData,
   nextData,
 }: {
-  isActivePoll: boolean;
+  pollStatus: PollStatus;
   editMode: PollEditMode;
   previousData: PollFormData | null;
   nextData: PollFormData;
 }): boolean => {
-  if (!isActivePoll || editMode !== 'full' || !previousData) {
+  if (pollStatus === 'draft' || editMode !== 'full' || !previousData) {
     return false;
   }
 
   return hasPollStructureChanges(previousData, nextData);
 };
+
+export const shouldRewriteQuestionsForPollEdit = ({
+  hasStructureChanges,
+}: {
+  hasStructureChanges: boolean;
+}): boolean => hasStructureChanges;
