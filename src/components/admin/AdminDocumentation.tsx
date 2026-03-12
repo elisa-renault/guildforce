@@ -281,6 +281,13 @@ const DOCUMENTATION: DocSection[] = [
         tags: ['polls', 'access', 'security'],
       },
       {
+        titleEn: 'Poll read access is RLS-aligned',
+        titleFr: 'Accès lecture des sondages aligné sur la RLS',
+        contentEn: 'Poll read access now stays aligned between frontend checks and database policies. `guild_polls`, `guild_poll_questions`, `guild_poll_sections`, and `guild_poll_responses` all follow the same split between `can_respond_to_poll()` and `can_view_poll_results()`, so a closed poll cannot appear configurable in the editor while still being hidden by base-table RLS.',
+        contentFr: 'L\'accès en lecture des sondages reste désormais aligné entre les contrôles frontend et les politiques base de données. `guild_polls`, `guild_poll_questions`, `guild_poll_sections` et `guild_poll_responses` suivent tous la même séparation entre `can_respond_to_poll()` et `can_view_poll_results()`, afin qu\'un sondage fermé ne puisse plus sembler bien configuré dans l\'éditeur tout en restant masqué par la RLS des tables de base.',
+        tags: ['polls', 'access', 'security', 'rls'],
+      },
+      {
         titleEn: 'Cohort analysis on poll results',
         titleFr: 'Analyse de cohorte sur les résultats',
         contentEn: 'Poll results now support manager-only cohort analysis through `get_poll_results_cohort_analysis()`. Guild GMs and members with `manage_polls` can filter results by prior answers using AND logic. Anonymous polls apply extra safeguards in cohort mode: no identities, no free-text answers, and redaction when the filtered sample drops below 5 respondents.',
@@ -392,6 +399,13 @@ const DOCUMENTATION: DocSection[] = [
         contentEn: 'Core helpers include:\n- `has_role`, `has_guild_permission`, `has_roster_access`\n- `is_guild_member`, `is_guild_gm`\n- `are_wishes_locked`, `can_edit_wishes`\n- `can_respond_to_poll`, `get_poll_question_results_visibility`, `can_view_poll_results`\n- `has_any_guild_secret_access`, `can_access_guild_secret`\n- `list_visible_guild_secrets`, `list_guild_secret_audit`\n- `is_user_forum_sanctioned`\n- `get_roster_member_selection` (manager-only decision comments)\nUse these functions instead of duplicating permission logic in frontend code.',
         contentFr: 'Les helpers principaux incluent :\n- `has_role`, `has_guild_permission`, `has_roster_access`\n- `is_guild_member`, `is_guild_gm`\n- `are_wishes_locked`, `can_edit_wishes`\n- `can_respond_to_poll`, `get_poll_question_results_visibility`, `can_view_poll_results`\n- `has_any_guild_secret_access`, `can_access_guild_secret`\n- `list_visible_guild_secrets`, `list_guild_secret_audit`\n- `is_user_forum_sanctioned`\n- `get_roster_member_selection` (commentaires de décision visibles seulement pour les gérants)\nUtiliser ces fonctions plutôt que de dupliquer la logique de permissions côté frontend.',
         tags: ['security', 'rpc', 'permissions'],
+      },
+      {
+        titleEn: 'Poll result rules must match base-table RLS',
+        titleFr: 'Les règles de résultats doivent correspondre à la RLS des tables',
+        contentEn: 'When poll visibility rules change, update both RPC helpers and RLS together. A permissive result rule is not sufficient if `guild_polls` or the related `guild_poll_questions` / `guild_poll_sections` policies still hide the poll row, question rows, or aggregated response counts.',
+        contentFr: 'Quand les règles de visibilité des sondages changent, il faut mettre à jour ensemble les helpers RPC et la RLS. Une règle de résultats permissive ne suffit pas si `guild_polls` ou les politiques liées de `guild_poll_questions` / `guild_poll_sections` masquent encore la ligne du sondage, les lignes de questions ou les compteurs agrégés.',
+        tags: ['security', 'polls', 'rpc', 'rls'],
       },
       {
         titleEn: 'Secret storage and audit',

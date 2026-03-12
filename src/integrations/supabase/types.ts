@@ -1251,7 +1251,9 @@ export type Database = {
       }
       guild_poll_questions: {
         Row: {
-          analysis_intent: Database["public"]["Enums"]["poll_question_analysis_intent"] | null
+          analysis_intent:
+            | Database["public"]["Enums"]["poll_question_analysis_intent"]
+            | null
           allow_other: boolean
           condition: Json | null
           created_at: string
@@ -1266,7 +1268,9 @@ export type Database = {
           section_id: string | null
         }
         Insert: {
-          analysis_intent?: Database["public"]["Enums"]["poll_question_analysis_intent"] | null
+          analysis_intent?:
+            | Database["public"]["Enums"]["poll_question_analysis_intent"]
+            | null
           allow_other?: boolean
           condition?: Json | null
           created_at?: string
@@ -1281,7 +1285,9 @@ export type Database = {
           section_id?: string | null
         }
         Update: {
-          analysis_intent?: Database["public"]["Enums"]["poll_question_analysis_intent"] | null
+          analysis_intent?:
+            | Database["public"]["Enums"]["poll_question_analysis_intent"]
+            | null
           allow_other?: boolean
           condition?: Json | null
           created_at?: string
@@ -1856,7 +1862,9 @@ export type Database = {
           min_rank_index: number | null
           poll_id: string
           question_id: string | null
-          question_type: Database["public"]["Enums"]["poll_question_type"] | null
+          question_type:
+            | Database["public"]["Enums"]["poll_question_type"]
+            | null
           section_id: string | null
           target_type: string
           user_id: string | null
@@ -1870,7 +1878,9 @@ export type Database = {
           min_rank_index?: number | null
           poll_id: string
           question_id?: string | null
-          question_type?: Database["public"]["Enums"]["poll_question_type"] | null
+          question_type?:
+            | Database["public"]["Enums"]["poll_question_type"]
+            | null
           section_id?: string | null
           target_type?: string
           user_id?: string | null
@@ -1884,7 +1894,9 @@ export type Database = {
           min_rank_index?: number | null
           poll_id?: string
           question_id?: string | null
-          question_type?: Database["public"]["Enums"]["poll_question_type"] | null
+          question_type?:
+            | Database["public"]["Enums"]["poll_question_type"]
+            | null
           section_id?: string | null
           target_type?: string
           user_id?: string | null
