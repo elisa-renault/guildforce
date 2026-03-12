@@ -83,6 +83,8 @@ export interface GuildPoll {
   questions?: GuildPollQuestion[];
   response_count?: number;
   member_count?: number;
+  viewer_can_respond?: boolean;
+  viewer_can_view_results?: boolean;
 }
 
 export interface GuildPollQuestion {

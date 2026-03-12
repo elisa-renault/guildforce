@@ -2,7 +2,6 @@ import { BarChart3, ChevronRight, Clock, Users } from 'lucide-react';
 import React, { forwardRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-
 import { GlowCard } from '@/components/GlowCard';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +9,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useGuildPolls } from '@/hooks/useGuildPolls';
 import { formatDistanceFromNowLocalized } from '@/i18n/format';
 import { supabase } from '@/integrations/supabase/client';
+import { getPollPrimaryAction } from '@/lib/pollAccess';
 
 interface ActivePollWidgetProps {
   guildId: string;
@@ -28,9 +28,9 @@ export const ActivePollWidget = forwardRef<HTMLDivElement, ActivePollWidgetProps
     const [canViewClosedPollResults, setCanViewClosedPollResults] = React.useState(false);
     const [hasManagePollsPermission, setHasManagePollsPermission] = React.useState(false);
 
-    // Get the first active poll
     const activePoll = polls.find((poll) => poll.status === 'active');
     const closedPoll = polls.find((poll) => poll.status === 'closed');
+    const primaryAction = activePoll ? getPollPrimaryAction(activePoll, isGM) : 'none';
 
     React.useEffect(() => {
       const fetchClosedPollMeta = async () => {
@@ -76,7 +76,7 @@ export const ActivePollWidget = forwardRef<HTMLDivElement, ActivePollWidgetProps
     }, [activePoll, closedPoll, guildId, user]);
 
     if (loading) {
-      return null; // Don't show loading state, just wait
+      return null;
     }
 
     if (!activePoll) {
@@ -98,7 +98,9 @@ export const ActivePollWidget = forwardRef<HTMLDivElement, ActivePollWidgetProps
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-2">
                 <BarChart3 className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t.polls.closed}</span>
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  {t.polls.closed}
+                </span>
               </div>
 
               <h3 className="font-semibold text-foreground line-clamp-2">{closedPoll.title}</h3>
@@ -137,7 +139,16 @@ export const ActivePollWidget = forwardRef<HTMLDivElement, ActivePollWidgetProps
       );
     }
 
+    if (primaryAction === 'none') {
+      return null;
+    }
+
     const handleClick = () => {
+      if (primaryAction === 'results') {
+        navigate(`/guild/${guildSlug}/poll/${activePoll.id}/results`);
+        return;
+      }
+
       navigate(`/guild/${guildSlug}/poll/${activePoll.id}`);
     };
 
@@ -180,7 +191,6 @@ export const ActivePollWidget = forwardRef<HTMLDivElement, ActivePollWidgetProps
               )}
             </div>
 
-            {/* Actions row */}
             <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/30" onClick={(event) => event.stopPropagation()}>
               {isGM && (
                 <Button variant="outline" size="sm" onClick={handleResultsClick}>
@@ -189,7 +199,9 @@ export const ActivePollWidget = forwardRef<HTMLDivElement, ActivePollWidgetProps
                 </Button>
               )}
               <Button variant="ghost" size="sm" className="ml-auto" onClick={handleClick}>
-                <span className="text-sm">{t.polls.view}</span>
+                <span className="text-sm">
+                  {primaryAction === 'results' ? t.polls.viewResults : t.polls.view}
+                </span>
                 <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             </div>

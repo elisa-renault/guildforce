@@ -95,6 +95,14 @@ const GuildPolls = () => {
   const draftPolls = polls.filter(p => p.status === 'draft');
   const activePolls = polls.filter(p => p.status === 'active');
   const closedPolls = polls.filter(p => p.status === 'closed');
+  const defaultTab =
+    activePolls.length > 0
+      ? 'active'
+      : closedPolls.length > 0
+        ? 'closed'
+        : canManagePolls && draftPolls.length > 0
+          ? 'draft'
+          : 'active';
 
   if (loading || permLoading) {
     return (
@@ -143,7 +151,7 @@ const GuildPolls = () => {
               {sm('guild.polls.empty')}
             </div>
           ) : (
-            <Tabs defaultValue="active">
+            <Tabs defaultValue={defaultTab}>
               <TabsList className="mb-6">
                 <TabsTrigger value="active">
                   {sm('guild.polls.tab.active')} ({activePolls.length})

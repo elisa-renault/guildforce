@@ -16,6 +16,7 @@ import type {
   ResponseValue,
 } from '@/types/poll';
 import { resolveSemanticMessage } from '@/i18n/semantic';
+import { canListPoll } from '@/lib/pollAccess';
 
 export const useGuildPolls = (guildId: string | undefined) => {
   const { user } = useAuth();
@@ -61,35 +62,44 @@ export const useGuildPolls = (guildId: string | undefined) => {
         return;
       }
 
-      // Filter polls based on respondent targeting (only for non-managers viewing active polls)
-      let filteredData = data;
-      if (!canManagePolls) {
-        // Check can_respond for each active poll
-        const pollAccessChecks = await Promise.all(
-          data.map(async (poll) => {
-            // Draft polls are never shown to non-managers
-            if (poll.status === 'draft') {
-              return { pollId: poll.id, canAccess: false };
-            }
-            // Closed polls stay visible in the list for guild members.
-            // Actual results access is still enforced on the results page / RPC policies.
-            if (poll.status === 'closed') {
-              return { pollId: poll.id, canAccess: true };
-            }
-            // For active polls, check targeting rules
-            const { data: canRespond } = await supabase.rpc('can_respond_to_poll', {
-              p_poll_id: poll.id,
-              p_user_id: user.id,
-            });
-            return { pollId: poll.id, canAccess: canRespond ?? true };
-          })
-        );
+      const filteredData = canManagePolls
+        ? data.map((poll) => ({
+            ...poll,
+            viewer_can_respond: true,
+            viewer_can_view_results: true,
+          }))
+        : (
+            await Promise.all(
+              data.map(async (poll) => {
+                if (poll.status === 'draft') {
+                  return {
+                    ...poll,
+                    viewer_can_respond: false,
+                    viewer_can_view_results: false,
+                  };
+                }
 
-        const accessiblePollIds = new Set(
-          pollAccessChecks.filter(c => c.canAccess).map(c => c.pollId)
-        );
-        filteredData = data.filter(poll => accessiblePollIds.has(poll.id));
-      }
+                const [respondResult, resultsResult] = await Promise.all([
+                  poll.status === 'active'
+                    ? supabase.rpc('can_respond_to_poll', {
+                        p_poll_id: poll.id,
+                        p_user_id: user.id,
+                      })
+                    : Promise.resolve({ data: false, error: null }),
+                  supabase.rpc('can_view_poll_results', {
+                    p_poll_id: poll.id,
+                    p_user_id: user.id,
+                  }),
+                ]);
+
+                return {
+                  ...poll,
+                  viewer_can_respond: respondResult.data ?? false,
+                  viewer_can_view_results: resultsResult.data ?? false,
+                };
+              }),
+            )
+          ).filter((poll) => canListPoll(poll, false));
 
       // Fetch response counts in a single call (bypasses results access but still enforces poll visibility)
       const responseCounts: Record<string, number> = {};

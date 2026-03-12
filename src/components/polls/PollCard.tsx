@@ -10,6 +10,7 @@ import type { GuildPoll } from '@/types/poll';
 import { EditActivePollDialog } from './EditActivePollDialog';
 import { formatDistanceFromNowLocalized } from '@/i18n/format';
 import { toneBadgeClass } from '@/lib/design-tokens';
+import { getPollPrimaryAction } from '@/lib/pollAccess';
 
 interface PollCardProps {
   poll: GuildPoll;
@@ -68,18 +69,30 @@ export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
     navigate(`/guild/${guildSlug}/polls/${poll.id}/edit`);
   };
 
+  const primaryAction = getPollPrimaryAction(poll, isGM);
+
+  const handlePrimaryView = () => {
+    if (primaryAction === 'results') {
+      handleViewResults();
+      return;
+    }
+
+    if (primaryAction === 'edit') {
+      handleEdit();
+      return;
+    }
+
+    handleRespond();
+  };
+
   const handleCardClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     if (target.closest('button') || target.closest('[role="dialog"]')) {
       return;
     }
     
-    if (poll.status === 'active') {
-      handleRespond();
-    } else if (poll.status === 'closed') {
-      handleViewResults();
-    } else if (poll.status === 'draft' && isGM) {
-      handleEdit();
+    if (primaryAction !== 'none') {
+      handlePrimaryView();
     }
   };
 
@@ -149,10 +162,17 @@ export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
         </div>
 
         <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/30" onClick={(e) => e.stopPropagation()}>
-          {poll.status === 'active' && !isGM && (
+          {poll.status === 'active' && !isGM && primaryAction === 'respond' && (
             <Button size="sm" onClick={handleRespond}>
               <Edit className="h-4 w-4 sm:mr-1.5" />
               <span className="hidden sm:inline">{t.polls?.respond}</span>
+            </Button>
+          )}
+
+          {poll.status === 'active' && !isGM && primaryAction === 'results' && (
+            <Button size="sm" variant="outline" onClick={handleViewResults}>
+              <BarChart3 className="h-4 w-4 sm:mr-1.5" />
+              <span className="hidden sm:inline">{t.polls?.viewResults}</span>
             </Button>
           )}
 

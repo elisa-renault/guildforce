@@ -31,10 +31,11 @@ const GuildPollView = () => {
   const [showResults, setShowResults] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [canViewResults, setCanViewResults] = useState<boolean | null>(null);
+  const [canRespondToPoll, setCanRespondToPoll] = useState<boolean | null>(null);
 
   const { poll, loading: pollLoading, refetch } = usePoll(pollId);
   const { poll: pollResults, loading: resultsLoading, refetch: refetchResults } = usePollResults(pollId);
-  const { submitAllResponses, checkCanViewResults, saving } = usePollMutations();
+  const { submitAllResponses, checkCanViewResults, checkCanRespond, saving } = usePollMutations();
   const { hasPermission: hasManagePolls } = useHasGuildPermission(guildId, 'manage_polls');
   const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
     resolveSemanticMessage({ key, language, translations: t });
@@ -43,7 +44,6 @@ const GuildPollView = () => {
 
   const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
 
-  // Handle back navigation - use history or fallback to polls list
   const handleBack = useCallback(() => {
     if (window.history.length > 1) {
       navigate(-1);
@@ -54,27 +54,39 @@ const GuildPollView = () => {
 
   const isClosed =
     poll?.status === 'closed' || (poll?.ends_at && new Date(poll.ends_at) < new Date()) || false;
-  
-  // GM and poll managers always can see results, otherwise check permission
+
   const userCanViewResults = isGM || hasManagePolls || canViewResults === true;
-  // Show results pane unless user is editing their responses
-  const showResultsPane = !isEditing && (isClosed || showResults || (!isGM && hasResponded && userCanViewResults));
+  const userCanRespond = isGM || hasManagePolls || canRespondToPoll === true;
+  const accessLoading = !isGM && !hasManagePolls && (canViewResults === null || canRespondToPoll === null);
+  const showResultsPane =
+    !isEditing &&
+    (
+      isClosed ||
+      showResults ||
+      (!userCanRespond && userCanViewResults) ||
+      (!isGM && hasResponded && userCanViewResults)
+    );
   const usesFullResultsLayout = showResultsPane && userCanViewResults;
   const showOuterHeader = !(showResultsPane && userCanViewResults);
   const canToggleResults = (isGM || hasManagePolls || (userCanViewResults && hasResponded)) && !isClosed;
 
-  // Check results access permission when poll loads
   useEffect(() => {
     const checkAccess = async () => {
-      if (pollId && !isGM) {
-        const canView = await checkCanViewResults(pollId);
+      if (pollId && !isGM && !hasManagePolls) {
+        const [canView, canRespond] = await Promise.all([
+          checkCanViewResults(pollId),
+          checkCanRespond(pollId),
+        ]);
         setCanViewResults(canView);
-      } else if (isGM) {
+        setCanRespondToPoll(canRespond);
+      } else if (isGM || hasManagePolls) {
         setCanViewResults(true);
+        setCanRespondToPoll(true);
       }
     };
+
     checkAccess();
-  }, [pollId, isGM, checkCanViewResults]);
+  }, [pollId, isGM, hasManagePolls, checkCanRespond, checkCanViewResults]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -94,7 +106,6 @@ const GuildPollView = () => {
 
       setGuildId(matchedGuild.id);
 
-      // Check GM status
       const { data: gmCheck } = await supabase.rpc('is_guild_gm', {
         p_guild_id: matchedGuild.id,
         p_user_id: user.id,
@@ -107,10 +118,9 @@ const GuildPollView = () => {
     fetchData();
   }, [user, regionSlug, serverSlug, guildSlug, navigate]);
 
-  // Check if user has already responded when poll loads
   useEffect(() => {
     if (poll?.questions) {
-      const responded = poll.questions.some(q => q.my_response);
+      const responded = poll.questions.some((question) => question.my_response);
       setHasResponded(responded);
     }
   }, [poll]);
@@ -129,7 +139,7 @@ const GuildPollView = () => {
     }
   };
 
-  if (loading || pollLoading || (showResultsPane && resultsLoading)) {
+  if (loading || accessLoading || pollLoading || (showResultsPane && resultsLoading)) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <CosmicBackground />
@@ -147,13 +157,14 @@ const GuildPollView = () => {
     );
   }
 
-
   return (
     <div className="flex-1 relative pt-16">
       <CosmicBackground />
 
-      <PageContainer className={usesFullResultsLayout ? 'relative z-10 py-8' : 'relative z-10 py-8 max-w-3xl'} width={usesFullResultsLayout ? 'wide' : 'contained'}>
-        {/* Top actions */}
+      <PageContainer
+        className={usesFullResultsLayout ? 'relative z-10 py-8' : 'relative z-10 py-8 max-w-3xl'}
+        width={usesFullResultsLayout ? 'wide' : 'contained'}
+      >
         <div className="mb-6 flex items-center justify-between gap-3">
           <Button
             type="button"
@@ -165,7 +176,6 @@ const GuildPollView = () => {
             <ArrowLeft className="h-5 w-5 text-muted-foreground" />
           </Button>
 
-          {/* Show/Hide results button - for GM or users with permission who already responded */}
           {canToggleResults && (
             <Button
               variant="outline"
@@ -180,7 +190,6 @@ const GuildPollView = () => {
 
         {showOuterHeader && (
           <>
-            {/* Header */}
             <div className="mb-4 min-w-0">
               <h1 className="text-2xl font-bold">{poll.title}</h1>
               {poll.description && (
@@ -188,7 +197,6 @@ const GuildPollView = () => {
               )}
             </div>
 
-            {/* Poll metadata */}
             <div className="mb-6 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
               {poll.roster?.name && (
                 <span className="rounded bg-muted/50 px-2 py-1">
@@ -206,14 +214,11 @@ const GuildPollView = () => {
           </>
         )}
 
-        {/* Show results or response form */}
         {showResultsPane && userCanViewResults ? (
           <div className="space-y-6">
-            {hasResponded && !isClosed && (
+            {hasResponded && !isClosed && userCanRespond && (
               <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 flex items-center justify-between">
-              <p className="text-primary">
-                  {t.polls.alreadyResponded}
-                </p>
+                <p className="text-primary">{t.polls.alreadyResponded}</p>
                 <Button
                   variant="outline"
                   size="sm"
@@ -230,12 +235,19 @@ const GuildPollView = () => {
               canUseCohortFilters={isGM || hasManagePolls}
             />
           </div>
+        ) : !userCanRespond && !isEditing ? (
+          <div className="space-y-6">
+            <div className="bg-muted/30 border border-muted rounded-lg p-8 text-center">
+              <Lock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">
+                {userCanViewResults ? t.polls.resultsRestricted : t.polls.notFound}
+              </p>
+            </div>
+          </div>
         ) : hasResponded && !userCanViewResults && !isEditing ? (
           <div className="space-y-6">
             <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 flex items-center justify-between">
-              <p className="text-primary">
-                  {t.polls.alreadyResponded}
-                </p>
+              <p className="text-primary">{t.polls.alreadyResponded}</p>
               {!isClosed && (
                 <Button
                   variant="outline"
@@ -249,9 +261,7 @@ const GuildPollView = () => {
             </div>
             <div className="bg-muted/30 border border-muted rounded-lg p-8 text-center">
               <Lock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">
-                {t.polls.resultsRestricted}
-              </p>
+              <p className="text-muted-foreground">{t.polls.resultsRestricted}</p>
             </div>
           </div>
         ) : (

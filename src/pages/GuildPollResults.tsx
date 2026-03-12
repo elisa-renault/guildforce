@@ -85,8 +85,9 @@ const GuildPollResultsPage = () => {
 
   // User can view if GM, has manage_polls permission, or has specific results access
   const userCanViewResults = isGM || hasManagePolls || canViewResults === true;
+  const accessLoading = !loading && !isGM && !hasManagePolls && canViewResults === null;
 
-  if (loading || resultsLoading) {
+  if (loading || accessLoading || resultsLoading) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <CosmicBackground />
@@ -95,7 +96,7 @@ const GuildPollResultsPage = () => {
     );
   }
 
-  if (!poll) {
+  if (!poll && userCanViewResults) {
     return null;
   }
 
