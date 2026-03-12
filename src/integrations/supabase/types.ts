@@ -1808,6 +1808,79 @@ export type Database = {
         }
         Relationships: []
       }
+      poll_question_ai_summaries: {
+        Row: {
+          comment_count: number
+          created_at: string
+          generated_at: string
+          generated_by: string | null
+          id: string
+          locale: string
+          model_name: string
+          poll_id: string
+          prompt_version: string
+          question_id: string
+          source_hash: string
+          status: string
+          summary_payload: Json | null
+          updated_at: string
+        }
+        Insert: {
+          comment_count?: number
+          created_at?: string
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          locale: string
+          model_name: string
+          poll_id: string
+          prompt_version: string
+          question_id: string
+          source_hash: string
+          status: string
+          summary_payload?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          comment_count?: number
+          created_at?: string
+          generated_at?: string
+          generated_by?: string | null
+          id?: string
+          locale?: string
+          model_name?: string
+          poll_id?: string
+          prompt_version?: string
+          question_id?: string
+          source_hash?: string
+          status?: string
+          summary_payload?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poll_question_ai_summaries_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "poll_question_ai_summaries_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "guild_polls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "poll_question_ai_summaries_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "guild_poll_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       poll_respondent_rules: {
         Row: {
           access_type: string

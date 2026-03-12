@@ -1,20 +1,23 @@
-import { useState, useMemo, useCallback } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { Send, Loader2, CheckCircle, Lock, GitBranch } from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
+
+import { RankingInput } from './RankingInput';
+import type { GuildPollQuestion, QuestionCondition, ResponseValue } from '@/types/poll';
+
+import { GlowCard } from '@/components/GlowCard';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
-import { GlowCard } from '@/components/GlowCard';
-import { StarRating } from '@/components/ui/star-rating';
 import { Slider } from '@/components/ui/slider';
-import { Send, Loader2, CheckCircle, Lock, GitBranch } from 'lucide-react';
-import { RankingInput } from './RankingInput';
-import { OTHER_OPTION_VALUE } from '@/types/poll';
-import type { GuildPollQuestion, ResponseValue, QuestionCondition } from '@/types/poll';
+import { StarRating } from '@/components/ui/star-rating';
+import { Textarea } from '@/components/ui/textarea';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { clampScaleValue, formatScaleValue, getScaleConfig, roundToStep } from '@/lib/pollScale';
+import { OTHER_OPTION_VALUE } from '@/types/poll';
+
 
 interface PollResponseProps {
   questions: GuildPollQuestion[];
@@ -22,6 +25,7 @@ interface PollResponseProps {
   onSubmit: (responses: { questionId: string; value: ResponseValue }[]) => Promise<void>;
   saving?: boolean;
   alreadyResponded?: boolean;
+  readOnly?: boolean;
 }
 
 // Evaluate if a condition is met based on current responses
@@ -100,8 +104,9 @@ export const PollResponse = ({
   onSubmit,
   saving = false,
   alreadyResponded = false,
+  readOnly = false,
 }: PollResponseProps) => {
-  const { language, t } = useLanguage();
+  const { t } = useLanguage();
   const [responses, setResponses] = useState<Record<string, ResponseValue>>(() => {
     const initial: Record<string, ResponseValue> = {};
     questions.forEach((q) => {
@@ -278,6 +283,7 @@ export const PollResponse = ({
                   <RadioGroup
                     value={(responses[question.id] as { type: 'single_choice'; value: string })?.value || ''}
                     onValueChange={(value) => updateResponse(question.id, { type: 'single_choice', value })}
+                    disabled={readOnly}
                     className="space-y-2"
                   >
                     {question.options.map((option, optionIndex) => (
@@ -318,6 +324,7 @@ export const PollResponse = ({
                             placeholder={t.polls?.otherPlaceholder}
                             className="ml-7 max-w-sm bg-background"
                             maxLength={100}
+                            disabled={readOnly}
                           />
                         )}
                       </div>
@@ -335,6 +342,7 @@ export const PollResponse = ({
                         <Checkbox
                           id={`${question.id}-${optionIndex}`}
                           checked={currentValues.includes(option)}
+                          disabled={readOnly}
                           onCheckedChange={(checked) => {
                             const newValues = checked 
                               ? [...currentValues, option]
@@ -358,6 +366,7 @@ export const PollResponse = ({
                         <Checkbox
                           id={`${question.id}-other`}
                           checked={((responses[question.id] as { type: 'multiple_choice'; values: string[] })?.values || []).includes(OTHER_OPTION_VALUE)}
+                          disabled={readOnly}
                           onCheckedChange={(checked) => {
                             const currentValues = (responses[question.id] as { type: 'multiple_choice'; values: string[] })?.values || [];
                             const newValues = checked 
@@ -380,6 +389,7 @@ export const PollResponse = ({
                           placeholder={t.polls?.otherPlaceholder}
                           className="ml-7 max-w-sm bg-background"
                           maxLength={100}
+                          disabled={readOnly}
                         />
                       )}
                     </div>
@@ -394,6 +404,7 @@ export const PollResponse = ({
                   placeholder={t.polls?.textResponsePlaceholder}
                   className="bg-background resize-none"
                   rows={3}
+                  disabled={readOnly}
                 />
               )}
 
@@ -406,6 +417,7 @@ export const PollResponse = ({
                       max={5}
                       allowHalf={true}
                       size="lg"
+                      disabled={readOnly}
                     />
                     <div className="text-center">
                       <span className="text-lg font-semibold text-primary">
@@ -423,6 +435,7 @@ export const PollResponse = ({
                   value={(responses[question.id] as { type: 'date'; value: string })?.value || ''}
                   onChange={(e) => updateResponse(question.id, { type: 'date', value: e.target.value })}
                   className="bg-background max-w-xs"
+                  disabled={readOnly}
                 />
               )}
 
@@ -432,6 +445,7 @@ export const PollResponse = ({
                   value={(responses[question.id] as { type: 'time'; value: string })?.value || ''}
                   onChange={(e) => updateResponse(question.id, { type: 'time', value: e.target.value })}
                   className="bg-background max-w-xs"
+                  disabled={readOnly}
                 />
               )}
 
@@ -441,6 +455,7 @@ export const PollResponse = ({
                   value={(responses[question.id] as { type: 'datetime'; value: string })?.value || ''}
                   onChange={(e) => updateResponse(question.id, { type: 'datetime', value: e.target.value })}
                   className="bg-background max-w-xs"
+                  disabled={readOnly}
                 />
               )}
 
@@ -489,6 +504,7 @@ export const PollResponse = ({
                                 max={scaleConfig.max}
                                 step={scaleConfig.step}
                                 value={[roundedValue]}
+                                disabled={readOnly}
                                 onValueChange={([value]) => {
                                   const next = clampScaleValue(
                                     roundToStep(value, scaleConfig.step, scaleConfig.min),
@@ -518,6 +534,7 @@ export const PollResponse = ({
                   <RankingInput
                     items={(responses[question.id] as { type: 'ranking'; values: string[] })?.values || question.options}
                     onChange={(newItems) => updateResponse(question.id, { type: 'ranking', values: newItems })}
+                    readOnly={readOnly}
                   />
                 </div>
               )}
@@ -527,26 +544,28 @@ export const PollResponse = ({
       })}
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3">
-        {alreadyResponded && (
+        {(alreadyResponded || readOnly) && (
           <div className="flex items-center gap-2 text-healer text-sm sm:mr-auto">
             <CheckCircle className="h-4 w-4 shrink-0" />
             <span>{t.polls?.alreadyResponded}</span>
           </div>
         )}
-        
-        <Button 
-          onClick={handleSubmit}
-          disabled={!isComplete || saving}
-          size="lg"
-          className="w-full sm:w-auto"
-        >
-          {saving ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-          ) : (
-            <Send className="h-4 w-4 mr-2" />
-          )}
-          {alreadyResponded ? t.polls?.updateResponses : t.polls?.submitResponses}
-        </Button>
+
+        {!readOnly && (
+          <Button
+            onClick={handleSubmit}
+            disabled={!isComplete || saving}
+            size="lg"
+            className="w-full sm:w-auto"
+          >
+            {saving ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4 mr-2" />
+            )}
+            {alreadyResponded ? t.polls?.updateResponses : t.polls?.submitResponses}
+          </Button>
+        )}
       </div>
     </div>
   );

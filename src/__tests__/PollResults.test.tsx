@@ -138,21 +138,20 @@ const buildPoll = (isAnonymous = false): GuildPoll => ({
 });
 
 describe('PollResults', () => {
-  it('renders summary controls and toggles between percentages and counts', () => {
+  it('renders summary controls and keeps the mixed percentage/count metric visible', () => {
     render(<PollResults poll={buildPoll()} variant="full" />);
 
     expect(screen.getByText('Poll results UX')).toBeInTheDocument();
     expect(screen.queryByText('Question navigator')).not.toBeInTheDocument();
     expect(screen.getByText('Strongest consensus')).toBeInTheDocument();
-    expect(screen.getByText('Context')).toBeInTheDocument();
-    expect(screen.queryByText('Needs review')).not.toBeInTheDocument();
+    expect(screen.getByText('Reading tags')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Reading tags' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Main section' })).toHaveAttribute('href', '#poll-section-section-main');
     expect(screen.getByText((content) => content.includes('80%') && content.includes('4'))).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Counts' }));
-
     expect(screen.getByText((content) => content.includes('4') && content.includes('80%'))).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Best raid night?' })).toHaveAttribute('href', '#poll-question-question-1');
+    expect(screen.queryByRole('button', { name: 'Percentages' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Counts' })).not.toBeInTheDocument();
   });
 
   it('collapses long text by default and reveals more on demand', () => {
@@ -208,5 +207,54 @@ describe('PollResults', () => {
 
     expect(screen.queryByText('Analyze a subgroup')).not.toBeInTheDocument();
     expect(screen.queryByText('Add filter')).not.toBeInTheDocument();
+  });
+
+  it('renders AI summaries ahead of raw comments and exposes the GM CTA without auto-generating', () => {
+    const onGenerateAiSummaries = vi.fn();
+
+    render(
+      <PollResults
+        poll={buildPoll()}
+        variant="full"
+        canGenerateAiSummaries
+        onGenerateAiSummaries={onGenerateAiSummaries}
+        aiSummaries={[
+          {
+            question_id: 'question-2',
+            status: 'ready',
+            comment_count: 5,
+            generated_at: '2026-03-02T20:00:00.000Z',
+            summary: {
+              headline: 'Most comments ask for clearer planning and a fixed raid cadence.',
+              themes: [{ label: 'Planning clarity', count: 3, summary: 'Respondents want clearer planning details.' }],
+              polarity_clusters: [{ label: 'Constructive concern', count: 2, summary: 'Feedback is mostly actionable rather than hostile.' }],
+              keywords: ['planning', 'schedule'],
+            },
+          },
+        ]}
+      />,
+    );
+
+    expect(onGenerateAiSummaries).not.toHaveBeenCalled();
+    expect(screen.getByText('AI summary')).toBeInTheDocument();
+    expect(screen.getByText('Most comments ask for clearer planning and a fixed raid cadence.')).toBeInTheDocument();
+    expect(screen.queryByText('Top recurring themes')).not.toBeInTheDocument();
+    expect(screen.queryByText('Planning clarity')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Show AI details' }));
+    expect(screen.getByText('Top recurring themes')).toBeInTheDocument();
+    expect(screen.getByText('Planning clarity')).toBeInTheDocument();
+    expect(screen.getByText('Raw comments')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Regenerate AI summaries' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Regenerate AI summaries' }));
+
+    expect(onGenerateAiSummaries).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not show the GM AI CTA to regular readers when no summary exists', () => {
+    render(<PollResults poll={buildPoll()} variant="full" aiSummaries={[]} />);
+
+    expect(screen.queryByRole('button', { name: 'Generate AI summaries' })).not.toBeInTheDocument();
+    expect(screen.queryByText('No AI summary has been generated for this question yet.')).not.toBeInTheDocument();
   });
 });

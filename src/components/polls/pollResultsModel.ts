@@ -125,7 +125,7 @@ export interface PollResultsModel {
 export interface PollResultsViewOptions {
   sectionId: string;
   type: PollResultsTypeFilter;
-  lowConsensusOnly: boolean;
+  tone: 'all' | PollResultsTone;
   sort: PollResultsSortMode;
 }
 
@@ -700,7 +700,7 @@ export const applyPollResultsView = (
       return false;
     }
 
-    if (options.lowConsensusOnly && !question.isLowConsensus) {
+    if (options.tone !== 'all' && question.tone !== options.tone) {
       return false;
     }
 

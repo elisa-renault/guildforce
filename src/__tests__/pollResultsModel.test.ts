@@ -152,7 +152,7 @@ describe('pollResultsModel', () => {
     const textOnly = applyPollResultsView(model, {
       sectionId: 'all',
       type: 'text-only',
-      lowConsensusOnly: false,
+      tone: 'all',
       sort: 'original',
     });
     expect(textOnly.map((question) => question.id)).toEqual(['question-text']);
@@ -160,7 +160,7 @@ describe('pollResultsModel', () => {
     const lowConsensus = applyPollResultsView(model, {
       sectionId: 'all',
       type: 'all',
-      lowConsensusOnly: true,
+      tone: 'review',
       sort: 'divisive',
     });
     expect(lowConsensus.map((question) => question.id)).toEqual(['question-rating']);
@@ -168,7 +168,7 @@ describe('pollResultsModel', () => {
     const consensusSorted = applyPollResultsView(model, {
       sectionId: 'all',
       type: 'all',
-      lowConsensusOnly: false,
+      tone: 'all',
       sort: 'consensus',
     });
     expect(consensusSorted.map((question) => question.id)).toEqual([
@@ -181,7 +181,7 @@ describe('pollResultsModel', () => {
     const schedulingOnly = applyPollResultsView(model, {
       sectionId: 'section-scheduling',
       type: 'all',
-      lowConsensusOnly: false,
+      tone: 'all',
       sort: 'responses',
     });
     expect(schedulingOnly.map((question) => question.id)).toEqual([

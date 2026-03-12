@@ -294,6 +294,13 @@ const DOCUMENTATION: DocSection[] = [
         contentFr: 'Les résultats de sondage supportent désormais une analyse de cohorte réservée aux gestionnaires via `get_poll_results_cohort_analysis()`. Les GM et membres disposant de `manage_polls` peuvent filtrer les résultats selon des réponses préalables en logique ET. Les sondages anonymes appliquent des garde-fous supplémentaires en mode cohorte : aucune identité, aucun texte libre, et masquage quand l\'échantillon filtré passe sous 5 répondants.',
         tags: ['polls', 'analytics', 'security'],
       },
+      {
+        titleEn: 'GM-triggered AI summaries for closed text questions',
+        titleFr: 'RÃ©sumÃ©s IA dÃ©clenchÃ©s par le GM sur les questions texte fermÃ©es',
+        contentEn: 'Closed poll text questions can expose cached AI summaries generated only on explicit GM action through the `poll-results-ai-summary` edge function. The function verifies the caller via bearer token, confirms `is_guild_gm()`, keeps question-level visibility aligned with `get_poll_question_results_visibility()`, then reads raw text answers server-side and caches one summary per (`question_id`, `locale`) in `poll_question_ai_summaries`. Cached rows include `model_name`, `prompt_version`, `source_hash`, `status`, `comment_count`, and `generated_by`, so normal result viewers can reuse the latest summary without calling OpenAI themselves. Cohort-filtered result views deliberately skip these AI summaries in v1.',
+        contentFr: 'Les questions texte des sondages fermÃ©s peuvent exposer des rÃ©sumÃ©s IA mis en cache, gÃ©nÃ©rÃ©s uniquement sur action explicite du GM via l\'edge function `poll-results-ai-summary`. La fonction valide l\'appelant via bearer token, confirme `is_guild_gm()`, maintient la visibilitÃ© question par question alignÃ©e sur `get_poll_question_results_visibility()`, puis lit les rÃ©ponses texte cÃ´tÃ© serveur et met en cache un rÃ©sumÃ© par (`question_id`, `locale`) dans `poll_question_ai_summaries`. Les lignes en cache incluent `model_name`, `prompt_version`, `source_hash`, `status`, `comment_count` et `generated_by`, afin que les lecteurs ayant l\'accÃ¨s normal aux rÃ©sultats puissent rÃ©utiliser le dernier rÃ©sumÃ© sans appeler OpenAI eux-mÃªmes. Les vues filtrÃ©es par cohorte ignorent volontairement ces rÃ©sumÃ©s IA en v1.',
+        tags: ['polls', 'ai', 'openai', 'security'],
+      },
     ],
   },
   {
@@ -408,6 +415,13 @@ const DOCUMENTATION: DocSection[] = [
         tags: ['security', 'polls', 'rpc', 'rls'],
       },
       {
+        titleEn: 'AI poll summaries stay server-side',
+        titleFr: 'Les rÃ©sumÃ©s IA de sondage restent cÃ´tÃ© serveur',
+        contentEn: '`poll_question_ai_summaries` is backend-only despite RLS being enabled. Frontend code must never query it directly. All reads/writes go through the `poll-results-ai-summary` edge function, which enforces bearer-token auth, closed-poll checks, GM-only generation, and question-level results visibility before using `OPENAI_API_KEY`. This prevents client-side exposure of raw AI cache internals or the OpenAI credential.',
+        contentFr: '`poll_question_ai_summaries` reste rÃ©servÃ© au backend, mÃªme avec la RLS activÃ©e. Le frontend ne doit jamais la requÃªter directement. Toutes les lectures/Ã©critures passent par l\'edge function `poll-results-ai-summary`, qui applique l\'auth bearer token, les contrÃ´les de sondage fermÃ©, la gÃ©nÃ©ration rÃ©servÃ©e au GM et la visibilitÃ© question par question avant d\'utiliser `OPENAI_API_KEY`. Cela Ã©vite toute exposition cÃ´tÃ© client du cache IA brut ou du secret OpenAI.',
+        tags: ['security', 'polls', 'ai', 'openai'],
+      },
+      {
         titleEn: 'Secret storage and audit',
         titleFr: 'Stockage des secrets et audit',
         contentEn: 'Guild vault payloads are never stored in plaintext in client-readable tables. `guild_secret_versions` is backend-only and holds encrypted payloads (`AES-GCM`) plus masked previews, while `guild_secret_audit_events` captures create/reveal/copy/rotate/archive/denied-access events without logging secret values. The `list_guild_secret_audit` helper resolves actor usernames for settings-side review. The `guild-vault` edge function performs JWT validation, permission checks, encryption/decryption, and audit writes. Optional secret illustrations live in the `guild-vault-images` storage bucket and are governed by GM / `manage_vault` storage policies.',
@@ -454,8 +468,8 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Feature tables',
         titleFr: 'Tables de fonctionnalités',
-        contentEn: '- Roster/wishes: `rosters` (wishes_locked, wishes_lock_at), `roster_access_rules`, `class_wishes`, `external_member_wishes`, `roster_member_selection`\n- Permissions/activity: `guild_permissions`, `guild_activity_logs`\n- Guild vault: `guild_secrets`, `guild_secret_versions`, `guild_secret_access_rules`, `guild_secret_audit_events`\n- Polls: `guild_polls`, `guild_poll_sections`, `guild_poll_questions`, `guild_poll_responses`, `poll_respondent_rules`, `poll_results_access_rules`\n- Product analytics events: `product_events` (+ RPC `track_product_event`)\n- Composition metadata: `raid_effects`, `wow_spells`',
-        contentFr: '- Rosters/vœux : `rosters` (wishes_locked, wishes_lock_at), `roster_access_rules`, `class_wishes`, `external_member_wishes`, `roster_member_selection`\n- Permissions/activité : `guild_permissions`, `guild_activity_logs`\n- Coffre de guilde : `guild_secrets`, `guild_secret_versions`, `guild_secret_access_rules`, `guild_secret_audit_events`\n- Sondages : `guild_polls`, `guild_poll_sections`, `guild_poll_questions`, `guild_poll_responses`, `poll_respondent_rules`, `poll_results_access_rules`\n- Événements analytics produit : `product_events` (+ RPC `track_product_event`)\n- Métadonnées de composition : `raid_effects`, `wow_spells`',
+        contentEn: '- Roster/wishes: `rosters` (wishes_locked, wishes_lock_at), `roster_access_rules`, `class_wishes`, `external_member_wishes`, `roster_member_selection`\n- Permissions/activity: `guild_permissions`, `guild_activity_logs`\n- Guild vault: `guild_secrets`, `guild_secret_versions`, `guild_secret_access_rules`, `guild_secret_audit_events`\n- Polls: `guild_polls`, `guild_poll_sections`, `guild_poll_questions`, `guild_poll_responses`, `poll_respondent_rules`, `poll_results_access_rules`, `poll_question_ai_summaries`\n- Product analytics events: `product_events` (+ RPC `track_product_event`)\n- Composition metadata: `raid_effects`, `wow_spells`',
+        contentFr: '- Rosters/vœux : `rosters` (wishes_locked, wishes_lock_at), `roster_access_rules`, `class_wishes`, `external_member_wishes`, `roster_member_selection`\n- Permissions/activité : `guild_permissions`, `guild_activity_logs`\n- Coffre de guilde : `guild_secrets`, `guild_secret_versions`, `guild_secret_access_rules`, `guild_secret_audit_events`\n- Sondages : `guild_polls`, `guild_poll_sections`, `guild_poll_questions`, `guild_poll_responses`, `poll_respondent_rules`, `poll_results_access_rules`, `poll_question_ai_summaries`\n- Événements analytics produit : `product_events` (+ RPC `track_product_event`)\n- Métadonnées de composition : `raid_effects`, `wow_spells`',
         tags: ['database', 'features'],
       },
       {

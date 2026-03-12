@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { formatRankLabel } from '@/lib/rankLabel';
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
+import { hasPollStructureChanges, shouldResetResponsesForFullPollEdit } from '@/lib/pollStructureChanges';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -282,7 +283,16 @@ const GuildPollNew = () => {
 
     try {
       if (existingPoll) {
-        if (isActivePoll && editMode === 'full') {
+        const existingStructure = toPollFormData(existingPoll);
+        const structureChanged = hasPollStructureChanges(existingStructure, data);
+        const shouldResetResponses = shouldResetResponsesForFullPollEdit({
+          isActivePoll,
+          editMode,
+          previousData: existingStructure,
+          nextData: data,
+        });
+
+        if (shouldResetResponses) {
           setPendingFullEditData({ data, accessConfig, respondentRules: respondentRules || [] });
           setConfirmResetDialog(true);
           return;
@@ -290,7 +300,7 @@ const GuildPollNew = () => {
         
         await updatePoll(existingPoll.id, data);
 
-        if (!isActivePoll || editMode === 'full') {
+        if (!isActivePoll || (editMode === 'full' && structureChanged)) {
           await updatePollQuestions(existingPoll.id, data);
         }
 

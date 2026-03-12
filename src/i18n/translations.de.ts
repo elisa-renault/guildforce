@@ -916,8 +916,10 @@ export const translationsDe: Translations = createLocaleTranslations(translation
       "filterType": "Nach Typ filtern",
       "allSections": "Alle Abschnitte",
       "allTypes": "Alle Fragetypen",
+      "allTones": "Alle Tags",
       "textOnly": "Nur Text",
       "sortBy": "Fragen sortieren",
+      "filterTone": "Lesetags",
       "lowConsensusOnly": "Nur analysieren",
       "collapseSections": "Abschnitte einklappen",
       "expandSections": "Abschnitte ausklappen",
@@ -964,6 +966,26 @@ export const translationsDe: Translations = createLocaleTranslations(translation
       "focusQuestion": "Fokus",
       "noSummary": "Keine Zusammenfassung verf\u00fcgbar",
       "none": "Keine",
+      "aiSummary": {
+        "headerTitle": "KI-Zusammenfassung f\u00fcr Freitext",
+        "headerHint": "Nur der Gildenmeister kann diese zwischengespeicherten Zusammenfassungen f\u00fcr geschlossene Umfragen erzeugen oder aktualisieren.",
+        "title": "KI-Zusammenfassung",
+        "showDetails": "KI-Details anzeigen",
+        "hideDetails": "KI-Details ausblenden",
+        "themes": "H\u00e4ufigste Themen",
+        "polarityClusters": "Stimmungs- oder Polarisierungscluster",
+        "keywords": "Wiederkehrende Schl\u00fcsselw\u00f6rter",
+        "rawComments": "Rohkommentare",
+        "generate": "KI-Zusammenfassungen erzeugen",
+        "regenerate": "KI-Zusammenfassungen neu erzeugen",
+        "generating": "KI-Zusammenfassungen werden erzeugt...",
+        "generateSuccess": "KI-Zusammenfassungen wurden erzeugt.",
+        "loading": "KI-Zusammenfassung wird geladen...",
+        "notGenerated": "F\u00fcr diese Frage wurde noch keine KI-Zusammenfassung erzeugt.",
+        "unavailable": "Die KI-Zusammenfassung ist derzeit nicht verf\u00fcgbar. Die Rohkommentare bleiben unten sichtbar.",
+        "insufficientData": "Es gibt noch nicht genug Freitextantworten f\u00fcr eine KI-Zusammenfassung.",
+        "generatedAtValue": "Erstellt: {{value}}"
+      },
       "kpis": {
         "respondents": "Antwortende",
         "respondentsValue": "{{count}} Antwortende",
@@ -1266,4 +1288,3 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "status": "Status"
   }
 });
-

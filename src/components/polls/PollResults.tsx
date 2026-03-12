@@ -16,11 +16,12 @@ import {
   Plus,
   RotateCcw,
   SlidersHorizontal,
+  Sparkles,
   Star,
   Trash2,
   Users,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { getPollResultsCohortOptions } from './pollResultsCohort';
 import {
@@ -28,9 +29,9 @@ import {
   buildPollResultsModel,
   type PollQuestionResultModel,
   type PollResultsChoiceStat,
-  type PollResultsDisplayMode,
   type PollResultsSectionModel,
   type PollResultsSortMode,
+  type PollResultsTone,
   type PollResultsTypeFilter,
 } from './pollResultsModel';
 
@@ -46,10 +47,12 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { usePollResultsCohortAnalysis } from '@/hooks/usePollResultsCohortAnalysis';
 import { formatDateLocalized, formatNumberLocalized, interpolateMessage } from '@/i18n/format';
 import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
+import { toneBadgeClass, toneCalloutClass } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
   OTHER_OPTION_VALUE,
   type GuildPoll,
+  type PollQuestionAiSummary,
   type PollQuestionType,
   type PollResultsCohortFilter,
   type PollResultsVariant,
@@ -59,6 +62,12 @@ interface PollResultsProps {
   poll: GuildPoll;
   variant: PollResultsVariant;
   canUseCohortFilters?: boolean;
+  aiSummaries?: PollQuestionAiSummary[];
+  aiSummariesLoading?: boolean;
+  aiSummariesError?: string | null;
+  canGenerateAiSummaries?: boolean;
+  aiSummariesGenerating?: boolean;
+  onGenerateAiSummaries?: () => void | Promise<unknown>;
 }
 
 const QUESTION_TYPE_ICONS: Record<PollQuestionType, typeof BarChart3> = {
@@ -86,27 +95,44 @@ const QUESTION_TYPE_COLORS: Record<PollQuestionType, string> = {
 };
 
 const TONE_BADGE_STYLES = {
-  strong: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30',
-  mixed: 'bg-muted/40 text-muted-foreground border-border',
-  review: 'bg-amber-500/10 text-amber-300 border-amber-500/30',
-  informative: 'bg-slate-500/10 text-slate-300 border-slate-500/30',
+  strong: toneBadgeClass('success'),
+  mixed: toneBadgeClass('neutral'),
+  review: toneBadgeClass('warning'),
+  informative: toneBadgeClass('info'),
 } as const;
+
+const INFO_BADGE_CLASS = toneBadgeClass('info');
+const NEUTRAL_BADGE_CLASS = 'border-border bg-card/60 text-foreground';
 
 const TEXT_PREVIEW_COUNT = {
   compact: 2,
   full: 4,
 } as const;
 
-export const PollResults = ({ poll, variant, canUseCohortFilters = false }: PollResultsProps) => {
+type PollResultsToneFilter = 'all' | PollResultsTone;
+
+export const PollResults = ({
+  poll,
+  variant,
+  canUseCohortFilters = false,
+  aiSummaries = [],
+  aiSummariesLoading = false,
+  aiSummariesError = null,
+  canGenerateAiSummaries = false,
+  aiSummariesGenerating = false,
+  onGenerateAiSummaries,
+}: PollResultsProps) => {
   const { language, t } = useLanguage();
   const isFull = variant === 'full';
-  const [displayMode, setDisplayMode] = useState<PollResultsDisplayMode>('percentage');
+  const [quickNavTopOffset, setQuickNavTopOffset] = useState(96);
+  const displayMode = 'percentage';
   const [sectionFilter, setSectionFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<PollResultsTypeFilter>('all');
   const [sortMode, setSortMode] = useState<PollResultsSortMode>('original');
-  const [lowConsensusOnly, setLowConsensusOnly] = useState(false);
+  const [toneFilter, setToneFilter] = useState<PollResultsToneFilter>('all');
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
   const [expandedTextBlocks, setExpandedTextBlocks] = useState<Record<string, boolean>>({});
+  const [expandedAiSummaries, setExpandedAiSummaries] = useState<Record<string, boolean>>({});
   const [cohortFilters, setCohortFilters] = useState<PollResultsCohortFilter[]>([]);
 
   const cohortOptions = useMemo(() => getPollResultsCohortOptions(poll), [poll]);
@@ -131,11 +157,63 @@ export const PollResults = ({ poll, variant, canUseCohortFilters = false }: Poll
     () => new Map((globalModel?.questions || []).map((question) => [question.id, question])),
     [globalModel],
   );
+  const aiSummaryMap = useMemo(
+    () => new Map(aiSummaries.map((summary) => [summary.question_id, summary])),
+    [aiSummaries],
+  );
+  const hasTextQuestions = useMemo(
+    () => Boolean((poll.questions || []).some((question) => question.question_type === 'text')),
+    [poll.questions],
+  );
+  const hasGeneratedAiSummaries = aiSummaries.some((summary) => summary.status !== 'not_generated');
+
+  useEffect(() => {
+    if (!isFull) {
+      return;
+    }
+
+    let raf = 0;
+
+    const compute = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const globalNav = document.querySelector<HTMLElement>('[data-global-nav]');
+        const guildSubNav = document.querySelector<HTMLElement>('[data-guild-subnav]');
+        const globalNavHeight = globalNav?.offsetHeight ?? 0;
+        const guildSubNavHeight = guildSubNav?.offsetHeight ?? 0;
+        const nextOffset = globalNavHeight + guildSubNavHeight + 16;
+
+        setQuickNavTopOffset((prev) => (prev === nextOffset ? prev : nextOffset));
+      });
+    };
+
+    compute();
+    window.addEventListener('resize', compute);
+
+    const resizeObserver =
+      typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(compute);
+    const globalNavEl = document.querySelector<HTMLElement>('[data-global-nav]');
+    const guildSubNavEl = document.querySelector<HTMLElement>('[data-guild-subnav]');
+
+    if (resizeObserver && globalNavEl) {
+      resizeObserver.observe(globalNavEl);
+    }
+
+    if (resizeObserver && guildSubNavEl) {
+      resizeObserver.observe(guildSubNavEl);
+    }
+
+    return () => {
+      cancelAnimationFrame(raf);
+      resizeObserver?.disconnect();
+      window.removeEventListener('resize', compute);
+    };
+  }, [isFull]);
 
   const visibleQuestions = applyPollResultsView(model, {
     sectionId: sectionFilter,
     type: typeFilter,
-    lowConsensusOnly: isFull ? lowConsensusOnly : false,
+    tone: isFull ? toneFilter : 'all',
     sort: isFull ? sortMode : 'original',
   });
 
@@ -146,6 +224,17 @@ export const PollResults = ({ poll, variant, canUseCohortFilters = false }: Poll
     section,
     questions: visibleQuestions.filter((question) => question.sectionId === section.id),
   }));
+  const toneCounts = useMemo(
+    () =>
+      model.questions.reduce<Record<PollResultsTone, number>>(
+        (counts, question) => {
+          counts[question.tone] += 1;
+          return counts;
+        },
+        { strong: 0, mixed: 0, review: 0, informative: 0 },
+      ),
+    [model.questions],
+  );
 
   const toggleSection = (sectionId: string) => {
     setCollapsedSections((current) => ({ ...current, [sectionId]: !current[sectionId] }));
@@ -153,6 +242,10 @@ export const PollResults = ({ poll, variant, canUseCohortFilters = false }: Poll
 
   const toggleTextBlock = (questionId: string) => {
     setExpandedTextBlocks((current) => ({ ...current, [questionId]: !current[questionId] }));
+  };
+
+  const toggleAiSummary = (questionId: string) => {
+    setExpandedAiSummaries((current) => ({ ...current, [questionId]: !current[questionId] }));
   };
 
   const setAllSectionsCollapsed = (collapsed: boolean) => {
@@ -276,6 +369,14 @@ export const PollResults = ({ poll, variant, canUseCohortFilters = false }: Poll
     return t.polls.resultsUi.mixedSignal;
   };
 
+  const getToneFilterLabel = (tone: PollResultsToneFilter) => {
+    if (tone === 'all') return t.polls.resultsUi.allTones;
+    if (tone === 'strong') return t.polls.resultsUi.strongConsensus;
+    if (tone === 'review') return t.polls.resultsUi.needsReview;
+    if (tone === 'informative') return t.polls.resultsUi.contextLabel;
+    return t.polls.resultsUi.mixedSignal;
+  };
+
   const formatQuestionOptionLabel = (question: PollQuestionResultModel, label: string) => {
     return formatFilterValue(question.question.question_type, label);
   };
@@ -315,6 +416,172 @@ export const PollResults = ({ poll, variant, canUseCohortFilters = false }: Poll
     return interpolateMessage(t.polls.resultsUi.takeaways.text, {
       count: formatCount(takeaway.count),
     });
+  };
+
+  const getAiSummaryButtonLabel = () =>
+    hasGeneratedAiSummaries ? t.polls.resultsUi.aiSummary.regenerate : t.polls.resultsUi.aiSummary.generate;
+
+  const renderAiSummary = (summary: PollQuestionAiSummary | undefined) => {
+    if (!summary) {
+      if (aiSummariesLoading) {
+        return (
+          <div className="rounded-xl border border-border/70 bg-background/40 p-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              <span>{t.polls.resultsUi.aiSummary.loading}</span>
+            </div>
+          </div>
+        );
+      }
+
+      if (aiSummariesError) {
+        return (
+          <div className="rounded-xl border border-border/70 bg-background/40 p-4 text-sm text-muted-foreground">
+            {t.polls.resultsUi.aiSummary.unavailable}
+          </div>
+        );
+      }
+
+      return canGenerateAiSummaries ? (
+        <div className="rounded-xl border border-dashed border-border/70 bg-background/30 p-4 text-sm text-muted-foreground">
+          {t.polls.resultsUi.aiSummary.notGenerated}
+        </div>
+      ) : null;
+    }
+
+    if (summary.status === 'insufficient_data') {
+      return (
+        <div className="rounded-xl border border-border/70 bg-background/40 p-4 text-sm text-muted-foreground">
+          {t.polls.resultsUi.aiSummary.insufficientData}
+        </div>
+      );
+    }
+
+    if (summary.status === 'unavailable' || !summary.summary) {
+      return (
+        <div className="rounded-xl border border-border/70 bg-background/40 p-4 text-sm text-muted-foreground">
+          {t.polls.resultsUi.aiSummary.unavailable}
+        </div>
+      );
+    }
+
+    const hasDetails =
+      Boolean(summary.generated_at) ||
+      summary.summary.themes.length > 0 ||
+      summary.summary.polarity_clusters.length > 0 ||
+      summary.summary.keywords.length > 0;
+    const isExpanded = expandedAiSummaries[summary.question_id] ?? false;
+
+    return (
+      <div className="rounded-xl border border-border/70 bg-card/40 p-5 sm:p-6">
+        <div className="flex items-start gap-4">
+          <div className={cn('mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border', toneCalloutClass('info'))}>
+            <Sparkles className="h-4 w-4" />
+          </div>
+          <div className="min-w-0 flex-1 space-y-3 pr-1">
+            <div className="space-y-2">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-primary/80">
+                    {t.polls.resultsUi.aiSummary.title}
+                  </p>
+                  <p className="text-sm leading-6 text-foreground break-words">{summary.summary.headline}</p>
+                </div>
+                {hasDetails && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-9 gap-1 self-start border-primary/50 bg-background/85 px-3 text-xs font-medium text-foreground shadow-sm hover:bg-primary/15 hover:text-foreground"
+                    onClick={() => toggleAiSummary(summary.question_id)}
+                  >
+                    {isExpanded ? t.polls.resultsUi.aiSummary.hideDetails : t.polls.resultsUi.aiSummary.showDetails}
+                    {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {hasDetails && (
+              <Collapsible open={isExpanded}>
+                <CollapsibleContent className="space-y-3">
+                  {summary.generated_at && (
+                    <p className="text-xs text-muted-foreground">
+                      {interpolateMessage(t.polls.resultsUi.aiSummary.generatedAtValue, {
+                        value: formatDateLocalized(summary.generated_at, language, {
+                          dateStyle: 'medium',
+                          timeStyle: 'short',
+                        }),
+                      })}
+                    </p>
+                  )}
+
+                  {summary.summary.themes.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                        {t.polls.resultsUi.aiSummary.themes}
+                      </p>
+                      <div className="space-y-2">
+                        {summary.summary.themes.map((theme) => (
+                          <div key={`${summary.question_id}-theme-${theme.label}`} className="rounded-lg border border-border/60 bg-background/60 p-3">
+                            <div className="flex items-center justify-between gap-3">
+                              <p className="text-sm font-medium text-foreground">{theme.label}</p>
+                              <Badge variant="outline" className="border-border bg-card/60 text-foreground">
+                                {formatCount(theme.count)}
+                              </Badge>
+                            </div>
+                            <p className="mt-2 text-sm text-muted-foreground">{theme.summary}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {summary.summary.polarity_clusters.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                        {t.polls.resultsUi.aiSummary.polarityClusters}
+                      </p>
+                      <div className="space-y-2">
+                        {summary.summary.polarity_clusters.map((cluster) => (
+                          <div key={`${summary.question_id}-cluster-${cluster.label}`} className="rounded-lg border border-border/60 bg-background/60 p-3">
+                            <div className="flex items-center justify-between gap-3">
+                              <p className="text-sm font-medium text-foreground">{cluster.label}</p>
+                              <Badge variant="outline" className="border-border bg-card/60 text-foreground">
+                                {formatCount(cluster.count)}
+                              </Badge>
+                            </div>
+                            <p className="mt-2 text-sm text-muted-foreground">{cluster.summary}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {summary.summary.keywords.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                        {t.polls.resultsUi.aiSummary.keywords}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {summary.summary.keywords.map((keyword) => (
+                          <Badge
+                            key={`${summary.question_id}-keyword-${keyword}`}
+                            className="max-w-full whitespace-normal break-words border-primary/80 bg-primary px-3 py-1 leading-tight text-primary-foreground shadow-sm shadow-primary/30"
+                          >
+                            {keyword}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CollapsibleContent>
+              </Collapsible>
+            )}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const renderChoiceMetric = (choice: PollResultsChoiceStat) =>
@@ -412,6 +679,37 @@ export const PollResults = ({ poll, variant, canUseCohortFilters = false }: Poll
                 {interpolateMessage(t.polls.resultsUi.kpis.respondentsValue, { count: formatCount(model.respondentCount) })}
               </span>
             </div>
+            {isFull && hasTextQuestions && canGenerateAiSummaries && (
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-foreground">{t.polls.resultsUi.aiSummary.headerTitle}</p>
+                    <p className="text-sm text-muted-foreground">{t.polls.resultsUi.aiSummary.headerHint}</p>
+                    {aiSummariesError && <p className="text-sm text-destructive">{aiSummariesError}</p>}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      void onGenerateAiSummaries?.();
+                    }}
+                    disabled={aiSummariesGenerating || !onGenerateAiSummaries}
+                  >
+                    {aiSummariesGenerating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        {t.polls.resultsUi.aiSummary.generating}
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4" />
+                        {getAiSummaryButtonLabel()}
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3 lg:min-w-[540px] lg:max-w-[760px] lg:flex-[0_0_48%] xl:min-w-[620px] xl:max-w-[860px]">
@@ -587,90 +885,119 @@ export const PollResults = ({ poll, variant, canUseCohortFilters = false }: Poll
   };
 
   const renderControls = () => (
-    <GlowCard className="p-4" hoverable={false}>
+    <GlowCard className="p-3 sm:p-4" hoverable={false}>
       <div className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-              {t.polls.resultsUi.controls}
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {interpolateMessage(t.polls.resultsUi.visibleQuestionsValue, { count: formatCount(visibleQuestions.length) })}
-            </p>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                {t.polls.resultsUi.controls}
+              </p>
+              <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary">
+                {interpolateMessage(t.polls.resultsUi.visibleQuestionsValue, {
+                  count: formatCount(visibleQuestions.length),
+                })}
+              </Badge>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button type="button" size="sm" variant={displayMode === 'percentage' ? 'default' : 'outline'} onClick={() => setDisplayMode('percentage')}>
-              {t.polls.resultsUi.percentages}
-            </Button>
-            <Button type="button" size="sm" variant={displayMode === 'count' ? 'default' : 'outline'} onClick={() => setDisplayMode('count')}>
-              {t.polls.resultsUi.counts}
-            </Button>
-          </div>
+
         </div>
 
-        <div className={cn('grid gap-3', isFull ? 'md:grid-cols-2 xl:grid-cols-4' : 'md:grid-cols-2')}>
-          <Select value={sectionFilter} onValueChange={setSectionFilter}>
-            <SelectTrigger aria-label={t.polls.resultsUi.filterSection}>
-              <SelectValue placeholder={t.polls.resultsUi.filterSection} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t.polls.resultsUi.allSections}</SelectItem>
-              {model.sections.map((section) => (
-                <SelectItem key={section.id} value={section.id}>
-                  {getSectionTitle(section)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className={cn('grid gap-2.5', isFull ? 'sm:grid-cols-2 xl:grid-cols-4' : 'sm:grid-cols-2')}>
+            <div className="space-y-1.5">
+              <p className="px-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                {t.polls.resultsUi.filterSection}
+              </p>
+              <Select value={sectionFilter} onValueChange={setSectionFilter}>
+                <SelectTrigger aria-label={t.polls.resultsUi.filterSection} className="h-10 rounded-lg border-border/70 bg-background/70">
+                  <SelectValue placeholder={t.polls.resultsUi.filterSection} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t.polls.resultsUi.allSections}</SelectItem>
+                  {model.sections.map((section) => (
+                    <SelectItem key={section.id} value={section.id}>
+                      {getSectionTitle(section)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <Select value={typeFilter} onValueChange={(value) => setTypeFilter(value as PollResultsTypeFilter)}>
-            <SelectTrigger aria-label={t.polls.resultsUi.filterType}>
-              <SelectValue placeholder={t.polls.resultsUi.filterType} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t.polls.resultsUi.allTypes}</SelectItem>
-              <SelectItem value="text-only">{t.polls.resultsUi.textOnly}</SelectItem>
-              {(['single_choice', 'multiple_choice', 'text', 'rating', 'date', 'time', 'datetime', 'ranking', 'scale'] as PollQuestionType[]).map((type) => (
-                <SelectItem key={type} value={type}>
-                  {getQuestionTypeLabel(type)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <div className="space-y-1.5">
+              <p className="px-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                {t.polls.resultsUi.filterType}
+              </p>
+              <Select value={typeFilter} onValueChange={(value) => setTypeFilter(value as PollResultsTypeFilter)}>
+                <SelectTrigger aria-label={t.polls.resultsUi.filterType} className="h-10 rounded-lg border-border/70 bg-background/70">
+                  <SelectValue placeholder={t.polls.resultsUi.filterType} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t.polls.resultsUi.allTypes}</SelectItem>
+                  <SelectItem value="text-only">{t.polls.resultsUi.textOnly}</SelectItem>
+                  {(['single_choice', 'multiple_choice', 'text', 'rating', 'date', 'time', 'datetime', 'ranking', 'scale'] as PollQuestionType[]).map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {getQuestionTypeLabel(type)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          {isFull && (
-            <Select value={sortMode} onValueChange={(value) => setSortMode(value as PollResultsSortMode)}>
-              <SelectTrigger aria-label={t.polls.resultsUi.sortBy}>
-                <SelectValue placeholder={t.polls.resultsUi.sortBy} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="original">{t.polls.resultsUi.sort.original}</SelectItem>
-                <SelectItem value="consensus">{t.polls.resultsUi.sort.consensus}</SelectItem>
-                <SelectItem value="divisive">{t.polls.resultsUi.sort.divisive}</SelectItem>
-                <SelectItem value="responses">{t.polls.resultsUi.sort.responses}</SelectItem>
-              </SelectContent>
-            </Select>
-          )}
+            {isFull && (
+              <div className="space-y-1.5">
+                <p className="px-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  {t.polls.resultsUi.sortBy}
+                </p>
+                <Select value={sortMode} onValueChange={(value) => setSortMode(value as PollResultsSortMode)}>
+                  <SelectTrigger aria-label={t.polls.resultsUi.sortBy} className="h-10 rounded-lg border-border/70 bg-background/70">
+                    <SelectValue placeholder={t.polls.resultsUi.sortBy} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="original">{t.polls.resultsUi.sort.original}</SelectItem>
+                    <SelectItem value="consensus">{t.polls.resultsUi.sort.consensus}</SelectItem>
+                    <SelectItem value="divisive">{t.polls.resultsUi.sort.divisive}</SelectItem>
+                    <SelectItem value="responses">{t.polls.resultsUi.sort.responses}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
-          {isFull ? (
-            <Button type="button" variant={lowConsensusOnly ? 'default' : 'outline'} onClick={() => setLowConsensusOnly((current) => !current)}>
-              {t.polls.resultsUi.lowConsensusOnly}
-            </Button>
-          ) : null}
+            {isFull && (
+              <div className="space-y-1.5">
+                <p className="px-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  {t.polls.resultsUi.filterTone}
+                </p>
+                <Select value={toneFilter} onValueChange={(value) => setToneFilter(value as PollResultsToneFilter)}>
+                  <SelectTrigger aria-label={t.polls.resultsUi.filterTone} className="h-10 rounded-lg border-border/70 bg-background/70">
+                    <SelectValue placeholder={t.polls.resultsUi.filterTone} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(['all', 'strong', 'mixed', 'review', 'informative'] as PollResultsToneFilter[]).map((tone) => {
+                      const count = tone === 'all' ? model.questions.length : toneCounts[tone];
+                      return (
+                        <SelectItem key={tone} value={tone}>
+                          {`${getToneFilterLabel(tone)} (${formatCount(count)})`}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
         </div>
 
         {isFull && (
           <div className="flex flex-wrap gap-2 border-t border-border/60 pt-3">
-            <Button type="button" size="sm" variant="outline" onClick={() => setAllSectionsCollapsed(true)}>
+            <Button type="button" size="sm" variant="outline" className="rounded-lg bg-background/50" onClick={() => setAllSectionsCollapsed(true)}>
               {t.polls.resultsUi.collapseSections}
             </Button>
-            <Button type="button" size="sm" variant="outline" onClick={() => setAllSectionsCollapsed(false)}>
+            <Button type="button" size="sm" variant="outline" className="rounded-lg bg-background/50" onClick={() => setAllSectionsCollapsed(false)}>
               {t.polls.resultsUi.expandSections}
             </Button>
-            <Button type="button" size="sm" variant="outline" onClick={() => setAllTextBlocksExpanded(false)}>
+            <Button type="button" size="sm" variant="outline" className="rounded-lg bg-background/50" onClick={() => setAllTextBlocksExpanded(false)}>
               {t.polls.resultsUi.collapseText}
             </Button>
-            <Button type="button" size="sm" variant="outline" onClick={() => setAllTextBlocksExpanded(true)}>
+            <Button type="button" size="sm" variant="outline" className="rounded-lg bg-background/50" onClick={() => setAllTextBlocksExpanded(true)}>
               {t.polls.resultsUi.expandText}
             </Button>
           </div>
@@ -688,6 +1015,7 @@ export const PollResults = ({ poll, variant, canUseCohortFilters = false }: Poll
     const isTextExpanded = Boolean(expandedTextBlocks[question.id]);
     const visibleTextEntries = isTextExpanded ? textEntries : textEntries.slice(0, previewCount);
     const globalQuestion = isCohortActive ? globalQuestionMap.get(question.id) : null;
+    const aiSummary = isCohortActive ? undefined : aiSummaryMap.get(question.id);
     const cohortRedactionMessage =
       question.cohortRedactionReason === 'text_hidden'
         ? t.polls.resultsUi.cohortTextHidden
@@ -712,11 +1040,11 @@ export const PollResults = ({ poll, variant, canUseCohortFilters = false }: Poll
               >
                 {question.isCohortRedacted ? t.polls.resultsUi.cohortRedactedBadge : getToneLabel(question)}
               </Badge>
-              <Badge variant="outline" className="border-border bg-card/60 text-foreground">
+              <Badge variant="outline" className={NEUTRAL_BADGE_CLASS}>
                 {interpolateMessage(t.polls.resultsUi.responsesValue, { count: formatCount(question.responseCount) })}
               </Badge>
               {question.question.condition && (
-                <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30">
+                <Badge variant="outline" className={cn('text-xs', INFO_BADGE_CLASS)}>
                   <GitBranch className="mr-1 h-3 w-3" />
                   {t.polls.conditionalBadge}
                 </Badge>
@@ -789,10 +1117,16 @@ export const PollResults = ({ poll, variant, canUseCohortFilters = false }: Poll
 
           {question.question.question_type === 'text' && (
             <div className="space-y-3">
+              {renderAiSummary(aiSummary)}
               {textEntries.length === 0 ? (
                 <p className="text-sm italic text-muted-foreground">{t.polls.resultsUi.noTextResponses}</p>
               ) : (
                 <>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                      {t.polls.resultsUi.aiSummary.rawComments}
+                    </p>
+                  </div>
                   <div className="space-y-2">
                     {visibleTextEntries.map((entry) => (
                       <div key={entry.id} className="rounded-lg border border-border/70 bg-background/60 p-3">
@@ -955,7 +1289,7 @@ export const PollResults = ({ poll, variant, canUseCohortFilters = false }: Poll
                         <div>
                           <div className="flex flex-wrap items-center gap-2">
                             <h2 className="text-lg font-semibold text-foreground">{getSectionTitle(section)}</h2>
-                            <Badge variant="outline" className="border-border bg-card/60 text-foreground">
+                            <Badge variant="outline" className={NEUTRAL_BADGE_CLASS}>
                               {getSectionSummaryText(section)}
                             </Badge>
                           </div>
@@ -988,15 +1322,20 @@ export const PollResults = ({ poll, variant, canUseCohortFilters = false }: Poll
           </div>
           {isFull && (
             <aside className="hidden xl:block">
-              <div className="sticky top-24 space-y-3">
+              <div className="sticky space-y-3" style={{ top: `${quickNavTopOffset}px` }}>
                 <GlowCard className="p-4" hoverable={false}>
                   <div className="rounded-xl border border-border/70 bg-background/40 p-4">
                     <div className="flex items-start gap-3">
-                      <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-primary">
+                      <div
+                        className={cn(
+                          'mt-0.5 flex h-9 w-9 items-center justify-center rounded-full border',
+                          toneCalloutClass('info'),
+                        )}
+                      >
                         <ListOrdered className="h-4 w-4" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-primary/80">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                           {t.polls.resultsUi.quickNavigation}
                         </p>
                         <p className="mt-1 text-base font-semibold text-foreground">
@@ -1005,12 +1344,15 @@ export const PollResults = ({ poll, variant, canUseCohortFilters = false }: Poll
                       </div>
                     </div>
                   </div>
-                  <div className="mt-4 max-h-[70vh] space-y-4 overflow-y-auto pr-1">
+                  <div
+                    className="mt-4 space-y-4 overflow-y-auto pr-1"
+                    style={{ maxHeight: `calc(100vh - ${quickNavTopOffset + 24}px)` }}
+                  >
                     {visibleQuestionGroups.map(({ section, questions }) => (
                       <div key={section.id} className="space-y-2">
                         <a
                           href={`#poll-section-${section.id}`}
-                          className="block rounded-md border border-transparent bg-background/20 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:border-border hover:bg-background/40 hover:text-foreground"
+                          className="block rounded-md border border-border/60 bg-background/40 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
                         >
                           {getSectionTitle(section)}
                         </a>
@@ -1019,7 +1361,7 @@ export const PollResults = ({ poll, variant, canUseCohortFilters = false }: Poll
                             <a
                               key={question.id}
                               href={`#${question.anchorId}`}
-                              className="block rounded-lg border border-border bg-card/40 px-4 py-3 text-[15px] leading-snug text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
+                              className="block rounded-lg border border-border/70 bg-background/40 px-4 py-3 text-[15px] leading-snug text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
                             >
                               {question.question.question_text}
                             </a>

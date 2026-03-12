@@ -1,10 +1,11 @@
 import { Loader2, BarChart3, ArrowLeft, Lock, Edit } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import type { ResponseValue } from '@/types/poll';
 
 import { CosmicBackground } from '@/components/CosmicBackground';
+import { GuildSubNav } from '@/components/guild';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { PollResponse, PollResults } from '@/components/polls';
 import { Button } from '@/components/ui/button';
@@ -13,19 +14,23 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
 import { usePoll, usePollResults, usePollMutations } from '@/hooks/useGuildPolls';
+import { usePollTextAiSummaries } from '@/hooks/usePollTextAiSummaries';
 import { formatDateLocalized } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { supabase } from '@/integrations/supabase/client';
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
+import { isReadOnlyResponsesView, shouldShowPollResultsPane } from '@/lib/pollViewMode';
 
 const GuildPollView = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { regionSlug, serverSlug, guildSlug, pollId } = useParams();
   const { language, t } = useLanguage();
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [guildId, setGuildId] = useState<string | null>(null);
+  const [guild, setGuild] = useState<{ name: string; server: string; region: string; avatar_url: string | null } | null>(null);
   const [isGM, setIsGM] = useState(false);
   const [hasResponded, setHasResponded] = useState(false);
   const [showResults, setShowResults] = useState(false);
@@ -43,6 +48,8 @@ const GuildPollView = () => {
     error instanceof Error ? error.message : t.polls.error;
 
   const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
+  const fullSlug = `${regionSlug}/${serverSlug}/${guildSlug}`;
+  const resultsPath = `${basePath}/poll/${pollId}/results`;
 
   const handleBack = useCallback(() => {
     if (window.history.length > 1) {
@@ -58,17 +65,34 @@ const GuildPollView = () => {
   const userCanViewResults = isGM || hasManagePolls || canViewResults === true;
   const userCanRespond = isGM || hasManagePolls || canRespondToPoll === true;
   const accessLoading = !isGM && !hasManagePolls && (canViewResults === null || canRespondToPoll === null);
-  const showResultsPane =
-    !isEditing &&
-    (
-      isClosed ||
-      showResults ||
-      (!userCanRespond && userCanViewResults) ||
-      (!isGM && hasResponded && userCanViewResults)
-    );
+  const requestedView = searchParams.get('view');
+  const reviewingClosedResponses = isReadOnlyResponsesView({
+    hasResponded,
+    isClosed,
+    requestedView,
+  });
+  const showResultsPane = shouldShowPollResultsPane({
+    hasResponded,
+    isClosed,
+    isEditing,
+    isGM,
+    requestedView,
+    showResults,
+    userCanRespond,
+    userCanViewResults,
+  });
   const usesFullResultsLayout = showResultsPane && userCanViewResults;
   const showOuterHeader = !(showResultsPane && userCanViewResults);
   const canToggleResults = (isGM || hasManagePolls || (userCanViewResults && hasResponded)) && !isClosed;
+  const canOpenFullResults = reviewingClosedResponses && userCanViewResults;
+  const {
+    summaries: aiSummaries,
+    loading: aiSummariesLoading,
+    error: aiSummariesError,
+  } = usePollTextAiSummaries({
+    poll: pollResults || poll,
+    enabled: showResultsPane && userCanViewResults,
+  });
 
   useEffect(() => {
     const checkAccess = async () => {
@@ -105,6 +129,12 @@ const GuildPollView = () => {
       }
 
       setGuildId(matchedGuild.id);
+      setGuild({
+        name: matchedGuild.name,
+        server: matchedGuild.server,
+        region: matchedGuild.region || 'eu',
+        avatar_url: matchedGuild.avatar_url,
+      });
 
       const { data: gmCheck } = await supabase.rpc('is_guild_gm', {
         p_guild_id: matchedGuild.id,
@@ -161,6 +191,16 @@ const GuildPollView = () => {
     <div className="flex-1 relative pt-16">
       <CosmicBackground />
 
+      {guild && (
+        <GuildSubNav
+          guild={guild}
+          guildId={guildId}
+          basePath={`/guild/${fullSlug}`}
+          isGM={isGM}
+          activeTab="polls"
+        />
+      )}
+
       <PageContainer
         className={usesFullResultsLayout ? 'relative z-10 py-8' : 'relative z-10 py-8 max-w-3xl'}
         width={usesFullResultsLayout ? 'wide' : 'contained'}
@@ -184,6 +224,17 @@ const GuildPollView = () => {
             >
               <BarChart3 className="mr-2 h-4 w-4" />
               {showResults ? t.polls.hideResults : t.polls.viewResults}
+            </Button>
+          )}
+
+          {!canToggleResults && canOpenFullResults && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(resultsPath)}
+            >
+              <BarChart3 className="mr-2 h-4 w-4" />
+              {t.common.results}
             </Button>
           )}
         </div>
@@ -233,6 +284,9 @@ const GuildPollView = () => {
               poll={pollResults || poll}
               variant="full"
               canUseCohortFilters={isGM || hasManagePolls}
+              aiSummaries={aiSummaries}
+              aiSummariesLoading={aiSummariesLoading}
+              aiSummariesError={aiSummariesError}
             />
           </div>
         ) : !userCanRespond && !isEditing ? (
@@ -271,6 +325,7 @@ const GuildPollView = () => {
             onSubmit={handleSubmit}
             saving={saving}
             alreadyResponded={hasResponded}
+            readOnly={reviewingClosedResponses}
           />
         )}
       </PageContainer>

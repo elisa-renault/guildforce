@@ -85,7 +85,7 @@ export const ActivePollWidget = forwardRef<HTMLDivElement, ActivePollWidgetProps
       }
 
       const handleReviewResponses = () => {
-        navigate(`/guild/${guildSlug}/poll/${closedPoll.id}`);
+        navigate(`/guild/${guildSlug}/poll/${closedPoll.id}?view=responses`);
       };
 
       const handleReviewResults = () => {

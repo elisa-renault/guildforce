@@ -1196,8 +1196,10 @@ export interface Translations {
       filterType: string;
       allSections: string;
       allTypes: string;
+      allTones: string;
       textOnly: string;
       sortBy: string;
+      filterTone: string;
       lowConsensusOnly: string;
       collapseSections: string;
       expandSections: string;
@@ -1244,6 +1246,26 @@ export interface Translations {
       focusQuestion: string;
       noSummary: string;
       none: string;
+      aiSummary: {
+        headerTitle: string;
+        headerHint: string;
+        title: string;
+        showDetails: string;
+        hideDetails: string;
+        themes: string;
+        polarityClusters: string;
+        keywords: string;
+        rawComments: string;
+        generate: string;
+        regenerate: string;
+        generating: string;
+        generateSuccess: string;
+        loading: string;
+        notGenerated: string;
+        unavailable: string;
+        insufficientData: string;
+        generatedAtValue: string;
+      };
       kpis: {
         respondents: string;
         respondentsValue: string;

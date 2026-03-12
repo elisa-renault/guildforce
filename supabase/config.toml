@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.guild-vault]
 verify_jwt = false
+
+[functions.poll-results-ai-summary]
+verify_jwt = false

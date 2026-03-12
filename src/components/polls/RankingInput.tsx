@@ -1,5 +1,4 @@
-import React, { forwardRef } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
+
 import {
   DndContext,
   closestCenter,
@@ -18,19 +17,24 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical } from 'lucide-react';
+import React, { forwardRef } from 'react';
+
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface RankingInputProps {
   items: string[];
   onChange: (items: string[]) => void;
+  readOnly?: boolean;
 }
 
 interface SortableItemProps {
   id: string;
   index: number;
   item: string;
+  readOnly?: boolean;
 }
 
-const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(({ id, index, item }, outerRef) => {
+const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(({ id, index, item, readOnly = false }, _outerRef) => {
   const {
     attributes,
     listeners,
@@ -55,9 +59,10 @@ const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(({ id, index,
     >
       <button
         type="button"
-        className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-primary/10 touch-none"
-        {...attributes}
-        {...listeners}
+        className={`p-1 rounded touch-none ${readOnly ? 'cursor-default opacity-60' : 'cursor-grab active:cursor-grabbing hover:bg-primary/10'}`}
+        disabled={readOnly}
+        {...(!readOnly ? attributes : {})}
+        {...(!readOnly ? listeners : {})}
       >
         <GripVertical className="h-4 w-4 text-muted-foreground" />
       </button>
@@ -71,7 +76,7 @@ const SortableItem = forwardRef<HTMLDivElement, SortableItemProps>(({ id, index,
 
 SortableItem.displayName = 'SortableItem';
 
-export const RankingInput = forwardRef<HTMLDivElement, RankingInputProps>(({ items, onChange }, ref) => {
+export const RankingInput = forwardRef<HTMLDivElement, RankingInputProps>(({ items, onChange, readOnly = false }, ref) => {
   const { t } = useLanguage();
   
   const sensors = useSensors(
@@ -86,6 +91,10 @@ export const RankingInput = forwardRef<HTMLDivElement, RankingInputProps>(({ ite
   );
 
   const handleDragEnd = (event: DragEndEvent) => {
+    if (readOnly) {
+      return;
+    }
+
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
@@ -98,9 +107,11 @@ export const RankingInput = forwardRef<HTMLDivElement, RankingInputProps>(({ ite
 
   return (
     <div ref={ref} className="space-y-2">
-      <p className="text-xs text-muted-foreground mb-3">
-        {t.polls.dragToRank}
-      </p>
+      {!readOnly && (
+        <p className="text-xs text-muted-foreground mb-3">
+          {t.polls.dragToRank}
+        </p>
+      )}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -109,7 +120,7 @@ export const RankingInput = forwardRef<HTMLDivElement, RankingInputProps>(({ ite
         <SortableContext items={items} strategy={verticalListSortingStrategy}>
           <div className="space-y-2">
             {items.map((item, index) => (
-              <SortableItem key={item} id={item} index={index} item={item} />
+              <SortableItem key={item} id={item} index={index} item={item} readOnly={readOnly} />
             ))}
           </div>
         </SortableContext>

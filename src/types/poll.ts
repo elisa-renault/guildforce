@@ -14,6 +14,8 @@ export type PollResultsCohortFilterableQuestionType =
   | 'datetime'
   | 'scale';
 export type PollResultsCohortRedactionReason = 'minimum_sample' | 'text_hidden';
+export type PollAiSummaryLocale = 'en' | 'fr' | 'de' | 'ru';
+export type PollAiSummaryStatus = 'ready' | 'insufficient_data' | 'unavailable' | 'not_generated';
 
 export interface GuildPollSection {
   id: string;
@@ -207,6 +209,27 @@ export interface PollResultsCohortAnalysis {
   is_anonymous_guarded: boolean;
   filters: PollResultsCohortFilter[];
   questions: PollResultsCohortQuestionResult[];
+}
+
+export interface PollAiSummaryFacet {
+  label: string;
+  count: number;
+  summary: string;
+}
+
+export interface PollQuestionAiSummaryContent {
+  headline: string;
+  themes: PollAiSummaryFacet[];
+  polarity_clusters: PollAiSummaryFacet[];
+  keywords: string[];
+}
+
+export interface PollQuestionAiSummary {
+  question_id: string;
+  status: PollAiSummaryStatus;
+  comment_count: number;
+  generated_at?: string;
+  summary?: PollQuestionAiSummaryContent;
 }
 
 // Special value for "Other" option
