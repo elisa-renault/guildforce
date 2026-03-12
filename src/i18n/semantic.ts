@@ -786,10 +786,10 @@ const FR_SEMANTIC_MESSAGES: Record<keyof typeof EN_SEMANTIC_MESSAGES, string> = 
   'guild.polls.empty': 'Aucun sondage trouve.',
   'guild.polls.tab.active': 'Actifs',
   'guild.polls.tab.draft': 'Brouillons',
-  'guild.polls.tab.closed': 'Fermes',
+  'guild.polls.tab.closed': 'Fermés',
   'guild.polls.empty.active': 'Aucun sondage actif.',
   'guild.polls.empty.draft': 'Aucun brouillon.',
-  'guild.polls.empty.closed': 'Aucun sondage ferme.',
+  'guild.polls.empty.closed': 'Aucun sondage fermé.',
 
   'guild.members.admin_read_only': 'Mode lecture admin',
   'guild.members.title': 'Membres de la guilde',
