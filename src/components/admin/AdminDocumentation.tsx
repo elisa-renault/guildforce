@@ -296,9 +296,9 @@ const DOCUMENTATION: DocSection[] = [
       },
       {
         titleEn: 'GM-triggered AI summaries for closed text questions',
-        titleFr: 'RÃ©sumÃ©s IA dÃ©clenchÃ©s par le GM sur les questions texte fermÃ©es',
+        titleFr: 'Résumés IA déclenchés par le GM sur les questions texte fermées',
         contentEn: 'Closed poll text questions can expose cached AI summaries generated only on explicit GM action through the `poll-results-ai-summary` edge function. The function verifies the caller via bearer token, confirms `is_guild_gm()`, keeps question-level visibility aligned with `get_poll_question_results_visibility()`, then reads raw text answers server-side and caches one summary per (`question_id`, `locale`) in `poll_question_ai_summaries`. Cached rows include `model_name`, `prompt_version`, `source_hash`, `status`, `comment_count`, and `generated_by`, so normal result viewers can reuse the latest summary without calling OpenAI themselves. Cohort-filtered result views deliberately skip these AI summaries in v1.',
-        contentFr: 'Les questions texte des sondages fermÃ©s peuvent exposer des rÃ©sumÃ©s IA mis en cache, gÃ©nÃ©rÃ©s uniquement sur action explicite du GM via l\'edge function `poll-results-ai-summary`. La fonction valide l\'appelant via bearer token, confirme `is_guild_gm()`, maintient la visibilitÃ© question par question alignÃ©e sur `get_poll_question_results_visibility()`, puis lit les rÃ©ponses texte cÃ´tÃ© serveur et met en cache un rÃ©sumÃ© par (`question_id`, `locale`) dans `poll_question_ai_summaries`. Les lignes en cache incluent `model_name`, `prompt_version`, `source_hash`, `status`, `comment_count` et `generated_by`, afin que les lecteurs ayant l\'accÃ¨s normal aux rÃ©sultats puissent rÃ©utiliser le dernier rÃ©sumÃ© sans appeler OpenAI eux-mÃªmes. Les vues filtrÃ©es par cohorte ignorent volontairement ces rÃ©sumÃ©s IA en v1.',
+        contentFr: 'Les questions texte des sondages fermés peuvent exposer des résumés IA mis en cache, générés uniquement sur action explicite du GM via l\'edge function `poll-results-ai-summary`. La fonction valide l\'appelant via bearer token, confirme `is_guild_gm()`, maintient la visibilité question par question alignée sur `get_poll_question_results_visibility()`, puis lit les réponses texte côté serveur et met en cache un résumé par (`question_id`, `locale`) dans `poll_question_ai_summaries`. Les lignes en cache incluent `model_name`, `prompt_version`, `source_hash`, `status`, `comment_count` et `generated_by`, afin que les lecteurs ayant l\'accès normal aux résultats puissent réutiliser le dernier résumé sans appeler OpenAI eux-mêmes. Les vues filtrées par cohorte ignorent volontairement ces résumés IA en v1.',
         tags: ['polls', 'ai', 'openai', 'security'],
       },
     ],
@@ -416,9 +416,9 @@ const DOCUMENTATION: DocSection[] = [
       },
       {
         titleEn: 'AI poll summaries stay server-side',
-        titleFr: 'Les rÃ©sumÃ©s IA de sondage restent cÃ´tÃ© serveur',
+        titleFr: 'Les résumés IA de sondage restent côté serveur',
         contentEn: '`poll_question_ai_summaries` is backend-only despite RLS being enabled. Frontend code must never query it directly. All reads/writes go through the `poll-results-ai-summary` edge function, which enforces bearer-token auth, closed-poll checks, GM-only generation, and question-level results visibility before using `OPENAI_API_KEY`. This prevents client-side exposure of raw AI cache internals or the OpenAI credential.',
-        contentFr: '`poll_question_ai_summaries` reste rÃ©servÃ© au backend, mÃªme avec la RLS activÃ©e. Le frontend ne doit jamais la requÃªter directement. Toutes les lectures/Ã©critures passent par l\'edge function `poll-results-ai-summary`, qui applique l\'auth bearer token, les contrÃ´les de sondage fermÃ©, la gÃ©nÃ©ration rÃ©servÃ©e au GM et la visibilitÃ© question par question avant d\'utiliser `OPENAI_API_KEY`. Cela Ã©vite toute exposition cÃ´tÃ© client du cache IA brut ou du secret OpenAI.',
+        contentFr: '`poll_question_ai_summaries` reste réservé au backend, même avec la RLS activée. Le frontend ne doit jamais la requêter directement. Toutes les lectures/écritures passent par l\'edge function `poll-results-ai-summary`, qui applique l\'auth bearer token, les contrôles de sondage fermé, la génération réservée au GM et la visibilité question par question avant d\'utiliser `OPENAI_API_KEY`. Cela évite toute exposition côté client du cache IA brut ou du secret OpenAI.',
         tags: ['security', 'polls', 'ai', 'openai'],
       },
       {
