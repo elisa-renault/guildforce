@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 
 const REQUIRED_FILES = [
   'src/integrations/supabase/types.ts',
@@ -6,6 +7,17 @@ const REQUIRED_FILES = [
 ];
 const MIGRATIONS_PREFIX = 'supabase/migrations/';
 const ZERO_SHA = '0000000000000000000000000000000000000000';
+const SCHEMA_SQL_PATTERNS = [
+  /\bcreate\s+(?:or\s+replace\s+)?(?:table|view|materialized\s+view|index|type|domain|policy|trigger|function|procedure|schema|extension|publication|subscription|role|sequence)\b/i,
+  /\balter\s+(?:table|view|materialized\s+view|index|type|domain|policy|trigger|function|procedure|schema|extension|publication|subscription|role|sequence)\b/i,
+  /\bdrop\s+(?:table|view|materialized\s+view|index|type|domain|policy|trigger|function|procedure|schema|extension|publication|subscription|role|sequence)\b/i,
+  /\bgrant\b/i,
+  /\brevoke\b/i,
+  /\bcomment\s+on\b/i,
+  /\benable\s+row\s+level\s+security\b/i,
+  /\bdisable\s+row\s+level\s+security\b/i,
+  /\bsecurity\s+definer\b/i,
+];
 
 function runGit(args) {
   return execFileSync('git', args, { encoding: 'utf8' }).trim();
@@ -77,6 +89,25 @@ function resolveRange() {
   return null;
 }
 
+function stripSqlComments(sql) {
+  return sql
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/--.*$/gm, ' ');
+}
+
+function isSchemaAffectingSql(sql) {
+  const normalized = stripSqlComments(sql);
+  return SCHEMA_SQL_PATTERNS.some((pattern) => pattern.test(normalized));
+}
+
+function readMigrationSql(filePath) {
+  try {
+    return readFileSync(filePath, 'utf8');
+  } catch {
+    return null;
+  }
+}
+
 const range = resolveRange();
 let changedEntries;
 
@@ -89,10 +120,28 @@ if (range) {
 }
 
 const changedByPath = new Map(changedEntries.map((entry) => [entry.path, entry.status]));
-const migrationTouched = [...changedByPath.keys()].some((filePath) => filePath.startsWith(MIGRATIONS_PREFIX));
+const changedMigrationEntries = changedEntries.filter((entry) => entry.path.startsWith(MIGRATIONS_PREFIX));
 
-if (!migrationTouched) {
+if (changedMigrationEntries.length === 0) {
   console.log('No migration changes detected. Schema triad check skipped.');
+  process.exit(0);
+}
+
+const schemaMigrationTouched = changedMigrationEntries.some((entry) => {
+  if (entry.status.startsWith('D')) {
+    return true;
+  }
+
+  const sql = readMigrationSql(entry.path);
+  if (sql === null) {
+    return true;
+  }
+
+  return isSchemaAffectingSql(sql);
+});
+
+if (!schemaMigrationTouched) {
+  console.log('Only data-only migration changes detected. Schema triad check skipped.');
   process.exit(0);
 }
 
