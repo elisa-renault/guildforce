@@ -4,7 +4,7 @@
 
 Guildforce is a guild operations platform for World of Warcraft communities. It centralizes guild management, roster planning, class wishes, polls, forum discussions, moderation, notifications, and admin tooling.
 
-Audit snapshot (repository state reviewed on 2026-02-03):
+Audit snapshot (repository state reviewed on 2026-02-03; verify against code before relying on operational details):
 - Frontend: React 18 + TypeScript + Vite (port `8080` in `vite.config.ts`)
 - Styling/UI: Tailwind CSS + shadcn/ui + custom "cosmic" components
 - Backend: Supabase Postgres + RLS + Edge Functions
@@ -33,7 +33,7 @@ Audit snapshot (repository state reviewed on 2026-02-03):
 - `supabase/functions/export-users`: admin-only auth-user CSV export
 - `supabase/functions/full-backup`: admin-only SQL export of public tables
 
-## Domain Overview (Current Behavior)
+## Domain Overview (Behavior Snapshot, Verify In Code)
 
 - Authentication
   - Battle.net is the primary login flow (`/functions/v1/battlenet-auth/auth-url` + `/login`).
@@ -117,13 +117,25 @@ Note: a legacy `characters` table still exists in migrations; avoid adding new p
 - This component is presentation-only (no business logic).
 - Any major feature or policy change must add/update a documented subsection.
 - Keep entries multilingual by always filling all languages content/title fields.
-- Make sure every language has their specific characters, be it accents "ê",  or special letters, "ç", etc.
+- Preserve language-specific characters correctly in UTF-8, including accents and locale-specific punctuation.
 - Use searchable tags (`auth`, `battlenet`, `wishes`, `polls`, `forum`, `security`, etc.).
+
+## Text Encoding and I18n Safety
+
+- Treat UTF-8 as mandatory for source files, translations, docs, JSON, SQL, and generated text assets.
+- Prefer `apply_patch` for text edits. Avoid shell redirection or shell-based file rewrites for textual content unless the command guarantees UTF-8 output.
+- Do not use PowerShell `Set-Content`, `Add-Content`, `Out-File`, or `>` / `>>` to rewrite user-facing text files unless encoding is explicitly controlled.
+- If a script generates or rewrites text files, it must write UTF-8 explicitly.
+- Keep user-facing copy in translation or content files when practical instead of scattering localized strings across many React components.
+- After changing front-end copy, translations, docs, SQL content, or admin content, run `npm run i18n:check:encoding` and `npm run i18n:check:diacritics`.
+- If mojibake appears in the terminal only, verify the file bytes and repository diff before changing application code.
 
 ## Workflow Orchestration
 
-### 1) Plan mode by default
-- For non-trivial work (>=3 steps or design decisions), plan first.
+### 1) Planning discipline by default
+- For non-trivial work (>=3 steps or design decisions), write or update a short plan before broad implementation.
+- If the active runtime exposes a formal planning mode or planning tool, use it.
+- If it does not, keep the plan in the task run file or in a concise working note.
 - If implementation drifts or fails, stop and re-plan.
 - Include verification steps in the plan (not only implementation).
 
@@ -159,6 +171,10 @@ Required expectations for non-trivial changes:
 Use realistic fixtures (20-300 member guilds, mixed ranks/roles, multi-roster setups) for permission and scaling confidence.
 
 ## Build and Quality Commands
+
+Shell guidance:
+- Git Bash can be more convenient for commands that pass Unix-style routes such as `/guilds` or `/forum`.
+- PowerShell is acceptable when it is the active environment, but avoid shell-based text rewrites unless UTF-8 encoding is explicit.
 
 Use existing npm scripts (canonical):
 - `npm run dev`

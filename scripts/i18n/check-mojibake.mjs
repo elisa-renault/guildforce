@@ -3,7 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const ROOT_DIR = process.cwd();
-const SCAN_DIRS = ['src', 'scripts'];
+const SCAN_DIRS = ['src', 'scripts', 'docs', 'supabase'];
+const ROOT_FILES = ['AGENTS.md', 'README.md', 'MIGRATION_SUPABASE.md', '.env.example'];
 const FILE_EXTENSIONS = new Set([
   '.ts',
   '.tsx',
@@ -65,6 +66,34 @@ const walkFiles = (dirPath, acc = []) => {
 
 const findings = [];
 
+const scanFile = (relativePath) => {
+  const filePath = path.join(ROOT_DIR, relativePath);
+  if (!fs.existsSync(filePath) || !shouldScanFile(filePath)) return;
+
+  const source = fs.readFileSync(filePath, 'utf8');
+
+  for (const pattern of MOJIBAKE_PATTERNS) {
+    pattern.regex.lastIndex = 0;
+    let match = pattern.regex.exec(source);
+
+    while (match) {
+      const line = source.slice(0, match.index).split(/\r?\n/).length;
+      findings.push({
+        file: toPosix(relativePath),
+        line,
+        token: match[0],
+        label: pattern.label,
+      });
+
+      match = pattern.regex.exec(source);
+    }
+  }
+};
+
+for (const rootFile of ROOT_FILES) {
+  scanFile(rootFile);
+}
+
 for (const scanDir of SCAN_DIRS) {
   const absScanDir = path.join(ROOT_DIR, scanDir);
   const files = walkFiles(absScanDir);
@@ -72,25 +101,7 @@ for (const scanDir of SCAN_DIRS) {
   for (const filePath of files) {
     const relativePath = toPosix(path.relative(ROOT_DIR, filePath));
     if (relativePath === SELF_RELATIVE_PATH) continue;
-
-    const source = fs.readFileSync(filePath, 'utf8');
-
-    for (const pattern of MOJIBAKE_PATTERNS) {
-      pattern.regex.lastIndex = 0;
-      let match = pattern.regex.exec(source);
-
-      while (match) {
-        const line = source.slice(0, match.index).split(/\r?\n/).length;
-        findings.push({
-          file: relativePath,
-          line,
-          token: match[0],
-          label: pattern.label,
-        });
-
-        match = pattern.regex.exec(source);
-      }
-    }
+    scanFile(relativePath);
   }
 }
 
