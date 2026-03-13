@@ -32,6 +32,7 @@ import { resolveSemanticMessage } from '@/i18n/semantic';
 import { supabase } from '@/integrations/supabase/client';
 import { toneCalloutClass, toneTextClass, wowClassColorValue } from '@/lib/design-tokens';
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
+import { toNormalizedRealmSlug } from '@/lib/guildDiscovery';
 import { formatRankLabel } from '@/lib/rankLabel';
 import { cn } from '@/lib/utils';
 
@@ -329,7 +330,7 @@ const GuildMembers = () => {
               )
             `)
             .ilike('guild_name', guildData.name)
-            .ilike('guild_realm_slug', guildData.server)
+            .ilike('guild_realm_slug', toNormalizedRealmSlug(guildData.server))
             .ilike('guild_region', guildData.region)
             .order('rank_index', { ascending: true });
 

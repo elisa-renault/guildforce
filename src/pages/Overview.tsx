@@ -263,7 +263,7 @@ const Overview = () => {
             {t.guildNav.welcome}{greetingName ? `, ${greetingName}` : ''}
           </h1>
           <p className="text-muted-foreground text-sm sm:text-base">
-            {guild?.name} • {guild?.server ? guild.server.charAt(0).toUpperCase() + guild.server.slice(1).toLowerCase() : ''}
+            {guild?.name} • {guild?.server || ''}
           </p>
         </div>
 

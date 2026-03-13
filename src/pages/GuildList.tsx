@@ -13,6 +13,7 @@ import { Shield, Crown, Loader2, Link as LinkIcon, Users, MapPin, Settings } fro
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { BattleNetIcon } from '@/components/BattleNetIcon';
+import { buildGuildDiscoveryKey, mergeGuildDiscoverySources } from '@/lib/guildDiscovery';
 import { getGuildPath, getGuildSettingsPath } from '@/lib/guildSlug';
 import { toast } from 'sonner';
 import {
@@ -29,22 +30,24 @@ import {
 } from '@/lib/battlenetOAuth';
 
 interface GuildWithMembership {
-  id: string;
+  id: string | null;
   name: string;
   server: string;
   region: string;
   faction: 'horde' | 'alliance';
-  role: string;
-  owner_id: string;
+  role: string | null;
+  owner_id: string | null;
   memberCount?: number;
   hasMain?: boolean;
   avatar_url?: string | null;
+  isDetectedOnly: boolean;
+  syncedCharacterCount: number;
 }
 
 const GuildList = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const { user, profile, session, loading: authLoading, refreshProfile } = useAuth();
+  const { user, profile, loading: authLoading, refreshProfile } = useAuth();
   const [guilds, setGuilds] = useState<GuildWithMembership[]>([]);
   const [loading, setLoading] = useState(true);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -55,10 +58,26 @@ const GuildList = () => {
   const loadGuilds = async (userId: string) => {
     setLoading(true);
 
-    const { data: memberships, error: membershipsError } = await supabase
-      .from('guild_members')
-      .select('guild_id, role')
-      .eq('user_id', userId);
+    const [membershipsResult, syncedMembershipsResult, mainCharResult] = await Promise.all([
+      supabase
+        .from('guild_members')
+        .select('guild_id, role')
+        .eq('user_id', userId),
+      supabase
+        .from('wow_guild_memberships')
+        .select('character_id, guild_name, guild_realm, guild_realm_slug, guild_region, guild_faction')
+        .eq('user_id', userId),
+      supabase
+        .from('wow_characters')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('is_main', true)
+        .limit(1),
+    ]);
+
+    const memberships = membershipsResult.data || [];
+    const membershipsError = membershipsResult.error;
+    const syncedMemberships = syncedMembershipsResult.data || [];
 
     if (membershipsError) {
       log.error('Error fetching guild memberships:', membershipsError);
@@ -67,11 +86,12 @@ const GuildList = () => {
       return;
     }
 
-    if (memberships && memberships.length > 0) {
-      const guildIds = memberships.map(m => m.guild_id);
-      
-      // Fetch guilds, character counts from roster cache, and user's main character info
-      const [guildResult, rosterCountsResult, mainCharResult] = await Promise.all([
+    let appGuilds: GuildWithMembership[] = [];
+
+    if (memberships.length > 0) {
+      const guildIds = memberships.map((membership) => membership.guild_id);
+
+      const [guildResult, rosterCountsResult] = await Promise.all([
         supabase
           .from('guilds')
           .select('id, name, server, region, faction, owner_id, avatar_url')
@@ -80,12 +100,6 @@ const GuildList = () => {
           .from('guild_roster_cache')
           .select('guild_id')
           .in('guild_id', guildIds),
-        supabase
-          .from('wow_characters')
-          .select('id, is_main, name')
-          .eq('user_id', userId)
-          .eq('is_main', true)
-          .limit(1)
       ]);
 
       if (guildResult.error) {
@@ -97,54 +111,59 @@ const GuildList = () => {
 
       // Count characters per guild from roster cache
       const memberCounts: Record<string, number> = {};
-      rosterCountsResult.data?.forEach(m => {
-        memberCounts[m.guild_id] = (memberCounts[m.guild_id] || 0) + 1;
+      rosterCountsResult.data?.forEach((member) => {
+        memberCounts[member.guild_id] = (memberCounts[member.guild_id] || 0) + 1;
       });
 
-      // Check if main character is in any guild
-      let mainGuildMembership: { guild_name: string; guild_realm: string } | null = null;
-      if (mainCharResult.data?.[0]) {
-        const mainCharId = mainCharResult.data[0].id;
-        const { data: mainMembership } = await supabase
-          .from('wow_guild_memberships')
-          .select('guild_name, guild_realm')
-          .eq('character_id', mainCharId)
-          .limit(1);
-        mainGuildMembership = mainMembership?.[0] || null;
-      }
-
       if (guildResult.data) {
-        const merged: GuildWithMembership[] = guildResult.data.map(g => {
-          // Check if this guild matches the main's guild
-          const hasMain = mainGuildMembership 
-            ? mainGuildMembership.guild_name.toLowerCase() === g.name.toLowerCase() &&
-              mainGuildMembership.guild_realm.toLowerCase() === g.server.toLowerCase().replace(/\s+/g, '-')
-            : false;
-          
-          return {
-            ...g,
-            region: g.region || 'eu',
-            faction: g.faction as 'horde' | 'alliance',
-            role: memberships.find(m => m.guild_id === g.id)?.role || 'member',
-            memberCount: memberCounts[g.id] || 0,
-            hasMain,
-            avatar_url: g.avatar_url,
-          };
-        });
-        
-        // Sort: main's guild first, then by name
-        merged.sort((a, b) => {
-          if (a.hasMain && !b.hasMain) return -1;
-          if (!a.hasMain && b.hasMain) return 1;
-          return a.name.localeCompare(b.name);
-        });
-        
-        setGuilds(merged);
+        appGuilds = guildResult.data.map((guild) => ({
+          ...guild,
+          region: guild.region || 'eu',
+          faction: guild.faction as 'horde' | 'alliance',
+          role: memberships.find((membership) => membership.guild_id === guild.id)?.role || 'member',
+          memberCount: memberCounts[guild.id] || 0,
+          hasMain: false,
+          avatar_url: guild.avatar_url,
+          isDetectedOnly: false,
+          syncedCharacterCount: 0,
+        }));
       }
-    } else {
-      setGuilds([]);
     }
 
+    const mainGuildMembership = mainCharResult.data?.[0]
+      ? syncedMemberships.find((membership) => membership.character_id === mainCharResult.data?.[0].id) || null
+      : null;
+
+    const mainGuildKey = mainGuildMembership
+      ? buildGuildDiscoveryKey({
+          region: mainGuildMembership.guild_region || 'eu',
+          guildName: mainGuildMembership.guild_name,
+          realmNameOrSlug: mainGuildMembership.guild_realm_slug || mainGuildMembership.guild_realm,
+        })
+      : null;
+
+    const mergedGuilds = mergeGuildDiscoverySources({
+      appGuilds,
+      syncedMemberships,
+    }).map((guild) => ({
+      ...guild,
+      hasMain:
+        mainGuildKey !== null &&
+        buildGuildDiscoveryKey({
+          region: guild.region,
+          guildName: guild.name,
+          realmNameOrSlug: guild.server,
+        }) === mainGuildKey,
+    }));
+
+    mergedGuilds.sort((a, b) => {
+      if (a.hasMain && !b.hasMain) return -1;
+      if (!a.hasMain && b.hasMain) return 1;
+      if (a.isDetectedOnly !== b.isDetectedOnly) return a.isDetectedOnly ? 1 : -1;
+      return a.name.localeCompare(b.name);
+    });
+
+    setGuilds(mergedGuilds as GuildWithMembership[]);
     setLoading(false);
   };
 
@@ -298,71 +317,109 @@ const GuildList = () => {
             {guilds.length > 0 ? (
               guilds.map((guild) => (
                 <div 
-                  key={guild.id}
+                  key={guild.id || `${guild.region}-${guild.server}-${guild.name}`}
                   className={`grid grid-cols-[auto_1fr_auto] md:grid-cols-[auto_1fr_auto_auto] items-center gap-3 md:gap-6 px-4 py-3 rounded-lg border transition-colors ${
                     guild.hasMain 
                       ? 'bg-primary/10 border-primary/30 hover:border-primary/50' 
                       : 'bg-card/50 border-border/50 hover:border-border hover:bg-card/80'
                   }`}
                 >
-                  <button
-                    type="button"
-                    className="col-span-2 md:col-span-3 grid grid-cols-[auto_1fr_auto] md:grid-cols-[auto_1fr_auto] items-center gap-3 md:gap-6 text-left rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                    onClick={() => navigate(getGuildPath(guild.region, guild.server, guild.name))}
-                  >
-                    {/* Guild avatar or faction icon */}
-                    <Avatar className={`h-10 w-10 flex-shrink-0 ${
-                      !guild.avatar_url ? (guild.faction === 'horde' 
-                        ? 'bg-horde/20' 
-                        : 'bg-alliance/20') : ''
-                    }`}>
-                      {guild.avatar_url ? (
-                        <AvatarImage src={guild.avatar_url} alt={guild.name} />
-                      ) : (
+                  {guild.isDetectedOnly ? (
+                    <div className="col-span-2 md:col-span-3 grid grid-cols-[auto_1fr_auto] md:grid-cols-[auto_1fr_auto] items-center gap-3 md:gap-6">
+                      <Avatar className={`h-10 w-10 flex-shrink-0 ${
+                        guild.faction === 'horde' ? 'bg-horde/20' : 'bg-alliance/20'
+                      }`}>
                         <AvatarFallback className={`${
-                          guild.faction === 'horde' 
-                            ? 'bg-horde/20 text-horde' 
+                          guild.faction === 'horde'
+                            ? 'bg-horde/20 text-horde'
                             : 'bg-alliance/20 text-alliance'
                         }`}>
                           <Shield className="h-5 w-5" strokeWidth={1.5} />
                         </AvatarFallback>
-                      )}
-                    </Avatar>
-                    
-                    {/* Guild name and server */}
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-foreground truncate">{guild.name}</h3>
-                        {guild.hasMain && (
-                          <span className="text-[10px] uppercase tracking-wider text-primary font-medium px-1.5 py-0.5 rounded bg-primary/20 flex-shrink-0">
-                            Main
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {guild.server.charAt(0).toUpperCase() + guild.server.slice(1)}
-                        </span>
-                        <span className="uppercase">{guild.region}</span>
-                      </div>
-                    </div>
+                      </Avatar>
 
-                    {/* Members - hidden on mobile */}
-                    <div className="hidden md:flex items-center gap-1.5 text-sm text-muted-foreground min-w-[60px]">
-                      <Users className="h-4 w-4" />
-                      <span>{guild.memberCount} {guild.memberCount === 1 ? t.guild.member : t.guild.memberPlural}</span>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-foreground truncate">{guild.name}</h3>
+                          {guild.hasMain && (
+                            <span className="text-[10px] uppercase tracking-wider text-primary font-medium px-1.5 py-0.5 rounded bg-primary/20 flex-shrink-0">
+                              Main
+                            </span>
+                          )}
+                          <span className="text-[10px] uppercase tracking-wider text-warning font-medium px-1.5 py-0.5 rounded bg-warning/20 flex-shrink-0">
+                            {t.guild.awaitingGM}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {guild.server}
+                          </span>
+                          <span className="uppercase">{guild.region}</span>
+                        </div>
+                      </div>
+
+                      <div className="hidden md:flex items-center gap-1.5 text-sm text-muted-foreground min-w-[60px]">
+                        <Users className="h-4 w-4" />
+                        <span>{guild.syncedCharacterCount}</span>
+                      </div>
                     </div>
-                  </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="col-span-2 md:col-span-3 grid grid-cols-[auto_1fr_auto] md:grid-cols-[auto_1fr_auto] items-center gap-3 md:gap-6 text-left rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                      onClick={() => navigate(getGuildPath(guild.region, guild.server, guild.name))}
+                    >
+                      <Avatar className={`h-10 w-10 flex-shrink-0 ${
+                        !guild.avatar_url ? (guild.faction === 'horde'
+                          ? 'bg-horde/20'
+                          : 'bg-alliance/20') : ''
+                      }`}>
+                        {guild.avatar_url ? (
+                          <AvatarImage src={guild.avatar_url} alt={guild.name} />
+                        ) : (
+                          <AvatarFallback className={`${
+                            guild.faction === 'horde'
+                              ? 'bg-horde/20 text-horde'
+                              : 'bg-alliance/20 text-alliance'
+                          }`}>
+                            <Shield className="h-5 w-5" strokeWidth={1.5} />
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-foreground truncate">{guild.name}</h3>
+                          {guild.hasMain && (
+                            <span className="text-[10px] uppercase tracking-wider text-primary font-medium px-1.5 py-0.5 rounded bg-primary/20 flex-shrink-0">
+                              Main
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {guild.server}
+                          </span>
+                          <span className="uppercase">{guild.region}</span>
+                        </div>
+                      </div>
+
+                      <div className="hidden md:flex items-center gap-1.5 text-sm text-muted-foreground min-w-[60px]">
+                        <Users className="h-4 w-4" />
+                        <span>{guild.memberCount} {guild.memberCount === 1 ? t.guild.member : t.guild.memberPlural}</span>
+                      </div>
+                    </button>
+                  )}
                   
                   {/* Role badge and settings */}
                   <div className="col-span-1 flex items-center justify-end gap-2 flex-shrink-0">
-                    {/* Mobile: show member count */}
                     <span className="md:hidden flex items-center gap-1 text-xs text-muted-foreground">
                       <Users className="h-3 w-3" />
-                      {guild.memberCount}
+                      {guild.isDetectedOnly ? guild.syncedCharacterCount : guild.memberCount}
                     </span>
-                    {guild.role === 'gm' && (
+                    {!guild.isDetectedOnly && guild.role === 'gm' && (
                       <>
                         <button
                           onClick={(e) => {

@@ -5,6 +5,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useGuildRankLabels } from '@/hooks/useGuildRankLabels';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { formatRankLabel } from '@/lib/rankLabel';
+import { toNormalizedRealmSlug } from '@/lib/guildDiscovery';
 
 export type PermissionType = 
   | 'manage_wishes' 
@@ -103,7 +104,7 @@ export function useGuildPermissions(guildId: string | null) {
           .from('wow_guild_memberships')
           .select('rank_index, rank_name')
           .ilike('guild_name', guildData.name)
-          .ilike('guild_realm_slug', guildData.server)
+          .ilike('guild_realm_slug', toNormalizedRealmSlug(guildData.server))
           .ilike('guild_region', guildData.region);
 
         if (ranksData) {

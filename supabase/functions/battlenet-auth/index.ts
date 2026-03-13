@@ -1,4 +1,11 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import {
+  buildBattleNetRealmSlugCandidates,
+  normalizeRealmKey,
+  resolveGuildRealmFields,
+  shouldRepairGuildServerDisplay,
+  toNormalizedRealmSlug,
+} from '../../../src/lib/guildDiscovery.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -198,13 +205,7 @@ function toGuildSlugUnicode(guildName: string): string {
  * Some stored values may be realm names (spaces/accents) rather than the canonical slug.
  */
 function toRealmSlug(value: string): string {
-  return value
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // Remove diacritical marks
-    .replace(/\s+/g, '-')
-    .replace(/'/g, '')
-    .replace(/[^a-z0-9-]/g, '');
+  return toNormalizedRealmSlug(value);
 }
 
 function normalizeCharacterKey(value: string): string {
@@ -683,9 +684,10 @@ async function getClientCredentialsToken(region: BattleNetRegion): Promise<strin
 async function fetchPublicGuildRoster(
   region: BattleNetRegion,
   realmSlug: string,
-  guildName: string
+  guildName: string,
+  realmName?: string
 ): Promise<{ members: any[]; faction: string } | null> {
-  const { data } = await fetchPublicGuildRosterWithDiagnostics(region, realmSlug, guildName);
+  const { data } = await fetchPublicGuildRosterWithDiagnostics(region, realmSlug, guildName, realmName);
   return data;
 }
 
@@ -698,25 +700,48 @@ type PublicGuildRosterFailure = {
   realmSlug: string;
 };
 
+type PublicGuildSummaryData = {
+  faction: string;
+  guildUrl: string;
+  namespace: string;
+  slugType: string;
+  realmSlug: string;
+};
+
+function isRosterUnavailableDiagnostics(args: {
+  failure: PublicGuildRosterFailure | null;
+  attempts?: PublicGuildRosterFailure[];
+}): boolean {
+  const attempts = args.attempts ?? [];
+  if (attempts.length === 0) {
+    return args.failure?.status === 404;
+  }
+
+  return attempts.every((attempt) => attempt.status === 404);
+}
+
 async function fetchPublicGuildRosterWithDiagnostics(
   region: BattleNetRegion,
   realmSlug: string,
-  guildName: string
+  guildName: string,
+  realmName?: string
 ): Promise<{
   data: { members: any[]; faction: string } | null;
   failure: PublicGuildRosterFailure | null;
   attempts?: PublicGuildRosterFailure[];
+  guildSummary?: PublicGuildSummaryData | null;
 }> {
   try {
     const clientToken = await getClientCredentialsToken(region);
     if (!clientToken) {
       log.error('Could not get client token for public roster fetch');
-      return { data: null, failure: null };
+      return { data: null, failure: null, guildSummary: null };
     }
 
     const apiUrl = BATTLENET_API_URLS[region];
     const locale = BATTLENET_LOCALES[region];
     const serverSlug = toRealmSlug(realmSlug);
+    const realmSlugCandidates = buildBattleNetRealmSlugCandidates(realmSlug, realmName);
 
     // Try multiple slug formats - some guilds need normalized, others need unicode
     const slugsToTry = [
@@ -735,7 +760,7 @@ async function fetchPublicGuildRosterWithDiagnostics(
     let lastFailure: { status: number; body: string; rosterUrl: string; namespace: string; slugType: string } | null = null;
 
     const tryFetchForRealmSlug = async (tryRealmSlug: string): Promise<{ members: any[]; faction: string } | null> => {
-      const tryServerSlug = toRealmSlug(tryRealmSlug);
+      const tryServerSlug = tryRealmSlug;
       for (const { slug: guildSlug, type: slugType } of slugsToTry) {
         for (const namespace of namespacesToTry) {
           const rosterUrl = `${apiUrl}/data/wow/guild/${tryServerSlug}/${encodeURIComponent(guildSlug)}/roster?namespace=${namespace}&locale=${locale}`;
@@ -788,29 +813,129 @@ async function fetchPublicGuildRosterWithDiagnostics(
       return null;
     };
 
+    const tryFetchGuildSummaryForRealmSlug = async (tryRealmSlug: string): Promise<PublicGuildSummaryData | null> => {
+      const tryServerSlug = tryRealmSlug;
+      for (const { slug: guildSlug, type: slugType } of slugsToTry) {
+        for (const namespace of namespacesToTry) {
+          const guildUrl = `${apiUrl}/data/wow/guild/${tryServerSlug}/${encodeURIComponent(guildSlug)}?namespace=${namespace}&locale=${locale}`;
+          const guildResponse = await retryWithBackoff(
+            () => fetch(guildUrl, {
+              headers: { 'Authorization': `Bearer ${clientToken}` },
+            }),
+            { maxAttempts: 3, initialDelayMs: 1000, multiplier: 2 }
+          );
+
+          if (!guildResponse.ok) {
+            continue;
+          }
+
+          const guildSummary = await guildResponse.json().catch(() => null);
+          const faction =
+            guildSummary?.faction?.type ||
+            guildSummary?.guild?.faction?.type ||
+            'UNKNOWN';
+
+          return {
+            faction,
+            guildUrl,
+            namespace,
+            slugType,
+            realmSlug: tryServerSlug,
+          };
+        }
+      }
+
+      return null;
+    };
+
     // First try with the provided realm slug.
-    const primaryData = await tryFetchForRealmSlug(serverSlug);
-    if (primaryData) {
-      return { data: primaryData, failure: null, attempts };
+    for (const candidateRealmSlug of realmSlugCandidates) {
+      const primaryData = await tryFetchForRealmSlug(candidateRealmSlug);
+      if (primaryData) {
+        return { data: primaryData, failure: null, attempts, guildSummary: null };
+      }
     }
 
     // If 404, try other connected realms: guilds may be attributed to a different realm slug within the connected realm set.
     const lastStatus = lastFailure?.status ?? null;
+    let connectedRealmSlugs: string[] = [];
     if (lastStatus === 404) {
-      const connectedRealmSlugs = await resolveConnectedRealmSlugs({
-        apiUrl,
-        locale,
-        region,
-        realmSlug: serverSlug,
-        accessToken: clientToken,
-      });
+      const connectedRealmSlugSet = new Set<string>();
+      for (const candidateRealmSlug of realmSlugCandidates) {
+        const resolvedRealmSlugs = await resolveConnectedRealmSlugs({
+          apiUrl,
+          locale,
+          region,
+          realmSlug: candidateRealmSlug,
+          accessToken: clientToken,
+        });
+
+        resolvedRealmSlugs.forEach((resolvedRealmSlug) => {
+          if (resolvedRealmSlug) {
+            connectedRealmSlugSet.add(resolvedRealmSlug);
+          }
+        });
+      }
+
+      connectedRealmSlugs = Array.from(connectedRealmSlugSet);
 
       for (const altRealmSlug of connectedRealmSlugs) {
-        if (!altRealmSlug || altRealmSlug === serverSlug) continue;
+        if (!altRealmSlug || realmSlugCandidates.includes(altRealmSlug)) continue;
         const altData = await tryFetchForRealmSlug(altRealmSlug);
         if (altData) {
-          return { data: altData, failure: null, attempts };
+          return { data: altData, failure: null, attempts, guildSummary: null };
         }
+      }
+    }
+
+    for (const candidateRealmSlug of realmSlugCandidates) {
+      const summaryPrimary = await tryFetchGuildSummaryForRealmSlug(candidateRealmSlug);
+      if (summaryPrimary) {
+        log.info(
+          `Public guild summary succeeded but roster is unavailable for ${guildName} on ${summaryPrimary.realmSlug} (${region.toUpperCase()}) ` +
+            `[${summaryPrimary.slugType}/${summaryPrimary.namespace}] url=${summaryPrimary.guildUrl}`
+        );
+        return {
+          data: null,
+          failure: lastFailure
+            ? {
+                status: lastFailure.status,
+                bodySnippet: String(lastFailure.body ?? '').slice(0, 200),
+                rosterUrl: lastFailure.rosterUrl,
+                namespace: lastFailure.namespace,
+                slugType: lastFailure.slugType,
+                realmSlug: serverSlug,
+              }
+            : null,
+          attempts,
+          guildSummary: summaryPrimary,
+        };
+      }
+    }
+
+    for (const altRealmSlug of connectedRealmSlugs) {
+      if (!altRealmSlug || altRealmSlug === serverSlug) continue;
+      const summaryAlt = await tryFetchGuildSummaryForRealmSlug(altRealmSlug);
+      if (summaryAlt) {
+        log.info(
+          `Public guild summary succeeded on connected realm but roster is unavailable for ${guildName} on ${summaryAlt.realmSlug} (${region.toUpperCase()}) ` +
+            `[${summaryAlt.slugType}/${summaryAlt.namespace}] url=${summaryAlt.guildUrl}`
+        );
+        return {
+          data: null,
+          failure: lastFailure
+            ? {
+                status: lastFailure.status,
+                bodySnippet: String(lastFailure.body ?? '').slice(0, 200),
+                rosterUrl: lastFailure.rosterUrl,
+                namespace: lastFailure.namespace,
+                slugType: lastFailure.slugType,
+                realmSlug: serverSlug,
+              }
+            : null,
+          attempts,
+          guildSummary: summaryAlt,
+        };
       }
     }
 
@@ -837,10 +962,11 @@ async function fetchPublicGuildRosterWithDiagnostics(
           }
         : null,
       attempts,
+      guildSummary: null,
     };
   } catch (error) {
     log.error('Error fetching public guild roster:', error);
-    return { data: null, failure: null };
+    return { data: null, failure: null, guildSummary: null };
   }
 }
 
@@ -1599,9 +1725,11 @@ Deno.serve(async (req) => {
           const guildRegion = getValidRegion(guild.region);
           const guildServerSlug = toRealmSlug(guild.server);
           let rosterSynced = false;
+          let rosterUnavailable = false;
           let reconciliation = { removed: 0, skipped: 0, candidates: 0 };
           try {
-            const rosterData = await fetchPublicGuildRoster(guildRegion, guildServerSlug, guild.name);
+            const diagnostics = await fetchPublicGuildRosterWithDiagnostics(guildRegion, guildServerSlug, guild.name, guild.server);
+            const rosterData = diagnostics.data;
             if (rosterData) {
               if (rosterData.faction && rosterData.faction !== 'UNKNOWN') {
                 await supabase
@@ -1612,17 +1740,32 @@ Deno.serve(async (req) => {
               await storeFullRosterForGuild(supabase, guildId, guild.name, rosterData.members || []);
               rosterSynced = true;
               reconciliation = await reconcileGuildMembersWithRoster(supabase, guild, requesterUserId);
+            } else if (
+              diagnostics.guildSummary ||
+              isRosterUnavailableDiagnostics({
+                failure: diagnostics.failure,
+                attempts: diagnostics.attempts,
+              })
+            ) {
+              rosterUnavailable = true;
+              if (diagnostics.guildSummary?.faction && diagnostics.guildSummary.faction !== 'UNKNOWN') {
+                await supabase
+                  .from('guilds')
+                  .update({ faction: diagnostics.guildSummary.faction.toLowerCase() })
+                  .eq('id', guildId);
+              }
             }
           } catch (err) {
             log.error(`Guild-resync ${jobId}: roster sync failed for guild ${sanitizePII(guild.name, 'name')}`, err);
           }
 
-          return { rosterSynced, reconciliation };
+          return { rosterSynced, rosterUnavailable, reconciliation };
         };
 
         // Run roster reconciliation before long per-member sync to avoid timeouts skipping cleanup.
         const initialRosterRun = await refreshRosterAndReconcile();
         let rosterSynced = initialRosterRun.rosterSynced;
+        const rosterUnavailable = initialRosterRun.rosterUnavailable;
         let reconciliation = initialRosterRun.reconciliation;
 
         const nowIso = new Date().toISOString();
@@ -1682,6 +1825,7 @@ Deno.serve(async (req) => {
           errors,
           skipped,
           rosterSynced,
+          rosterUnavailable,
           reconciliation,
         };
       };
@@ -1789,10 +1933,49 @@ Deno.serve(async (req) => {
       const guildServerSlug = toRealmSlug(guild.server);
 
       try {
-        const diagnostics = await fetchPublicGuildRosterWithDiagnostics(guildRegion, guildServerSlug, guild.name);
+        const diagnostics = await fetchPublicGuildRosterWithDiagnostics(guildRegion, guildServerSlug, guild.name, guild.server);
         const guildData = diagnostics.data;
         const failure = diagnostics.failure;
         if (!guildData) {
+          const rosterUnavailable =
+            !!diagnostics.guildSummary ||
+            isRosterUnavailableDiagnostics({
+              failure,
+              attempts: diagnostics.attempts,
+            });
+
+          if (rosterUnavailable) {
+            if (diagnostics.guildSummary?.faction && diagnostics.guildSummary.faction !== 'UNKNOWN') {
+              await supabase
+                .from('guilds')
+                .update({ faction: diagnostics.guildSummary.faction.toLowerCase() })
+                .eq('id', guildId);
+            }
+
+            const { data: countsData } = await supabase
+              .rpc('get_guild_member_counts', { p_guild_ids: [guildId] });
+
+            const countsRow = Array.isArray(countsData) ? countsData[0] : null;
+            const cachedMembers = Number(countsRow?.total_count ?? 0);
+            const cachedGuildforceUsers = Number(countsRow?.unique_users ?? 0);
+
+            return new Response(JSON.stringify({
+              success: true,
+              guildId,
+              cachedMembers,
+              cachedGuildforceUsers,
+              rosterUnavailable: true,
+              durationMs: Date.now() - startedAt,
+              details: {
+                summary: diagnostics.guildSummary ?? null,
+                ...(failure ?? {}),
+                attempts: diagnostics.attempts ?? [],
+              },
+            }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
+          }
+
           return new Response(JSON.stringify({
             error: 'Failed to fetch guild members from Blizzard',
             details: {
@@ -1948,7 +2131,7 @@ Deno.serve(async (req) => {
 
       try {
         // Validate that Blizzard recognizes the guild with the new name (and fetch members for cache refresh).
-        const diagnostics = await fetchPublicGuildRosterWithDiagnostics(guildRegion, guildServerSlug, newName);
+        const diagnostics = await fetchPublicGuildRosterWithDiagnostics(guildRegion, guildServerSlug, newName, guild.server);
         const guildData = diagnostics.data;
         const failure = diagnostics.failure;
         if (!guildData) {
@@ -2257,9 +2440,32 @@ Deno.serve(async (req) => {
           try {
             const region = getValidRegion(guild.region);
             const serverSlug = toRealmSlug(guild.server);
-            const rosterData = await fetchPublicGuildRoster(region, serverSlug, guild.name);
+            const diagnostics = await fetchPublicGuildRosterWithDiagnostics(region, serverSlug, guild.name, guild.server);
+            const rosterData = diagnostics.data;
 
             if (!rosterData) {
+              const rosterUnavailable =
+                !!diagnostics.guildSummary ||
+                isRosterUnavailableDiagnostics({
+                  failure: diagnostics.failure,
+                  attempts: diagnostics.attempts,
+                });
+
+              if (rosterUnavailable) {
+                if (diagnostics.guildSummary?.faction && diagnostics.guildSummary.faction !== 'UNKNOWN') {
+                  await supabase
+                    .from('guilds')
+                    .update({ faction: diagnostics.guildSummary.faction.toLowerCase() })
+                    .eq('id', guild.id);
+                }
+
+                guildsSkipped++;
+                log.info(
+                  `Skipping roster cache refresh for ${sanitizePII(guild.name, 'name')}: guild summary exists but roster is unavailable`
+                );
+                continue;
+              }
+
               log.debug(`Failed to fetch public roster for ${sanitizePII(guild.name, 'name')}`);
               guildsErrors++;
               continue;
@@ -2778,7 +2984,7 @@ async function reconcileGuildMembersWithRoster(
       userCharacterKeys.get(char.user_id)!.add(buildCharacterKey(char.name, char.realm_slug));
     }
 
-    const guildServerSlug = guild.server.toLowerCase().replace(/\s+/g, '-').replace(/'/g, '');
+    const guildServerSlug = toRealmSlug(guild.server);
     const { data: wowGuildMemberships, error: wowMembershipError } = await supabase
       .from('wow_guild_memberships')
       .select('user_id')
@@ -3163,7 +3369,7 @@ async function fetchAndStoreCharacters(
     );
 
     const guildMemberships: GuildMembershipData[] = [];
-    const guildsToCheck: Map<string, { name: string; realmSlug: string; faction: string; characterIds: string[] }> = new Map();
+    const guildsToCheck: Map<string, { name: string; realmName: string; realmSlug: string; faction: string; characterIds: string[] }> = new Map();
     let characterDetailSuccessCount = 0;
 
     // Fetch character details to get guild info
@@ -3186,8 +3392,12 @@ async function fetchAndStoreCharacters(
         if (charDetail.guild) {
           log.debug(`Character ${sanitizePII(char.name, 'name')} is in guild: ${sanitizePII(charDetail.guild.name, 'name')}`);
           
-          const guildKey = `${charDetail.guild.name}-${charDetail.guild.realm?.slug || char.realmSlug}`;
-          const guildRealmSlug = charDetail.guild.realm?.slug || char.realmSlug;
+          const guildRealm = resolveGuildRealmFields({
+            realmName: charDetail.guild.realm?.name,
+            realmSlug: charDetail.guild.realm?.slug,
+            fallbackRealmName: char.realm,
+          });
+          const guildKey = `${charDetail.guild.name}-${guildRealm.realmSlug}`;
           const guildFaction = charDetail.guild.faction?.type || 'UNKNOWN';
           
           const insertedChar = syncCharByKey.get(buildCharacterKey(char.name, char.realmSlug));
@@ -3197,14 +3407,15 @@ async function fetchAndStoreCharacters(
               .from('wow_characters')
               .update({ 
                 guild_name: charDetail.guild.name,
-                guild_realm: charDetail.guild.realm?.name || char.realm,
+                guild_realm: guildRealm.realmDisplayName,
               })
               .eq('id', insertedChar.id);
 
             if (!guildsToCheck.has(guildKey)) {
               guildsToCheck.set(guildKey, {
                 name: charDetail.guild.name,
-                realmSlug: guildRealmSlug,
+                realmName: guildRealm.realmDisplayName,
+                realmSlug: guildRealm.realmSlug,
                 faction: guildFaction,
                 characterIds: [insertedChar.id],
               });
@@ -3221,23 +3432,25 @@ async function fetchAndStoreCharacters(
     log.debug(`Found ${guildsToCheck.size} unique guilds to check for ranks`);
 
     // Fetch roster for each guild to get member ranks
-    for (const [guildKey, guildInfo] of guildsToCheck) {
+    for (const [, guildInfo] of guildsToCheck) {
       try {
         // Use public roster fetch with robust fallback (normalized + unicode slugs, multiple namespaces)
         // to avoid 404s on guild names with accents.
-        const rosterResult = await fetchPublicGuildRoster(region, guildInfo.realmSlug, guildInfo.name);
+        const rosterDiagnostics = await fetchPublicGuildRosterWithDiagnostics(region, guildInfo.realmSlug, guildInfo.name, guildInfo.realmName);
+        const rosterResult = rosterDiagnostics.data;
 
         if (!rosterResult) {
           log.debug(`Failed to fetch roster for ${guildInfo.name}: public roster fetch returned null`);
+          const fallbackFaction = rosterDiagnostics.guildSummary?.faction || guildInfo.faction;
 
           for (const charId of guildInfo.characterIds) {
-            guildMemberships.push({
-              characterId: charId,
-              guildName: guildInfo.name,
-              guildRealm: guildInfo.realmSlug,
-              guildRealmSlug: guildInfo.realmSlug,
-              guildFaction: guildInfo.faction,
-              rankIndex: 99,
+              guildMemberships.push({
+                characterId: charId,
+                guildName: guildInfo.name,
+                guildRealm: guildInfo.realmName,
+                guildRealmSlug: guildInfo.realmSlug,
+                guildFaction: fallbackFaction,
+                rankIndex: 99,
               rankName: 'Unknown',
             });
           }
@@ -3309,7 +3522,7 @@ async function fetchAndStoreCharacters(
             guildMemberships.push({
               characterId: charId,
               guildName: guildInfo.name,
-              guildRealm: guildInfo.realmSlug,
+              guildRealm: guildInfo.realmName,
               guildRealmSlug: guildInfo.realmSlug,
               guildFaction: rosterGuildFaction,
               rankIndex: rosterMember.rank ?? 99,
@@ -3319,7 +3532,7 @@ async function fetchAndStoreCharacters(
             guildMemberships.push({
               characterId: charId,
               guildName: guildInfo.name,
-              guildRealm: guildInfo.realmSlug,
+              guildRealm: guildInfo.realmName,
               guildRealmSlug: guildInfo.realmSlug,
               guildFaction: rosterGuildFaction,
               rankIndex: 99,
@@ -3753,7 +3966,8 @@ async function reconcileRenamedGuildIfPossible(
     const candidateCheck = await fetchPublicGuildRosterWithDiagnostics(
       guildInfo.region,
       guildInfo.server,
-      candidate.name
+      candidate.name,
+      guildInfo.server
     );
 
     if (candidateCheck.data) {
@@ -3785,7 +3999,8 @@ async function reconcileRenamedGuildIfPossible(
     const newRoster = await fetchPublicGuildRosterWithDiagnostics(
       guildInfo.region,
       guildInfo.server,
-      guildInfo.name
+      guildInfo.name,
+      guildInfo.server
     );
 
     if (!newRoster.data) {
@@ -3907,11 +4122,11 @@ async function autoJoinGuilds(
     const currentWoWGuilds = new Set<string>(uniqueGuilds.keys());
     log.debug(`Processing ${uniqueGuilds.size} unique guilds for auto-join...`);
 
-    for (const [guildKey, guildInfo] of uniqueGuilds) {
+    for (const [, guildInfo] of uniqueGuilds) {
       try {
         const { data: existingGuildInitial, error: guildLookupError } = await supabase
           .from('guilds')
-          .select('id, owner_id, faction')
+          .select('id, owner_id, faction, server')
           .eq('name', guildInfo.name)
           .eq('server', guildInfo.server)
           .eq('region', guildInfo.region)
@@ -3925,6 +4140,31 @@ async function autoJoinGuilds(
         let existingGuild = existingGuildInitial;
         let guildId: string;
 
+        if (!existingGuild) {
+          const { data: guildCandidates, error: guildCandidatesError } = await supabase
+            .from('guilds')
+            .select('id, owner_id, faction, server')
+            .eq('name', guildInfo.name)
+            .eq('region', guildInfo.region);
+
+          if (guildCandidatesError) {
+            log.error(`Error loading guild candidates for ${sanitizePII(guildInfo.name, 'name')}:`, guildCandidatesError);
+          } else if (guildCandidates?.length) {
+            const normalizedMatches = guildCandidates.filter((candidate: { server: string }) =>
+              normalizeRealmKey(candidate.server) === normalizeRealmKey(guildInfo.server)
+            );
+
+            if (normalizedMatches.length > 0) {
+              existingGuild = normalizedMatches[0];
+              if (normalizedMatches.length > 1) {
+                log.info(
+                  `Multiple normalized realm matches found for ${sanitizePII(guildInfo.name, 'name')} on ${sanitizePII(guildInfo.server, 'name')}; using first candidate ${sanitizePII(existingGuild.id, 'id')}`
+                );
+              }
+            }
+          }
+        }
+
         if (!existingGuild && guildInfo.isGM) {
           // Attempt to reconcile renamed guilds BEFORE we create a new record.
           // This prevents orphaning existing data when Blizzard guild names change.
@@ -3932,7 +4172,7 @@ async function autoJoinGuilds(
           if (reconciledGuildId) {
             const { data: reconciledGuild, error: reconciledGuildError } = await supabase
               .from('guilds')
-              .select('id, owner_id, faction')
+              .select('id, owner_id, faction, server')
               .eq('id', reconciledGuildId)
               .maybeSingle();
 
@@ -3947,6 +4187,16 @@ async function autoJoinGuilds(
         if (existingGuild) {
           guildId = existingGuild.id;
           log.debug(`Guild ${sanitizePII(guildInfo.name, 'name')} already exists (id: ${sanitizePII(guildId, 'id')})`);
+
+          if (shouldRepairGuildServerDisplay(existingGuild.server, guildInfo.server)) {
+            log.info(
+              `Repairing stored realm display name for ${sanitizePII(guildInfo.name, 'name')} from ${sanitizePII(existingGuild.server, 'name')} to ${sanitizePII(guildInfo.server, 'name')}`
+            );
+            await supabase
+              .from('guilds')
+              .update({ server: guildInfo.server })
+              .eq('id', guildId);
+          }
 
           // Update faction if it changed in Battle.net (source of truth)
           if (existingGuild.faction !== guildInfo.faction) {
@@ -3971,7 +4221,7 @@ async function autoJoinGuilds(
               .from('guilds')
               .update({ owner_id: userId })
               .eq('id', guildId);
-            await syncExistingMembers(supabase, guildId, guildInfo.name, guildInfo.server);
+            await syncExistingMembers(supabase, guildId, guildInfo.name, guildInfo.serverSlug, guildInfo.region);
           } else if (existingGuild.owner_id !== null && existingGuild.owner_id !== userId && guildInfo.isGM) {
             // Battle.net is source of truth: new GM takes ownership immediately
             log.info(`User is now GM in WoW for guild ${sanitizePII(guildInfo.name, 'name')}, transferring ownership...`);
@@ -3989,7 +4239,7 @@ async function autoJoinGuilds(
               .eq('guild_id', guildId)
               .eq('user_id', previousOwnerId);
 
-            await syncExistingMembers(supabase, guildId, guildInfo.name, guildInfo.server);
+            await syncExistingMembers(supabase, guildId, guildInfo.name, guildInfo.serverSlug, guildInfo.region);
           }
         } else {
           // Create new guild
@@ -4081,7 +4331,8 @@ async function syncExistingMembers(
   supabase: any,
   guildId: string,
   guildName: string,
-  guildServer: string
+  guildServerSlug: string,
+  guildRegion: BattleNetRegion
 ) {
   try {
     log.debug(`Syncing existing members for guild ${sanitizePII(guildName, 'name')}...`);
@@ -4090,7 +4341,8 @@ async function syncExistingMembers(
       .from('wow_guild_memberships')
       .select('user_id, rank_index')
       .ilike('guild_name', guildName)
-      .ilike('guild_realm', guildServer);
+      .ilike('guild_realm_slug', guildServerSlug)
+      .ilike('guild_region', guildRegion);
 
     if (lookupError) {
       log.error('Error looking up wow_guild_memberships:', lookupError);

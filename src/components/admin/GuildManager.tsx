@@ -80,6 +80,10 @@ type SortDirection = 'asc' | 'desc';
 type MembersCacheFilter = 'all' | 'missing' | 'cached';
 
 const formatServerName = (serverSlug: string) => {
+  if (/[A-Z\s'\u2019]/.test(serverSlug)) {
+    return serverSlug;
+  }
+
   return serverSlug
     .split('-')
     .filter(Boolean)

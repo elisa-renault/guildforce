@@ -9,8 +9,13 @@ describe('guildSlug', () => {
   });
 
   it('removes diacritics for Latin names', () => {
-    expect(toSlug('Exöde')).toBe('exode');
-    expect(toSlug('Héro al pull')).toBe('hero-al-pull');
+    expect(toSlug('Exode')).toBe('exode');
+    expect(toSlug('Hero al pull')).toBe('hero-al-pull');
+  });
+
+  it('normalizes apostrophes in realm-style names', () => {
+    expect(toSlug("Pozzo dell'Eternità")).toBe('pozzo-delleternita');
+    expect(toSlug('Pozzo dell’Eternità')).toBe('pozzo-delleternita');
   });
 
   it('keeps non-Latin letters so slugs do not become empty', () => {

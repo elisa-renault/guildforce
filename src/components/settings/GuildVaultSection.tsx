@@ -56,6 +56,7 @@ import {
   type GuildSecretPayload,
   type GuildSecretSummary,
 } from '@/lib/guildVault';
+import { toNormalizedRealmSlug } from '@/lib/guildDiscovery';
 import { formatRankLabel } from '@/lib/rankLabel';
 
 interface GuildVaultSectionProps {
@@ -198,7 +199,7 @@ export const GuildVaultSection = ({
           .from('wow_guild_memberships')
           .select('rank_index, rank_name')
           .ilike('guild_name', guildData.name)
-          .ilike('guild_realm_slug', guildData.server)
+          .ilike('guild_realm_slug', toNormalizedRealmSlug(guildData.server))
           .ilike('guild_region', guildData.region);
 
         if (cancelled) return;

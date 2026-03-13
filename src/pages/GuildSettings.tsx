@@ -21,6 +21,7 @@ import { useGuildRankLabels } from '@/hooks/useGuildRankLabels';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { supabase } from '@/integrations/supabase/client';
 import { getVisibleGuildSettingsSections } from '@/lib/guildSettingsSections';
+import { toNormalizedRealmSlug } from '@/lib/guildDiscovery';
 import { getGuildPath } from '@/lib/guildSlug';
 import { formatRankLabel } from '@/lib/rankLabel';
 
@@ -164,7 +165,7 @@ const GuildSettings = () => {
           .from('wow_guild_memberships')
           .select('rank_index, rank_name')
           .ilike('guild_name', guildRecord.name)
-          .ilike('guild_realm_slug', guildRecord.server)
+          .ilike('guild_realm_slug', toNormalizedRealmSlug(guildRecord.server))
           .ilike('guild_region', guildRecord.region);
 
         if (ranksData) {

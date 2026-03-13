@@ -585,7 +585,7 @@ export const GuildProfileSection = ({
             </div>
             <div className="flex justify-between gap-2 py-2 border-b border-border/50">
               <span className="text-muted-foreground text-sm">{t.guild.server}</span>
-              <span className="font-medium text-right break-words">{guild.server.charAt(0).toUpperCase() + guild.server.slice(1)}</span>
+              <span className="font-medium text-right break-words">{guild.server}</span>
             </div>
           </div>
 

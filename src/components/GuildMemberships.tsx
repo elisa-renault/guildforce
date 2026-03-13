@@ -10,6 +10,7 @@ import { Crown, Users, Shield, Loader2, Clock } from 'lucide-react';
 import { getClassNameFromBattleNet } from '@/data/battlenetClasses';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import type { GuildRankLabelMap } from '@/lib/rankLabel';
+import { buildGuildDiscoveryKey } from '@/lib/guildDiscovery';
 import { formatRankLabel } from '@/lib/rankLabel';
 
 interface GuildMembership {
@@ -17,6 +18,7 @@ interface GuildMembership {
   guild_name: string;
   guild_realm: string;
   guild_realm_slug: string;
+  guild_region: string;
   guild_faction: string;
   rank_index: number;
   rank_name: string | null;
@@ -33,6 +35,7 @@ interface AppGuild {
   id: string;
   name: string;
   server: string;
+  region: string | null;
   owner_id: string | null;
 }
 
@@ -110,21 +113,24 @@ export const GuildMemberships: React.FC = () => {
     
     const { data } = await supabase
       .from('guild_members')
-      .select('guild_id, role, guilds (id, name, server, owner_id)')
+      .select('guild_id, role, guilds (id, name, server, region, owner_id)')
       .eq('user_id', user.id);
     
     if (data) {
-      const guildMap = new Map(
+      setAppGuilds(new Map(
         data.map(g => {
           const guild = g.guilds as unknown as AppGuild;
-          return [`${guild.name.toLowerCase()}-${guild.server.toLowerCase()}`, { 
-            id: guild.id, 
+          return [buildGuildDiscoveryKey({
+            region: guild.region || 'eu',
+            guildName: guild.name,
+            realmNameOrSlug: guild.server,
+          }), {
+            id: guild.id,
             role: g.role,
-            hasOwner: guild.owner_id !== null
+            hasOwner: guild.owner_id !== null,
           }];
         })
-      );
-      setAppGuilds(guildMap);
+      ));
     }
   };
 
@@ -159,8 +165,12 @@ export const GuildMemberships: React.FC = () => {
     return getClassNameFromBattleNet(classId);
   };
 
-  const getAppGuildInfo = (guildName: string, guildRealm: string): { id: string; role: string; hasOwner: boolean } | null => {
-    return appGuilds.get(`${guildName.toLowerCase()}-${guildRealm.toLowerCase()}`) || null;
+  const getAppGuildInfo = (guildName: string, guildRealm: string, guildRegion: string): { id: string; role: string; hasOwner: boolean } | null => {
+    return appGuilds.get(buildGuildDiscoveryKey({
+      region: guildRegion || 'eu',
+      guildName,
+      realmNameOrSlug: guildRealm,
+    })) || null;
   };
 
   if (!isConnected) {
@@ -174,6 +184,7 @@ export const GuildMemberships: React.FC = () => {
       acc[key] = {
         guild_name: membership.guild_name,
         guild_realm: membership.guild_realm,
+        guild_region: membership.guild_region,
         guild_faction: membership.guild_faction,
         is_gm: false,
         members: [],
@@ -184,7 +195,7 @@ export const GuildMemberships: React.FC = () => {
     }
     acc[key].members.push(membership);
     return acc;
-  }, {} as Record<string, { guild_name: string; guild_realm: string; guild_faction: string; is_gm: boolean; members: GuildMembership[] }>);
+  }, {} as Record<string, { guild_name: string; guild_realm: string; guild_region: string; guild_faction: string; is_gm: boolean; members: GuildMembership[] }>);
 
   const guilds = Object.values(guildGroups);
 
@@ -202,7 +213,7 @@ export const GuildMemberships: React.FC = () => {
       ) : guilds.length > 0 ? (
         <div className="space-y-4">
           {guilds.map((guild) => {
-            const appGuildInfo = getAppGuildInfo(guild.guild_name, guild.guild_realm);
+            const appGuildInfo = getAppGuildInfo(guild.guild_name, guild.guild_realm, guild.guild_region);
             const isInApp = !!appGuildInfo;
             const isAppGM = appGuildInfo?.role === 'gm';
             const isOrphan = appGuildInfo && !appGuildInfo.hasOwner;

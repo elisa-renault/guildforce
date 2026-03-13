@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { RosterAccessEditor } from './RosterAccessEditor';
 import { resolveSemanticMessage } from '@/i18n/semantic';
+import { toNormalizedRealmSlug } from '@/lib/guildDiscovery';
 import { formatRankLabel } from '@/lib/rankLabel';
 
 interface AccessRule {
@@ -117,7 +118,7 @@ export const RosterEditDialog = ({ open, onOpenChange, rosterId, guildId, onSave
           .from('wow_guild_memberships')
           .select('rank_index, rank_name')
           .ilike('guild_name', guildData.name)
-          .ilike('guild_realm_slug', guildData.server)
+          .ilike('guild_realm_slug', toNormalizedRealmSlug(guildData.server))
           .ilike('guild_region', guildData.region);
 
         if (ranksData) {
