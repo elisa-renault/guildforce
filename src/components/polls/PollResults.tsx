@@ -324,6 +324,11 @@ export const PollResults = ({
     section.isUnsectioned ? t.polls.resultsUi.unsectioned : section.title;
   const formatCount = (value: number) => formatNumberLocalized(value, language);
   const formatPercentage = (value: number) => `${formatNumberLocalized(Number(value.toFixed(0)), language)}%`;
+  const formatRatingValue = (value: number) =>
+    formatNumberLocalized(value, language, {
+      minimumFractionDigits: Number.isInteger(value) ? 0 : 1,
+      maximumFractionDigits: 1,
+    });
   const formatFilterValue = (questionType: PollQuestionType, value: string) => {
     if (value === OTHER_OPTION_VALUE) {
       return t.polls.otherSpecify;
@@ -1020,6 +1025,11 @@ export const PollResults = ({
       question.cohortRedactionReason === 'text_hidden'
         ? t.polls.resultsUi.cohortTextHidden
         : t.polls.resultsUi.cohortMinimumSample;
+    const ratingAverage = question.ratingAverage || 0;
+    const formattedRatingAverage = formatNumberLocalized(Number(ratingAverage.toFixed(1)), language, {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    });
 
     return (
       <GlowCard key={question.id} className="p-5" hoverable={false}>
@@ -1170,21 +1180,24 @@ export const PollResults = ({
 
           {question.question.question_type === 'rating' && question.ratingRows && (
             <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <StarDisplay value={question.ratingAverage || 0} max={5} size="lg" />
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-primary">
-                    {formatNumberLocalized(Number((question.ratingAverage || 0).toFixed(1)), language, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
-                  </span>
-                  <span className="text-sm text-muted-foreground">/ 5</span>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                <StarDisplay value={ratingAverage} max={5} size="lg" />
+                <div className="space-y-1">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-bold text-primary">{formattedRatingAverage}</span>
+                    <span className="text-sm text-muted-foreground">/ 5</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {interpolateMessage(t.polls.resultsUi.responsesValue, { count: formatCount(question.responseCount) })}
+                  </p>
                 </div>
               </div>
               <div className="space-y-1.5">
                 {question.ratingRows.map((row) => (
                   <div key={row.value} className="flex items-center gap-1.5">
-                    <div className="w-10 shrink-0 text-left text-xs text-muted-foreground">{row.value} / 5</div>
+                    <div className="w-12 shrink-0 text-left text-xs text-muted-foreground">{formatRatingValue(row.value)} / 5</div>
                     <Progress value={row.percentage} className="h-2 flex-1 bg-muted/40" />
-                    <span className="w-20 text-right text-xs text-muted-foreground">{renderChoiceMetric({ value: String(row.value), label: String(row.value), count: row.count, percentage: row.percentage, users: [], otherTexts: [] })}</span>
+                    <span className="w-20 text-right text-xs text-muted-foreground">{renderChoiceMetric({ value: row.label, label: row.label, count: row.count, percentage: row.percentage, users: [], otherTexts: [] })}</span>
                   </div>
                 ))}
               </div>

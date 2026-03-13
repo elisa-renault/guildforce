@@ -215,4 +215,32 @@ describe('pollResultsModel', () => {
       'tiny',
     ]);
   });
+
+  it('preserves half-star ratings in the distribution instead of rounding them into integer buckets', () => {
+    const model = buildPollResultsModel({
+      ...pollFixture,
+      questions: pollFixture.questions?.map((question) =>
+        question.id === 'question-rating'
+          ? {
+              ...question,
+              responses: [
+                { id: 'sr1', question_id: 'question-rating', user_id: 'u1', created_at: '2026-02-20T20:00:00.000Z', response_value: { type: 'rating', value: 4 } },
+                { id: 'sr2', question_id: 'question-rating', user_id: 'u2', created_at: '2026-02-20T20:00:00.000Z', response_value: { type: 'rating', value: 3.5 } },
+                { id: 'sr3', question_id: 'question-rating', user_id: 'u3', created_at: '2026-02-20T20:00:00.000Z', response_value: { type: 'rating', value: 3.5 } },
+                { id: 'sr4', question_id: 'question-rating', user_id: 'u4', created_at: '2026-02-20T20:00:00.000Z', response_value: { type: 'rating', value: 2 } },
+              ],
+            }
+          : question,
+      ),
+    });
+
+    const ratingQuestion = model.questions.find((question) => question.id === 'question-rating');
+
+    expect(ratingQuestion?.ratingAverage).toBe(3.25);
+    expect(ratingQuestion?.ratingRows).toEqual([
+      { value: 4, label: '4.0', count: 1, percentage: 25 },
+      { value: 3.5, label: '3.5', count: 2, percentage: 50 },
+      { value: 2, label: '2.0', count: 1, percentage: 25 },
+    ]);
+  });
 });

@@ -32,6 +32,7 @@ export interface PollResultsChoiceStat {
 
 export interface PollResultsRatingRow {
   value: number;
+  label: string;
   count: number;
   percentage: number;
 }
@@ -234,22 +235,33 @@ const getDateTimeStats = (question: GuildPollQuestion): PollResultsChoiceStat[] 
 };
 
 const getRatingStats = (question: GuildPollQuestion) => {
+  const step = 0.5;
   const values = (question.responses || [])
     .map((response) => {
       const value = response.response_value as ResponseValue;
-      return value.type === 'rating' ? value.value : null;
+      return value.type === 'rating' ? roundToStep(value.value, step, 1) : null;
     })
-    .filter((value): value is number => typeof value === 'number');
+    .filter((value): value is number => typeof value === 'number' && value >= 1 && value <= 5);
 
   const average = values.length > 0 ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
-  const rows = [5, 4, 3, 2, 1].map((rating) => {
-    const count = values.filter((value) => Math.round(value) === rating).length;
-    return {
+  const distribution = new Map<number, number>();
+  getScaleSteps(1, 5, step).forEach((value) => {
+    distribution.set(value, 0);
+  });
+
+  values.forEach((value) => {
+    distribution.set(value, (distribution.get(value) || 0) + 1);
+  });
+
+  const rows = Array.from(distribution.entries())
+    .sort((a, b) => b[0] - a[0])
+    .map(([rating, count]) => ({
       value: rating,
+      label: formatScaleValue(rating, step),
       count,
       percentage: values.length > 0 ? (count / values.length) * 100 : 0,
-    };
-  });
+    }))
+    .filter((row) => row.count > 0);
 
   return { average, rows, values };
 };
