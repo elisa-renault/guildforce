@@ -23,7 +23,10 @@ const App = () => (
             <Sonner />
             <BrowserRouter>
               <GlobalNav />
-              <div className="flex-1 flex flex-col relative z-10 pb-4 md:pb-0">
+              <div
+                className="flex-1 flex flex-col relative z-10 pb-4 transition-[padding-top] duration-200 md:pb-0"
+                style={{ paddingTop: 'var(--global-nav-extra-offset, 0px)' }}
+              >
                 <Suspense fallback={<LoadingScreen message="Loading..." />}>
                   <Routes>
                     {appRoutes.map((route) => (

@@ -1,5 +1,5 @@
 import { Shield, User, LogOut, MessageSquare, Menu, Crown, Undo2 } from 'lucide-react';
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 import { CosmicButton } from '@/components/CosmicButton';
@@ -23,9 +23,42 @@ export const GlobalNav = () => {
   const { user, signOut, isImpersonating, impersonationTarget, restoreAdminSession } = useAuth();
   const { isAdmin } = useIsAdmin();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const headerRef = useRef<HTMLElement | null>(null);
   const routeMeta = getRouteMeta(location.pathname);
   const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
     resolveSemanticMessage({ key, language, translations: t });
+
+  useLayoutEffect(() => {
+    if (routeMeta?.hideGlobalNav) {
+      document.documentElement.style.setProperty('--global-nav-extra-offset', '0px');
+      return;
+    }
+
+    const headerEl = headerRef.current;
+    if (!headerEl) return;
+
+    const baseNavHeight = 64;
+    const updateOffset = () => {
+      const measuredHeight = Math.ceil(headerEl.getBoundingClientRect().height);
+      const extraOffset = Math.max(measuredHeight - baseNavHeight, 0);
+      document.documentElement.style.setProperty('--global-nav-extra-offset', `${extraOffset}px`);
+    };
+
+    updateOffset();
+
+    const resizeObserver = typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(updateOffset)
+      : null;
+
+    resizeObserver?.observe(headerEl);
+    window.addEventListener('resize', updateOffset);
+
+    return () => {
+      resizeObserver?.disconnect();
+      window.removeEventListener('resize', updateOffset);
+      document.documentElement.style.setProperty('--global-nav-extra-offset', '0px');
+    };
+  }, [routeMeta?.hideGlobalNav, isImpersonating, impersonationTarget?.username]);
 
   if (routeMeta?.hideGlobalNav) return null;
 
@@ -106,7 +139,7 @@ export const GlobalNav = () => {
   );
 
   return (
-    <header data-global-nav className="fixed top-0 left-0 right-0 z-50 glass-header" role="banner">
+    <header ref={headerRef} data-global-nav className="fixed top-0 left-0 right-0 z-50 glass-header" role="banner">
       {isImpersonating && (
         <div className="border-b border-status-warning/30 bg-status-warning/10">
           <PageContainer className="flex min-h-11 items-center justify-between gap-3 py-2" width="wide">
