@@ -2629,6 +2629,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      // Backend helper normalizes guild server display names vs synced realm slugs.
       has_roster_access: {
         Args: { p_roster_id: string; p_user_id: string }
         Returns: boolean
