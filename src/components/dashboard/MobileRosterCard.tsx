@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 interface MobileRosterCardProps {
   member: MemberWish;
   isOwnRow: boolean;
-  isGM: boolean;
+  canManageWishes: boolean;
   isRosterLocked?: boolean;
   onStartEditing: (member: MemberWish) => void;
   onValidateWish?: (userId: string, choiceIndex: number, status: ValidationStatus) => void;
@@ -40,7 +40,7 @@ const roleConfig: Record<string, { icon: typeof Shield; color: string }> = {
 export const MobileRosterCard = ({
   member,
   isOwnRow,
-  isGM,
+  canManageWishes,
   isRosterLocked = false,
   onStartEditing,
   onValidateWish,
@@ -118,7 +118,7 @@ export const MobileRosterCard = ({
           status={validationStatus}
           validatedBy={wish.validated_by_username}
           validatedAt={wish.validated_at}
-          isGM={isGM && !member.isExternal}
+          isGM={canManageWishes && !member.isExternal}
           onValidate={(status) => onValidateWish?.(member.id, wish.choice_index, status)}
           compact
         />
@@ -130,7 +130,7 @@ export const MobileRosterCard = ({
   const memberLocked = Boolean(member.wishes_locked);
   const effectiveLocked = isRosterLocked || memberLocked;
   const actionItems = [
-    ...(isGM && onRemoveMember && !isOwnRow ? [{
+    ...(canManageWishes && onRemoveMember && !isOwnRow ? [{
       key: 'delete',
       label: t.common.delete,
       icon: Trash2,
@@ -138,7 +138,7 @@ export const MobileRosterCard = ({
       loading: deletingMemberId === member.id,
       disabled: false,
     }] : []),
-    ...(isGM && onToggleMemberLock && !member.isExternal ? [{
+    ...(canManageWishes && onToggleMemberLock && !member.isExternal ? [{
       key: 'lock',
       label: memberLocked ? t.wishes.unlockMember : t.wishes.lockMember,
       icon: memberLocked ? Unlock : Lock,
@@ -146,7 +146,7 @@ export const MobileRosterCard = ({
       loading: lockingMemberId === member.id,
       disabled: false,
     }] : []),
-    ...(isOwnRow ? [{
+    ...((isOwnRow || canManageWishes) ? [{
       key: 'edit',
       label: t.common.edit,
       icon: Pencil,
@@ -275,7 +275,7 @@ export const MobileRosterCard = ({
 
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <span className="text-[11px] uppercase tracking-wide text-muted-foreground">{t.wishes.rosterDecision.title}</span>
-        {isGM && onSelectionStatusChange ? (
+        {canManageWishes && onSelectionStatusChange ? (
           <Select
             value={member.selectionStatus || 'undecided'}
             onValueChange={(value) => onSelectionStatusChange(member.id, value as RosterSelectionStatus)}

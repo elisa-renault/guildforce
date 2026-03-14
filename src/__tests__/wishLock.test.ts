@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveWishLockState } from '@/lib/wishLock';
+import { isWishEditingLocked, resolveWishLockState } from '@/lib/wishLock';
 
 describe('resolveWishLockState', () => {
   it('locks when roster is explicitly locked', () => {
@@ -43,5 +43,15 @@ describe('resolveWishLockState', () => {
     const state = resolveWishLockState({ rosterLocked: true, rosterLockAt: null, memberLocked: true });
     expect(state.isLocked).toBe(true);
     expect(state.reason).toBe('roster');
+  });
+
+  it('lets wish managers bypass locks outside read-only mode', () => {
+    const state = resolveWishLockState({ rosterLocked: true, rosterLockAt: null, memberLocked: true });
+    expect(isWishEditingLocked({ lockState: state, canManageWishes: true })).toBe(false);
+  });
+
+  it('keeps locks enforced for read-only admins', () => {
+    const state = resolveWishLockState({ rosterLocked: true, rosterLockAt: null, memberLocked: false });
+    expect(isWishEditingLocked({ lockState: state, canManageWishes: true, isReadOnly: true })).toBe(true);
   });
 });

@@ -243,6 +243,20 @@ const DOCUMENTATION: DocSection[] = [
         contentFr: 'Les verrous roster utilisent `rosters.wishes_locked` avec planification via `wishes_lock_at`. Les verrous membres sont stockés dans `guild_members.wishes_locked`. La RLS s\'appuie sur `can_edit_wishes()` et les RPCs `lock_roster_wishes`, `unlock_roster_wishes`, `schedule_roster_wishes_lock`, `set_member_wishes_locked`, `upsert_member_roster_wishes`, `remove_guild_member_with_wishes`, `upsert_external_member_wish` et `delete_external_member_wish` pour les actions manuelles. Les décisions de sélection sont lues via `get_roster_member_selection(p_roster_id)` pour afficher le commentaire uniquement aux gérants, alors que les membres standards voient seulement le statut + la raison. Les admins globaux de l’application peuvent aussi appeler cette RPC en lecture seule pour les audits de guilde, mais les commentaires réservés aux gérants restent masqués tant que l’appelant n’est pas GM/gérant des vœux. La migration recrée explicitement la surcharge UUID canonique de `get_roster_member_selection` pour éviter les dérives de signature liées à `CREATE OR REPLACE`. Les écritures dans `roster_member_selection` exigent GM/manage_wishes et valident le périmètre cible (membre de guilde ou externe non matché via `guild_roster_cache`). Le SELECT direct sur `roster_member_selection` est restreint aux GM/gérants de vœux pour éviter les fuites de commentaires. Les verrous programmés passent par `apply_scheduled_wish_locks()`.',
         tags: ['wishes', 'rosters', 'security', 'scheduling'],
       },
+      {
+        titleEn: 'Manager lock override',
+        titleFr: 'Override gérant sur verrou',
+        contentEn: 'GM and `manage_wishes` actors may still correct a linked member\'s commitment and wishes through `upsert_member_roster_wishes()` and `upsert_external_member_wish()` when a roster/member lock would block regular self-service edits. Global read-only admins do not inherit this override.',
+        contentFr: 'Les GM et acteurs `manage_wishes` peuvent toujours corriger l\'engagement et les vœux d\'un membre lié via `upsert_member_roster_wishes()` et `upsert_external_member_wish()` lorsqu\'un verrou roster ou membre bloquerait une édition classique. Les admins globaux en lecture seule ne bénéficient pas de cet override.',
+        tags: ['wishes', 'security', 'rosters', 'commitment'],
+      },
+      {
+        titleEn: 'Wish automation rules',
+        titleFr: 'Règles automatiques des vœux',
+        contentEn: 'Wish automation is now actor-aware. Self-edits only reset validation on the slots that actually changed, preserve commitment unless the member explicitly edits it, and reset roster decision to `undecided` only when wishes changed or when a confirmed member downgrades commitment from `confirmed` while currently `selected`/`bench`. GM or `manage_wishes` edits never auto-reset validation or roster decision; only the fields explicitly edited by the manager change. External manual entries also keep their validation/commitment/decision state when they are later linked to a Guildforce user, and external data wins on same-roster conflict during claim transfer.',
+        contentFr: 'Les automatismes des vœux dépendent désormais de l’acteur. Les auto-éditions membre ne remettent en attente que les slots réellement modifiés, conservent l’engagement tant que le membre ne le change pas explicitement, et ne repassent la décision roster à `undecided` que si les vœux changent ou si un membre confirmé baisse son engagement depuis `confirmed` alors qu’il était `selected`/`bench`. Les éditions GM ou `manage_wishes` ne réinitialisent jamais automatiquement la validation ni la décision roster : seules les valeurs modifiées par le gérant changent. Les entrées externes manuelles conservent aussi leur validation, engagement et décision lors du claim vers un utilisateur Guildforce, avec priorité aux données externes en cas de conflit sur le même roster.',
+        tags: ['wishes', 'validation', 'commitment', 'security', 'rosters'],
+      },
     ],
   },
   {

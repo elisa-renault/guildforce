@@ -30,7 +30,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatDateTimeLocalized, interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import { resolveSpecOrder } from '@/lib/wishOrder';
-import { resolveWishLockState } from '@/lib/wishLock';
+import { isWishEditingLocked, resolveWishLockState } from '@/lib/wishLock';
 import { getSelectedValidatedMembers } from '@/lib/selectedValidatedMembers';
 import { toneCalloutClass, toneTextClass } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -493,7 +493,7 @@ const RosterWishes = () => {
             class_id: ext.class_id,
             spec_ids: resolveSpecOrder(ext.spec_ids || [], ext.spec_order),
             comment: ext.comment,
-            validation_status: (ext.validation_status || 'approved') as ValidationStatus,
+            validation_status: (ext.validation_status || 'pending') as ValidationStatus,
             validated_by: ext.validated_by,
             validated_at: ext.validated_at,
             validated_by_username: ext.validated_by ? validatorById.get(ext.validated_by) || null : null,
@@ -546,8 +546,7 @@ const RosterWishes = () => {
 
   const startEditing = (member: MemberWish) => {
     const canEditOwn = member.id === user?.id;
-    const canEditAsManager = canManageWishes;
-    const canEditExternalAsManager = !!member.isExternal && canEditAsManager;
+    const canEditAsManager = canManageWishes && !isAdminReadOnly;
     if (!canEditOwn && !canEditAsManager) return;
 
     // Check if user has access to this roster
@@ -557,8 +556,7 @@ const RosterWishes = () => {
       return;
     }
 
-    // Managers can edit external entries even when member/roster lock would block self-edits.
-    if (!canEditExternalAsManager) {
+    if (!canEditAsManager) {
       const lockState = resolveWishLockState({
         rosterLocked: currentRoster?.wishes_locked,
         rosterLockAt: currentRoster?.wishes_lock_at,
@@ -857,14 +855,14 @@ const RosterWishes = () => {
     const currentRoster = rosters.find(r => r.id === selectedRosterId);
     const currentMember = members.find(m => m.id === editingUserId);
     if (!currentMember) return;
+    const canEditAsManager = canManageWishes && !isAdminReadOnly;
     const isEditingExternal = !!currentMember.isExternal;
-    const canEditExternalAsManager = isEditingExternal && canManageWishes;
     const lockState = resolveWishLockState({
       rosterLocked: currentRoster?.wishes_locked,
       rosterLockAt: currentRoster?.wishes_lock_at,
       memberLocked: currentMember?.wishes_locked,
     });
-    if (!canEditExternalAsManager && lockState.isLocked) {
+    if (!canEditAsManager && lockState.isLocked) {
       toast({
         title: t.wishes.lockedTitle,
         description: lockState.reason === 'member' ? t.wishes.lockedMemberDesc : t.wishes.lockedRosterDesc,
@@ -892,7 +890,7 @@ const RosterWishes = () => {
     try {
       const dbStatus = editStatus === 'withdrawn' ? 'withdrawn' : (editStatus === 'confirmed' ? 'confirmed' : 'potential');
       if (isEditingExternal) {
-        if (!canEditExternalAsManager || !currentMember.rosterCacheId) {
+        if (!canEditAsManager || !currentMember.rosterCacheId) {
           throw new Error(s('roster_wishes.external_edit_unauthorized'));
         }
 
@@ -911,11 +909,13 @@ const RosterWishes = () => {
         });
         if (error) throw error;
       } else {
-        const wishesPayload = editWishes.map((w) => ({
-          class_id: w.classId,
-          spec_ids: w.specIds,
-          comment: w.comment || null,
-        }));
+        const wishesPayload = editWishes
+          .filter((w) => !!w.classId)
+          .map((w) => ({
+            class_id: w.classId,
+            spec_ids: w.specIds,
+            comment: w.comment || null,
+          }));
 
         const { error } = await supabase.rpc('upsert_member_roster_wishes', {
           p_guild_id: guildId,
@@ -923,6 +923,7 @@ const RosterWishes = () => {
           p_member_id: editingUserId,
           p_commitment_status: dbStatus,
           p_wishes: wishesPayload,
+          p_manager_edit: canEditAsManager,
         });
         if (error) throw error;
       }
@@ -1135,7 +1136,11 @@ const RosterWishes = () => {
     rosterLockAt: currentRoster?.wishes_lock_at,
     memberLocked: editingMember?.wishes_locked ?? currentMember?.wishes_locked,
   });
-  const isEditingLocked = editingMember?.isExternal && canManageWishes ? false : currentMemberLockState.isLocked;
+  const isEditingLocked = isWishEditingLocked({
+    lockState: currentMemberLockState,
+    canManageWishes,
+    isReadOnly: isAdminReadOnly,
+  });
   const rosterScheduledLabel =
     rosterLockState.isScheduled && rosterLockState.scheduledAt
       ? formatDateTimeLocalized(rosterLockState.scheduledAt, language, { dateStyle: 'medium', timeStyle: 'short' })
@@ -1306,7 +1311,7 @@ const RosterWishes = () => {
               editStatus={editStatus}
               saving={saving}
               maxWishes={MAX_WISHES}
-              isGM={canManageWishes}
+              canManageWishes={canManageWishes && !isAdminReadOnly}
               isRosterLocked={rosterLockState.isLocked}
               isEditingLocked={isEditingLocked}
               onStartEditing={startEditing}

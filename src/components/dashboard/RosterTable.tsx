@@ -36,7 +36,7 @@ interface RosterTableProps {
   editStatus: CommitmentStatus;
   saving: boolean;
   maxWishes: number;
-  isGM?: boolean;
+  canManageWishes?: boolean;
   isRosterLocked?: boolean;
   isEditingLocked?: boolean;
   onStartEditing: (member: MemberWish) => void;
@@ -75,7 +75,7 @@ export const RosterTable = ({
   editStatus,
   saving,
   maxWishes,
-  isGM = false,
+  canManageWishes = false,
   isRosterLocked = false,
   isEditingLocked = false,
   onStartEditing,
@@ -292,7 +292,7 @@ export const RosterTable = ({
             status={validationStatus}
             validatedBy={wish.validated_by_username}
             validatedAt={wish.validated_at}
-            isGM={isGM && !isExternal}
+            isGM={canManageWishes && !isExternal}
             onValidate={(status) => handleValidation(memberId, choiceIndex, status)}
             loading={isValidating}
             compact
@@ -424,7 +424,7 @@ export const RosterTable = ({
             if (!regionSlug || !serverSlug || !guildSlug || member.isExternal) return;
 
             const qp = selectedRosterId ? `?rosterId=${encodeURIComponent(selectedRosterId)}` : '';
-            if (isOwnRow && !isGM) {
+            if (isOwnRow && !canManageWishes) {
               navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/wishes${qp}`);
               return;
             }
@@ -436,7 +436,7 @@ export const RosterTable = ({
               key={member.id}
               member={member}
               isOwnRow={isOwnRow}
-              isGM={isGM}
+              canManageWishes={canManageWishes}
               isRosterLocked={isRosterLocked}
               onStartEditing={handleStartEditing}
               onValidateWish={onValidateWish}
@@ -484,7 +484,7 @@ export const RosterTable = ({
                   : '';
 
               const rowActions = [
-                ...(isGM && onRemoveMember && !isOwnRow ? [{
+                ...(canManageWishes && onRemoveMember && !isOwnRow ? [{
                   key: 'delete',
                   label: t.common.delete,
                   icon: Trash2,
@@ -492,7 +492,7 @@ export const RosterTable = ({
                   loading: deletingMemberId === member.id,
                   disabled: false,
                 }] : []),
-                ...(isGM && onToggleMemberLock && !member.isExternal ? [{
+                ...(canManageWishes && onToggleMemberLock && !member.isExternal ? [{
                   key: 'lock',
                   label: memberLocked ? t.wishes.unlockMember : t.wishes.lockMember,
                   icon: memberLocked ? Unlock : Lock,
@@ -500,7 +500,7 @@ export const RosterTable = ({
                   loading: lockingMemberId === member.id,
                   disabled: false,
                 }] : []),
-                ...((isOwnRow || isGM) ? [{
+                ...((isOwnRow || canManageWishes) ? [{
                   key: 'edit',
                   label: isEditing ? t.common.save : t.common.edit,
                   icon: isEditing ? Save : Pencil,
@@ -620,7 +620,7 @@ export const RosterTable = ({
                       )}
                     </TableCell>
                     <TableCell className="py-2 px-2 md:px-3">
-                      {isGM && onSelectionStatusChange ? (
+                      {canManageWishes && onSelectionStatusChange ? (
                         <div onClick={(e) => e.stopPropagation()}>
                           <Select
                             value={member.selectionStatus || 'undecided'}

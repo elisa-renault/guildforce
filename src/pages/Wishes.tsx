@@ -213,6 +213,8 @@ const Wishes = () => {
   // GM and permissions state
   const [isGM, setIsGM] = useState(false);
   const [hasActivityPermission, setHasActivityPermission] = useState(false);
+  const getErrorMessage = (error: unknown) =>
+    error instanceof Error ? error.message : t.errors.generic;
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -464,41 +466,65 @@ const Wishes = () => {
     setSaving(true);
 
     try {
-      // Map CommitmentStatus to DB status
       const dbStatus = confirmed === 'withdrawn' ? 'withdrawn' : (confirmed === 'confirmed' ? 'confirmed' : 'potential');
-      await supabase
-        .from('guild_members')
-        .update({ status: dbStatus })
-        .eq('guild_id', guildId)
-        .eq('user_id', user.id);
-
-      // Delete all existing wishes for this roster first
-      await supabase
-        .from('class_wishes')
-        .delete()
-        .eq('guild_id', guildId)
-        .eq('user_id', user.id)
-        .eq('roster_id', selectedRosterId);
-
-      // Insert wishes with new order and roster_id
-      const wishesToInsert = wishes
-        .map((w, i) => ({
-          guild_id: guildId,
-          user_id: user.id,
-          roster_id: selectedRosterId,
-          choice_index: i + 1,
+      const wishesPayload = wishes
+        .filter((w) => !!w.classId)
+        .map((w) => ({
           class_id: w.classId,
           spec_ids: w.specIds,
-          spec_order: w.specIds,
-          comment: w.comment,
-        }))
-        .filter(w => w.class_id);
+          comment: w.comment || null,
+        }));
 
-      if (wishesToInsert.length > 0) {
-        const { error } = await supabase
+      const { error } = await supabase.rpc('upsert_member_roster_wishes', {
+        p_guild_id: guildId,
+        p_roster_id: selectedRosterId,
+        p_member_id: user.id,
+        p_commitment_status: dbStatus,
+        p_wishes: wishesPayload,
+        p_manager_edit: false,
+      });
+      if (error) throw error;
+
+      const [{ data: memberData }, { data: wishesData }] = await Promise.all([
+        supabase
+          .from('guild_members')
+          .select('status, wishes_locked')
+          .eq('guild_id', guildId)
+          .eq('user_id', user.id)
+          .single(),
+        supabase
           .from('class_wishes')
-          .insert(wishesToInsert);
-        if (error) throw error;
+          .select('*')
+          .eq('guild_id', guildId)
+          .eq('user_id', user.id)
+          .eq('roster_id', selectedRosterId)
+          .order('choice_index'),
+      ]);
+
+      if (memberData) {
+        const statusMap: Record<string, CommitmentStatus> = {
+          confirmed: 'confirmed',
+          potential: 'undecided',
+          withdrawn: 'withdrawn',
+        };
+        setConfirmed(statusMap[memberData.status] || 'undecided');
+        setMemberWishesLocked(!!memberData.wishes_locked);
+      }
+
+      if (wishesData && wishesData.length > 0) {
+        const loadedWishes: WishData[] = wishesData.map((w, index) => ({
+          id: `wish-${index + 1}`,
+          classId: w.class_id,
+          specIds: resolveSpecOrder(w.spec_ids || [], w.spec_order),
+          comment: w.comment || '',
+        }));
+        setWishes(loadedWishes);
+      } else {
+        setWishes([
+          { id: 'wish-1', classId: '', specIds: [], comment: '' },
+          { id: 'wish-2', classId: '', specIds: [], comment: '' },
+          { id: 'wish-3', classId: '', specIds: [], comment: '' },
+        ]);
       }
 
       toast({ title: t.wishes.wishesSaved });
@@ -681,5 +707,3 @@ const Wishes = () => {
 };
 
 export default Wishes;
-  const getErrorMessage = (error: unknown) =>
-    error instanceof Error ? error.message : t.errors.generic;

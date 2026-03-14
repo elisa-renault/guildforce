@@ -2747,6 +2747,7 @@ export type Database = {
         Args: {
           p_commitment_status: string
           p_guild_id: string
+          p_manager_edit?: boolean
           p_member_id: string
           p_roster_id: string
           p_wishes?: Json

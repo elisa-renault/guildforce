@@ -7,6 +7,11 @@ export interface WishLockState {
   scheduledAt: Date | null;
 }
 
+interface WishLockOverrideInput {
+  canManageWishes?: boolean;
+  isReadOnly?: boolean;
+}
+
 interface ResolveWishLockStateInput {
   rosterLocked?: boolean | null;
   rosterLockAt?: string | null;
@@ -56,4 +61,21 @@ export const resolveWishLockState = ({
     isScheduled: scheduleUpcoming,
     scheduledAt,
   };
+};
+
+export const canOverrideWishLocks = ({
+  canManageWishes = false,
+  isReadOnly = false,
+}: WishLockOverrideInput): boolean => canManageWishes && !isReadOnly;
+
+export const isWishEditingLocked = ({
+  lockState,
+  canManageWishes = false,
+  isReadOnly = false,
+}: WishLockOverrideInput & { lockState: WishLockState }): boolean => {
+  if (canOverrideWishLocks({ canManageWishes, isReadOnly })) {
+    return false;
+  }
+
+  return lockState.isLocked;
 };
