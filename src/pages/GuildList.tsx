@@ -44,6 +44,9 @@ interface GuildWithMembership {
   syncedCharacterCount: number;
 }
 
+const dedupeGuildsById = <T extends { id: string }>(guilds: T[]) =>
+  Array.from(new Map(guilds.map((guild) => [guild.id, guild])).values());
+
 const GuildList = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
@@ -58,7 +61,7 @@ const GuildList = () => {
   const loadGuilds = async (userId: string) => {
     setLoading(true);
 
-    const [membershipsResult, syncedMembershipsResult, mainCharResult, visibleGuildsResult] = await Promise.all([
+    const [membershipsResult, syncedMembershipsResult, mainCharResult] = await Promise.all([
       supabase
         .from('guild_members')
         .select('guild_id, role')
@@ -73,15 +76,11 @@ const GuildList = () => {
         .eq('user_id', userId)
         .eq('is_main', true)
         .limit(1),
-      supabase
-        .from('guilds')
-        .select('id, name, server, region, faction, owner_id, avatar_url'),
     ]);
 
     const memberships = membershipsResult.data || [];
     const membershipsError = membershipsResult.error;
     const syncedMemberships = syncedMembershipsResult.data || [];
-    const visibleGuilds = visibleGuildsResult.data || [];
 
     if (membershipsError) {
       log.error('Error fetching guild memberships:', membershipsError);
@@ -91,13 +90,42 @@ const GuildList = () => {
     }
 
     let appGuilds: GuildWithMembership[] = [];
+    const membershipGuildIds = Array.from(new Set(memberships.map((membership) => membership.guild_id)));
+    const [memberGuildsResult, ownedGuildsResult] = await Promise.all([
+      membershipGuildIds.length > 0
+        ? supabase
+            .from('guilds')
+            .select('id, name, server, region, faction, owner_id, avatar_url')
+            .in('id', membershipGuildIds)
+        : Promise.resolve({
+            data: [] as Array<{
+              id: string;
+              name: string;
+              server: string;
+              region: string | null;
+              faction: string;
+              owner_id: string | null;
+              avatar_url: string | null;
+            }>,
+            error: null,
+          }),
+      supabase
+        .from('guilds')
+        .select('id, name, server, region, faction, owner_id, avatar_url')
+        .eq('owner_id', userId),
+    ]);
 
-    if (visibleGuildsResult.error) {
-      log.error('Error fetching visible guilds:', visibleGuildsResult.error);
+    if (memberGuildsResult.error || ownedGuildsResult.error) {
+      log.error('Error fetching relevant guilds:', memberGuildsResult.error || ownedGuildsResult.error);
       setGuilds([]);
       setLoading(false);
       return;
     }
+
+    const visibleGuilds = dedupeGuildsById([
+      ...(memberGuildsResult.data || []),
+      ...(ownedGuildsResult.data || []),
+    ]);
 
     if (visibleGuilds.length > 0) {
       const guildIds = visibleGuilds.map((guild) => guild.id);

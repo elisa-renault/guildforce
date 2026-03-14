@@ -39,6 +39,9 @@ interface AppGuild {
   owner_id: string | null;
 }
 
+const dedupeGuildsById = <T extends { id: string }>(guilds: T[]) =>
+  Array.from(new Map(guilds.map((guild) => [guild.id, guild])).values());
+
 export const GuildMemberships: React.FC = () => {
   const navigate = useNavigate();
   const { profile, user } = useAuth();
@@ -111,14 +114,32 @@ export const GuildMemberships: React.FC = () => {
   const fetchAppGuilds = async () => {
     if (!user?.id) return;
 
-    const [{ data: memberships }, { data: visibleGuilds }] = await Promise.all([
-      supabase
-        .from('guild_members')
-        .select('guild_id, role')
-        .eq('user_id', user.id),
+    const { data: memberships } = await supabase
+      .from('guild_members')
+      .select('guild_id, role')
+      .eq('user_id', user.id);
+
+    const membershipGuildIds = Array.from(new Set((memberships || []).map((membership) => membership.guild_id)));
+
+    const [memberGuildsResult, ownedGuildsResult] = await Promise.all([
+      membershipGuildIds.length > 0
+        ? supabase
+            .from('guilds')
+            .select('id, name, server, region, owner_id')
+            .in('id', membershipGuildIds)
+        : Promise.resolve({
+            data: [] as AppGuild[],
+            error: null,
+          }),
       supabase
         .from('guilds')
         .select('id, name, server, region, owner_id'),
+        .eq('owner_id', user.id),
+    ]);
+
+    const visibleGuilds = dedupeGuildsById([
+      ...(memberGuildsResult.data || []),
+      ...(ownedGuildsResult.data || []),
     ]);
 
     if (visibleGuilds) {
