@@ -1,23 +1,26 @@
-import { Shield, User, LogOut, MessageSquare, Menu, Crown } from 'lucide-react';
+import { Shield, User, LogOut, MessageSquare, Menu, Crown, Undo2 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 import { CosmicButton } from '@/components/CosmicButton';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { NotificationBell } from '@/components/forum/NotificationBell';
+import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useIsAdmin } from '@/hooks/useAdmin';
+import { interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { navItemClass } from '@/lib/nav-styles';
 import { getRouteMeta } from '@/routes';
+import { toast } from 'sonner';
 
 export const GlobalNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t, language } = useLanguage();
-  const { user, signOut } = useAuth();
+  const { user, signOut, isImpersonating, impersonationTarget, restoreAdminSession } = useAuth();
   const { isAdmin } = useIsAdmin();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const routeMeta = getRouteMeta(location.pathname);
@@ -32,6 +35,15 @@ export const GlobalNav = () => {
   const handleNavigation = (path: string) => {
     navigate(path);
     setMobileMenuOpen(false);
+  };
+
+  const handleRestoreAdmin = async () => {
+    try {
+      const restorePath = await restoreAdminSession('/admin?section=users');
+      navigate(restorePath);
+    } catch (error) {
+      toast.error(sm('globalnav.impersonation.restore_error'));
+    }
   };
 
   const NavLinks = ({ mobile = false }: { mobile?: boolean }) => (
@@ -94,8 +106,35 @@ export const GlobalNav = () => {
   );
 
   return (
-    <header data-global-nav className="fixed top-0 left-0 right-0 z-50 glass-header h-16" role="banner">
-      <PageContainer className="h-full flex items-center justify-between" width="wide">
+    <header data-global-nav className="fixed top-0 left-0 right-0 z-50 glass-header" role="banner">
+      {isImpersonating && (
+        <div className="border-b border-status-warning/30 bg-status-warning/10">
+          <PageContainer className="flex min-h-11 items-center justify-between gap-3 py-2" width="wide">
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-status-warning">
+                {sm('globalnav.impersonation.badge')}
+              </p>
+              <p className="truncate text-sm text-foreground">
+                {interpolateMessage(sm('globalnav.impersonation.banner'), {
+                  username: impersonationTarget?.username || 'user',
+                })}
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="shrink-0 border-status-warning/40 bg-background/70"
+              onClick={handleRestoreAdmin}
+            >
+              <Undo2 className="mr-1.5 h-4 w-4" />
+              {sm('globalnav.impersonation.return_to_admin')}
+            </Button>
+          </PageContainer>
+        </div>
+      )}
+
+      <PageContainer className="flex h-16 items-center justify-between" width="wide">
         {/* Left side - Logo */}
         <div className="flex items-center gap-2">
           <button 

@@ -110,26 +110,33 @@ export const GuildMemberships: React.FC = () => {
 
   const fetchAppGuilds = async () => {
     if (!user?.id) return;
-    
-    const { data } = await supabase
-      .from('guild_members')
-      .select('guild_id, role, guilds (id, name, server, region, owner_id)')
-      .eq('user_id', user.id);
-    
-    if (data) {
+
+    const [{ data: memberships }, { data: visibleGuilds }] = await Promise.all([
+      supabase
+        .from('guild_members')
+        .select('guild_id, role')
+        .eq('user_id', user.id),
+      supabase
+        .from('guilds')
+        .select('id, name, server, region, owner_id'),
+    ]);
+
+    if (visibleGuilds) {
+      const membershipRoleByGuildId = new Map((memberships || []).map((membership) => [membership.guild_id, membership.role]));
+
       setAppGuilds(new Map(
-        data.map(g => {
-          const guild = g.guilds as unknown as AppGuild;
-          return [buildGuildDiscoveryKey({
+        visibleGuilds.map((guild) => [
+          buildGuildDiscoveryKey({
             region: guild.region || 'eu',
             guildName: guild.name,
             realmNameOrSlug: guild.server,
-          }), {
+          }),
+          {
             id: guild.id,
-            role: g.role,
+            role: membershipRoleByGuildId.get(guild.id) || (guild.owner_id === user.id ? 'gm' : 'member'),
             hasOwner: guild.owner_id !== null,
-          }];
-        })
+          },
+        ])
       ));
     }
   };

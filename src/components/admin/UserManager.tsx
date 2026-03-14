@@ -1,7 +1,8 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import log from '@/lib/logger';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { BattleNetRegion, REGION_LABELS } from '@/lib/battlenetOAuth';
 import { GlowCard } from '@/components/GlowCard';
@@ -9,6 +10,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   Table,
   TableBody,
@@ -32,6 +43,8 @@ import {
 import { toast } from 'sonner';
 import { formatDateTimeLocalized, formatPluralMessage, interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
+import { canImpersonateUser, type ImpersonationTargetSummary } from '@/lib/adminImpersonation';
+import { useIsAdmin } from '@/hooks/useAdmin';
 
 type AppRole = 'admin' | 'moderator' | 'user';
 type SortDirection = 'asc' | 'desc';
@@ -61,15 +74,23 @@ interface UserWithRoles {
 const ITEMS_PER_PAGE = 15;
 
 export function UserManager() {
+  const navigate = useNavigate();
   const { language, t } = useLanguage();
   const s = (key: SemanticKey) => resolveSemanticMessage({ key, language, translations: t });
-  const { user: currentUser } = useAuth();
+  const {
+    user: currentUser,
+    isImpersonating,
+    startImpersonation,
+  } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const [users, setUsers] = useState<UserWithRoles[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [togglingRole, setTogglingRole] = useState<{ userId: string; role: AppRole } | null>(null);
+  const [impersonatingUserId, setImpersonatingUserId] = useState<string | null>(null);
+  const [impersonationTarget, setImpersonationTarget] = useState<ImpersonationTargetSummary | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>('created_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
@@ -271,6 +292,28 @@ export function UserManager() {
       toast.error(s('admin.user_manager.toast.toggle_error'));
     } finally {
       setTogglingRole(null);
+    }
+  };
+
+  const handleStartImpersonation = async () => {
+    if (!impersonationTarget) return;
+
+    setImpersonatingUserId(impersonationTarget.id);
+
+    try {
+      await startImpersonation(impersonationTarget, '/admin?section=users');
+      toast.success(
+        interpolateMessage(s('admin.user_manager.toast.impersonate_started'), {
+          username: impersonationTarget.username || 'user',
+        })
+      );
+      setImpersonationTarget(null);
+      navigate('/guilds');
+    } catch (error) {
+      log.error('Error starting impersonation:', error);
+      toast.error(s('admin.user_manager.toast.impersonate_error'));
+    } finally {
+      setImpersonatingUserId(null);
     }
   };
 
@@ -564,6 +607,26 @@ export function UserManager() {
                         )}
                         {t.common.admin}
                       </Button>
+                      {isAdmin && canImpersonateUser({
+                        currentUserId: currentUser?.id,
+                        targetUserId: user.id,
+                        targetRoles: user.roles,
+                        isImpersonating,
+                      }) && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() => setImpersonationTarget({ id: user.id, username: user.username || null })}
+                          disabled={impersonatingUserId === user.id}
+                        >
+                          {impersonatingUserId === user.id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            s('admin.user_manager.impersonate')
+                          )}
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -609,6 +672,25 @@ export function UserManager() {
           </div>
         </div>
       )}
+
+      <AlertDialog open={!!impersonationTarget} onOpenChange={(open) => !open && setImpersonationTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{s('admin.user_manager.impersonate_confirm_title')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {interpolateMessage(s('admin.user_manager.impersonate_confirm_body'), {
+                username: impersonationTarget?.username || 'user',
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={!!impersonatingUserId}>{t.common.cancel}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleStartImpersonation} disabled={!!impersonatingUserId}>
+              {impersonatingUserId ? <Loader2 className="h-4 w-4 animate-spin" /> : s('admin.user_manager.impersonate')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

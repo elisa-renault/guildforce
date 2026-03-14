@@ -52,6 +52,42 @@ export type Database = {
           },
         ]
       }
+      admin_impersonation_sessions: {
+        Row: {
+          actor_user_id: string
+          ended_at: string | null
+          id: string
+          restore_path: string | null
+          start_path: string | null
+          started_at: string
+          target_email: string | null
+          target_user_id: string
+          target_username: string | null
+        }
+        Insert: {
+          actor_user_id: string
+          ended_at?: string | null
+          id?: string
+          restore_path?: string | null
+          start_path?: string | null
+          started_at?: string
+          target_email?: string | null
+          target_user_id: string
+          target_username?: string | null
+        }
+        Update: {
+          actor_user_id?: string
+          ended_at?: string | null
+          id?: string
+          restore_path?: string | null
+          start_path?: string | null
+          started_at?: string
+          target_email?: string | null
+          target_user_id?: string
+          target_username?: string | null
+        }
+        Relationships: []
+      }
       battlenet_tokens: {
         Row: {
           access_token: string | null

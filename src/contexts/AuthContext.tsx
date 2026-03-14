@@ -2,6 +2,16 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import log from '@/lib/logger';
 import type { User, Session } from '@supabase/supabase-js';
 import { trackProductEvent } from '@/lib/productEvents';
+import {
+  clearAdminImpersonationTransition,
+  clearStoredAdminImpersonationState,
+  consumeAdminImpersonationTransition,
+  readStoredAdminImpersonationState,
+  setAdminImpersonationTransition,
+  writeStoredAdminImpersonationState,
+  type ImpersonationTargetSummary,
+  type StoredAdminImpersonationState,
+} from '@/lib/adminImpersonation';
 
 let supabaseModulePromise: Promise<typeof import('@/integrations/supabase/client')> | null = null;
 
@@ -52,10 +62,14 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
+  isImpersonating: boolean;
+  impersonationTarget: ImpersonationTargetSummary | null;
   signUp: (email: string, password: string, discordPseudo: string, language: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  startImpersonation: (targetUser: ImpersonationTargetSummary, startPath?: string) => Promise<void>;
+  restoreAdminSession: (restorePath?: string) => Promise<string>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -65,6 +79,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [impersonationState, setImpersonationState] = useState<StoredAdminImpersonationState | null>(() =>
+    readStoredAdminImpersonationState(),
+  );
+
+  const syncImpersonationState = () => {
+    const nextState = readStoredAdminImpersonationState();
+    setImpersonationState(nextState);
+    return nextState;
+  };
 
   const fetchProfile = async (userId: string) => {
     const { supabase } = await loadSupabase();
@@ -106,6 +129,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const shouldSuppressSignedInEffects = () =>
+    Boolean(readStoredAdminImpersonationState());
+
   useEffect(() => {
     let cancelled = false;
     let subscription: { unsubscribe: () => void } | null = null;
@@ -146,19 +172,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           if (newSession?.user) {
             setTimeout(async () => {
               const profileData = await fetchProfile(newSession.user!.id);
+              const authTransition = consumeAdminImpersonationTransition();
+              const suppressSignedInEffects = Boolean(authTransition) || shouldSuppressSignedInEffects();
+              syncImpersonationState();
 
               // Trigger background sync on SIGNED_IN event if Battle.net is linked
-              if (event === 'SIGNED_IN' && profileData?.battlenet_id && newSession.access_token) {
+              if (event === 'SIGNED_IN' && !suppressSignedInEffects && profileData?.battlenet_id && newSession.access_token) {
                 triggerBattleNetSync(newSession.access_token);
               }
 
-              if (event === 'SIGNED_IN') {
+              if (event === 'SIGNED_IN' && !suppressSignedInEffects) {
                 const { supabase } = await loadSupabase();
                 await trackProductEvent(supabase, 'first_login', { source: 'auth_context' });
               }
             }, 0);
           } else {
             setProfile(null);
+            setImpersonationState(null);
           }
         },
       );
@@ -212,6 +242,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setUser(null);
     setSession(null);
     setProfile(null);
+    setImpersonationState(null);
+    clearStoredAdminImpersonationState();
+    clearAdminImpersonationTransition();
     
     try {
       await supabase.auth.signOut();
@@ -230,16 +263,119 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const startImpersonation = async (
+    targetUser: ImpersonationTargetSummary,
+    startPath = '/admin?section=users',
+  ) => {
+    const { supabase } = await loadSupabase();
+    const adminSession = session;
+
+    if (!adminSession?.access_token || !adminSession.refresh_token) {
+      throw new Error('Missing admin session');
+    }
+
+    const { data, error } = await supabase.functions.invoke('admin-impersonation/start', {
+      headers: { Authorization: `Bearer ${adminSession.access_token}` },
+      body: {
+        targetUserId: targetUser.id,
+        startPath,
+      },
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data?.verifyToken || !data?.impersonationId) {
+      throw new Error('Invalid impersonation response');
+    }
+
+    const nextState: StoredAdminImpersonationState = {
+      adminSession,
+      impersonationId: data.impersonationId as string,
+      returnPath: startPath,
+      target: {
+        id: data.target?.id || targetUser.id,
+        username: data.target?.username ?? targetUser.username ?? null,
+      },
+    };
+
+    writeStoredAdminImpersonationState(nextState);
+    setImpersonationState(nextState);
+    setAdminImpersonationTransition('start');
+
+    const { error: verifyError } = await supabase.auth.verifyOtp({
+      token_hash: data.verifyToken as string,
+      type: (data.tokenType || 'magiclink') as
+        | 'signup'
+        | 'magiclink'
+        | 'recovery'
+        | 'invite'
+        | 'email'
+        | 'email_change',
+    });
+
+    if (verifyError) {
+      clearStoredAdminImpersonationState();
+      clearAdminImpersonationTransition();
+      setImpersonationState(null);
+      throw verifyError;
+    }
+  };
+
+  const restoreAdminSession = async (restorePath?: string) => {
+    const { supabase } = await loadSupabase();
+    const storedState = readStoredAdminImpersonationState();
+
+    if (!storedState) {
+      throw new Error('No admin impersonation state found');
+    }
+
+    const nextRestorePath = restorePath || storedState.returnPath || '/admin?section=users';
+    setAdminImpersonationTransition('restore');
+
+    const { error: setSessionError } = await supabase.auth.setSession({
+      access_token: storedState.adminSession.access_token,
+      refresh_token: storedState.adminSession.refresh_token,
+    });
+
+    if (setSessionError) {
+      clearAdminImpersonationTransition();
+      throw setSessionError;
+    }
+
+    const { error: restoreError } = await supabase.functions.invoke('admin-impersonation/restore', {
+      headers: { Authorization: `Bearer ${storedState.adminSession.access_token}` },
+      body: {
+        impersonationId: storedState.impersonationId,
+        restorePath: nextRestorePath,
+      },
+    });
+
+    clearStoredAdminImpersonationState();
+    setImpersonationState(null);
+
+    if (restoreError) {
+      throw restoreError;
+    }
+
+    return nextRestorePath;
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
       session,
       profile,
       loading,
+      isImpersonating: Boolean(impersonationState),
+      impersonationTarget: impersonationState?.target ?? null,
       signUp,
       signIn,
       signOut,
       refreshProfile,
+      startImpersonation,
+      restoreAdminSession,
     }}>
       {children}
     </AuthContext.Provider>

@@ -2763,6 +2763,7 @@ async function storeFullRoster(
     }
 
     log.info(`Successfully cached ${dedupedRosterData.length} roster members for guild ${sanitizePII(guildName, 'name')}`);
+    await claimOrphanGuildOwnerFromRosterMatch(supabase, guildId);
   } catch (error) {
     log.error('Error storing full roster:', error);
   }
@@ -2878,8 +2879,107 @@ async function storeFullRosterForGuild(
     }
 
     log.info(`Successfully cached ${dedupedRosterData.length} roster members for guild ${sanitizePII(guildName, 'name')}`);
+    await claimOrphanGuildOwnerFromRosterMatch(supabase, guildId);
   } catch (error) {
     log.error('Error storing full roster for guild:', error);
+  }
+}
+
+async function claimOrphanGuildOwnerFromRosterMatch(
+  supabase: any,
+  guildId: string
+): Promise<string | null> {
+  try {
+    const { data: guild, error: guildError } = await supabase
+      .from('guilds')
+      .select('id, name, owner_id')
+      .eq('id', guildId)
+      .maybeSingle();
+
+    if (guildError) {
+      log.error(`Failed to load guild ${sanitizePII(guildId, 'id')} for roster owner claim:`, guildError);
+      return null;
+    }
+
+    if (!guild || guild.owner_id) {
+      return guild?.owner_id ?? null;
+    }
+
+    const { data: gmRows, error: gmRowsError } = await supabase
+      .from('guild_roster_cache')
+      .select('matched_user_id')
+      .eq('guild_id', guildId)
+      .eq('is_guild_master', true)
+      .not('matched_user_id', 'is', null);
+
+    if (gmRowsError) {
+      log.error(
+        `Failed to load roster GM matches for guild ${sanitizePII(guildId, 'id')}:`,
+        gmRowsError,
+      );
+      return null;
+    }
+
+    const matchedOwnerIds = Array.from(
+      new Set(
+        (gmRows || [])
+          .map((row: { matched_user_id: string | null }) => row.matched_user_id)
+          .filter((value): value is string => typeof value === 'string' && value.length > 0),
+      ),
+    );
+
+    if (matchedOwnerIds.length !== 1) {
+      if (matchedOwnerIds.length > 1) {
+        log.info(
+          `Skipping roster owner claim for guild ${sanitizePII(guild.name, 'name')}: multiple matched GM users (${matchedOwnerIds.length})`,
+        );
+      }
+      return null;
+    }
+
+    const matchedOwnerId = matchedOwnerIds[0];
+
+    const { error: claimError } = await supabase
+      .from('guilds')
+      .update({ owner_id: matchedOwnerId })
+      .eq('id', guildId)
+      .is('owner_id', null);
+
+    if (claimError) {
+      log.error(
+        `Failed to claim orphan guild ${sanitizePII(guild.name, 'name')} from roster GM match:`,
+        claimError,
+      );
+      return null;
+    }
+
+    const { error: membershipError } = await supabase
+      .from('guild_members')
+      .upsert(
+        {
+          guild_id: guildId,
+          user_id: matchedOwnerId,
+          role: 'gm',
+          status: 'confirmed',
+        },
+        { onConflict: 'guild_id,user_id' },
+      );
+
+    if (membershipError) {
+      log.error(
+        `Failed to upsert GM membership after roster owner claim for guild ${sanitizePII(guild.name, 'name')}:`,
+        membershipError,
+      );
+      return null;
+    }
+
+    log.info(
+      `Claimed orphan guild ${sanitizePII(guild.name, 'name')} from roster GM match for user ${sanitizePII(matchedOwnerId, 'id')}`,
+    );
+    return matchedOwnerId;
+  } catch (error) {
+    log.error('Error claiming orphan guild owner from roster match:', error);
+    return null;
   }
 }
 
@@ -3720,6 +3820,28 @@ async function fetchAndStoreCharacters(
       }
       
       log.info('Re-matching complete');
+
+      const { data: gmRosterGuildRows, error: gmRosterGuildRowsError } = await supabase
+        .from('guild_roster_cache')
+        .select('guild_id')
+        .eq('matched_user_id', userId)
+        .eq('is_guild_master', true);
+
+      if (gmRosterGuildRowsError) {
+        log.error('Failed to load roster GM guilds for owner claim:', gmRosterGuildRowsError);
+      } else {
+        const guildIdsToClaim = Array.from(
+          new Set(
+            (gmRosterGuildRows || [])
+              .map((row: { guild_id: string | null }) => row.guild_id)
+              .filter((value): value is string => typeof value === 'string' && value.length > 0),
+          ),
+        );
+
+        for (const guildId of guildIdsToClaim) {
+          await claimOrphanGuildOwnerFromRosterMatch(supabase, guildId);
+        }
+      }
     }
 
     return { success: true, detectedRegion: region };

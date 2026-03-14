@@ -58,14 +58,14 @@ const GuildList = () => {
   const loadGuilds = async (userId: string) => {
     setLoading(true);
 
-    const [membershipsResult, syncedMembershipsResult, mainCharResult] = await Promise.all([
+    const [membershipsResult, syncedMembershipsResult, mainCharResult, visibleGuildsResult] = await Promise.all([
       supabase
         .from('guild_members')
         .select('guild_id, role')
         .eq('user_id', userId),
       supabase
         .from('wow_guild_memberships')
-        .select('character_id, guild_name, guild_realm, guild_realm_slug, guild_region, guild_faction')
+        .select('character_id, guild_name, guild_realm, guild_realm_slug, guild_region, guild_faction, is_guild_master')
         .eq('user_id', userId),
       supabase
         .from('wow_characters')
@@ -73,11 +73,15 @@ const GuildList = () => {
         .eq('user_id', userId)
         .eq('is_main', true)
         .limit(1),
+      supabase
+        .from('guilds')
+        .select('id, name, server, region, faction, owner_id, avatar_url'),
     ]);
 
     const memberships = membershipsResult.data || [];
     const membershipsError = membershipsResult.error;
     const syncedMemberships = syncedMembershipsResult.data || [];
+    const visibleGuilds = visibleGuildsResult.data || [];
 
     if (membershipsError) {
       log.error('Error fetching guild memberships:', membershipsError);
@@ -88,46 +92,74 @@ const GuildList = () => {
 
     let appGuilds: GuildWithMembership[] = [];
 
-    if (memberships.length > 0) {
-      const guildIds = memberships.map((membership) => membership.guild_id);
+    if (visibleGuildsResult.error) {
+      log.error('Error fetching visible guilds:', visibleGuildsResult.error);
+      setGuilds([]);
+      setLoading(false);
+      return;
+    }
 
-      const [guildResult, rosterCountsResult] = await Promise.all([
-        supabase
-          .from('guilds')
-          .select('id, name, server, region, faction, owner_id, avatar_url')
-          .in('id', guildIds),
-        supabase
-          .from('guild_roster_cache')
-          .select('guild_id')
-          .in('guild_id', guildIds),
-      ]);
+    if (visibleGuilds.length > 0) {
+      const guildIds = visibleGuilds.map((guild) => guild.id);
+      const { data: rosterCountsData, error: rosterCountsError } = await supabase
+        .from('guild_roster_cache')
+        .select('guild_id')
+        .in('guild_id', guildIds);
 
-      if (guildResult.error) {
-        log.error('Error fetching guilds:', guildResult.error);
+      if (rosterCountsError) {
+        log.error('Error fetching guild roster counts:', rosterCountsError);
         setGuilds([]);
         setLoading(false);
         return;
       }
 
+      const membershipRoleByGuildId = new Map(
+        memberships.map((membership) => [membership.guild_id, membership.role]),
+      );
+
+      const syncedGmKeySet = new Set(
+        syncedMemberships
+          .filter((membership) => membership.is_guild_master)
+          .map((membership) =>
+            buildGuildDiscoveryKey({
+              region: membership.guild_region || 'eu',
+              guildName: membership.guild_name,
+              realmNameOrSlug: membership.guild_realm_slug || membership.guild_realm,
+            }),
+          ),
+      );
+
       // Count characters per guild from roster cache
       const memberCounts: Record<string, number> = {};
-      rosterCountsResult.data?.forEach((member) => {
+      rosterCountsData?.forEach((member) => {
         memberCounts[member.guild_id] = (memberCounts[member.guild_id] || 0) + 1;
       });
 
-      if (guildResult.data) {
-        appGuilds = guildResult.data.map((guild) => ({
+      appGuilds = visibleGuilds.map((guild) => {
+        const guildKey = buildGuildDiscoveryKey({
+          region: guild.region || 'eu',
+          guildName: guild.name,
+          realmNameOrSlug: guild.server,
+        });
+
+        const derivedRole =
+          membershipRoleByGuildId.get(guild.id)
+          || (guild.owner_id === userId ? 'gm' : null)
+          || (syncedGmKeySet.has(guildKey) ? 'gm' : null)
+          || 'member';
+
+        return {
           ...guild,
           region: guild.region || 'eu',
           faction: guild.faction as 'horde' | 'alliance',
-          role: memberships.find((membership) => membership.guild_id === guild.id)?.role || 'member',
+          role: derivedRole,
           memberCount: memberCounts[guild.id] || 0,
           hasMain: false,
           avatar_url: guild.avatar_url,
           isDetectedOnly: false,
           syncedCharacterCount: 0,
-        }));
-      }
+        };
+      });
     }
 
     const mainGuildMembership = mainCharResult.data?.[0]
@@ -419,7 +451,7 @@ const GuildList = () => {
                       <Users className="h-3 w-3" />
                       {guild.isDetectedOnly ? guild.syncedCharacterCount : guild.memberCount}
                     </span>
-                    {!guild.isDetectedOnly && guild.role === 'gm' && (
+                    {!guild.isDetectedOnly && (guild.role === 'gm' || guild.owner_id === user?.id) && (
                       <>
                         <button
                           onClick={(e) => {

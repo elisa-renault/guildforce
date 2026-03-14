@@ -102,6 +102,13 @@ const DOCUMENTATION: DocSection[] = [
         contentFr: 'Les sessions sont gérées par Supabase Auth et exposées via AuthContext (`user`, `profile`, `loading`, `signOut`). Les sessions persistent dans localStorage. Si un profil Battle.net est lié, une resynchronisation en arrière-plan est déclenchée à la connexion.',
         tags: ['auth', 'session'],
       },
+      {
+        titleEn: 'Admin impersonation',
+        titleFr: 'Impersonation admin',
+        contentEn: 'Global admins can start a full user impersonation session from the admin user table for debugging. The original admin Supabase session is stored in `sessionStorage`, the live session is swapped to the target user via a backend-generated magic link, and a persistent banner allows one-click restoration to `/admin?section=users`.',
+        contentFr: 'Les administrateurs globaux peuvent lancer une vraie session d\'impersonation depuis la table des utilisateurs admin pour le debug. La session Supabase d\'origine est stockée dans `sessionStorage`, la session active est basculée vers l\'utilisateur cible via un magic link généré côté backend, et un bandeau persistant permet un retour en un clic vers `/admin?section=users`.',
+        tags: ['auth', 'admin', 'debug'],
+      },
     ],
   },
   {
@@ -121,8 +128,8 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Guild member cache',
         titleFr: 'Cache des membres de guilde',
-        contentEn: '`guild_roster_cache` stores the full Blizzard guild member list per guild with rank data and character matching (`matched_user_id`, `matched_character_id`). Manual resync is available and scheduled sync endpoints are provided for background refresh.',
-        contentFr: '`guild_roster_cache` stocke la liste complète des membres Blizzard par guilde avec les rangs et le matching de personnages (`matched_user_id`, `matched_character_id`). Une resynchronisation manuelle est disponible et des endpoints de sync planifiée existent pour le rafraîchissement en arrière-plan.',
+        contentEn: '`guild_roster_cache` stores the full Blizzard guild member list per guild with rank data and character matching (`matched_user_id`, `matched_character_id`). Manual resync is available and scheduled sync endpoints are provided for background refresh. When a guild is still orphaned locally, a unique matched GM row in this cache can now claim `guilds.owner_id` and seed the GM membership row.',
+        contentFr: '`guild_roster_cache` stocke la liste complète des membres Blizzard par guilde avec les rangs et le matching de personnages (`matched_user_id`, `matched_character_id`). Une resynchronisation manuelle est disponible et des endpoints de sync planifiée existent pour le rafraîchissement en arrière-plan. Quand une guilde est encore orpheline localement, une ligne GM matchée de façon unique dans ce cache peut désormais renseigner `guilds.owner_id` et créer la ligne GM dans `guild_members`.',
         tags: ['battlenet', 'sync', 'members'],
       },
       {
@@ -158,8 +165,8 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Guild members and statuses',
         titleFr: 'Membres et statuts',
-        contentEn: '`guild_members` links users to guilds and tracks role/status (`confirmed`, `potential`, `withdrawn`). This status is used by member-facing features and guild member cache visibility policies.',
-        contentFr: '`guild_members` relie les utilisateurs aux guildes et suit rôle/statut (`confirmed`, `potential`, `withdrawn`). Ce statut est utilisé par les fonctionnalités membres et les politiques de visibilité du cache des membres.',
+        contentEn: '`guild_members` links users to guilds and tracks role/status (`confirmed`, `potential`, `withdrawn`). This status is used by member-facing features and guild member cache visibility policies. For freshly synced Guild Masters, Guildforce also treats `guilds.owner_id` as a first-class ownership signal so the GM can still see and open the guild even if the mirrored `guild_members` row is late.',
+        contentFr: '`guild_members` relie les utilisateurs aux guildes et suit rôle/statut (`confirmed`, `potential`, `withdrawn`). Ce statut est utilisé par les fonctionnalités membres et les politiques de visibilité du cache des membres. Pour les GM fraîchement synchronisés, Guildforce traite aussi `guilds.owner_id` comme un signal de propriété de premier niveau afin que le GM puisse voir et ouvrir la guilde même si la ligne miroir dans `guild_members` arrive en retard.',
         tags: ['guilds', 'members'],
       },
       {
@@ -496,8 +503,8 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Admin/content tables',
         titleFr: 'Tables admin/contenu',
-        contentEn: '- `user_roles`\n- `bug_reports`\n- `legal_pages`, `legal_page_translations`\n- `patch_notes`, `patch_note_translations`\n- `account_deletion_requests`',
-        contentFr: '- `user_roles`\n- `bug_reports`\n- `legal_pages`, `legal_page_translations`\n- `patch_notes`, `patch_note_translations`\n- `account_deletion_requests`',
+        contentEn: '- `user_roles`\n- `bug_reports`\n- `legal_pages`, `legal_page_translations`\n- `patch_notes`, `patch_note_translations`\n- `account_deletion_requests`\n- `admin_impersonation_sessions`',
+        contentFr: '- `user_roles`\n- `bug_reports`\n- `legal_pages`, `legal_page_translations`\n- `patch_notes`, `patch_note_translations`\n- `account_deletion_requests`\n- `admin_impersonation_sessions`',
         tags: ['database', 'admin'],
       },
       {

@@ -3,6 +3,9 @@ project_id = "supabase-project-ref"
 [functions.battlenet-auth]
 verify_jwt = false
 
+[functions.admin-impersonation]
+verify_jwt = false
+
 [functions.submit-bug-report]
 verify_jwt = false
 
