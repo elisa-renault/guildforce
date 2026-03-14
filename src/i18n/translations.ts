@@ -1236,6 +1236,8 @@ export interface Translations {
       cohortRedactedBadge: string;
       responsesValue: string;
       visibleQuestionsValue: string;
+      yourResponse: string;
+      yourRanking: string;
       marginPoints: string;
       noRunnerUp: string;
       scoreValue: string;

@@ -238,9 +238,9 @@ describe('pollResultsModel', () => {
 
     expect(ratingQuestion?.ratingAverage).toBe(3.25);
     expect(ratingQuestion?.ratingRows).toEqual([
-      { value: 4, label: '4.0', count: 1, percentage: 25 },
-      { value: 3.5, label: '3.5', count: 2, percentage: 50 },
-      { value: 2, label: '2.0', count: 1, percentage: 25 },
+      { value: 4, label: '4.0', count: 1, percentage: 25, isViewerSelected: false },
+      { value: 3.5, label: '3.5', count: 2, percentage: 50, isViewerSelected: false },
+      { value: 2, label: '2.0', count: 1, percentage: 25, isViewerSelected: false },
     ]);
   });
 });

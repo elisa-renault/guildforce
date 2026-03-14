@@ -957,6 +957,8 @@ export const translationsFr: Translations = {
         cohortRedactedBadge: 'Masqué',
         responsesValue: '{{count}} réponses',
         visibleQuestionsValue: '{{count}} questions visibles',
+        yourResponse: 'Votre réponse',
+        yourRanking: 'Votre classement',
         marginPoints: 'écart {{value}}',
         noRunnerUp: 'option seule en tête',
         scoreValue: 'Score {{value}}',

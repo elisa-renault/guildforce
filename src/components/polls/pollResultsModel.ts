@@ -28,6 +28,7 @@ export interface PollResultsChoiceStat {
   percentage: number;
   users: VisibleUser[];
   otherTexts: string[];
+  isViewerSelected: boolean;
 }
 
 export interface PollResultsRatingRow {
@@ -35,6 +36,7 @@ export interface PollResultsRatingRow {
   label: string;
   count: number;
   percentage: number;
+  isViewerSelected: boolean;
 }
 
 export interface PollResultsScaleRow {
@@ -42,6 +44,7 @@ export interface PollResultsScaleRow {
   label: string;
   count: number;
   percentage: number;
+  isViewerSelected: boolean;
 }
 
 export interface PollResultsRankingRow {
@@ -56,6 +59,7 @@ export interface PollResultsTextEntry {
   id: string;
   value: string;
   user?: VisibleUser;
+  isViewerEntry: boolean;
 }
 
 export type PollQuestionTakeaway =
@@ -93,6 +97,7 @@ export interface PollQuestionResultModel {
   scaleMinLabel?: string;
   scaleMaxLabel?: string;
   rankingRows?: PollResultsRankingRow[];
+  viewerRanking?: string[];
   textEntries?: PollResultsTextEntry[];
 }
 
@@ -146,10 +151,46 @@ const getRespondentCount = (poll: GuildPoll, questions: GuildPollQuestion[]) => 
   ).size;
 };
 
-const getChoiceStats = (question: GuildPollQuestion): PollResultsChoiceStat[] => {
+const getViewerResponse = (question: GuildPollQuestion, viewerUserId?: string | null) => {
+  if (!viewerUserId) {
+    return null;
+  }
+
+  return (question.responses || []).find((response) => response.user_id === viewerUserId) || null;
+};
+
+const getViewerSelectedValues = (question: GuildPollQuestion, viewerUserId?: string | null) => {
+  const viewerResponse = getViewerResponse(question, viewerUserId);
+  if (!viewerResponse) {
+    return [];
+  }
+
+  const value = viewerResponse.response_value as ResponseValue;
+
+  if (value.type === 'single_choice') {
+    return value.value ? [value.value] : [];
+  }
+
+  if (value.type === 'multiple_choice') {
+    return value.values;
+  }
+
+  if (
+    (question.question_type === 'date' && value.type === 'date') ||
+    (question.question_type === 'time' && value.type === 'time') ||
+    (question.question_type === 'datetime' && value.type === 'datetime')
+  ) {
+    return value.value ? [value.value] : [];
+  }
+
+  return [];
+};
+
+const getChoiceStats = (question: GuildPollQuestion, viewerUserId?: string | null): PollResultsChoiceStat[] => {
   const respondents = question.responses || [];
   const total = respondents.length;
   const stats = new Map<string, PollResultsChoiceStat>();
+  const viewerSelectedValues = new Set(getViewerSelectedValues(question, viewerUserId));
 
   question.options.forEach((option) => {
     stats.set(option, {
@@ -159,6 +200,7 @@ const getChoiceStats = (question: GuildPollQuestion): PollResultsChoiceStat[] =>
       percentage: 0,
       users: [],
       otherTexts: [],
+      isViewerSelected: viewerSelectedValues.has(option),
     });
   });
 
@@ -170,6 +212,7 @@ const getChoiceStats = (question: GuildPollQuestion): PollResultsChoiceStat[] =>
       percentage: 0,
       users: [],
       otherTexts: [],
+      isViewerSelected: viewerSelectedValues.has(OTHER_OPTION_VALUE),
     });
   }
 
@@ -199,9 +242,10 @@ const getChoiceStats = (question: GuildPollQuestion): PollResultsChoiceStat[] =>
     .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
 };
 
-const getDateTimeStats = (question: GuildPollQuestion): PollResultsChoiceStat[] => {
+const getDateTimeStats = (question: GuildPollQuestion, viewerUserId?: string | null): PollResultsChoiceStat[] => {
   const total = question.responses?.length || 0;
   const stats = new Map<string, PollResultsChoiceStat>();
+  const viewerSelectedValues = new Set(getViewerSelectedValues(question, viewerUserId));
 
   (question.responses || []).forEach((response) => {
     const value = response.response_value as ResponseValue;
@@ -218,6 +262,7 @@ const getDateTimeStats = (question: GuildPollQuestion): PollResultsChoiceStat[] 
       percentage: 0,
       users: [],
       otherTexts: [],
+      isViewerSelected: viewerSelectedValues.has(key),
     };
     current.count += 1;
     if (response.user) {
@@ -234,8 +279,13 @@ const getDateTimeStats = (question: GuildPollQuestion): PollResultsChoiceStat[] 
     .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
 };
 
-const getRatingStats = (question: GuildPollQuestion) => {
+const getRatingStats = (question: GuildPollQuestion, viewerUserId?: string | null) => {
   const step = 0.5;
+  const viewerResponse = getViewerResponse(question, viewerUserId);
+  const viewerValue =
+    viewerResponse && (viewerResponse.response_value as ResponseValue).type === 'rating'
+      ? roundToStep((viewerResponse.response_value as Extract<ResponseValue, { type: 'rating' }>).value, step, 1)
+      : null;
   const values = (question.responses || [])
     .map((response) => {
       const value = response.response_value as ResponseValue;
@@ -260,14 +310,20 @@ const getRatingStats = (question: GuildPollQuestion) => {
       label: formatScaleValue(rating, step),
       count,
       percentage: values.length > 0 ? (count / values.length) * 100 : 0,
+      isViewerSelected: viewerValue === rating,
     }))
     .filter((row) => row.count > 0);
 
   return { average, rows, values };
 };
 
-const getScaleStats = (question: GuildPollQuestion) => {
+const getScaleStats = (question: GuildPollQuestion, viewerUserId?: string | null) => {
   const config = getScaleConfig(question.scale_config);
+  const viewerResponse = getViewerResponse(question, viewerUserId);
+  const viewerValue =
+    viewerResponse && (viewerResponse.response_value as ResponseValue).type === 'scale'
+      ? roundToStep((viewerResponse.response_value as Extract<ResponseValue, { type: 'scale' }>).value, config.step, config.min)
+      : null;
   const values = (question.responses || [])
     .map((response) => {
       const value = response.response_value as ResponseValue;
@@ -299,6 +355,7 @@ const getScaleStats = (question: GuildPollQuestion) => {
         label,
         count,
         percentage: values.length > 0 ? (count / values.length) * 100 : 0,
+        isViewerSelected: viewerValue === value,
       };
     });
 
@@ -342,7 +399,7 @@ const getRankingStats = (question: GuildPollQuestion): PollResultsRankingRow[] =
     .sort((a, b) => b.averageScore - a.averageScore || a.option.localeCompare(b.option));
 };
 
-const getTextEntries = (question: GuildPollQuestion): PollResultsTextEntry[] =>
+const getTextEntries = (question: GuildPollQuestion, viewerUserId?: string | null): PollResultsTextEntry[] =>
   (question.responses || [])
     .map((response) => {
       const value = response.response_value as ResponseValue;
@@ -353,10 +410,17 @@ const getTextEntries = (question: GuildPollQuestion): PollResultsTextEntry[] =>
         id: response.id,
         value: trimmed,
         user: response.user,
+        isViewerEntry: Boolean(viewerUserId) && response.user_id === viewerUserId,
       };
     })
     .filter((entry): entry is PollResultsTextEntry => Boolean(entry))
-    .sort((a, b) => b.value.length - a.value.length || a.value.localeCompare(b.value) || a.id.localeCompare(b.id));
+    .sort(
+      (a, b) =>
+        Number(b.isViewerEntry) - Number(a.isViewerEntry) ||
+        b.value.length - a.value.length ||
+        a.value.localeCompare(b.value) ||
+        a.id.localeCompare(b.id),
+    );
 
 const getLeaderMetrics = (items: Array<{ label: string; count: number; percentage: number }>) => {
   const leader = items[0];
@@ -471,10 +535,11 @@ const isDiscreteQuestionType = (questionType: PollQuestionType) =>
   questionType === 'datetime' ||
   questionType === 'ranking';
 
-const createQuestionModel = (question: GuildPollQuestion): PollQuestionResultModel => {
+const createQuestionModel = (question: GuildPollQuestion, viewerUserId?: string | null): PollQuestionResultModel => {
   const sectionId = question.section_id || UNSECTIONED_SECTION_ID;
   const resolvedAnalysisIntent = resolveAnalysisIntent(question);
   const isConsensusEligible = isConsensusEligibleQuestion(question.question_type, resolvedAnalysisIntent);
+  const viewerResponse = getViewerResponse(question, viewerUserId);
   const base = {
     id: question.id,
     anchorId: `poll-question-${question.id}`,
@@ -503,7 +568,7 @@ const createQuestionModel = (question: GuildPollQuestion): PollQuestionResultMod
   });
 
   if (question.question_type === 'single_choice' || question.question_type === 'multiple_choice') {
-    const choiceStats = getChoiceStats(question);
+    const choiceStats = getChoiceStats(question, viewerUserId);
     const { leader, marginPercentage } = getLeaderMetrics(choiceStats);
     const leaderPercentage = leader?.percentage || 0;
     const isLowConsensus = question.question_type === 'multiple_choice'
@@ -536,7 +601,7 @@ const createQuestionModel = (question: GuildPollQuestion): PollQuestionResultMod
   }
 
   if (question.question_type === 'date' || question.question_type === 'time' || question.question_type === 'datetime') {
-    const choiceStats = getDateTimeStats(question);
+    const choiceStats = getDateTimeStats(question, viewerUserId);
     const { leader, marginPercentage } = getLeaderMetrics(choiceStats);
     const leaderPercentage = leader?.percentage || 0;
     const isLowConsensus = leaderPercentage < 50 || (marginPercentage !== null && marginPercentage < 10);
@@ -559,7 +624,7 @@ const createQuestionModel = (question: GuildPollQuestion): PollQuestionResultMod
   }
 
   if (question.question_type === 'rating') {
-    const { average, rows, values } = getRatingStats(question);
+    const { average, rows, values } = getRatingStats(question, viewerUserId);
     const dispersion = getDispersion(values, 1, 5);
     const normalizedAverage = values.length > 0 ? ((average - 1) / 4) * 100 : 0;
     const isLowConsensus = dispersion === 'split';
@@ -584,7 +649,7 @@ const createQuestionModel = (question: GuildPollQuestion): PollQuestionResultMod
   }
 
   if (question.question_type === 'scale') {
-    const { average, values, config, rows } = getScaleStats(question);
+    const { average, values, config, rows } = getScaleStats(question, viewerUserId);
     const dispersion = getDispersion(values, config.min, config.max);
     const normalizedAverage = values.length > 0 ? ((average - config.min) / Math.max(1, config.max - config.min)) * 100 : 0;
     const isLowConsensus = dispersion === 'split';
@@ -636,10 +701,14 @@ const createQuestionModel = (question: GuildPollQuestion): PollQuestionResultMod
         marginPercentage,
       },
       rankingRows,
+      viewerRanking:
+        viewerResponse && (viewerResponse.response_value as ResponseValue).type === 'ranking'
+          ? [...(viewerResponse.response_value as Extract<ResponseValue, { type: 'ranking' }>).values]
+          : undefined,
     });
   }
 
-  const textEntries = getTextEntries(question);
+  const textEntries = getTextEntries(question, viewerUserId);
   const consensusScore = textEntries.length > 0 ? 40 : 0;
 
   return withAnalysisIntent({
@@ -657,8 +726,8 @@ const createQuestionModel = (question: GuildPollQuestion): PollQuestionResultMod
   });
 };
 
-export const buildPollResultsModel = (poll: GuildPoll): PollResultsModel => {
-  const questions = getSortedQuestions(poll).map(createQuestionModel);
+export const buildPollResultsModel = (poll: GuildPoll, viewerUserId?: string | null): PollResultsModel => {
+  const questions = getSortedQuestions(poll).map((question) => createQuestionModel(question, viewerUserId));
   const respondentCount = getRespondentCount(poll, poll.questions || []);
   const sections = buildSectionModels(poll, questions);
   const discreteQuestions = questions.filter((question) => question.isDiscrete && question.isConsensusEligible);

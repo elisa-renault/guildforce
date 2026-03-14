@@ -43,6 +43,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { StarDisplay } from '@/components/ui/star-rating';
+import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePollResultsCohortAnalysis } from '@/hooks/usePollResultsCohortAnalysis';
 import { formatDateLocalized, formatNumberLocalized, interpolateMessage } from '@/i18n/format';
@@ -103,6 +104,8 @@ const TONE_BADGE_STYLES = {
 
 const INFO_BADGE_CLASS = toneBadgeClass('info');
 const NEUTRAL_BADGE_CLASS = 'border-border bg-card/60 text-foreground';
+const VIEWER_HIGHLIGHT_CLASS = 'border-primary/50 bg-primary/10';
+const VIEWER_BADGE_CLASS = 'border-primary/40 bg-primary/15 text-primary';
 
 const TEXT_PREVIEW_COUNT = {
   compact: 2,
@@ -122,6 +125,7 @@ export const PollResults = ({
   aiSummariesGenerating = false,
   onGenerateAiSummaries,
 }: PollResultsProps) => {
+  const { user } = useAuth();
   const { language, t } = useLanguage();
   const isFull = variant === 'full';
   const [quickNavTopOffset, setQuickNavTopOffset] = useState(96);
@@ -147,10 +151,10 @@ export const PollResults = ({
     filters: cohortFilters,
   });
   const activePoll = cohortPoll || poll;
-  const model = buildPollResultsModel(activePoll);
+  const model = buildPollResultsModel(activePoll, user?.id ?? null);
   const globalModel = useMemo(
-    () => (cohortFilters.length > 0 ? buildPollResultsModel(poll) : null),
-    [cohortFilters.length, poll],
+    () => (cohortFilters.length > 0 ? buildPollResultsModel(poll, user?.id ?? null) : null),
+    [cohortFilters.length, poll, user?.id],
   );
   const isCohortActive = cohortFilters.length > 0;
   const globalQuestionMap = useMemo(
@@ -589,10 +593,23 @@ export const PollResults = ({
     );
   };
 
-  const renderChoiceMetric = (choice: PollResultsChoiceStat) =>
-    displayMode === 'percentage'
+  const renderChoiceMetric = (choice: PollResultsChoiceStat) => displayMode === 'percentage'
       ? `${formatPercentage(choice.percentage)} · ${formatCount(choice.count)}`
       : `${formatCount(choice.count)} · ${formatPercentage(choice.percentage)}`;
+
+  /*
+      ? `${formatPercentage(choice.percentage)} · ${formatCount(choice.count)}`
+      : `${formatCount(choice.count)} · ${formatPercentage(choice.percentage)}`;
+
+  */
+  const getViewerHighlightClass = (isViewerSelected: boolean) =>
+    isViewerSelected ? VIEWER_HIGHLIGHT_CLASS : 'border-border/70 bg-background/60';
+
+  const renderViewerBadge = () => (
+    <Badge variant="outline" className={cn('text-[11px]', VIEWER_BADGE_CLASS)}>
+      {t.polls.resultsUi.yourResponse}
+    </Badge>
+  );
 
   const strongestConsensus = model.strongestConsensusQuestion
     ? model.questions.find((question) => question.id === model.strongestConsensusQuestion?.id) || null
@@ -1030,10 +1047,11 @@ export const PollResults = ({
       minimumFractionDigits: 1,
       maximumFractionDigits: 1,
     });
+    const viewerRanking = question.viewerRanking || [];
 
     return (
       <GlowCard key={question.id} className="p-5" hoverable={false}>
-        <div id={question.anchorId} className="space-y-4 scroll-mt-28">
+        <div id={question.anchorId} data-question-id={question.id} className="space-y-4 scroll-mt-28">
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm font-semibold text-primary">{index + 1}.</span>
@@ -1093,9 +1111,16 @@ export const PollResults = ({
             question.choiceStats && (
               <div className="space-y-3">
                 {question.choiceStats.map((choice) => (
-                  <div key={choice.value} className="space-y-1.5">
+                  <div
+                    key={choice.value}
+                    data-viewer-response={choice.isViewerSelected ? 'true' : undefined}
+                    className={cn('space-y-1.5 rounded-lg border p-3', getViewerHighlightClass(choice.isViewerSelected))}
+                  >
                     <div className="flex items-center justify-between gap-3 text-sm">
-                      <span className="text-foreground">{formatQuestionOptionLabel(question, choice.label)}</span>
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span className="text-foreground">{formatQuestionOptionLabel(question, choice.label)}</span>
+                        {choice.isViewerSelected && renderViewerBadge()}
+                      </div>
                       <span className="whitespace-nowrap text-muted-foreground">{renderChoiceMetric(choice)}</span>
                     </div>
                     <Progress value={choice.percentage} className="h-2 bg-muted/40" />
@@ -1139,7 +1164,11 @@ export const PollResults = ({
                   </div>
                   <div className="space-y-2">
                     {visibleTextEntries.map((entry) => (
-                      <div key={entry.id} className="rounded-lg border border-border/70 bg-background/60 p-3">
+                      <div
+                        key={entry.id}
+                        data-viewer-response={entry.isViewerEntry ? 'true' : undefined}
+                        className={cn('rounded-lg border p-3', getViewerHighlightClass(entry.isViewerEntry))}
+                      >
                         {!poll.is_anonymous && entry.user && (
                           <div className="mb-2 flex items-center gap-2">
                             <Avatar className="h-6 w-6">
@@ -1152,8 +1181,10 @@ export const PollResults = ({
                               )}
                             </Avatar>
                             <span className="text-sm font-medium text-foreground">{entry.user.username}</span>
+                            {entry.isViewerEntry && renderViewerBadge()}
                           </div>
                         )}
+                        {poll.is_anonymous && entry.isViewerEntry && <div className="mb-2">{renderViewerBadge()}</div>}
                         <p className="text-sm text-muted-foreground">{entry.value}</p>
                       </div>
                     ))}
@@ -1194,10 +1225,15 @@ export const PollResults = ({
               </div>
               <div className="space-y-1.5">
                 {question.ratingRows.map((row) => (
-                  <div key={row.value} className="flex items-center gap-1.5">
+                  <div
+                    key={row.value}
+                    data-viewer-response={row.isViewerSelected ? 'true' : undefined}
+                    className={cn('flex items-center gap-1.5 rounded-lg border p-3', getViewerHighlightClass(row.isViewerSelected))}
+                  >
                     <div className="w-12 shrink-0 text-left text-xs text-muted-foreground">{formatRatingValue(row.value)} / 5</div>
                     <Progress value={row.percentage} className="h-2 flex-1 bg-muted/40" />
-                    <span className="w-20 text-right text-xs text-muted-foreground">{renderChoiceMetric({ value: row.label, label: row.label, count: row.count, percentage: row.percentage, users: [], otherTexts: [] })}</span>
+                    {row.isViewerSelected && renderViewerBadge()}
+                    <span className="w-20 text-right text-xs text-muted-foreground">{renderChoiceMetric({ value: row.label, label: row.label, count: row.count, percentage: row.percentage, users: [], otherTexts: [], isViewerSelected: false })}</span>
                   </div>
                 ))}
               </div>
@@ -1238,10 +1274,15 @@ export const PollResults = ({
               </div>
               <div className="space-y-1.5">
                 {question.scaleRows.map((row) => (
-                  <div key={row.label} className="flex items-center gap-1.5">
+                  <div
+                    key={row.label}
+                    data-viewer-response={row.isViewerSelected ? 'true' : undefined}
+                    className={cn('flex items-center gap-1.5 rounded-lg border p-3', getViewerHighlightClass(row.isViewerSelected))}
+                  >
                     <div className="w-5 shrink-0 text-left text-xs text-muted-foreground">{row.label}</div>
                     <Progress value={row.percentage} className="h-2 flex-1 bg-muted/40" />
-                    <span className="w-20 text-right text-xs text-muted-foreground">{renderChoiceMetric({ value: row.label, label: row.label, count: row.count, percentage: row.percentage, users: [], otherTexts: [] })}</span>
+                    {row.isViewerSelected && renderViewerBadge()}
+                    <span className="w-20 text-right text-xs text-muted-foreground">{renderChoiceMetric({ value: row.label, label: row.label, count: row.count, percentage: row.percentage, users: [], otherTexts: [], isViewerSelected: false })}</span>
                   </div>
                 ))}
               </div>
@@ -1250,6 +1291,24 @@ export const PollResults = ({
 
           {question.question.question_type === 'ranking' && question.rankingRows && (
             <div className="space-y-2">
+              {viewerRanking.length > 0 && (
+                <div data-viewer-ranking="true" className={cn('rounded-lg border p-4', VIEWER_HIGHLIGHT_CLASS)}>
+                  <div className="mb-3 flex items-center gap-2">
+                    <p className="text-sm font-semibold text-foreground">{t.polls.resultsUi.yourRanking}</p>
+                    {renderViewerBadge()}
+                  </div>
+                  <div className="space-y-2">
+                    {viewerRanking.map((option, viewerIndex) => (
+                      <div key={`${question.id}-viewer-ranking-${option}`} className="flex items-center gap-3 text-sm text-foreground">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
+                          {viewerIndex + 1}
+                        </span>
+                        <span className="min-w-0 truncate">{option}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               {question.rankingRows.map((row, rankingIndex) => (
                 <div key={row.option} className="flex items-center gap-3 rounded-lg border border-border/70 bg-background/60 p-3">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">

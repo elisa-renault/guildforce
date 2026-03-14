@@ -956,6 +956,8 @@ export const translationsDe: Translations = createLocaleTranslations(translation
       "cohortRedactedBadge": "Verborgen",
       "responsesValue": "{{count}} Antworten",
       "visibleQuestionsValue": "{{count}} sichtbare Fragen",
+      "yourResponse": "Ihre Antwort",
+      "yourRanking": "Ihre Rangfolge",
       "marginPoints": "Abstand {{value}}",
       "noRunnerUp": "einzige f\u00fchrende Option",
       "scoreValue": "Wert {{value}}",

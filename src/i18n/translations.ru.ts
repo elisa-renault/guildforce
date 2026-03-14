@@ -1115,6 +1115,8 @@ export const translationsRu: Translations = createLocaleTranslations(translation
       collapseSection: 'Collapse section',
       responsesValue: '{{count}} responses',
       visibleQuestionsValue: '{{count}} visible questions',
+      yourResponse: 'Ваш ответ',
+      yourRanking: 'Ваш порядок',
       marginPoints: 'margin {{value}}',
       noRunnerUp: 'single leading option',
       scoreValue: 'Score {{value}}',
