@@ -2597,6 +2597,7 @@ export type Database = {
         Args: { p_roster_id: string; p_user_id: string }
         Returns: boolean
       }
+      // Backend permission semantics: guild owner_id is treated as GM authority.
       is_guild_gm: {
         Args: { p_guild_id: string; p_user_id: string }
         Returns: boolean
