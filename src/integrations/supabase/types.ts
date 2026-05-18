@@ -2480,6 +2480,7 @@ export type Database = {
         Args: { p_poll_id: string; p_user_id: string }
         Returns: boolean
       }
+      // Vault rank access is evaluated against current guild_roster_cache matches.
       can_access_guild_secret: {
         Args: { p_capability: string; p_secret_id: string; p_user_id: string }
         Returns: boolean
