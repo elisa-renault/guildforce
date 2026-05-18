@@ -441,11 +441,14 @@ export interface Translations {
     viewingDraft: string;
     activeOpen: string;
     prepareNew: string;
+    renameSeason: string;
     archiveSeason: string;
     activateDraft: string;
     dialogTitle: string;
+    renameDialogTitle: string;
     name: string;
     namePlaceholder: string;
+    renameNameLabel: string;
     startsAt: string;
     endsAt: string;
     prefillPrevious: string;
@@ -457,8 +460,10 @@ export interface Translations {
     sourceSeason: string;
     createDraft: string;
     startSeason: string;
+    renameConfirm: string;
     created: string;
     activated: string;
+    renamed: string;
     archivedToast: string;
     confirmArchive: string;
     noSeason: string;

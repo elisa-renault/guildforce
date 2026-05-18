@@ -690,6 +690,23 @@ const RosterWishes = () => {
     }
   };
 
+  const handleRenameSeason = async (seasonId: string, name: string) => {
+    setSeasonBusy(true);
+    try {
+      const { error } = await supabase
+        .from('guild_seasons')
+        .update({ name })
+        .eq('id', seasonId);
+      if (error) throw error;
+      await fetchSeasons(guildId);
+      toast({ title: t.seasons.renamed });
+    } catch (error: unknown) {
+      toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
+    } finally {
+      setSeasonBusy(false);
+    }
+  };
+
   const startEditing = (member: MemberWish) => {
     if (!isSelectedSeasonActive) {
       toast({ title: t.seasons.archived, description: selectedSeason?.state === 'draft' ? t.seasons.draftHint : t.seasons.archivedHint, variant: 'destructive' });
@@ -1397,8 +1414,15 @@ const RosterWishes = () => {
         className={`${isMobile ? 'fixed left-0 right-0' : 'sticky'} -mt-px z-30 bg-background/80 backdrop-blur-lg border-b border-border/50`}
         style={{ top: controlsTop }}
       >
-        <PageContainer className={cn('px-3 md:px-4 py-2', isMobile ? 'space-y-2' : 'flex items-center justify-between gap-2')} width="wide">
+          <PageContainer className={cn('px-3 md:px-4 py-2', isMobile ? 'space-y-2' : 'flex items-center justify-between gap-2')} width="wide">
           <div className="flex min-w-0 flex-1 items-center gap-2">
+            <RosterSelector
+              rosters={rosters}
+              selectedRosterId={selectedRosterId}
+              onSelect={setSelectedRosterId}
+              showAccessIndicator={true}
+              showWishesLockIndicator={true}
+            />
             <SeasonSelector
               seasons={seasons}
               selectedSeasonId={selectedSeasonId}
@@ -1409,13 +1433,7 @@ const RosterWishes = () => {
               onPrepareSeason={handlePrepareSeason}
               onArchiveSeason={handleArchiveSeason}
               onActivateSeason={handleActivateSeason}
-            />
-            <RosterSelector
-              rosters={rosters}
-              selectedRosterId={selectedRosterId}
-              onSelect={setSelectedRosterId}
-              showAccessIndicator={true}
-              showWishesLockIndicator={true}
+              onRenameSeason={handleRenameSeason}
             />
           </div>
           {isMobile ? (

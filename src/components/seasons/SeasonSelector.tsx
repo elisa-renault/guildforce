@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Archive, CalendarDays, CheckCircle2, MoreVertical, Play, Plus, ScrollText } from 'lucide-react';
+import { Archive, CalendarDays, CheckCircle2, MoreVertical, Pencil, Play, Plus, ScrollText } from 'lucide-react';
 
 import { CosmicButton } from '@/components/CosmicButton';
 import { Badge } from '@/components/ui/badge';
@@ -30,6 +30,7 @@ interface SeasonSelectorProps {
   onPrepareSeason?: (input: PrepareSeasonInput) => Promise<void>;
   onArchiveSeason?: (seasonId: string) => Promise<void>;
   onActivateSeason?: (seasonId: string) => Promise<void>;
+  onRenameSeason?: (seasonId: string, name: string) => Promise<void>;
 }
 
 export interface PrepareSeasonInput {
@@ -70,10 +71,13 @@ export const SeasonSelector = ({
   onPrepareSeason,
   onArchiveSeason,
   onActivateSeason,
+  onRenameSeason,
 }: SeasonSelectorProps) => {
   const { t } = useLanguage();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [name, setName] = useState('');
+  const [renameName, setRenameName] = useState('');
   const [startsAt, setStartsAt] = useState('');
   const [endsAt, setEndsAt] = useState('');
   const [sourceSeasonId, setSourceSeasonId] = useState('');
@@ -81,7 +85,7 @@ export const SeasonSelector = ({
   const [resetCopiedWishes, setResetCopiedWishes] = useState(true);
   const [activateImmediately, setActivateImmediately] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [actionBusy, setActionBusy] = useState<null | 'archive' | 'activate'>(null);
+  const [actionBusy, setActionBusy] = useState<null | 'archive' | 'activate' | 'rename'>(null);
 
   const sortedSeasons = useMemo(
     () =>
@@ -110,6 +114,12 @@ export const SeasonSelector = ({
   const openDialog = () => {
     resetForm();
     setDialogOpen(true);
+  };
+
+  const openRenameDialog = () => {
+    if (!selectedSeason) return;
+    setRenameName(selectedSeason.name);
+    setRenameDialogOpen(true);
   };
 
   const submit = async () => {
@@ -153,6 +163,17 @@ export const SeasonSelector = ({
     }
   };
 
+  const renameSelected = async () => {
+    if (!selectedSeason || !onRenameSeason || !renameName.trim()) return;
+    setActionBusy('rename');
+    try {
+      await onRenameSeason(selectedSeason.id, renameName.trim());
+      setRenameDialogOpen(false);
+    } finally {
+      setActionBusy(null);
+    }
+  };
+
   const getStateLabel = (state: GuildSeasonState) => {
     if (state === 'active') return t.seasons.active;
     if (state === 'draft') return t.seasons.draft;
@@ -167,8 +188,6 @@ export const SeasonSelector = ({
       </div>
     );
   }
-
-  const SelectedIcon = selectedSeason ? stateIcon[selectedSeason.state] : ScrollText;
 
   return (
     <>
@@ -198,12 +217,6 @@ export const SeasonSelector = ({
             })}
           </SelectContent>
         </Select>
-        {selectedSeason && (
-          <Badge variant="outline" className={cn('hidden h-6 gap-1 px-2 text-[10px] sm:inline-flex', getSeasonStateBadgeClass(selectedSeason.state))}>
-            <SelectedIcon className="h-3 w-3" />
-            {getStateLabel(selectedSeason.state)}
-          </Badge>
-        )}
         {canManage && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -220,6 +233,12 @@ export const SeasonSelector = ({
                 <Plus className="mr-2 h-4 w-4" />
                 {t.seasons.prepareNew}
               </DropdownMenuItem>
+              {selectedSeason && onRenameSeason && (
+                <DropdownMenuItem onClick={openRenameDialog} disabled={actionBusy === 'rename'} className="cursor-pointer">
+                  <Pencil className="mr-2 h-4 w-4" />
+                  {t.seasons.renameSeason}
+                </DropdownMenuItem>
+              )}
               {selectedSeason?.state === 'draft' && (
                 <DropdownMenuItem onClick={activateSelected} disabled={actionBusy === 'activate'} className="cursor-pointer">
                   <Play className="mr-2 h-4 w-4" />
@@ -320,6 +339,34 @@ export const SeasonSelector = ({
               </CosmicButton>
               <CosmicButton onClick={submit} loading={saving} disabled={!name.trim()}>
                 {activateImmediately ? t.seasons.startSeason : t.seasons.createDraft}
+              </CosmicButton>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+        <DialogContent className="max-w-md border-border bg-card">
+          <DialogHeader>
+            <DialogTitle>{t.seasons.renameDialogTitle}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="season-rename-name">{t.seasons.renameNameLabel}</Label>
+              <Input
+                id="season-rename-name"
+                value={renameName}
+                onChange={(event) => setRenameName(event.target.value)}
+                placeholder={t.seasons.namePlaceholder}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <CosmicButton variant="outline" onClick={() => setRenameDialogOpen(false)}>
+                {t.common.cancel}
+              </CosmicButton>
+              <CosmicButton onClick={renameSelected} loading={actionBusy === 'rename'} disabled={!renameName.trim()}>
+                {t.seasons.renameConfirm}
               </CosmicButton>
             </div>
           </div>

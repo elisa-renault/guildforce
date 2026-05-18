@@ -683,21 +683,21 @@ const Wishes = () => {
 
       {/* Roster + Save controls */}
       <div className="sticky top-[104px] z-30 bg-background/80 backdrop-blur-lg border-b border-border/50">
-        <PageContainer className="px-3 md:px-4 py-3 flex items-center justify-between gap-2" width="wide">
-          <div className="flex min-w-0 flex-1 items-center gap-2">
-            <SeasonSelector
-              seasons={seasons}
-              selectedSeasonId={selectedSeasonId}
-              onSelect={selectSeason}
-              emptyLabel={seasonSupportMode === 'legacy' ? t.seasons.legacyMode : undefined}
-            />
-            <RosterSelector
-              rosters={accessibleRosters}
-              selectedRosterId={selectedRosterId}
-              onSelect={setSelectedRosterId}
-              showWishesLockIndicator={true}
-            />
-          </div>
+          <PageContainer className="px-3 md:px-4 py-3 flex items-center justify-between gap-2" width="wide">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              <RosterSelector
+                rosters={accessibleRosters}
+                selectedRosterId={selectedRosterId}
+                onSelect={setSelectedRosterId}
+                showWishesLockIndicator={true}
+              />
+              <SeasonSelector
+                seasons={seasons}
+                selectedSeasonId={selectedSeasonId}
+                onSelect={selectSeason}
+                emptyLabel={seasonSupportMode === 'legacy' ? t.seasons.legacyMode : undefined}
+              />
+            </div>
           <CosmicButton 
             size="sm" 
             onClick={saveWishes} 
