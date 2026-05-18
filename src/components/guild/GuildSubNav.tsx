@@ -251,33 +251,33 @@ export const GuildSubNav = ({
   };
 
   return (
-    <div data-guild-subnav className="sticky z-40 bg-background/80 backdrop-blur-lg border-b border-border/50 w-full" style={{ top: subNavTop }}>
+    <div data-guild-subnav className="sticky -mt-px z-40 bg-background/80 backdrop-blur-lg border-b border-border/50 w-full" style={{ top: subNavTop }}>
       <PageContainer className="max-w-full overflow-hidden px-3 md:px-4" width="wide">
-        <div className="flex items-center gap-2 py-2">
+        <div className="flex items-center gap-1.5 py-1.5 md:gap-2 md:py-2">
           {/* Back button - uses browser history or fallback */}
           <button
             onClick={handleBack}
-            className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className="h-7 w-7 rounded-lg bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background md:h-8 md:w-8"
             title={t.common.back}
           >
             <ArrowLeft className="h-4 w-4 text-muted-foreground" />
           </button>
 
           {/* Guild avatar + name */}
-          <div className="flex items-center gap-2 min-w-0 shrink-0 max-w-[120px] md:max-w-none">
+          <div className="flex items-center gap-1.5 min-w-0 shrink-0 max-w-[96px] md:max-w-none md:gap-2">
             {guild.avatar_url && (
-              <Avatar className="h-6 w-6 md:h-7 md:w-7 border border-border/50 shrink-0">
+              <Avatar className="h-5 w-5 md:h-7 md:w-7 border border-border/50 shrink-0">
                 <AvatarImage src={guild.avatar_url} alt={guild.name} />
                 <AvatarFallback className="text-[10px] md:text-xs">{guild.name.charAt(0)}</AvatarFallback>
               </Avatar>
             )}
-            <span className="font-semibold text-sm md:text-base text-foreground truncate">
+            <span className="font-semibold text-[13px] md:text-base text-foreground truncate">
               {guild.name}
             </span>
           </div>
 
           {/* Navigation tabs - icons only on mobile, icons + text on desktop */}
-          <nav className="flex items-center gap-0.5 md:gap-1 ml-auto overflow-x-auto scrollbar-hide">
+          <nav className="ml-auto flex items-center gap-0.5 overflow-x-auto scrollbar-hide md:gap-1">
             {visibleTabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = normalizedActiveTab === tab.id || (activeTab === 'wishes' && tab.id === 'roster');
@@ -286,7 +286,7 @@ export const GuildSubNav = ({
                 <button
                   key={tab.id}
                   onClick={() => navigate(tab.path)}
-                  className={cn(navItemClass({ active: isActive, size: 'guild' }), 'shrink-0')}
+                  className={cn(navItemClass({ active: isActive, size: 'guild' }), 'h-8 min-w-8 shrink-0 px-2 md:h-auto md:min-w-0')}
                   title={tab.label}
                 >
                   <Icon className="h-4 w-4" />

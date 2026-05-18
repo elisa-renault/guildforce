@@ -27,6 +27,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { resolveSpecOrder } from '@/lib/wishOrder';
 import { toneBadgeClass, toneCalloutClass, toneTextClass } from '@/lib/design-tokens';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SeasonSelector, SeasonStateCallout } from '@/components/seasons/SeasonSelector';
+import { isSeasonFilteringEnabled, isSeasonSchemaUnavailable, type SeasonSupportMode } from '@/lib/seasonSupport';
+import type { GuildSeason } from '@/types/seasons';
 
 interface WishChoice {
   choice_index: number;
@@ -54,11 +57,14 @@ const roleConfig: Record<string, { color: string }> = {
 const MemberWishes = () => {
   const navigate = useNavigate();
   const { regionSlug, serverSlug, guildSlug, memberId } = useParams();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { t, language } = useLanguage();
   const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [guild, setGuild] = useState<{ id: string; name: string; server: string; region: string } | null>(null);
+  const [seasons, setSeasons] = useState<GuildSeason[]>([]);
+  const [selectedSeasonId, setSelectedSeasonId] = useState<string | null>(null);
+  const [seasonSupportMode, setSeasonSupportMode] = useState<SeasonSupportMode>('enabled');
   const [member, setMember] = useState<{ username: string; battletag: string | null; status: string; rosterDecision: RosterSelectionStatus } | null>(null);
   const [wishes, setWishes] = useState<WishChoice[]>([]);
   const [isGM, setIsGM] = useState(false);
@@ -107,6 +113,35 @@ const MemberWishes = () => {
       }
       
       setGuild({ id: matchedGuild.id, name: matchedGuild.name, server: matchedGuild.server, region: matchedGuild.region || 'eu' });
+      const requestedSeasonId = searchParams.get('seasonId');
+      let initialSeason: GuildSeason | null = null;
+      const { data: seasonsData, error: seasonsError } = await supabase
+        .from('guild_seasons')
+        .select('*')
+        .eq('guild_id', matchedGuild.id)
+        .order('state', { ascending: true })
+        .order('created_at', { ascending: false });
+      if (seasonsError && isSeasonSchemaUnavailable(seasonsError)) {
+        setSeasonSupportMode('legacy');
+        setSeasons([]);
+        setSelectedSeasonId(null);
+      } else {
+        const nextSeasons = (seasonsData || []) as GuildSeason[];
+        if (nextSeasons.length === 0) {
+          setSeasonSupportMode('legacy');
+          setSeasons([]);
+          setSelectedSeasonId(null);
+        } else {
+          setSeasonSupportMode('enabled');
+          setSeasons(nextSeasons);
+          initialSeason =
+            nextSeasons.find((season) => season.id === requestedSeasonId) ||
+            nextSeasons.find((season) => season.state === 'active') ||
+            nextSeasons[0] ||
+            null;
+          setSelectedSeasonId(initialSeason?.id || null);
+        }
+      }
 
       // Check if current user is GM
       if (user) {
@@ -147,10 +182,19 @@ const MemberWishes = () => {
         .single();
 
       if (profileData) {
+        const { data: intentData } = initialSeason
+          ? await supabase
+              .from('guild_season_member_intents')
+              .select('commitment_status')
+              .eq('guild_id', matchedGuild.id)
+              .eq('season_id', initialSeason.id)
+              .eq('user_id', memberId)
+              .maybeSingle()
+          : { data: null };
         setMember({
           username: profileData.username,
           battletag: profileData.battletag,
-          status: memberData.status,
+          status: intentData?.commitment_status || memberData.status,
           rosterDecision: 'undecided',
         });
       }
@@ -158,12 +202,15 @@ const MemberWishes = () => {
       setMemberWishesLocked(!!memberData.wishes_locked);
 
       // Get wishes with validation info
-      const { data: wishesData } = await supabase
+      let wishesQuery = supabase
         .from('class_wishes')
         .select('choice_index, class_id, spec_ids, spec_order, comment, validation_status, validated_by, validated_at')
         .eq('guild_id', matchedGuild.id)
-        .eq('user_id', memberId)
-        .order('choice_index');
+        .eq('user_id', memberId);
+      if (initialSeason?.id) {
+        wishesQuery = wishesQuery.eq('season_id', initialSeason.id);
+      }
+      const { data: wishesData } = await wishesQuery.order('choice_index');
 
       if (wishesData) {
         setWishes(wishesData.map(w => ({
@@ -187,7 +234,10 @@ const MemberWishes = () => {
           .maybeSingle();
 
         if (rosterInGuild) {
-          const { data: selectionRows } = await supabase.rpc('get_roster_member_selection', { p_roster_id: rosterId });
+          const { data: selectionRows } = await supabase.rpc(
+            'get_roster_member_selection',
+            initialSeason?.id ? { p_roster_id: rosterId, p_season_id: initialSeason.id } : { p_roster_id: rosterId }
+          );
           const memberSelection = (selectionRows || []).find((row) => row.user_id === memberId);
           if (memberSelection?.selection_status) {
             setMember((prev) => prev ? { ...prev, rosterDecision: memberSelection.selection_status as RosterSelectionStatus } : prev);
@@ -204,6 +254,7 @@ const MemberWishes = () => {
   // Handle validation
   const handleValidation = async (choiceIndex: number, status: ValidationStatus) => {
     if (!guild || !memberId || !user) return;
+    if (seasonSupportMode === 'enabled' && (!selectedSeasonId || selectedSeason?.state !== 'active')) return;
     
     setValidatingWish(choiceIndex);
     
@@ -214,7 +265,7 @@ const MemberWishes = () => {
         : w
     ));
 
-    const { error } = await supabase
+    let updateQuery = supabase
       .from('class_wishes')
       .update({
         validation_status: status,
@@ -224,16 +275,23 @@ const MemberWishes = () => {
       .eq('guild_id', guild.id)
       .eq('user_id', memberId)
       .eq('choice_index', choiceIndex);
+    if (seasonSupportMode === 'enabled' && selectedSeasonId) {
+      updateQuery = updateQuery.eq('season_id', selectedSeasonId);
+    }
+    const { error } = await updateQuery;
 
     if (error) {
       toast.error(t.errors.generic);
       // Revert on error
-      const { data } = await supabase
+      let reloadQuery = supabase
         .from('class_wishes')
         .select('choice_index, class_id, spec_ids, spec_order, comment, validation_status, validated_by, validated_at')
         .eq('guild_id', guild.id)
-        .eq('user_id', memberId)
-        .order('choice_index');
+        .eq('user_id', memberId);
+      if (seasonSupportMode === 'enabled' && selectedSeasonId) {
+        reloadQuery = reloadQuery.eq('season_id', selectedSeasonId);
+      }
+      const { data } = await reloadQuery.order('choice_index');
       if (data) {
         setWishes(data.map(w => ({
           choice_index: w.choice_index,
@@ -260,6 +318,7 @@ const MemberWishes = () => {
 
   const handleRosterDecisionChange = async (status: RosterSelectionStatus) => {
     if (!guild || !memberId || !user || !canManageWishes) return;
+    if (seasonSupportMode === 'enabled' && (!selectedSeasonId || selectedSeason?.state !== 'active')) return;
     const rosterId = searchParams.get('rosterId');
     if (!rosterId) return;
 
@@ -272,14 +331,23 @@ const MemberWishes = () => {
       const { error } = await supabase
         .from('roster_member_selection')
         .upsert(
-          {
-            roster_id: rosterId,
-            user_id: memberId,
-            selection_status: status,
-            decided_by: user.id,
-            decided_at: now,
-          },
-          { onConflict: 'roster_id,user_id' }
+          seasonSupportMode === 'enabled' && selectedSeasonId
+            ? {
+                roster_id: rosterId,
+                season_id: selectedSeasonId,
+                user_id: memberId,
+                selection_status: status,
+                decided_by: user.id,
+                decided_at: now,
+              }
+            : {
+                roster_id: rosterId,
+                user_id: memberId,
+                selection_status: status,
+                decided_by: user.id,
+                decided_at: now,
+              },
+          { onConflict: seasonSupportMode === 'enabled' ? 'roster_id,season_id,user_id' : 'roster_id,user_id' }
         );
       if (error) throw error;
     } catch (error: unknown) {
@@ -340,6 +408,14 @@ const MemberWishes = () => {
     t.wishes.secondChoice,
     t.wishes.thirdChoice,
   ];
+  const selectedSeason = seasons.find((season) => season.id === selectedSeasonId) || null;
+  const isSelectedSeasonActive = seasonSupportMode === 'legacy' || selectedSeason?.state === 'active';
+  const selectSeason = (seasonId: string) => {
+    setSelectedSeasonId(seasonId);
+    const next = new URLSearchParams(searchParams);
+    next.set('seasonId', seasonId);
+    setSearchParams(next, { replace: true });
+  };
 
   if (loading) {
     return (
@@ -374,6 +450,12 @@ const MemberWishes = () => {
           </div>
           
           <div className="flex items-center gap-3">
+            <SeasonSelector
+              seasons={seasons}
+              selectedSeasonId={selectedSeasonId}
+              onSelect={selectSeason}
+              emptyLabel={seasonSupportMode === 'legacy' ? t.seasons.legacyMode : undefined}
+            />
             {/* Status badge */}
             {member && (
               <Badge 
@@ -413,7 +495,8 @@ const MemberWishes = () => {
                 size="sm"
                 variant="outline"
                 icon={<Pencil className="h-3.5 w-3.5" strokeWidth={1.5} />}
-                onClick={() => navigate(`${getGuildPath(guild.region, guild.server, guild.name)}/wishes`)}
+                disabled={!isSelectedSeasonActive}
+                onClick={() => navigate(`${getGuildPath(guild.region, guild.server, guild.name)}/wishes${selectedSeasonId ? `?seasonId=${encodeURIComponent(selectedSeasonId)}` : ''}`)}
               >
                 {t.common.edit}
               </CosmicButton>
@@ -444,6 +527,14 @@ const MemberWishes = () => {
           </h2>
         </div>
 
+        {seasonSupportMode === 'legacy' ? (
+          <div className={cn('mb-4 rounded-lg border p-3 text-sm', toneCalloutClass('info'))}>
+            <span className={toneTextClass('info')}>{t.seasons.legacyModeHint}</span>
+          </div>
+        ) : (
+          selectedSeason && <SeasonStateCallout season={selectedSeason} />
+        )}
+
         {memberWishesLocked && (
           <div className={cn("mb-4 rounded-lg border p-3 flex items-start gap-2", toneCalloutClass('warning'))}>
             <Lock className={cn("h-4 w-4 mt-0.5", toneTextClass('warning'))} />
@@ -461,7 +552,7 @@ const MemberWishes = () => {
               <Select
                 value={member?.rosterDecision || 'undecided'}
                 onValueChange={(value) => handleRosterDecisionChange(value as RosterSelectionStatus)}
-                disabled={updatingRosterDecision}
+                disabled={updatingRosterDecision || !isSelectedSeasonActive}
               >
                 <SelectTrigger className="w-full sm:w-[220px]">
                   <SelectValue />
@@ -576,7 +667,7 @@ const MemberWishes = () => {
                         validatedBy={wish.validated_by}
                         validatedAt={wish.validated_at}
                         isGM={isGM}
-                        onValidate={isGM ? (status) => handleValidation(wish.choice_index, status) : undefined}
+                        onValidate={isGM && isSelectedSeasonActive ? (status) => handleValidation(wish.choice_index, status) : undefined}
                         loading={validatingWish === wish.choice_index}
                       />
                     </div>

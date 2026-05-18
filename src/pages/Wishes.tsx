@@ -13,12 +13,15 @@ import { CosmicButton } from '@/components/CosmicButton';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { GuildSubNav } from '@/components/guild';
 import { RosterSelector } from '@/components/roster';
+import { SeasonSelector, SeasonStateCallout } from '@/components/seasons/SeasonSelector';
+import type { GuildSeason } from '@/types/seasons';
 import { Loader2, Save, GripVertical, Plus, Trash2, ChevronUp, ChevronDown, Lock, Clock } from 'lucide-react';
 
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
 import { resolveSpecOrder } from '@/lib/wishOrder';
 import { formatDateTimeLocalized, interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
+import { isSeasonFilteringEnabled, isSeasonSchemaUnavailable, type SeasonSupportMode } from '@/lib/seasonSupport';
 import { resolveWishLockState } from '@/lib/wishLock';
 import { cn } from '@/lib/utils';
 import { toneCalloutClass, toneTextClass } from '@/lib/design-tokens';
@@ -194,10 +197,14 @@ const Wishes = () => {
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const requestedRosterId = new URLSearchParams(location.search).get('rosterId');
+  const requestedSeasonId = new URLSearchParams(location.search).get('seasonId');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [guildId, setGuildId] = useState<string | null>(null);
   const [guild, setGuild] = useState<{ name: string; server: string; region: string; faction: string; avatar_url?: string | null } | null>(null);
+  const [seasons, setSeasons] = useState<GuildSeason[]>([]);
+  const [selectedSeasonId, setSelectedSeasonId] = useState<string | null>(null);
+  const [seasonSupportMode, setSeasonSupportMode] = useState<SeasonSupportMode>('enabled');
   const [confirmed, setConfirmed] = useState<CommitmentStatus>('undecided');
   const [memberWishesLocked, setMemberWishesLocked] = useState(false);
   const [wishes, setWishes] = useState<WishData[]>([
@@ -258,6 +265,36 @@ const Wishes = () => {
         faction: matchedGuild.faction,
         avatar_url: matchedGuild.avatar_url 
       });
+
+      let initialSeason: GuildSeason | null = null;
+      const { data: seasonsData, error: seasonsError } = await supabase
+        .from('guild_seasons')
+        .select('*')
+        .eq('guild_id', foundGuildId)
+        .order('state', { ascending: true })
+        .order('created_at', { ascending: false });
+      if (seasonsError && isSeasonSchemaUnavailable(seasonsError)) {
+        setSeasonSupportMode('legacy');
+        setSeasons([]);
+        setSelectedSeasonId(null);
+      } else {
+        const nextSeasons = (seasonsData || []) as GuildSeason[];
+        if (nextSeasons.length === 0) {
+          setSeasonSupportMode('legacy');
+          setSeasons([]);
+          setSelectedSeasonId(null);
+        } else {
+          setSeasonSupportMode('enabled');
+          setSeasons(nextSeasons);
+          initialSeason =
+            nextSeasons.find((season) => season.id === requestedSeasonId) ||
+            nextSeasons.find((season) => season.state === 'active') ||
+            nextSeasons[0];
+          if (initialSeason) {
+            setSelectedSeasonId(initialSeason.id);
+          }
+        }
+      }
 
       // Check if user is GM
       const { data: gmCheck } = await supabase.rpc('is_guild_gm', {
@@ -322,13 +359,22 @@ const Wishes = () => {
         .single();
 
       if (memberData) {
+        const { data: intentData } = initialSeason
+          ? await supabase
+              .from('guild_season_member_intents')
+              .select('commitment_status')
+              .eq('guild_id', foundGuildId)
+              .eq('season_id', initialSeason.id)
+              .eq('user_id', user.id)
+              .maybeSingle()
+          : { data: null };
         // Map DB status to CommitmentStatus
         const statusMap: Record<string, CommitmentStatus> = {
           'confirmed': 'confirmed',
           'potential': 'undecided',
           'withdrawn': 'withdrawn',
         };
-        setConfirmed(statusMap[memberData.status] || 'undecided');
+        setConfirmed(statusMap[intentData?.commitment_status || memberData.status] || 'undecided');
         setMemberWishesLocked(!!memberData.wishes_locked);
       }
 
@@ -336,20 +382,44 @@ const Wishes = () => {
     };
 
     fetchData();
-  }, [user, authLoading, regionSlug, serverSlug, guildSlug, navigate, requestedRosterId]);
+  }, [user, authLoading, regionSlug, serverSlug, guildSlug, navigate, requestedRosterId, requestedSeasonId]);
 
   // Fetch wishes when roster changes
   useEffect(() => {
     if (!guildId || !selectedRosterId || !user) return;
 
+    const seasonFilteringEnabled = isSeasonFilteringEnabled(seasonSupportMode, selectedSeasonId);
+    if (seasonSupportMode === 'enabled' && !selectedSeasonId) return;
+
     const fetchWishes = async () => {
-      const { data: wishesData } = await supabase
+      const { data: intentData } = seasonFilteringEnabled
+        ? await supabase
+            .from('guild_season_member_intents')
+            .select('commitment_status')
+            .eq('guild_id', guildId)
+            .eq('season_id', selectedSeasonId!)
+            .eq('user_id', user.id)
+            .maybeSingle()
+        : { data: null };
+      if (intentData?.commitment_status) {
+        const statusMap: Record<string, CommitmentStatus> = {
+          confirmed: 'confirmed',
+          potential: 'undecided',
+          withdrawn: 'withdrawn',
+        };
+        setConfirmed(statusMap[intentData.commitment_status] || 'undecided');
+      }
+
+      let wishesQuery = supabase
         .from('class_wishes')
         .select('*')
         .eq('guild_id', guildId)
         .eq('user_id', user.id)
-        .eq('roster_id', selectedRosterId)
-        .order('choice_index');
+        .eq('roster_id', selectedRosterId);
+      if (seasonFilteringEnabled) {
+        wishesQuery = wishesQuery.eq('season_id', selectedSeasonId!);
+      }
+      const { data: wishesData } = await wishesQuery.order('choice_index');
 
       if (wishesData && wishesData.length > 0) {
         const loadedWishes: WishData[] = wishesData.map((w, index) => ({
@@ -370,14 +440,14 @@ const Wishes = () => {
     };
 
     fetchWishes();
-  }, [guildId, selectedRosterId, user]);
+  }, [guildId, selectedRosterId, selectedSeasonId, user, seasonSupportMode]);
 
   const updateWish = (
     index: number,
     field: keyof Omit<WishData, 'id'>,
     value: Omit<WishData, 'id'>[keyof Omit<WishData, 'id'>]
   ) => {
-    if (lockState?.isLocked) return;
+    if (isEditingDisabled) return;
     const updated = [...wishes];
     updated[index] = { ...updated[index], [field]: value };
     if (field === 'classId') {
@@ -387,34 +457,34 @@ const Wishes = () => {
   };
 
   const addWish = () => {
-    if (lockState?.isLocked) return;
+    if (isEditingDisabled) return;
     if (wishes.length >= 13) return; // Max 13 wishes (one per class)
     const newId = `wish-${Date.now()}`;
     setWishes([...wishes, { id: newId, classId: '', specIds: [], comment: '' }]);
   };
 
   const removeWish = (index: number) => {
-    if (lockState?.isLocked) return;
+    if (isEditingDisabled) return;
     if (wishes.length <= 1) return;
     setWishes(wishes.filter((_, i) => i !== index));
   };
 
   const clearWish = (index: number) => {
-    if (lockState?.isLocked) return;
+    if (isEditingDisabled) return;
     const updated = [...wishes];
     updated[index] = { ...updated[index], classId: '', specIds: [], comment: '' };
     setWishes(updated);
   };
 
   const moveWish = (index: number, direction: 'up' | 'down') => {
-    if (lockState?.isLocked) return;
+    if (isEditingDisabled) return;
     const newIndex = direction === 'up' ? index - 1 : index + 1;
     if (newIndex < 0 || newIndex >= wishes.length) return;
     setWishes(arrayMove(wishes, index, newIndex));
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
-    if (lockState?.isLocked) return;
+    if (isEditingDisabled) return;
     const { active, over } = event;
     
     if (over && active.id !== over.id) {
@@ -433,6 +503,10 @@ const Wishes = () => {
     }
     if (!selectedRosterId) {
       toast({ title: t.errors.generic, description: t.wishes.noRosterSelected, variant: 'destructive' });
+      return;
+    }
+    if (seasonSupportMode === 'enabled' && (!selectedSeasonId || selectedSeason?.state !== 'active')) {
+      toast({ title: t.seasons.archived, description: selectedSeason?.state === 'draft' ? t.seasons.draftHint : t.seasons.archivedHint, variant: 'destructive' });
       return;
     }
 
@@ -475,40 +549,58 @@ const Wishes = () => {
           comment: w.comment || null,
         }));
 
-      const { error } = await supabase.rpc('upsert_member_roster_wishes', {
+      const payload: Record<string, unknown> = {
         p_guild_id: guildId,
         p_roster_id: selectedRosterId,
         p_member_id: user.id,
         p_commitment_status: dbStatus,
         p_wishes: wishesPayload,
         p_manager_edit: false,
-      });
+      };
+      if (seasonSupportMode === 'enabled' && selectedSeasonId) {
+        payload.p_season_id = selectedSeasonId;
+      }
+      const { error } = await supabase.rpc('upsert_member_roster_wishes', payload);
       if (error) throw error;
 
-      const [{ data: memberData }, { data: wishesData }] = await Promise.all([
+      const [{ data: intentData }, { data: memberData }, { data: wishesData }] = await Promise.all([
+        seasonSupportMode === 'enabled' && selectedSeasonId
+          ? supabase
+              .from('guild_season_member_intents')
+              .select('commitment_status')
+              .eq('guild_id', guildId)
+              .eq('season_id', selectedSeasonId)
+              .eq('user_id', user.id)
+              .maybeSingle()
+          : Promise.resolve({ data: null }),
         supabase
           .from('guild_members')
           .select('status, wishes_locked')
           .eq('guild_id', guildId)
           .eq('user_id', user.id)
           .single(),
-        supabase
-          .from('class_wishes')
-          .select('*')
-          .eq('guild_id', guildId)
-          .eq('user_id', user.id)
-          .eq('roster_id', selectedRosterId)
-          .order('choice_index'),
+        (() => {
+          let query = supabase
+            .from('class_wishes')
+            .select('*')
+            .eq('guild_id', guildId)
+            .eq('user_id', user.id)
+            .eq('roster_id', selectedRosterId);
+          if (seasonSupportMode === 'enabled' && selectedSeasonId) {
+            query = query.eq('season_id', selectedSeasonId);
+          }
+          return query.order('choice_index');
+        })(),
       ]);
 
-      if (memberData) {
+      if (memberData || intentData) {
         const statusMap: Record<string, CommitmentStatus> = {
           confirmed: 'confirmed',
           potential: 'undecided',
           withdrawn: 'withdrawn',
         };
-        setConfirmed(statusMap[memberData.status] || 'undecided');
-        setMemberWishesLocked(!!memberData.wishes_locked);
+        setConfirmed(statusMap[intentData?.commitment_status || memberData?.status || 'potential'] || 'undecided');
+        setMemberWishesLocked(!!memberData?.wishes_locked);
       }
 
       if (wishesData && wishesData.length > 0) {
@@ -545,11 +637,14 @@ const Wishes = () => {
   }
 
   const currentRoster = rosters.find(r => r.id === selectedRosterId);
+  const selectedSeason = seasons.find((season) => season.id === selectedSeasonId) || null;
+  const isSelectedSeasonActive = seasonSupportMode === 'legacy' || selectedSeason?.state === 'active';
   const lockState = resolveWishLockState({
     rosterLocked: currentRoster?.wishes_locked,
     rosterLockAt: currentRoster?.wishes_lock_at,
     memberLocked: memberWishesLocked,
   });
+  const isEditingDisabled = lockState.isLocked || !isSelectedSeasonActive;
   const lockMessage =
     lockState.reason === 'member'
       ? t.wishes.lockedMemberDesc
@@ -561,6 +656,12 @@ const Wishes = () => {
 
   // Only show accessible rosters
   const accessibleRosters = rosters.filter(r => r.hasAccess);
+  const selectSeason = (seasonId: string) => {
+    setSelectedSeasonId(seasonId);
+    const next = new URLSearchParams(location.search);
+    next.set('seasonId', seasonId);
+    navigate(`${location.pathname}?${next.toString()}`, { replace: true });
+  };
 
   const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
 
@@ -582,18 +683,26 @@ const Wishes = () => {
 
       {/* Roster + Save controls */}
       <div className="sticky top-[104px] z-30 bg-background/80 backdrop-blur-lg border-b border-border/50">
-        <PageContainer className="px-3 md:px-4 py-3 flex items-center justify-between" width="wide">
-          <RosterSelector
-            rosters={accessibleRosters}
-            selectedRosterId={selectedRosterId}
-            onSelect={setSelectedRosterId}
-            showWishesLockIndicator={true}
-          />
+        <PageContainer className="px-3 md:px-4 py-3 flex items-center justify-between gap-2" width="wide">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <SeasonSelector
+              seasons={seasons}
+              selectedSeasonId={selectedSeasonId}
+              onSelect={selectSeason}
+              emptyLabel={seasonSupportMode === 'legacy' ? t.seasons.legacyMode : undefined}
+            />
+            <RosterSelector
+              rosters={accessibleRosters}
+              selectedRosterId={selectedRosterId}
+              onSelect={setSelectedRosterId}
+              showWishesLockIndicator={true}
+            />
+          </div>
           <CosmicButton 
             size="sm" 
             onClick={saveWishes} 
             loading={saving}
-            disabled={lockState.isLocked}
+            disabled={isEditingDisabled}
             icon={<Save className="h-4 w-4" strokeWidth={1.5} />}
           >
             {t.wishes.saveWishes}
@@ -605,6 +714,14 @@ const Wishes = () => {
         <div className="text-center mb-6">
           <h2 className="text-2xl font-display cosmic-text">{t.wishes.title}</h2>
         </div>
+
+        {seasonSupportMode === 'legacy' ? (
+          <div className={cn('mb-4 rounded-lg border p-3 text-sm', toneCalloutClass('info'))}>
+            <span className={toneTextClass('info')}>{t.seasons.legacyModeHint}</span>
+          </div>
+        ) : (
+          selectedSeason && <SeasonStateCallout season={selectedSeason} />
+        )}
 
         {lockState.isLocked && (
           <div className={cn("mb-4 rounded-lg border p-3 flex items-start gap-2", toneCalloutClass('warning'))}>
@@ -630,7 +747,7 @@ const Wishes = () => {
 
         {/* Commitment toggle */}
         <GlowCard className="p-4 mb-4">
-          <CommitmentToggle status={confirmed} onChange={setConfirmed} disabled={lockState.isLocked} />
+          <CommitmentToggle status={confirmed} onChange={setConfirmed} disabled={isEditingDisabled} />
         </GlowCard>
 
         {/* Wish cards with drag and drop */}
@@ -665,7 +782,7 @@ const Wishes = () => {
                     canRemove={wishes.length > 1}
                     choiceLabels={choiceLabels}
                     usedClassIds={usedClassIds}
-                    disabled={lockState.isLocked}
+                    disabled={isEditingDisabled}
                   />
                 );
               })}
@@ -678,10 +795,10 @@ const Wishes = () => {
           <div className="mt-4 text-center">
             <button
               onClick={addWish}
-              disabled={lockState.isLocked}
+              disabled={isEditingDisabled}
               className={cn(
                 "inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-dashed border-primary/50 text-sm text-primary transition-colors",
-                lockState.isLocked ? "opacity-50 cursor-not-allowed" : "hover:bg-primary/10"
+                isEditingDisabled ? "opacity-50 cursor-not-allowed" : "hover:bg-primary/10"
               )}
             >
               <Plus className="h-4 w-4" />
@@ -695,7 +812,7 @@ const Wishes = () => {
             size="md" 
             onClick={saveWishes} 
             loading={saving}
-            disabled={lockState.isLocked}
+            disabled={isEditingDisabled}
             icon={<Save className="h-4 w-4" strokeWidth={1.5} />}
           >
             {t.wishes.saveWishes}

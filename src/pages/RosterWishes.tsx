@@ -1,5 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsAdmin } from '@/hooks/useAdmin';
@@ -20,8 +20,10 @@ import { PageContainer } from '@/components/layout/PageContainer';
 import { GuildSubNav } from '@/components/guild';
 import { RosterFilters, RosterTable, RosterAnalytics, RosterSelectedTable } from '@/components/dashboard';
 import { RosterSelector, RosterEditDialog } from '@/components/roster';
+import { SeasonSelector, SeasonStateCallout, type PrepareSeasonInput } from '@/components/seasons/SeasonSelector';
 import { MemberWish, WishData, RosterFilters as RosterFiltersType, ValidationStatus } from '@/types/guild';
-import { Loader2, Sparkles, Settings, TableIcon, BarChart3, Download, Eye, Lock, Unlock, Clock, UserPlus } from 'lucide-react';
+import type { GuildSeason } from '@/types/seasons';
+import { Loader2, Sparkles, Settings, TableIcon, BarChart3, Download, Eye, Lock, Unlock, Clock, UserPlus, MoreVertical } from 'lucide-react';
 import { exportWishesToCSV } from '@/lib/exportWishes';
 import { getGuildWishesPath } from '@/lib/guildSlug';
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
@@ -31,11 +33,13 @@ import { formatDateTimeLocalized, interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import { resolveSpecOrder } from '@/lib/wishOrder';
 import { isWishEditingLocked, resolveWishLockState } from '@/lib/wishLock';
+import { isSeasonFilteringEnabled, isSeasonSchemaUnavailable, type SeasonSupportMode } from '@/lib/seasonSupport';
 import { getSelectedValidatedMembers } from '@/lib/selectedValidatedMembers';
 import { toneCalloutClass, toneTextClass } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 // Max wishes = number of WoW classes
 const MAX_WISHES = wowClasses.length;
@@ -118,6 +122,7 @@ const formatRealmDisplayName = (rawName?: string | null, rawSlug?: string | null
 
 const RosterWishes = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { regionSlug, serverSlug, guildSlug } = useParams();
   const { t, language } = useLanguage();
   const s = (key: SemanticKey, fallback?: string) =>
@@ -128,6 +133,10 @@ const RosterWishes = () => {
   const [loading, setLoading] = useState(true);
   const [guildId, setGuildId] = useState<string | null>(null);
   const [guild, setGuild] = useState<{ name: string; server: string; region: string; faction: string; avatar_url: string | null } | null>(null);
+  const [seasons, setSeasons] = useState<GuildSeason[]>([]);
+  const [selectedSeasonId, setSelectedSeasonId] = useState<string | null>(null);
+  const [seasonSupportMode, setSeasonSupportMode] = useState<SeasonSupportMode>('enabled');
+  const [seasonBusy, setSeasonBusy] = useState(false);
   const [members, setMembers] = useState<MemberWish[]>([]);
   const [canManageWishes, setCanManageWishes] = useState(false);
   const [isGM, setIsGM] = useState(false);
@@ -199,7 +208,7 @@ const RosterWishes = () => {
 
         // Use getBoundingClientRect for precise positioning when SubNav exists
         const nextTop = subNav
-          ? Math.max(0, Math.round(subNav.getBoundingClientRect().bottom))
+          ? Math.max(0, Math.round(subNav.getBoundingClientRect().bottom) - 1)
           : fallbackGlobalH + fallbackSubH;
 
         setControlsTop((prev) => (prev === nextTop ? prev : nextTop));
@@ -249,6 +258,56 @@ const RosterWishes = () => {
     return localDate.toISOString();
   };
 
+  const selectSeasonInUrl = (seasonId: string) => {
+    setSelectedSeasonId(seasonId);
+    const next = new URLSearchParams(searchParams);
+    next.set('seasonId', seasonId);
+    setSearchParams(next, { replace: true });
+  };
+
+  const resolveInitialSeason = (items: GuildSeason[]) => {
+    const requestedSeasonId = searchParams.get('seasonId');
+    return (
+      items.find((season) => season.id === requestedSeasonId) ||
+      items.find((season) => season.state === 'active') ||
+      items[0] ||
+      null
+    );
+  };
+
+  const fetchSeasons = async (foundGuildId = guildId) => {
+    if (!foundGuildId) return [];
+    const { data, error } = await supabase
+      .from('guild_seasons')
+      .select('*')
+      .eq('guild_id', foundGuildId)
+      .order('state', { ascending: true })
+      .order('created_at', { ascending: false });
+
+    if (error && isSeasonSchemaUnavailable(error)) {
+      setSeasonSupportMode('legacy');
+      setSeasons([]);
+      setSelectedSeasonId(null);
+      return [];
+    }
+
+    const nextSeasons = (data || []) as GuildSeason[];
+    if (nextSeasons.length === 0) {
+      setSeasonSupportMode('legacy');
+      setSeasons([]);
+      setSelectedSeasonId(null);
+      return [];
+    }
+
+    setSeasonSupportMode('enabled');
+    setSeasons(nextSeasons);
+    setSelectedSeasonId((current) => {
+      if (current && nextSeasons.some((season) => season.id === current)) return current;
+      return resolveInitialSeason(nextSeasons)?.id || null;
+    });
+    return nextSeasons;
+  };
+
   const getMainCharacterName = (value?: string | null) => {
     if (!value) return null;
     const trimmed = value.trim();
@@ -284,6 +343,7 @@ const RosterWishes = () => {
     const foundGuildId = matchedGuild.id;
     setGuildId(foundGuildId);
     setGuild({ name: matchedGuild.name, server: matchedGuild.server, region: matchedGuild.region || 'eu', faction: matchedGuild.faction, avatar_url: matchedGuild.avatar_url });
+    await fetchSeasons(foundGuildId);
 
     // Check if user is a member of this guild
     const { data: membershipData, error: membershipError } = await supabase
@@ -377,6 +437,9 @@ const RosterWishes = () => {
   const fetchWishes = async () => {
     if (!guildId || !selectedRosterId) return;
 
+    const seasonFilteringEnabled = isSeasonFilteringEnabled(seasonSupportMode, selectedSeasonId);
+    if (seasonSupportMode === 'enabled' && !selectedSeasonId) return;
+
     const { data: membersData } = await supabase
       .from('guild_members')
       .select('user_id, status, wishes_locked')
@@ -392,27 +455,49 @@ const RosterWishes = () => {
           .in('id', userIds)
       : { data: [] };
 
+    const { data: intentData } = userIds.length > 0 && seasonFilteringEnabled
+      ? await supabase
+          .from('guild_season_member_intents')
+          .select('user_id, commitment_status')
+          .eq('guild_id', guildId)
+          .eq('season_id', selectedSeasonId!)
+          .in('user_id', userIds)
+      : { data: [] };
+    const intentByUserId = new Map((intentData || []).map((intent) => [intent.user_id, intent.commitment_status]));
+
     // Filter wishes by selected roster
-    const { data: wishesData } = await supabase
+    let wishesQuery = supabase
       .from('class_wishes')
       .select('user_id, choice_index, class_id, spec_ids, spec_order, comment, validation_status, validated_by, validated_at')
       .eq('guild_id', guildId)
       .eq('roster_id', selectedRosterId);
+    if (seasonFilteringEnabled) {
+      wishesQuery = wishesQuery.eq('season_id', selectedSeasonId!);
+    }
+    const { data: wishesData } = await wishesQuery;
 
     // External wishes and candidate pool (members in roster cache not yet linked to a Guildforce account)
-    const { data: externalWishesData } = await supabase
+    let externalWishesQuery = supabase
       .from('external_member_wishes')
       .select('id, roster_cache_id, class_id, spec_ids, spec_order, comment, commitment_status, validation_status, validated_by, validated_at')
       .eq('guild_id', guildId)
       .eq('roster_id', selectedRosterId);
+    if (seasonFilteringEnabled) {
+      externalWishesQuery = externalWishesQuery.eq('season_id', selectedSeasonId!);
+    }
+    const { data: externalWishesData } = await externalWishesQuery;
 
     const { data: rosterCacheData } = await supabase
       .from('guild_roster_cache')
       .select('id, character_name, character_realm, character_realm_slug, matched_user_id')
       .eq('guild_id', guildId);
 
-    const { data: selectionRows } = await supabase
-      .rpc('get_roster_member_selection', { p_roster_id: selectedRosterId });
+    const { data: selectionRows } = await supabase.rpc(
+      'get_roster_member_selection',
+      seasonFilteringEnabled
+        ? { p_roster_id: selectedRosterId, p_season_id: selectedSeasonId! }
+        : { p_roster_id: selectedRosterId }
+    );
 
     const selectionList = (selectionRows || []) as RosterMemberSelectionRow[];
     const selectionsByUserId = new Map(
@@ -460,7 +545,7 @@ const RosterWishes = () => {
         id: m.user_id,
         username: profile?.username || 'Unknown',
         mainCharacterName: getMainCharacterName(profile?.main_character_name),
-        status: m.status,
+        status: intentByUserId.get(m.user_id) || m.status,
         wishes_locked: m.wishes_locked,
         wishes: memberWishes.sort((a, b) => a.choice_index - b.choice_index),
         selectionStatus: selection?.selection_status || 'undecided',
@@ -532,10 +617,10 @@ const RosterWishes = () => {
   }, [user, authLoading, regionSlug, serverSlug, guildSlug, navigate, adminLoading, isGlobalAdmin]);
 
   useEffect(() => {
-    if (guildId && selectedRosterId) {
+    if (guildId && selectedRosterId && (seasonSupportMode === 'legacy' || selectedSeasonId)) {
       fetchWishes();
     }
-  }, [guildId, selectedRosterId]);
+  }, [guildId, selectedRosterId, selectedSeasonId, seasonSupportMode]);
 
   useEffect(() => {
     if (!lockDialogOpen) return;
@@ -543,8 +628,73 @@ const RosterWishes = () => {
     setLockAtInput(toLocalInputValue(roster?.wishes_lock_at));
   }, [lockDialogOpen, rosters, selectedRosterId]);
 
+  const selectedSeason = seasons.find((season) => season.id === selectedSeasonId) || null;
+  const isSelectedSeasonActive = seasonSupportMode === 'legacy' || selectedSeason?.state === 'active';
+  const canMutateSelectedSeason = isSelectedSeasonActive && !isAdminReadOnly;
+
+  const handlePrepareSeason = async (input: PrepareSeasonInput) => {
+    if (!guildId) return;
+    setSeasonBusy(true);
+    try {
+      const { data, error } = await supabase.rpc('prepare_guild_wish_season', {
+        p_guild_id: guildId,
+        p_name: input.name,
+        p_starts_at: input.startsAt,
+        p_ends_at: input.endsAt,
+        p_source_season_id: input.sourceSeasonId,
+        p_prefill_wishes: input.prefillWishes,
+        p_reset_copied_wishes: input.resetCopiedWishes,
+        p_activate: input.activateImmediately,
+      });
+      if (error) throw error;
+      const nextSeasons = await fetchSeasons(guildId);
+      const nextSeasonId = data?.id || resolveInitialSeason(nextSeasons)?.id;
+      if (nextSeasonId) selectSeasonInUrl(nextSeasonId);
+      toast({ title: input.activateImmediately ? t.seasons.activated : t.seasons.created });
+      await fetchWishes();
+    } catch (error: unknown) {
+      toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
+    } finally {
+      setSeasonBusy(false);
+    }
+  };
+
+  const handleArchiveSeason = async (seasonId: string) => {
+    setSeasonBusy(true);
+    try {
+      const { error } = await supabase.rpc('archive_guild_wish_season', { p_season_id: seasonId });
+      if (error) throw error;
+      const nextSeasons = await fetchSeasons(guildId);
+      const nextSeasonId = resolveInitialSeason(nextSeasons)?.id;
+      if (nextSeasonId) selectSeasonInUrl(nextSeasonId);
+      toast({ title: t.seasons.archivedToast });
+    } catch (error: unknown) {
+      toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
+    } finally {
+      setSeasonBusy(false);
+    }
+  };
+
+  const handleActivateSeason = async (seasonId: string) => {
+    setSeasonBusy(true);
+    try {
+      const { data, error } = await supabase.rpc('activate_guild_wish_season', { p_season_id: seasonId });
+      if (error) throw error;
+      await fetchSeasons(guildId);
+      if (data?.id) selectSeasonInUrl(data.id);
+      toast({ title: t.seasons.activated });
+    } catch (error: unknown) {
+      toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
+    } finally {
+      setSeasonBusy(false);
+    }
+  };
 
   const startEditing = (member: MemberWish) => {
+    if (!isSelectedSeasonActive) {
+      toast({ title: t.seasons.archived, description: selectedSeason?.state === 'draft' ? t.seasons.draftHint : t.seasons.archivedHint, variant: 'destructive' });
+      return;
+    }
     const canEditOwn = member.id === user?.id;
     const canEditAsManager = canManageWishes && !isAdminReadOnly;
     if (!canEditOwn && !canEditAsManager) return;
@@ -676,19 +826,23 @@ const RosterWishes = () => {
   };
 
   const handleSaveExternalWish = async () => {
-    if (!guildId || !selectedRosterId || !canManageWishes) return;
+    if (!guildId || !selectedRosterId || !canManageWishes || !isSelectedSeasonActive) return;
     if (!externalCandidateId || !externalClassId) return;
 
     setSavingExternalWish(true);
     try {
-      const { error } = await supabase.rpc('upsert_external_member_wish', {
+      const payload: Record<string, unknown> = {
         p_roster_id: selectedRosterId,
         p_roster_cache_id: externalCandidateId,
         p_class_id: externalClassId,
         p_spec_ids: [],
         p_comment: externalComment.trim() || null,
         p_commitment_status: 'potential',
-      });
+      };
+      if (seasonSupportMode === 'enabled' && selectedSeasonId) {
+        payload.p_season_id = selectedSeasonId;
+      }
+      const { error } = await supabase.rpc('upsert_external_member_wish', payload);
       if (error) throw error;
 
       toast({
@@ -738,7 +892,7 @@ const RosterWishes = () => {
 
 
   const handleSelectionStatusChange = async (memberId: string, status: MemberWish['selectionStatus']) => {
-    if (!selectedRosterId || !user || !canManageWishes) return;
+    if (!selectedRosterId || !user || !canManageWishes || !isSelectedSeasonActive) return;
     if (!status) return;
 
     const currentMember = members.find((m) => m.id === memberId);
@@ -766,7 +920,7 @@ const RosterWishes = () => {
     );
 
     try {
-      const payload = currentMember.isExternal
+      const payload: Record<string, unknown> = currentMember.isExternal
         ? {
             roster_id: selectedRosterId,
             user_id: null,
@@ -787,7 +941,12 @@ const RosterWishes = () => {
             decided_by: user.id,
             decided_at: now,
           };
-      const onConflict = currentMember.isExternal ? 'roster_id,roster_cache_id' : 'roster_id,user_id';
+      if (seasonSupportMode === 'enabled' && selectedSeasonId) {
+        payload.season_id = selectedSeasonId;
+      }
+      const onConflict = currentMember.isExternal
+        ? (seasonSupportMode === 'enabled' ? 'roster_id,season_id,roster_cache_id' : 'roster_id,roster_cache_id')
+        : (seasonSupportMode === 'enabled' ? 'roster_id,season_id,user_id' : 'roster_id,user_id');
 
       if (currentMember.isExternal && !currentMember.rosterCacheId) {
         throw new Error(s('roster_wishes.external_edit_unauthorized'));
@@ -850,7 +1009,7 @@ const RosterWishes = () => {
   };
 
   const saveEditing = async () => {
-    if (!user || !guildId || !editingUserId || !selectedRosterId) return;
+    if (!user || !guildId || !editingUserId || !selectedRosterId || !isSelectedSeasonActive) return;
 
     const currentRoster = rosters.find(r => r.id === selectedRosterId);
     const currentMember = members.find(m => m.id === editingUserId);
@@ -899,14 +1058,18 @@ const RosterWishes = () => {
           throw new Error(s('roster_wishes.external_first_wish_required'));
         }
 
-        const { error } = await supabase.rpc('upsert_external_member_wish', {
+        const payload: Record<string, unknown> = {
           p_roster_id: selectedRosterId,
           p_roster_cache_id: currentMember.rosterCacheId,
           p_class_id: primaryWish.classId,
           p_spec_ids: primaryWish.specIds,
           p_comment: primaryWish.comment || null,
           p_commitment_status: dbStatus,
-        });
+        };
+        if (seasonSupportMode === 'enabled' && selectedSeasonId) {
+          payload.p_season_id = selectedSeasonId;
+        }
+        const { error } = await supabase.rpc('upsert_external_member_wish', payload);
         if (error) throw error;
       } else {
         const wishesPayload = editWishes
@@ -917,14 +1080,18 @@ const RosterWishes = () => {
             comment: w.comment || null,
           }));
 
-        const { error } = await supabase.rpc('upsert_member_roster_wishes', {
+        const payload: Record<string, unknown> = {
           p_guild_id: guildId,
           p_roster_id: selectedRosterId,
           p_member_id: editingUserId,
           p_commitment_status: dbStatus,
           p_wishes: wishesPayload,
           p_manager_edit: canEditAsManager,
-        });
+        };
+        if (seasonSupportMode === 'enabled' && selectedSeasonId) {
+          payload.p_season_id = selectedSeasonId;
+        }
+        const { error } = await supabase.rpc('upsert_member_roster_wishes', payload);
         if (error) throw error;
       }
 
@@ -940,7 +1107,7 @@ const RosterWishes = () => {
 
   // Validate a wish (GM or users with manage_wishes permission)
   const validateWish = async (userId: string, choiceIndex: number, status: ValidationStatus) => {
-    if (!user || !guildId || !selectedRosterId || !canManageWishes) return;
+    if (!user || !guildId || !selectedRosterId || !canManageWishes || !isSelectedSeasonActive) return;
 
     // Optimistic UI update so the badge changes instantly
     setMembers((prev) =>
@@ -963,7 +1130,7 @@ const RosterWishes = () => {
     );
 
     try {
-      const { error } = await supabase
+      let query = supabase
         .from('class_wishes')
         .update({
           validation_status: status,
@@ -974,6 +1141,10 @@ const RosterWishes = () => {
         .eq('roster_id', selectedRosterId)
         .eq('user_id', userId)
         .eq('choice_index', choiceIndex);
+      if (seasonSupportMode === 'enabled' && selectedSeasonId) {
+        query = query.eq('season_id', selectedSeasonId);
+      }
+      const { error } = await query;
 
       if (error) throw error;
 
@@ -1145,6 +1316,50 @@ const RosterWishes = () => {
     rosterLockState.isScheduled && rosterLockState.scheduledAt
       ? formatDateTimeLocalized(rosterLockState.scheduledAt, language, { dateStyle: 'medium', timeStyle: 'short' })
       : null;
+  const getMobileToolbarActions = () => [
+    {
+      key: 'export',
+      label: t.dashboard.exportCSV,
+      icon: Download,
+      disabled: filteredMembers.length === 0,
+      onClick: () => {
+        exportWishesToCSV(filteredMembers, {
+          language,
+          t,
+          rosterName: currentRoster?.name || 'roster',
+          guildName: guild?.name || 'guild',
+        });
+        toast({ title: t.dashboard.exportSuccess });
+      },
+    },
+    ...(canManageWishes && !isAdminReadOnly && selectedRosterId && isSelectedSeasonActive
+      ? [{
+          key: 'add-external',
+          label: t.dashboard.externalMember.addButton,
+          icon: UserPlus,
+          disabled: false,
+          onClick: () => setExternalDialogOpen(true),
+        }]
+      : []),
+    ...(canManageWishes && !isAdminReadOnly && selectedRosterId && isSelectedSeasonActive
+      ? [{
+          key: 'lock',
+          label: t.rosters.wishesLockTitle,
+          icon: Lock,
+          disabled: false,
+          onClick: () => setLockDialogOpen(true),
+        }]
+      : []),
+    ...(isGM && selectedRosterId
+      ? [{
+          key: 'roster-settings',
+          label: t.dashboard.roster,
+          icon: Settings,
+          disabled: false,
+          onClick: () => setRosterSettingsOpen(true),
+        }]
+      : []),
+  ];
 
   const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
 
@@ -1179,71 +1394,144 @@ const RosterWishes = () => {
       {/* Roster controls bar */}
       <div
         ref={controlsRef}
-        className={`${isMobile ? 'fixed left-0 right-0' : 'sticky'} z-30 bg-background/80 backdrop-blur-lg border-b border-border/50`}
+        className={`${isMobile ? 'fixed left-0 right-0' : 'sticky'} -mt-px z-30 bg-background/80 backdrop-blur-lg border-b border-border/50`}
         style={{ top: controlsTop }}
       >
-        <PageContainer className="px-3 md:px-4 py-2 flex items-center justify-between" width="wide">
-          <RosterSelector
-            rosters={rosters}
-            selectedRosterId={selectedRosterId}
-            onSelect={setSelectedRosterId}
-            showAccessIndicator={true}
-            showWishesLockIndicator={true}
-          />
-          <div className="flex gap-1.5 md:gap-2">
-            <CosmicButton 
-              size="sm" 
-              variant="outline" 
-              onClick={() => {
-                exportWishesToCSV(filteredMembers, {
-                  language,
-                  t,
-                  rosterName: currentRoster?.name || 'roster',
-                  guildName: guild?.name || 'guild'
-                });
-                toast({ title: t.dashboard.exportSuccess });
-              }} 
-              icon={<Download className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} 
-              className="h-7 w-7 md:h-8 md:w-auto p-0 md:px-3"
-            >
-              <span className="hidden md:inline">{t.dashboard.exportCSV}</span>
-            </CosmicButton>
-            {/* Hide edit my wishes button for admin read-only mode */}
-            {!isAdminReadOnly && (
-              <CosmicButton size="sm" variant="outline" onClick={() => guild && navigate(getGuildWishesPath(guild.region, guild.server, guild.name))} icon={<Sparkles className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 w-7 md:h-8 md:w-auto p-0 md:px-3">
-                <span className="hidden md:inline">{t.wishes.editMyWishes}</span>
-              </CosmicButton>
-            )}
-            {canManageWishes && !isAdminReadOnly && selectedRosterId && (
-              <CosmicButton
-                size="sm"
-                variant="outline"
-                onClick={() => setExternalDialogOpen(true)}
-                icon={<UserPlus className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />}
-                className="h-7 w-7 md:h-8 md:w-auto p-0 md:px-3"
-              >
-                <span className="hidden md:inline">
-                  {t.dashboard.externalMember.addButton}
-                </span>
-              </CosmicButton>
-            )}
-            {canManageWishes && !isAdminReadOnly && selectedRosterId && (
-              <CosmicButton
-                size="sm"
-                variant={rosterLockState.isLocked ? "default" : "outline"}
-                onClick={() => setLockDialogOpen(true)}
-                icon={<Lock className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />}
-                className="h-7 w-7 md:h-8 md:w-auto p-0 md:px-3"
-              >
-                <span className="hidden md:inline">{t.rosters.wishesLockTitle}</span>
-              </CosmicButton>
-            )}
-            {isGM && selectedRosterId && (
-              <CosmicButton size="sm" variant="outline" onClick={() => setRosterSettingsOpen(true)} icon={<Settings className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 w-7 md:h-8 md:w-auto p-0 md:px-3">
-                <span className="hidden md:inline">{t.dashboard.roster}</span>
-              </CosmicButton>
-            )}
+        <PageContainer className={cn('px-3 md:px-4 py-2', isMobile ? 'space-y-2' : 'flex items-center justify-between gap-2')} width="wide">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <SeasonSelector
+              seasons={seasons}
+              selectedSeasonId={selectedSeasonId}
+              onSelect={selectSeasonInUrl}
+              emptyLabel={seasonSupportMode === 'legacy' ? t.seasons.legacyMode : undefined}
+              canManage={canManageWishes && !isAdminReadOnly}
+              busy={seasonBusy}
+              onPrepareSeason={handlePrepareSeason}
+              onArchiveSeason={handleArchiveSeason}
+              onActivateSeason={handleActivateSeason}
+            />
+            <RosterSelector
+              rosters={rosters}
+              selectedRosterId={selectedRosterId}
+              onSelect={setSelectedRosterId}
+              showAccessIndicator={true}
+              showWishesLockIndicator={true}
+            />
           </div>
+          {isMobile ? (
+            <div className="flex items-center gap-2">
+              {!isAdminReadOnly && (
+                <CosmicButton
+                  size="sm"
+                  onClick={() => {
+                    if (!guild) return;
+                    const params = new URLSearchParams();
+                    if (selectedRosterId) params.set('rosterId', selectedRosterId);
+                    if (selectedSeasonId) params.set('seasonId', selectedSeasonId);
+                    const query = params.toString();
+                    navigate(`${getGuildWishesPath(guild.region, guild.server, guild.name)}${query ? `?${query}` : ''}`);
+                  }}
+                  disabled={!isSelectedSeasonActive}
+                  icon={<Sparkles className="h-3.5 w-3.5" strokeWidth={1.5} />}
+                  className="h-8 flex-1 justify-center px-3 text-xs"
+                >
+                  {t.wishes.editMyWishes}
+                </CosmicButton>
+              )}
+              <DropdownMenu modal={false}>
+                <DropdownMenuTrigger asChild>
+                  <CosmicButton
+                    size="sm"
+                    variant="outline"
+                    icon={<MoreVertical className="h-4 w-4" strokeWidth={1.5} />}
+                    className="h-8 w-8 p-0"
+                    aria-label={t.common.actions}
+                  />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 border-border bg-card">
+                  {getMobileToolbarActions().map((action) => (
+                    <DropdownMenuItem
+                      key={action.key}
+                      disabled={action.disabled}
+                      onClick={action.onClick}
+                      className="cursor-pointer"
+                    >
+                      <action.icon className="mr-2 h-4 w-4" />
+                      {action.label}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          ) : (
+            <div className="flex gap-1.5 md:gap-2">
+              <CosmicButton 
+                size="sm" 
+                variant="outline" 
+                onClick={() => {
+                  exportWishesToCSV(filteredMembers, {
+                    language,
+                    t,
+                    rosterName: currentRoster?.name || 'roster',
+                    guildName: guild?.name || 'guild'
+                  });
+                  toast({ title: t.dashboard.exportSuccess });
+                }} 
+                icon={<Download className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} 
+                className="h-7 w-7 md:h-8 md:w-auto p-0 md:px-3"
+              >
+                <span className="hidden md:inline">{t.dashboard.exportCSV}</span>
+              </CosmicButton>
+              {!isAdminReadOnly && (
+                <CosmicButton
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    if (!guild) return;
+                    const params = new URLSearchParams();
+                    if (selectedRosterId) params.set('rosterId', selectedRosterId);
+                    if (selectedSeasonId) params.set('seasonId', selectedSeasonId);
+                    const query = params.toString();
+                    navigate(`${getGuildWishesPath(guild.region, guild.server, guild.name)}${query ? `?${query}` : ''}`);
+                  }}
+                  disabled={!isSelectedSeasonActive}
+                  icon={<Sparkles className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />}
+                  className="h-7 w-7 md:h-8 md:w-auto p-0 md:px-3"
+                >
+                  <span className="hidden md:inline">{t.wishes.editMyWishes}</span>
+                </CosmicButton>
+              )}
+              {canManageWishes && !isAdminReadOnly && selectedRosterId && isSelectedSeasonActive && (
+                <CosmicButton
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setExternalDialogOpen(true)}
+                  icon={<UserPlus className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />}
+                  className="h-7 w-7 md:h-8 md:w-auto p-0 md:px-3"
+                >
+                  <span className="hidden md:inline">
+                    {t.dashboard.externalMember.addButton}
+                  </span>
+                </CosmicButton>
+              )}
+              {canManageWishes && !isAdminReadOnly && selectedRosterId && isSelectedSeasonActive && (
+                <CosmicButton
+                  size="sm"
+                  variant={rosterLockState.isLocked ? "default" : "outline"}
+                  onClick={() => setLockDialogOpen(true)}
+                  icon={<Lock className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />}
+                  className="h-7 w-7 md:h-8 md:w-auto p-0 md:px-3"
+                >
+                  <span className="hidden md:inline">{t.rosters.wishesLockTitle}</span>
+                </CosmicButton>
+              )}
+              {isGM && selectedRosterId && (
+                <CosmicButton size="sm" variant="outline" onClick={() => setRosterSettingsOpen(true)} icon={<Settings className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 w-7 md:h-8 md:w-auto p-0 md:px-3">
+                  <span className="hidden md:inline">{t.dashboard.roster}</span>
+                </CosmicButton>
+              )}
+            </div>
+          )}
         </PageContainer>
       </div>
       {isMobile && controlsSpacerH > 0 && (
@@ -1256,6 +1544,14 @@ const RosterWishes = () => {
           <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive">
             {t.rosters.noAccessMessage}
           </div>
+        )}
+
+        {seasonSupportMode === 'legacy' ? (
+          <div className={cn('mb-3 rounded-lg border px-3 py-2 text-sm', toneCalloutClass('info'))}>
+            <span className={toneTextClass('info')}>{t.seasons.legacyModeHint}</span>
+          </div>
+        ) : (
+          selectedSeason && <SeasonStateCallout season={selectedSeason} />
         )}
 
         {currentRoster && rosterLockState.isLocked && (
@@ -1281,16 +1577,16 @@ const RosterWishes = () => {
         )}
 
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'table' | 'selected' | 'analytics')} className="w-full">
-          <TabsList className="mb-4">
-            <TabsTrigger value="table" className="gap-2">
+          <TabsList className="mb-3 h-auto w-full justify-start overflow-x-auto p-1">
+            <TabsTrigger value="table" className="gap-2 whitespace-nowrap px-3">
               <TableIcon className="h-4 w-4" />
               {t.dashboard.table}
             </TabsTrigger>
-            <TabsTrigger value="selected" className="gap-2">
+            <TabsTrigger value="selected" className="gap-2 whitespace-nowrap px-3">
               <Sparkles className="h-4 w-4" />
               {t.dashboard.selectedValidatedView}
             </TabsTrigger>
-            <TabsTrigger value="analytics" className="gap-2">
+            <TabsTrigger value="analytics" className="gap-2 whitespace-nowrap px-3">
               <BarChart3 className="h-4 w-4" />
               {t.dashboard.analytics}
             </TabsTrigger>
@@ -1306,14 +1602,15 @@ const RosterWishes = () => {
               members={filteredMembers}
               currentUserId={user?.id}
               selectedRosterId={selectedRosterId}
+              selectedSeasonId={selectedSeasonId}
               editingUserId={editingUserId}
               editWishes={editWishes}
               editStatus={editStatus}
               saving={saving}
               maxWishes={MAX_WISHES}
-              canManageWishes={canManageWishes && !isAdminReadOnly}
+              canManageWishes={canManageWishes && canMutateSelectedSeason}
               isRosterLocked={rosterLockState.isLocked}
-              isEditingLocked={isEditingLocked}
+              isEditingLocked={isEditingLocked || !isSelectedSeasonActive}
               onStartEditing={startEditing}
               onUpdateEditWish={updateEditWish}
               onEditStatusChange={setEditStatus}
@@ -1322,11 +1619,11 @@ const RosterWishes = () => {
               onRemoveWish={removeWish}
               onClearWish={clearWish}
               onValidateWish={validateWish}
-              onToggleMemberLock={canManageWishes && !isAdminReadOnly ? handleToggleMemberLock : undefined}
+              onToggleMemberLock={canManageWishes && canMutateSelectedSeason ? handleToggleMemberLock : undefined}
               lockingMemberId={lockingMemberId}
-              onRemoveMember={canManageWishes && !isAdminReadOnly ? handleRemoveMember : undefined}
+              onRemoveMember={canManageWishes && canMutateSelectedSeason ? handleRemoveMember : undefined}
               deletingMemberId={deletingMemberId}
-              onSelectionStatusChange={canManageWishes && !isAdminReadOnly ? handleSelectionStatusChange : undefined}
+              onSelectionStatusChange={canManageWishes && canMutateSelectedSeason ? handleSelectionStatusChange : undefined}
               updatingSelectionMemberId={updatingSelectionMemberId}
             />
           </TabsContent>
@@ -1336,6 +1633,7 @@ const RosterWishes = () => {
               members={selectedValidatedMembers}
               currentUserId={user?.id}
               selectedRosterId={selectedRosterId}
+              selectedSeasonId={selectedSeasonId}
               onViewFullTable={() => setActiveTab('table')}
             />
           </TabsContent>

@@ -234,6 +234,7 @@ export type Database = {
           guild_id: string
           id: string
           roster_id: string | null
+          season_id: string
           spec_ids: string[]
           spec_order: string[]
           updated_at: string
@@ -250,6 +251,7 @@ export type Database = {
           guild_id: string
           id?: string
           roster_id?: string | null
+          season_id: string
           spec_ids?: string[]
           spec_order?: string[]
           updated_at?: string
@@ -266,6 +268,7 @@ export type Database = {
           guild_id?: string
           id?: string
           roster_id?: string | null
+          season_id?: string
           spec_ids?: string[]
           spec_order?: string[]
           updated_at?: string
@@ -287,6 +290,13 @@ export type Database = {
             columns: ["roster_id"]
             isOneToOne: false
             referencedRelation: "rosters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_wishes_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "guild_seasons"
             referencedColumns: ["id"]
           },
           {
@@ -317,6 +327,7 @@ export type Database = {
           id: string
           roster_cache_id: string
           roster_id: string
+          season_id: string
           spec_ids: string[]
           spec_order: string[]
           updated_at: string
@@ -335,6 +346,7 @@ export type Database = {
           id?: string
           roster_cache_id: string
           roster_id: string
+          season_id: string
           spec_ids?: string[]
           spec_order?: string[]
           updated_at?: string
@@ -353,6 +365,7 @@ export type Database = {
           id?: string
           roster_cache_id?: string
           roster_id?: string
+          season_id?: string
           spec_ids?: string[]
           spec_order?: string[]
           updated_at?: string
@@ -387,6 +400,13 @@ export type Database = {
             columns: ["roster_id"]
             isOneToOne: false
             referencedRelation: "rosters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "external_member_wishes_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "guild_seasons"
             referencedColumns: ["id"]
           },
           {
@@ -1007,6 +1027,122 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guild_season_member_intents: {
+        Row: {
+          commitment_status: string
+          guild_id: string
+          id: string
+          season_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          commitment_status?: string
+          guild_id: string
+          id?: string
+          season_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          commitment_status?: string
+          guild_id?: string
+          id?: string
+          season_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_season_member_intents_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_season_member_intents_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "guild_seasons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_season_member_intents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guild_seasons: {
+        Row: {
+          activated_at: string | null
+          archived_at: string | null
+          created_at: string
+          created_by: string | null
+          ends_at: string | null
+          guild_id: string
+          id: string
+          name: string
+          source_season_id: string | null
+          starts_at: string | null
+          state: Database["public"]["Enums"]["guild_season_state"]
+          updated_at: string
+        }
+        Insert: {
+          activated_at?: string | null
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          guild_id: string
+          id?: string
+          name: string
+          source_season_id?: string | null
+          starts_at?: string | null
+          state?: Database["public"]["Enums"]["guild_season_state"]
+          updated_at?: string
+        }
+        Update: {
+          activated_at?: string | null
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          guild_id?: string
+          id?: string
+          name?: string
+          source_season_id?: string | null
+          starts_at?: string | null
+          state?: Database["public"]["Enums"]["guild_season_state"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_seasons_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_seasons_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_seasons_source_season_id_fkey"
+            columns: ["source_season_id"]
+            isOneToOne: false
+            referencedRelation: "guild_seasons"
             referencedColumns: ["id"]
           },
         ]
@@ -2196,6 +2332,7 @@ export type Database = {
           reason_code: Database["public"]["Enums"]["roster_selection_reason_code"] | null
           roster_id: string
           roster_cache_id: string | null
+          season_id: string
           selection_status: Database["public"]["Enums"]["roster_selection_status"]
           updated_at: string
           user_id: string | null
@@ -2208,6 +2345,7 @@ export type Database = {
           reason_code?: Database["public"]["Enums"]["roster_selection_reason_code"] | null
           roster_id: string
           roster_cache_id?: string | null
+          season_id: string
           selection_status?: Database["public"]["Enums"]["roster_selection_status"]
           updated_at?: string
           user_id?: string | null
@@ -2220,6 +2358,7 @@ export type Database = {
           reason_code?: Database["public"]["Enums"]["roster_selection_reason_code"] | null
           roster_id?: string
           roster_cache_id?: string | null
+          season_id?: string
           selection_status?: Database["public"]["Enums"]["roster_selection_status"]
           updated_at?: string
           user_id?: string | null
@@ -2244,6 +2383,13 @@ export type Database = {
             columns: ["roster_cache_id"]
             isOneToOne: false
             referencedRelation: "guild_roster_cache"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "roster_member_selection_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "guild_seasons"
             referencedColumns: ["id"]
           },
           {
@@ -2593,7 +2739,7 @@ export type Database = {
         }[]
       }
       get_roster_member_selection: {
-        Args: { p_roster_id: string }
+        Args: { p_roster_id: string; p_season_id?: string | null }
         Returns: {
           user_id: string | null
           roster_cache_id: string | null
@@ -2604,6 +2750,23 @@ export type Database = {
           decided_at: string | null
           updated_at: string
         }[]
+      }
+      get_active_guild_season: {
+        Args: { p_guild_id: string }
+        Returns: Database["public"]["Tables"]["guild_seasons"]["Row"]
+      }
+      prepare_guild_wish_season: {
+        Args: {
+          p_activate?: boolean
+          p_ends_at?: string | null
+          p_guild_id: string
+          p_name: string
+          p_prefill_wishes?: boolean
+          p_reset_copied_wishes?: boolean
+          p_source_season_id?: string | null
+          p_starts_at?: string | null
+        }
+        Returns: Database["public"]["Tables"]["guild_seasons"]["Row"]
       }
       // Global admins may call this RPC in read-only mode; signature is unchanged.
       get_user_forum_sanction: {
@@ -2744,6 +2907,14 @@ export type Database = {
         Args: { p_guild_id: string; p_member_id: string; p_locked: boolean }
         Returns: undefined
       }
+      archive_guild_wish_season: {
+        Args: { p_season_id: string }
+        Returns: Database["public"]["Tables"]["guild_seasons"]["Row"]
+      }
+      activate_guild_wish_season: {
+        Args: { p_season_id: string }
+        Returns: Database["public"]["Tables"]["guild_seasons"]["Row"]
+      }
       set_main_character: {
         Args: { p_character_id: string }
         Returns: undefined
@@ -2778,6 +2949,7 @@ export type Database = {
           p_commitment_status?: string
           p_roster_cache_id: string
           p_roster_id: string
+          p_season_id?: string | null
           p_spec_ids?: string[]
         }
         Returns: string
@@ -2789,6 +2961,7 @@ export type Database = {
           p_manager_edit?: boolean
           p_member_id: string
           p_roster_id: string
+          p_season_id?: string | null
           p_wishes?: Json
         }
         Returns: undefined
@@ -2797,6 +2970,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "moderator" | "user"
       forum_sanction_type: "timeout" | "ban"
+      guild_season_state: "draft" | "active" | "archived"
       poll_question_analysis_intent: "decision" | "informative"
       poll_question_type:
         | "single_choice"
@@ -2947,6 +3121,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "moderator", "user"],
       forum_sanction_type: ["timeout", "ban"],
+      guild_season_state: ["draft", "active", "archived"],
       poll_question_analysis_intent: ["decision", "informative"],
       poll_question_type: [
         "single_choice",

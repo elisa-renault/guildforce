@@ -31,6 +31,7 @@ interface RosterTableProps {
   members: MemberWish[];
   currentUserId: string | undefined;
   selectedRosterId?: string | null;
+  selectedSeasonId?: string | null;
   editingUserId: string | null;
   editWishes: WishData[];
   editStatus: CommitmentStatus;
@@ -70,6 +71,7 @@ export const RosterTable = ({
   members,
   currentUserId,
   selectedRosterId,
+  selectedSeasonId,
   editingUserId,
   editWishes,
   editStatus,
@@ -414,7 +416,8 @@ export const RosterTable = ({
             if (member.isExternal) return;
             if (regionSlug && serverSlug && guildSlug) {
               const qp = selectedRosterId ? `?rosterId=${encodeURIComponent(selectedRosterId)}` : '';
-              navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/member/${member.id}${qp}`);
+              const seasonParam = selectedSeasonId ? `${qp ? '&' : '?'}seasonId=${encodeURIComponent(selectedSeasonId)}` : '';
+              navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/member/${member.id}${qp}${seasonParam}`);
             }
           };
 
@@ -424,11 +427,12 @@ export const RosterTable = ({
             if (!regionSlug || !serverSlug || !guildSlug || member.isExternal) return;
 
             const qp = selectedRosterId ? `?rosterId=${encodeURIComponent(selectedRosterId)}` : '';
+            const seasonParam = selectedSeasonId ? `${qp ? '&' : '?'}seasonId=${encodeURIComponent(selectedSeasonId)}` : '';
             if (isOwnRow && !canManageWishes) {
-              navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/wishes${qp}`);
+              navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/wishes${qp}${seasonParam}`);
               return;
             }
-            navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/member/${member.id}${qp}`);
+            navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/member/${member.id}${qp}${seasonParam}`);
           };
 
           return (
@@ -521,7 +525,8 @@ export const RosterTable = ({
                 if (!isEditing && regionSlug && serverSlug && guildSlug) {
                   if (member.isExternal) return;
                   const qp = selectedRosterId ? `?rosterId=${encodeURIComponent(selectedRosterId)}` : '';
-                  navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/member/${member.id}${qp}`);
+                  const seasonParam = selectedSeasonId ? `${qp ? '&' : '?'}seasonId=${encodeURIComponent(selectedSeasonId)}` : '';
+                  navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/member/${member.id}${qp}${seasonParam}`);
                 }
               };
               

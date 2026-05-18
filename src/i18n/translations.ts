@@ -428,6 +428,43 @@ export interface Translations {
       hint: string;
     };
   };
+  seasons: {
+    label: string;
+    selectSeason: string;
+    active: string;
+    draft: string;
+    archived: string;
+    activeHint: string;
+    draftHint: string;
+    archivedHint: string;
+    viewingArchived: string;
+    viewingDraft: string;
+    activeOpen: string;
+    prepareNew: string;
+    archiveSeason: string;
+    activateDraft: string;
+    dialogTitle: string;
+    name: string;
+    namePlaceholder: string;
+    startsAt: string;
+    endsAt: string;
+    prefillPrevious: string;
+    prefillPreviousHint: string;
+    resetCopied: string;
+    resetCopiedHint: string;
+    activateImmediately: string;
+    activateImmediatelyHint: string;
+    sourceSeason: string;
+    createDraft: string;
+    startSeason: string;
+    created: string;
+    activated: string;
+    archivedToast: string;
+    confirmArchive: string;
+    noSeason: string;
+    legacyMode: string;
+    legacyModeHint: string;
+  };
   // Dashboard
   dashboard: {
     title: string;

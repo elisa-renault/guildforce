@@ -230,6 +230,13 @@ const DOCUMENTATION: DocSection[] = [
         tags: ['wishes', 'classes'],
       },
       {
+        titleEn: 'Wish seasons',
+        titleFr: 'Saisons de vœux',
+        contentEn: '`guild_seasons` scopes roster planning into draft, active, and archived seasons. Only one season can be active per guild. `class_wishes`, `external_member_wishes`, `roster_member_selection`, and `guild_season_member_intents` are season-scoped so historical wishes, commitments, validation decisions, and roster decisions remain reviewable after a season is archived. New seasons are created through `prepare_guild_wish_season()`, which can archive the current active season, optionally prefill wishes from a previous season, and reset copied validation fields to pending. Archived and draft seasons are read-only for member editing; RLS and `upsert_member_roster_wishes()` enforce active-season edits.',
+        contentFr: '`guild_seasons` découpe la planification roster en saisons brouillon, active et archivée. Une seule saison peut être active par guilde. `class_wishes`, `external_member_wishes`, `roster_member_selection` et `guild_season_member_intents` sont rattachés à la saison afin que les vœux, engagements, validations et décisions roster historiques restent consultables après archivage. Les nouvelles saisons passent par `prepare_guild_wish_season()`, qui peut archiver la saison active, préremplir les vœux depuis une saison précédente et remettre les validations copiées en attente. Les saisons archivées et brouillon sont en lecture seule pour les membres ; la RLS et `upsert_member_roster_wishes()` imposent les éditions uniquement sur la saison active.',
+        tags: ['wishes', 'seasons', 'rosters', 'security'],
+      },
+      {
         titleEn: 'Validation workflow',
         titleFr: 'Workflow de validation',
         contentEn: 'Validation fields (`validation_status`, `validated_by`, `validated_at`) support officer review. GM or delegated managers can approve, reject, reset to pending, and edit entries inline.',

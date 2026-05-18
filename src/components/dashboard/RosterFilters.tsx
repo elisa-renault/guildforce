@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Search, ChevronDown, Check, Shield, Heart, Swords, X, Clock, CheckCircle2, 
   XCircle, UserCheck, UserMinus, UserX, Sword, Crosshair, MessageSquare, 
-  Hash, RotateCcw, Users, Target
+  Hash, RotateCcw, Users, Target, SlidersHorizontal
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLocalizedClassName, wowClasses, Role } from '@/data/wowClasses';
@@ -15,6 +15,10 @@ import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 interface RosterFiltersProps {
   filters: RosterFiltersType;
@@ -71,9 +75,11 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
   const { t, language } = useLanguage();
   const s = (key: SemanticKey, fallback?: string) =>
     resolveSemanticMessage({ key, language: t.lang, translations: t, fallback });
+  const isMobile = useIsMobile();
   const [playersOpen, setPlayersOpen] = useState(false);
   const [wishesOpen, setWishesOpen] = useState(false);
   const [specsOpen, setSpecsOpen] = useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const updateFilter = <K extends keyof RosterFiltersType>(key: K, value: RosterFiltersType[K]) => {
     onFiltersChange({ ...filters, [key]: value });
@@ -282,6 +288,366 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
 
     return pills;
   }, [filters, language, t]);
+  const activeFilterCount = activePills.length;
+
+  if (isMobile) {
+    return (
+      <div className="mb-4 space-y-2.5">
+        <div className="flex items-center gap-2">
+          <div className="relative min-w-0 flex-1">
+            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" strokeWidth={1.5} />
+            <Input
+              placeholder={t.common.search}
+              value={filters.searchQuery}
+              onChange={(e) => updateFilter('searchQuery', e.target.value)}
+              className="h-10 border-border/50 bg-card/60 pl-9 text-sm"
+            />
+          </div>
+
+          <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+            <SheetTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className={cn(
+                  'h-10 gap-2 border-border/50 bg-card/60 px-3 text-sm',
+                  activeFilterCount > 0 && 'border-primary/40 bg-primary/5 text-foreground'
+                )}
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                {t.dashboard.filters}
+                {activeFilterCount > 0 && (
+                  <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-[10px]">
+                    {activeFilterCount}
+                  </Badge>
+                )}
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="h-[82vh] rounded-t-2xl border-border bg-card/95 px-0 pb-0">
+              <SheetHeader className="px-4 pt-4 text-left">
+                <SheetTitle>{t.dashboard.filters}</SheetTitle>
+                <SheetDescription>{s('dashboard.roster_filters.active_label')}</SheetDescription>
+              </SheetHeader>
+
+              <ScrollArea className="mt-3 h-[calc(82vh-9.5rem)] px-4">
+                <div className="space-y-4 pb-6">
+                  <div className="grid grid-cols-3 gap-2">
+                    <Button
+                      variant={filters.commitmentFilters.includes('confirmed') ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-8 text-xs"
+                      onClick={() => toggleCommitment('confirmed')}
+                    >
+                      {t.wishes.commitment.confirmed}
+                    </Button>
+                    <Button
+                      variant={filters.validationFilters.includes('approved') ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-8 text-xs"
+                      onClick={() => toggleValidation('approved')}
+                    >
+                      {t.wishes.validation.approved}
+                    </Button>
+                    <Button
+                      variant={filters.rosterDecisionFilters.includes('selected') ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-8 text-xs"
+                      onClick={() => toggleRosterDecision('selected')}
+                    >
+                      {t.wishes.rosterDecision.selected}
+                    </Button>
+                  </div>
+
+                  <Accordion type="multiple" defaultValue={['players', 'wishes']} className="space-y-2">
+                    <AccordionItem value="players" className="rounded-lg border border-border/50 bg-background/40 px-3">
+                      <AccordionTrigger className="py-3 text-sm">
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                          <span>{t.guild.members}</span>
+                          {hasPlayersFilters && (
+                            <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-[10px]">
+                              {playersFilterCount}
+                            </Badge>
+                          )}
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-4 pb-3">
+                        <div>
+                          <h4 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">{t.dashboard.commitment}</h4>
+                          <div className="grid grid-cols-1 gap-1.5">
+                            {(Object.keys(commitmentConfig) as CommitmentFilter[]).map((commitment) => {
+                              const config = commitmentConfig[commitment];
+                              const Icon = config.icon;
+                              const isSelected = filters.commitmentFilters.includes(commitment);
+                              return (
+                                <Button
+                                  key={commitment}
+                                  variant={isSelected ? 'default' : 'outline'}
+                                  size="sm"
+                                  className={cn('h-9 justify-start gap-2 text-xs', !isSelected && config.color)}
+                                  onClick={() => toggleCommitment(commitment)}
+                                >
+                                  <Icon className="h-4 w-4" />
+                                  {t.wishes.commitment[config.labelKey]}
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        <Separator />
+                        <div>
+                          <h4 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">{t.wishes.rosterDecision.title}</h4>
+                          <div className="grid grid-cols-1 gap-1.5">
+                            {(Object.keys(rosterDecisionConfig) as RosterSelectionStatus[]).map((decision) => {
+                              const config = rosterDecisionConfig[decision];
+                              const Icon = config.icon;
+                              const isSelected = filters.rosterDecisionFilters.includes(decision);
+                              return (
+                                <Button
+                                  key={decision}
+                                  variant={isSelected ? 'default' : 'outline'}
+                                  size="sm"
+                                  className={cn('h-9 justify-start gap-2 text-xs', !isSelected && config.color)}
+                                  onClick={() => toggleRosterDecision(decision)}
+                                >
+                                  <Icon className="h-4 w-4" />
+                                  {t.wishes.rosterDecision[config.labelKey]}
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+
+                    <AccordionItem value="wishes" className="rounded-lg border border-border/50 bg-background/40 px-3">
+                      <AccordionTrigger className="py-3 text-sm">
+                        <div className="flex items-center gap-2">
+                          <Hash className="h-4 w-4 text-muted-foreground" />
+                          <span>{s('dashboard.roster_filters.wishes_title')}</span>
+                          {hasWishesFilters && (
+                            <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-[10px]">
+                              {wishesFilterCount}
+                            </Badge>
+                          )}
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-4 pb-3">
+                        <div>
+                          <h4 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">{t.dashboard.validation}</h4>
+                          <div className="grid grid-cols-1 gap-1.5">
+                            {(Object.keys(validationConfig) as ValidationStatus[]).map((status) => {
+                              const config = validationConfig[status];
+                              const Icon = config.icon;
+                              const isSelected = filters.validationFilters.includes(status);
+                              return (
+                                <Button
+                                  key={status}
+                                  variant={isSelected ? 'default' : 'outline'}
+                                  size="sm"
+                                  className={cn('h-9 justify-start gap-2 text-xs', !isSelected && config.color)}
+                                  onClick={() => toggleValidation(status)}
+                                >
+                                  <Icon className="h-4 w-4" />
+                                  {t.wishes.validation[status]}
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        <Separator />
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            variant={filters.maxWishIndex === 1 ? 'default' : 'outline'}
+                            size="sm"
+                            className="h-8 text-xs"
+                            onClick={() => updateFilter('maxWishIndex', filters.maxWishIndex === 1 ? null : 1)}
+                          >
+                            {t.dashboard.wishRange1}
+                          </Button>
+                          <Button
+                            variant={filters.maxWishIndex === 2 ? 'default' : 'outline'}
+                            size="sm"
+                            className="h-8 text-xs"
+                            onClick={() => updateFilter('maxWishIndex', filters.maxWishIndex === 2 ? null : 2)}
+                          >
+                            {interpolateMessage(t.dashboard.wishRangeN, { n: 2 })}
+                          </Button>
+                          <Button
+                            variant={filters.minWishes === 1 ? 'default' : 'outline'}
+                            size="sm"
+                            className="h-8 text-xs"
+                            onClick={() => updateFilter('minWishes', filters.minWishes === 1 ? null : 1)}
+                          >
+                            &gt;=1
+                          </Button>
+                          <Button
+                            variant={filters.hasComment === true ? 'default' : 'outline'}
+                            size="sm"
+                            className="h-8 gap-1 text-xs"
+                            onClick={() => updateFilter('hasComment', filters.hasComment === true ? null : true)}
+                          >
+                            <MessageSquare className="h-3.5 w-3.5" />
+                            {t.dashboard.withComment}
+                          </Button>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+
+                    <AccordionItem value="specs" className="rounded-lg border border-border/50 bg-background/40 px-3">
+                      <AccordionTrigger className="py-3 text-sm">
+                        <div className="flex items-center gap-2">
+                          <Target className="h-4 w-4 text-muted-foreground" />
+                          <span>{t.wishes.specs}</span>
+                          {hasSpecsFilters && (
+                            <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-[10px]">
+                              {specsFilterCount}
+                            </Badge>
+                          )}
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="space-y-4 pb-3">
+                        <div>
+                          <h4 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">{s('dashboard.roster_filters.roles_title')}</h4>
+                          <div className="grid grid-cols-3 gap-1.5">
+                            {(Object.keys(roleConfig) as Role[]).map((role) => {
+                              const config = roleConfig[role];
+                              const Icon = config.icon;
+                              const isSelected = filters.roleFilters.includes(role);
+                              return (
+                                <Button
+                                  key={role}
+                                  variant={isSelected ? 'default' : 'outline'}
+                                  size="sm"
+                                  className={cn('h-8 gap-1 px-2 text-xs', !isSelected && config.color)}
+                                  onClick={() => toggleRole(role)}
+                                >
+                                  <Icon className="h-3.5 w-3.5" />
+                                  {t.dashboard[role]}
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        <Separator />
+                        <div>
+                          <h4 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">{t.dashboard.range}</h4>
+                          <div className="grid grid-cols-2 gap-1.5">
+                            {(['melee', 'ranged'] as RangeFilter[]).map((range) => {
+                              const config = rangeConfig[range];
+                              const Icon = config.icon;
+                              const isSelected = filters.rangeFilters.includes(range);
+                              return (
+                                <Button
+                                  key={range}
+                                  variant={isSelected ? 'default' : 'outline'}
+                                  size="sm"
+                                  className={cn('h-8 gap-1 px-2 text-xs', !isSelected && config.color)}
+                                  onClick={() => toggleRange(range)}
+                                >
+                                  <Icon className="h-3.5 w-3.5" />
+                                  {t.dashboard[range]}
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        <Separator />
+                        <div>
+                          <h4 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">{s('dashboard.roster_filters.classes_title')}</h4>
+                          <div className="flex flex-wrap gap-1.5">
+                            {wowClasses.map((cls) => {
+                              const isSelected = filters.classFilters.includes(cls.id);
+                              return (
+                                <button
+                                  key={cls.id}
+                                  onClick={() => toggleClass(cls.id)}
+                                  className={cn(
+                                    'rounded-md border px-2 py-1 text-[11px] transition-colors',
+                                    isSelected ? 'border-primary/50 bg-primary/15' : 'border-border/40 bg-background/40'
+                                  )}
+                                  style={{ color: `hsl(var(--class-${cls.id}))` }}
+                                >
+                                  {getLocalizedClassName(cls.id, language)}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                </div>
+              </ScrollArea>
+
+              <div className="border-t border-border/50 px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" className="h-9 flex-1" onClick={resetAllFilters} disabled={!hasAnyFilters}>
+                    <RotateCcw className="mr-2 h-4 w-4" />
+                    {t.common.reset}
+                  </Button>
+                  <Button className="h-9 flex-1" onClick={() => setMobileFiltersOpen(false)}>
+                    {t.common.close}
+                  </Button>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant={filters.commitmentFilters.includes('confirmed') ? 'default' : 'outline'}
+            size="sm"
+            className="h-8 text-xs"
+            onClick={() => toggleCommitment('confirmed')}
+          >
+            {t.wishes.commitment.confirmed}
+          </Button>
+          <Button
+            variant={filters.validationFilters.includes('approved') ? 'default' : 'outline'}
+            size="sm"
+            className="h-8 text-xs"
+            onClick={() => toggleValidation('approved')}
+          >
+            {t.wishes.validation.approved}
+          </Button>
+          <Button
+            variant={filters.rosterDecisionFilters.includes('selected') ? 'default' : 'outline'}
+            size="sm"
+            className="h-8 text-xs"
+            onClick={() => toggleRosterDecision('selected')}
+          >
+            {t.wishes.rosterDecision.selected}
+          </Button>
+        </div>
+
+        {activePills.length > 0 && (
+          <ScrollArea className="w-full whitespace-nowrap">
+            <div className="flex gap-2 pb-1">
+              {activePills.map((pill) => (
+                <Badge
+                  key={pill.key}
+                  variant="outline"
+                  className={cn(
+                    'h-6 gap-1 rounded-full pl-2 pr-1 transition-colors',
+                    getPillToneClass(pill.color)
+                  )}
+                  style={pill.color?.startsWith('hsl') ? { color: pill.color } : undefined}
+                  onClick={pill.onRemove}
+                >
+                  <span className={cn('text-[11px]', pill.color && !pill.color.startsWith('hsl') && pill.color)}>
+                    {pill.label}
+                  </span>
+                  <X className="h-3 w-3 opacity-60" />
+                </Badge>
+              ))}
+            </div>
+          </ScrollArea>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-3 mb-4">

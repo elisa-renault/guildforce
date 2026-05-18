@@ -26,6 +26,7 @@ interface RosterSelectedTableProps {
   members: MemberWish[];
   currentUserId?: string;
   selectedRosterId?: string | null;
+  selectedSeasonId?: string | null;
   onViewFullTable?: () => void;
 }
 
@@ -263,6 +264,7 @@ export const RosterSelectedTable = ({
   members,
   currentUserId,
   selectedRosterId,
+  selectedSeasonId,
   onViewFullTable,
 }: RosterSelectedTableProps) => {
   const { t, language } = useLanguage();
@@ -364,7 +366,8 @@ export const RosterSelectedTable = ({
   const handleNavigate = (member: MemberWish) => {
     if (member.isExternal || !regionSlug || !serverSlug || !guildSlug) return;
     const qp = selectedRosterId ? `?rosterId=${encodeURIComponent(selectedRosterId)}` : '';
-    navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/member/${member.id}${qp}`);
+    const seasonParam = selectedSeasonId ? `${qp ? '&' : '?'}seasonId=${encodeURIComponent(selectedSeasonId)}` : '';
+    navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/member/${member.id}${qp}${seasonParam}`);
   };
 
   const handleMemberKeyDown = (event: KeyboardEvent, member: MemberWish) => {
