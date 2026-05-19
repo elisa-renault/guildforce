@@ -1,11 +1,12 @@
-import { Loader2, ArrowLeft, Lock } from 'lucide-react';
+import { BarChart3, Loader2, ArrowLeft, Lock } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { CosmicBackground } from '@/components/CosmicBackground';
-import { GlowCard } from '@/components/GlowCard';
-import { GuildSubNav } from '@/components/guild';
+import { GuildWorkspaceShell } from '@/components/guild';
+import { EmptyState } from '@/components/layout/EmptyState';
 import { PageContainer } from '@/components/layout/PageContainer';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { PollResults } from '@/components/polls';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -155,74 +156,70 @@ const GuildPollResultsPage = () => {
 
   // If user doesn't have access to view results, show restricted message
   if (!userCanViewResults) {
-    return (
-      <div className="flex-1 relative pt-16">
-        <CosmicBackground />
-        {guild && (
-          <GuildSubNav
-            guild={guild}
-            guildId={guildId}
-            basePath={basePath}
-            isGM={isGM}
-            activeTab="polls"
-          />
-        )}
+    if (!guild) return null;
 
-        <PageContainer className="py-8" width="contained">
-          <div className="flex items-center gap-4 mb-6">
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="rounded-lg bg-card/60"
-              onClick={handleBack}
-              aria-label={t.common.back}
-            >
-              <ArrowLeft className="h-5 w-5 text-muted-foreground" />
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold">{poll.title}</h1>
-              <p className="text-muted-foreground">
-                {t.common.results}
-              </p>
-            </div>
-          </div>
-          <GlowCard className="p-8 text-center" hoverable={false}>
-            <Lock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">
-              {t.polls.resultsRestricted}
-            </p>
-            {hasResponded && (
-              <div className="mt-4">
-                <Button variant="outline" onClick={() => navigate(personalResponsesPath)}>
-                  {t.polls.reviewMyResponses}
-                </Button>
-              </div>
+    return (
+      <GuildWorkspaceShell
+        guild={guild}
+        guildId={guildId}
+        basePath={basePath}
+        isGM={isGM}
+        activeTab="polls"
+        context={{ status: t.common.results }}
+      >
+        <PageContainer className="space-y-5 py-5 md:py-6" width="workspace">
+          <PageHeader
+            className="max-w-4xl"
+            icon={BarChart3}
+            title={poll.title}
+            description={t.common.results}
+            actions={(
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="rounded-lg bg-card/60"
+                onClick={handleBack}
+                aria-label={t.common.back}
+              >
+                <ArrowLeft className="h-5 w-5 text-muted-foreground" />
+              </Button>
             )}
-          </GlowCard>
+          />
+          <EmptyState
+            icon={Lock}
+            title={t.polls.resultsRestricted}
+            action={hasResponded ? (
+              <Button variant="outline" onClick={() => navigate(personalResponsesPath)}>
+                {t.polls.reviewMyResponses}
+              </Button>
+            ) : null}
+          />
         </PageContainer>
-      </div>
+      </GuildWorkspaceShell>
     );
   }
 
 
+  if (!guild) return null;
+
   return (
-    <div className="flex-1 relative pt-16">
-      <CosmicBackground />
-
-      {guild && (
-        <GuildSubNav
-          guild={guild}
-          guildId={guildId}
-          basePath={basePath}
-          isGM={isGM}
-          activeTab="polls"
-        />
-      )}
-
-      <PageContainer className="py-8" width="wide">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-          <div className="flex items-center gap-4">
+    <GuildWorkspaceShell
+      guild={guild}
+      guildId={guildId}
+      basePath={basePath}
+      isGM={isGM}
+      activeTab="polls"
+      context={{ status: t.common.results }}
+    >
+      <PageContainer className="space-y-6 py-5 md:py-6" width="workspace">
+        <PageHeader
+          className="max-w-4xl"
+          icon={BarChart3}
+          title={poll.title}
+          description={t.common.results}
+          actions={(
+            <>
             <Button
               type="button"
               variant="outline"
@@ -233,13 +230,14 @@ const GuildPollResultsPage = () => {
             >
               <ArrowLeft className="h-5 w-5 text-muted-foreground" />
             </Button>
-          </div>
-          {hasResponded && (
-            <Button variant="outline" onClick={() => navigate(personalResponsesPath)}>
-              {t.polls.reviewMyResponses}
-            </Button>
+            {hasResponded && (
+              <Button variant="outline" onClick={() => navigate(personalResponsesPath)}>
+                {t.polls.reviewMyResponses}
+              </Button>
+            )}
+            </>
           )}
-        </div>
+        />
 
         <PollResults
           poll={poll}
@@ -253,7 +251,7 @@ const GuildPollResultsPage = () => {
           onGenerateAiSummaries={generateAiSummaries}
         />
       </PageContainer>
-    </div>
+    </GuildWorkspaceShell>
   );
 };
 

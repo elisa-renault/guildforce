@@ -4,15 +4,16 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { CosmicBackground } from '@/components/CosmicBackground';
-import { GuildSubNav } from '@/components/guild';
+import { GuildWorkspaceShell } from '@/components/guild';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { PageContainer } from '@/components/layout/PageContainer';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { PollEditor, type ResultsAccessConfig, type RespondentAccessRule } from '@/components/polls';
 import { usePollMutations } from '@/hooks/useGuildPolls';
 import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
 import { useGuildRankLabels } from '@/hooks/useGuildRankLabels';
 import type { PollFormData, SectionFormData, QuestionFormData } from '@/types/poll';
-import { AlertTriangle, Loader2 } from 'lucide-react';
+import { AlertTriangle, ClipboardList, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { formatRankLabel } from '@/lib/rankLabel';
@@ -518,25 +519,25 @@ const GuildPollNew = () => {
     { label: existingPoll ? t.common.edit : t.common.new },
   ];
 
+  if (!guild) return null;
+
   return (
-    <div className="flex-1 relative pt-16">
-      <CosmicBackground />
-
-      {guild && (
-        <GuildSubNav
-          guild={guild}
-          guildId={guildId}
-          basePath={basePath}
-          isGM={isGM}
-          activeTab="polls"
+    <GuildWorkspaceShell
+      guild={guild}
+      guildId={guildId}
+      basePath={basePath}
+      isGM={isGM}
+      activeTab="polls"
+      context={{ status: existingPoll ? t.common.edit : t.common.new }}
+    >
+      <PageContainer className="max-w-4xl space-y-5 py-5 md:py-6" width="workspace">
+        <Breadcrumbs items={breadcrumbs} />
+        <PageHeader
+          className="max-w-4xl"
+          icon={ClipboardList}
+          title={existingPoll ? t.polls.edit : t.polls.new}
+          description={guild ? guild.name : undefined}
         />
-      )}
-
-      <PageContainer className="py-5 sm:py-8 max-w-4xl px-1 sm:px-4" width="contained">
-        <Breadcrumbs items={breadcrumbs} className="mb-4 px-8" />
-        <h1 className="text-2xl font-bold mb-6 px-8">
-          {existingPoll ? t.polls.edit : t.polls.new}
-        </h1>
 
         {isActivePoll && (
           <div className={`mb-6 p-4 rounded-lg border ${isMetadataOnly 
@@ -593,7 +594,7 @@ const GuildPollNew = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </GuildWorkspaceShell>
   );
 };
 

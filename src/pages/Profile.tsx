@@ -20,6 +20,7 @@ import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { PageContainer } from '@/components/layout/PageContainer';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { BattleNetConnect } from '@/components/BattleNetConnect';
 import { AvatarCropDialog } from '@/components/AvatarCropDialog';
 
@@ -361,24 +362,29 @@ const Profile = () => {
 
   // Normal profile view - modular grid layout
   return (
-    <div className="flex-1 relative pt-16">
+    <div className="flex-1 relative">
       <CosmicBackground />
 
-      <PageContainer as="main" className="relative z-10 py-6" width="wide">
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
-          <h1 className="font-display text-2xl text-foreground">{t.profile.title}</h1>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate(`/u/${profile.username}`)}
-            className="gap-1.5"
-          >
-            <ExternalLink className="h-3.5 w-3.5" strokeWidth={1.5} />
-            {ui.viewPublicProfile}
-          </Button>
-        </div>
+      <PageContainer as="main" className="relative z-10 space-y-6 py-6" width="app">
+        <PageHeader
+          icon={User}
+          title={t.profile.title}
+          description={profile.username}
+          titleClassName="font-display"
+          actions={(
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/u/${profile.username}`)}
+              className="gap-1.5"
+            >
+              <ExternalLink className="h-3.5 w-3.5" strokeWidth={1.5} />
+              {ui.viewPublicProfile}
+            </Button>
+          )}
+        />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-4xl mx-auto">
+        <div className="grid max-w-6xl grid-cols-1 gap-4 lg:grid-cols-2">
           {/* Left column: Avatar + Profile stacked */}
           <div className="space-y-4">
             {/* Avatar */}

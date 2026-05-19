@@ -182,10 +182,12 @@ export const PollResults = ({
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => {
         const globalNav = document.querySelector<HTMLElement>('[data-global-nav]');
-        const guildSubNav = document.querySelector<HTMLElement>('[data-guild-subnav]');
+        const workspaceTopbar = document.querySelector<HTMLElement>('[data-guild-workspace-topbar]');
+        const workspaceToolbar = document.querySelector<HTMLElement>('[data-guild-workspace-toolbar]');
         const globalNavHeight = globalNav?.offsetHeight ?? 0;
-        const guildSubNavHeight = guildSubNav?.offsetHeight ?? 0;
-        const nextOffset = globalNavHeight + guildSubNavHeight + 16;
+        const workspaceTopbarHeight = workspaceTopbar?.offsetHeight ?? 0;
+        const workspaceToolbarHeight = workspaceToolbar?.offsetHeight ?? 0;
+        const nextOffset = globalNavHeight + workspaceTopbarHeight + workspaceToolbarHeight + 16;
 
         setQuickNavTopOffset((prev) => (prev === nextOffset ? prev : nextOffset));
       });
@@ -197,14 +199,19 @@ export const PollResults = ({
     const resizeObserver =
       typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(compute);
     const globalNavEl = document.querySelector<HTMLElement>('[data-global-nav]');
-    const guildSubNavEl = document.querySelector<HTMLElement>('[data-guild-subnav]');
+    const workspaceTopbarEl = document.querySelector<HTMLElement>('[data-guild-workspace-topbar]');
+    const workspaceToolbarEl = document.querySelector<HTMLElement>('[data-guild-workspace-toolbar]');
 
     if (resizeObserver && globalNavEl) {
       resizeObserver.observe(globalNavEl);
     }
 
-    if (resizeObserver && guildSubNavEl) {
-      resizeObserver.observe(guildSubNavEl);
+    if (resizeObserver && workspaceTopbarEl) {
+      resizeObserver.observe(workspaceTopbarEl);
+    }
+
+    if (resizeObserver && workspaceToolbarEl) {
+      resizeObserver.observe(workspaceToolbarEl);
     }
 
     return () => {

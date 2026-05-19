@@ -88,6 +88,61 @@ export interface Translations {
     guildMembers: string;
     notFound: string;
   };
+  commandPalette: {
+    title: string;
+    open: string;
+    placeholder: string;
+    placeholderInGuild: string;
+    loading: string;
+    loadingHint: string;
+    searchUnavailable: string;
+    emptyTitle: string;
+    emptyDescription: string;
+    usedCount: string;
+    groups: {
+      recent: string;
+      actions: string;
+      pages: string;
+      guilds: string;
+      members: string;
+      rosters: string;
+      polls: string;
+      forum: string;
+    };
+    actions: {
+      createPoll: string;
+      openRoster: string;
+      editWishes: string;
+      openSettings: string;
+      syncMembers: string;
+      createForumTopic: string;
+      openProfile: string;
+      openAdmin: string;
+    };
+    actionSubtitles: {
+      openProfile: string;
+      openAdmin: string;
+      syncMembers: string;
+      createForumTopic: string;
+      openForumFirst: string;
+    };
+    pageSubtitles: {
+      guilds: string;
+      forum: string;
+      profile: string;
+      admin: string;
+    };
+    badges: {
+      main: string;
+      linked: string;
+      notLinked: string;
+    };
+    keyboard: {
+      navigate: string;
+      open: string;
+      close: string;
+    };
+  };
   guildVault: {
     title: string;
     subtitle: string;

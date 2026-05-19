@@ -2,7 +2,7 @@ import fs from 'node:fs';
 
 const requiredFiles = [
   'src/components/GlobalNav.tsx',
-  'src/components/guild/GuildSubNav.tsx',
+  'src/components/guild/GuildWorkspaceShell.tsx',
   'src/components/admin/AdminSettingsSidebar.tsx',
 ];
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,8 +16,10 @@ import {
 } from '@/data/wowClasses';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
+import { ContextualToolbar } from '@/components/layout/ContextualToolbar';
 import { PageContainer } from '@/components/layout/PageContainer';
-import { GuildSubNav } from '@/components/guild';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { GuildWorkspaceShell } from '@/components/guild';
 import { RosterFilters, RosterTable, RosterAnalytics, RosterSelectedTable } from '@/components/dashboard';
 import { RosterSelector, RosterEditDialog } from '@/components/roster';
 import { SeasonSelector, SeasonStateCallout, type PrepareSeasonInput } from '@/components/seasons/SeasonSelector';
@@ -186,58 +188,6 @@ const RosterWishes = () => {
   const [savingExternalWish, setSavingExternalWish] = useState(false);
 
   const isMobile = useIsMobile();
-
-  // Dynamic offset for roster controls bar.
-  // On mobile we render it as `fixed` (like the Settings tabs) to avoid a top-vs-scroll mismatch.
-  const controlsRef = useRef<HTMLDivElement | null>(null);
-  const [controlsTop, setControlsTop] = useState<number>(112);
-  // Default spacer to ~44px (py-2 + h-7 button) so it's never 0 on first paint
-  const [controlsSpacerH, setControlsSpacerH] = useState<number>(isMobile ? 44 : 0);
-
-  useLayoutEffect(() => {
-    let raf = 0;
-
-    const compute = () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        const globalNav = document.querySelector<HTMLElement>('[data-global-nav]');
-        const subNav = document.querySelector<HTMLElement>('[data-guild-subnav]');
-
-        const fallbackGlobalH = globalNav?.offsetHeight ?? 64;
-        const fallbackSubH = subNav?.offsetHeight ?? 48;
-
-        // Use getBoundingClientRect for precise positioning when SubNav exists
-        const nextTop = subNav
-          ? Math.max(0, Math.round(subNav.getBoundingClientRect().bottom) - 1)
-          : fallbackGlobalH + fallbackSubH;
-
-        setControlsTop((prev) => (prev === nextTop ? prev : nextTop));
-
-        if (isMobile && controlsRef.current) {
-          const nextH = Math.round(controlsRef.current.offsetHeight);
-          setControlsSpacerH((prev) => (prev === nextH ? prev : nextH));
-        }
-      });
-    };
-
-    // Run immediately on mount to measure controls bar height
-    compute();
-
-    window.addEventListener('resize', compute);
-
-    const ro = new ResizeObserver(compute);
-    const globalNavEl = document.querySelector<HTMLElement>('[data-global-nav]');
-    const subNavEl = document.querySelector<HTMLElement>('[data-guild-subnav]');
-    if (globalNavEl) ro.observe(globalNavEl);
-    if (subNavEl) ro.observe(subNavEl);
-    if (controlsRef.current) ro.observe(controlsRef.current);
-
-    return () => {
-      cancelAnimationFrame(raf);
-      ro.disconnect();
-      window.removeEventListener('resize', compute);
-    };
-  }, [guild, isMobile]);
 
   const toLocalInputValue = (value?: string | null) => {
     if (!value) return '';
@@ -1380,64 +1330,37 @@ const RosterWishes = () => {
 
   const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
 
-  return (
-    <div className="flex-1 relative pt-16">
-      <CosmicBackground />
+  if (!guild) return null;
 
-      {/* Guild Sub-Navigation */}
-      {guild && (
-        <GuildSubNav
-          guild={guild}
-          guildId={guildId}
-          basePath={basePath}
-          isGM={isGM}
-          hasSettingsPermission={hasSettingsPermission}
-          activeTab="roster"
-        />
-      )}
-
-      {/* Admin read-only banner */}
-      {isAdminReadOnly && (
-        <PageContainer className="px-3 md:px-4 py-2" width="wide">
-          <div className={cn("flex items-center justify-center gap-2 p-2 rounded-lg border", toneCalloutClass('warning'))}>
-            <Eye className={cn("h-4 w-4", toneTextClass('warning'))} />
-            <span className={cn("text-sm font-medium", toneTextClass('warning'))}>
-              {s('roster_wishes.admin_read_only')}
-            </span>
-          </div>
-        </PageContainer>
-      )}
-
-      {/* Roster controls bar */}
-      <div
-        ref={controlsRef}
-        className={`${isMobile ? 'fixed left-0 right-0' : 'sticky'} -mt-px z-30 bg-background/80 backdrop-blur-lg border-b border-border/50`}
-        style={{ top: controlsTop }}
-      >
-          <PageContainer className={cn('px-3 md:px-4 py-2', isMobile ? 'space-y-2' : 'flex items-center justify-between gap-2')} width="wide">
-          <div className="flex min-w-0 flex-1 items-center gap-2">
-            <RosterSelector
-              rosters={rosters}
-              selectedRosterId={selectedRosterId}
-              onSelect={setSelectedRosterId}
-              showAccessIndicator={true}
-              showWishesLockIndicator={true}
-            />
-            <SeasonSelector
-              seasons={seasons}
-              selectedSeasonId={selectedSeasonId}
-              onSelect={selectSeasonInUrl}
-              emptyLabel={seasonSupportMode === 'legacy' ? t.seasons.legacyMode : undefined}
-              canManage={canManageWishes && !isAdminReadOnly}
-              busy={seasonBusy}
-              onPrepareSeason={handlePrepareSeason}
-              onArchiveSeason={handleArchiveSeason}
-              onActivateSeason={handleActivateSeason}
-              onRenameSeason={handleRenameSeason}
-            />
-          </div>
-          {isMobile ? (
-            <div className="flex items-center gap-2">
+  const workspaceToolbar = (
+    <PageContainer className="py-2.5" width="workspace">
+          <ContextualToolbar
+            className={cn('border-border/30 bg-card/10 p-2', isMobile && 'gap-2')}
+            leading={(
+              <div className="flex min-w-0 flex-1 items-center gap-2">
+                <RosterSelector
+                  rosters={rosters}
+                  selectedRosterId={selectedRosterId}
+                  onSelect={setSelectedRosterId}
+                  showAccessIndicator={true}
+                  showWishesLockIndicator={true}
+                />
+                <SeasonSelector
+                  seasons={seasons}
+                  selectedSeasonId={selectedSeasonId}
+                  onSelect={selectSeasonInUrl}
+                  emptyLabel={seasonSupportMode === 'legacy' ? t.seasons.legacyMode : undefined}
+                  canManage={canManageWishes && !isAdminReadOnly}
+                  busy={seasonBusy}
+                  onPrepareSeason={handlePrepareSeason}
+                  onArchiveSeason={handleArchiveSeason}
+                  onActivateSeason={handleActivateSeason}
+                  onRenameSeason={handleRenameSeason}
+                />
+              </div>
+            )}
+            trailing={isMobile ? (
+              <>
               {!isAdminReadOnly && (
                 <CosmicButton
                   size="sm"
@@ -1480,30 +1403,12 @@ const RosterWishes = () => {
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
-          ) : (
-            <div className="flex gap-1.5 md:gap-2">
-              <CosmicButton 
-                size="sm" 
-                variant="outline" 
-                onClick={() => {
-                  exportWishesToCSV(filteredMembers, {
-                    language,
-                    t,
-                    rosterName: currentRoster?.name || 'roster',
-                    guildName: guild?.name || 'guild'
-                  });
-                  toast({ title: t.dashboard.exportSuccess });
-                }} 
-                icon={<Download className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} 
-                className="h-7 w-7 md:h-8 md:w-auto p-0 md:px-3"
-              >
-                <span className="hidden md:inline">{t.dashboard.exportCSV}</span>
-              </CosmicButton>
+              </>
+            ) : (
+              <>
               {!isAdminReadOnly && (
                 <CosmicButton
                   size="sm"
-                  variant="outline"
                   onClick={() => {
                     if (!guild) return;
                     const params = new URLSearchParams();
@@ -1519,44 +1424,78 @@ const RosterWishes = () => {
                   <span className="hidden md:inline">{t.wishes.editMyWishes}</span>
                 </CosmicButton>
               )}
-              {canManageWishes && !isAdminReadOnly && selectedRosterId && isSelectedSeasonActive && (
-                <CosmicButton
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setExternalDialogOpen(true)}
-                  icon={<UserPlus className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />}
-                  className="h-7 w-7 md:h-8 md:w-auto p-0 md:px-3"
-                >
-                  <span className="hidden md:inline">
-                    {t.dashboard.externalMember.addButton}
-                  </span>
-                </CosmicButton>
+              {getMobileToolbarActions().length > 0 && (
+                <DropdownMenu modal={false}>
+                  <DropdownMenuTrigger asChild>
+                    <CosmicButton
+                      size="sm"
+                      variant="outline"
+                      icon={<MoreVertical className="h-4 w-4" strokeWidth={1.5} />}
+                      className="h-8 w-8 p-0"
+                      aria-label={t.common.actions}
+                    />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56 border-border bg-card">
+                    {getMobileToolbarActions().map((action) => (
+                      <DropdownMenuItem
+                        key={action.key}
+                        disabled={action.disabled}
+                        onClick={action.onClick}
+                        className="cursor-pointer"
+                      >
+                        <action.icon className="mr-2 h-4 w-4" />
+                        {action.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
-              {canManageWishes && !isAdminReadOnly && selectedRosterId && isSelectedSeasonActive && (
-                <CosmicButton
-                  size="sm"
-                  variant={rosterLockState.isLocked ? "default" : "outline"}
-                  onClick={() => setLockDialogOpen(true)}
-                  icon={<Lock className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />}
-                  className="h-7 w-7 md:h-8 md:w-auto p-0 md:px-3"
-                >
-                  <span className="hidden md:inline">{t.rosters.wishesLockTitle}</span>
-                </CosmicButton>
-              )}
-              {isGM && selectedRosterId && (
-                <CosmicButton size="sm" variant="outline" onClick={() => setRosterSettingsOpen(true)} icon={<Settings className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />} className="h-7 w-7 md:h-8 md:w-auto p-0 md:px-3">
-                  <span className="hidden md:inline">{t.dashboard.roster}</span>
-                </CosmicButton>
-              )}
-            </div>
-          )}
+              </>
+            )}
+          />
+    </PageContainer>
+  );
+
+  return (
+    <GuildWorkspaceShell
+      guild={guild}
+      guildId={guildId}
+      basePath={basePath}
+      isGM={isGM}
+      hasSettingsPermission={hasSettingsPermission}
+      activeTab="roster"
+      toolbar={workspaceToolbar}
+      context={{
+        roster: currentRoster?.name,
+        season: selectedSeason?.name,
+        status: rosterLockState.isLocked ? t.wishes.lockedTitle : undefined,
+      }}
+    >
+      {/* Admin read-only banner */}
+      {isAdminReadOnly && (
+        <PageContainer className="py-2.5" width="workspace">
+          <div className={cn("flex items-center justify-center gap-2 p-2 rounded-lg border", toneCalloutClass('warning'))}>
+            <Eye className={cn("h-4 w-4", toneTextClass('warning'))} />
+            <span className={cn("text-sm font-medium", toneTextClass('warning'))}>
+              {s('roster_wishes.admin_read_only')}
+            </span>
+          </div>
         </PageContainer>
-      </div>
-      {isMobile && controlsSpacerH > 0 && (
-        <div aria-hidden="true" style={{ height: controlsSpacerH }} />
       )}
 
-      <PageContainer as="main" className="px-3 md:px-4 py-4 md:py-6 relative z-10" width="wide">
+      <PageContainer as="main" className="relative z-10 py-4 md:py-6" width="workspace">
+        <PageHeader
+          className="mb-4 max-w-4xl xl:max-w-5xl"
+          icon={TableIcon}
+          title={t.guildNav.wishesTable}
+          description={currentRoster?.name || t.dashboard.roster}
+          meta={selectedSeason ? (
+            <span className="rounded-md border border-border/50 bg-muted/30 px-2 py-1 text-xs text-muted-foreground">
+              {selectedSeason.name}
+            </span>
+          ) : null}
+        />
+
         {/* Access warning */}
         {currentRoster && !currentRoster.hasAccess && (
           <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive">
@@ -1595,7 +1534,7 @@ const RosterWishes = () => {
         )}
 
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'table' | 'selected' | 'analytics')} className="w-full">
-          <TabsList className="mb-3 h-auto w-full justify-start overflow-x-auto p-1">
+          <TabsList className="mb-3 h-auto w-full justify-start overflow-x-auto p-1 lg:w-auto">
             <TabsTrigger value="table" className="gap-2 whitespace-nowrap px-3">
               <TableIcon className="h-4 w-4" />
               {t.dashboard.table}
@@ -1822,7 +1761,7 @@ const RosterWishes = () => {
           onSaved={fetchData}
         />
       )}
-    </div>
+    </GuildWorkspaceShell>
   );
 };
 

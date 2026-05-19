@@ -12,6 +12,7 @@ import {
   Database,
   Key,
   RefreshCw,
+  Search,
 } from 'lucide-react';
 import { useState, type ElementType } from 'react';
 import { Link } from 'react-router-dom';
@@ -175,6 +176,13 @@ const DOCUMENTATION: DocSection[] = [
         contentEn: '`guild_permissions` delegates key actions (`manage_wishes`, `manage_polls`, `manage_rosters`, `view_activity_log`, `manage_vault`, `view_vault_audit`) with `rank` and `user` rules. GM users always keep implicit full control. The Battle.net-tracked guild owner (`guilds.owner_id`) is also treated as an effective GM by permission helpers so a freshly claimed GM does not lose settings access if the mirrored `guild_members` role is stale.',
         contentFr: '`guild_permissions` délègue les actions clés (`manage_wishes`, `manage_polls`, `manage_rosters`, `view_activity_log`, `manage_vault`, `view_vault_audit`) avec des règles `rank` et `user`. Les GM gardent toujours un contrôle implicite complet. Le propriétaire de guilde suivi depuis Battle.net (`guilds.owner_id`) est aussi traité comme un GM effectif par les helpers de permission afin qu’un GM venant de claim sa guilde ne perde pas l’accès aux réglages si le rôle miroir dans `guild_members` est en retard.',
         tags: ['guilds', 'permissions'],
+      },
+      {
+        titleEn: 'Guild navigation preferences',
+        titleFr: 'Préférences de navigation guilde',
+        contentEn: '`user_guild_navigation_preferences` stores per-user switcher state: favorite guilds and the last visited timestamp. It improves navigation speed between guild workspaces but does not grant guild access or change any guild permission helper.',
+        contentFr: '`user_guild_navigation_preferences` stocke l’état du switcher par utilisateur : guildes favorites et date de dernière visite. Cette table accélère la navigation entre workspaces de guilde mais ne donne aucun accès guilde et ne modifie aucun helper de permission.',
+        tags: ['guilds', 'navigation', 'preferences'],
       },
       {
         titleEn: 'Guild Vault',
@@ -385,6 +393,36 @@ const DOCUMENTATION: DocSection[] = [
     ],
   },
   {
+    id: 'command-palette',
+    titleEn: 'Command Palette',
+    titleFr: 'Palette de commandes',
+    icon: Search,
+    color: 'text-primary',
+    subsections: [
+      {
+        titleEn: 'Navigation accelerator',
+        titleFr: 'Accélérateur de navigation',
+        contentEn: 'The Guildforce Command Palette is opened from the topbar or with `Ctrl/Cmd+K`. It replaces decorative global search with a keyboard-first overlay that can jump to guilds, members, rosters, polls, forum topics, pages, and safe quick actions without relying on the sidebar.',
+        contentFr: 'La palette de commandes Guildforce s\'ouvre depuis la topbar ou avec `Ctrl/Cmd+K`. Elle remplace la recherche globale décorative par un overlay keyboard-first capable d\'ouvrir guildes, membres, rosters, sondages, sujets forum, pages et actions rapides sûres sans dépendre de la sidebar.',
+        tags: ['command-palette', 'search', 'navigation'],
+      },
+      {
+        titleEn: 'Context-aware search',
+        titleFr: 'Recherche contextuelle',
+        contentEn: '`search_command_palette()` combines `pg_trgm` matching with explicit permission helper checks. When a guild workspace is active, results from that guild receive a context boost while global search remains limited to spaces the user can access.',
+        contentFr: '`search_command_palette()` combine le matching `pg_trgm` avec des contrôles explicites via helpers de permission. Quand un workspace de guilde est actif, les résultats de cette guilde sont priorisés, tandis que la recherche globale reste limitée aux espaces accessibles à l\'utilisateur.',
+        tags: ['command-palette', 'search', 'guilds', 'permissions'],
+      },
+      {
+        titleEn: 'Quick actions and recents',
+        titleFr: 'Actions rapides et récents',
+        contentEn: 'Quick actions open existing workflows only: create poll, open roster, edit wishes, open settings, sync member cache from Battle.net settings, open profile, and open admin when authorized. Activations are stored in `command_palette_recent_items` through `record_command_palette_use()` so the empty state remains useful per account.',
+        contentFr: 'Les actions rapides ouvrent uniquement des workflows existants : créer un sondage, ouvrir le roster, modifier les vœux, ouvrir les paramètres, synchroniser le cache membres depuis les réglages Battle.net, ouvrir le profil et ouvrir l\'admin si autorisé. Les activations sont stockées dans `command_palette_recent_items` via `record_command_palette_use()` afin que l\'état vide reste utile par compte.',
+        tags: ['command-palette', 'actions', 'recents'],
+      },
+    ],
+  },
+  {
     id: 'admin',
     titleEn: 'Administration',
     titleFr: 'Administration',
@@ -427,6 +465,20 @@ const DOCUMENTATION: DocSection[] = [
         contentEn: 'All business tables run with RLS enabled. Client code must rely on policies instead of bypass logic. Sensitive tables (especially battlenet_tokens) are locked down to self access or privileged backend contexts. Guild deletion allows owner or app admin, and audit logging now safely skips inserts when cascading delete removes the parent guild row first.',
         contentFr: 'Toutes les tables métiers fonctionnent avec RLS activé. Le code client doit s\'appuyer sur les politiques au lieu de contourner la sécurité. Les tables sensibles (notamment battlenet_tokens) sont strictement limitées à l\'auto-accès ou aux contextes backend privilégiés. La suppression de guilde autorise le propriétaire ou un admin applicatif, et le journal d\'activité ignore désormais proprement les insertions quand une suppression en cascade retire d\'abord la guilde parente.',
         tags: ['security', 'rls'],
+      },
+      {
+        titleEn: 'Self-owned navigation metadata',
+        titleFr: 'Métadonnées de navigation personnelles',
+        contentEn: '`user_guild_navigation_preferences` is RLS-protected with self-only select, insert, update, and delete policies. Rows store navigation metadata only and must never be used as proof of guild membership or authorization.',
+        contentFr: '`user_guild_navigation_preferences` est protégée par RLS avec des politiques select, insert, update et delete limitées à l’utilisateur propriétaire. Les lignes stockent uniquement des métadonnées de navigation et ne doivent jamais servir de preuve d’appartenance ou d’autorisation guilde.',
+        tags: ['security', 'rls', 'navigation'],
+      },
+      {
+        titleEn: 'Command palette search guardrails',
+        titleFr: 'Garde-fous de la palette de commandes',
+        contentEn: '`command_palette_recent_items` is self-owned RLS data. `record_command_palette_use()` refuses unsupported item types and verifies guild scope before writing a recent item. `search_command_palette()` is `SECURITY DEFINER` but explicitly gates results through `is_guild_member`, `is_guild_gm`, `has_role`, `has_roster_access`, `has_guild_permission`, `can_respond_to_poll`, and `can_view_poll_results` to avoid leaking inaccessible guild, roster, poll, member, or forum data.',
+        contentFr: '`command_palette_recent_items` est une donnée RLS personnelle. `record_command_palette_use()` refuse les types non supportés et vérifie le périmètre guilde avant d\'écrire un récent. `search_command_palette()` est `SECURITY DEFINER`, mais filtre explicitement les résultats via `is_guild_member`, `is_guild_gm`, `has_role`, `has_roster_access`, `has_guild_permission`, `can_respond_to_poll` et `can_view_poll_results` pour éviter toute fuite de guildes, rosters, sondages, membres ou contenus forum non accessibles.',
+        tags: ['security', 'rls', 'rpc', 'command-palette'],
       },
       {
         titleEn: 'Helper RPC functions',
@@ -489,8 +541,8 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Core tables',
         titleFr: 'Tables cœur',
-        contentEn: '- `profiles`, `battlenet_tokens`\n- `wow_characters`, `wow_guild_memberships`\n- `guilds`, `guild_members` (includes `wishes_locked`), `guild_roster_cache`, `guild_aliases`',
-        contentFr: '- `profiles`, `battlenet_tokens`\n- `wow_characters`, `wow_guild_memberships`\n- `guilds`, `guild_members` (inclut `wishes_locked`), `guild_roster_cache`, `guild_aliases`',
+        contentEn: '- `profiles`, `battlenet_tokens`\n- `wow_characters`, `wow_guild_memberships`\n- `guilds`, `guild_members` (includes `wishes_locked`), `guild_roster_cache`, `guild_aliases`\n- `user_guild_navigation_preferences` for self-owned switcher favorites and recent guilds\n- `command_palette_recent_items` for self-owned recent command palette items and action frequency',
+        contentFr: '- `profiles`, `battlenet_tokens`\n- `wow_characters`, `wow_guild_memberships`\n- `guilds`, `guild_members` (inclut `wishes_locked`), `guild_roster_cache`, `guild_aliases`\n- `user_guild_navigation_preferences` pour les favoris et guildes récentes du switcher personnel\n- `command_palette_recent_items` pour les récents personnels de la palette de commandes et la fréquence des actions',
         tags: ['database', 'core'],
       },
       {
@@ -520,6 +572,13 @@ const DOCUMENTATION: DocSection[] = [
         contentEn: 'Admin metrics are served by `get_admin_dashboard_stats()` (snapshot KPIs) and `get_admin_dashboard_timeseries(p_days)` (daily UTC trend points, bounded 14-180 days). Formula highlights: DAU/WAU/MAU rolling windows from core actions, WAU/MAU engagement %, activation 7D by signup-day cohort, active guilds 30D, open critical backlog (`pending_reports + open_bugs + pending_deletions`), and daily incident creation volume (`created_reports + created_bugs + created_deletions`). Keep dashboard labels/tooltips aligned with these formulas.',
         contentFr: 'Les métriques admin sont exposées via `get_admin_dashboard_stats()` (KPI snapshot) et `get_admin_dashboard_timeseries(p_days)` (points de tendance quotidiens UTC, bornés entre 14 et 180 jours). Formules clés : fenêtres glissantes DAU/WAU/MAU basées sur les actions cœur, engagement WAU/MAU %, activation 7j par cohorte de jour d\'inscription, guildes actives 30j, backlog critique ouvert (`pending_reports + open_bugs + pending_deletions`) et volume quotidien d’incidents créés (`created_reports + created_bugs + created_deletions`). Maintenir les labels/tooltips dashboard alignés avec ces formules.',
         tags: ['database', 'analytics', 'admin'],
+      },
+      {
+        titleEn: 'Command palette RPC',
+        titleFr: 'RPC palette de commandes',
+        contentEn: '`search_command_palette(p_query, p_context_guild_id, p_limit_per_group)` returns typed grouped result candidates for `guild`, `member`, `roster`, `poll`, and `forum`. `record_command_palette_use(...)` records safe activations for recents and frequency ranking. Keep generated Supabase types synchronized when these signatures change.',
+        contentFr: '`search_command_palette(p_query, p_context_guild_id, p_limit_per_group)` renvoie des candidats typés pour les groupes `guild`, `member`, `roster`, `poll` et `forum`. `record_command_palette_use(...)` enregistre les activations sûres pour les récents et le ranking par fréquence. Les types Supabase générés doivent rester synchronisés si ces signatures changent.',
+        tags: ['database', 'rpc', 'command-palette', 'search'],
       },
     ],
   },

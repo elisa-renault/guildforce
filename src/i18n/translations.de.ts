@@ -78,6 +78,61 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "guildMembers": "Mitglieder",
     "notFound": "Seite nicht gefunden"
   },
+  "commandPalette": {
+    "title": "Befehlspalette",
+    "open": "Suchen oder springen...",
+    "placeholder": "Seiten, Gilden, Mitglieder, Umfragen, Forum suchen...",
+    "placeholderInGuild": "{guild}, Aktionen, Mitglieder, Umfragen suchen...",
+    "loading": "Suche...",
+    "loadingHint": "Suche in deinen zugänglichen Bereichen.",
+    "searchUnavailable": "Suchdienst nicht verfügbar. Nur lokale Kurzbefehle werden angezeigt.",
+    "emptyTitle": "Keine Ergebnisse",
+    "emptyDescription": "Versuche eine Seite, ein Mitglied, eine Gilde, eine Umfrage, einen Roster oder eine Aktion.",
+    "usedCount": "{count} Mal genutzt",
+    "groups": {
+      "recent": "Zuletzt",
+      "actions": "Aktionen",
+      "pages": "Seiten",
+      "guilds": "Gilden",
+      "members": "Mitglieder",
+      "rosters": "Roster",
+      "polls": "Umfragen",
+      "forum": "Forum"
+    },
+    "actions": {
+      "createPoll": "Umfrage erstellen",
+      "openRoster": "Zum Roster",
+      "editWishes": "Meine Wünsche bearbeiten",
+      "openSettings": "Einstellungen öffnen",
+      "syncMembers": "Mitgliedercache synchronisieren",
+      "createForumTopic": "Forum-Thema erstellen",
+      "openProfile": "Mein Profil öffnen",
+      "openAdmin": "Admin öffnen"
+    },
+    "actionSubtitles": {
+      "openProfile": "Profil, Charaktere und Präferenzen",
+      "openAdmin": "Benutzer, Gilden, Moderation und Inhalte",
+      "syncMembers": "Battle.net-Sync-Einstellungen dieser Gilde öffnen",
+      "createForumTopic": "Thema in der aktuellen Kategorie starten",
+      "openForumFirst": "Forum öffnen und zuerst eine Kategorie wählen"
+    },
+    "pageSubtitles": {
+      "guilds": "Gilden-Workspaces wechseln oder verwalten",
+      "forum": "Themen, Beiträge, Moderation und Abos",
+      "profile": "Charaktere, Battle.net und Konto",
+      "admin": "Operatives Backoffice"
+    },
+    "badges": {
+      "main": "Main",
+      "linked": "Verknüpft",
+      "notLinked": "Nicht verknüpft"
+    },
+    "keyboard": {
+      "navigate": "Navigieren",
+      "open": "Öffnen",
+      "close": "Schließen"
+    }
+  },
   "guildVault": {
     "title": "Gildentresor",
     "subtitle": "Geteilte Gilden-Zugangsdaten und Geheimnisse. Nutze den Tresor, um Zugangsdaten, Tokens oder Notizen sicher zu teilen, mit Zugriffssteuerung nach Rang oder Mitglied.",

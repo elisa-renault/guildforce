@@ -8,13 +8,14 @@ import { getClassById, getLocalizedClassName, getLocalizedSpecName, getSpecById 
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
 import { GlowCard } from '@/components/GlowCard';
-import { GuildSubNav } from '@/components/guild';
+import { GuildWorkspaceShell } from '@/components/guild';
 import { ActivePollWidget } from '@/components/polls';
 import { PageContainer } from '@/components/layout/PageContainer';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Loader2, Sparkles, Users, CheckCircle2, Shield, Heart, Swords, ChevronDown, Eye } from 'lucide-react';
-import { toSlug, getGuildWishesPath } from '@/lib/guildSlug';
+import { LayoutDashboard, Loader2, Sparkles, Users, CheckCircle2, Shield, Heart, Swords, ChevronDown, Eye } from 'lucide-react';
+import { getGuildWishesPath } from '@/lib/guildSlug';
 import { CommitmentStatus } from '@/components/CommitmentToggle';
 import { cn } from '@/lib/utils';
 import { interpolateMessage } from '@/i18n/format';
@@ -230,23 +231,22 @@ const Overview = () => {
   const StatusIcon = statusConfig.icon;
   const greetingName = user?.user_metadata?.username;
 
+  if (!guild) return null;
+
   return (
-    <div className="flex-1 relative pt-16">
-      <CosmicBackground />
-
-      {/* Guild Sub-Navigation */}
-      {guild && (
-        <GuildSubNav
-          guild={guild}
-          guildId={guildId}
-          basePath={basePath}
-          isGM={isGM}
-          hasSettingsPermission={hasSettingsPermission}
-          activeTab="overview"
-        />
-      )}
-
-      <PageContainer as="main" className="relative z-10 overflow-x-hidden py-6" width="contained">
+    <GuildWorkspaceShell
+      guild={guild}
+      guildId={guildId}
+      basePath={basePath}
+      isGM={isGM}
+      hasSettingsPermission={hasSettingsPermission}
+      activeTab="overview"
+      context={{
+        roster: defaultRoster?.name,
+        status: statusConfig.label,
+      }}
+    >
+      <PageContainer as="main" className="relative z-10 py-5 md:py-6" width="workspace">
         {/* Admin read-only banner */}
         {isAdminReadOnly && (
           <div className={cn("flex items-center justify-center gap-2 mb-4 p-2 rounded-lg border", toneCalloutClass('warning'))}>
@@ -257,17 +257,26 @@ const Overview = () => {
           </div>
         )}
 
-        {/* Welcome Section */}
-        <div className="text-center mb-8 px-2">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-display cosmic-text mb-2 break-words">
-            {t.guildNav.welcome}{greetingName ? `, ${greetingName}` : ''}
-          </h1>
-          <p className="text-muted-foreground text-sm sm:text-base">
-            {guild?.name} • {guild?.server || ''}
-          </p>
-        </div>
+        <PageHeader
+          className="mb-5 max-w-4xl xl:max-w-5xl"
+          icon={LayoutDashboard}
+          title={`${t.guildNav.welcome}${greetingName ? `, ${greetingName}` : ''}`}
+          description={`${guild?.name} • ${guild?.server || ''}`}
+          titleClassName="font-display cosmic-text"
+          meta={(
+            <>
+              <Badge variant="secondary" className="text-xs">
+                {totalMembers} {t.guild.members}
+              </Badge>
+              <Badge variant="outline" className={cn('text-xs', statusConfig.bgColor, statusConfig.color)}>
+                <StatusIcon className="mr-1 h-3.5 w-3.5" />
+                {statusConfig.label}
+              </Badge>
+            </>
+          )}
+        />
 
-        <div className="grid md:grid-cols-2 gap-4 md:gap-6">
+        <div className="grid max-w-[1380px] gap-4 lg:gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
           {/* Left Column - My Status + Wishes */}
           <div className="space-y-4 min-w-0">
             {/* My Status Card */}
@@ -466,7 +475,7 @@ const Overview = () => {
           </div>
         </div>
       </PageContainer>
-    </div>
+    </GuildWorkspaceShell>
   );
 };
 

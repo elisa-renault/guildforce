@@ -3,11 +3,13 @@ import { cva, type VariantProps } from 'class-variance-authority';
 
 import { cn } from '@/lib/utils';
 
-const pageContainerVariants = cva('w-full px-4 md:px-6', {
+const pageContainerVariants = cva('w-full px-4 md:px-5 xl:px-6 2xl:px-8', {
   variants: {
     width: {
       contained: 'mx-auto max-w-5xl',
       wide: 'mx-auto md:max-w-6xl lg:max-w-7xl xl:max-w-screen-2xl 2xl:max-w-[1600px]',
+      app: 'max-w-none',
+      workspace: 'max-w-none',
       full: '',
     },
     spacing: {
@@ -46,4 +48,3 @@ export const PageContainer = <T extends ElementType = 'div'>({
     />
   );
 };
-

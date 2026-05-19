@@ -1,21 +1,22 @@
-import { useEffect, useState } from 'react';
-import log from '@/lib/logger';
-import { useNavigate } from 'react-router-dom';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { CosmicBackground } from '@/components/CosmicBackground';
-import { GlowCard } from '@/components/GlowCard';
-import { CosmicButton } from '@/components/CosmicButton';
 import { PageContainer } from '@/components/layout/PageContainer';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Shield, Crown, Loader2, Link as LinkIcon, Users, MapPin, Settings } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { BattleNetIcon } from '@/components/BattleNetIcon';
-import { buildGuildDiscoveryKey, mergeGuildDiscoverySources } from '@/lib/guildDiscovery';
+import { useUserGuilds } from '@/hooks/useUserGuilds';
 import { getGuildPath, getGuildSettingsPath } from '@/lib/guildSlug';
 import { toast } from 'sonner';
+import { BattleNetIcon } from '@/components/BattleNetIcon';
+import { CosmicBackground } from '@/components/CosmicBackground';
+import { CosmicButton } from '@/components/CosmicButton';
+import { GlowCard } from '@/components/GlowCard';
+import { EmptyState } from '@/components/layout/EmptyState';
+import { Label } from '@/components/ui/label';
+import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { supabase } from '@/integrations/supabase/client';
 import {
   type BattleNetRegion,
   REGION_LABELS,
@@ -28,204 +29,17 @@ import {
   getRedirectUri,
   generateOAuthState,
 } from '@/lib/battlenetOAuth';
-
-interface GuildWithMembership {
-  id: string | null;
-  name: string;
-  server: string;
-  region: string;
-  faction: 'horde' | 'alliance';
-  role: string | null;
-  owner_id: string | null;
-  memberCount?: number;
-  hasMain?: boolean;
-  avatar_url?: string | null;
-  isDetectedOnly: boolean;
-  syncedCharacterCount: number;
-}
-
-const dedupeGuildsById = <T extends { id: string }>(guilds: T[]) =>
-  Array.from(new Map(guilds.map((guild) => [guild.id, guild])).values());
+import log from '@/lib/logger';
 
 const GuildList = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { user, profile, loading: authLoading, refreshProfile } = useAuth();
-  const [guilds, setGuilds] = useState<GuildWithMembership[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { guilds, loading, refresh: refreshGuilds } = useUserGuilds({ enabled: Boolean(user?.id) });
   const [isConnecting, setIsConnecting] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState<BattleNetRegion>('eu');
 
   const isConnected = !!profile?.battlenet_id;
-
-  const loadGuilds = async (userId: string) => {
-    setLoading(true);
-
-    const [membershipsResult, syncedMembershipsResult, mainCharResult] = await Promise.all([
-      supabase
-        .from('guild_members')
-        .select('guild_id, role')
-        .eq('user_id', userId),
-      supabase
-        .from('wow_guild_memberships')
-        .select('character_id, guild_name, guild_realm, guild_realm_slug, guild_region, guild_faction, is_guild_master')
-        .eq('user_id', userId),
-      supabase
-        .from('wow_characters')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('is_main', true)
-        .limit(1),
-    ]);
-
-    const memberships = membershipsResult.data || [];
-    const membershipsError = membershipsResult.error;
-    const syncedMemberships = syncedMembershipsResult.data || [];
-
-    if (membershipsError) {
-      log.error('Error fetching guild memberships:', membershipsError);
-      setGuilds([]);
-      setLoading(false);
-      return;
-    }
-
-    let appGuilds: GuildWithMembership[] = [];
-    const membershipGuildIds = Array.from(new Set(memberships.map((membership) => membership.guild_id)));
-    const [memberGuildsResult, ownedGuildsResult] = await Promise.all([
-      membershipGuildIds.length > 0
-        ? supabase
-            .from('guilds')
-            .select('id, name, server, region, faction, owner_id, avatar_url')
-            .in('id', membershipGuildIds)
-        : Promise.resolve({
-            data: [] as Array<{
-              id: string;
-              name: string;
-              server: string;
-              region: string | null;
-              faction: string;
-              owner_id: string | null;
-              avatar_url: string | null;
-            }>,
-            error: null,
-          }),
-      supabase
-        .from('guilds')
-        .select('id, name, server, region, faction, owner_id, avatar_url')
-        .eq('owner_id', userId),
-    ]);
-
-    if (memberGuildsResult.error || ownedGuildsResult.error) {
-      log.error('Error fetching relevant guilds:', memberGuildsResult.error || ownedGuildsResult.error);
-      setGuilds([]);
-      setLoading(false);
-      return;
-    }
-
-    const visibleGuilds = dedupeGuildsById([
-      ...(memberGuildsResult.data || []),
-      ...(ownedGuildsResult.data || []),
-    ]);
-
-    if (visibleGuilds.length > 0) {
-      const guildIds = visibleGuilds.map((guild) => guild.id);
-      const { data: rosterCountsData, error: rosterCountsError } = await supabase
-        .from('guild_roster_cache')
-        .select('guild_id')
-        .in('guild_id', guildIds);
-
-      if (rosterCountsError) {
-        log.error('Error fetching guild roster counts:', rosterCountsError);
-        setGuilds([]);
-        setLoading(false);
-        return;
-      }
-
-      const membershipRoleByGuildId = new Map(
-        memberships.map((membership) => [membership.guild_id, membership.role]),
-      );
-
-      const syncedGmKeySet = new Set(
-        syncedMemberships
-          .filter((membership) => membership.is_guild_master)
-          .map((membership) =>
-            buildGuildDiscoveryKey({
-              region: membership.guild_region || 'eu',
-              guildName: membership.guild_name,
-              realmNameOrSlug: membership.guild_realm_slug || membership.guild_realm,
-            }),
-          ),
-      );
-
-      // Count characters per guild from roster cache
-      const memberCounts: Record<string, number> = {};
-      rosterCountsData?.forEach((member) => {
-        memberCounts[member.guild_id] = (memberCounts[member.guild_id] || 0) + 1;
-      });
-
-      appGuilds = visibleGuilds.map((guild) => {
-        const guildKey = buildGuildDiscoveryKey({
-          region: guild.region || 'eu',
-          guildName: guild.name,
-          realmNameOrSlug: guild.server,
-        });
-
-        const derivedRole =
-          membershipRoleByGuildId.get(guild.id)
-          || (guild.owner_id === userId ? 'gm' : null)
-          || (syncedGmKeySet.has(guildKey) ? 'gm' : null)
-          || 'member';
-
-        return {
-          ...guild,
-          region: guild.region || 'eu',
-          faction: guild.faction as 'horde' | 'alliance',
-          role: derivedRole,
-          memberCount: memberCounts[guild.id] || 0,
-          hasMain: false,
-          avatar_url: guild.avatar_url,
-          isDetectedOnly: false,
-          syncedCharacterCount: 0,
-        };
-      });
-    }
-
-    const mainGuildMembership = mainCharResult.data?.[0]
-      ? syncedMemberships.find((membership) => membership.character_id === mainCharResult.data?.[0].id) || null
-      : null;
-
-    const mainGuildKey = mainGuildMembership
-      ? buildGuildDiscoveryKey({
-          region: mainGuildMembership.guild_region || 'eu',
-          guildName: mainGuildMembership.guild_name,
-          realmNameOrSlug: mainGuildMembership.guild_realm_slug || mainGuildMembership.guild_realm,
-        })
-      : null;
-
-    const mergedGuilds = mergeGuildDiscoverySources({
-      appGuilds,
-      syncedMemberships,
-    }).map((guild) => ({
-      ...guild,
-      hasMain:
-        mainGuildKey !== null &&
-        buildGuildDiscoveryKey({
-          region: guild.region,
-          guildName: guild.name,
-          realmNameOrSlug: guild.server,
-        }) === mainGuildKey,
-    }));
-
-    mergedGuilds.sort((a, b) => {
-      if (a.hasMain && !b.hasMain) return -1;
-      if (!a.hasMain && b.hasMain) return 1;
-      if (a.isDetectedOnly !== b.isDetectedOnly) return a.isDetectedOnly ? 1 : -1;
-      return a.name.localeCompare(b.name);
-    });
-
-    setGuilds(mergedGuilds as GuildWithMembership[]);
-    setLoading(false);
-  };
 
   // Handle OAuth callback (return from Battle.net)
   useEffect(() => {
@@ -269,10 +83,7 @@ const GuildList = () => {
 
       toast.success(`${t.battlenet.connected} : ${data.battletag}`);
       await refreshProfile();
-
-      if (user?.id) {
-        await loadGuilds(user.id);
-      }
+      await refreshGuilds();
     } catch (error) {
       log.error('Error completing Battle.net connection:', error);
       toast.error(t.errors.generic);
@@ -314,11 +125,8 @@ const GuildList = () => {
 
     if (!user) {
       navigate('/auth');
-      return;
     }
-
-    loadGuilds(user.id);
-  }, [authLoading, user, navigate, profile?.battlenet_id]);
+  }, [authLoading, user, navigate]);
 
   if (authLoading || (loading && !user)) {
     return (
@@ -330,11 +138,16 @@ const GuildList = () => {
   }
 
   return (
-    <div className="flex-1 relative pt-16">
+    <div className="flex-1 relative">
       <CosmicBackground />
 
-      <PageContainer as="main" className="relative z-10 py-8" width="wide">
-        <h1 className="font-display text-3xl text-foreground mb-8 text-center">{t.common.myGuilds}</h1>
+      <PageContainer as="main" className="relative z-10 space-y-6 py-8" width="app">
+        <PageHeader
+          icon={Shield}
+          title={t.common.myGuilds}
+          description={profile?.battletag || profile?.username}
+          titleClassName="font-display"
+        />
 
         {loading || isConnecting ? (
           <div className="flex items-center justify-center py-20">
@@ -373,7 +186,7 @@ const GuildList = () => {
             </CosmicButton>
           </GlowCard>
         ) : (
-          <div className="flex flex-col gap-2 max-w-4xl mx-auto">
+          <div className="flex max-w-5xl flex-col gap-2">
             {guilds.length > 0 ? (
               guilds.map((guild) => (
                 <div 
@@ -498,10 +311,7 @@ const GuildList = () => {
                 </div>
               ))
             ) : (
-              <div className="p-8 text-center rounded-lg border border-dashed border-border/50">
-                <Shield className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" strokeWidth={1.5} />
-                <p className="text-muted-foreground">{t.guild.noGuilds}</p>
-              </div>
+              <EmptyState icon={Shield} title={t.guild.noGuilds} />
             )}
           </div>
         )}

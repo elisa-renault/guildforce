@@ -4,12 +4,14 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { CosmicBackground } from '@/components/CosmicBackground';
-import { GuildSubNav } from '@/components/guild';
+import { GuildWorkspaceShell } from '@/components/guild';
+import { EmptyState } from '@/components/layout/EmptyState';
 import { PageContainer } from '@/components/layout/PageContainer';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { PollCard } from '@/components/polls';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Loader2 } from 'lucide-react';
+import { BarChart3, ClipboardList, Plus, Loader2 } from 'lucide-react';
 import { useGuildPolls, usePollMutations } from '@/hooks/useGuildPolls';
 import { toast } from 'sonner';
 import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
@@ -29,7 +31,7 @@ const GuildPolls = () => {
   const fullSlug = `${regionSlug}/${serverSlug}/${guildSlug}`;
   const basePath = `/guild/${fullSlug}`;
   const { polls, loading: pollsLoading, refetch } = useGuildPolls(guildId || undefined);
-  const { publishPoll, closePoll, deletePoll, duplicatePoll, saving } = usePollMutations();
+  const { publishPoll, closePoll, deletePoll, duplicatePoll } = usePollMutations();
   const { hasPermission: hasManagePolls, loading: permLoading } = useHasGuildPermission(guildId, 'manage_polls');
   const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
     resolveSemanticMessage({ key, language, translations: t });
@@ -113,46 +115,52 @@ const GuildPolls = () => {
     );
   }
 
+  if (!guild) return null;
+
   return (
-    <div className="flex-1 relative pt-16">
-      <CosmicBackground />
-
-      {guild && (
-        <GuildSubNav
-          guild={guild}
-          guildId={guildId}
-          basePath={basePath}
-          isGM={isGM}
-          activeTab="polls"
-        />
-      )}
-
-      <PageContainer as="main" className="relative z-10 overflow-x-hidden py-6 md:py-8" width="wide">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-            <h1 className="text-xl md:text-2xl font-bold">
-              {sm('guild.polls.title')}
-            </h1>
-
-            {canManagePolls && (
-              <Button onClick={() => navigate(`${basePath}/polls/new`)} size="sm" className="md:size-default">
-                <Plus className="h-4 w-4 md:mr-2" />
+    <GuildWorkspaceShell
+      guild={guild}
+      guildId={guildId}
+      basePath={basePath}
+      isGM={isGM}
+      activeTab="polls"
+      context={{
+        status: `${activePolls.length} ${sm('guild.polls.tab.active').toLowerCase()}`,
+      }}
+    >
+      <PageContainer as="main" className="relative z-10 py-5 md:py-6" width="workspace">
+        <div className="max-w-5xl space-y-5">
+          <PageHeader
+            className="max-w-4xl"
+            icon={BarChart3}
+            title={sm('guild.polls.title')}
+            description={`${activePolls.length} ${sm('guild.polls.tab.active').toLowerCase()} • ${closedPolls.length} ${sm('guild.polls.tab.closed').toLowerCase()}`}
+            actions={canManagePolls ? (
+              <Button onClick={() => navigate(`${basePath}/polls/new`)} size="sm">
+                <Plus className="h-4 w-4 sm:mr-2" />
                 <span className="hidden sm:inline">{sm('guild.polls.new')}</span>
               </Button>
-            )}
-          </div>
+            ) : null}
+          />
 
           {pollsLoading ? (
             <div className="flex justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : polls.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              {sm('guild.polls.empty')}
-            </div>
+            <EmptyState
+              icon={ClipboardList}
+              title={sm('guild.polls.empty')}
+              action={canManagePolls ? (
+                <Button onClick={() => navigate(`${basePath}/polls/new`)} size="sm">
+                  <Plus className="mr-2 h-4 w-4" />
+                  {sm('guild.polls.new')}
+                </Button>
+              ) : null}
+            />
           ) : (
             <Tabs defaultValue={defaultTab}>
-              <TabsList className="mb-6">
+              <TabsList className="mb-5 h-auto w-full justify-start overflow-x-auto p-1 sm:w-auto">
                 <TabsTrigger value="active">
                   {sm('guild.polls.tab.active')} ({activePolls.length})
                 </TabsTrigger>
@@ -178,9 +186,7 @@ const GuildPolls = () => {
                   />
                 ))}
                 {activePolls.length === 0 && (
-                  <p className="text-center py-8 text-muted-foreground">
-                    {sm('guild.polls.empty.active')}
-                  </p>
+                  <EmptyState icon={ClipboardList} title={sm('guild.polls.empty.active')} className="min-h-[180px]" />
                 )}
               </TabsContent>
 
@@ -198,9 +204,7 @@ const GuildPolls = () => {
                     />
                   ))}
                   {draftPolls.length === 0 && (
-                    <p className="text-center py-8 text-muted-foreground">
-                      {sm('guild.polls.empty.draft')}
-                    </p>
+                    <EmptyState icon={ClipboardList} title={sm('guild.polls.empty.draft')} className="min-h-[180px]" />
                   )}
                 </TabsContent>
               )}
@@ -217,16 +221,14 @@ const GuildPolls = () => {
                   />
                 ))}
                 {closedPolls.length === 0 && (
-                  <p className="text-center py-8 text-muted-foreground">
-                    {sm('guild.polls.empty.closed')}
-                  </p>
+                  <EmptyState icon={ClipboardList} title={sm('guild.polls.empty.closed')} className="min-h-[180px]" />
                 )}
               </TabsContent>
             </Tabs>
           )}
         </div>
       </PageContainer>
-    </div>
+    </GuildWorkspaceShell>
   );
 };
 

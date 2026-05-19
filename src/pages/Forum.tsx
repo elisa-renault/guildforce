@@ -1,20 +1,18 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
 import { useForumCategories } from '@/hooks/useForum';
 import { useIsAdmin } from '@/hooks/useAdmin';
 import { CosmicBackground } from '@/components/CosmicBackground';
-import { CosmicButton } from '@/components/CosmicButton';
 import { ForumCategoryList } from '@/components/forum';
+import { EmptyState } from '@/components/layout/EmptyState';
 import { PageContainer } from '@/components/layout/PageContainer';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
-import { Loader2, Plus, MessageSquare, Settings } from 'lucide-react';
+import { Loader2, MessageSquare, Settings } from 'lucide-react';
 
 const Forum = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const { user } = useAuth();
   const { categories, loading, error } = useForumCategories();
   const { isAdmin } = useIsAdmin();
 
@@ -28,22 +26,16 @@ const Forum = () => {
   }
 
   return (
-    <div className="flex-1 relative pt-16">
+    <div className="flex-1 relative">
       <CosmicBackground />
 
-      <PageContainer as="main" className="relative z-10 py-8" width="contained">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="font-display text-3xl text-foreground flex items-center gap-3">
-              <MessageSquare className="h-8 w-8" />
-              {t.forum.title}
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              {t.forum.subtitle}
-            </p>
-          </div>
-          {isAdmin && (
+      <PageContainer as="main" className="relative z-10 space-y-6 py-8" width="app">
+        <PageHeader
+          icon={MessageSquare}
+          title={t.forum.title}
+          description={t.forum.subtitle}
+          titleClassName="font-display"
+          actions={isAdmin ? (
             <Button
               variant="outline"
               onClick={() => navigate('/forum/admin')}
@@ -52,11 +44,11 @@ const Forum = () => {
               <Settings className="h-4 w-4 mr-2" />
               {t.common.admin}
             </Button>
-          )}
-        </div>
+          ) : null}
+        />
 
         {error && (
-          <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive mb-6">
+          <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-destructive">
             {error}
           </div>
         )}
@@ -65,15 +57,11 @@ const Forum = () => {
 
         {/* Empty state with call to action */}
         {categories.length === 0 && !loading && (
-          <div className="text-center py-16">
-            <MessageSquare className="h-16 w-16 mx-auto mb-4 text-muted-foreground/30" />
-            <h2 className="text-xl font-semibold text-foreground mb-2">
-              {t.forum.empty.noCategories}
-            </h2>
-            <p className="text-muted-foreground">
-              {t.forum.empty.beingSetUp}
-            </p>
-          </div>
+          <EmptyState
+            icon={MessageSquare}
+            title={t.forum.empty.noCategories}
+            description={t.forum.empty.beingSetUp}
+          />
         )}
       </PageContainer>
     </div>

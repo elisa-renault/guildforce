@@ -1,11 +1,12 @@
-import { Loader2 } from 'lucide-react';
+import { Loader2, Settings } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
-import { GuildSubNav } from '@/components/guild/GuildSubNav';
+import { GuildWorkspaceShell } from '@/components/guild';
 import { PageContainer } from '@/components/layout/PageContainer';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { GuildPermissionsEditor, MyPermissionsCard } from '@/components/permissions';
 import { RosterManager } from '@/components/roster';
 import {
@@ -20,8 +21,8 @@ import { useGuildAccessState, type GuildAccessStateGuild } from '@/hooks/useGuil
 import { useGuildRankLabels } from '@/hooks/useGuildRankLabels';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { supabase } from '@/integrations/supabase/client';
-import { getVisibleGuildSettingsSections } from '@/lib/guildSettingsSections';
 import { toNormalizedRealmSlug } from '@/lib/guildDiscovery';
+import { getVisibleGuildSettingsSections } from '@/lib/guildSettingsSections';
 import { getGuildPath } from '@/lib/guildSlug';
 import { formatRankLabel } from '@/lib/rankLabel';
 
@@ -378,34 +379,61 @@ const GuildSettings = () => {
     }
   };
 
+  const settingsSectionLabelKeys: Record<SettingsSection, Parameters<typeof resolveSemanticMessage>[0]['key']> = {
+    profile: 'settings.sidebar.section.profile',
+    permissions: 'settings.sidebar.section.permissions',
+    mypermissions: 'settings.sidebar.section.mypermissions',
+    rosters: 'settings.sidebar.section.rosters',
+    activity: 'settings.sidebar.section.activity',
+    battlenet: 'settings.sidebar.section.battlenet',
+  };
+
   return (
-    <div className="flex-1 relative pt-16 flex flex-col">
-      <CosmicBackground />
-
-      <GuildSubNav
-        guild={displayGuild}
-        guildId={displayGuild.id}
-        basePath={basePath}
-        isGM={isGM}
-        hasSettingsPermission={hasSettingsAccess}
-        hasVaultAccess={hasVaultAccess}
-        activeTab="settings"
-      />
-
-      <div className="flex-1 flex flex-col md:flex-row relative z-10 overflow-x-hidden">
+    <GuildWorkspaceShell
+      guild={displayGuild}
+      guildId={displayGuild.id}
+      basePath={basePath}
+      isGM={isGM}
+      hasSettingsPermission={hasSettingsAccess}
+      hasVaultAccess={hasVaultAccess}
+      activeTab="settings"
+      context={{
+        status: resolveSemanticMessage({
+          key: settingsSectionLabelKeys[activeSection],
+          language: t.lang,
+          translations: t,
+        }),
+      }}
+    >
+      <div className="relative z-10 min-w-0 md:grid md:h-[calc(100dvh-7.5rem-var(--global-nav-extra-offset,0px))] md:min-h-0 md:grid-cols-[16rem_minmax(0,1fr)] md:overflow-hidden lg:h-[calc(100dvh-4rem-var(--global-nav-extra-offset,0px))]">
         <GuildSettingsSidebar
           activeSection={activeSection}
           onSectionChange={handleSectionChange}
           visibleSections={visibleSections}
         />
 
-        <main className="flex-1 overflow-x-hidden min-w-0">
-          <PageContainer width="wide" className="py-3 md:py-6">
+        <main className="min-w-0 md:min-h-0 md:overflow-y-auto">
+          <PageContainer width="workspace" className="space-y-4 py-4 md:py-6">
+            <PageHeader
+              className="max-w-4xl"
+              icon={Settings}
+              title={t.guildNav.settings}
+              description={displayGuild.name}
+              meta={(
+                <span className="rounded-md border border-border/50 bg-muted/30 px-2 py-1 text-xs text-muted-foreground">
+                  {resolveSemanticMessage({
+                    key: settingsSectionLabelKeys[activeSection],
+                    language: t.lang,
+                    translations: t,
+                  })}
+                </span>
+              )}
+            />
             {renderSectionContent()}
           </PageContainer>
         </main>
       </div>
-    </div>
+    </GuildWorkspaceShell>
   );
 };
 

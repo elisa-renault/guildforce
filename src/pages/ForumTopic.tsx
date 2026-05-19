@@ -216,10 +216,10 @@ const ForumTopicPage = () => {
   }
 
   return (
-    <div className="flex-1 relative pt-16">
+    <div className="flex-1 relative">
       <CosmicBackground />
 
-      <PageContainer as="main" className="relative z-10 py-8" width="contained">
+      <PageContainer as="main" className="relative z-10 py-8" width="app">
         {/* Breadcrumbs */}
         <Breadcrumbs 
           items={[

@@ -4,6 +4,61 @@ import { translationsEn } from './translations.en';
 
 // Placeholder locale pack for progressive rollout; currently falls back to EN copy.
 export const translationsPtBr: Translations = createLocaleTranslations(translationsEn, {
+  commandPalette: {
+    title: 'Paleta de comandos',
+    open: 'Buscar ou ir para...',
+    placeholder: 'Buscar páginas, guildas, membros, enquetes, fórum...',
+    placeholderInGuild: 'Buscar em {guild}, ações, membros, enquetes...',
+    loading: 'Buscando...',
+    loadingHint: 'Buscando nos espaços que você pode acessar.',
+    searchUnavailable: 'Busca indisponível. Mostrando apenas atalhos locais.',
+    emptyTitle: 'Nenhum resultado',
+    emptyDescription: 'Tente uma página, membro, guilda, enquete, roster ou ação.',
+    usedCount: 'Usado {count} vezes',
+    groups: {
+      recent: 'Recentes',
+      actions: 'Ações',
+      pages: 'Páginas',
+      guilds: 'Guildas',
+      members: 'Membros',
+      rosters: 'Rosters',
+      polls: 'Enquetes',
+      forum: 'Fórum',
+    },
+    actions: {
+      createPoll: 'Criar enquete',
+      openRoster: 'Ir para o roster',
+      editWishes: 'Editar meus desejos',
+      openSettings: 'Abrir configurações',
+      syncMembers: 'Sincronizar membros',
+      createForumTopic: 'Criar tópico no fórum',
+      openProfile: 'Abrir meu perfil',
+      openAdmin: 'Abrir admin',
+    },
+    actionSubtitles: {
+      openProfile: 'Perfil, personagens e preferências',
+      openAdmin: 'Usuários, guildas, moderação e conteúdo',
+      syncMembers: 'Abre as configurações Battle.net desta guilda',
+      createForumTopic: 'Cria um tópico na categoria atual',
+      openForumFirst: 'Abra o fórum e escolha uma categoria',
+    },
+    pageSubtitles: {
+      guilds: 'Alternar ou gerenciar workspaces de guilda',
+      forum: 'Tópicos, posts, moderação e inscrições',
+      profile: 'Personagens, Battle.net e conta',
+      admin: 'Back office operacional',
+    },
+    badges: {
+      main: 'Main',
+      linked: 'Vinculado',
+      notLinked: 'Não vinculado',
+    },
+    keyboard: {
+      navigate: 'Navegar',
+      open: 'Abrir',
+      close: 'Fechar',
+    },
+  },
   dashboard: {
     selectedValidatedView: 'Sele\u00e7\u00e3o validada',
     selectedValidatedSubtitle: 'Membros confirmados, selecionados para o roster, com pelo menos um desejo aprovado.',

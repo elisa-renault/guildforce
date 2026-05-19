@@ -315,6 +315,66 @@ export type Database = {
           },
         ]
       }
+      command_palette_recent_items: {
+        Row: {
+          created_at: string
+          guild_id: string | null
+          href: string | null
+          item_id: string
+          item_type: string
+          last_used_at: string
+          metadata: Json
+          subtitle: string | null
+          title: string
+          updated_at: string
+          use_count: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          guild_id?: string | null
+          href?: string | null
+          item_id: string
+          item_type: string
+          last_used_at?: string
+          metadata?: Json
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+          use_count?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          guild_id?: string | null
+          href?: string | null
+          item_id?: string
+          item_type?: string
+          last_used_at?: string
+          metadata?: Json
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+          use_count?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "command_palette_recent_items_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "command_palette_recent_items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       external_member_wishes: {
         Row: {
           choice_index: number
@@ -2466,6 +2526,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_guild_navigation_preferences: {
+        Row: {
+          created_at: string
+          guild_id: string
+          is_favorite: boolean
+          last_visited_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          guild_id: string
+          is_favorite?: boolean
+          last_visited_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          guild_id?: string
+          is_favorite?: boolean
+          last_visited_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_guild_navigation_preferences_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_guild_navigation_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wow_characters: {
         Row: {
           class_id: number
@@ -2902,6 +3004,34 @@ export type Database = {
       remove_guild_member_with_wishes: {
         Args: { p_guild_id: string; p_member_id: string }
         Returns: undefined
+      }
+      record_command_palette_use: {
+        Args: {
+          p_guild_id?: string | null
+          p_href?: string | null
+          p_item_id: string
+          p_item_type: string
+          p_metadata?: Json
+          p_subtitle?: string | null
+          p_title: string
+        }
+        Returns: undefined
+      }
+      search_command_palette: {
+        Args: {
+          p_context_guild_id?: string | null
+          p_limit_per_group?: number
+          p_query: string
+        }
+        Returns: {
+          guild_id: string | null
+          metadata: Json
+          result_id: string
+          result_type: string
+          score: number
+          subtitle: string | null
+          title: string
+        }[]
       }
       set_member_wishes_locked: {
         Args: { p_guild_id: string; p_member_id: string; p_locked: boolean }

@@ -21,7 +21,7 @@ import { AdminDocumentation } from '@/components/admin/AdminDocumentation';
 import { AdminBackupSection } from '@/components/admin/AdminBackupSection';
 import { mapAdminTimeseriesRows, type AdminTimeseriesPoint } from '@/components/admin/adminDashboardTimeseries';
 import { PageContainer } from '@/components/layout/PageContainer';
-import { SectionHeader } from '@/components/layout/SectionHeader';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Crown, Loader2 } from 'lucide-react';
 
 interface AdminStats {
@@ -302,7 +302,7 @@ export default function Admin() {
 
   if (authLoading || rolesLoading) {
     return (
-      <div className="flex-1 flex items-center justify-center pt-16">
+      <div className="flex-1 flex items-center justify-center">
         <CosmicBackground />
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
@@ -370,7 +370,7 @@ export default function Admin() {
   };
 
   return (
-    <div className="flex-1 relative pt-16 flex flex-col">
+    <div className="flex-1 relative flex flex-col">
       <CosmicBackground />
 
       {/* Layout with sidebar */}
@@ -390,8 +390,8 @@ export default function Admin() {
           
           {/* Header */}
           <div className="border-b border-border/50 bg-background/80 backdrop-blur-sm">
-            <PageContainer className="py-4" width="wide">
-              <SectionHeader
+            <PageContainer className="py-4" width="app">
+              <PageHeader
                 icon={Crown}
                 title={t.admin.administration}
                 description={isAdmin ? t.admin.adminDashboard : t.admin.moderatorDashboard}
@@ -400,7 +400,7 @@ export default function Admin() {
           </div>
 
           {/* Section content */}
-          <PageContainer className="py-4 md:py-6" width="wide">
+          <PageContainer className="py-4 md:py-6" width="app">
             {renderSectionContent()}
           </PageContainer>
         </main>

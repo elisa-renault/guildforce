@@ -10,12 +10,14 @@ import { CommitmentToggle, CommitmentStatus } from '@/components/CommitmentToggl
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
+import { ContextualToolbar } from '@/components/layout/ContextualToolbar';
 import { PageContainer } from '@/components/layout/PageContainer';
-import { GuildSubNav } from '@/components/guild';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { GuildWorkspaceShell } from '@/components/guild';
 import { RosterSelector } from '@/components/roster';
 import { SeasonSelector, SeasonStateCallout } from '@/components/seasons/SeasonSelector';
 import type { GuildSeason } from '@/types/seasons';
-import { Loader2, Save, GripVertical, Plus, Trash2, ChevronUp, ChevronDown, Lock, Clock } from 'lucide-react';
+import { Loader2, Save, GripVertical, Plus, Trash2, ChevronUp, ChevronDown, Lock, Clock, Sparkles } from 'lucide-react';
 
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
 import { resolveSpecOrder } from '@/lib/wishOrder';
@@ -665,26 +667,14 @@ const Wishes = () => {
 
   const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
 
-  return (
-    <div className="flex-1 relative pt-16">
-      <CosmicBackground />
+  if (!guild) return null;
 
-      {/* Guild Sub-Navigation */}
-      {guild && (
-        <GuildSubNav
-          guild={guild}
-          guildId={guildId}
-          basePath={basePath}
-          isGM={isGM}
-          hasSettingsPermission={isGM || hasActivityPermission}
-          activeTab="wishes"
-        />
-      )}
-
-      {/* Roster + Save controls */}
-      <div className="sticky top-[104px] z-30 bg-background/80 backdrop-blur-lg border-b border-border/50">
-          <PageContainer className="px-3 md:px-4 py-3 flex items-center justify-between gap-2" width="wide">
-            <div className="flex min-w-0 flex-1 items-center gap-2">
+  const workspaceToolbar = (
+    <PageContainer className="py-2.5" width="workspace">
+            <ContextualToolbar
+              className="border-border/30 bg-card/10 p-2"
+              leading={(
+                <div className="flex min-w-0 flex-1 items-center gap-2">
               <RosterSelector
                 rosters={accessibleRosters}
                 selectedRosterId={selectedRosterId}
@@ -697,23 +687,51 @@ const Wishes = () => {
                 onSelect={selectSeason}
                 emptyLabel={seasonSupportMode === 'legacy' ? t.seasons.legacyMode : undefined}
               />
-            </div>
-          <CosmicButton 
-            size="sm" 
-            onClick={saveWishes} 
-            loading={saving}
-            disabled={isEditingDisabled}
-            icon={<Save className="h-4 w-4" strokeWidth={1.5} />}
-          >
-            {t.wishes.saveWishes}
-          </CosmicButton>
-        </PageContainer>
-      </div>
+                </div>
+              )}
+              trailing={(
+                <CosmicButton
+                  size="sm"
+                  onClick={saveWishes}
+                  loading={saving}
+                  disabled={isEditingDisabled}
+                  icon={<Save className="h-4 w-4" strokeWidth={1.5} />}
+                >
+                  {t.wishes.saveWishes}
+                </CosmicButton>
+              )}
+            />
+    </PageContainer>
+  );
 
-      <PageContainer as="main" className="px-3 md:px-4 py-4 relative z-10" width="wide">
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-display cosmic-text">{t.wishes.title}</h2>
-        </div>
+  return (
+    <GuildWorkspaceShell
+      guild={guild}
+      guildId={guildId}
+      basePath={basePath}
+      isGM={isGM}
+      hasSettingsPermission={isGM || hasActivityPermission}
+      activeTab="wishes"
+      toolbar={workspaceToolbar}
+      context={{
+        roster: currentRoster?.name,
+        season: selectedSeason?.name,
+        status: lockState.isLocked ? t.wishes.lockedTitle : undefined,
+      }}
+    >
+      <PageContainer as="main" className="relative z-10 py-4 md:py-5" width="workspace">
+        <PageHeader
+          className="mb-4 max-w-4xl"
+          icon={Sparkles}
+          title={t.wishes.title}
+          description={guild ? `${guild.name} • ${currentRoster?.name || t.dashboard.roster}` : undefined}
+          titleClassName="font-display cosmic-text"
+          meta={selectedSeason ? (
+            <span className="rounded-md border border-border/50 bg-muted/30 px-2 py-1 text-xs text-muted-foreground">
+              {selectedSeason.name}
+            </span>
+          ) : null}
+        />
 
         {seasonSupportMode === 'legacy' ? (
           <div className={cn('mb-4 rounded-lg border p-3 text-sm', toneCalloutClass('info'))}>
@@ -746,7 +764,7 @@ const Wishes = () => {
         )}
 
         {/* Commitment toggle */}
-        <GlowCard className="p-4 mb-4">
+        <GlowCard className="mb-4 max-w-4xl p-4">
           <CommitmentToggle status={confirmed} onChange={setConfirmed} disabled={isEditingDisabled} />
         </GlowCard>
 
@@ -760,7 +778,7 @@ const Wishes = () => {
             items={wishes.map(w => w.id)}
             strategy={verticalListSortingStrategy}
           >
-            <div className="space-y-2">
+            <div className="max-w-4xl space-y-2">
               {wishes.map((wish, index) => {
                 // Get all used class IDs except the current wish's class
                 const usedClassIds = wishes
@@ -819,7 +837,7 @@ const Wishes = () => {
           </CosmicButton>
         </div>
       </PageContainer>
-    </div>
+    </GuildWorkspaceShell>
   );
 };
 

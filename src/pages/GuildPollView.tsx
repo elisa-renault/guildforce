@@ -5,8 +5,9 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import type { ResponseValue } from '@/types/poll';
 
 import { CosmicBackground } from '@/components/CosmicBackground';
-import { GuildSubNav } from '@/components/guild';
+import { GuildWorkspaceShell } from '@/components/guild';
 import { PageContainer } from '@/components/layout/PageContainer';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { PollResponse, PollResults } from '@/components/polls';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -187,82 +188,117 @@ const GuildPollView = () => {
     );
   }
 
+  if (!guild) return null;
+
   return (
-    <div className="flex-1 relative pt-16">
-      <CosmicBackground />
-
-      {guild && (
-        <GuildSubNav
-          guild={guild}
-          guildId={guildId}
-          basePath={`/guild/${fullSlug}`}
-          isGM={isGM}
-          activeTab="polls"
-        />
-      )}
-
+    <GuildWorkspaceShell
+      guild={guild}
+      guildId={guildId}
+      basePath={`/guild/${fullSlug}`}
+      isGM={isGM}
+      activeTab="polls"
+      context={{
+        status: isClosed ? t.polls.closed : undefined,
+      }}
+    >
       <PageContainer
-        className={usesFullResultsLayout ? 'relative z-10 py-8' : 'relative z-10 py-8 max-w-3xl'}
-        width={usesFullResultsLayout ? 'wide' : 'contained'}
+        className={usesFullResultsLayout ? 'relative z-10 py-5 md:py-6' : 'relative z-10 max-w-4xl py-5 md:py-6'}
+        width="workspace"
       >
-        <div className="mb-6 flex items-center justify-between gap-3">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={handleBack}
-            className="h-10 w-10 shrink-0 rounded-lg bg-muted/50 hover:bg-muted"
-          >
-            <ArrowLeft className="h-5 w-5 text-muted-foreground" />
-          </Button>
-
-          {canToggleResults && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowResults(!showResults)}
-            >
-              <BarChart3 className="mr-2 h-4 w-4" />
-              {showResults ? t.polls.hideResults : t.polls.viewResults}
-            </Button>
-          )}
-
-          {!canToggleResults && canOpenFullResults && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate(resultsPath)}
-            >
-              <BarChart3 className="mr-2 h-4 w-4" />
-              {t.common.results}
-            </Button>
-          )}
-        </div>
-
         {showOuterHeader && (
-          <>
-            <div className="mb-4 min-w-0">
-              <h1 className="text-2xl font-bold">{poll.title}</h1>
-              {poll.description && (
-                <p className="mt-1 text-muted-foreground">{poll.description}</p>
-              )}
-            </div>
+          <PageHeader
+            className="mb-5 max-w-4xl"
+            icon={BarChart3}
+            title={poll.title}
+            description={poll.description}
+            actions={(
+              <>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleBack}
+                  className="h-10 w-10 shrink-0 rounded-lg bg-muted/50 hover:bg-muted"
+                  aria-label={t.common.back}
+                >
+                  <ArrowLeft className="h-5 w-5 text-muted-foreground" />
+                </Button>
+                {canToggleResults && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowResults(!showResults)}
+                  >
+                    <BarChart3 className="mr-2 h-4 w-4" />
+                    {showResults ? t.polls.hideResults : t.polls.viewResults}
+                  </Button>
+                )}
+                {!canToggleResults && canOpenFullResults && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate(resultsPath)}
+                  >
+                    <BarChart3 className="mr-2 h-4 w-4" />
+                    {t.common.results}
+                  </Button>
+                )}
+              </>
+            )}
+            meta={(
+              <>
+                {poll.roster?.name && (
+                  <span className="rounded bg-muted/50 px-2 py-1">
+                    {poll.roster.name}
+                  </span>
+                )}
+                {poll.ends_at && (
+                  <span className={isClosed ? 'text-destructive' : ''}>
+                    {isClosed
+                      ? t.polls.closed
+                      : `${t.polls.endsOn}: ${formatDateLocalized(poll.ends_at, language, { dateStyle: 'medium' })}`}
+                  </span>
+                )}
+              </>
+            )}
+          />
+        )}
 
-            <div className="mb-6 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-              {poll.roster?.name && (
-                <span className="rounded bg-muted/50 px-2 py-1">
-                  {poll.roster.name}
-                </span>
-              )}
-              {poll.ends_at && (
-                <span className={isClosed ? 'text-destructive' : ''}>
-                  {isClosed
-                    ? t.polls.closed
-                    : `${t.polls.endsOn}: ${formatDateLocalized(poll.ends_at, language, { dateStyle: 'medium' })}`}
-                </span>
-              )}
-            </div>
-          </>
+        {!showOuterHeader && (
+          <div className="mb-6 flex items-center justify-between gap-3">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={handleBack}
+              className="h-10 w-10 shrink-0 rounded-lg bg-muted/50 hover:bg-muted"
+              aria-label={t.common.back}
+            >
+              <ArrowLeft className="h-5 w-5 text-muted-foreground" />
+            </Button>
+
+            {canToggleResults && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowResults(!showResults)}
+              >
+                <BarChart3 className="mr-2 h-4 w-4" />
+                {showResults ? t.polls.hideResults : t.polls.viewResults}
+              </Button>
+            )}
+
+            {!canToggleResults && canOpenFullResults && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(resultsPath)}
+              >
+                <BarChart3 className="mr-2 h-4 w-4" />
+                {t.common.results}
+              </Button>
+            )}
+          </div>
         )}
 
         {showResultsPane && userCanViewResults ? (
@@ -329,7 +365,7 @@ const GuildPollView = () => {
           />
         )}
       </PageContainer>
-    </div>
+    </GuildWorkspaceShell>
   );
 };
 

@@ -90,10 +90,10 @@ const ForumNewTopic = () => {
   const categoryName = t.forum.categoryNames[category.slug as keyof typeof t.forum.categoryNames] || category.name;
 
   return (
-    <div className="flex-1 relative pt-16">
+    <div className="flex-1 relative">
       <CosmicBackground />
 
-      <PageContainer as="main" className="relative z-10 py-8 max-w-3xl" width="contained">
+      <PageContainer as="main" className="relative z-10 max-w-3xl py-8" width="app">
         {/* Breadcrumbs */}
         <Breadcrumbs 
           items={[

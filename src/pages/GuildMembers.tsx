@@ -4,8 +4,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { CosmicBackground } from '@/components/CosmicBackground';
-import { GuildSubNav } from '@/components/guild/GuildSubNav';
+import { GuildWorkspaceShell } from '@/components/guild';
+import { ContextualToolbar } from '@/components/layout/ContextualToolbar';
 import { PageContainer } from '@/components/layout/PageContainer';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -460,7 +462,7 @@ const GuildMembers = () => {
     return (
       <div className="flex-1 relative pt-16">
         <CosmicBackground />
-        <PageContainer className="pt-20 pb-8" width="wide">
+        <PageContainer className="pt-20 pb-8" width="workspace">
           <Skeleton className="h-12 w-1/3 mb-6" />
           <div className="space-y-3">
             {Array.from({ length: 10 }).map((_, i) => (
@@ -485,19 +487,18 @@ const GuildMembers = () => {
   ).size;
 
   return (
-    <div className="flex-1 relative pt-16">
-      <CosmicBackground />
-
-      <GuildSubNav
-        guild={guild}
-        guildId={guild.id}
-        basePath={basePath}
-        isGM={isGM}
-        hasSettingsPermission={isGM || hasActivityPermission}
-        activeTab="members"
-      />
-
-      <PageContainer as="main" className="px-3 md:px-4 py-4 md:py-6" width="wide">
+    <GuildWorkspaceShell
+      guild={guild}
+      guildId={guild.id}
+      basePath={basePath}
+      isGM={isGM}
+      hasSettingsPermission={isGM || hasActivityPermission}
+      activeTab="members"
+      context={{
+        status: `${uniqueGuildforceMembers} ${uniqueGuildforceMembers === 1 ? t.guild.uniqueMember : t.guild.uniqueMembers}`,
+      }}
+    >
+      <PageContainer as="main" className="py-4 md:py-6" width="workspace">
         {/* Admin read-only banner */}
         {isAdminReadOnly && (
           <div className={cn("flex items-center justify-center gap-2 mb-4 p-2 rounded-lg border", toneCalloutClass('warning'))}>
@@ -508,42 +509,47 @@ const GuildMembers = () => {
           </div>
         )}
 
-        <Breadcrumbs items={breadcrumbItems} className="mb-4" />
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-          <div className="flex items-center gap-3">
-            <Users className="h-6 w-6 text-primary" />
-            <h1 className="text-xl md:text-2xl font-bold">
-              {memberUi.guildMembersTitle}
-            </h1>
-            <Badge variant="secondary" className="text-xs">
-              {members.length}
-            </Badge>
-          </div>
-          
-          {hasRosterCache && lastSyncDate && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <RefreshCw className="h-3.5 w-3.5" />
-              <span>
-                {memberUi.syncPrefix}{' '}
-                {formatDistanceFromNowLocalized(lastSyncDate, language, true)}
-              </span>
-            </div>
-          )}
-          
-          {!hasRosterCache && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <RefreshCw className="h-4 w-4" />
-              <span>
-                {memberUi.syncMissing}
-              </span>
-            </div>
-          )}
+        <div className="space-y-4">
+          <Breadcrumbs items={breadcrumbItems} />
+          <PageHeader
+            className="max-w-5xl"
+            icon={Users}
+            title={memberUi.guildMembersTitle}
+            meta={(
+              <>
+                <Badge variant="secondary" className="text-xs">
+                  {members.length}
+                </Badge>
+                <Badge variant="outline" className="border-healer/30 bg-healer/10 text-xs text-healer">
+                  {uniqueGuildforceMembers} {uniqueGuildforceMembers === 1 ? t.guild.uniqueMember : t.guild.uniqueMembers}
+                </Badge>
+              </>
+            )}
+            actions={(
+              <>
+                {hasRosterCache && lastSyncDate && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    <span>
+                      {memberUi.syncPrefix}{' '}
+                      {formatDistanceFromNowLocalized(lastSyncDate, language, true)}
+                    </span>
+                  </div>
+                )}
+                {!hasRosterCache && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <RefreshCw className="h-4 w-4" />
+                    <span>{memberUi.syncMissing}</span>
+                  </div>
+                )}
+              </>
+            )}
+          />
         </div>
 
         {/* Filters - Dashboard style */}
-        <div className="flex flex-col gap-2 mb-4">
-          {/* Search - full width on mobile */}
-          <div className="relative w-full md:max-w-[280px]">
+        <ContextualToolbar className="my-4 max-w-6xl" leading={(
+          <div className="relative w-full md:w-[280px]">
             <label htmlFor="member-search" className="sr-only">
               {t.common.search}
             </label>
@@ -554,12 +560,13 @@ const GuildMembers = () => {
               placeholder={memberUi.searchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-9 md:h-8 pl-8 text-sm cosmic-input"
+              className="h-9 pl-8 text-sm cosmic-input md:h-8"
             />
           </div>
+        )}>
           
           {/* Filters row - horizontal scroll on mobile */}
-          <div className="flex gap-2 items-center overflow-x-auto pb-1 -mx-3 px-3 md:mx-0 md:px-0 md:overflow-visible md:flex-wrap">
+          <div className="flex min-w-0 gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible md:pb-0">
             
             {/* Class Filter */}
             <Popover open={classOpen} onOpenChange={setClassOpen}>
@@ -822,7 +829,7 @@ const GuildMembers = () => {
               </PopoverContent>
             </Popover>
           </div>
-        </div>
+        </ContextualToolbar>
 
         {/* Stats summary */}
         <div className="flex flex-wrap gap-2 mb-4 text-sm text-muted-foreground">
@@ -989,7 +996,7 @@ const GuildMembers = () => {
           </div>
         )}
       </PageContainer>
-    </div>
+    </GuildWorkspaceShell>
   );
 };
 

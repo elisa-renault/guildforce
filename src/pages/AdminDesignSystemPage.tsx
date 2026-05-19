@@ -35,9 +35,9 @@ export default function AdminDesignSystemPage() {
   if (!user || !isAdmin) return null;
 
   return (
-    <div className="flex-1 relative pt-16">
+    <div className="flex-1 relative">
       <CosmicBackground />
-      <PageContainer as="main" className="relative z-10 py-4 md:py-6" width="wide">
+      <PageContainer as="main" className="relative z-10 py-4 md:py-6" width="app">
         <AdminDesignSystem />
       </PageContainer>
     </div>
