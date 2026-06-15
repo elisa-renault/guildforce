@@ -133,7 +133,7 @@ export const GuildMemberships: React.FC = () => {
           }),
       supabase
         .from('guilds')
-        .select('id, name, server, region, owner_id'),
+        .select('id, name, server, region, owner_id')
         .eq('owner_id', user.id),
     ]);
 
