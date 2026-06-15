@@ -136,8 +136,8 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Spell/effect data sync',
         titleFr: 'Synchronisation des sorts/effets',
-        contentEn: 'Raid utility data uses `raid_effects` + `wow_spells`. The `sync-wow-spells` edge function fetches localized spell metadata (EN/FR) and updates cache entries used by roster analytics and composition tooling.',
-        contentFr: 'Les données d\'utilité raid utilisent `raid_effects` + `wow_spells`. L\'edge function `sync-wow-spells` récupère les métadonnées localisées des sorts (EN/FR) et met à jour le cache utilisé par les analyses de roster et les outils de composition.',
+        contentEn: 'Raid utility data uses `raid_effects` + `wow_spells`. The `sync-wow-spells` edge function fetches localized spell metadata (EN/FR) and updates cache entries used by roster analytics and composition tooling. Scheduled calls must provide `x-cron-secret` from `CRON_SECRET` or use service-role authorization.',
+        contentFr: 'Les données d\'utilité raid utilisent `raid_effects` + `wow_spells`. L\'edge function `sync-wow-spells` récupère les métadonnées localisées des sorts (EN/FR) et met à jour le cache utilisé par les analyses de roster et les outils de composition. Les appels planifiés doivent fournir `x-cron-secret` depuis `CRON_SECRET` ou utiliser une autorisation service-role.',
         tags: ['battlenet', 'spells', 'raid'],
       },
     ],

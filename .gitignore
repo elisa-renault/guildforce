@@ -13,6 +13,7 @@ dist/
 dist-ssr/
 coverage/
 *.tsbuildinfo
+tmp/
 
 # Environment and local data files
 .env
@@ -20,6 +21,10 @@ coverage/
 !.env.example
 *.local
 .csv
+
+# Generated audits and local planning exports
+/public/audit/
+/Actions prioritaires Admin Dashboard.pdf
 
 # Local assistant/workflow notes
 /tasks/

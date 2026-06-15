@@ -2,7 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-cron-secret',
 };
 
 const BATTLENET_CLIENT_ID = Deno.env.get('BATTLENET_CLIENT_ID')!;
@@ -92,6 +92,17 @@ async function fetchWithRetry(url: string, options: RequestInit, attempts = 3): 
   return fetch(url, options);
 }
 
+function isAuthorizedSyncRequest(req: Request): boolean {
+  const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
+  const cronSecret = req.headers.get('x-cron-secret');
+  const expectedCronSecret = Deno.env.get('CRON_SECRET');
+
+  return (
+    authHeader === `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` ||
+    Boolean(cronSecret && expectedCronSecret && cronSecret === expectedCronSecret)
+  );
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -101,6 +112,13 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({ error: 'Method not allowed' }),
       { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  if (!isAuthorizedSyncRequest(req)) {
+    return new Response(
+      JSON.stringify({ error: 'Unauthorized' }),
+      { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 

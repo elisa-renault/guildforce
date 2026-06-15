@@ -1,4 +1,4 @@
-project_id = "supabase-project-ref"
+project_id = "guildforce"
 
 [functions.battlenet-auth]
 verify_jwt = false

@@ -19,6 +19,8 @@ NEW_SUPABASE_URL="https://<project_ref>.supabase.co"
 NEW_SUPABASE_ANON_KEY="..."
 NEW_SUPABASE_SERVICE_ROLE_KEY="..."
 NEW_SUPABASE_DB_URL="postgresql://postgres:<PASSWORD_URL_ENCODED>@db.<project_ref>.supabase.co:5432/postgres"
+SYNC_WOW_SPELLS_URL="https://<project_ref>.supabase.co/functions/v1/sync-wow-spells"
+CRON_SECRET="<long-random-secret>"
 ```
 
 ## 2) Appliquer le schema
@@ -78,6 +80,11 @@ supabase secrets set BATTLENET_CLIENT_ID="..."
 supabase secrets set BATTLENET_CLIENT_SECRET="..."
 supabase secrets set SUPABASE_URL="https://<project_ref>.supabase.co"
 supabase secrets set SUPABASE_SERVICE_ROLE_KEY="..."
+supabase secrets set CRON_SECRET="$CRON_SECRET"
+
+psql "$NEW_SUPABASE_DB_URL" -v ON_ERROR_STOP=1 \
+  -c "alter database postgres set \"app.settings.sync_wow_spells_url\" = '$SYNC_WOW_SPELLS_URL';" \
+  -c "alter database postgres set \"app.settings.cron_secret\" = '$CRON_SECRET';"
 
 supabase functions deploy battlenet-auth
 supabase functions deploy submit-bug-report
