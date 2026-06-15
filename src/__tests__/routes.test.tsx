@@ -1,7 +1,8 @@
+import { cleanup, render, screen } from "@testing-library/react";
 import { Suspense } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { cleanup, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+
 import { appRoutes } from "../routes";
 
 vi.mock("../pages/Index", () => ({
@@ -12,6 +13,12 @@ vi.mock("../pages/Auth", () => ({
 }));
 vi.mock("../pages/GuildList", () => ({
   default: () => <div>Guild List Page</div>,
+}));
+vi.mock("../pages/GuildAtlas", () => ({
+  default: () => <div>Guild Atlas Page</div>,
+}));
+vi.mock("../pages/GuildAtlasEditor", () => ({
+  default: () => <div>Guild Atlas Editor Page</div>,
 }));
 vi.mock("../pages/LegalPage", () => ({
   default: () => <div>Legal Page</div>,
@@ -42,6 +49,9 @@ describe("appRoutes", () => {
     await renderRoute("/", "Index Page");
     await renderRoute("/auth", "Auth Page");
     await renderRoute("/guilds", "Guild List Page");
+    await renderRoute("/guild/eu/tarren-mill/midnight/atlas", "Guild Atlas Page");
+    await renderRoute("/guild/eu/tarren-mill/midnight/atlas/new", "Guild Atlas Editor Page");
+    await renderRoute("/guild/eu/tarren-mill/midnight/atlas/doc-1/edit", "Guild Atlas Editor Page");
     await renderRoute("/legal", "Legal Page");
     await renderRoute("/unknown", "Not Found Page");
   });

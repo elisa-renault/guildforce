@@ -18,6 +18,7 @@ const PERMISSION_TYPES: PermissionType[] = [
   'view_activity_log',
   'manage_vault',
   'view_vault_audit',
+  'manage_atlas',
 ];
 
 export const MyPermissionsCard = ({ guildId, isGM }: MyPermissionsCardProps) => {
@@ -36,6 +37,7 @@ export const MyPermissionsCard = ({ guildId, isGM }: MyPermissionsCardProps) => 
       view_activity_log: 'viewActivityLog',
       manage_vault: 'manageVault',
       view_vault_audit: 'viewVaultAudit',
+      manage_atlas: 'manageAtlas',
     };
     return t.permissions[keyMap[type]] || type;
   };
@@ -48,6 +50,7 @@ export const MyPermissionsCard = ({ guildId, isGM }: MyPermissionsCardProps) => 
       view_activity_log: 'viewActivityLogDesc',
       manage_vault: 'manageVaultDesc',
       view_vault_audit: 'viewVaultAuditDesc',
+      manage_atlas: 'manageAtlasDesc',
     };
     return t.permissions[keyMap[type]] || '';
   };

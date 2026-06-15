@@ -76,6 +76,9 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "guildPollView": "Umfrage",
     "guildPollResults": "Umfrage-Ergebnisse",
     "guildMembers": "Mitglieder",
+    "guildAtlas": "Gildenatlas",
+    "guildAtlasNew": "Neues Atlas-Dokument",
+    "guildAtlasEdit": "Atlas-Dokument bearbeiten",
     "notFound": "Seite nicht gefunden"
   },
   "commandPalette": {
@@ -107,20 +110,23 @@ export const translationsDe: Translations = createLocaleTranslations(translation
       "syncMembers": "Mitgliedercache synchronisieren",
       "createForumTopic": "Forum-Thema erstellen",
       "openProfile": "Mein Profil öffnen",
-      "openAdmin": "Admin öffnen"
+      "openAdmin": "Admin öffnen",
+      "createAtlasDoc": "Atlas-Dokument erstellen"
     },
     "actionSubtitles": {
       "openProfile": "Profil, Charaktere und Präferenzen",
       "openAdmin": "Benutzer, Gilden, Moderation und Inhalte",
       "syncMembers": "Battle.net-Sync-Einstellungen dieser Gilde öffnen",
       "createForumTopic": "Thema in der aktuellen Kategorie starten",
-      "openForumFirst": "Forum öffnen und zuerst eine Kategorie wählen"
+      "openForumFirst": "Forum öffnen und zuerst eine Kategorie wählen",
+      "createAtlasDoc": "Einen Wissensartikel für die Gilde entwerfen"
     },
     "pageSubtitles": {
       "guilds": "Gilden-Workspaces wechseln oder verwalten",
       "forum": "Themen, Beiträge, Moderation und Abos",
       "profile": "Charaktere, Battle.net und Konto",
-      "admin": "Operatives Backoffice"
+      "admin": "Operatives Backoffice",
+      "atlas": "Gildendokumentation und offizielle Leitfäden"
     },
     "badges": {
       "main": "Main",
@@ -817,6 +823,8 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "manageVaultDesc": "Gildengeheimnisse erstellen, rotieren, archivieren und steuern",
     "viewVaultAudit": "Tresor-Audit anzeigen",
     "viewVaultAuditDesc": "Zugriffe und Verwaltungsereignisse für Gildengeheimnisse einsehen",
+    "manageAtlas": "Atlas verwalten",
+    "manageAtlasDesc": "Gildenwissen erstellen, veröffentlichen, archivieren und steuern",
     "manageMembers": "Mitglieder verwalten",
     "manageMembersDesc": "Bearbeiten Sie den Verpflichtungsstatus der Mitglieder",
     "delegated": "delegiert",
@@ -853,6 +861,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "myStatus": "Mein Status",
     "guildOverview": "Gilden\u00fcbersicht",
     "vault": "Tresor",
+    "atlas": "Gildenatlas",
     "quickAccess": "Schnellzugriff",
     "wishesTable": "Wunschliste",
     "members": "Mitglieder",

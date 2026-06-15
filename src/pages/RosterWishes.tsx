@@ -133,6 +133,7 @@ const RosterWishes = () => {
   const { isAdmin: isGlobalAdmin, loading: adminLoading } = useIsAdmin();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [wishesLoading, setWishesLoading] = useState(true);
   const [guildId, setGuildId] = useState<string | null>(null);
   const [guild, setGuild] = useState<{ name: string; server: string; region: string; faction: string; avatar_url: string | null } | null>(null);
   const [seasons, setSeasons] = useState<GuildSeason[]>([]);
@@ -378,6 +379,11 @@ const RosterWishes = () => {
       if (defaultRoster && !selectedRosterId) {
         setSelectedRosterId(defaultRoster.id);
       }
+      if (!defaultRoster) {
+        setWishesLoading(false);
+      }
+    } else {
+      setWishesLoading(false);
     }
 
     setLoading(false);
@@ -385,174 +391,187 @@ const RosterWishes = () => {
 
   // Fetch wishes when roster changes
   const fetchWishes = async () => {
-    if (!guildId || !selectedRosterId) return;
+    setWishesLoading(true);
+    try {
+      if (!guildId || !selectedRosterId) {
+        setMembers([]);
+        setExternalCandidates([]);
+        return;
+      }
 
-    const seasonFilteringEnabled = isSeasonFilteringEnabled(seasonSupportMode, selectedSeasonId);
-    if (seasonSupportMode === 'enabled' && !selectedSeasonId) return;
+      const seasonFilteringEnabled = isSeasonFilteringEnabled(seasonSupportMode, selectedSeasonId);
+      if (seasonSupportMode === 'enabled' && !selectedSeasonId) {
+        setMembers([]);
+        setExternalCandidates([]);
+        return;
+      }
 
-    const { data: membersData } = await supabase
-      .from('guild_members')
-      .select('user_id, status, wishes_locked')
-      .eq('guild_id', guildId);
+      const { data: membersData } = await supabase
+        .from('guild_members')
+        .select('user_id, status, wishes_locked')
+        .eq('guild_id', guildId);
 
-    const safeMembers = membersData || [];
-    const userIds = safeMembers.map(m => m.user_id);
+      const safeMembers = membersData || [];
+      const userIds = safeMembers.map(m => m.user_id);
 
-    const { data: profiles } = userIds.length > 0
-      ? await supabase
-          .from('profiles')
-          .select('id, username, main_character_name')
-          .in('id', userIds)
-      : { data: [] };
+      const { data: profiles } = userIds.length > 0
+        ? await supabase
+            .from('profiles')
+            .select('id, username, main_character_name')
+            .in('id', userIds)
+        : { data: [] };
 
-    const { data: intentData } = userIds.length > 0 && seasonFilteringEnabled
-      ? await supabase
-          .from('guild_season_member_intents')
-          .select('user_id, commitment_status')
-          .eq('guild_id', guildId)
-          .eq('season_id', selectedSeasonId!)
-          .in('user_id', userIds)
-      : { data: [] };
-    const intentByUserId = new Map((intentData || []).map((intent) => [intent.user_id, intent.commitment_status]));
+      const { data: intentData } = userIds.length > 0 && seasonFilteringEnabled
+        ? await supabase
+            .from('guild_season_member_intents')
+            .select('user_id, commitment_status')
+            .eq('guild_id', guildId)
+            .eq('season_id', selectedSeasonId!)
+            .in('user_id', userIds)
+        : { data: [] };
+      const intentByUserId = new Map((intentData || []).map((intent) => [intent.user_id, intent.commitment_status]));
 
-    // Filter wishes by selected roster
-    let wishesQuery = supabase
-      .from('class_wishes')
-      .select('user_id, choice_index, class_id, spec_ids, spec_order, comment, validation_status, validated_by, validated_at')
-      .eq('guild_id', guildId)
-      .eq('roster_id', selectedRosterId);
-    if (seasonFilteringEnabled) {
-      wishesQuery = wishesQuery.eq('season_id', selectedSeasonId!);
-    }
-    const { data: wishesData } = await wishesQuery;
+      // Filter wishes by selected roster
+      let wishesQuery = supabase
+        .from('class_wishes')
+        .select('user_id, choice_index, class_id, spec_ids, spec_order, comment, validation_status, validated_by, validated_at')
+        .eq('guild_id', guildId)
+        .eq('roster_id', selectedRosterId);
+      if (seasonFilteringEnabled) {
+        wishesQuery = wishesQuery.eq('season_id', selectedSeasonId!);
+      }
+      const { data: wishesData } = await wishesQuery;
 
-    // External wishes and candidate pool (members in roster cache not yet linked to a Guildforce account)
-    let externalWishesQuery = supabase
-      .from('external_member_wishes')
-      .select('id, roster_cache_id, class_id, spec_ids, spec_order, comment, commitment_status, validation_status, validated_by, validated_at')
-      .eq('guild_id', guildId)
-      .eq('roster_id', selectedRosterId);
-    if (seasonFilteringEnabled) {
-      externalWishesQuery = externalWishesQuery.eq('season_id', selectedSeasonId!);
-    }
-    const { data: externalWishesData } = await externalWishesQuery;
+      // External wishes and candidate pool (members in roster cache not yet linked to a Guildforce account)
+      let externalWishesQuery = supabase
+        .from('external_member_wishes')
+        .select('id, roster_cache_id, class_id, spec_ids, spec_order, comment, commitment_status, validation_status, validated_by, validated_at')
+        .eq('guild_id', guildId)
+        .eq('roster_id', selectedRosterId);
+      if (seasonFilteringEnabled) {
+        externalWishesQuery = externalWishesQuery.eq('season_id', selectedSeasonId!);
+      }
+      const { data: externalWishesData } = await externalWishesQuery;
 
-    const { data: rosterCacheData } = await supabase
-      .from('guild_roster_cache')
-      .select('id, character_name, character_realm, character_realm_slug, matched_user_id')
-      .eq('guild_id', guildId);
+      const { data: rosterCacheData } = await supabase
+        .from('guild_roster_cache')
+        .select('id, character_name, character_realm, character_realm_slug, matched_user_id')
+        .eq('guild_id', guildId);
 
-    const { data: selectionRows } = await supabase.rpc(
-      'get_roster_member_selection',
-      seasonFilteringEnabled
-        ? { p_roster_id: selectedRosterId, p_season_id: selectedSeasonId! }
-        : { p_roster_id: selectedRosterId }
-    );
+      const { data: selectionRows } = await supabase.rpc(
+        'get_roster_member_selection',
+        seasonFilteringEnabled
+          ? { p_roster_id: selectedRosterId, p_season_id: selectedSeasonId! }
+          : { p_roster_id: selectedRosterId }
+      );
 
-    const selectionList = (selectionRows || []) as RosterMemberSelectionRow[];
-    const selectionsByUserId = new Map(
-      selectionList
-        .filter((row) => !!row.user_id)
-        .map((row) => [row.user_id as string, row])
-    );
-    const selectionsByRosterCacheId = new Map(
-      selectionList
-        .filter((row) => !!row.roster_cache_id)
-        .map((row) => [row.roster_cache_id as string, row])
-    );
+      const selectionList = (selectionRows || []) as RosterMemberSelectionRow[];
+      const selectionsByUserId = new Map(
+        selectionList
+          .filter((row) => !!row.user_id)
+          .map((row) => [row.user_id as string, row])
+      );
+      const selectionsByRosterCacheId = new Map(
+        selectionList
+          .filter((row) => !!row.roster_cache_id)
+          .map((row) => [row.roster_cache_id as string, row])
+      );
 
-    // Fetch validator profiles if there are any
-    const validatorIds = [
-      ...new Set([
-        ...(wishesData?.filter(w => w.validated_by).map(w => w.validated_by) || []),
-        ...(externalWishesData?.filter(w => w.validated_by).map(w => w.validated_by) || []),
-      ]),
-    ];
-    const { data: validatorProfiles } = validatorIds.length > 0
-      ? await supabase.from('profiles').select('id, username').in('id', validatorIds)
-      : { data: [] };
+      // Fetch validator profiles if there are any
+      const validatorIds = [
+        ...new Set([
+          ...(wishesData?.filter(w => w.validated_by).map(w => w.validated_by) || []),
+          ...(externalWishesData?.filter(w => w.validated_by).map(w => w.validated_by) || []),
+        ]),
+      ];
+      const { data: validatorProfiles } = validatorIds.length > 0
+        ? await supabase.from('profiles').select('id, username').in('id', validatorIds)
+        : { data: [] };
 
-    const profilesById = new Map((profiles || []).map((p) => [p.id, p]));
-    const validatorById = new Map((validatorProfiles || []).map((p) => [p.id, p.username]));
+      const profilesById = new Map((profiles || []).map((p) => [p.id, p]));
+      const validatorById = new Map((validatorProfiles || []).map((p) => [p.id, p.username]));
 
-    // Keep only members that still have an active profile.
-    // This avoids showing stale lines for accounts that were removed.
-    const mergedMembers: MemberWish[] = safeMembers.flatMap(m => {
-      const profile = profilesById.get(m.user_id);
-      if (!profile) return [];
-      const memberWishes = wishesData?.filter(w => w.user_id === m.user_id).map(w => ({
-        choice_index: w.choice_index,
-        class_id: w.class_id,
-        spec_ids: resolveSpecOrder(w.spec_ids || [], w.spec_order),
-        comment: w.comment,
-        validation_status: (w.validation_status || 'pending') as ValidationStatus,
-        validated_by: w.validated_by,
-        validated_at: w.validated_at,
-        validated_by_username: w.validated_by ? validatorById.get(w.validated_by) || null : null,
-      })) || [];
-      const selection = selectionsByUserId.get(m.user_id);
-      return {
-        id: m.user_id,
-        username: profile?.username || 'Unknown',
-        mainCharacterName: getMainCharacterName(profile?.main_character_name),
-        status: intentByUserId.get(m.user_id) || m.status,
-        wishes_locked: m.wishes_locked,
-        wishes: memberWishes.sort((a, b) => a.choice_index - b.choice_index),
-        selectionStatus: selection?.selection_status || 'undecided',
-        selectionReasonCode: selection?.reason_code || null,
-        selectionComment: selection?.comment || null,
-        selectionDecidedBy: selection?.decided_by || null,
-        selectionDecidedAt: selection?.decided_at || null,
-        selectionUpdatedAt: selection?.updated_at || null,
-      };
-    });
-
-    const externalByCache = new Map((externalWishesData || []).map((w) => [w.roster_cache_id, w as ExternalWishRow]));
-    const externalMembers: MemberWish[] = (rosterCacheData || [])
-      .filter((row) => !row.matched_user_id)
-      .flatMap((row) => {
-        const ext = externalByCache.get(row.id);
-        if (!ext) return [];
-        const selection = selectionsByRosterCacheId.get(row.id);
-        return [{
-          id: `external:${ext.id}`,
-          username: row.character_name,
-          mainCharacterName: formatRealmDisplayName(row.character_realm, row.character_realm_slug),
-          status: ext.commitment_status || 'potential',
-          wishes_locked: false,
-          isExternal: true,
-          externalWishId: ext.id,
-          rosterCacheId: row.id,
-          wishes: [{
-            choice_index: 1,
-            class_id: ext.class_id,
-            spec_ids: resolveSpecOrder(ext.spec_ids || [], ext.spec_order),
-            comment: ext.comment,
-            validation_status: (ext.validation_status || 'pending') as ValidationStatus,
-            validated_by: ext.validated_by,
-            validated_at: ext.validated_at,
-            validated_by_username: ext.validated_by ? validatorById.get(ext.validated_by) || null : null,
-          }],
+      // Keep only members that still have an active profile.
+      // This avoids showing stale lines for accounts that were removed.
+      const mergedMembers: MemberWish[] = safeMembers.flatMap(m => {
+        const profile = profilesById.get(m.user_id);
+        if (!profile) return [];
+        const memberWishes = wishesData?.filter(w => w.user_id === m.user_id).map(w => ({
+          choice_index: w.choice_index,
+          class_id: w.class_id,
+          spec_ids: resolveSpecOrder(w.spec_ids || [], w.spec_order),
+          comment: w.comment,
+          validation_status: (w.validation_status || 'pending') as ValidationStatus,
+          validated_by: w.validated_by,
+          validated_at: w.validated_at,
+          validated_by_username: w.validated_by ? validatorById.get(w.validated_by) || null : null,
+        })) || [];
+        const selection = selectionsByUserId.get(m.user_id);
+        return {
+          id: m.user_id,
+          username: profile?.username || 'Unknown',
+          mainCharacterName: getMainCharacterName(profile?.main_character_name),
+          status: intentByUserId.get(m.user_id) || m.status,
+          wishes_locked: m.wishes_locked,
+          wishes: memberWishes.sort((a, b) => a.choice_index - b.choice_index),
           selectionStatus: selection?.selection_status || 'undecided',
           selectionReasonCode: selection?.reason_code || null,
           selectionComment: selection?.comment || null,
           selectionDecidedBy: selection?.decided_by || null,
           selectionDecidedAt: selection?.decided_at || null,
           selectionUpdatedAt: selection?.updated_at || null,
-        }];
+        };
       });
 
-    setMembers([...mergedMembers, ...externalMembers]);
+      const externalByCache = new Map((externalWishesData || []).map((w) => [w.roster_cache_id, w as ExternalWishRow]));
+      const externalMembers: MemberWish[] = (rosterCacheData || [])
+        .filter((row) => !row.matched_user_id)
+        .flatMap((row) => {
+          const ext = externalByCache.get(row.id);
+          if (!ext) return [];
+          const selection = selectionsByRosterCacheId.get(row.id);
+          return [{
+            id: `external:${ext.id}`,
+            username: row.character_name,
+            mainCharacterName: formatRealmDisplayName(row.character_realm, row.character_realm_slug),
+            status: ext.commitment_status || 'potential',
+            wishes_locked: false,
+            isExternal: true,
+            externalWishId: ext.id,
+            rosterCacheId: row.id,
+            wishes: [{
+              choice_index: 1,
+              class_id: ext.class_id,
+              spec_ids: resolveSpecOrder(ext.spec_ids || [], ext.spec_order),
+              comment: ext.comment,
+              validation_status: (ext.validation_status || 'pending') as ValidationStatus,
+              validated_by: ext.validated_by,
+              validated_at: ext.validated_at,
+              validated_by_username: ext.validated_by ? validatorById.get(ext.validated_by) || null : null,
+            }],
+            selectionStatus: selection?.selection_status || 'undecided',
+            selectionReasonCode: selection?.reason_code || null,
+            selectionComment: selection?.comment || null,
+            selectionDecidedBy: selection?.decided_by || null,
+            selectionDecidedAt: selection?.decided_at || null,
+            selectionUpdatedAt: selection?.updated_at || null,
+          }];
+        });
 
-    const candidates: ExternalRosterCandidate[] = (rosterCacheData || [])
-      .filter((row) => !row.matched_user_id)
-      .map((row) => ({
-        id: row.id,
-        character_name: row.character_name,
-        character_realm: formatRealmDisplayName(row.character_realm, row.character_realm_slug),
-        character_realm_slug: row.character_realm_slug || '',
-      }));
-    setExternalCandidates(candidates);
+      setMembers([...mergedMembers, ...externalMembers]);
+
+      const candidates: ExternalRosterCandidate[] = (rosterCacheData || [])
+        .filter((row) => !row.matched_user_id)
+        .map((row) => ({
+          id: row.id,
+          character_name: row.character_name,
+          character_realm: formatRealmDisplayName(row.character_realm, row.character_realm_slug),
+          character_realm_slug: row.character_realm_slug || '',
+        }));
+      setExternalCandidates(candidates);
+    } finally {
+      setWishesLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -569,6 +588,8 @@ const RosterWishes = () => {
   useEffect(() => {
     if (guildId && selectedRosterId && (seasonSupportMode === 'legacy' || selectedSeasonId)) {
       fetchWishes();
+    } else if (guildId && !selectedRosterId) {
+      setWishesLoading(false);
     }
   }, [guildId, selectedRosterId, selectedSeasonId, seasonSupportMode]);
 
@@ -1288,7 +1309,7 @@ const RosterWishes = () => {
       key: 'export',
       label: t.dashboard.exportCSV,
       icon: Download,
-      disabled: filteredMembers.length === 0,
+      disabled: wishesLoading || filteredMembers.length === 0,
       onClick: () => {
         exportWishesToCSV(filteredMembers, {
           language,
@@ -1557,6 +1578,7 @@ const RosterWishes = () => {
 
             <RosterTable
               members={filteredMembers}
+              loading={wishesLoading}
               currentUserId={user?.id}
               selectedRosterId={selectedRosterId}
               selectedSeasonId={selectedSeasonId}

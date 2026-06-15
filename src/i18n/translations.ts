@@ -86,6 +86,9 @@ export interface Translations {
     guildPollView: string;
     guildPollResults: string;
     guildMembers: string;
+    guildAtlas: string;
+    guildAtlasNew: string;
+    guildAtlasEdit: string;
     notFound: string;
   };
   commandPalette: {
@@ -118,6 +121,7 @@ export interface Translations {
       createForumTopic: string;
       openProfile: string;
       openAdmin: string;
+      createAtlasDoc: string;
     };
     actionSubtitles: {
       openProfile: string;
@@ -125,12 +129,14 @@ export interface Translations {
       syncMembers: string;
       createForumTopic: string;
       openForumFirst: string;
+      createAtlasDoc: string;
     };
     pageSubtitles: {
       guilds: string;
       forum: string;
       profile: string;
       admin: string;
+      atlas: string;
     };
     badges: {
       main: string;
@@ -1128,6 +1134,8 @@ export interface Translations {
     manageVaultDesc: string;
     viewVaultAudit: string;
     viewVaultAuditDesc: string;
+    manageAtlas: string;
+    manageAtlasDesc: string;
     manageMembers: string;
     manageMembersDesc: string;
     delegated: string;
@@ -1165,6 +1173,7 @@ export interface Translations {
     myStatus: string;
     guildOverview: string;
     vault: string;
+    atlas: string;
     quickAccess: string;
     wishesTable: string;
     noWishApproved: string;

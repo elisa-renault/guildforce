@@ -24,6 +24,7 @@ const PERMISSION_TYPES: { type: PermissionType; isSensitive?: boolean }[] = [
   { type: 'view_activity_log' },
   { type: 'manage_vault', isSensitive: true },
   { type: 'view_vault_audit', isSensitive: true },
+  { type: 'manage_atlas' },
 ];
 
 export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps) => {
@@ -79,6 +80,7 @@ export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps)
       view_activity_log: 'viewActivityLog',
       manage_vault: 'manageVault',
       view_vault_audit: 'viewVaultAudit',
+      manage_atlas: 'manageAtlas',
     };
     return t.permissions[keyMap[type]] || type;
   };
@@ -91,6 +93,7 @@ export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps)
       view_activity_log: 'viewActivityLogDesc',
       manage_vault: 'manageVaultDesc',
       view_vault_audit: 'viewVaultAuditDesc',
+      manage_atlas: 'manageAtlasDesc',
     };
     return t.permissions[keyMap[type]] || '';
   };

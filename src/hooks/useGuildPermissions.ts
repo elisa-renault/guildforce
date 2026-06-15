@@ -13,7 +13,8 @@ export type PermissionType =
   | 'manage_rosters' 
   | 'view_activity_log'
   | 'manage_vault'
-  | 'view_vault_audit';
+  | 'view_vault_audit'
+  | 'manage_atlas';
 
 export interface PermissionRule {
   id?: string;
@@ -193,6 +194,7 @@ export function useGuildPermissions(guildId: string | null) {
           'view_activity_log',
           'manage_vault',
           'view_vault_audit',
+          'manage_atlas',
         ] as const;
         
         permissionTypes.forEach(type => {

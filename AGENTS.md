@@ -221,6 +221,26 @@ Operational notes:
   - `MSYS_NO_PATHCONV=1 npm run e2e:snapshots member /guilds /forum /profile`
 - Use `docs/permissions-matrix.md` as the role/access oracle during QA and debugging.
 
+## Authenticated Role Smoke Tests
+
+Use this when a release needs proof that a feature works with real authenticated permissions, not just unit tests or static screenshots.
+
+Process:
+1. Create a task run with `npm run task:new -- "Smoke <feature> authenticated roles"`.
+2. Start the local app on the same origin used by the auth state, usually `http://localhost:8080`.
+3. Record or refresh auth state with `npm run e2e:auth:record <role>`. If there is only one Battle.net account, it may still cover multiple roles when that account has different permissions in different guilds.
+4. Resolve the real route by opening `/guilds` with the saved storage state and clicking the target guild card instead of guessing slugs.
+5. Test the manager path first: open the feature, create temporary data, save, publish/activate if applicable, exercise critical actions, and verify rendered output.
+6. Test the member/read-only path separately: use a guild where the same auth state is only a member, or use a distinct `member.json`. Verify visible data, absence of privileged controls, and direct protected-route redirects.
+7. If test data must be injected for a read-only role, use DB/admin access only when explicitly approved and keep the inserted rows clearly named with a `Smoke <feature> <timestamp>` prefix.
+8. Clean up all temporary rows and uploaded assets. Verify cleanup with a DB query or application reload.
+9. Record exact routes, temporary ids, cleanup results, and any browser console errors in the task run; close and archive it.
+
+Atlas smoke checklist:
+- Manager guild: create Atlas document, save draft, publish, edit/read it, upload and render an image, archive, restore.
+- Member guild: read a published members-visible document, confirm no create/edit/actions controls, confirm `/atlas/new` and `/atlas/:id/edit` redirect back to `/atlas`.
+- Cleanup: delete the smoke Atlas documents and any uploaded `guild-atlas-images` object, then confirm no `Smoke Atlas%` rows remain.
+
 Supabase references:
 - Migrations: `supabase/migrations`
 - Edge functions: `supabase/functions`

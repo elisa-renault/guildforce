@@ -1,9 +1,9 @@
-import { type ComponentPropsWithoutRef, type ElementType } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
+import { type ComponentPropsWithoutRef, type ElementType } from 'react';
 
 import { cn } from '@/lib/utils';
 
-const pageContainerVariants = cva('w-full px-4 md:px-5 xl:px-6 2xl:px-8', {
+const pageContainerVariants = cva('w-full min-w-0 px-4 md:px-5 xl:px-6 2xl:px-8', {
   variants: {
     width: {
       contained: 'mx-auto max-w-5xl',

@@ -1046,6 +1046,102 @@ export type Database = {
           },
         ]
       }
+      guild_atlas_documents: {
+        Row: {
+          collection: string | null
+          content: string
+          created_at: string
+          created_by: string | null
+          guild_id: string
+          id: string
+          min_rank_index: number | null
+          owner_user_id: string | null
+          roster_id: string | null
+          slug: string
+          status: string
+          summary: string | null
+          tags: string[]
+          title: string
+          updated_at: string
+          updated_by: string | null
+          visibility_type: string
+        }
+        Insert: {
+          collection?: string | null
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          guild_id: string
+          id?: string
+          min_rank_index?: number | null
+          owner_user_id?: string | null
+          roster_id?: string | null
+          slug: string
+          status?: string
+          summary?: string | null
+          tags?: string[]
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+          visibility_type?: string
+        }
+        Update: {
+          collection?: string | null
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          guild_id?: string
+          id?: string
+          min_rank_index?: number | null
+          owner_user_id?: string | null
+          roster_id?: string | null
+          slug?: string
+          status?: string
+          summary?: string | null
+          tags?: string[]
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+          visibility_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_atlas_documents_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_atlas_documents_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_atlas_documents_owner_user_id_fkey"
+            columns: ["owner_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_atlas_documents_roster_id_fkey"
+            columns: ["roster_id"]
+            isOneToOne: false
+            referencedRelation: "rosters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_atlas_documents_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guild_members: {
         Row: {
           guild_id: string
@@ -2879,6 +2975,18 @@ export type Database = {
           reason: string
           sanction_type: Database["public"]["Enums"]["forum_sanction_type"]
         }[]
+      }
+      can_manage_guild_atlas: {
+        Args: { p_guild_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      can_view_guild_atlas_document: {
+        Args: { p_document_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      get_user_guild_rank_index: {
+        Args: { p_guild_id: string; p_user_id: string }
+        Returns: number | null
       }
       has_guild_permission: {
         Args: { p_guild_id: string; p_permission: string; p_user_id: string }

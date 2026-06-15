@@ -28,6 +28,7 @@ export const PageHeader = ({
     className={cn(
       'flex flex-col gap-4 rounded-lg border border-border/40 bg-card/20 px-4 py-4 backdrop-blur-sm md:flex-row md:items-start md:justify-between md:px-5',
       className,
+      'w-full max-w-full min-w-0',
     )}
   >
     <div className="flex min-w-0 items-start gap-3">

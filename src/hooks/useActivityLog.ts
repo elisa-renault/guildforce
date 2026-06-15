@@ -22,7 +22,13 @@ export type ActionType =
   | 'vault_secret_created'
   | 'vault_secret_archived'
   | 'vault_secret_rotated'
-  | 'vault_access_rules_updated';
+  | 'vault_access_rules_updated'
+  | 'atlas_doc_created'
+  | 'atlas_doc_updated'
+  | 'atlas_doc_published'
+  | 'atlas_doc_archived'
+  | 'atlas_doc_restored'
+  | 'atlas_doc_visibility_updated';
 
 export interface ActivityLog {
   id: string;

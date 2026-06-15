@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Skeleton } from '@/components/ui/skeleton';
 import { CheckCircle, HelpCircle, XCircle, Pencil, Save, Shield, Heart, Sword, Swords, Crosshair, MessageSquare, Plus, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Lock, Unlock, MoreVertical, Loader2, UserPlus } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getClassById, getLocalizedClassName, getLocalizedSpecName, getSpecById } from '@/data/wowClasses';
@@ -29,6 +30,7 @@ type SortDirection = 'asc' | 'desc';
 
 interface RosterTableProps {
   members: MemberWish[];
+  loading?: boolean;
   currentUserId: string | undefined;
   selectedRosterId?: string | null;
   selectedSeasonId?: string | null;
@@ -69,6 +71,7 @@ const roleConfig: Record<string, { icon: typeof Shield; color: string }> = {
 
 export const RosterTable = ({
   members,
+  loading = false,
   currentUserId,
   selectedRosterId,
   selectedSeasonId,
@@ -396,6 +399,35 @@ export const RosterTable = ({
     const filledWishes = wishes.filter(w => w.class_id);
     return Math.max(0, filledWishes.length - 3);
   };
+
+  if (loading) {
+    return (
+      <GlowCard className="overflow-hidden">
+        <div
+          className="space-y-4 p-4"
+          role="status"
+          aria-live="polite"
+          aria-busy="true"
+        >
+          <div className="flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+            <span>{t.common.loading}</span>
+          </div>
+          <div className="space-y-3">
+            {Array.from({ length: isMobile ? 3 : 6 }).map((_, index) => (
+              <div key={index} className="flex items-center gap-3">
+                <Skeleton className="h-10 w-36 flex-shrink-0" />
+                <Skeleton className="h-8 w-28 flex-shrink-0" />
+                <Skeleton className="h-8 flex-1" />
+                <Skeleton className="hidden h-8 flex-1 md:block" />
+                <Skeleton className="hidden h-8 flex-1 lg:block" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </GlowCard>
+    );
+  }
 
   if (members.length === 0) {
     return (

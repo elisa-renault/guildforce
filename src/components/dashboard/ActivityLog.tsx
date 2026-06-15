@@ -19,6 +19,8 @@ import {
   RotateCw,
   KeyRound,
   UserMinus,
+  Compass,
+  Archive,
 } from 'lucide-react';
 import React, { useState } from 'react';
 
@@ -64,6 +66,12 @@ const ACTION_ICONS: Record<ActionType, React.ReactNode> = {
   vault_secret_archived: <Trash2 className="h-4 w-4" />,
   vault_secret_rotated: <RotateCw className="h-4 w-4" />,
   vault_access_rules_updated: <Shield className="h-4 w-4" />,
+  atlas_doc_created: <Compass className="h-4 w-4" />,
+  atlas_doc_updated: <FileText className="h-4 w-4" />,
+  atlas_doc_published: <CheckCircle2 className="h-4 w-4" />,
+  atlas_doc_archived: <Archive className="h-4 w-4" />,
+  atlas_doc_restored: <FileText className="h-4 w-4" />,
+  atlas_doc_visibility_updated: <Shield className="h-4 w-4" />,
 };
 
 const ACTION_COLORS: Record<ActionType, string> = {
@@ -86,6 +94,12 @@ const ACTION_COLORS: Record<ActionType, string> = {
   vault_secret_archived: toneBadgeClass('warning'),
   vault_secret_rotated: toneBadgeClass('info'),
   vault_access_rules_updated: toneBadgeClass('warning'),
+  atlas_doc_created: toneBadgeClass('info'),
+  atlas_doc_updated: toneBadgeClass('warning'),
+  atlas_doc_published: toneBadgeClass('success'),
+  atlas_doc_archived: toneBadgeClass('warning'),
+  atlas_doc_restored: toneBadgeClass('info'),
+  atlas_doc_visibility_updated: toneBadgeClass('warning'),
 };
 
 export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
@@ -136,6 +150,12 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
       roster_updated: resolveSemanticMessage({ key: 'activity.log.action.roster_updated', language, translations: t }),
       roster_deleted: resolveSemanticMessage({ key: 'activity.log.action.roster_deleted', language, translations: t }),
       permissions_updated: resolveSemanticMessage({ key: 'activity.log.action.permissions_updated', language, translations: t }),
+      atlas_doc_created: resolveSemanticMessage({ key: 'activity.log.action.atlas_doc_created', language, translations: t }),
+      atlas_doc_updated: resolveSemanticMessage({ key: 'activity.log.action.atlas_doc_updated', language, translations: t }),
+      atlas_doc_published: resolveSemanticMessage({ key: 'activity.log.action.atlas_doc_published', language, translations: t }),
+      atlas_doc_archived: resolveSemanticMessage({ key: 'activity.log.action.atlas_doc_archived', language, translations: t }),
+      atlas_doc_restored: resolveSemanticMessage({ key: 'activity.log.action.atlas_doc_restored', language, translations: t }),
+      atlas_doc_visibility_updated: resolveSemanticMessage({ key: 'activity.log.action.atlas_doc_visibility_updated', language, translations: t }),
     },
     filterLabels: {
       all: resolveSemanticMessage({ key: 'activity.log.filter.all', language, translations: t }),
@@ -159,6 +179,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
       manage_polls: resolveSemanticMessage({ key: 'activity.log.permission.manage_polls', language, translations: t }),
       manage_rosters: resolveSemanticMessage({ key: 'activity.log.permission.manage_rosters', language, translations: t }),
       view_activity_log: resolveSemanticMessage({ key: 'activity.log.permission.view_activity_log', language, translations: t }),
+      manage_atlas: resolveSemanticMessage({ key: 'activity.log.permission.manage_atlas', language, translations: t }),
     },
   };
 

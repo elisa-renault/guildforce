@@ -37,6 +37,8 @@ const GuildPollNew = lazy(() => import("./pages/GuildPollNew"));
 const GuildPollView = lazy(() => import("./pages/GuildPollView"));
 const GuildPollResults = lazy(() => import("./pages/GuildPollResults"));
 const GuildMembers = lazy(() => import("./pages/GuildMembers"));
+const GuildAtlas = lazy(() => import("./pages/GuildAtlas"));
+const GuildAtlasEditor = lazy(() => import("./pages/GuildAtlasEditor"));
 const Profile = lazy(() => import("./pages/Profile"));
 const PublicProfile = lazy(() => import("./pages/PublicProfile"));
 const Forum = lazy(() => import("./pages/Forum"));
@@ -250,6 +252,27 @@ export const appRoutes: AppRoute[] = [
     path: "/guild/:regionSlug/:serverSlug/:guildSlug/members",
     element: <GuildMembers />,
     title: "guildMembers",
+    layout: "guild-workspace",
+    requiresAuth: true,
+  },
+  {
+    path: "/guild/:regionSlug/:serverSlug/:guildSlug/atlas",
+    element: <GuildAtlas />,
+    title: "guildAtlas",
+    layout: "guild-workspace",
+    requiresAuth: true,
+  },
+  {
+    path: "/guild/:regionSlug/:serverSlug/:guildSlug/atlas/new",
+    element: <GuildAtlasEditor />,
+    title: "guildAtlasNew",
+    layout: "guild-workspace",
+    requiresAuth: true,
+  },
+  {
+    path: "/guild/:regionSlug/:serverSlug/:guildSlug/atlas/:documentId/edit",
+    element: <GuildAtlasEditor />,
+    title: "guildAtlasEdit",
     layout: "guild-workspace",
     requiresAuth: true,
   },

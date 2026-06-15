@@ -29,6 +29,7 @@ const guild: CommandPaletteGuildContext = {
   region: 'eu',
   avatarUrl: null,
   basePath: '/guild/eu/tarren-mill/midnight',
+  canManageAtlas: true,
 };
 
 const location = (pathname: string): Location =>
@@ -110,9 +111,29 @@ describe('command palette registry', () => {
           id: `action:guild:${guild.id}:sync-members`,
           href: `${guild.basePath}/settings?section=battlenet`,
         }),
+        expect.objectContaining({
+          id: `page:guild:${guild.id}:atlas`,
+          href: `${guild.basePath}/atlas`,
+        }),
+        expect.objectContaining({
+          id: `action:guild:${guild.id}:create-atlas-doc`,
+          href: `${guild.basePath}/atlas/new`,
+        }),
       ]),
     );
     expect(items.some((item) => item.title.toLowerCase().includes('add member'))).toBe(false);
+  });
+
+  it('hides Atlas document creation for guild members without Atlas management', () => {
+    const items = buildCommandPaletteRegistry({
+      t: translationsEn,
+      activeGuild: { ...guild, canManageAtlas: false },
+      isAdmin: false,
+      location: location(`${guild.basePath}/atlas`),
+    });
+
+    expect(items.some((item) => item.id === `action:guild:${guild.id}:create-atlas-doc`)).toBe(false);
+    expect(items.some((item) => item.id === `page:guild:${guild.id}:atlas`)).toBe(true);
   });
 
   it('only includes admin actions for authorized users', () => {

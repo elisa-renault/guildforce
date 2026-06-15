@@ -8,6 +8,7 @@ import type { ReactNode } from 'react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserGuilds } from '@/hooks/useUserGuilds';
+import { supabase } from '@/integrations/supabase/client';
 import { getGuildPath } from '@/lib/guildSlug';
 
 const isMacPlatform = () => {
@@ -21,6 +22,7 @@ export const CommandPaletteProvider = ({ children }: { children: ReactNode }) =>
   const { guilds } = useUserGuilds({ enabled: Boolean(user?.id) });
   const [isOpen, setIsOpen] = useState(false);
   const [shortcutLabel, setShortcutLabel] = useState('Ctrl K');
+  const [canManageActiveAtlas, setCanManageActiveAtlas] = useState(false);
 
   useEffect(() => {
     setShortcutLabel(isMacPlatform() ? 'Cmd K' : 'Ctrl K');
@@ -42,9 +44,45 @@ export const CommandPaletteProvider = ({ children }: { children: ReactNode }) =>
   );
 
   const activeGuild = useMemo<CommandPaletteGuildContext | null>(
-    () => navigableGuilds.find((guild) => location.pathname.startsWith(guild.basePath)) || null,
-    [location.pathname, navigableGuilds],
+    () => {
+      const active = navigableGuilds.find((guild) => location.pathname.startsWith(guild.basePath)) || null;
+      return active ? { ...active, canManageAtlas: canManageActiveAtlas } : null;
+    },
+    [canManageActiveAtlas, location.pathname, navigableGuilds],
   );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadAtlasManagement = async () => {
+      const active = navigableGuilds.find((guild) => location.pathname.startsWith(guild.basePath)) || null;
+      if (!user?.id || !active?.id) {
+        setCanManageActiveAtlas(false);
+        return;
+      }
+
+      const [gmResult, permissionResult] = await Promise.all([
+        supabase.rpc('is_guild_owner_or_gm', {
+          _guild_id: active.id,
+        }),
+        supabase.rpc('has_guild_permission', {
+          p_guild_id: active.id,
+          p_permission: 'manage_atlas',
+          p_user_id: user.id,
+        }),
+      ]);
+
+      if (!cancelled) {
+        setCanManageActiveAtlas(Boolean(gmResult.data) || Boolean(permissionResult.data));
+      }
+    };
+
+    void loadAtlasManagement();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [location.pathname, navigableGuilds, user?.id]);
 
   const open = useCallback(() => setIsOpen(true), []);
   const close = useCallback(() => setIsOpen(false), []);

@@ -25,11 +25,13 @@ interface GuildAccessState {
   requiresAuth: boolean;
   notFound: boolean;
   guild: GuildAccessStateGuild | null;
+  isMember: boolean;
   isGM: boolean;
   hasManageRosters: boolean;
   hasViewActivityLog: boolean;
   hasManageVault: boolean;
   hasViewVaultAudit: boolean;
+  hasManageAtlas: boolean;
   hasVaultAccess: boolean;
 }
 
@@ -38,11 +40,13 @@ const INITIAL_STATE: GuildAccessState = {
   requiresAuth: false,
   notFound: false,
   guild: null,
+  isMember: false,
   isGM: false,
   hasManageRosters: false,
   hasViewActivityLog: false,
   hasManageVault: false,
   hasViewVaultAudit: false,
+  hasManageAtlas: false,
   hasVaultAccess: false,
 };
 
@@ -110,14 +114,20 @@ export function useGuildAccessState({
 
     const [
       gmResult,
+      memberResult,
       rostersPermResult,
       activityPermResult,
       manageVaultResult,
       viewVaultAuditResult,
+      manageAtlasResult,
       anyVaultAccessResult,
     ] = await Promise.all([
       supabase.rpc('is_guild_owner_or_gm', {
         _guild_id: matchedGuild.id,
+      }),
+      supabase.rpc('is_guild_member', {
+        _guild_id: matchedGuild.id,
+        _user_id: user.id,
       }),
       supabase.rpc('has_guild_permission', {
         p_guild_id: matchedGuild.id,
@@ -139,6 +149,11 @@ export function useGuildAccessState({
         p_permission: 'view_vault_audit',
         p_user_id: user.id,
       }),
+      supabase.rpc('has_guild_permission', {
+        p_guild_id: matchedGuild.id,
+        p_permission: 'manage_atlas',
+        p_user_id: user.id,
+      }),
       supabase.rpc('has_any_guild_secret_access', {
         p_guild_id: matchedGuild.id,
         p_user_id: user.id,
@@ -150,11 +165,13 @@ export function useGuildAccessState({
       requiresAuth: false,
       notFound: false,
       guild: matchedGuild,
+      isMember: Boolean(memberResult.data),
       isGM: Boolean(gmResult.data),
       hasManageRosters: Boolean(rostersPermResult.data),
       hasViewActivityLog: Boolean(activityPermResult.data),
       hasManageVault: Boolean(manageVaultResult.data),
       hasViewVaultAudit: Boolean(viewVaultAuditResult.data),
+      hasManageAtlas: Boolean(manageAtlasResult.data),
       hasVaultAccess: Boolean(anyVaultAccessResult.data),
     });
   }, [authLoading, guildSlug, regionSlug, serverSlug, user]);

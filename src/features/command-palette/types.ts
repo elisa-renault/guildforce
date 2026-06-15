@@ -26,6 +26,7 @@ export interface CommandPaletteGuildContext {
   region: string;
   avatarUrl?: string | null;
   basePath: string;
+  canManageAtlas?: boolean;
 }
 
 export interface CommandPaletteItem {

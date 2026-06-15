@@ -77,7 +77,116 @@ Outputs:
 
 If a role is redirected to `/auth`, the command exits with error so expired sessions are caught early.
 
-## 4) Useful flags
+## 4) Authenticated smoke tests
+
+Use authenticated smoke tests when a feature needs role-sensitive proof before release. Screenshots show that pages render; smoke tests also perform the critical actions and confirm permissions.
+
+Typical flow:
+
+1. Start or verify the local app:
+
+```bash
+npm run dev
+```
+
+2. Record the needed auth state:
+
+```bash
+npm run e2e:auth:record admin
+npm run e2e:auth:record member
+```
+
+If only one Battle.net account is available, it can still cover multiple roles when that account has different permissions in different guilds. For example, the same `admin.json` can be a GM in one guild and a regular member in another guild.
+
+3. Verify the auth state and discover exact guild routes:
+
+```bash
+node - <<'NODE'
+const { chromium } = require('playwright');
+
+(async () => {
+  const browser = await chromium.launch({ headless: true });
+  const context = await browser.newContext({ storageState: 'e2e/.auth/admin.json' });
+  const page = await context.newPage();
+
+  await page.goto('http://localhost:8080/guilds', { waitUntil: 'domcontentloaded' });
+  await page.waitForLoadState('networkidle').catch(() => {});
+
+  console.log('URL:', page.url());
+  console.log((await page.locator('body').innerText()).replace(/\s+/g, ' ').slice(0, 1000));
+
+  await browser.close();
+})();
+NODE
+```
+
+Use `http://localhost:8080` if the auth state was recorded on `localhost`. `127.0.0.1` is a different browser origin and may not reuse the same local storage.
+
+4. Run the manager path with Playwright:
+
+- open the target feature route
+- create temporary data named `Smoke <feature> <timestamp>`
+- save it
+- publish or activate it if the feature has lifecycle states
+- exercise the important actions
+- verify the rendered result in the UI
+- collect browser console errors and page errors
+
+5. Run the member/read-only path:
+
+- open the same feature in a guild where the auth state is only a member, or use `member.json`
+- verify the expected published data is readable
+- verify privileged controls are absent
+- verify direct protected URLs redirect or deny access
+
+6. Clean up:
+
+- delete all `Smoke <feature> <timestamp>` rows
+- delete uploaded assets from storage buckets
+- verify cleanup with a DB query or a fresh UI reload
+
+7. Record the result in the task run:
+
+- guild routes used
+- auth state file used
+- temporary row ids and storage paths
+- actions tested
+- cleanup proof
+- remaining browser console errors, even if non-blocking
+
+### Atlas smoke checklist
+
+Manager guild:
+
+- open `/guild/<region>/<server>/<guild>/atlas`
+- create an Atlas document
+- save or publish it
+- upload an image through the Markdown image tool
+- verify the image renders in the reader
+- archive and restore the document
+
+Member guild:
+
+- open the member guild Atlas route
+- verify a published `members` document is visible
+- verify no New/Edit/actions controls are visible
+- verify `/atlas/new` redirects to `/atlas`
+- verify `/atlas/:documentId/edit` redirects to `/atlas`
+
+Cleanup:
+
+```sql
+delete from public.guild_atlas_documents
+where title like 'Smoke Atlas%';
+
+select count(*)
+from public.guild_atlas_documents
+where title like 'Smoke Atlas%';
+```
+
+When an image was uploaded, remove the corresponding object from `guild-atlas-images` before deleting the document if the document content is the easiest way to recover the storage path.
+
+## 5) Useful flags
 
 - `--baseUrl http://localhost:8080` (default)
 - `--baseUrl http://127.0.0.1:8080` (only if this exact URI is allowed in your Battle.net OAuth app)
@@ -97,3 +206,5 @@ node scripts/e2e/rolepack.mjs --pack core
 
 - Never commit session state files.
 - Re-record role files when OAuth tokens expire.
+- Use DB/admin access for smoke data injection only with explicit approval.
+- Always clean up injected smoke data and uploaded storage objects.

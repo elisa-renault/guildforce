@@ -1,4 +1,5 @@
 import { ReactNode, CSSProperties, MouseEvent, forwardRef } from 'react';
+
 import { cn } from '@/lib/utils';
 
 interface GlowCardProps {
@@ -23,7 +24,7 @@ export const GlowCard = forwardRef<HTMLDivElement, GlowCardProps>(
       <div
         ref={ref}
         className={cn(
-          'glass-card p-6 transition-all duration-500',
+          'glass-card min-w-0 p-6 transition-all duration-500',
           hoverable && 'hover:border-primary/30',
           onClick && 'cursor-pointer',
           className

@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  Compass,
   Crown,
   LayoutDashboard,
   LockKeyhole,
@@ -28,7 +29,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { navItemClass } from '@/lib/nav-styles';
 import { cn } from '@/lib/utils';
 
-export type GuildWorkspaceTab = 'overview' | 'roster' | 'polls' | 'members' | 'vault' | 'settings' | 'wishes' | 'dashboard';
+export type GuildWorkspaceTab = 'overview' | 'roster' | 'polls' | 'members' | 'atlas' | 'vault' | 'settings' | 'wishes' | 'dashboard';
 
 export interface GuildWorkspaceContext {
   roster?: ReactNode;
@@ -207,6 +208,7 @@ export const GuildWorkspaceShell = ({
     { id: 'roster', label: t.guildNav.wishesTable, icon: Table, path: `${basePath}/roster`, show: true },
     { id: 'polls', label: t.guildNav.polls, icon: BarChart3, path: `${basePath}/polls`, show: true },
     { id: 'members', label: t.guild.members, icon: Users, path: `${basePath}/members`, show: true },
+    { id: 'atlas', label: t.guildNav.atlas, icon: Compass, path: `${basePath}/atlas`, show: true },
     { id: 'vault', label: t.guildNav.vault, icon: LockKeyhole, path: `${basePath}/vault`, show: showVault },
     { id: 'settings', label: t.guildNav.settings, icon: Settings, path: `${basePath}/settings`, show: showSettings },
   ];
