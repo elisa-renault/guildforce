@@ -2949,6 +2949,18 @@ export type Database = {
           updated_at: string
         }[]
       }
+      set_roster_member_selection: {
+        Args: {
+          p_roster_id: string
+          p_selection_status: Database["public"]["Enums"]["roster_selection_status"]
+          p_user_id?: string | null
+          p_roster_cache_id?: string | null
+          p_season_id?: string | null
+          p_reason_code?: Database["public"]["Enums"]["roster_selection_reason_code"] | null
+          p_comment?: string | null
+        }
+        Returns: undefined
+      }
       get_active_guild_season: {
         Args: { p_guild_id: string }
         Returns: Database["public"]["Tables"]["guild_seasons"]["Row"]

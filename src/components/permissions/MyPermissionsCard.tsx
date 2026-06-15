@@ -64,14 +64,16 @@ export const MyPermissionsCard = ({ guildId, isGM }: MyPermissionsCardProps) => 
 
       try {
         const [permissionChecks, vaultAccessResult] = await Promise.all([
-          PERMISSION_TYPES.map(async (type) => {
-            const { data } = await supabase.rpc('has_guild_permission', {
-              p_guild_id: guildId,
-              p_user_id: user.id,
-              p_permission: type,
-            });
-            return { type, hasPermission: !!data };
-          }),
+          Promise.all(
+            PERMISSION_TYPES.map(async (type) => {
+              const { data } = await supabase.rpc('has_guild_permission', {
+                p_guild_id: guildId,
+                p_user_id: user.id,
+                p_permission: type,
+              });
+              return { type, hasPermission: !!data };
+            })
+          ),
           supabase.rpc('has_any_guild_secret_access', {
             p_guild_id: guildId,
             p_user_id: user.id,

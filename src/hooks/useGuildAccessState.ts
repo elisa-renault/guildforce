@@ -27,6 +27,7 @@ interface GuildAccessState {
   guild: GuildAccessStateGuild | null;
   isMember: boolean;
   isGM: boolean;
+  hasManageWishes: boolean;
   hasManageRosters: boolean;
   hasViewActivityLog: boolean;
   hasManageVault: boolean;
@@ -42,6 +43,7 @@ const INITIAL_STATE: GuildAccessState = {
   guild: null,
   isMember: false,
   isGM: false,
+  hasManageWishes: false,
   hasManageRosters: false,
   hasViewActivityLog: false,
   hasManageVault: false,
@@ -115,6 +117,7 @@ export function useGuildAccessState({
     const [
       gmResult,
       memberResult,
+      wishesPermResult,
       rostersPermResult,
       activityPermResult,
       manageVaultResult,
@@ -128,6 +131,11 @@ export function useGuildAccessState({
       supabase.rpc('is_guild_member', {
         _guild_id: matchedGuild.id,
         _user_id: user.id,
+      }),
+      supabase.rpc('has_guild_permission', {
+        p_guild_id: matchedGuild.id,
+        p_permission: 'manage_wishes',
+        p_user_id: user.id,
       }),
       supabase.rpc('has_guild_permission', {
         p_guild_id: matchedGuild.id,
@@ -167,6 +175,7 @@ export function useGuildAccessState({
       guild: matchedGuild,
       isMember: Boolean(memberResult.data),
       isGM: Boolean(gmResult.data),
+      hasManageWishes: Boolean(wishesPermResult.data),
       hasManageRosters: Boolean(rostersPermResult.data),
       hasViewActivityLog: Boolean(activityPermResult.data),
       hasManageVault: Boolean(manageVaultResult.data),

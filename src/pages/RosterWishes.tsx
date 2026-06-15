@@ -37,6 +37,7 @@ import { resolveSpecOrder } from '@/lib/wishOrder';
 import { isWishEditingLocked, resolveWishLockState } from '@/lib/wishLock';
 import { isSeasonFilteringEnabled, isSeasonSchemaUnavailable, type SeasonSupportMode } from '@/lib/seasonSupport';
 import { getSelectedValidatedMembers } from '@/lib/selectedValidatedMembers';
+import { getRosterSelectionErrorMessage } from '@/lib/rosterSelectionErrors';
 import { toneCalloutClass, toneTextClass } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -333,7 +334,7 @@ const RosterWishes = () => {
         p_permission: 'view_activity_log',
         p_user_id: user.id,
       });
-      setHasSettingsPermission(!!userIsGM || !!settingsPerm);
+      setHasSettingsPermission(!!userIsGM || !!wishPerm || !!settingsPerm);
     }
 
     // Fetch rosters and check access (for both members and admin read-only)
@@ -908,41 +909,19 @@ const RosterWishes = () => {
     );
 
     try {
-      const payload: Record<string, unknown> = currentMember.isExternal
-        ? {
-            roster_id: selectedRosterId,
-            user_id: null,
-            roster_cache_id: currentMember.rosterCacheId ?? null,
-            selection_status: nextStatus,
-            reason_code: currentMember.selectionReasonCode ?? null,
-            comment: currentMember.selectionComment ?? null,
-            decided_by: user.id,
-            decided_at: now,
-          }
-        : {
-            roster_id: selectedRosterId,
-            user_id: memberId,
-            roster_cache_id: null,
-            selection_status: nextStatus,
-            reason_code: currentMember.selectionReasonCode ?? null,
-            comment: currentMember.selectionComment ?? null,
-            decided_by: user.id,
-            decided_at: now,
-          };
-      if (seasonSupportMode === 'enabled' && selectedSeasonId) {
-        payload.season_id = selectedSeasonId;
-      }
-      const onConflict = currentMember.isExternal
-        ? (seasonSupportMode === 'enabled' ? 'roster_id,season_id,roster_cache_id' : 'roster_id,roster_cache_id')
-        : (seasonSupportMode === 'enabled' ? 'roster_id,season_id,user_id' : 'roster_id,user_id');
-
       if (currentMember.isExternal && !currentMember.rosterCacheId) {
         throw new Error(s('roster_wishes.external_edit_unauthorized'));
       }
 
-      const { error } = await supabase
-        .from('roster_member_selection')
-        .upsert(payload, { onConflict });
+      const { error } = await supabase.rpc('set_roster_member_selection', {
+        p_roster_id: selectedRosterId,
+        p_selection_status: nextStatus,
+        p_user_id: currentMember.isExternal ? null : memberId,
+        p_roster_cache_id: currentMember.isExternal ? currentMember.rosterCacheId ?? null : null,
+        p_season_id: seasonSupportMode === 'enabled' ? selectedSeasonId : null,
+        p_reason_code: currentMember.selectionReasonCode ?? null,
+        p_comment: currentMember.selectionComment ?? null,
+      });
       if (error) throw error;
 
       await fetchWishes();
@@ -959,7 +938,11 @@ const RosterWishes = () => {
             : m
         )
       );
-      toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
+      toast({
+        title: t.errors.generic,
+        description: getRosterSelectionErrorMessage(error, language, getErrorMessage(error)),
+        variant: 'destructive',
+      });
     } finally {
       setUpdatingSelectionMemberId(null);
     }

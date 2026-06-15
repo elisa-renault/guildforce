@@ -703,8 +703,8 @@ export const RosterTable = ({
                     <TableCell className="py-1 pl-0 pr-1">
                       <div className="flex justify-end gap-1">
                         {rowActions.length <= 1 && rowActions.map((action) => (
-                          <TooltipProvider delayDuration={200}>
-                            <Tooltip key={action.key}>
+                          <TooltipProvider key={action.key} delayDuration={200}>
+                            <Tooltip>
                               <TooltipTrigger asChild>
                                 <CosmicButton
                                   size="sm"

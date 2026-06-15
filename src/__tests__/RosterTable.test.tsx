@@ -90,4 +90,15 @@ describe('RosterTable', () => {
     expect(screen.getByText('Yaya')).toBeInTheDocument();
     expect(screen.queryByText('No data to display')).not.toBeInTheDocument();
   });
+
+  it('renders roster decision controls for wish managers', () => {
+    renderRosterTable({
+      loading: false,
+      members: [member],
+      canManageWishes: true,
+      onSelectionStatusChange: vi.fn(),
+    });
+
+    expect(screen.getByRole('combobox')).toBeInTheDocument();
+  });
 });

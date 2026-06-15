@@ -68,6 +68,7 @@ const GuildSettings = () => {
     notFound,
     guild,
     isGM,
+    hasManageWishes,
     hasManageRosters,
     hasViewActivityLog,
     hasManageVault,
@@ -91,10 +92,11 @@ const GuildSettings = () => {
 
   const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
   const hasSettingsAccess =
-    isGM || hasManageRosters || hasViewActivityLog || hasManageVault || hasViewVaultAudit;
+    isGM || hasManageWishes || hasManageRosters || hasViewActivityLog || hasManageVault || hasViewVaultAudit;
   const hasVaultPageAccess = isGM || hasVaultAccess;
   const visibleSections = getVisibleGuildSettingsSections({
     gm: isGM,
+    wishes: hasManageWishes,
     rosters: hasManageRosters,
     activity: hasViewActivityLog || hasManageVault || hasViewVaultAudit,
   });

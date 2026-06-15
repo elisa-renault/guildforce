@@ -10,12 +10,14 @@ export type SettingsSection =
 
 interface VisibleGuildSettingsArgs {
   gm: boolean;
+  wishes?: boolean;
   rosters: boolean;
   activity: boolean;
 }
 
 export function getVisibleGuildSettingsSections({
   gm,
+  wishes = false,
   rosters,
   activity,
 }: VisibleGuildSettingsArgs): SettingsSection[] {
@@ -24,7 +26,7 @@ export function getVisibleGuildSettingsSections({
   }
 
   const sections: SettingsSection[] = [];
-  if (rosters || activity) {
+  if (wishes || rosters || activity) {
     sections.push('mypermissions');
   }
   if (rosters) {

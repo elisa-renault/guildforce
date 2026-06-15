@@ -118,6 +118,11 @@ export const GuildWorkspaceShell = ({
     Promise.all([
       supabase.rpc('has_guild_permission', {
         p_guild_id: guildId,
+        p_permission: 'manage_wishes',
+        p_user_id: userId,
+      }),
+      supabase.rpc('has_guild_permission', {
+        p_guild_id: guildId,
         p_permission: 'manage_rosters',
         p_user_id: userId,
       }),
@@ -137,12 +142,13 @@ export const GuildWorkspaceShell = ({
         p_user_id: userId,
       }),
     ])
-      .then(([rostersResult, activityResult, manageVaultResult, viewVaultAuditResult]) => {
+      .then(([wishesResult, rostersResult, activityResult, manageVaultResult, viewVaultAuditResult]) => {
         if (cancelled) return;
 
         setResolvedSettingsPermission(
           Boolean(
-            rostersResult.data ||
+            wishesResult.data ||
+              rostersResult.data ||
               activityResult.data ||
               manageVaultResult.data ||
               viewVaultAuditResult.data,

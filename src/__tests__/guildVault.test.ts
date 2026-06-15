@@ -257,6 +257,15 @@ describe('guild settings section visibility', () => {
     expect(
       getVisibleGuildSettingsSections({
         gm: false,
+        wishes: true,
+        rosters: false,
+        activity: false,
+      }),
+    ).toEqual(['mypermissions']);
+
+    expect(
+      getVisibleGuildSettingsSections({
+        gm: false,
         rosters: false,
         activity: false,
       }),
