@@ -1,5 +1,5 @@
 import { ChevronDown, Crown, Search, Shield, Star } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import type { GuildNavigationPreference, UserGuildSummary } from '@/hooks/useUserGuilds';
@@ -18,6 +18,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useUserGuilds } from '@/hooks/useUserGuilds';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  applyGuildPreferencePatch,
+  buildGuildPreferenceUpdatePayload,
+  type GuildPreferencePatch,
+  mergeLoadedGuildPreferences,
+} from '@/lib/guildNavigationPreferences';
 import { getGuildPath } from '@/lib/guildSlug';
 import log from '@/lib/logger';
 import { cn } from '@/lib/utils';
@@ -42,6 +48,7 @@ export const GuildSwitcher = ({ className }: GuildSwitcherProps) => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [preferences, setPreferences] = useState<GuildNavigationPreference[]>([]);
+  const preferenceWriteVersionRef = useRef(0);
   const userId = user?.id;
 
   const copy = language === 'fr'
@@ -93,6 +100,8 @@ export const GuildSwitcher = ({ className }: GuildSwitcherProps) => {
 
     let cancelled = false;
 
+    const loadWriteVersion = preferenceWriteVersionRef.current;
+
     supabase
       .from('user_guild_navigation_preferences')
       .select('*')
@@ -106,7 +115,12 @@ export const GuildSwitcher = ({ className }: GuildSwitcherProps) => {
           return;
         }
 
-        setPreferences(data || []);
+        if (preferenceWriteVersionRef.current === loadWriteVersion) {
+          setPreferences(data || []);
+          return;
+        }
+
+        setPreferences((current) => mergeLoadedGuildPreferences(data || [], current));
       });
 
     return () => {
@@ -116,41 +130,64 @@ export const GuildSwitcher = ({ className }: GuildSwitcherProps) => {
 
   const upsertPreference = async (
     guild: NavigableGuild,
-    patch: Partial<Pick<GuildNavigationPreference, 'is_favorite' | 'last_visited_at'>>,
+    patch: GuildPreferencePatch,
   ) => {
     if (!userId) return;
 
-    const existing = preferenceByGuildId.get(guild.id);
     const now = new Date().toISOString();
-    const nextPreference: GuildNavigationPreference = {
-      user_id: userId,
-      guild_id: guild.id,
-      is_favorite: patch.is_favorite ?? existing?.is_favorite ?? false,
-      last_visited_at: patch.last_visited_at ?? existing?.last_visited_at ?? null,
-      created_at: existing?.created_at ?? now,
-      updated_at: now,
-    };
+    const updatePayload = buildGuildPreferenceUpdatePayload(patch);
 
-    setPreferences((current) => [
-      ...current.filter((preference) => preference.guild_id !== guild.id),
-      nextPreference,
-    ]);
+    if (Object.keys(updatePayload).length === 0) return;
 
-    const { error } = await supabase
+    preferenceWriteVersionRef.current += 1;
+    setPreferences((current) => applyGuildPreferencePatch(current, userId, guild.id, patch, now));
+
+    const { data: updatedRows, error: updateError } = await supabase
       .from('user_guild_navigation_preferences')
-      .upsert(
-        {
-          user_id: userId,
-          guild_id: guild.id,
-          is_favorite: nextPreference.is_favorite,
-          last_visited_at: nextPreference.last_visited_at,
-        },
-        { onConflict: 'user_id,guild_id' },
-      );
+      .update(updatePayload)
+      .eq('user_id', userId)
+      .eq('guild_id', guild.id)
+      .select('guild_id')
+      .limit(1);
 
-    if (error) {
-      log.warn('Unable to save guild navigation preference:', error);
+    if (updateError) {
+      log.warn('Unable to save guild navigation preference:', updateError);
+      return;
     }
+
+    if (updatedRows && updatedRows.length > 0) {
+      return;
+    }
+
+    const { error: insertError } = await supabase
+      .from('user_guild_navigation_preferences')
+      .insert({
+        user_id: userId,
+        guild_id: guild.id,
+        is_favorite: patch.is_favorite ?? false,
+        last_visited_at: patch.last_visited_at ?? null,
+      });
+
+    if (!insertError) {
+      return;
+    }
+
+    if (insertError.code === '23505') {
+      const { error: retryUpdateError } = await supabase
+        .from('user_guild_navigation_preferences')
+        .update(updatePayload)
+        .eq('user_id', userId)
+        .eq('guild_id', guild.id);
+
+      if (!retryUpdateError) {
+        return;
+      }
+
+      log.warn('Unable to save guild navigation preference after retry:', retryUpdateError);
+      return;
+    }
+
+    log.warn('Unable to create guild navigation preference:', insertError);
   };
 
   useEffect(() => {
