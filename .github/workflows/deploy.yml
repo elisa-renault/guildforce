@@ -35,7 +35,7 @@ jobs:
       - name: Sync app to VPS
         uses: burnett01/rsync-deployments@6.0.0
         with:
-          switches: -avz --delete --exclude=node_modules --exclude=.git --exclude=.env --exclude=dist --exclude=supabase/.temp
+          switches: -avz --delete --exclude=node_modules --exclude=.git --exclude=.env --exclude=dist --exclude=dist.next --exclude=dist.release.* --exclude=dist.stale.* --exclude=supabase/.temp
           path: ./
           remote_path: /var/www/guildforce/
           remote_host: ${{ secrets.VPS_HOST }}
@@ -43,20 +43,33 @@ jobs:
           remote_user: ${{ secrets.VPS_USER }}
           remote_key: ${{ secrets.VPS_SSH_KEY }}
 
-      - name: Install and restart service
+      - name: Sync built dist to VPS
+        uses: burnett01/rsync-deployments@6.0.0
+        with:
+          switches: -avz --delete
+          path: ./dist/
+          remote_path: /var/www/guildforce/dist.next/
+          remote_host: ${{ secrets.VPS_HOST }}
+          remote_port: ${{ secrets.VPS_PORT }}
+          remote_user: ${{ secrets.VPS_USER }}
+          remote_key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: Activate build and reload nginx
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
           port: ${{ secrets.VPS_PORT }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          script_stop: true
           script: |
+            set -eu
             cd /var/www/guildforce
-            if [ -d dist ] && [ ! -w dist ]; then
-              mv dist "dist.stale.$(date +%Y%m%d%H%M%S)"
-            elif [ -d dist/assets ] && [ ! -w dist/assets ]; then
-              mv dist "dist.stale.$(date +%Y%m%d%H%M%S)"
+            timestamp="$(date +%Y%m%d%H%M%S)"
+            mv dist.next "dist.release.$timestamp"
+            if [ -d dist ]; then
+              mv dist "dist.stale.$timestamp"
             fi
-            npm ci
-            npm run build
+            mv "dist.release.$timestamp" dist
+            node scripts/generate-runtime-env.mjs
             sudo -n /usr/bin/systemctl reload nginx
