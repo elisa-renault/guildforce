@@ -12,6 +12,10 @@ import {
   type ImpersonationTargetSummary,
   type StoredAdminImpersonationState,
 } from '@/lib/adminImpersonation';
+import {
+  BATTLE_NET_RESYNC_THROTTLE_MS,
+  isBattleNetResyncAlreadyRunning,
+} from '@/lib/battlenetSync';
 import log from '@/lib/logger';
 import { trackProductEvent } from '@/lib/productEvents';
 
@@ -23,6 +27,9 @@ const loadSupabase = () => {
   }
   return supabaseModulePromise;
 };
+
+const battleNetSyncInFlightByUserId = new Map<string, Promise<void>>();
+const battleNetSyncStartedAtByUserId = new Map<string, number>();
 
 const scheduleIdle = (cb: () => void) => {
   const win = window as Window & {
@@ -112,22 +119,50 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   // Background sync of Battle.net data on login (non-blocking)
-  const triggerBattleNetSync = async (accessToken: string) => {
-    try {
+  const triggerBattleNetSync = async (userId: string, accessToken: string) => {
+    if (battleNetSyncInFlightByUserId.has(userId)) {
+      log.debug('Background Battle.net sync skipped: already running locally');
+      return;
+    }
+
+    const now = Date.now();
+    const lastStartedAt = battleNetSyncStartedAtByUserId.get(userId) ?? 0;
+    if (now - lastStartedAt < BATTLE_NET_RESYNC_THROTTLE_MS) {
+      log.debug('Background Battle.net sync skipped: recently started');
+      return;
+    }
+
+    battleNetSyncStartedAtByUserId.set(userId, now);
+
+    const syncPromise = (async () => {
       const { supabase } = await loadSupabase();
-      // Fire and forget - don't block the UI
-      supabase.functions.invoke('battlenet-auth/resync', {
+      const { error } = await supabase.functions.invoke('battlenet-auth/resync', {
         headers: { Authorization: `Bearer ${accessToken}` },
         body: {},
-      }).then(({ error }) => {
-        if (error) {
-          log.debug('Background Battle.net sync skipped:', error.message);
-        } else {
-          log.debug('Background Battle.net sync completed');
-        }
       });
+
+      if (isBattleNetResyncAlreadyRunning(error)) {
+        log.debug('Background Battle.net sync skipped: already running on server');
+        return;
+      }
+
+      if (error) {
+        log.debug('Background Battle.net sync skipped:', error.message);
+      } else {
+        log.debug('Background Battle.net sync completed');
+      }
+    })();
+
+    battleNetSyncInFlightByUserId.set(userId, syncPromise);
+
+    try {
+      await syncPromise;
     } catch (err) {
       log.debug('Background sync error:', err);
+    } finally {
+      if (battleNetSyncInFlightByUserId.get(userId) === syncPromise) {
+        battleNetSyncInFlightByUserId.delete(userId);
+      }
     }
   };
 
@@ -180,7 +215,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
               // Trigger background sync on SIGNED_IN event if Battle.net is linked
               if (event === 'SIGNED_IN' && !suppressSignedInEffects && profileData?.battlenet_id && newSession.access_token) {
-                triggerBattleNetSync(newSession.access_token);
+                void triggerBattleNetSync(newSession.user!.id, newSession.access_token);
               }
 
               if (event === 'SIGNED_IN' && !suppressSignedInEffects) {

@@ -13,6 +13,7 @@ import { CheckCircle, Loader2, RotateCcw, Unlink } from 'lucide-react';
 import { toast } from 'sonner';
 import { getClassNameFromBattleNet } from '@/data/battlenetClasses';
 import { BattleNetIcon } from './BattleNetIcon';
+import { isBattleNetResyncAlreadyRunning, readFunctionErrorPayload } from '@/lib/battlenetSync';
 import {
   type BattleNetRegion,
   REGION_LABELS,
@@ -38,10 +39,6 @@ interface WoWCharacter {
   is_main: boolean;
 }
 
-type FunctionInvokeError = {
-  context?: Response;
-  message?: string;
-};
 
 export const BattleNetConnect: React.FC = () => {
   const { profile, session, refreshProfile } = useAuth();
@@ -244,6 +241,12 @@ export const BattleNetConnect: React.FC = () => {
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
 
+      if (isBattleNetResyncAlreadyRunning(error)) {
+        log.debug('Manual Battle.net resync skipped: already running');
+        toast(t.battlenet.syncing);
+        return;
+      }
+
       if (error) throw error;
       
       // Check if backend returned an error (403, SYNC_FAILED, etc.)
@@ -280,21 +283,18 @@ export const BattleNetConnect: React.FC = () => {
       
       await Promise.all([fetchCharacters(), refreshProfile()]);
     } catch (error) {
+      const payload = await readFunctionErrorPayload(error);
+
+      if (isBattleNetResyncAlreadyRunning(error, payload)) {
+        log.debug('Manual Battle.net resync skipped: already running');
+        toast(t.battlenet.syncing);
+        return;
+      }
+
       log.error('Error resyncing characters:', error);
 
-      const invokeError = error as FunctionInvokeError;
-      let backendError = '';
-      let backendErrorCode = '';
-
-      if (invokeError?.context) {
-        try {
-          const payload = await invokeError.context.clone().json() as { error?: string; errorCode?: string };
-          backendError = payload?.error || '';
-          backendErrorCode = payload?.errorCode || '';
-        } catch {
-          // Ignore non-JSON responses and keep generic fallback below.
-        }
-      }
+      const backendError = payload.error || '';
+      const backendErrorCode = payload.errorCode || '';
 
       const mustReconnect =
         backendErrorCode === 'TOKEN_EXPIRED_NO_REFRESH' ||
