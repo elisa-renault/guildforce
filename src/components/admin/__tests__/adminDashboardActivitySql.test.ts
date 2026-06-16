@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const migrationSql = readFileSync(
-  resolve(process.cwd(), 'supabase/migrations/20260616090000_fix_admin_activity_metrics_sync_backfill.sql'),
+  resolve(process.cwd(), 'supabase/migrations/20260616093000_suppress_low_volume_admin_engagement.sql'),
   'utf8',
 );
 
@@ -22,5 +22,11 @@ describe('admin dashboard activity SQL', () => {
       expect(userActivitySql).not.toContain('public.guild_members');
       expect(userActivitySql).not.toContain('gm.joined_at AS occurred_at');
     }
+  });
+
+  it('suppresses WAU/MAU ratios when MAU volume is too low', () => {
+    expect(migrationSql).toContain('WHEN aw.mau_users >= 20');
+    expect(migrationSql).toContain('CASE WHEN mau >= 20');
+    expect(migrationSql).toContain('WAU/MAU is null until MAU reaches 20 users');
   });
 });
