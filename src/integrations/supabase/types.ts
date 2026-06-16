@@ -2850,6 +2850,7 @@ export type Database = {
       }
       fix_jsonb_text_array_mojibake: { Args: { j: Json }; Returns: Json }
       fix_poll_response_value: { Args: { j: Json }; Returns: Json }
+      // Contract unchanged; activity-source semantics are refined in the 20260616090000 migration.
       get_admin_dashboard_stats: {
         Args: never
         Returns: {
@@ -2889,6 +2890,7 @@ export type Database = {
           wau_users: number
         }[]
       }
+      // Contract unchanged; activity-source semantics are refined in the 20260616090000 migration.
       get_admin_dashboard_timeseries: {
         Args: { p_days?: number }
         Returns: {
