@@ -5,7 +5,7 @@ import {
   type CookiePreferencesChangedDetail,
   hasAnalyticsConsent,
 } from '@/lib/analyticsConsent';
-import { getPostHogClient } from '@/lib/posthogClient';
+import { getPostHogClient, syncPostHogConsentState } from '@/lib/posthogClient';
 
 export const PostHogConsentSync = () => {
   useEffect(() => {
@@ -13,12 +13,7 @@ export const PostHogConsentSync = () => {
       const posthog = getPostHogClient();
       if (!posthog) return;
 
-      if (analyticsAllowed) {
-        posthog.opt_in_capturing();
-      } else {
-        posthog.opt_out_capturing();
-        posthog.reset();
-      }
+      syncPostHogConsentState(posthog, analyticsAllowed);
     };
 
     syncConsent(hasAnalyticsConsent());
@@ -34,4 +29,3 @@ export const PostHogConsentSync = () => {
 
   return null;
 };
-

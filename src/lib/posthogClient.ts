@@ -7,6 +7,20 @@ import { getPostHogConfig } from '@/lib/posthogConfig';
 
 let initialized = false;
 
+export const syncPostHogConsentState = (client: PostHog, analyticsAllowed: boolean) => {
+  if (analyticsAllowed) {
+    if (client.has_opted_out_capturing()) {
+      client.opt_in_capturing();
+    }
+    return;
+  }
+
+  if (!client.has_opted_out_capturing()) {
+    client.opt_out_capturing();
+  }
+  client.reset();
+};
+
 export const initializePostHog = (): PostHog | null => {
   const config = getPostHogConfig();
 
@@ -26,11 +40,7 @@ export const initializePostHog = (): PostHog | null => {
       mask_all_element_attributes: true,
       persistence: 'localStorage',
       loaded: (client) => {
-        if (hasAnalyticsConsent()) {
-          client.opt_in_capturing();
-        } else {
-          client.opt_out_capturing();
-        }
+        syncPostHogConsentState(client, hasAnalyticsConsent());
       },
     });
     initialized = true;
@@ -45,4 +55,3 @@ export const getPostHogClient = (): PostHog | null => {
 };
 
 export const isPostHogInitialized = (): boolean => initialized;
-
