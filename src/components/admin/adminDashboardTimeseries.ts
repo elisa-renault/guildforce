@@ -8,11 +8,9 @@ export interface AdminTimeseriesPoint {
   activatedUsers7d: number | null;
   activationRate7dPct: number | null;
   activeGuilds30d: number;
-  pendingReports: number;
   openBugs: number;
   pendingDeletions: number;
   criticalIssues: number;
-  createdReports: number;
   createdBugs: number;
   createdDeletions: number;
   criticalCreated: number;
@@ -40,11 +38,9 @@ interface RawTimeseriesRow {
   activated_users_7d: number | null;
   activation_rate_7d_pct: number | null;
   active_guilds_30d: number;
-  pending_reports: number;
   open_bugs: number;
   pending_deletions: number;
   critical_issues: number;
-  created_reports: number;
   created_bugs: number;
   created_deletions: number;
   critical_created_issues: number;
@@ -64,11 +60,9 @@ export const mapAdminTimeseriesRows = (rows: RawTimeseriesRow[] | null | undefin
       activatedUsers7d: toNullableNumber(row.activated_users_7d),
       activationRate7dPct: toNullableNumber(row.activation_rate_7d_pct),
       activeGuilds30d: toNumber(row.active_guilds_30d),
-      pendingReports: toNumber(row.pending_reports),
       openBugs: toNumber(row.open_bugs),
       pendingDeletions: toNumber(row.pending_deletions),
       criticalIssues: toNumber(row.critical_issues),
-      createdReports: toNumber(row.created_reports),
       createdBugs: toNumber(row.created_bugs),
       createdDeletions: toNumber(row.created_deletions),
       criticalCreated: toNumber(row.critical_created_issues),

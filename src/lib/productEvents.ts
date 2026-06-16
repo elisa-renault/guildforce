@@ -10,7 +10,6 @@ export type ProductEventName =
   | 'first_login'
   | 'wish_created'
   | 'poll_voted'
-  | 'forum_post_created'
   | 'guild_member_invited'
   | 'activated_first_action';
 
@@ -20,7 +19,6 @@ export type ProductEventFeatureArea =
   | 'auth'
   | 'wishes'
   | 'polls'
-  | 'forum'
   | 'guild'
   | 'rosters'
   | 'admin';

@@ -4,7 +4,6 @@ import type { Translations } from '@/i18n/translations';
 
 import { listSemanticKeys, resolveSemanticMessage } from '@/i18n/semantic';
 import { loadTranslations } from '@/i18n/translations';
-import { getReportReasonLabel } from '@/types/forum';
 
 describe('RU i18n smoke', () => {
   it('renders critical dictionary paths in Russian', async () => {
@@ -17,7 +16,6 @@ describe('RU i18n smoke', () => {
     expect(ru.auth.loginWithBattleNet).toBe('Продолжить через Battle.net');
     expect(ru.guild.guildMaster).toBe('Гилд-мастер');
     expect(ru.polls.new).toBe('Новый опрос');
-    expect(ru.forum.newTopic).toBe('Новая тема');
     expect(ru.admin.userManagement).toBe('Управление пользователями');
     expect(ru.admin.stats.users).toBe('Пользователи');
     expect(ru.admin.stats.chartActivityTrendTitle).toBe('Тренд активности (DAU / WAU / MAU)');
@@ -34,9 +32,6 @@ describe('RU i18n smoke', () => {
     expect(ru.activityLog.joinedGuild).toBe('Вступление в гильдию');
     expect(ru.activityLog.noActivity).toBe('Активность пока отсутствует');
     expect(ru.admin.loadingError).toBe('Ошибка загрузки');
-    expect(ru.admin.nameAndSlugRequired).toBe('Требуются название и slug');
-    expect(ru.forum.categoryNames.feedback).toBe('Отзывы и идеи');
-    expect(ru.forum.categoryDescriptions.support).toBe('Помощь и техническая поддержка');
     expect(ru.guildNav.overview).toBe('Обзор');
     expect(ru.guildNav.members).toBe('Участники');
     expect(ru.permissions.resetTooltip).toBe('Удалить все делегированные права');
@@ -45,16 +40,13 @@ describe('RU i18n smoke', () => {
   });
 
   it('resolves RU semantic copy without EN fallback on core release keys', () => {
-    const releasePrefixes = ['admin.', 'forum.', 'polls.', 'guild.', 'settings.', 'ui.', 'globalnav.', 'activity.'];
+    const releasePrefixes = ['admin.', 'markdown.', 'polls.', 'guild.', 'settings.', 'ui.', 'globalnav.', 'activity.'];
     const keys = listSemanticKeys().filter((key) => releasePrefixes.some((prefix) => key.startsWith(prefix)));
     const translations = { auto: {} } as unknown as Translations;
     const requiredRu = new Set([
       'admin.user_manager.toast.role_removed',
       'admin.user_manager.toast.role_assigned',
       'admin.user_manager.search_placeholder',
-      'forum.report.dialog.title',
-      'forum.sanctions.dialog.title',
-      'forum.reports.title',
       'polls.mutations.publish_success',
       'polls.editor.publish',
       'polls.results_access.title',
@@ -79,8 +71,6 @@ describe('RU i18n smoke', () => {
       'guild.members.table_rank',
       'guild.members.previous',
       'guild.members.next',
-      'forum.markdown.toolbar.table',
-      'forum.report.dialog.cancel',
       'polls.sortable.type.single_choice',
       'polls.condition.operator.equals',
       'polls.results.datetime.responses',
@@ -110,8 +100,4 @@ describe('RU i18n smoke', () => {
     expect(leaks).toEqual([]);
   });
 
-  it('localizes forum report reasons in Russian with EN fallback for unknown locales', () => {
-    expect(getReportReasonLabel('harassment', 'ru')).toBe('Домогательства');
-    expect(getReportReasonLabel('misinformation', 'es')).toBe('Misinformation');
-  });
 });

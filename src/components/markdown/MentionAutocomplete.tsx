@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { supabase } from '@/integrations/supabase/client';
 import { User } from 'lucide-react';
 
 interface MentionUser {
@@ -22,6 +24,7 @@ export const MentionAutocomplete = ({
   onSelect,
   onClose,
 }: MentionAutocompleteProps) => {
+  const { t } = useLanguage();
   const [users, setUsers] = useState<MentionUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -109,7 +112,7 @@ export const MentionAutocomplete = ({
     >
       {loading ? (
         <div className="px-3 py-2 text-sm text-muted-foreground">
-          Recherche...
+          {t.common.loading}...
         </div>
       ) : (
         <ul className="py-1">

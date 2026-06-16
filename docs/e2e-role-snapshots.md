@@ -61,7 +61,7 @@ npm run e2e:snapshots:rolepack list
 Use explicit roles/routes:
 
 ```bash
-npm run e2e:snapshots member,admin /guilds,/forum,/forum/admin,/profile,/admin
+npm run e2e:snapshots member,admin /guilds,/profile,/admin
 ```
 
 Use a named role pack:

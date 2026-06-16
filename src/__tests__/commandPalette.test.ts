@@ -20,7 +20,6 @@ import type {
   CommandPaletteServerResult,
 } from '../features/command-palette/types';
 import { translationsEn } from '../i18n/translations.en';
-import type { Location } from 'react-router-dom';
 
 const guild: CommandPaletteGuildContext = {
   id: 'guild-1',
@@ -31,15 +30,6 @@ const guild: CommandPaletteGuildContext = {
   basePath: '/guild/eu/tarren-mill/midnight',
   canManageAtlas: true,
 };
-
-const location = (pathname: string): Location =>
-  ({
-    pathname,
-    search: '',
-    hash: '',
-    state: null,
-    key: 'test',
-  }) as Location;
 
 describe('command palette scoring', () => {
   it('boosts matching items from the active guild context', () => {
@@ -82,7 +72,6 @@ describe('command palette scoring', () => {
       t: translationsEn,
       activeGuild: guild,
       isAdmin: false,
-      location: location(guild.basePath),
     });
 
     const matches = filterLocalCommandPaletteItems(items, 'wishes', guild.id);
@@ -98,7 +87,6 @@ describe('command palette registry', () => {
       t: translationsEn,
       activeGuild: guild,
       isAdmin: false,
-      location: location(`${guild.basePath}/roster`),
     });
 
     expect(items).toEqual(
@@ -129,7 +117,6 @@ describe('command palette registry', () => {
       t: translationsEn,
       activeGuild: { ...guild, canManageAtlas: false },
       isAdmin: false,
-      location: location(`${guild.basePath}/atlas`),
     });
 
     expect(items.some((item) => item.id === `action:guild:${guild.id}:create-atlas-doc`)).toBe(false);
@@ -141,36 +128,17 @@ describe('command palette registry', () => {
       t: translationsEn,
       activeGuild: null,
       isAdmin: false,
-      location: location('/guilds'),
     });
     const adminItems = buildCommandPaletteRegistry({
       t: translationsEn,
       activeGuild: null,
       isAdmin: true,
-      location: location('/guilds'),
     });
 
     expect(userItems.some((item) => item.id === 'action:open-admin')).toBe(false);
     expect(adminItems.some((item) => item.id === 'action:open-admin')).toBe(true);
   });
 
-  it('opens the forum topic workflow when a forum category is the active context', () => {
-    const items = buildCommandPaletteRegistry({
-      t: translationsEn,
-      activeGuild: null,
-      isAdmin: false,
-      location: location('/forum/category/general'),
-    });
-
-    expect(items).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          id: 'action:forum:create-topic:general',
-          href: '/forum/category/general/new',
-        }),
-      ]),
-    );
-  });
 });
 
 describe('command palette result normalization', () => {
@@ -199,28 +167,6 @@ describe('command palette result normalization', () => {
     expect(resolveCommandPaletteHref(item!)).toBe('/u/Elisara');
   });
 
-  it('maps global forum topic results to topic navigation', () => {
-    const result: CommandPaletteServerResult = {
-      result_type: 'forum',
-      result_id: 'fd9f7927-4667-46e9-aa12-74c5ceb7fc21',
-      guild_id: null,
-      title: 'Le mage Arcane est le seul vrai mage',
-      subtitle: 'general - Forum',
-      score: 91,
-      metadata: {
-        category_id: 'category-general',
-        category_name: 'general',
-        category_slug: 'general',
-        reply_count: 4,
-      },
-    };
-
-    const item = mapServerResultToCommandItem(result);
-
-    expect(item).toEqual(expect.objectContaining({ type: 'forum', group: 'forum' }));
-    expect(resolveCommandPaletteHref(item!)).toBe('/forum/topic/fd9f7927-4667-46e9-aa12-74c5ceb7fc21');
-  });
-
   it('normalizes recent rows into the recent group with frequency metadata', () => {
     const row: CommandPaletteRecentRow = {
       item_type: 'page',
@@ -241,5 +187,21 @@ describe('command palette result normalization', () => {
         recentCount: 4,
       }),
     );
+  });
+
+  it('ignores stale recent rows with unsupported item types', () => {
+    const row: CommandPaletteRecentRow = {
+      item_type: 'legacy',
+      item_id: 'legacy:removed',
+      guild_id: null,
+      title: 'Removed feature action',
+      subtitle: 'Old persisted shortcut',
+      href: null,
+      metadata: {},
+      use_count: 1,
+      last_used_at: '2026-05-19T10:00:00.000Z',
+    };
+
+    expect(mapRecentRowToCommandItem(row)).toBeNull();
   });
 });

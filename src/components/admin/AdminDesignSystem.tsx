@@ -503,7 +503,7 @@ export const AdminDesignSystem = () => {
                   <div className="rounded border border-border/40 p-2 flex items-center justify-between"><span>Public: Index/Auth/Legal/Changelog</span><Badge variant="secondary">Covered</Badge></div>
                   <div className="rounded border border-border/40 p-2 flex items-center justify-between"><span>Guild app: Overview/Wishes/Roster/Members</span><Badge variant="secondary">Covered</Badge></div>
                   <div className="rounded border border-border/40 p-2 flex items-center justify-between"><span>Polls: list/view/results/new</span><Badge variant="outline">Mostly covered</Badge></div>
-                  <div className="rounded border border-border/40 p-2 flex items-center justify-between"><span>Forum: list/topic/admin/new topic</span><Badge variant="outline">Mostly covered</Badge></div>
+                  <div className="rounded border border-border/40 p-2 flex items-center justify-between"><span>Admin: dashboard/users/legal/patch notes</span><Badge variant="outline">Mostly covered</Badge></div>
                   <div className="rounded border border-border/40 p-2 flex items-center justify-between"><span>Admin modules</span><Badge variant="secondary">Covered</Badge></div>
                   <div className="rounded border border-border/40 p-2 flex items-center justify-between"><span>NotFound / edge states</span><Badge variant="secondary">Covered</Badge></div>
                 </div>
@@ -557,7 +557,7 @@ export const AdminDesignSystem = () => {
                   <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded bg-muted/30 p-2 text-xs">
                     <Badge variant="outline" className="border-border/40 bg-background/35 text-muted-foreground">Brand</Badge>
                     <Badge variant="outline" className="border-primary/25 bg-primary/10 text-primary">Guild switcher</Badge>
-                    <Badge variant="outline">Forum</Badge>
+                    <Badge variant="outline">Admin</Badge>
                     <Badge variant="outline" className="border-border/35 bg-background/30 text-muted-foreground">Search</Badge>
                     <Badge variant="outline" className="border-border/35 bg-card/20">User zone</Badge>
                   </div>
@@ -635,7 +635,7 @@ export const AdminDesignSystem = () => {
 </PageContainer>
 
 <PageContainer as="main" width="app" spacing="md">
-  {/* forum, profile, admin */}
+  {/* profile, admin */}
 </PageContainer>
 
 <PageContainer as="main" width="workspace" spacing="md">
@@ -854,7 +854,7 @@ export const AdminDesignSystem = () => {
             <GlowCard className="space-y-4 p-4">
               <h3 className="text-base font-semibold">Overlays and disclosure primitives</h3>
               <p className="text-sm text-muted-foreground">
-                {t({ en: 'Used in guild members, forum moderation, profile and auth pages for contextual help and confirmations.' })}
+                {t({ en: 'Used in guild members, profile and auth pages for contextual help and confirmations.' })}
               </p>
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="rounded-md border border-border/50 p-3 space-y-3">
@@ -891,7 +891,7 @@ export const AdminDesignSystem = () => {
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Delete forum topic?</AlertDialogTitle>
+                          <AlertDialogTitle>Delete content item?</AlertDialogTitle>
                           <AlertDialogDescription>This action is irreversible and removes all associated posts.</AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -917,7 +917,7 @@ export const AdminDesignSystem = () => {
             <GlowCard className="space-y-4 p-4">
               <h3 className="text-base font-semibold">Extended primitives</h3>
               <p className="text-sm text-muted-foreground">
-                {t({ en: 'Advanced primitives used in forum editors, polls, and operational dashboards.' })}
+                {t({ en: 'Advanced primitives used in markdown editors, polls, and operational dashboards.' })}
               </p>
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="rounded-md border border-border/50 p-3 space-y-3">
@@ -928,7 +928,7 @@ export const AdminDesignSystem = () => {
                       <Separator />
                       <p className="text-sm">Recruitment post updated</p>
                       <p className="text-sm">Roster lock scheduled</p>
-                      <p className="text-sm">Forum moderation action applied</p>
+                      <p className="text-sm">Moderation action applied</p>
                     </div>
                   </ScrollArea>
                   <Accordion type="single" collapsible className="w-full">

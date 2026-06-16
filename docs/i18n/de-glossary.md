@@ -19,8 +19,6 @@ Target locale: `de`
 | Permissions | Berechtigungen | Access control |
 | Settings | Einstellungen | Generic settings label |
 | Activity log | Aktivitätsprotokoll | Audit trail |
-| Forum topic | Forenthema | |
-| Forum post | Forenbeitrag | |
 | Report (moderation) | Meldung | Avoid "Report" anglicism |
 | Sanction | Sanktion | Moderation action |
 | Timeout | Zeitweilige Sperre | If space allows; otherwise "Timeout" |

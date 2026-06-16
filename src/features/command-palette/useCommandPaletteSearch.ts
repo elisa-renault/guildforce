@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { mapRecentRowToCommandItem, mapServerResultToCommandItem } from './resolve';
+import { isCommandPaletteResultType, mapRecentRowToCommandItem, mapServerResultToCommandItem } from './resolve';
 import { dedupeCommandPaletteItems, filterLocalCommandPaletteItems, groupCommandPaletteItems } from './scoring';
 import type {
   CommandPaletteGuildContext,
@@ -63,6 +63,7 @@ export const useCommandPaletteSearch = ({
       const { data, error } = await supabase
         .from('command_palette_recent_items')
         .select('item_type, item_id, guild_id, title, subtitle, href, metadata, use_count, last_used_at')
+        .in('item_type', ['action', 'page', 'guild', 'member', 'roster', 'poll'])
         .order('last_used_at', { ascending: false })
         .limit(8);
 
@@ -92,7 +93,10 @@ export const useCommandPaletteSearch = ({
 
   const groups = useMemo(() => {
     if (normalizedQuery.length === 0) {
-      const recentItems = (recentItemsQuery.data || []).map(mapRecentRowToCommandItem);
+      const recentItems = (recentItemsQuery.data || [])
+        .filter((row) => isCommandPaletteResultType(row.item_type))
+        .map(mapRecentRowToCommandItem)
+        .filter((item): item is CommandPaletteItem => Boolean(item));
       const recentGuilds: CommandPaletteItem[] = (recentGuildsQuery.data || [])
         .map((preference) => {
           const guild = guildsById.get(preference.guild_id);

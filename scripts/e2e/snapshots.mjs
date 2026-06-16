@@ -5,7 +5,7 @@ import process from 'node:process';
 import { chromium } from 'playwright';
 
 const DEFAULT_BASE_URL = process.env.E2E_BASE_URL ?? 'http://localhost:8080';
-const DEFAULT_ROUTES = ['/guilds', '/forum', '/forum/admin', '/profile', '/admin'];
+const DEFAULT_ROUTES = ['/guilds', '/profile', '/admin'];
 const DEFAULT_WAIT_MS = Number(process.env.E2E_WAIT_MS ?? 1200);
 
 const parseArgs = argv => {

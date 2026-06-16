@@ -41,26 +41,22 @@ describe('semantic i18n', () => {
   });
 
   it('returns dedicated DE semantic copy for release-scope keys', () => {
-    const releasePrefixes = ['admin.', 'forum.', 'polls.', 'guild.', 'settings.', 'ui.', 'globalnav.', 'activity.'];
+    const releasePrefixes = ['admin.', 'markdown.', 'polls.', 'guild.', 'settings.', 'ui.', 'globalnav.', 'activity.'];
     const allowedIdentical = new Set([
       'footer.brand',
       'auth.brand',
       'admin.patch.version_placeholder',
       'admin.patch.content_placeholder.fr',
-      'forum.report.dialog.details_label',
-      'forum.report.reason.spam',
-      'forum.markdown.toolbar.separator',
-      'forum.markdown.toolbar.link',
+      'markdown.toolbar.separator',
+      'markdown.toolbar.link',
       'polls.sortable.option_prefix',
       'polls.sortable.min_value_label',
       'polls.sortable.max_value_label',
-      'forum.new_topic.in_category',
       'guild.members.guildforce_label',
       'guild.members.alts',
       'guild.members.main_alt',
       'admin.user_manager.table.battletag',
       'admin.user_manager.table.region',
-      'admin.sidebar.section.forum',
       'admin.sidebar.section.patchnotes',
       'admin.sidebar.category.overview',
       'admin.sidebar.category.management',
@@ -99,15 +95,6 @@ describe('semantic i18n', () => {
     expect(leaks).toEqual([]);
   });
 
-  it('resolves forum report copy with semantic FR text', () => {
-    const value = resolveSemanticMessage({
-      key: 'forum.report.dialog.title',
-      language: 'fr',
-      translations: asTranslations({}),
-    });
-
-    expect(value).toBe('Signaler ce contenu');
-  });
 
   it('keeps poll mutation compatibility with legacy auto keys', () => {
     const value = resolveSemanticMessage({
@@ -133,27 +120,7 @@ describe('semantic i18n', () => {
     expect(value).toBe('Veroffentlichen (legacy)');
   });
 
-  it('returns forum reports FR semantic copy', () => {
-    const value = resolveSemanticMessage({
-      key: 'forum.reports.title',
-      language: 'fr',
-      translations: asTranslations({}),
-    });
 
-    expect(value).toBe('Signalements');
-  });
-
-  it('keeps forum sanctions compatibility with legacy auto keys', () => {
-    const value = resolveSemanticMessage({
-      key: 'forum.sanctions.dialog.title',
-      language: 'it',
-      translations: asTranslations({
-        components_forum_SanctionDialog_98: 'Sanktion anwenden (legacy)',
-      }),
-    });
-
-    expect(value).toBe('Sanktion anwenden (legacy)');
-  });
 
   it('keeps poll results compatibility with legacy auto keys', () => {
     const value = resolveSemanticMessage({
@@ -169,14 +136,12 @@ describe('semantic i18n', () => {
 
   it('keeps markdown editor compatibility with legacy auto keys', () => {
     const value = resolveSemanticMessage({
-      key: 'forum.markdown.tab.write',
+      key: 'markdown.tab.write',
       language: 'it',
-      translations: asTranslations({
-        components_forum_MarkdownEditor_188: 'Schreiben (legacy)',
-      }),
+      translations: asTranslations({}),
     });
 
-    expect(value).toBe('Schreiben (legacy)');
+    expect(value).toBe('Write');
   });
 
   it('keeps admin deletion requests compatibility with legacy auto keys', () => {
@@ -215,17 +180,6 @@ describe('semantic i18n', () => {
     expect(value).toBe('Ergebniszugriff (legacy)');
   });
 
-  it('keeps forum page/admin compatibility with legacy auto keys', () => {
-    const value = resolveSemanticMessage({
-      key: 'forum.page.empty.no_categories',
-      language: 'it',
-      translations: asTranslations({
-        pages_Forum_72: 'Noch keine Kategorien (legacy)',
-      }),
-    });
-
-    expect(value).toBe('Noch keine Kategorien (legacy)');
-  });
 
   it('keeps public profile/overview compatibility with legacy auto keys', () => {
     const value = resolveSemanticMessage({
@@ -254,15 +208,12 @@ describe('semantic i18n', () => {
   it('exposes semantic keys for migration checks', () => {
     expect(listSemanticKeys()).toContain('admin.legal.saved');
     expect(listSemanticKeys()).toContain('admin.documentation.search_placeholder');
-    expect(listSemanticKeys()).toContain('forum.report.dialog.title');
-    expect(listSemanticKeys()).toContain('forum.sanctions.dialog.title');
     expect(listSemanticKeys()).toContain('polls.sortable.type.scale');
     expect(listSemanticKeys()).toContain('polls.mutations.publish_success');
     expect(listSemanticKeys()).toContain('polls.editor.publish');
     expect(listSemanticKeys()).toContain('polls.condition.operator.equals');
     expect(listSemanticKeys()).toContain('polls.results.anonymous_badge');
-    expect(listSemanticKeys()).toContain('forum.reports.title');
-    expect(listSemanticKeys()).toContain('forum.markdown.tab.write');
+    expect(listSemanticKeys()).toContain('markdown.tab.write');
     expect(listSemanticKeys()).toContain('guild.members.title');
     expect(listSemanticKeys()).toContain('admin.backup.title');
     expect(listSemanticKeys()).toContain('admin.deletion.title');
@@ -274,9 +225,6 @@ describe('semantic i18n', () => {
     expect(listSemanticKeys()).toContain('ui.breadcrumb.aria_label');
     expect(listSemanticKeys()).toContain('globalnav.home.aria_label');
     expect(listSemanticKeys()).toContain('footer.brand');
-    expect(listSemanticKeys()).toContain('forum.new_topic.title');
-    expect(listSemanticKeys()).toContain('forum.topic.toast.reply_created');
-    expect(listSemanticKeys()).toContain('forum.page.empty.no_categories');
     expect(listSemanticKeys()).toContain('public_profile.user_not_found');
     expect(listSemanticKeys()).toContain('overview.more_wishes');
     expect(listSemanticKeys()).toContain('dashboard.roster_filters.clear_all');

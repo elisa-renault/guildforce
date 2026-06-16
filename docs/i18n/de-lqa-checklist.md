@@ -24,8 +24,7 @@ Target locale: `de`
 - [ ] Auth page (email + Battle.net copy).
 - [ ] Home page hero + feature cards.
 - [ ] Guild page (overview + wishes + polls + settings).
-- [ ] Forum list + topic + report/sanction dialogs.
-- [ ] Admin pages (users, guilds, legal, patch notes, moderation).
+- [ ] Admin pages (users, guilds, legal, patch notes, support queues).
 - [ ] Legal public pages render DE content without EN fallback.
 
 ## Technical checks

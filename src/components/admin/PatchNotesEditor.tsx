@@ -14,7 +14,7 @@ import { useCallback, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { toast } from 'sonner';
 
-import { MarkdownEditor } from '@/components/forum/MarkdownEditor';
+import { MarkdownEditor } from '@/components/markdown/MarkdownEditor';
 import { GlowCard } from '@/components/GlowCard';
 import {
   AlertDialog,
@@ -593,4 +593,3 @@ export const PatchNotesEditor = () => {
     </div>
   );
 };
-

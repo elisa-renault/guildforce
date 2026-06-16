@@ -7,7 +7,7 @@ export const translationsPtBr: Translations = createLocaleTranslations(translati
   commandPalette: {
     title: 'Paleta de comandos',
     open: 'Buscar ou ir para...',
-    placeholder: 'Buscar páginas, guildas, membros, enquetes, fórum...',
+    placeholder: 'Buscar páginas, guildas, membros, enquetes...',
     placeholderInGuild: 'Buscar em {guild}, ações, membros, enquetes...',
     loading: 'Buscando...',
     loadingHint: 'Buscando nos espaços que você pode acessar.',
@@ -23,7 +23,6 @@ export const translationsPtBr: Translations = createLocaleTranslations(translati
       members: 'Membros',
       rosters: 'Rosters',
       polls: 'Enquetes',
-      forum: 'Fórum',
     },
     actions: {
       createPoll: 'Criar enquete',
@@ -31,7 +30,6 @@ export const translationsPtBr: Translations = createLocaleTranslations(translati
       editWishes: 'Editar meus desejos',
       openSettings: 'Abrir configurações',
       syncMembers: 'Sincronizar membros',
-      createForumTopic: 'Criar tópico no fórum',
       openProfile: 'Abrir meu perfil',
       openAdmin: 'Abrir admin',
     },
@@ -39,12 +37,9 @@ export const translationsPtBr: Translations = createLocaleTranslations(translati
       openProfile: 'Perfil, personagens e preferências',
       openAdmin: 'Usuários, guildas, moderação e conteúdo',
       syncMembers: 'Abre as configurações Battle.net desta guilda',
-      createForumTopic: 'Cria um tópico na categoria atual',
-      openForumFirst: 'Abra o fórum e escolha uma categoria',
     },
     pageSubtitles: {
       guilds: 'Alternar ou gerenciar workspaces de guilda',
-      forum: 'Tópicos, posts, moderação e inscrições',
       profile: 'Personagens, Battle.net e conta',
       admin: 'Back office operacional',
     },

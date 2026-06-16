@@ -6,8 +6,7 @@ export type CommandPaletteResultType =
   | 'guild'
   | 'member'
   | 'roster'
-  | 'poll'
-  | 'forum';
+  | 'poll';
 
 export type CommandPaletteGroupId =
   | 'recent'
@@ -16,8 +15,7 @@ export type CommandPaletteGroupId =
   | 'guilds'
   | 'members'
   | 'rosters'
-  | 'polls'
-  | 'forum';
+  | 'polls';
 
 export interface CommandPaletteGuildContext {
   id: string;
@@ -59,7 +57,7 @@ export interface CommandPaletteServerResult {
 }
 
 export interface CommandPaletteRecentRow {
-  item_type: CommandPaletteResultType;
+  item_type: string;
   item_id: string;
   guild_id: string | null;
   title: string;

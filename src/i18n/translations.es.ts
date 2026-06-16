@@ -7,7 +7,7 @@ export const translationsEs: Translations = createLocaleTranslations(translation
   commandPalette: {
     title: 'Paleta de comandos',
     open: 'Buscar o ir a...',
-    placeholder: 'Buscar páginas, hermandades, miembros, encuestas, foro...',
+    placeholder: 'Buscar páginas, hermandades, miembros, encuestas...',
     placeholderInGuild: 'Buscar en {guild}, acciones, miembros, encuestas...',
     loading: 'Buscando...',
     loadingHint: 'Buscando en los espacios a los que tienes acceso.',
@@ -23,7 +23,6 @@ export const translationsEs: Translations = createLocaleTranslations(translation
       members: 'Miembros',
       rosters: 'Rosters',
       polls: 'Encuestas',
-      forum: 'Foro',
     },
     actions: {
       createPoll: 'Crear encuesta',
@@ -31,7 +30,6 @@ export const translationsEs: Translations = createLocaleTranslations(translation
       editWishes: 'Editar mis deseos',
       openSettings: 'Abrir ajustes',
       syncMembers: 'Sincronizar miembros',
-      createForumTopic: 'Crear tema del foro',
       openProfile: 'Abrir mi perfil',
       openAdmin: 'Abrir administración',
     },
@@ -39,12 +37,9 @@ export const translationsEs: Translations = createLocaleTranslations(translation
       openProfile: 'Perfil, personajes y preferencias',
       openAdmin: 'Usuarios, hermandades, moderación y contenido',
       syncMembers: 'Abre los ajustes de sincronización Battle.net',
-      createForumTopic: 'Crea un tema en la categoría actual',
-      openForumFirst: 'Abre el foro y elige una categoría',
     },
     pageSubtitles: {
       guilds: 'Cambiar o gestionar tus workspaces de hermandad',
-      forum: 'Temas, mensajes, moderación y suscripciones',
       profile: 'Personajes, Battle.net y cuenta',
       admin: 'Back office operativo',
     },

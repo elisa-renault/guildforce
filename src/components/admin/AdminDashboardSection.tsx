@@ -14,7 +14,6 @@ import {
   Activity,
   Users, 
   Shield, 
-  MessageSquare, 
   AlertTriangle,
   ChevronRight,
   FileText,
@@ -32,10 +31,6 @@ import { AdminSection } from './AdminSettingsSidebar';
 interface AdminStats {
   totalUsers: number;
   totalGuilds: number;
-  totalTopics: number;
-  totalPosts: number;
-  pendingReports: number;
-  activeSanctions: number;
   openBugs: number;
   pendingDeletions: number;
   uniqueWishUsers: number;
@@ -204,34 +199,6 @@ export const AdminDashboardSection = ({
       color: 'text-status-warning',
       tooltip: t.admin.stats.guildsWithTwoWishUsersTooltip,
     },
-    topics: {
-      label: t.admin.stats.topics,
-      value: formatCount(stats?.totalTopics),
-      icon: MessageSquare,
-      color: 'text-primary',
-      tooltip: t.admin.stats.topicsTooltip,
-    },
-    posts: {
-      label: t.admin.stats.posts,
-      value: formatCount(stats?.totalPosts),
-      icon: MessageSquare,
-      color: 'text-status-info',
-      tooltip: t.admin.stats.postsTooltip,
-    },
-    pendingReports: {
-      label: t.admin.stats.pendingReports,
-      value: formatCount(stats?.pendingReports),
-      icon: AlertTriangle,
-      color: stats?.pendingReports && stats.pendingReports > 0 ? 'text-status-warning' : 'text-muted-foreground',
-      tooltip: t.admin.stats.pendingReportsTooltip,
-    },
-    activeSanctions: {
-      label: t.admin.stats.activeSanctions,
-      value: formatCount(stats?.activeSanctions),
-      icon: AlertTriangle,
-      color: stats?.activeSanctions && stats.activeSanctions > 0 ? 'text-status-error' : 'text-muted-foreground',
-      tooltip: t.admin.stats.activeSanctionsTooltip,
-    },
     openBugs: {
       label: t.admin.stats.openBugs,
       value: formatCount(stats?.openBugs),
@@ -249,11 +216,11 @@ export const AdminDashboardSection = ({
     criticalIssues: {
       label: t.admin.stats.criticalIssues,
       value: formatCount(
-        (stats?.pendingReports ?? 0) + (stats?.openBugs ?? 0) + (stats?.pendingDeletions ?? 0),
+        (stats?.openBugs ?? 0) + (stats?.pendingDeletions ?? 0),
       ),
       icon: AlertTriangle,
       color:
-        (stats?.pendingReports ?? 0) + (stats?.openBugs ?? 0) + (stats?.pendingDeletions ?? 0) > 0
+        (stats?.openBugs ?? 0) + (stats?.pendingDeletions ?? 0) > 0
           ? 'text-status-error'
           : 'text-status-success',
       tooltip: t.admin.stats.criticalIssuesTooltip,
@@ -342,10 +309,6 @@ export const AdminDashboardSection = ({
       description: t.admin.stats.sectionOperationsDesc,
       groups: [
         {
-          title: t.admin.stats.groupForum,
-          stats: ['topics', 'posts', 'pendingReports', 'activeSanctions'],
-        },
-        {
           title: t.admin.stats.groupModeration,
           stats: ['openBugs', 'pendingDeletions', 'criticalIssues', 'guildsWithTwoWishUsers'],
         },
@@ -354,14 +317,6 @@ export const AdminDashboardSection = ({
   ];
 
   const adminSections = [
-    {
-      title: t.admin?.forumAdmin,
-      description: t.admin.stats.forumAdminDesc,
-      icon: MessageSquare,
-      onClick: () => onNavigateToSection('forum'),
-      color: 'text-primary',
-      allowsModerator: true,
-    },
     {
       title: t.admin?.userManagement,
       description: t.admin?.userManagementDesc,

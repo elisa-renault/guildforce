@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Shield, FileText, Bug, Trash2, MessageSquare, Settings, BookOpen, ScrollText, Download } from 'lucide-react';
+import { LayoutDashboard, Users, Shield, FileText, Bug, Trash2, Settings, BookOpen, ScrollText, Download } from 'lucide-react';
 import { useLayoutEffect, useState, RefObject } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -9,7 +9,7 @@ import { resolveSemanticMessage } from '@/i18n/semantic';
 import { navItemClass } from '@/lib/nav-styles';
 import { cn } from '@/lib/utils';
 
-export type AdminSection = 'dashboard' | 'users' | 'permissions' | 'guilds' | 'forum' | 'legal' | 'patchnotes' | 'bugs' | 'deletions' | 'docs' | 'backup';
+export type AdminSection = 'dashboard' | 'users' | 'permissions' | 'guilds' | 'legal' | 'patchnotes' | 'bugs' | 'deletions' | 'docs' | 'backup';
 
 interface SectionConfig {
   id: AdminSection;
@@ -27,7 +27,6 @@ const SECTIONS: SectionConfig[] = [
   { id: 'permissions', labelKey: 'admin.sidebar.section.permissions', icon: Settings, category: 'management', requiresAdmin: true },
   { id: 'guilds', labelKey: 'admin.sidebar.section.guilds', icon: Shield, category: 'management', requiresAdmin: true },
   { id: 'backup', labelKey: 'admin.sidebar.section.backup', icon: Download, category: 'management', requiresAdmin: true },
-  { id: 'forum', labelKey: 'admin.sidebar.section.forum', icon: MessageSquare, category: 'content', allowsModerator: true },
   { id: 'legal', labelKey: 'admin.sidebar.section.legal', icon: FileText, category: 'content', requiresAdmin: true },
   { id: 'patchnotes', labelKey: 'admin.sidebar.section.patchnotes', icon: ScrollText, category: 'content', requiresAdmin: true },
   { id: 'bugs', labelKey: 'admin.sidebar.section.bugs', icon: Bug, category: 'support', allowsModerator: true },

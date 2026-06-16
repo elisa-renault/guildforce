@@ -233,7 +233,6 @@ const requiredDeSections = [
   'permissions',
   'rosters',
   'polls',
-  'forum',
   'admin',
   'accessibility',
   'notifications',
@@ -258,7 +257,6 @@ const deCriticalDictionaryExpectations = {
   'permissions.title': 'Berechtigungen',
   'rosters.createRoster': 'Aufstellung erstellen',
   'polls.new': 'Neue Umfrage',
-  'forum.newTopic': 'Neues Thema',
   'admin.userManagement': 'Benutzerverwaltung',
   'notifications.title': 'Benachrichtigungen',
   'patchnotes.changelog': 'Änderungsprotokoll',
@@ -279,7 +277,6 @@ const missingDeSemanticKeys = [...difference(enSemanticKeys, deSemanticKeys)].so
 
 const deCriticalSemanticExpectations = {
   'admin.documentation.title': 'Dokumentation',
-  'forum.report.dialog.title': 'Melden Sie diesen Inhalt',
   'polls.mutations.publish_success': 'Umfrage veröffentlicht!',
   'guild.members.title': 'Gildenmitglieder',
   'activity.log.title': 'Aktivitätsprotokoll',

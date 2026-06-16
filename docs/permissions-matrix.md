@@ -7,8 +7,8 @@ This document is the practical role/access reference used by agents during testi
 | Role | Scope | Expected Access | Expected Restriction |
 |---|---|---|---|
 | `user` | App-wide | Standard authenticated navigation and member-level actions | No `/admin` access |
-| `moderator` | Forum moderation | Forum moderation surfaces and sanctions workflows | No full admin panel unless also `admin` |
-| `admin` | Platform admin | Admin panel (`/admin`), user/forum/admin management | Guild-specific GM privileges still depend on guild membership/role |
+| `moderator` | Platform support | Support/admin surfaces allowed to moderators | No full admin panel unless also `admin` |
+| `admin` | Platform admin | Admin panel (`/admin`), user and guild management | Guild-specific GM privileges still depend on guild membership/role |
 
 Source of truth:
 - `public.user_roles`
@@ -18,7 +18,7 @@ Source of truth:
 
 | Guild Role (`guild_members.role`) | Scope | Expected Access | Expected Restriction |
 |---|---|---|---|
-| `member` | Guild features | Guild overview, wishes (self/allowed), forum participation, poll participation (if targeted) | No GM-only guild settings actions |
+| `member` | Guild features | Guild overview, wishes (self/allowed), poll participation (if targeted) | No GM-only guild settings actions |
 | `officer` | Guild features + delegated permissions | Member-level access plus delegated actions via `guild_permissions`/`has_guild_permission` | No automatic GM-only actions unless explicitly granted |
 | `gm` | Guild ownership operations | Full guild management (settings, members, rosters, polls, permissions) | Does not imply platform `admin` role |
 
@@ -31,9 +31,7 @@ Source of truth:
 | Route | Member | Admin | Notes |
 |---|---|---|---|
 | `/guilds` | Allowed | Allowed | Requires authentication |
-| `/forum` | Allowed | Allowed | Requires authentication |
 | `/profile` | Allowed | Allowed | Requires authentication |
-| `/forum/admin` | Usually denied unless moderator/admin | Allowed (if role present) | Moderation scope |
 | `/admin` | Denied | Allowed | Controlled by `has_role(..., 'admin')` |
 
 ## Practical QA Toggles (Single Battle.net Account)

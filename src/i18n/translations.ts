@@ -64,16 +64,11 @@ export interface Translations {
     guilds: string;
     profile: string;
     publicProfile: string;
-    forum: string;
-    forumAdmin: string;
     admin: string;
     legal: string;
     privacy: string;
     terms: string;
     changelog: string;
-    forumCategory: string;
-    forumNewTopic: string;
-    forumTopic: string;
     guildOverview: string;
     guildRoster: string;
     guildWishes: string;
@@ -110,7 +105,6 @@ export interface Translations {
       members: string;
       rosters: string;
       polls: string;
-      forum: string;
     };
     actions: {
       createPoll: string;
@@ -118,7 +112,6 @@ export interface Translations {
       editWishes: string;
       openSettings: string;
       syncMembers: string;
-      createForumTopic: string;
       openProfile: string;
       openAdmin: string;
       createAtlasDoc: string;
@@ -127,13 +120,10 @@ export interface Translations {
       openProfile: string;
       openAdmin: string;
       syncMembers: string;
-      createForumTopic: string;
-      openForumFirst: string;
       createAtlasDoc: string;
     };
     pageSubtitles: {
       guilds: string;
-      forum: string;
       profile: string;
       admin: string;
       atlas: string;
@@ -669,7 +659,7 @@ export interface Translations {
         profile: string;
         characters: string;
         wishes: string;
-        forumPosts: string;
+        contentContributions: string;
       };
       typeToConfirm: string;
       confirmDeletion: string;
@@ -800,91 +790,8 @@ export interface Translations {
     wishesLockScheduledToast: string;
     wishesLockClearedToast: string;
   };
-  // Forum
-  forum: {
-    title: string;
-    subtitle: string;
-    categories: string;
-    topics: string;
-    posts: string;
-    newTopic: string;
-    reply: string;
-    quote: string;
-    edit: string;
-    delete: string;
-    pin: string;
-    unpin: string;
-    lock: string;
-    unlock: string;
-    pinned: string;
-    locked: string;
-    views: string;
-    replies: string;
-    lastReply: string;
-    noTopics: string;
-    noPosts: string;
-    writeReply: string;
-    preview: string;
-    postReply: string;
-    editPost: string;
-    deleteConfirm: string;
-    topicCreated: string;
-    postCreated: string;
-    postUpdated: string;
-    postDeleted: string;
-    topicDeleted: string;
-    backToForum: string;
-    backToCategory: string;
-    globalForum: string;
-    guildForum: string;
-    noCategory: string;
-    noTopicYet: string;
-    topicsCount: string;
-    by: string;
-    unknownUser: string;
-    categoryNames: {
-      feedback: string;
-      support: string;
-      general: string;
-      bugs: string;
-    };
-    categoryDescriptions: {
-      feedback: string;
-      support: string;
-      general: string;
-      bugs: string;
-    };
-    empty: {
-      noCategories: string;
-      beingSetUp: string;
-    };
-    moderation: {
-      sanction: string;
-      revokeSanction: string;
-      revokeSanctionConfirm: string;
-      revoke: string;
-    };
-    createTopic: string;
-    contentPlaceholder: string;
-    confirmDeleteTopic: string;
-    confirmDeletePost: string;
-    topicNotFound: string;
-    topicLocked: string;
-    replyingTo: string;
-    noReplies: string;
-    previous: string;
-    categoryNotFound: string;
-    viewProfile: string;
-    siteAdministrator: string;
-    forumModerator: string;
-    // ForumPost
-    edited: string;
-    report: string;
-    quoteFrom: string;
-  };
   // Admin
   admin: {
-    forumAdmin: string;
     userManagement: string;
     userManagementDesc: string;
     guildManagement: string;
@@ -896,31 +803,15 @@ export interface Translations {
     bugReports: string;
     bugReportsDesc: string;
     quickAccess: string;
-    forumCategories: string;
-    forumModerators: string;
-    noCategories: string;
-    noModerators: string;
     accessRestricted: string;
-    // ForumAdmin specific
     loadingError: string;
-    backToForum: string;
     reports: string;
     categories: string;
     moderators: string;
     users: string;
     sanctions: string;
-    nameAndSlugRequired: string;
-    categoryUpdated: string;
-    categoryCreated: string;
-    categoryDeleted: string;
-    orderUpdated: string;
-    moderatorAdded: string;
-    moderatorRemoved: string;
     roleRemoved: string;
     roleAdded: string;
-    editCategory: string;
-    newCategory: string;
-    addModerator: string;
     selectUser: string;
     confirmDeletion: string;
     actionIrreversible: string;
@@ -971,14 +862,9 @@ export interface Translations {
       activationRate7d: string;
       retentionD7: string;
       retentionD30: string;
-      topics: string;
-      posts: string;
-      pendingReports: string;
-      activeSanctions: string;
       openBugs: string;
       pendingDeletions: string;
       criticalIssues: string;
-      forumAdminDesc: string;
       uniqueWishUsers: string;
       totalWishes: string;
       guildsWithWishes: string;
@@ -992,7 +878,6 @@ export interface Translations {
       pollVoters: string;
       groupCommunity: string;
       groupWishes: string;
-      groupForum: string;
       groupModeration: string;
       groupPolls: string;
       groupActivation: string;
@@ -1033,10 +918,6 @@ export interface Translations {
       activationRate7dTooltip: string;
       retentionD7Tooltip: string;
       retentionD30Tooltip: string;
-      topicsTooltip: string;
-      postsTooltip: string;
-      pendingReportsTooltip: string;
-      activeSanctionsTooltip: string;
       openBugsTooltip: string;
       pendingDeletionsTooltip: string;
       criticalIssuesTooltip: string;

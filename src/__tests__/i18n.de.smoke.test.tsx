@@ -4,7 +4,6 @@ import type { Translations } from '@/i18n/translations';
 
 import { listSemanticKeys, resolveSemanticMessage } from '@/i18n/semantic';
 import { loadTranslations } from '@/i18n/translations';
-import { getReportReasonLabel } from '@/types/forum';
 
 
 describe('DE i18n smoke', () => {
@@ -18,14 +17,13 @@ describe('DE i18n smoke', () => {
     expect(de.auth.loginWithBattleNet).toBe('Mit Battle.net anmelden');
     expect(de.guild.guildMaster).toBe('Gildenmeister');
     expect(de.polls.new).toBe('Neue Umfrage');
-    expect(de.forum.newTopic).toBe('Neues Thema');
     expect(de.admin.userManagement).toBe('Benutzerverwaltung');
     expect(de.legal.privacyPolicy).toBe('Datenschutzerklärung');
     expect(de.cookies.manageCookies).toBe('Cookie-Einstellungen');
   });
 
   it('resolves DE semantic copy without EN fallback on core namespaces', () => {
-    const releasePrefixes = ['admin.', 'forum.', 'polls.', 'guild.', 'settings.', 'ui.', 'globalnav.', 'activity.'];
+    const releasePrefixes = ['admin.', 'markdown.', 'polls.', 'guild.', 'settings.', 'ui.', 'globalnav.', 'activity.'];
     const keys = listSemanticKeys().filter((key) => releasePrefixes.some((prefix) => key.startsWith(prefix)));
     const translations = { auto: {} } as unknown as Translations;
     const allowedIdentical = new Set([
@@ -33,20 +31,16 @@ describe('DE i18n smoke', () => {
       'auth.brand',
       'admin.patch.version_placeholder',
       'admin.patch.content_placeholder.fr',
-      'forum.report.dialog.details_label',
-      'forum.report.reason.spam',
-      'forum.markdown.toolbar.separator',
-      'forum.markdown.toolbar.link',
+      'markdown.toolbar.separator',
+      'markdown.toolbar.link',
       'polls.sortable.option_prefix',
       'polls.sortable.min_value_label',
       'polls.sortable.max_value_label',
-      'forum.new_topic.in_category',
       'guild.members.guildforce_label',
       'guild.members.alts',
       'guild.members.main_alt',
       'admin.user_manager.table.battletag',
       'admin.user_manager.table.region',
-      'admin.sidebar.section.forum',
       'admin.sidebar.section.patchnotes',
       'admin.sidebar.category.overview',
       'admin.sidebar.category.management',
@@ -73,8 +67,4 @@ describe('DE i18n smoke', () => {
     }
   });
 
-  it('localizes forum report reasons in German with EN fallback for unknown locales', () => {
-    expect(getReportReasonLabel('harassment', 'de')).toBe('Belaestigung');
-    expect(getReportReasonLabel('misinformation', 'es')).toBe('Misinformation');
-  });
 });

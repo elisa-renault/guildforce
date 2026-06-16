@@ -6,7 +6,7 @@ export const translationsZhCn: Translations = createLocaleTranslations(translati
   commandPalette: {
     title: '命令面板',
     open: '搜索或跳转...',
-    placeholder: '搜索页面、公会、成员、投票、论坛...',
+    placeholder: '搜索页面、公会、成员、投票...',
     placeholderInGuild: '搜索 {guild}、操作、成员、投票...',
     loading: '搜索中...',
     loadingHint: '正在搜索你可访问的空间。',
@@ -22,7 +22,6 @@ export const translationsZhCn: Translations = createLocaleTranslations(translati
       members: '成员',
       rosters: '名册',
       polls: '投票',
-      forum: '论坛',
     },
     actions: {
       createPoll: '创建投票',
@@ -30,7 +29,6 @@ export const translationsZhCn: Translations = createLocaleTranslations(translati
       editWishes: '编辑我的志愿',
       openSettings: '打开设置',
       syncMembers: '同步成员缓存',
-      createForumTopic: '创建论坛主题',
       openProfile: '打开我的资料',
       openAdmin: '打开管理',
     },
@@ -38,12 +36,9 @@ export const translationsZhCn: Translations = createLocaleTranslations(translati
       openProfile: '资料、角色和偏好',
       openAdmin: '用户、公会、审核和内容工具',
       syncMembers: '打开此公会的 Battle.net 同步设置',
-      createForumTopic: '在当前分类创建主题',
-      openForumFirst: '打开论坛并先选择分类',
     },
     pageSubtitles: {
       guilds: '切换或管理公会工作区',
-      forum: '主题、帖子、审核和订阅',
       profile: '角色、Battle.net 和账号',
       admin: '运营后台',
     },

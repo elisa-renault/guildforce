@@ -16,7 +16,6 @@ import { DeletionRequestsManager } from '@/components/admin/DeletionRequestsMana
 import { AdminSettingsSidebar, AdminSection } from '@/components/admin/AdminSettingsSidebar';
 import { AdminDashboardSection } from '@/components/admin/AdminDashboardSection';
 import { AdminPermissionsManager } from '@/components/admin/AdminPermissionsManager';
-import { AdminForumSection } from '@/components/admin/AdminForumSection';
 import { AdminDocumentation } from '@/components/admin/AdminDocumentation';
 import { AdminBackupSection } from '@/components/admin/AdminBackupSection';
 import { mapAdminTimeseriesRows, type AdminTimeseriesPoint } from '@/components/admin/adminDashboardTimeseries';
@@ -27,10 +26,6 @@ import { Crown, Loader2 } from 'lucide-react';
 interface AdminStats {
   totalUsers: number;
   totalGuilds: number;
-  totalTopics: number;
-  totalPosts: number;
-  pendingReports: number;
-  activeSanctions: number;
   openBugs: number;
   pendingDeletions: number;
   uniqueWishUsers: number;
@@ -135,10 +130,6 @@ export default function Admin() {
         setStats({
           totalUsers: statsRow?.total_users ?? 0,
           totalGuilds: statsRow?.total_guilds ?? 0,
-          totalTopics: statsRow?.total_topics ?? 0,
-          totalPosts: statsRow?.total_posts ?? 0,
-          pendingReports: statsRow?.pending_reports ?? 0,
-          activeSanctions: statsRow?.active_sanctions ?? 0,
           openBugs: statsRow?.open_bugs ?? 0,
           pendingDeletions: statsRow?.pending_deletions ?? 0,
           uniqueWishUsers: statsRow?.unique_wish_users ?? 0,
@@ -174,10 +165,6 @@ export default function Admin() {
           const [
             { count: usersCount },
             { count: guildsCount },
-            { count: topicsCount },
-            { count: postsCount },
-            { count: reportsCount },
-            { count: sanctionsCount },
             { count: bugsCount },
             { count: deletionsCount },
             { count: totalWishesCount },
@@ -190,10 +177,6 @@ export default function Admin() {
           ] = await Promise.all([
             supabase.from('profiles').select('*', { count: 'exact', head: true }),
             supabase.from('guilds').select('*', { count: 'exact', head: true }),
-            supabase.from('forum_topics').select('*', { count: 'exact', head: true }),
-            supabase.from('forum_posts').select('*', { count: 'exact', head: true }),
-            supabase.from('forum_reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-            supabase.from('forum_user_sanctions').select('*', { count: 'exact', head: true }).eq('is_active', true),
             supabase.from('bug_reports').select('*', { count: 'exact', head: true }).eq('status', 'open'),
             supabase.from('account_deletion_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
             supabase.from('class_wishes').select('*', { count: 'exact', head: true }),
@@ -246,10 +229,6 @@ export default function Admin() {
           setStats({
             totalUsers: usersCount || 0,
             totalGuilds: guildsCount || 0,
-            totalTopics: topicsCount || 0,
-            totalPosts: postsCount || 0,
-            pendingReports: reportsCount || 0,
-            activeSanctions: sanctionsCount || 0,
             openBugs: bugsCount || 0,
             pendingDeletions: deletionsCount || 0,
             uniqueWishUsers: uniqueUserIds.size,
@@ -345,9 +324,6 @@ export default function Admin() {
       case 'backup':
         if (!isAdmin) return null;
         return <AdminBackupSection />;
-      
-      case 'forum':
-        return <AdminForumSection />;
       
       case 'legal':
         if (!isAdmin) return null;

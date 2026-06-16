@@ -1,25 +1,17 @@
 import type { CommandPaletteGuildContext, CommandPaletteItem } from './types';
 import type { Translations } from '@/i18n/translations';
-import type { Location } from 'react-router-dom';
-
-
 
 interface BuildRegistryOptions {
   t: Translations;
   activeGuild: CommandPaletteGuildContext | null;
   isAdmin: boolean;
-  location: Location;
 }
-
-const forumCategoryPath = /^\/forum\/category\/([^/]+)$/;
 
 export const buildCommandPaletteRegistry = ({
   t,
   activeGuild,
   isAdmin,
-  location,
 }: BuildRegistryOptions): CommandPaletteItem[] => {
-  const categoryMatch = location.pathname.match(forumCategoryPath);
   const items: CommandPaletteItem[] = [
     {
       id: 'page:guilds',
@@ -29,15 +21,6 @@ export const buildCommandPaletteRegistry = ({
       subtitle: t.commandPalette.pageSubtitles.guilds,
       href: '/guilds',
       keywords: ['guilds', 'guildes', 'workspaces', 'my guilds'],
-    },
-    {
-      id: 'page:forum',
-      type: 'page',
-      group: 'pages',
-      title: t.forum.title,
-      subtitle: t.commandPalette.pageSubtitles.forum,
-      href: '/forum',
-      keywords: ['forum', 'topics', 'posts', 'discussion'],
     },
     {
       id: 'page:profile',
@@ -57,16 +40,6 @@ export const buildCommandPaletteRegistry = ({
       href: '/profile',
       keywords: ['profile', 'profil', 'account', 'open profile'],
       score: 18,
-    },
-    {
-      id: `action:forum:create-topic:${categoryMatch?.[1] || 'forum'}`,
-      type: 'action',
-      group: 'actions',
-      title: t.commandPalette.actions.createForumTopic,
-      subtitle: categoryMatch ? t.commandPalette.actionSubtitles.createForumTopic : t.commandPalette.actionSubtitles.openForumFirst,
-      href: categoryMatch ? `/forum/category/${categoryMatch[1]}/new` : '/forum',
-      keywords: ['forum', 'topic', 'thread', 'discussion'],
-      score: categoryMatch ? 16 : 8,
     },
   ];
 

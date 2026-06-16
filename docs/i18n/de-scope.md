@@ -16,8 +16,6 @@ Fallback locale: `en`
   - `guild`, `wishes`, `dashboard`, `permissions`, `rosters`, `guildSettings`
 - Polls:
   - `polls` dictionary + all poll-related semantic strings (`polls.*` in `semantic.ts`)
-- Forum:
-  - `forum` dictionary + all forum-related semantic strings (`forum.*` in `semantic.ts`)
 - Admin:
   - `admin`, `patchnotes`, `legal`, `cookies`, `notifications`, `activityLog`
   - all admin-related semantic strings (`admin.*` in `semantic.ts`)

@@ -633,7 +633,7 @@ const Profile = () => {
                           <li>{t.profile.deletion.dataList.profile}</li>
                           <li>{t.profile.deletion.dataList.characters}</li>
                           <li>{t.profile.deletion.dataList.wishes}</li>
-                          <li>{t.profile.deletion.dataList.forumPosts}</li>
+                          <li>{t.profile.deletion.dataList.contentContributions}</li>
                         </ul>
                         <div className="pt-2">
                           <Label htmlFor="confirm-delete" className="text-foreground text-sm">

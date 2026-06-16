@@ -139,13 +139,13 @@ export const MarkdownEditor = ({
     if (!file || !imageTools?.uploadImage) return;
 
     if (!file.type.startsWith('image/')) {
-      toast.error(s('forum.markdown.image.invalid_type'));
+      toast.error(s('markdown.image.invalid_type'));
       event.target.value = '';
       return;
     }
 
     if (imageTools.maxSizeBytes && file.size > imageTools.maxSizeBytes) {
-      toast.error(s('forum.markdown.image.invalid_size'));
+      toast.error(s('markdown.image.invalid_size'));
       event.target.value = '';
       return;
     }
@@ -167,44 +167,44 @@ export const MarkdownEditor = ({
   const toolbarGroups = [
     {
       buttons: [
-        { icon: Heading1, action: () => insertMarkdown('# ', '', true), title: s('forum.markdown.toolbar.heading1') },
-        { icon: Heading2, action: () => insertMarkdown('## ', '', true), title: s('forum.markdown.toolbar.heading2') },
-        { icon: Heading3, action: () => insertMarkdown('### ', '', true), title: s('forum.markdown.toolbar.heading3') },
+        { icon: Heading1, action: () => insertMarkdown('# ', '', true), title: s('markdown.toolbar.heading1') },
+        { icon: Heading2, action: () => insertMarkdown('## ', '', true), title: s('markdown.toolbar.heading2') },
+        { icon: Heading3, action: () => insertMarkdown('### ', '', true), title: s('markdown.toolbar.heading3') },
       ]
     },
     {
       buttons: [
-        { icon: Bold, action: () => insertMarkdown('**', '**'), title: s('forum.markdown.toolbar.bold') },
-        { icon: Italic, action: () => insertMarkdown('*', '*'), title: s('forum.markdown.toolbar.italic') },
-        { icon: Strikethrough, action: () => insertMarkdown('~~', '~~'), title: s('forum.markdown.toolbar.strikethrough') },
+        { icon: Bold, action: () => insertMarkdown('**', '**'), title: s('markdown.toolbar.bold') },
+        { icon: Italic, action: () => insertMarkdown('*', '*'), title: s('markdown.toolbar.italic') },
+        { icon: Strikethrough, action: () => insertMarkdown('~~', '~~'), title: s('markdown.toolbar.strikethrough') },
       ]
     },
     {
       buttons: [
-        { icon: List, action: () => insertMarkdown('- ', '', true), title: s('forum.markdown.toolbar.list') },
-        { icon: ListOrdered, action: () => insertMarkdown('1. ', '', true), title: s('forum.markdown.toolbar.list_ordered') },
-        { icon: CheckSquare, action: () => insertMarkdown('- [ ] ', '', true), title: s('forum.markdown.toolbar.task_list') },
+        { icon: List, action: () => insertMarkdown('- ', '', true), title: s('markdown.toolbar.list') },
+        { icon: ListOrdered, action: () => insertMarkdown('1. ', '', true), title: s('markdown.toolbar.list_ordered') },
+        { icon: CheckSquare, action: () => insertMarkdown('- [ ] ', '', true), title: s('markdown.toolbar.task_list') },
       ]
     },
     {
       buttons: [
-        { icon: Quote, action: () => insertMarkdown('> ', '', true), title: s('forum.markdown.toolbar.quote') },
-        { icon: Code, action: () => insertMarkdown('`', '`'), title: s('forum.markdown.toolbar.code') },
-        { icon: Minus, action: () => insertMarkdown('\n---\n', '', true), title: s('forum.markdown.toolbar.separator') },
+        { icon: Quote, action: () => insertMarkdown('> ', '', true), title: s('markdown.toolbar.quote') },
+        { icon: Code, action: () => insertMarkdown('`', '`'), title: s('markdown.toolbar.code') },
+        { icon: Minus, action: () => insertMarkdown('\n---\n', '', true), title: s('markdown.toolbar.separator') },
       ]
     },
     {
       buttons: [
-        { icon: Link, action: () => insertMarkdown('[', '](https://)'), title: s('forum.markdown.toolbar.link') },
+        { icon: Link, action: () => insertMarkdown('[', '](https://)'), title: s('markdown.toolbar.link') },
         {
           id: 'image',
           icon: Image,
           action: () => imageTools ? setImagePopoverOpen(true) : insertMarkdown('![alt](', ')'),
-          title: s('forum.markdown.toolbar.image'),
+          title: s('markdown.toolbar.image'),
         },
-        { icon: Table, action: insertTable, title: s('forum.markdown.toolbar.table') },
+        { icon: Table, action: insertTable, title: s('markdown.toolbar.table') },
         ...(enableMentions
-          ? [{ icon: AtSign, action: () => insertMarkdown('@'), title: s('forum.markdown.toolbar.mention') }]
+          ? [{ icon: AtSign, action: () => insertMarkdown('@'), title: s('markdown.toolbar.mention') }]
           : []),
       ] as ToolbarButton[],
     },
@@ -297,7 +297,7 @@ export const MarkdownEditor = ({
                     <PopoverContent align="start" className="w-80 border-border/60 bg-popover/95 p-3">
                       <div className="space-y-3">
                         <div className="space-y-1.5">
-                          <Label htmlFor="markdown-image-url">{s('forum.markdown.image.url')}</Label>
+                          <Label htmlFor="markdown-image-url">{s('markdown.image.url')}</Label>
                           <Input
                             id="markdown-image-url"
                             value={imageUrl}
@@ -324,13 +324,13 @@ export const MarkdownEditor = ({
                               disabled={uploadingImage}
                             >
                               <Upload className="h-4 w-4" />
-                              {uploadingImage ? s('forum.markdown.image.uploading') : s('forum.markdown.image.upload')}
+                              {uploadingImage ? s('markdown.image.uploading') : s('markdown.image.upload')}
                             </Button>
                           </div>
                         ) : null}
 
                         <div className="space-y-1.5">
-                          <Label htmlFor="markdown-image-alt">{s('forum.markdown.image.alt')}</Label>
+                          <Label htmlFor="markdown-image-alt">{s('markdown.image.alt')}</Label>
                           <Input
                             id="markdown-image-alt"
                             value={imageAlt}
@@ -340,7 +340,7 @@ export const MarkdownEditor = ({
 
                         <div className="grid grid-cols-2 gap-2">
                           <div className="space-y-1.5">
-                            <Label>{s('forum.markdown.image.width')}</Label>
+                            <Label>{s('markdown.image.width')}</Label>
                             <Select
                               value={String(imageWidth)}
                               onValueChange={(nextValue) => setImageWidth(Number(nextValue) as MarkdownImageWidth)}
@@ -358,7 +358,7 @@ export const MarkdownEditor = ({
                             </Select>
                           </div>
                           <div className="space-y-1.5">
-                            <Label>{s('forum.markdown.image.align')}</Label>
+                            <Label>{s('markdown.image.align')}</Label>
                             <Select
                               value={imageAlign}
                               onValueChange={(nextValue) => setImageAlign(nextValue as MarkdownImageAlign)}
@@ -369,7 +369,7 @@ export const MarkdownEditor = ({
                               <SelectContent>
                                 {imageAlignOptions.map((align) => (
                                   <SelectItem key={align} value={align}>
-                                    {s(`forum.markdown.image.align_${align}` as SemanticKey)}
+                                    {s(`markdown.image.align_${align}` as SemanticKey)}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -383,7 +383,7 @@ export const MarkdownEditor = ({
                           onClick={handleAdvancedImageInsert}
                           disabled={!imageUrl.trim() || uploadingImage}
                         >
-                          {s('forum.markdown.image.insert')}
+                          {s('markdown.image.insert')}
                         </Button>
                       </div>
                     </PopoverContent>
@@ -417,7 +417,7 @@ export const MarkdownEditor = ({
             onClick={() => setActiveTab('write')}
           >
             <Edit3 className="h-3 w-3 mr-1" />
-            {s('forum.markdown.tab.write')}
+            {s('markdown.tab.write')}
           </Button>
           <Button
             type="button"
@@ -427,7 +427,7 @@ export const MarkdownEditor = ({
             onClick={() => setActiveTab('preview')}
           >
             <Eye className="h-3 w-3 mr-1" />
-            {s('forum.markdown.tab.preview')}
+            {s('markdown.tab.preview')}
           </Button>
         </div>
       </div>
@@ -460,7 +460,7 @@ export const MarkdownEditor = ({
             <MarkdownContent content={value} className="prose-sm" />
           ) : (
             <p className="text-muted-foreground italic">
-              {s('forum.markdown.preview.empty')}
+              {s('markdown.preview.empty')}
             </p>
           )}
         </div>

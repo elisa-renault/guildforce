@@ -3,7 +3,7 @@
   "defaultPack": "ds_critical",
   "packs": {
     "ds_critical": {
-      "description": "Design-system critical runtime coverage across public, player, guild, forum, and admin surfaces.",
+      "description": "Design-system critical runtime coverage across public, player, guild, and admin surfaces.",
       "publicRoutes": [
         "/",
         "/auth",
@@ -15,11 +15,6 @@
       "privateRoutes": [
         "/guilds",
         "/profile",
-        "/forum",
-        "/forum/admin",
-        "/forum/category/general",
-        "/forum/category/general/new",
-        "/forum/topic/1",
         "/admin",
         "/admin/design-system",
         "/guild/eu/tarren-mill/example",
@@ -43,7 +38,6 @@
       ],
       "privateRoutes": [
         "/guilds",
-        "/forum",
         "/admin",
         "/admin/design-system"
       ]

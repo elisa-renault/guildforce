@@ -8,7 +8,6 @@ export const COMMAND_PALETTE_GROUP_ORDER: CommandPaletteGroupId[] = [
   'members',
   'rosters',
   'polls',
-  'forum',
 ];
 
 const normalize = (value: string) =>

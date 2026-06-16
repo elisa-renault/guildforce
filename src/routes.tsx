@@ -41,11 +41,6 @@ const GuildAtlas = lazy(() => import("./pages/GuildAtlas"));
 const GuildAtlasEditor = lazy(() => import("./pages/GuildAtlasEditor"));
 const Profile = lazy(() => import("./pages/Profile"));
 const PublicProfile = lazy(() => import("./pages/PublicProfile"));
-const Forum = lazy(() => import("./pages/Forum"));
-const ForumCategory = lazy(() => import("./pages/ForumCategory"));
-const ForumNewTopic = lazy(() => import("./pages/ForumNewTopic"));
-const ForumTopic = lazy(() => import("./pages/ForumTopic"));
-const ForumAdmin = lazy(() => import("./pages/ForumAdmin"));
 const Admin = lazy(() => import("./pages/Admin"));
 const AdminDesignSystemPage = lazy(() => import("./pages/AdminDesignSystemPage"));
 const LegalPage = lazy(() => import("./pages/LegalPage"));
@@ -94,23 +89,6 @@ export const appRoutes: AppRoute[] = [
     layout: "public",
   },
   {
-    path: "/forum",
-    element: <Forum />,
-    title: "forum",
-    layout: "app",
-    requiresAuth: true,
-    navLabel: "forum",
-    showInNav: true,
-    breadcrumb: [{ labelKey: "forum", href: "/forum" }],
-  },
-  {
-    path: "/forum/admin",
-    element: <ForumAdmin />,
-    title: "forumAdmin",
-    layout: "app",
-    requiresAuth: true,
-  },
-  {
     path: "/admin",
     element: <Admin />,
     title: "admin",
@@ -149,27 +127,6 @@ export const appRoutes: AppRoute[] = [
     element: <Changelog />,
     title: "changelog",
     layout: "public",
-  },
-  {
-    path: "/forum/category/:categorySlug",
-    element: <ForumCategory />,
-    title: "forumCategory",
-    layout: "app",
-    requiresAuth: true,
-  },
-  {
-    path: "/forum/category/:categorySlug/new",
-    element: <ForumNewTopic />,
-    title: "forumNewTopic",
-    layout: "app",
-    requiresAuth: true,
-  },
-  {
-    path: "/forum/topic/:topicId",
-    element: <ForumTopic />,
-    title: "forumTopic",
-    layout: "app",
-    requiresAuth: true,
   },
   {
     path: "/guild/:regionSlug/:serverSlug/:guildSlug",

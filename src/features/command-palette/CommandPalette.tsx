@@ -2,7 +2,6 @@ import {
   AlertTriangle,
   BarChart3,
   Clock3,
-  MessageSquare,
   PanelTop,
   Search,
   Shield,
@@ -12,7 +11,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import { buildCommandPaletteRegistry } from './registry';
 import { resolveCommandPaletteHref } from './resolve';
@@ -63,7 +62,6 @@ const iconByType: Record<CommandPaletteResultType, LucideIcon> = {
   member: User,
   roster: Table,
   poll: BarChart3,
-  forum: MessageSquare,
 };
 
 const getItemInitial = (item: CommandPaletteItem) => item.title.charAt(0).toUpperCase();
@@ -101,7 +99,6 @@ export const CommandPalette = ({
   shortcutLabel,
 }: CommandPaletteProps) => {
   const navigate = useNavigate();
-  const location = useLocation();
   const isMobile = useIsMobile();
   const { user } = useAuth();
   const { t, language } = useLanguage();
@@ -109,8 +106,8 @@ export const CommandPalette = ({
   const [query, setQuery] = useState('');
 
   const localItems = useMemo(
-    () => buildCommandPaletteRegistry({ t, activeGuild, isAdmin, location }),
-    [activeGuild, isAdmin, location, t],
+    () => buildCommandPaletteRegistry({ t, activeGuild, isAdmin }),
+    [activeGuild, isAdmin, t],
   );
 
   const { groups, loading, error } = useCommandPaletteSearch({

@@ -18,6 +18,11 @@ const toRecord = (value: unknown): Record<string, unknown> => {
 
 const stringValue = (value: unknown) => (typeof value === 'string' ? value : null);
 
+const supportedResultTypes = ['action', 'page', 'guild', 'member', 'roster', 'poll'] as const;
+
+export const isCommandPaletteResultType = (value: string): value is CommandPaletteResultType =>
+  supportedResultTypes.includes(value as CommandPaletteResultType);
+
 const getGuildBasePath = (metadata: Record<string, unknown>) => {
   const region = stringValue(metadata.region) || 'eu';
   const server = stringValue(metadata.server);
@@ -41,8 +46,6 @@ export const groupForResultType = (type: CommandPaletteResultType) => {
       return 'rosters';
     case 'poll':
       return 'polls';
-    case 'forum':
-      return 'forum';
     default:
       return 'pages';
   }
@@ -75,17 +78,16 @@ export const resolveCommandPaletteHref = (item: CommandPaletteItem) => {
     return guildBasePath ? `${guildBasePath}/poll/${encodeURIComponent(item.id)}` : null;
   }
 
-  if (item.type === 'forum') {
-    return `/forum/topic/${encodeURIComponent(item.id)}`;
-  }
-
   return null;
 };
 
 export const mapServerResultToCommandItem = (result: CommandPaletteServerResult): CommandPaletteItem | null => {
-  const type = result.result_type as CommandPaletteResultType;
+  if (!isCommandPaletteResultType(result.result_type)) {
+    return null;
+  }
 
-  if (!['guild', 'member', 'roster', 'poll', 'forum'].includes(type)) {
+  const type = result.result_type;
+  if (!['guild', 'member', 'roster', 'poll'].includes(type)) {
     return null;
   }
 
@@ -103,7 +105,11 @@ export const mapServerResultToCommandItem = (result: CommandPaletteServerResult)
   };
 };
 
-export const mapRecentRowToCommandItem = (row: CommandPaletteRecentRow): CommandPaletteItem => {
+export const mapRecentRowToCommandItem = (row: CommandPaletteRecentRow): CommandPaletteItem | null => {
+  if (!isCommandPaletteResultType(row.item_type)) {
+    return null;
+  }
+
   const metadata = toRecord(row.metadata);
 
   return {

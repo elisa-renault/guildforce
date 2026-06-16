@@ -478,512 +478,6 @@ export type Database = {
           },
         ]
       }
-      forum_categories: {
-        Row: {
-          color: string | null
-          created_at: string
-          description: string | null
-          display_order: number
-          guild_id: string | null
-          icon: string | null
-          id: string
-          is_global: boolean
-          name: string
-          slug: string
-          updated_at: string
-        }
-        Insert: {
-          color?: string | null
-          created_at?: string
-          description?: string | null
-          display_order?: number
-          guild_id?: string | null
-          icon?: string | null
-          id?: string
-          is_global?: boolean
-          name: string
-          slug: string
-          updated_at?: string
-        }
-        Update: {
-          color?: string | null
-          created_at?: string
-          description?: string | null
-          display_order?: number
-          guild_id?: string | null
-          icon?: string | null
-          id?: string
-          is_global?: boolean
-          name?: string
-          slug?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "forum_categories_guild_id_fkey"
-            columns: ["guild_id"]
-            isOneToOne: false
-            referencedRelation: "guilds"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      forum_moderators: {
-        Row: {
-          category_id: string | null
-          created_at: string
-          guild_id: string | null
-          id: string
-          is_global_mod: boolean
-          user_id: string
-        }
-        Insert: {
-          category_id?: string | null
-          created_at?: string
-          guild_id?: string | null
-          id?: string
-          is_global_mod?: boolean
-          user_id: string
-        }
-        Update: {
-          category_id?: string | null
-          created_at?: string
-          guild_id?: string | null
-          id?: string
-          is_global_mod?: boolean
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "forum_moderators_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "forum_categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "forum_moderators_guild_id_fkey"
-            columns: ["guild_id"]
-            isOneToOne: false
-            referencedRelation: "guilds"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "forum_moderators_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      forum_notifications: {
-        Row: {
-          created_at: string
-          id: string
-          is_read: boolean
-          post_id: string | null
-          topic_id: string | null
-          triggered_by: string | null
-          type: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          is_read?: boolean
-          post_id?: string | null
-          topic_id?: string | null
-          triggered_by?: string | null
-          type: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          is_read?: boolean
-          post_id?: string | null
-          topic_id?: string | null
-          triggered_by?: string | null
-          type?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "forum_notifications_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "forum_posts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "forum_notifications_topic_id_fkey"
-            columns: ["topic_id"]
-            isOneToOne: false
-            referencedRelation: "forum_topics"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "forum_notifications_triggered_by_fkey"
-            columns: ["triggered_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "forum_notifications_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      forum_posts: {
-        Row: {
-          author_id: string
-          content: string
-          created_at: string
-          id: string
-          is_edited: boolean
-          quoted_post_id: string | null
-          topic_id: string
-          updated_at: string
-        }
-        Insert: {
-          author_id: string
-          content: string
-          created_at?: string
-          id?: string
-          is_edited?: boolean
-          quoted_post_id?: string | null
-          topic_id: string
-          updated_at?: string
-        }
-        Update: {
-          author_id?: string
-          content?: string
-          created_at?: string
-          id?: string
-          is_edited?: boolean
-          quoted_post_id?: string | null
-          topic_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "forum_posts_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "forum_posts_quoted_post_id_fkey"
-            columns: ["quoted_post_id"]
-            isOneToOne: false
-            referencedRelation: "forum_posts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "forum_posts_topic_id_fkey"
-            columns: ["topic_id"]
-            isOneToOne: false
-            referencedRelation: "forum_topics"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      forum_reactions: {
-        Row: {
-          created_at: string
-          id: string
-          post_id: string | null
-          reaction_type: string
-          topic_id: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          post_id?: string | null
-          reaction_type?: string
-          topic_id?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          post_id?: string | null
-          reaction_type?: string
-          topic_id?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "forum_reactions_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "forum_posts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "forum_reactions_topic_id_fkey"
-            columns: ["topic_id"]
-            isOneToOne: false
-            referencedRelation: "forum_topics"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "forum_reactions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      forum_reports: {
-        Row: {
-          created_at: string
-          details: string | null
-          id: string
-          post_id: string | null
-          reason: string
-          reporter_id: string
-          resolution_note: string | null
-          resolved_at: string | null
-          resolved_by: string | null
-          status: string
-          topic_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          details?: string | null
-          id?: string
-          post_id?: string | null
-          reason: string
-          reporter_id: string
-          resolution_note?: string | null
-          resolved_at?: string | null
-          resolved_by?: string | null
-          status?: string
-          topic_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          details?: string | null
-          id?: string
-          post_id?: string | null
-          reason?: string
-          reporter_id?: string
-          resolution_note?: string | null
-          resolved_at?: string | null
-          resolved_by?: string | null
-          status?: string
-          topic_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "forum_reports_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "forum_posts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "forum_reports_reporter_id_fkey"
-            columns: ["reporter_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "forum_reports_resolved_by_fkey"
-            columns: ["resolved_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "forum_reports_topic_id_fkey"
-            columns: ["topic_id"]
-            isOneToOne: false
-            referencedRelation: "forum_topics"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      forum_topic_subscriptions: {
-        Row: {
-          created_at: string
-          id: string
-          notify_replies: boolean
-          topic_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          notify_replies?: boolean
-          topic_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          notify_replies?: boolean
-          topic_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "forum_topic_subscriptions_topic_id_fkey"
-            columns: ["topic_id"]
-            isOneToOne: false
-            referencedRelation: "forum_topics"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "forum_topic_subscriptions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      forum_topics: {
-        Row: {
-          author_id: string
-          category_id: string
-          content: string
-          created_at: string
-          id: string
-          is_locked: boolean
-          is_pinned: boolean
-          last_reply_at: string | null
-          last_reply_by: string | null
-          reply_count: number
-          title: string
-          updated_at: string
-          view_count: number
-        }
-        Insert: {
-          author_id: string
-          category_id: string
-          content: string
-          created_at?: string
-          id?: string
-          is_locked?: boolean
-          is_pinned?: boolean
-          last_reply_at?: string | null
-          last_reply_by?: string | null
-          reply_count?: number
-          title: string
-          updated_at?: string
-          view_count?: number
-        }
-        Update: {
-          author_id?: string
-          category_id?: string
-          content?: string
-          created_at?: string
-          id?: string
-          is_locked?: boolean
-          is_pinned?: boolean
-          last_reply_at?: string | null
-          last_reply_by?: string | null
-          reply_count?: number
-          title?: string
-          updated_at?: string
-          view_count?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "forum_topics_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "forum_topics_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "forum_categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "forum_topics_last_reply_by_fkey"
-            columns: ["last_reply_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      forum_user_sanctions: {
-        Row: {
-          created_at: string
-          created_by: string
-          expires_at: string | null
-          id: string
-          is_active: boolean
-          reason: string | null
-          revoked_at: string | null
-          revoked_by: string | null
-          sanction_type: Database["public"]["Enums"]["forum_sanction_type"]
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          created_by: string
-          expires_at?: string | null
-          id?: string
-          is_active?: boolean
-          reason?: string | null
-          revoked_at?: string | null
-          revoked_by?: string | null
-          sanction_type: Database["public"]["Enums"]["forum_sanction_type"]
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string
-          expires_at?: string | null
-          id?: string
-          is_active?: boolean
-          reason?: string | null
-          revoked_at?: string | null
-          revoked_by?: string | null
-          sanction_type?: Database["public"]["Enums"]["forum_sanction_type"]
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "forum_user_sanctions_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "forum_user_sanctions_revoked_by_fkey"
-            columns: ["revoked_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "forum_user_sanctions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       guild_activity_logs: {
         Row: {
           action_details: Json | null
@@ -2858,7 +2352,6 @@ export type Database = {
           activation_rate_7d_pct: number | null
           active_guilds_30d: number
           active_guilds_30d_delta_pct: number | null
-          active_sanctions: number
           active_users_30d: number
           active_users_30d_delta_pct: number | null
           closed_polls: number
@@ -2874,14 +2367,11 @@ export type Database = {
           open_bugs: number
           new_signups_7d: number
           pending_deletions: number
-          pending_reports: number
           poll_voters: number
           retention_d30_pct: number | null
           retention_d7_pct: number | null
           total_guilds: number
           total_polls: number
-          total_posts: number
-          total_topics: number
           total_users: number
           total_wishes: number
           unique_wish_users: number
@@ -2896,7 +2386,6 @@ export type Database = {
         Returns: {
           created_bugs: number
           created_deletions: number
-          created_reports: number
           activated_users_7d: number | null
           activation_rate_7d_pct: number | null
           active_guilds_30d: number
@@ -2909,7 +2398,6 @@ export type Database = {
           new_signups: number
           open_bugs: number
           pending_deletions: number
-          pending_reports: number
           wau_users: number
         }[]
       }
@@ -2981,15 +2469,6 @@ export type Database = {
         Returns: Database["public"]["Tables"]["guild_seasons"]["Row"]
       }
       // Global admins may call this RPC in read-only mode; signature is unchanged.
-      get_user_forum_sanction: {
-        Args: { p_user_id: string }
-        Returns: {
-          created_at: string
-          expires_at: string
-          reason: string
-          sanction_type: Database["public"]["Enums"]["forum_sanction_type"]
-        }[]
-      }
       can_manage_guild_atlas: {
         Args: { p_guild_id: string; p_user_id: string }
         Returns: boolean
@@ -3041,10 +2520,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_user_forum_sanctioned: {
-        Args: { p_user_id: string }
-        Returns: boolean
-      }
       list_public_tables: {
         Args: never
         Returns: {
@@ -3091,10 +2566,6 @@ export type Database = {
       lock_roster_wishes: {
         Args: { p_roster_id: string }
         Returns: undefined
-      }
-      log_product_event_from_forum_post: {
-        Args: Record<PropertyKey, never>
-        Returns: unknown
       }
       log_product_event_from_poll_response: {
         Args: Record<PropertyKey, never>
@@ -3221,7 +2692,6 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
-      forum_sanction_type: "timeout" | "ban"
       guild_season_state: "draft" | "active" | "archived"
       poll_question_analysis_intent: "decision" | "informative"
       poll_question_type:
@@ -3372,7 +2842,6 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
-      forum_sanction_type: ["timeout", "ban"],
       guild_season_state: ["draft", "active", "archived"],
       poll_question_analysis_intent: ["decision", "informative"],
       poll_question_type: [

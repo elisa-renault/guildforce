@@ -1,10 +1,9 @@
-import { Crown, LogOut, MessageSquare, Settings, Undo2, User } from 'lucide-react';
+import { Crown, LogOut, Settings, Undo2, User } from 'lucide-react';
 import { useLayoutEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { CosmicButton } from '@/components/CosmicButton';
-import { NotificationBell } from '@/components/forum/NotificationBell';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { GuildSwitcher } from '@/components/navigation/GuildSwitcher';
 import { Button } from '@/components/ui/button';
@@ -23,7 +22,6 @@ import { useIsAdmin } from '@/hooks/useAdmin';
 import { interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { navItemClass } from '@/lib/nav-styles';
-import { cn } from '@/lib/utils';
 import { getRouteMeta } from '@/routes';
 
 export const GlobalNav = () => {
@@ -36,7 +34,6 @@ export const GlobalNav = () => {
   const routeMeta = getRouteMeta(location.pathname);
   const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
     resolveSemanticMessage({ key, language, translations: t });
-  const forumActive = location.pathname.startsWith('/forum');
   const menuCopy = language === 'fr'
     ? {
         account: 'Compte',
@@ -152,21 +149,6 @@ export const GlobalNav = () => {
           <div className="flex min-w-0 flex-1 items-center gap-3 md:gap-4 lg:gap-6">
             <div className="flex min-w-0 items-center gap-2 md:gap-3">
               <GuildSwitcher className="max-w-[196px] sm:max-w-[280px] lg:max-w-[340px]" />
-              <button
-                type="button"
-                onClick={() => navigate('/forum')}
-                className={cn(
-                  navItemClass({
-                    active: forumActive,
-                    hover: 'accent',
-                    className: 'hidden h-10 bg-transparent px-3 text-muted-foreground/90 lg:inline-flex',
-                  }),
-                )}
-                aria-current={forumActive ? 'page' : undefined}
-              >
-                <MessageSquare className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
-                <span>{t.forum.title}</span>
-              </button>
             </div>
 
             <div className="hidden min-w-0 flex-1 items-center justify-center lg:flex">
@@ -182,7 +164,6 @@ export const GlobalNav = () => {
           {user ? (
             <>
               <CommandPaletteTrigger variant="icon" className="lg:hidden" />
-              <NotificationBell />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
@@ -205,10 +186,6 @@ export const GlobalNav = () => {
                     ) : null}
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate('/forum')} className="lg:hidden">
-                    <MessageSquare className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                    {t.forum.title}
-                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/profile')}>
                     <User className="mr-2 h-4 w-4" strokeWidth={1.5} />
                     {t.profile.title}

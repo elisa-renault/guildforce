@@ -15,7 +15,7 @@ import type { SemanticKey } from '@/i18n/semantic';
 import type { AtlasDocStatus, AtlasVisibilityType } from '@/lib/guildAtlas';
 
 import { CosmicBackground } from '@/components/CosmicBackground';
-import { MarkdownEditor } from '@/components/forum';
+import { MarkdownEditor } from '@/components/markdown/MarkdownEditor';
 import { GlowCard } from '@/components/GlowCard';
 import { GuildWorkspaceShell } from '@/components/guild';
 import { PageContainer } from '@/components/layout/PageContainer';

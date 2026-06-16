@@ -8,7 +8,6 @@
           "role": "member",
           "routes": [
             "/guilds",
-            "/forum",
             "/profile"
           ]
         },
@@ -16,8 +15,6 @@
           "role": "admin",
           "routes": [
             "/guilds",
-            "/forum",
-            "/forum/admin",
             "/admin",
             "/profile"
           ]
@@ -31,7 +28,6 @@
           "role": "member",
           "routes": [
             "/guilds",
-            "/forum",
             "/profile"
           ]
         }
@@ -44,8 +40,6 @@
           "role": "admin",
           "routes": [
             "/guilds",
-            "/forum",
-            "/forum/admin",
             "/admin",
             "/profile"
           ]

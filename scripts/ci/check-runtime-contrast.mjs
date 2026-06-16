@@ -5,7 +5,7 @@ import { chromium } from 'playwright';
 
 const DEFAULT_BASE_URL = process.env.E2E_BASE_URL ?? 'http://localhost:8080';
 const DEFAULT_PUBLIC_ROUTES = ['/', '/auth'];
-const DEFAULT_PRIVATE_ROUTES = ['/guilds', '/forum', '/admin', '/admin/design-system'];
+const DEFAULT_PRIVATE_ROUTES = ['/guilds', '/admin', '/admin/design-system'];
 const DEFAULT_ROUTES_PACK_FILE = path.resolve(
   process.cwd(),
   'scripts',
