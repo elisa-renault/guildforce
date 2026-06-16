@@ -32,20 +32,10 @@ jobs:
           npm run verify:quick
           npm run build
 
-      - name: Prepare VPS permissions
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          port: ${{ secrets.VPS_PORT }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
-            sudo -n /usr/bin/chown -R "$(id -un):$(id -gn)" /var/www/guildforce
-
       - name: Sync app to VPS
         uses: burnett01/rsync-deployments@6.0.0
         with:
-          switches: -avz --delete --exclude=node_modules --exclude=.git --exclude=.env --exclude=supabase/.temp
+          switches: -avz --delete --exclude=node_modules --exclude=.git --exclude=.env --exclude=dist --exclude=supabase/.temp
           path: ./
           remote_path: /var/www/guildforce/
           remote_host: ${{ secrets.VPS_HOST }}
@@ -62,6 +52,11 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd /var/www/guildforce
+            if [ -d dist ] && [ ! -w dist ]; then
+              mv dist "dist.stale.$(date +%Y%m%d%H%M%S)"
+            elif [ -d dist/assets ] && [ ! -w dist/assets ]; then
+              mv dist "dist.stale.$(date +%Y%m%d%H%M%S)"
+            fi
             npm ci
             npm run build
             sudo -n /usr/bin/systemctl reload nginx
