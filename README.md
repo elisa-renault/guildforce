@@ -40,6 +40,9 @@ Create `.env` at the repository root (or copy from `.env.example`):
 VITE_SUPABASE_PROJECT_ID="your-project-id"
 VITE_SUPABASE_PUBLISHABLE_KEY="your-anon-key"
 VITE_SUPABASE_URL="https://your-project-id.supabase.co"
+VITE_POSTHOG_PROJECT_TOKEN="your-posthog-project-token"
+VITE_POSTHOG_HOST="https://eu.i.posthog.com"
+VITE_POSTHOG_ENABLED="true"
 ```
 
 ### 3) Run locally
@@ -87,7 +90,7 @@ Deployment runs through GitHub Actions via `.github/workflows/deploy.yml`:
 - Trigger: push to `main` (or manual dispatch).
 - Syncs repository content to the VPS using `rsync`.
 - Runs `npm ci` and `npm run build` on the server.
-- The build regenerates `dist/env.js` from server env values (`.env` and process env) for runtime Supabase config.
+- The build regenerates `dist/env.js` from server env values (`.env` and process env) for runtime Supabase and PostHog config.
 - Reloads Nginx service.
 
 ## Security Notes

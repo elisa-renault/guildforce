@@ -883,8 +883,8 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "editLegalPagesDesc": "Bearbeiten Sie den Inhalt obligatorischer rechtlicher Seiten"
   },
   "cookies": {
-    "title": "Externes Mitglied hinzuf\u00fcgen",
-    "description": "Sammle Klassen- und Spezialisierungsw\u00fcnsche deiner Gildenmitglieder, um das perfekte Roster aufzubauen.",
+    "title": "Wir verwenden Cookies",
+    "description": "Wir verwenden notwendige Cookies und, mit Ihrer Zustimmung, PostHog Cloud EU, um die Produktnutzung zu verstehen. Sie können auswählen, welche Cookies Sie akzeptieren.",
     "learnMore": "Erfahren Sie mehr \u00fcber unsere Datenschutzrichtlinie",
     "acceptAll": "Akzeptiere alles",
     "rejectAll": "Alles ablehnen",
@@ -895,9 +895,9 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "essential": "Unverzichtbare Cookies",
     "essentialDesc": "Erforderlich, damit die Website ordnungsgem\u00e4\u00df funktioniert. Kann nicht deaktiviert werden.",
     "analytics": "Analyse-Cookies",
-    "analyticsDesc": "Helfen Sie uns zu verstehen, wie Besucher mit der Website interagieren.",
+    "analyticsDesc": "Hilft uns, die Produktnutzung mit expliziten PostHog-Ereignissen zu messen, ohne Seitentexte oder Nutzerinhalte zu erfassen.",
     "marketing": "Marketing-Cookies",
-    "marketingDesc": "Wird verwendet, um personalisierte Werbung basierend auf Ihren Interessen anzuzeigen.",
+    "marketingDesc": "Derzeit werden keine Marketing-Cookies verwendet, außer optionale Kommunikationstools werden später aktiviert.",
     "manageCookies": "Cookie-Einstellungen"
   },
   "polls": {

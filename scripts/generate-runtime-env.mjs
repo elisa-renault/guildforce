@@ -15,6 +15,14 @@ const SUPABASE_KEYS = [
   'SUPABASE_ANON_KEY',
 ];
 
+const POSTHOG_KEYS = [
+  'VITE_POSTHOG_PROJECT_TOKEN',
+  'VITE_POSTHOG_HOST',
+  'VITE_POSTHOG_ENABLED',
+];
+
+const RUNTIME_ENV_KEYS = [...SUPABASE_KEYS, ...POSTHOG_KEYS];
+
 const stripWrappingQuotes = (value) => {
   if (!value) return value;
 
@@ -62,11 +70,11 @@ const readDotEnv = async () => {
   }
 };
 
-const fromProcessEnv = Object.fromEntries(SUPABASE_KEYS.map((key) => [key, process.env[key]]));
+const fromProcessEnv = Object.fromEntries(RUNTIME_ENV_KEYS.map((key) => [key, process.env[key]]));
 const fromDotEnv = await readDotEnv();
 
 const resolved = Object.fromEntries(
-  SUPABASE_KEYS.map((key) => {
+  RUNTIME_ENV_KEYS.map((key) => {
     const processValue = stripWrappingQuotes(fromProcessEnv[key]);
     const dotEnvValue = stripWrappingQuotes(fromDotEnv[key]);
     return [key, processValue || dotEnvValue || undefined];

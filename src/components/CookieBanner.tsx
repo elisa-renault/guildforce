@@ -1,11 +1,13 @@
+import { Cookie, Settings } from 'lucide-react';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Cookie, Settings } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { dispatchCookiePreferencesChanged } from '@/lib/analyticsConsent';
 
 export type CookiePreferences = {
   essential: boolean; // Always true, cannot be disabled
@@ -72,6 +74,7 @@ export const CookieBanner: React.FC = () => {
   const saveConsent = (prefs: CookiePreferences) => {
     localStorage.setItem(COOKIE_CONSENT_KEY, 'true');
     localStorage.setItem(COOKIE_PREFERENCES_KEY, JSON.stringify(prefs));
+    dispatchCookiePreferencesChanged(prefs);
     setPreferences(prefs);
     setShowBanner(false);
     setShowPreferences(false);

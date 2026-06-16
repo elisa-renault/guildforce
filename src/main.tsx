@@ -1,5 +1,3 @@
-import { createRoot } from "react-dom/client";
-import App from "./App.tsx";
 import "@fontsource/faculty-glyphic/latin-400.css";
 import "@fontsource/roboto/latin-300.css";
 import "@fontsource/roboto/latin-400.css";
@@ -8,7 +6,14 @@ import "@fontsource/roboto/latin-700.css";
 import facultyGlyphic400 from "@fontsource/faculty-glyphic/files/faculty-glyphic-latin-400-normal.woff2?url";
 import roboto400 from "@fontsource/roboto/files/roboto-latin-400-normal.woff2?url";
 import roboto500 from "@fontsource/roboto/files/roboto-latin-500-normal.woff2?url";
+import { PostHogProvider } from "@posthog/react";
+import { createRoot } from "react-dom/client";
+
+import App from "./App.tsx";
+
 import "./index.css";
+
+import { initializePostHog } from "@/lib/posthogClient";
 
 const preloadFont = (href: string) => {
   const link = document.createElement("link");
@@ -24,4 +29,14 @@ preloadFont(facultyGlyphic400);
 preloadFont(roboto400);
 preloadFont(roboto500);
 
-createRoot(document.getElementById("root")!).render(<App />);
+const posthogClient = initializePostHog();
+
+createRoot(document.getElementById("root")!).render(
+  posthogClient ? (
+    <PostHogProvider client={posthogClient}>
+      <App />
+    </PostHogProvider>
+  ) : (
+    <App />
+  ),
+);

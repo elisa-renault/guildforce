@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import log from '@/lib/logger';
+
 import type { User, Session } from '@supabase/supabase-js';
-import { trackProductEvent } from '@/lib/productEvents';
+
 import {
   clearAdminImpersonationTransition,
   clearStoredAdminImpersonationState,
@@ -12,6 +12,8 @@ import {
   type ImpersonationTargetSummary,
   type StoredAdminImpersonationState,
 } from '@/lib/adminImpersonation';
+import log from '@/lib/logger';
+import { trackProductEvent } from '@/lib/productEvents';
 
 let supabaseModulePromise: Promise<typeof import('@/integrations/supabase/client')> | null = null;
 
@@ -183,7 +185,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
               if (event === 'SIGNED_IN' && !suppressSignedInEffects) {
                 const { supabase } = await loadSupabase();
-                await trackProductEvent(supabase, 'first_login', { source: 'auth_context' });
+                await trackProductEvent(supabase, 'first_login', {
+                  source: 'auth_context',
+                  featureArea: 'auth',
+                });
               }
             }, 0);
           } else {

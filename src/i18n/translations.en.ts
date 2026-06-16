@@ -927,7 +927,7 @@ export const translationsEn: Translations = {
     },
     cookies: {
       title: 'We use cookies',
-      description: 'We use cookies to improve your experience and analyze site traffic. You can choose which cookies to accept.',
+      description: 'We use essential cookies and, with your consent, PostHog Cloud EU analytics to understand product usage. You can choose which cookies to accept.',
       learnMore: 'Learn more about our privacy policy',
       acceptAll: 'Accept all',
       rejectAll: 'Reject all',
@@ -938,9 +938,9 @@ export const translationsEn: Translations = {
       essential: 'Essential cookies',
       essentialDesc: 'Required for the site to function properly. Cannot be disabled.',
       analytics: 'Analytics cookies',
-      analyticsDesc: 'Help us understand how visitors interact with the site.',
+      analyticsDesc: 'Helps us measure product usage with explicit PostHog events, without capturing page text or user content.',
       marketing: 'Marketing cookies',
-      marketingDesc: 'Used to display personalized ads based on your interests.',
+      marketingDesc: 'No marketing cookies are currently used unless optional communication tools are enabled later.',
       manageCookies: 'Cookie settings',
     },
     polls: {

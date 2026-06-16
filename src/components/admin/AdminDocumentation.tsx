@@ -530,6 +530,13 @@ const DOCUMENTATION: DocSection[] = [
         tags: ['security', 'analytics', 'events'],
       },
       {
+        titleEn: 'PostHog product analytics',
+        titleFr: 'Analytics produit PostHog',
+        contentEn: 'PostHog Cloud EU is used only for consented explicit product analytics. Autocapture, automatic pageviews, and session replay stay disabled. The V1 event taxonomy is `app_session_started`, `first_login`, `activated_first_action`, `wish_created`, `poll_voted`, `forum_post_created`, and `guild_member_invited`; allowed properties are limited to source, feature area, guild/roster/poll identifiers, plus `$groups.guild` for guild-scoped events. Do not send email, BattleTag, usernames, character names, page text, forum content, poll content, comments, or secret/audit payloads. During the comparison period, Supabase `product_events` remains active for double measurement and admin operational metrics remain in Supabase.',
+        contentFr: 'PostHog Cloud EU sert uniquement aux analytics produit explicites avec consentement. L’autocapture, les pageviews automatiques et le session replay restent désactivés. La taxonomie V1 est `app_session_started`, `first_login`, `activated_first_action`, `wish_created`, `poll_voted`, `forum_post_created` et `guild_member_invited`; les propriétés autorisées sont limitées à la source, la zone fonctionnelle, les identifiants guilde/roster/sondage, plus `$groups.guild` pour les événements de guilde. Ne jamais envoyer email, BattleTag, pseudos, noms de personnages, textes de page, contenus forum, contenus de sondage, commentaires ou payloads de secrets/audit. Pendant la période de comparaison, Supabase `product_events` reste actif pour la double mesure et les métriques opérationnelles admin restent dans Supabase.',
+        tags: ['security', 'analytics', 'posthog', 'privacy', 'gdpr'],
+      },
+      {
         titleEn: 'Privacy controls',
         titleFr: 'Contrôles de confidentialité',
         contentEn: 'Privacy-related controls include BattleTag visibility preferences, account deletion requests, cookie consent, and legal page governance. Keep user-facing copy synchronized across supported locales, with EN fallback.',

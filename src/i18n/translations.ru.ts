@@ -1053,7 +1053,7 @@ export const translationsRu: Translations = createLocaleTranslations(translation
   },
   cookies: {
     title: 'Использование cookie',
-    description: 'Cookie используются для улучшения работы сайта и аналитики. Выбери, какие cookie разрешить.',
+    description: 'Мы используем обязательные cookie и, с твоего согласия, PostHog Cloud EU для анализа использования продукта. Можно выбрать, какие cookie разрешить.',
     learnMore: 'Подробнее о политике конфиденциальности',
     acceptAll: 'Принять все',
     rejectAll: 'Отклонить все',
@@ -1064,9 +1064,9 @@ export const translationsRu: Translations = createLocaleTranslations(translation
     essential: 'Обязательные cookie',
     essentialDesc: 'Нужны для корректной работы сайта. Отключить нельзя.',
     analytics: 'Аналитические cookie',
-    analyticsDesc: 'Помогают понимать, как используется сайт.',
+    analyticsDesc: 'Помогают измерять использование продукта через явные события PostHog без записи текста страниц или пользовательского контента.',
     marketing: 'Маркетинговые cookie',
-    marketingDesc: 'Используются для показа более релевантного контента.',
+    marketingDesc: 'Маркетинговые cookie сейчас не используются, если позже не будут включены дополнительные инструменты коммуникации.',
     manageCookies: 'Управление cookie',
   },
   polls: {
