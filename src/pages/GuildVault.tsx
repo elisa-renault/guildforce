@@ -1,13 +1,10 @@
-import { Loader2, LockKeyhole } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { CosmicBackground } from '@/components/CosmicBackground';
-import { GlowCard } from '@/components/GlowCard';
 import { GuildWorkspaceShell } from '@/components/guild';
 import { PageContainer } from '@/components/layout/PageContainer';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { useLanguage } from '@/contexts/LanguageContext';
 import { GuildVaultSection } from '@/components/settings';
 import { useGuildAccessState } from '@/hooks/useGuildAccessState';
 import { getGuildPath } from '@/lib/guildSlug';
@@ -15,7 +12,6 @@ import { getGuildPath } from '@/lib/guildSlug';
 const GuildVault = () => {
   const navigate = useNavigate();
   const { regionSlug, serverSlug, guildSlug } = useParams();
-  const { t } = useLanguage();
   const {
     loading,
     requiresAuth,
@@ -78,20 +74,12 @@ const GuildVault = () => {
       hasVaultAccess={hasVaultAccess}
       activeTab="vault"
     >
-      <PageContainer as="main" className="relative z-10 space-y-4 py-4 md:py-6" width="workspace">
-        <PageHeader
-          className="max-w-4xl"
-          icon={LockKeyhole}
-          title={t.guildNav.vault}
-          description={guild.name}
+      <PageContainer as="main" className="relative z-10 py-4 md:py-5" width="workspace">
+        <GuildVaultSection
+          guildId={guild.id}
+          canManageVault={isGM || hasManageVault}
+          officerRankThreshold={guild.officer_rank_threshold ?? 2}
         />
-        <GlowCard className="border-border/30 bg-card/10 p-3 md:p-4">
-          <GuildVaultSection
-            guildId={guild.id}
-            canManageVault={isGM || hasManageVault}
-            officerRankThreshold={guild.officer_rank_threshold ?? 2}
-          />
-        </GlowCard>
       </PageContainer>
     </GuildWorkspaceShell>
   );

@@ -1,4 +1,4 @@
-import { Loader2, Settings } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
@@ -6,7 +6,6 @@ import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { GuildWorkspaceShell } from '@/components/guild';
 import { PageContainer } from '@/components/layout/PageContainer';
-import { PageHeader } from '@/components/layout/PageHeader';
 import { GuildPermissionsEditor, MyPermissionsCard } from '@/components/permissions';
 import { RosterManager } from '@/components/roster';
 import {
@@ -335,7 +334,7 @@ const GuildSettings = () => {
 
       case 'permissions':
         return (
-          <GlowCard className="p-6">
+          <GlowCard surface="section">
             <GuildPermissionsEditor guildId={displayGuild.id} />
           </GlowCard>
         );
@@ -371,7 +370,7 @@ const GuildSettings = () => {
 
       case 'mypermissions':
         return (
-          <GlowCard className="p-6">
+          <GlowCard surface="section">
             <MyPermissionsCard guildId={displayGuild.id} isGM={isGM} />
           </GlowCard>
         );
@@ -407,7 +406,7 @@ const GuildSettings = () => {
         }),
       }}
     >
-      <div className="relative z-10 min-w-0 md:grid md:h-[calc(100dvh-7.5rem-var(--global-nav-extra-offset,0px))] md:min-h-0 md:grid-cols-[16rem_minmax(0,1fr)] md:overflow-hidden lg:h-[calc(100dvh-4rem-var(--global-nav-extra-offset,0px))]">
+      <div className="relative z-10 min-w-0 md:grid md:h-[calc(100dvh-7rem-var(--global-nav-extra-offset,0px))] md:min-h-0 md:grid-cols-[16rem_minmax(0,1fr)] md:overflow-hidden lg:h-[calc(100dvh-3.5rem-var(--global-nav-extra-offset,0px))]">
         <GuildSettingsSidebar
           activeSection={activeSection}
           onSectionChange={handleSectionChange}
@@ -415,22 +414,7 @@ const GuildSettings = () => {
         />
 
         <main className="min-w-0 md:min-h-0 md:overflow-y-auto">
-          <PageContainer width="workspace" className="space-y-4 py-4 md:py-6">
-            <PageHeader
-              className="max-w-4xl"
-              icon={Settings}
-              title={t.guildNav.settings}
-              description={displayGuild.name}
-              meta={(
-                <span className="rounded-md border border-border/50 bg-muted/30 px-2 py-1 text-xs text-muted-foreground">
-                  {resolveSemanticMessage({
-                    key: settingsSectionLabelKeys[activeSection],
-                    language: t.lang,
-                    translations: t,
-                  })}
-                </span>
-              )}
-            />
+          <PageContainer width="workspace" className="py-4 md:py-5">
             {renderSectionContent()}
           </PageContainer>
         </main>

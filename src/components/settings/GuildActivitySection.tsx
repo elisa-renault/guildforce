@@ -81,7 +81,7 @@ export const GuildActivitySection = ({
 
   return (
     <div className="space-y-4">
-      <h2 className="font-display text-lg">{t.common.activityLog}</h2>
+      <h2 className="font-sans text-base font-medium">{t.common.activityLog}</h2>
 
       <div className="min-h-[500px]">
         <ActivityLog guildId={guildId} />

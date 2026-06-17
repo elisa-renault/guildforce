@@ -123,7 +123,7 @@ export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps)
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2">
           <Shield className="h-4 w-4 text-primary" />
-          <h3 className="font-display text-base">{t.permissions.title}</h3>
+          <h3 className="font-sans text-base font-medium">{t.permissions.title}</h3>
           
           {/* Summary badges */}
           <div className="flex items-center gap-1.5">

@@ -1,17 +1,13 @@
-import { Crown, Shield, Search, Users, CheckCircle2, XCircle, RefreshCw, ChevronDown, ChevronLeft, ChevronRight, Check, X, Star, Eye } from 'lucide-react';
+import { Crown, Shield, CheckCircle2, XCircle, ChevronDown, ChevronLeft, ChevronRight, Check, X, Star, Eye } from 'lucide-react';
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
-import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { CosmicBackground } from '@/components/CosmicBackground';
 import { GuildWorkspaceShell } from '@/components/guild';
-import { ContextualToolbar } from '@/components/layout/ContextualToolbar';
 import { PageContainer } from '@/components/layout/PageContainer';
-import { PageHeader } from '@/components/layout/PageHeader';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { FilterBar, FilterSearchField, activeFilterControlClassName, filterControlClassName } from '@/components/ui/filter-controls';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -29,7 +25,6 @@ import { getLocalizedClassName, wowClasses } from '@/data/wowClasses';
 import { useIsAdmin } from '@/hooks/useAdmin';
 import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
 import { useGuildRankLabels } from '@/hooks/useGuildRankLabels';
-import { formatDistanceFromNowLocalized } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { supabase } from '@/integrations/supabase/client';
 import { toneCalloutClass, toneTextClass, wowClassColorValue } from '@/lib/design-tokens';
@@ -77,6 +72,26 @@ interface GuildInfo {
 
 const ITEMS_PER_PAGE = 20;
 
+const MembersTableSkeleton = () => (
+  <div className="space-y-4">
+    <div className="flex flex-wrap gap-2">
+      <Skeleton className="h-8 w-full md:w-[280px]" />
+      <Skeleton className="h-8 w-36" />
+      <Skeleton className="h-8 w-32" />
+      <Skeleton className="h-8 w-32" />
+      <Skeleton className="h-8 w-28" />
+    </div>
+    <Skeleton className="h-4 w-72 max-w-full" />
+    <div className="overflow-hidden rounded-lg border border-border/50 bg-card/30">
+      <div className="space-y-px">
+        {Array.from({ length: 10 }).map((_, index) => (
+          <Skeleton key={index} className="h-12 w-full rounded-none" />
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
 // eslint-disable-next-line complexity
 const GuildMembers = () => {
   const { regionSlug, serverSlug, guildSlug } = useParams();
@@ -95,9 +110,7 @@ const GuildMembers = () => {
   const [rankFilters, setRankFilters] = useState<number[]>([]);
   const [guildforceFilter, setGuildforceFilter] = useState<'all' | 'guildforce' | 'not-guildforce'>('all');
   const [mainFilter, setMainFilter] = useState<'all' | 'main-only' | 'alts-only'>('all');
-  const [hasRosterCache, setHasRosterCache] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [lastSyncDate, setLastSyncDate] = useState<string | null>(null);
   
   // Popover states
   const [classOpen, setClassOpen] = useState(false);
@@ -110,9 +123,6 @@ const GuildMembers = () => {
 
   const memberUi = {
     adminReadOnly: resolveSemanticMessage({ key: 'guild.members.admin_read_only', language, translations: t }),
-    guildMembersTitle: resolveSemanticMessage({ key: 'guild.members.title', language, translations: t }),
-    syncPrefix: resolveSemanticMessage({ key: 'guild.members.sync_prefix', language, translations: t }),
-    syncMissing: resolveSemanticMessage({ key: 'guild.members.sync_missing', language, translations: t }),
     searchPlaceholder: resolveSemanticMessage({ key: 'guild.members.search_placeholder', language, translations: t }),
     rankPlural: resolveSemanticMessage({ key: 'guild.members.rank_plural', language, translations: t }),
     rankSingle: resolveSemanticMessage({ key: 'guild.members.rank_single', language, translations: t }),
@@ -248,17 +258,6 @@ const GuildMembers = () => {
           .order('rank_index', { ascending: true });
 
         if (!rosterError && rosterCache && rosterCache.length > 0) {
-          setHasRosterCache(true);
-          
-          // Get the most recent updated_at for sync date display
-          const mostRecentUpdate = rosterCache.reduce((latest, m) => {
-            const current = m.updated_at ? new Date(m.updated_at).getTime() : 0;
-            return current > latest ? current : latest;
-          }, 0);
-          if (mostRecentUpdate > 0) {
-            setLastSyncDate(new Date(mostRecentUpdate).toISOString());
-          }
-          
           // Get profiles for matched users
           const userIds = rosterCache
             .filter(m => m.matched_user_id)
@@ -312,8 +311,6 @@ const GuildMembers = () => {
           setMembers(memberList);
         } else {
           // Fallback to wow_guild_memberships (only synced users)
-          setHasRosterCache(false);
-          
           const { data: wowMembers, error: wowError } = await supabase
             .from('wow_guild_memberships')
             .select(`
@@ -446,33 +443,11 @@ const GuildMembers = () => {
 
   const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
 
-  const breadcrumbItems = [
-    { label: t.common.myGuilds, href: '/guilds' },
-    { label: guild?.name || '...', href: basePath },
-    { label: t.guild.members },
-  ];
-
   const hasClassFilters = classFilters.length > 0;
   const hasRankFilters = rankFilters.length > 0;
   const hasGuildforceFilter = guildforceFilter !== 'all';
   const hasMainFilter = mainFilter !== 'all';
   const selectedClasses = wowClasses.filter(c => classFilters.includes(c.id));
-
-  if (loading) {
-    return (
-      <div className="flex-1 relative pt-16">
-        <CosmicBackground />
-        <PageContainer className="pt-20 pb-8" width="workspace">
-          <Skeleton className="h-12 w-1/3 mb-6" />
-          <div className="space-y-3">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full" />
-            ))}
-          </div>
-        </PageContainer>
-      </div>
-    );
-  }
 
   if (!guild) return null;
 
@@ -499,6 +474,10 @@ const GuildMembers = () => {
       }}
     >
       <PageContainer as="main" className="py-4 md:py-6" width="workspace">
+        {loading ? (
+          <MembersTableSkeleton />
+        ) : (
+          <>
         {/* Admin read-only banner */}
         {isAdminReadOnly && (
           <div className={cn("flex items-center justify-center gap-2 mb-4 p-2 rounded-lg border", toneCalloutClass('warning'))}>
@@ -509,64 +488,19 @@ const GuildMembers = () => {
           </div>
         )}
 
-        <div className="space-y-4">
-          <Breadcrumbs items={breadcrumbItems} />
-          <PageHeader
-            className="max-w-5xl"
-            icon={Users}
-            title={memberUi.guildMembersTitle}
-            meta={(
-              <>
-                <Badge variant="secondary" className="text-xs">
-                  {members.length}
-                </Badge>
-                <Badge variant="outline" className="border-healer/30 bg-healer/10 text-xs text-healer">
-                  {uniqueGuildforceMembers} {uniqueGuildforceMembers === 1 ? t.guild.uniqueMember : t.guild.uniqueMembers}
-                </Badge>
-              </>
-            )}
-            actions={(
-              <>
-                {hasRosterCache && lastSyncDate && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <RefreshCw className="h-3.5 w-3.5" />
-                    <span>
-                      {memberUi.syncPrefix}{' '}
-                      {formatDistanceFromNowLocalized(lastSyncDate, language, true)}
-                    </span>
-                  </div>
-                )}
-                {!hasRosterCache && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <RefreshCw className="h-4 w-4" />
-                    <span>{memberUi.syncMissing}</span>
-                  </div>
-                )}
-              </>
-            )}
+        {/* Filters */}
+        <FilterBar>
+          <label htmlFor="member-search" className="sr-only">
+            {t.common.search}
+          </label>
+          <FilterSearchField
+            id="member-search"
+            name="member-search"
+            placeholder={memberUi.searchPlaceholder}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            containerClassName="w-full md:w-[280px] flex-none"
           />
-        </div>
-
-        {/* Filters - Dashboard style */}
-        <ContextualToolbar className="my-4 max-w-6xl" leading={(
-          <div className="relative w-full md:w-[280px]">
-            <label htmlFor="member-search" className="sr-only">
-              {t.common.search}
-            </label>
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
-            <Input
-              id="member-search"
-              name="member-search"
-              placeholder={memberUi.searchPlaceholder}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-9 pl-8 text-sm cosmic-input md:h-8"
-            />
-          </div>
-        )}>
-          
-          {/* Filters row - horizontal scroll on mobile */}
-          <div className="flex min-w-0 gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible md:pb-0">
             
             {/* Class Filter */}
             <Popover open={classOpen} onOpenChange={setClassOpen}>
@@ -575,8 +509,9 @@ const GuildMembers = () => {
                   variant="outline"
                   size="sm"
                   className={cn(
-                    "h-9 md:h-8 min-w-[130px] md:min-w-[200px] justify-between gap-2 text-sm flex-shrink-0 whitespace-nowrap !bg-input/60 backdrop-blur-sm !border-border/50 hover:!bg-input/80 hover:!text-foreground",
-                    hasClassFilters && "!border-border/70"
+                    filterControlClassName,
+                    "min-w-[130px] justify-between gap-2 whitespace-nowrap md:min-w-[180px]",
+                    hasClassFilters && activeFilterControlClassName
                   )}
                 >
                   {hasClassFilters ? (
@@ -643,8 +578,9 @@ const GuildMembers = () => {
                   variant="outline"
                   size="sm"
                   className={cn(
-                    "h-9 md:h-8 min-w-[110px] md:min-w-[160px] justify-between gap-2 text-sm flex-shrink-0 whitespace-nowrap !bg-input/60 backdrop-blur-sm !border-border/50 hover:!bg-input/80 hover:!text-foreground",
-                    hasRankFilters && "!border-border/70"
+                    filterControlClassName,
+                    "min-w-[110px] justify-between gap-2 whitespace-nowrap md:min-w-[150px]",
+                    hasRankFilters && activeFilterControlClassName
                   )}
                 >
                   {hasRankFilters ? (
@@ -708,8 +644,9 @@ const GuildMembers = () => {
                   variant="outline"
                   size="sm"
                   className={cn(
-                    "h-9 md:h-8 min-w-[100px] md:min-w-[160px] justify-between gap-2 text-sm flex-shrink-0 whitespace-nowrap !bg-input/60 backdrop-blur-sm !border-border/50 hover:!bg-input/80 hover:!text-foreground",
-                    hasGuildforceFilter && "!border-border/70"
+                    filterControlClassName,
+                    "min-w-[120px] justify-between gap-2 whitespace-nowrap md:min-w-[150px]",
+                    hasGuildforceFilter && activeFilterControlClassName
                   )}
                 >
                   {guildforceFilter === 'guildforce' && (
@@ -774,8 +711,9 @@ const GuildMembers = () => {
                   variant="outline"
                   size="sm"
                   className={cn(
-                    "h-9 md:h-8 min-w-[100px] md:min-w-[140px] justify-between gap-2 text-sm flex-shrink-0 whitespace-nowrap !bg-input/60 backdrop-blur-sm !border-border/50 hover:!bg-input/80 hover:!text-foreground",
-                    hasMainFilter && "!border-border/70"
+                    filterControlClassName,
+                    "min-w-[110px] justify-between gap-2 whitespace-nowrap md:min-w-[130px]",
+                    hasMainFilter && activeFilterControlClassName
                   )}
                 >
                   {mainFilter === 'main-only' && (
@@ -828,22 +766,21 @@ const GuildMembers = () => {
                 </div>
               </PopoverContent>
             </Popover>
-          </div>
-        </ContextualToolbar>
+        </FilterBar>
 
         {/* Stats summary */}
         <div className="flex flex-wrap gap-2 mb-4 text-sm text-muted-foreground">
           <span>
             {filteredMembers.length} {t.guild.charactersShown}
           </span>
-          <span>•</span>
+          <span aria-hidden="true">/</span>
           <span className="text-healer">
             {uniqueGuildforceMembers} {uniqueGuildforceMembers === 1 ? t.guild.uniqueMember : t.guild.uniqueMembers}
           </span>
           <span className="text-muted-foreground/70">
             ({guildforceCount} {t.guild.characters})
           </span>
-          <span>•</span>
+          <span aria-hidden="true">/</span>
           <span className="text-muted-foreground">
             {notOnGuildforceCount} {t.guild.charactersNotRegistered}
           </span>
@@ -994,6 +931,8 @@ const GuildMembers = () => {
               </Button>
             </div>
           </div>
+        )}
+          </>
         )}
       </PageContainer>
     </GuildWorkspaceShell>

@@ -39,7 +39,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
+import { FilterBar, FilterSearchField, activeFilterControlClassName, filterControlClassName } from '@/components/ui/filter-controls';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useGuildAccessState } from '@/hooks/useGuildAccessState';
 import { useGuildAtlas } from '@/hooks/useGuildAtlas';
@@ -199,6 +199,7 @@ const GuildAtlas = () => {
           className="max-w-6xl py-3 md:py-3"
           icon={Compass}
           title={s('guild.atlas.title')}
+          bordered={false}
           actions={canManageAtlas ? (
             <Button size="sm" onClick={() => openCreate()}>
               <Plus className="h-4 w-4 sm:mr-2" />
@@ -208,18 +209,15 @@ const GuildAtlas = () => {
         />
 
         <section className="grid gap-4 xl:grid-cols-[minmax(360px,0.9fr)_minmax(0,1.1fr)]">
-          <GlowCard hoverable={false} className="p-4 md:p-5">
+          <GlowCard surface="section" hoverable={false}>
             <div className="mb-4 flex flex-col gap-3">
-              <div className="flex gap-2">
-                <div className="relative min-w-0 flex-1">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    value={filters.query}
-                    onChange={(event) => setFilters((current) => ({ ...current, query: event.target.value }))}
-                    placeholder={s('guild.atlas.search.placeholder')}
-                    className="pl-9"
-                  />
-                </div>
+              <FilterBar className="mb-0 flex-nowrap">
+                <FilterSearchField
+                  value={filters.query}
+                  onChange={(event) => setFilters((current) => ({ ...current, query: event.target.value }))}
+                  placeholder={s('guild.atlas.search.placeholder')}
+                  containerClassName="min-w-0 flex-1"
+                />
 
                 {canManageAtlas ? (
                   <DropdownMenu>
@@ -227,7 +225,7 @@ const GuildAtlas = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-10 shrink-0 gap-2"
+                        className={cn(filterControlClassName, 'shrink-0 gap-2')}
                         aria-label={s('guild.atlas.filter.label')}
                       >
                         <SlidersHorizontal className="h-4 w-4" />
@@ -265,25 +263,25 @@ const GuildAtlas = () => {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 ) : null}
-              </div>
+              </FilterBar>
 
               <div className="flex gap-2 overflow-x-auto pb-1">
                 <Button
                   type="button"
-                  variant={filters.collection === 'all' ? 'default' : 'outline'}
+                  variant="outline"
                   size="sm"
                   onClick={() => setFilters((current) => ({ ...current, collection: 'all' }))}
-                  className="shrink-0"
+                  className={cn(filterControlClassName, 'shrink-0', filters.collection === 'all' && activeFilterControlClassName)}
                 >
                   {s('guild.atlas.filter.all_categories')}
                 </Button>
                 {hasUncategorized ? (
                   <Button
                     type="button"
-                    variant={filters.collection === UNCATEGORIZED_COLLECTION ? 'default' : 'outline'}
+                    variant="outline"
                     size="sm"
                     onClick={() => setFilters((current) => ({ ...current, collection: UNCATEGORIZED_COLLECTION }))}
-                    className="shrink-0"
+                    className={cn(filterControlClassName, 'shrink-0', filters.collection === UNCATEGORIZED_COLLECTION && activeFilterControlClassName)}
                   >
                     {s('guild.atlas.collection.uncategorized')}
                   </Button>
@@ -292,10 +290,10 @@ const GuildAtlas = () => {
                   <Button
                     key={collection}
                     type="button"
-                    variant={filters.collection === collection ? 'default' : 'outline'}
+                    variant="outline"
                     size="sm"
                     onClick={() => setFilters((current) => ({ ...current, collection }))}
-                    className="shrink-0"
+                    className={cn(filterControlClassName, 'shrink-0', filters.collection === collection && activeFilterControlClassName)}
                   >
                     {collection}
                   </Button>
@@ -311,13 +309,13 @@ const GuildAtlas = () => {
                     type="button"
                     onClick={() => openDocument(doc)}
                     className={cn(
-                      'w-full rounded-lg border border-border/40 bg-card/20 p-3 text-left transition-colors hover:border-primary/35 hover:bg-primary/10',
+                      'w-full rounded border border-border/35 bg-background/25 p-3 text-left transition-colors hover:border-primary/35 hover:bg-primary/10',
                       selectedDoc?.id === doc.id && 'border-primary/45 bg-primary/15',
                     )}
                   >
                     <div className="flex min-w-0 items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-foreground">{doc.title}</p>
+                        <p className="truncate text-sm font-medium text-foreground">{doc.title}</p>
                         {doc.summary ? (
                           <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{doc.summary}</p>
                         ) : null}
@@ -357,7 +355,7 @@ const GuildAtlas = () => {
             )}
           </GlowCard>
 
-          <GlowCard hoverable={false} className="min-h-[560px] p-4 md:p-5">
+          <GlowCard surface="section" hoverable={false} className="min-h-[560px]">
             {selectedDoc ? (
               <article className="space-y-5">
                 <div className="flex flex-col gap-3 border-b border-border/35 pb-4 md:flex-row md:items-start md:justify-between">
@@ -367,7 +365,7 @@ const GuildAtlas = () => {
                         {s(`guild.atlas.status.${selectedDoc.status}` as SemanticKey)}
                       </Badge>
                     ) : null}
-                    <h2 className="text-2xl font-semibold tracking-normal text-foreground">{selectedDoc.title}</h2>
+                    <h2 className="text-xl font-medium tracking-normal text-foreground">{selectedDoc.title}</h2>
                     {selectedDoc.summary ? (
                       <p className="mt-2 text-sm leading-6 text-muted-foreground">{selectedDoc.summary}</p>
                     ) : null}

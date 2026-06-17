@@ -657,12 +657,12 @@ export const GuildVaultSection = ({
   })();
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <LockKeyhole className="h-4 w-4 text-primary" />
-            <h2 className="font-display text-base md:text-lg">{vault.title}</h2>
+            <h2 className="font-sans text-base font-medium">{vault.title}</h2>
           </div>
           <p className="text-sm text-muted-foreground">{vault.subtitle}</p>
         </div>
@@ -868,7 +868,7 @@ export const GuildVaultSection = ({
           {vault.empty}
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {secrets.map((secret) => {
             const revealed = revealedSecrets[secret.id];
             const showAccessEditor = Boolean(accessEditorOpen[secret.id]);
@@ -886,7 +886,7 @@ export const GuildVaultSection = ({
             const progressValue = (remainingSeconds / 60) * 100;
 
             return (
-              <div key={secret.id} className="rounded-lg border border-border/40 bg-card/30 p-3">
+              <div key={secret.id} className="rounded border border-border/35 bg-card/20 p-3">
                 <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
                   <div className="min-w-0">
                     <div className="flex items-start gap-3">
@@ -903,7 +903,7 @@ export const GuildVaultSection = ({
                       <div className="min-w-0 flex-1 space-y-2 lg:space-y-1">
                         <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:gap-3">
                           <div className="flex min-w-0 flex-wrap items-center gap-2">
-                            <h3 className="truncate text-sm font-semibold md:text-base">{secret.label}</h3>
+                            <h3 className="truncate text-sm font-medium md:text-base">{secret.label}</h3>
                             {secret.can_reveal && (
                               <Badge variant="outline" className="h-6 px-2 text-[11px]">
                                 {vault.state.revealBadge}

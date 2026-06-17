@@ -18,6 +18,12 @@ interface GuildBattleNetSectionProps {
   onResyncComplete?: () => void;
 }
 
+type EdgeFunctionError = Error & {
+  context?: {
+    json?: () => Promise<{ error?: string }>;
+  };
+};
+
 export const GuildBattleNetSection = ({
   guildId,
   isOwnerOrGM,
@@ -55,7 +61,7 @@ export const GuildBattleNetSection = ({
       if (error) {
         // Try to get message from error context (FunctionsHttpError)
         try {
-          const context = await (error as any).context?.json?.();
+          const context = await (error as EdgeFunctionError).context?.json?.();
           errorMessage = context?.error || error.message || '';
         } catch {
           errorMessage = error.message || '';
@@ -91,7 +97,7 @@ export const GuildBattleNetSection = ({
               .replace('{{jobId}}', jobId)
           : s('settings.guild_battlenet.resync_success_desc', 'Member cache refreshed.'),
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       log.error('Resync error:', error);
       toast({
         title: t.guildSettings.resyncError,
@@ -132,7 +138,7 @@ export const GuildBattleNetSection = ({
       let errorMessage = '';
       if (error) {
         try {
-          const context = await (error as any).context?.json?.();
+          const context = await (error as EdgeFunctionError).context?.json?.();
           errorMessage = context?.error || error.message || '';
         } catch {
           errorMessage = error.message || '';
@@ -180,8 +186,8 @@ export const GuildBattleNetSection = ({
   };
 
   return (
-    <GlowCard className="p-6">
-      <h2 className="font-display text-lg mb-4">{s('settings.guild_battlenet.title')}</h2>
+    <GlowCard surface="section">
+      <h2 className="mb-4 font-sans text-base font-medium">{s('settings.guild_battlenet.title')}</h2>
       
       <div className="grid gap-4 md:grid-cols-2">
         <section className="rounded-xl border border-border/50 bg-background/30 p-4">
@@ -190,7 +196,7 @@ export const GuildBattleNetSection = ({
               {syncing ? <RefreshCw className="h-4 w-4 animate-spin" /> : <BattleNetIcon className="h-4 w-4" />}
             </div>
             <div className="min-w-0">
-              <h3 className="font-display text-sm">
+              <h3 className="font-sans text-sm font-medium">
                 {s('settings.guild_battlenet.resync_title', 'Sync member cache')}
               </h3>
               <p className="mt-1 text-xs text-muted-foreground">
@@ -222,7 +228,7 @@ export const GuildBattleNetSection = ({
               <PenLine className="h-4 w-4" />
             </div>
             <div className="min-w-0">
-              <h3 className="font-display text-sm">
+              <h3 className="font-sans text-sm font-medium">
                 {s('settings.guild_battlenet.rename_action', 'Guild renamed')}
               </h3>
               <p className="mt-1 text-xs text-muted-foreground">

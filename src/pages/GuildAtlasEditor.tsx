@@ -258,6 +258,7 @@ const GuildAtlasEditor = () => {
           icon={Compass}
           title={isEditing ? s('guild.atlas.editor.edit_title') : s('guild.atlas.editor.new_title')}
           description={s('guild.atlas.editor.description')}
+          bordered={false}
           meta={(
             <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary">
               {s(`guild.atlas.status.${selectedStatus}` as SemanticKey)}
@@ -273,7 +274,7 @@ const GuildAtlasEditor = () => {
 
         <div className="grid gap-4 xl:grid-cols-[minmax(300px,0.42fr)_minmax(0,1fr)]">
           <div className="space-y-4">
-            <GlowCard hoverable={false} className="space-y-4 p-4">
+            <GlowCard surface="section" hoverable={false} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="atlas-title">{s('guild.atlas.editor.title')}</Label>
                 <Input
@@ -327,8 +328,8 @@ const GuildAtlasEditor = () => {
                 </div>
               </div>
 
-              <div className="rounded-lg border border-border/40 bg-card/20 p-3">
-                <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+              <div className="border-t border-border/35 pt-3">
+                <div className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
                   <ShieldCheck className="h-4 w-4 text-primary" />
                   {s('guild.atlas.visibility.label')}
                 </div>
@@ -396,8 +397,8 @@ const GuildAtlasEditor = () => {
             </GlowCard>
           </div>
 
-          <GlowCard hoverable={false} className="space-y-3 p-4 md:p-5">
-            <div className="flex flex-col gap-3 border-b border-border/35 pb-3 sm:flex-row sm:items-center sm:justify-between">
+          <GlowCard surface="section" hoverable={false} className="space-y-3">
+            <div className="flex flex-col gap-3 pb-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <Label htmlFor="atlas-content">{s('guild.atlas.editor.content')}</Label>
                 <p className="mt-1 text-xs text-muted-foreground">{s('guild.atlas.editor.content_hint')}</p>
@@ -461,7 +462,7 @@ const GuildAtlasEditor = () => {
               }}
             />
 
-            <div className="flex flex-col-reverse gap-2 border-t border-border/35 pt-4 sm:flex-row sm:items-center sm:justify-end">
+            <div className="flex flex-col-reverse gap-2 pt-4 sm:flex-row sm:items-center sm:justify-end">
               <Button variant="outline" onClick={() => navigate(atlasPath)}>
                 {t.common.cancel}
               </Button>

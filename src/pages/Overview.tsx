@@ -258,11 +258,12 @@ const Overview = () => {
         )}
 
         <PageHeader
-          className="mb-5 max-w-4xl xl:max-w-5xl"
+          className="mb-4"
           icon={LayoutDashboard}
           title={`${t.guildNav.welcome}${greetingName ? `, ${greetingName}` : ''}`}
           description={`${guild?.name} • ${guild?.server || ''}`}
-          titleClassName="font-display cosmic-text"
+          titleClassName="font-sans font-medium"
+          bordered={false}
           meta={(
             <>
               <Badge variant="secondary" className="text-xs">
@@ -276,15 +277,15 @@ const Overview = () => {
           )}
         />
 
-        <div className="grid max-w-[1380px] gap-4 lg:gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+        <div className="grid gap-4 lg:gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
           {/* Left Column - My Status + Wishes */}
           <div className="space-y-4 min-w-0">
             {/* My Status Card */}
-            <GlowCard className="p-4 overflow-hidden">
+            <GlowCard surface="section" className="overflow-hidden">
               <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-              <h2 className="font-semibold text-foreground">
-                {t.guildNav.myStatus}
-              </h2>
+                <h2 className="font-medium text-foreground">
+                  {t.guildNav.myStatus}
+                </h2>
                 {/* Show first approved wish if any */}
                 {(() => {
                   const firstApproved = myWishes.find(w => w.validation_status === 'approved');
@@ -393,7 +394,7 @@ const Overview = () => {
               </div>
 
               {/* Edit Wishes Button */}
-              <div className="mt-4 pt-4 border-t border-border/50">
+              <div className="mt-3">
                 <CosmicButton
                   onClick={() => guild && navigate(getGuildWishesPath(guild.region, guild.server, guild.name))}
                   icon={<Sparkles className="h-4 w-4" strokeWidth={1.5} />}
@@ -405,28 +406,28 @@ const Overview = () => {
             </GlowCard>
 
             {/* Mini Stats */}
-            <GlowCard className="p-4">
-              <h2 className="font-semibold text-foreground mb-3">
+            <GlowCard surface="section">
+              <h2 className="font-medium text-foreground mb-3">
                 {t.guildNav.guildOverview}
               </h2>
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <div className="w-9 h-9 rounded bg-primary/10 flex items-center justify-center">
                     <Users className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-foreground">{totalMembers}</p>
+                    <p className="text-xl font-medium text-foreground">{totalMembers}</p>
                     <p className="text-xs text-muted-foreground">
                       {t.guild.members}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-healer/10 flex items-center justify-center">
+                  <div className="w-9 h-9 rounded bg-healer/10 flex items-center justify-center">
                     <CheckCircle2 className="h-5 w-5 text-healer" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-foreground">{confirmedMembers}</p>
+                    <p className="text-xl font-medium text-foreground">{confirmedMembers}</p>
                     <p className="text-xs text-muted-foreground">
                       {t.dashboard.confirmedPlayers}
                     </p>
@@ -447,14 +448,14 @@ const Overview = () => {
             )}
             
             {/* Quick Actions */}
-            <GlowCard className="p-4">
-              <h2 className="font-semibold text-foreground mb-3">
+            <GlowCard surface="section">
+              <h2 className="font-medium text-foreground mb-3">
                 {t.guildNav.quickAccess}
               </h2>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => navigate(`${basePath}/roster`)}
-                  className="flex items-center gap-2 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors text-left"
+                  className="flex items-center gap-2 rounded border border-border/35 bg-background/25 px-3 py-2.5 text-left transition-colors hover:bg-muted/25"
                 >
                   <Swords className="h-4 w-4 text-primary" />
                   <span className="text-sm">
@@ -463,7 +464,7 @@ const Overview = () => {
                 </button>
                 <button
                   onClick={() => navigate(`${basePath}/members`)}
-                  className="flex items-center gap-2 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors text-left"
+                  className="flex items-center gap-2 rounded border border-border/35 bg-background/25 px-3 py-2.5 text-left transition-colors hover:bg-muted/25"
                 >
                   <Users className="h-4 w-4 text-primary" />
                   <span className="text-sm">

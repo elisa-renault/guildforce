@@ -501,28 +501,23 @@ export const GuildProfileSection = ({
   };
 
   return (
-    <div className="space-y-4 md:space-y-6 overflow-x-hidden">
-      {/* Avatar + Info Grid */}
-      <div className="grid gap-4 md:gap-6 lg:grid-cols-3">
-        {/* Avatar Section */}
-        <GlowCard className="p-4 md:p-6 overflow-hidden">
-          <h2 className="font-display text-base md:text-lg mb-3 md:mb-4">{t.guildSettings.avatar}</h2>
-          
-          <div className="flex flex-col items-center gap-3 md:gap-4">
-            <Avatar className="h-24 w-24 md:h-28 md:w-28 lg:h-32 lg:w-32 border-2 border-border">
+    <div className="space-y-4 overflow-x-hidden">
+      <GlowCard surface="section" className="p-4">
+        <div className="grid gap-4 md:grid-cols-[220px_minmax(0,1fr)] lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)]">
+          <section className="flex flex-col items-center justify-center gap-3 text-center md:border-r md:border-border/35 md:pr-4">
+            <Avatar className="h-20 w-20 border border-border/60 md:h-24 md:w-24">
               {guild.avatar_url ? (
                 <AvatarImage src={guild.avatar_url} alt={guild.name} />
               ) : (
                 <AvatarFallback className={`${
-                  guild.faction === 'horde' 
-                    ? 'bg-horde/20 text-horde' 
+                  guild.faction === 'horde'
+                    ? 'bg-horde/20 text-horde'
                     : 'bg-alliance/20 text-alliance'
                 }`}>
-                  <Shield className="h-8 w-8 md:h-10 md:w-10 lg:h-12 lg:w-12" strokeWidth={1.5} />
+                  <Shield className="h-8 w-8 md:h-10 md:w-10" strokeWidth={1.5} />
                 </AvatarFallback>
               )}
             </Avatar>
-
             <div className="flex flex-wrap justify-center gap-2">
               <input
                 ref={fileInputRef}
@@ -555,42 +550,40 @@ export const GuildProfileSection = ({
                 </CosmicButton>
               )}
             </div>
+            <p className="max-w-xs text-xs text-muted-foreground">{t.guildSettings.avatarHint}</p>
+          </section>
 
-            <p className="text-xs text-muted-foreground text-center">
-              {t.guildSettings.avatarHint}
-            </p>
-          </div>
-        </GlowCard>
+          <section className="min-w-0">
+            <h2 className="mb-3 font-sans text-base font-medium">{t.guildSettings.guildInfo}</h2>
 
-        {/* Guild Info Section */}
-        <GlowCard className="p-4 md:p-6 lg:col-span-2">
-          <h2 className="font-display text-base md:text-lg mb-3 md:mb-4">{t.guildSettings.guildInfo}</h2>
-          
-          <div className="grid gap-y-0.5 sm:grid-cols-2 sm:gap-x-8">
-            <div className="flex justify-between gap-2 py-2 border-b border-border/50">
-              <span className="text-muted-foreground text-sm">{t.guild.name}</span>
-              <span className="font-medium text-right break-words">{guild.name}</span>
+            <div className="grid gap-y-0.5 lg:grid-cols-2 lg:gap-x-8">
+              <div className="flex justify-between gap-3 border-b border-border/35 py-2">
+                <span className="text-sm text-muted-foreground">{t.guild.name}</span>
+                <span className="text-right font-medium break-words">{guild.name}</span>
+              </div>
+              <div className="flex justify-between gap-3 border-b border-border/35 py-2">
+                <span className="text-sm text-muted-foreground">{t.battlenet.region}</span>
+                <span className="text-right font-medium uppercase">{guild.region}</span>
+              </div>
+              <div className="flex justify-between gap-3 border-b border-border/35 py-2">
+                <span className="text-sm text-muted-foreground">{t.guild.faction}</span>
+                <span className={`text-right font-medium ${
+                  guild.faction === 'horde' ? 'text-horde' : 'text-alliance'
+                }`}>
+                  {guild.faction === 'horde' ? t.guild.horde : t.guild.alliance}
+                </span>
+              </div>
+              <div className="flex justify-between gap-3 border-b border-border/35 py-2">
+                <span className="text-sm text-muted-foreground">{t.guild.server}</span>
+                <span className="text-right font-medium break-words">{guild.server}</span>
+              </div>
             </div>
-            <div className="flex justify-between gap-2 py-2 border-b border-border/50">
-              <span className="text-muted-foreground text-sm">{t.battlenet.region}</span>
-              <span className="font-medium uppercase text-right">{guild.region}</span>
-            </div>
-            <div className="flex justify-between gap-2 py-2 border-b border-border/50">
-              <span className="text-muted-foreground text-sm">{t.guild.faction}</span>
-              <span className={`font-medium text-right ${
-                guild.faction === 'horde' ? 'text-horde' : 'text-alliance'
-              }`}>
-                {guild.faction === 'horde' ? t.guild.horde : t.guild.alliance}
-              </span>
-            </div>
-            <div className="flex justify-between gap-2 py-2 border-b border-border/50">
-              <span className="text-muted-foreground text-sm">{t.guild.server}</span>
-              <span className="font-medium text-right break-words">{guild.server}</span>
-            </div>
-          </div>
+          </section>
+        </div>
+      </GlowCard>
 
-          {/* Officer Rank Threshold */}
-          <div className="mt-4 md:mt-6">
+      <GlowCard surface="section" className="p-4">
+        <section className="min-w-0">
             <div className="flex items-center gap-2 mb-1.5 md:mb-2">
               <Crown className="h-4 w-4 text-warning" />
               <Label className="text-xs md:text-sm font-medium">
@@ -625,12 +618,12 @@ export const GuildProfileSection = ({
                 ))}
               </div>
             )}
-          </div>
+          </section>
 
           {isGM && ranks.length > 0 && (
-            <div className="mt-5 border-t border-border/50 pt-5">
+            <div className="mt-5 border-t border-border/35 pt-5">
               <div className="mb-3">
-                <h3 className="text-sm font-semibold">{t.guildSettings.rankLabels.title}</h3>
+                <h3 className="text-sm font-medium">{t.guildSettings.rankLabels.title}</h3>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {t.guildSettings.rankLabels.description}
                 </p>
@@ -702,8 +695,7 @@ export const GuildProfileSection = ({
               </div>
             </div>
           )}
-        </GlowCard>
-      </div>
+      </GlowCard>
     </div>
   );
 };

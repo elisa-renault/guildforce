@@ -111,7 +111,7 @@ export const MyPermissionsCard = ({ guildId, isGM }: MyPermissionsCardProps) => 
       <div className="space-y-4">
         <div className="flex items-center gap-2 mb-4">
           <Key className="h-5 w-5 text-primary" />
-          <h3 className="font-display text-lg">
+          <h3 className="font-sans text-base font-medium">
             {t.permissions.myPermissions}
           </h3>
         </div>
@@ -137,7 +137,7 @@ export const MyPermissionsCard = ({ guildId, isGM }: MyPermissionsCardProps) => 
       <div className="space-y-4">
         <div className="flex items-center gap-2 mb-4">
           <Key className="h-5 w-5 text-primary" />
-          <h3 className="font-display text-lg">
+          <h3 className="font-sans text-base font-medium">
             {t.permissions.myPermissions}
           </h3>
         </div>
@@ -153,7 +153,7 @@ export const MyPermissionsCard = ({ guildId, isGM }: MyPermissionsCardProps) => 
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
         <Key className="h-5 w-5 text-primary" />
-        <h3 className="font-display text-lg">
+        <h3 className="font-sans text-base font-medium">
           {t.permissions.myPermissions}
         </h3>
         <Badge variant="secondary" className="text-xs">

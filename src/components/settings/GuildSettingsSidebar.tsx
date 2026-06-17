@@ -62,7 +62,7 @@ export const GuildSettingsSidebar = ({
 
   return (
     <>
-      <div className="sticky z-30 border-b border-border/50 bg-background/95 px-3 backdrop-blur-sm md:hidden top-[calc(7.5rem+var(--global-nav-extra-offset,0px))]">
+      <div className="sticky z-30 border-b border-border/40 bg-background/95 px-3 backdrop-blur-sm md:hidden top-[calc(7rem+var(--global-nav-extra-offset,0px))]">
         <ScrollArea className="w-full">
           <div className="flex items-center gap-0.5 py-1.5">
             {visibleSectionConfigs.map((section) => {
@@ -75,9 +75,9 @@ export const GuildSettingsSidebar = ({
                   type="button"
                   onClick={() => onSectionChange(section.id)}
                   className={cn(
-                    'flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors',
+                    'flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded px-2.5 py-1.5 text-xs font-medium transition-colors',
                     isActive
-                      ? 'bg-primary/20 text-foreground ring-1 ring-primary/50'
+                      ? 'bg-primary/10 text-foreground'
                       : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
                   )}
                 >
@@ -91,9 +91,9 @@ export const GuildSettingsSidebar = ({
         </ScrollArea>
       </div>
 
-      <aside className="hidden h-full min-h-0 w-64 shrink-0 border-r border-border/50 bg-card/30 backdrop-blur-sm md:block">
+      <aside className="hidden h-full min-h-0 w-64 shrink-0 border-r border-border/35 bg-background/35 md:block">
         <nav className="h-full overflow-y-auto p-3">
-          <div className="space-y-5">
+          <div className="space-y-4">
             {(['guild', 'management', 'audit', 'integration', 'mypermissions'] as const).map((categoryKey) => {
               const sections = sectionsByCategory[categoryKey];
               if (!sections || sections.length === 0) return null;
@@ -101,8 +101,8 @@ export const GuildSettingsSidebar = ({
               const categoryLabel = CATEGORIES[categoryKey];
 
               return (
-                <section key={categoryKey} className="space-y-2">
-                  <h3 className="flex h-5 items-center px-3 text-xs font-semibold uppercase leading-none tracking-wider text-muted-foreground">
+                <section key={categoryKey} className="space-y-1.5">
+                  <h3 className="flex h-5 items-center px-3 text-[11px] font-medium uppercase leading-none tracking-[0.14em] text-muted-foreground">
                     {sm(categoryLabel)}
                   </h3>
                   <div className="space-y-1">
@@ -116,10 +116,10 @@ export const GuildSettingsSidebar = ({
                           type="button"
                           onClick={() => onSectionChange(section.id)}
                           className={cn(
-                            'flex h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-sm font-medium transition-colors',
+                            'flex h-9 w-full items-center gap-2.5 rounded border-l-2 px-3 text-left text-sm font-medium transition-colors',
                             isActive
-                              ? 'bg-primary/20 text-foreground ring-1 ring-primary/50'
-                              : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
+                              ? 'border-l-primary bg-primary/10 text-foreground'
+                              : 'border-l-transparent text-muted-foreground hover:bg-muted/35 hover:text-foreground',
                           )}
                         >
                           <Icon className="h-4 w-4 shrink-0" />
