@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useLanguage, Language } from '@/contexts/LanguageContext';
 import { getLanguageDisplayLabel, LANGUAGE_OPTIONS, isSupportedLanguage } from '@/i18n/config';
 import { interpolateMessage } from '@/i18n/format';
@@ -365,12 +365,12 @@ const Profile = () => {
     <div className="flex-1 relative">
       <CosmicBackground />
 
-      <PageContainer as="main" className="relative z-10 space-y-6 py-6" width="app">
+      <PageContainer as="main" className="relative z-10 mx-auto max-w-5xl space-y-4 py-4" width="app">
         <PageHeader
           icon={User}
           title={t.profile.title}
           description={profile.username}
-          titleClassName="font-display"
+          bordered={false}
           actions={(
             <Button
               variant="outline"
@@ -384,212 +384,117 @@ const Profile = () => {
           )}
         />
 
-        <div className="grid max-w-6xl grid-cols-1 gap-4 lg:grid-cols-2">
-          {/* Left column: Avatar + Profile stacked */}
-          <div className="space-y-4">
-            {/* Avatar */}
-            <GlowCard className="p-5" hoverable={false}>
-              <h2 className="text-sm font-medium text-foreground mb-4">{t.profile.avatar}</h2>
-              
-              <div className="flex flex-col items-center">
-                <div className="w-28 h-28 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/25 overflow-hidden mb-4">
-                  {uploadingAvatar ? (
-                    <Loader2 className="h-10 w-10 text-white animate-spin" />
-                  ) : profile?.avatar_url ? (
-                    <img src={profile.avatar_url} alt={ui.avatarAlt} className="w-full h-full object-cover" />
-                  ) : (
-                    <User className="h-12 w-12 text-white" strokeWidth={1.5} />
-                  )}
-                </div>
-
-                <div className="flex flex-col gap-2 w-full">
-                  <input
-                    id="profile-avatar-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileSelect}
-                    className="sr-only"
-                    disabled={uploadingAvatar}
-                  />
-                  <Label
-                    htmlFor="profile-avatar-upload"
-                    className="inline-flex h-9 w-full cursor-pointer items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
-                    aria-disabled={uploadingAvatar}
-                  >
-                    <Upload className="h-4 w-4 mr-2" strokeWidth={1.5} />
-                    {t.profile.uploadAvatar}
-                  </Label>
-                  
-                  {profile?.avatar_url && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleDeleteAvatar}
-                      disabled={uploadingAvatar}
-                      className="w-full text-status-error hover:text-status-error hover:bg-status-error/10"
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" strokeWidth={1.5} />
-                      {t.profile.removeAvatar}
-                    </Button>
-                  )}
-                </div>
-                
-                <p className="text-xs text-muted-foreground mt-3 text-center">{t.profile.avatarHint}</p>
-              </div>
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_300px]">
+          <div className="space-y-3">
+            <GlowCard surface="section" hoverable={false}>
+              <h2 className="mb-3 text-sm font-medium text-foreground">{t.profile.accountConnection}</h2>
+              <BattleNetConnect embedded />
             </GlowCard>
 
-            {/* Profile form - Username only */}
-            <GlowCard className="p-5" hoverable={false}>
-              <h2 className="text-sm font-medium text-foreground mb-4 flex items-center gap-2">
-                <User className="h-4 w-4 text-primary" strokeWidth={1.5} />
-                {t.profile.profileInfo}
-              </h2>
-
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <FormField control={form.control} name="username" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-foreground text-sm">{t.auth.pseudo}</FormLabel>
-                      <FormControl>
-                        <Input placeholder={t.auth.pseudoPlaceholder} {...field} className="cosmic-input" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-
-                  <CosmicButton type="submit" className="w-full" loading={saving} icon={<Save className="h-4 w-4" strokeWidth={1.5} />}>
-                    {ui.saveUsername}
-                  </CosmicButton>
-                </form>
-              </Form>
-            </GlowCard>
-
-          </div>
-
-          {/* Right column: Battle.net + Preferences + Danger Zone */}
-          <div className="space-y-4">
-            {/* Battle.net connection */}
-            <GlowCard className="p-5" hoverable={false}>
-              <h2 className="text-sm font-medium text-foreground mb-4">{t.profile.accountConnection}</h2>
-              <BattleNetConnect />
-            </GlowCard>
-
-            {/* Preferences - Language + Privacy combined */}
-            <GlowCard className="p-5" hoverable={false}>
-              <h2 className="text-sm font-medium text-foreground mb-4 flex items-center gap-2">
+            <GlowCard surface="section" hoverable={false}>
+              <h2 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
                 <Settings className="h-4 w-4 text-primary" strokeWidth={1.5} />
                 {ui.preferencesTitle}
               </h2>
 
-              {/* Language selector */}
-              <div className="mb-4 pb-4 border-b border-border">
-                <Label htmlFor="profile-language" className="text-sm text-foreground flex items-center gap-2">
+              <div className="grid gap-3 border-b border-border/45 pb-3 md:grid-cols-[160px_minmax(0,1fr)] md:items-center">
+                <Label htmlFor="profile-language" className="flex items-center gap-2 text-sm text-foreground">
                   <Globe className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
                   {t.profile.language}
                 </Label>
-                <Select value={language} onValueChange={(val) => isSupportedLanguage(val) && handleLanguageChange(val)}>
-                  <SelectTrigger id="profile-language" className="cosmic-input mt-2">
-                    <SelectValue placeholder={getLanguageDisplayLabel(language)} />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border">
-                    {LANGUAGE_OPTIONS.map((option) => (
-                      <SelectItem key={option.code} value={option.code}>{getLanguageDisplayLabel(option.code)}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground mt-1.5">
-                  {t.common.savedAutomatically}
-                </p>
+                <div>
+                  <Select value={language} onValueChange={(val) => isSupportedLanguage(val) && handleLanguageChange(val)}>
+                    <SelectTrigger id="profile-language" className="cosmic-input">
+                      <SelectValue placeholder={getLanguageDisplayLabel(language)} />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border">
+                      {LANGUAGE_OPTIONS.map((option) => (
+                        <SelectItem key={option.code} value={option.code}>{getLanguageDisplayLabel(option.code)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="mt-1 text-xs text-muted-foreground">{t.common.savedAutomatically}</p>
+                </div>
               </div>
 
-              {/* BattleTag visibility */}
               {profile?.battletag && (
-                <div className="mb-4 pb-4 border-b border-border">
-                  <Label className="text-sm text-foreground flex items-center gap-2 mb-3">
+                <div className="grid gap-3 border-b border-border/45 py-3 md:grid-cols-[160px_minmax(0,1fr)] md:items-start">
+                  <Label className="flex items-center gap-2 pt-1 text-sm text-foreground">
                     <Shield className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
                     {t.profile.battletagVisibility.label}
                   </Label>
-                  <RadioGroup
-                    value={battletagVisibility}
-                    onValueChange={(val) => handleBattletagVisibilityChange(val as BattletagVisibility)}
-                    className="space-y-2"
-                  >
-                    <div className="flex items-start space-x-3 p-2.5 rounded-lg hover:bg-muted/30 transition-colors">
-                      <RadioGroupItem value="everyone" id="vis-everyone" className="mt-0.5" />
-                      <Label htmlFor="vis-everyone" className="flex-1 cursor-pointer">
-                        <div className="flex items-center gap-2">
-                          <Globe className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
-                          <span className="text-sm font-medium text-foreground">{t.profile.battletagVisibility.everyone}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-0.5">{t.profile.battletagVisibility.everyoneDesc}</p>
-                      </Label>
-                    </div>
-                    <div className="flex items-start space-x-3 p-2.5 rounded-lg hover:bg-muted/30 transition-colors">
-                      <RadioGroupItem value="guild_only" id="vis-guild" className="mt-0.5" />
-                      <Label htmlFor="vis-guild" className="flex-1 cursor-pointer">
-                        <div className="flex items-center gap-2">
-                          <Users className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
-                          <span className="text-sm font-medium text-foreground">{t.profile.battletagVisibility.guildOnly}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-0.5">{t.profile.battletagVisibility.guildOnlyDesc}</p>
-                      </Label>
-                    </div>
-                    <div className="flex items-start space-x-3 p-2.5 rounded-lg hover:bg-muted/30 transition-colors">
-                      <RadioGroupItem value="nobody" id="vis-nobody" className="mt-0.5" />
-                      <Label htmlFor="vis-nobody" className="flex-1 cursor-pointer">
-                        <div className="flex items-center gap-2">
-                          <EyeOff className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
-                          <span className="text-sm font-medium text-foreground">{t.profile.battletagVisibility.nobody}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-0.5">{t.profile.battletagVisibility.nobodyDesc}</p>
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {t.common.savedAutomatically}
-                  </p>
+                  <div>
+                    <RadioGroup
+                      value={battletagVisibility}
+                      onValueChange={(val) => handleBattletagVisibilityChange(val as BattletagVisibility)}
+                      className="space-y-1"
+                    >
+                      <div className={`rounded-md px-2 py-1.5 transition-colors ${
+                        battletagVisibility === 'everyone'
+                          ? 'bg-primary/10 text-foreground'
+                          : 'text-muted-foreground hover:bg-muted/15'
+                      }`}>
+                        <Label htmlFor="vis-everyone" className="flex cursor-pointer items-center gap-2">
+                          <RadioGroupItem value="everyone" id="vis-everyone" className="shrink-0" />
+                          <Globe className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={1.5} />
+                          <span className="text-sm font-medium leading-tight text-foreground">{t.profile.battletagVisibility.everyone}</span>
+                          <span className="sr-only">{t.profile.battletagVisibility.everyoneDesc}</span>
+                        </Label>
+                      </div>
+                      <div className={`rounded-md px-2 py-1.5 transition-colors ${
+                        battletagVisibility === 'guild_only'
+                          ? 'bg-primary/10 text-foreground'
+                          : 'text-muted-foreground hover:bg-muted/15'
+                      }`}>
+                        <Label htmlFor="vis-guild" className="flex cursor-pointer items-center gap-2">
+                          <RadioGroupItem value="guild_only" id="vis-guild" className="shrink-0" />
+                          <Users className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={1.5} />
+                          <span className="text-sm font-medium leading-tight text-foreground">{t.profile.battletagVisibility.guildOnly}</span>
+                          <span className="sr-only">{t.profile.battletagVisibility.guildOnlyDesc}</span>
+                        </Label>
+                      </div>
+                      <div className={`rounded-md px-2 py-1.5 transition-colors ${
+                        battletagVisibility === 'nobody'
+                          ? 'bg-primary/10 text-foreground'
+                          : 'text-muted-foreground hover:bg-muted/15'
+                      }`}>
+                        <Label htmlFor="vis-nobody" className="flex cursor-pointer items-center gap-2">
+                          <RadioGroupItem value="nobody" id="vis-nobody" className="shrink-0" />
+                          <EyeOff className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={1.5} />
+                          <span className="text-sm font-medium leading-tight text-foreground">{t.profile.battletagVisibility.nobody}</span>
+                          <span className="sr-only">{t.profile.battletagVisibility.nobodyDesc}</span>
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                    <p className="mt-1 text-xs text-muted-foreground">{t.common.savedAutomatically}</p>
+                  </div>
                 </div>
               )}
 
-              {/* Privacy info - collapsible */}
-              <details className="group">
-                <summary className="text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors flex items-center gap-1.5">
+              <details className="group pt-3">
+                <summary className="flex cursor-pointer items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground">
                   <Info className="h-3.5 w-3.5" strokeWidth={1.5} />
                   {ui.privacyTitle}
                 </summary>
-                <div className="mt-3 space-y-2 text-xs">
-                  <div className="p-2.5 rounded-lg bg-muted/30 border border-border">
-                    <p className="font-medium text-foreground">
-                      {ui.privacyPublicTitle}
-                    </p>
-                    <p className="text-muted-foreground mt-0.5">
-                      {ui.privacyPublicDesc}
-                    </p>
+                <dl className="mt-3 grid gap-2 text-xs md:grid-cols-3">
+                  <div>
+                    <dt className="font-medium text-foreground">{ui.privacyPublicTitle}</dt>
+                    <dd className="mt-0.5 text-muted-foreground">{ui.privacyPublicDesc}</dd>
                   </div>
-                  <div className="p-2.5 rounded-lg bg-muted/30 border border-border">
-                    <p className="font-medium text-foreground">
-                      {ui.privacyGuildTitle}
-                    </p>
-                    <p className="text-muted-foreground mt-0.5">
-                      {ui.privacyGuildDesc}
-                    </p>
+                  <div>
+                    <dt className="font-medium text-foreground">{ui.privacyGuildTitle}</dt>
+                    <dd className="mt-0.5 text-muted-foreground">{ui.privacyGuildDesc}</dd>
                   </div>
-                  <div className="p-2.5 rounded-lg bg-muted/30 border border-border">
-                    <p className="font-medium text-foreground">
-                      {ui.privacyPrivateTitle}
-                    </p>
-                    <p className="text-muted-foreground mt-0.5">
-                      {ui.privacyPrivateDesc}
-                    </p>
+                  <div>
+                    <dt className="font-medium text-foreground">{ui.privacyPrivateTitle}</dt>
+                    <dd className="mt-0.5 text-muted-foreground">{ui.privacyPrivateDesc}</dd>
                   </div>
-                </div>
+                </dl>
               </details>
             </GlowCard>
 
-            {/* Danger Zone */}
-            <GlowCard className="p-5 border-destructive/30" hoverable={false}>
-              <h2 className="text-sm font-medium text-status-error mb-4 flex items-center gap-2">
+            <GlowCard surface="flat" className="rounded-md border border-destructive/35 p-3" hoverable={false}>
+              <h2 className="mb-3 flex items-center gap-2 text-sm font-medium text-status-error">
                 <AlertTriangle className="h-4 w-4 text-status-error" strokeWidth={1.5} />
                 {ui.dangerZoneTitle}
               </h2>
@@ -614,7 +519,7 @@ const Profile = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="w-full text-status-error hover:text-status-error hover:bg-status-error/10 border-status-error/30 whitespace-normal text-left h-auto py-2"
+                      className="w-full rounded-md border-status-error/35 text-status-error hover:bg-status-error/10 hover:text-status-error"
                     >
                       <Trash2 className="h-4 w-4 mr-2 shrink-0" />
                       <span>{t.profile.deletion.requestDeletion}</span>
@@ -667,6 +572,83 @@ const Profile = () => {
               )}
             </GlowCard>
           </div>
+
+          <aside className="space-y-3 lg:order-last">
+            <GlowCard surface="section" hoverable={false}>
+              <h2 className="mb-3 text-sm font-medium text-foreground">{t.profile.avatar}</h2>
+              <div className="flex flex-col items-center">
+                <div className="mb-3 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary to-secondary">
+                  {uploadingAvatar ? (
+                    <Loader2 className="h-10 w-10 text-white animate-spin" />
+                  ) : profile?.avatar_url ? (
+                    <img src={profile.avatar_url} alt={ui.avatarAlt} className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="h-12 w-12 text-white" strokeWidth={1.5} />
+                  )}
+                </div>
+
+                <div className="flex w-full flex-col gap-2">
+                  <input
+                    id="profile-avatar-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    className="sr-only"
+                    disabled={uploadingAvatar}
+                  />
+                  <Label
+                    htmlFor="profile-avatar-upload"
+                    className="inline-flex h-8 w-full cursor-pointer items-center justify-center rounded border border-input bg-background px-3 py-1.5 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+                    aria-disabled={uploadingAvatar}
+                  >
+                    <Upload className="h-4 w-4 mr-2" strokeWidth={1.5} />
+                    {t.profile.uploadAvatar}
+                  </Label>
+                  
+                  {profile?.avatar_url && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDeleteAvatar}
+                      disabled={uploadingAvatar}
+                      className="w-full text-status-error hover:text-status-error hover:bg-status-error/10"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" strokeWidth={1.5} />
+                      {t.profile.removeAvatar}
+                    </Button>
+                  )}
+                </div>
+                
+                <p className="mt-2 text-center text-xs text-muted-foreground">{t.profile.avatarHint}</p>
+              </div>
+            </GlowCard>
+
+            <GlowCard surface="section" hoverable={false}>
+              <h2 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
+                <User className="h-4 w-4 text-primary" strokeWidth={1.5} />
+                {t.profile.profileInfo}
+              </h2>
+
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+                  <FormField control={form.control} name="username" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-foreground text-sm">{t.auth.pseudo}</FormLabel>
+                      <FormControl>
+                        <Input placeholder={t.auth.pseudoPlaceholder} {...field} className="cosmic-input" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+
+                  <CosmicButton type="submit" className="w-full" loading={saving} icon={<Save className="h-4 w-4" strokeWidth={1.5} />}>
+                    {ui.saveUsername}
+                  </CosmicButton>
+                </form>
+              </Form>
+            </GlowCard>
+          </aside>
         </div>
 
         {/* Avatar Crop Dialog */}

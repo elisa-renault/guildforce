@@ -118,13 +118,26 @@ export const useUserGuilds = ({ enabled = true }: UseUserGuildsOptions = {}) => 
 
       if (visibleGuilds.length > 0) {
         const guildIds = visibleGuilds.map((guild) => guild.id);
-        const { data: rosterCountsData, error: rosterCountsError } = await supabase
-          .from('guild_roster_cache')
-          .select('guild_id')
-          .in('guild_id', guildIds);
+        const guildNames = Array.from(new Set(visibleGuilds.map((guild) => guild.name)));
+        const guildRegions = Array.from(new Set(visibleGuilds.map((guild) => guild.region || 'eu')));
+        const [rosterCountsResult, wowMembershipCountsResult] = await Promise.all([
+          supabase
+            .from('guild_roster_cache')
+            .select('guild_id')
+            .in('guild_id', guildIds),
+          supabase
+            .from('wow_guild_memberships')
+            .select('guild_name, guild_realm, guild_realm_slug, guild_region')
+            .in('guild_name', guildNames)
+            .in('guild_region', guildRegions),
+        ]);
 
-        if (rosterCountsError) {
-          throw rosterCountsError;
+        if (rosterCountsResult.error) {
+          log.warn('Unable to count guild roster cache rows:', rosterCountsResult.error);
+        }
+
+        if (wowMembershipCountsResult.error) {
+          log.warn('Unable to count synced guild memberships:', wowMembershipCountsResult.error);
         }
 
         const membershipRoleByGuildId = new Map(
@@ -144,8 +157,19 @@ export const useUserGuilds = ({ enabled = true }: UseUserGuildsOptions = {}) => 
         );
 
         const memberCounts: Record<string, number> = {};
-        rosterCountsData?.forEach((member) => {
+        rosterCountsResult.data?.forEach((member) => {
           memberCounts[member.guild_id] = (memberCounts[member.guild_id] || 0) + 1;
+        });
+
+        const syncedMemberCountsByGuildKey = new Map<string, number>();
+        wowMembershipCountsResult.data?.forEach((membership) => {
+          const guildKey = buildGuildDiscoveryKey({
+            region: membership.guild_region || 'eu',
+            guildName: membership.guild_name,
+            realmNameOrSlug: membership.guild_realm_slug || membership.guild_realm,
+          });
+
+          syncedMemberCountsByGuildKey.set(guildKey, (syncedMemberCountsByGuildKey.get(guildKey) || 0) + 1);
         });
 
         appGuilds = visibleGuilds.map((guild) => {
@@ -166,7 +190,7 @@ export const useUserGuilds = ({ enabled = true }: UseUserGuildsOptions = {}) => 
             region: guild.region || 'eu',
             faction: guild.faction as 'horde' | 'alliance',
             role: derivedRole,
-            memberCount: memberCounts[guild.id] || 0,
+            memberCount: memberCounts[guild.id] || syncedMemberCountsByGuildKey.get(guildKey) || 0,
             hasMain: false,
             avatar_url: guild.avatar_url,
             isDetectedOnly: false,

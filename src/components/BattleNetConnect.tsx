@@ -39,8 +39,11 @@ interface WoWCharacter {
   is_main: boolean;
 }
 
+interface BattleNetConnectProps {
+  embedded?: boolean;
+}
 
-export const BattleNetConnect: React.FC = () => {
+export const BattleNetConnect: React.FC<BattleNetConnectProps> = ({ embedded = false }) => {
   const { profile, session, refreshProfile } = useAuth();
   const { t } = useLanguage();
   const s = (key: SemanticKey, fallback?: string) =>
@@ -317,11 +320,11 @@ export const BattleNetConnect: React.FC = () => {
     return getClassNameFromBattleNet(classId);
   };
 
-  return (
-    <GlowCard className="p-6">
-      <div className="flex items-center gap-3 mb-4">
-        <BattleNetIcon className="w-6 h-6 text-primary" />
-        <h3 className="text-lg font-semibold text-foreground">{s('battlenet.connect.title')}</h3>
+  const content = (
+    <>
+      <div className="mb-3 flex items-center gap-2.5">
+        <BattleNetIcon className="h-5 w-5 text-primary" />
+        <h3 className="text-base font-medium text-foreground">{s('battlenet.connect.title')}</h3>
         {isConnected && (
           <div className="ml-auto flex items-center gap-2">
             {connectedRegion && (
@@ -329,7 +332,7 @@ export const BattleNetConnect: React.FC = () => {
                 {REGION_LABELS[connectedRegion]}
               </Badge>
             )}
-            <Badge variant="secondary">
+            <Badge variant="secondary" className="h-5 px-1.5 text-[11px] font-medium">
               <CheckCircle className="w-3 h-3 mr-1" />
               {profile?.battletag}
             </Badge>
@@ -371,46 +374,46 @@ export const BattleNetConnect: React.FC = () => {
           </CosmicButton>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {isLoadingCharacters ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
             </div>
           ) : characters.length > 0 ? (
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground mb-2">
+            <div className="space-y-1.5">
+              <p className="text-sm text-muted-foreground">
                 {t.battlenet.yourCharacters} ({characters.length})
               </p>
               <div
-                className="max-h-64 overflow-y-auto space-y-2 pr-2"
+                className="max-h-56 overflow-y-auto pr-1"
                 tabIndex={0}
                 aria-label={t.battlenet.yourCharacters}
               >
                 {[...characters].sort((a, b) => (b.is_main ? 1 : 0) - (a.is_main ? 1 : 0)).map((char) => (
                   <div
                     key={char.id}
-                    className={`flex items-center justify-between p-3 rounded-lg border transition-colors cursor-pointer ${
-                      char.is_main 
-                        ? 'border-primary bg-primary/10' 
-                        : 'border-border/50 bg-background/30 hover:bg-background/50'
+                    className={`flex cursor-pointer items-center justify-between gap-3 border-b px-1 py-2 transition-colors last:border-b-0 ${
+                      char.is_main
+                        ? 'border-primary/35 bg-primary/5'
+                        : 'border-border/35 hover:bg-muted/20'
                     }`}
                     onClick={() => setMainCharacter({ name: char.name, realm_slug: char.realm_slug })}
                   >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center bg-wow-${getClassName(char.class_id)}/20`}>
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded bg-wow-${getClassName(char.class_id)}/15`}>
                         <span className={`text-xs font-bold text-wow-${getClassName(char.class_id)}`}>
                           {char.level}
                         </span>
                       </div>
-                      <div>
-                        <p className={`font-medium text-wow-${getClassName(char.class_id)}`}>
+                      <div className="min-w-0">
+                        <p className={`truncate text-sm font-medium text-wow-${getClassName(char.class_id)}`}>
                           {char.name}
                         </p>
                         <p className="text-xs text-muted-foreground">{char.realm}</p>
                       </div>
                     </div>
                     {char.is_main && (
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline" className="h-5 shrink-0 px-1.5 text-[10px] font-medium">
                         {t.battlenet.main}
                       </Badge>
                     )}
@@ -429,7 +432,7 @@ export const BattleNetConnect: React.FC = () => {
             </div>
           )}
 
-          <div className="flex justify-between items-center pt-2 border-t border-border/50">
+          <div className="flex items-center justify-between border-t border-border/45 pt-2">
             <button
               onClick={handleDisconnect}
               disabled={isLoading}
@@ -453,6 +456,16 @@ export const BattleNetConnect: React.FC = () => {
           </div>
         </div>
       )}
+    </>
+  );
+
+  if (embedded) {
+    return <div className="min-w-0">{content}</div>;
+  }
+
+  return (
+    <GlowCard surface="section" hoverable={false}>
+      {content}
     </GlowCard>
   );
 };

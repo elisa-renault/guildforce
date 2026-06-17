@@ -228,10 +228,10 @@ export const GuildMemberships: React.FC = () => {
   const guilds = Object.values(guildGroups);
 
   return (
-    <GlowCard className="p-6">
+    <GlowCard surface="section">
       <div className="flex items-center gap-3 mb-4">
         <Shield className="w-6 h-6 text-primary" />
-        <h3 className="text-lg font-semibold text-foreground">{t.guild.myGuilds}</h3>
+        <h3 className="text-lg font-medium text-foreground">{t.guild.myGuilds}</h3>
       </div>
 
       {isLoading ? (
@@ -265,7 +265,7 @@ export const GuildMemberships: React.FC = () => {
                       <Users className="w-5 h-5 text-muted-foreground" />
                     )}
                     <div>
-                      <h4 className="font-semibold text-foreground">{guild.guild_name}</h4>
+                      <h4 className="font-medium text-foreground">{guild.guild_name}</h4>
                       <p className="text-xs text-muted-foreground">{guild.guild_realm}</p>
                     </div>
                   </div>
