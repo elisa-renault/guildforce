@@ -1,6 +1,6 @@
 import React, { useState, useEffect, forwardRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { useLanguage, Language } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { getClassById, getLocalizedClassName } from '@/data/wowClasses';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -12,12 +12,12 @@ import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { ContextualToolbar } from '@/components/layout/ContextualToolbar';
 import { PageContainer } from '@/components/layout/PageContainer';
-import { PageHeader } from '@/components/layout/PageHeader';
 import { GuildWorkspaceShell } from '@/components/guild';
 import { RosterSelector } from '@/components/roster';
 import { SeasonSelector, SeasonStateCallout } from '@/components/seasons/SeasonSelector';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { GuildSeason } from '@/types/seasons';
-import { Loader2, Save, GripVertical, Plus, Trash2, ChevronUp, ChevronDown, Lock, Clock, Sparkles } from 'lucide-react';
+import { Loader2, Save, GripVertical, Plus, Trash2, ChevronUp, ChevronDown, Lock, Clock } from 'lucide-react';
 
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
 import { resolveSpecOrder } from '@/lib/wishOrder';
@@ -106,6 +106,7 @@ const SortableWishCard = forwardRef<HTMLDivElement, SortableWishCardProps>(
   return (
     <div ref={setNodeRef} style={style}>
       <GlowCard 
+        surface="section"
         className={cn("p-3", isDisabled && "opacity-60")}
         hoverable={false}
       >
@@ -670,7 +671,7 @@ const Wishes = () => {
   if (!guild) return null;
 
   const workspaceToolbar = (
-    <PageContainer className="py-2.5" width="workspace">
+    <PageContainer className="py-2" width="workspace">
             <ContextualToolbar
               className="border-border/30 bg-card/10 p-2"
               leading={(
@@ -690,15 +691,45 @@ const Wishes = () => {
                 </div>
               )}
               trailing={(
-                <CosmicButton
-                  size="sm"
-                  onClick={saveWishes}
-                  loading={saving}
-                  disabled={isEditingDisabled}
-                  icon={<Save className="h-4 w-4" strokeWidth={1.5} />}
-                >
-                  {t.wishes.saveWishes}
-                </CosmicButton>
+                <>
+                  {(lockState.isLocked || scheduledLabel) && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            className={cn(
+                              'inline-flex h-8 w-8 items-center justify-center rounded border border-border/40 bg-background/40',
+                              lockState.isLocked ? toneTextClass('warning') : toneTextClass('info'),
+                            )}
+                            aria-label={lockState.isLocked ? `${t.wishes.lockedTitle}: ${lockMessage}` : interpolateMessage(t.wishes.lockScheduledDesc, { date: scheduledLabel || '' })}
+                          >
+                            {lockState.isLocked ? <Lock className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
+                            <span className="sr-only">
+                              {lockState.isLocked ? `${t.wishes.lockedTitle}: ${lockMessage}` : interpolateMessage(t.wishes.lockScheduledDesc, { date: scheduledLabel || '' })}
+                            </span>
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs">
+                            {lockState.isLocked
+                              ? `${t.wishes.lockedTitle}: ${lockMessage}`
+                              : interpolateMessage(t.wishes.lockScheduledDesc, { date: scheduledLabel || '' })}
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                  <CosmicButton
+                    size="sm"
+                    onClick={saveWishes}
+                    loading={saving}
+                    disabled={isEditingDisabled}
+                    icon={<Save className="h-4 w-4" strokeWidth={1.5} />}
+                  >
+                    {t.wishes.saveWishes}
+                  </CosmicButton>
+                </>
               )}
             />
     </PageContainer>
@@ -719,20 +750,7 @@ const Wishes = () => {
         status: lockState.isLocked ? t.wishes.lockedTitle : undefined,
       }}
     >
-      <PageContainer as="main" className="relative z-10 py-4 md:py-5" width="workspace">
-        <PageHeader
-          className="mb-4 max-w-4xl"
-          icon={Sparkles}
-          title={t.wishes.title}
-          description={guild ? `${guild.name} • ${currentRoster?.name || t.dashboard.roster}` : undefined}
-          titleClassName="font-display cosmic-text"
-          meta={selectedSeason ? (
-            <span className="rounded-md border border-border/50 bg-muted/30 px-2 py-1 text-xs text-muted-foreground">
-              {selectedSeason.name}
-            </span>
-          ) : null}
-        />
-
+      <PageContainer as="main" className="relative z-10 py-3 md:py-4" width="workspace">
         {seasonSupportMode === 'legacy' ? (
           <div className={cn('mb-4 rounded-lg border p-3 text-sm', toneCalloutClass('info'))}>
             <span className={toneTextClass('info')}>{t.seasons.legacyModeHint}</span>
@@ -741,30 +759,8 @@ const Wishes = () => {
           selectedSeason && <SeasonStateCallout season={selectedSeason} />
         )}
 
-        {lockState.isLocked && (
-          <div className={cn("mb-4 rounded-lg border p-3 flex items-start gap-2", toneCalloutClass('warning'))}>
-            <Lock className={cn("h-4 w-4 mt-0.5", toneTextClass('warning'))} />
-            <div className="text-sm">
-              <div className="font-medium">{t.wishes.lockedTitle}</div>
-              <div className={cn("opacity-80", toneTextClass('warning'))}>{lockMessage}</div>
-            </div>
-          </div>
-        )}
-
-        {!lockState.isLocked && scheduledLabel && (
-          <div className={cn("mb-4 rounded-lg border p-3 flex items-start gap-2", toneCalloutClass('info'))}>
-            <Clock className={cn("h-4 w-4 mt-0.5", toneTextClass('info'))} />
-            <div className="text-sm">
-              <div className="font-medium">{t.wishes.lockScheduledTitle}</div>
-              <div className={cn("opacity-80", toneTextClass('info'))}>
-                {interpolateMessage(t.wishes.lockScheduledDesc, { date: scheduledLabel })}
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Commitment toggle */}
-        <GlowCard className="mb-4 max-w-4xl p-4">
+        <GlowCard surface="section" className="mb-4 p-3">
           <CommitmentToggle status={confirmed} onChange={setConfirmed} disabled={isEditingDisabled} />
         </GlowCard>
 
@@ -778,7 +774,7 @@ const Wishes = () => {
             items={wishes.map(w => w.id)}
             strategy={verticalListSortingStrategy}
           >
-            <div className="max-w-4xl space-y-2">
+            <div className="space-y-2">
               {wishes.map((wish, index) => {
                 // Get all used class IDs except the current wish's class
                 const usedClassIds = wishes

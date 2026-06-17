@@ -1,10 +1,9 @@
 import { useState, useMemo } from 'react';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Search, ChevronDown, Check, Shield, Heart, Swords, X, Clock, CheckCircle2, 
+  ChevronDown, Check, Shield, Heart, Swords, X, Clock, CheckCircle2, 
   XCircle, UserCheck, UserMinus, UserX, Sword, Crosshair, MessageSquare, 
   Hash, RotateCcw, Users, Target, SlidersHorizontal
 } from 'lucide-react';
@@ -19,6 +18,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { FilterBar, FilterSearchField, activeFilterControlClassName, filterControlClassName } from '@/components/ui/filter-controls';
 
 interface RosterFiltersProps {
   filters: RosterFiltersType;
@@ -294,15 +294,13 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
     return (
       <div className="mb-4 space-y-2.5">
         <div className="flex items-center gap-2">
-          <div className="relative min-w-0 flex-1">
-            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" strokeWidth={1.5} />
-            <Input
-              placeholder={t.common.search}
-              value={filters.searchQuery}
-              onChange={(e) => updateFilter('searchQuery', e.target.value)}
-              className="h-10 border-border/50 bg-card/60 pl-9 text-sm"
-            />
-          </div>
+          <FilterSearchField
+            placeholder={t.common.search}
+            value={filters.searchQuery}
+            onChange={(e) => updateFilter('searchQuery', e.target.value)}
+            containerClassName="min-w-0 flex-1"
+            className="h-10"
+          />
 
           <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
             <SheetTrigger asChild>
@@ -310,8 +308,9 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
                 variant="outline"
                 size="sm"
                 className={cn(
-                  'h-10 gap-2 border-border/50 bg-card/60 px-3 text-sm',
-                  activeFilterCount > 0 && 'border-primary/40 bg-primary/5 text-foreground'
+                  filterControlClassName,
+                  'h-10 gap-2 px-3',
+                  activeFilterCount > 0 && activeFilterControlClassName
                 )}
               >
                 <SlidersHorizontal className="h-4 w-4" />
@@ -650,19 +649,16 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
   }
 
   return (
-    <div className="flex flex-col gap-3 mb-4">
+    <div className="mb-4 flex flex-col gap-3">
       {/* Row 1: Search + Filter Groups + Reset */}
-      <div className="flex gap-2 items-center flex-wrap">
+      <FilterBar className="mb-0">
         {/* Search */}
-        <div className="relative w-full sm:w-[200px] flex-shrink-0">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
-          <Input
-            placeholder={t.common.search}
-            value={filters.searchQuery}
-            onChange={(e) => updateFilter('searchQuery', e.target.value)}
-            className="h-9 pl-8 text-sm cosmic-input"
-          />
-        </div>
+        <FilterSearchField
+          placeholder={t.common.search}
+          value={filters.searchQuery}
+          onChange={(e) => updateFilter('searchQuery', e.target.value)}
+          containerClassName="w-full sm:w-[200px] flex-none"
+        />
         {/* Players Group */}
         <Popover open={playersOpen} onOpenChange={setPlayersOpen}>
           <PopoverTrigger asChild>
@@ -670,10 +666,11 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
               variant="outline"
               size="sm"
               className={cn(
-                "h-9 gap-2 text-sm",
+                filterControlClassName,
+                "gap-2",
                 hasPlayersFilters 
-                  ? "border-primary/50 bg-primary/5" 
-                  : "border-border/40 text-muted-foreground"
+                  ? activeFilterControlClassName
+                  : "text-muted-foreground"
               )}
             >
               <Users className="h-4 w-4" />
@@ -759,10 +756,11 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
               variant="outline"
               size="sm"
               className={cn(
-                "h-9 gap-2 text-sm",
+                filterControlClassName,
+                "gap-2",
                 hasWishesFilters 
-                  ? "border-primary/50 bg-primary/5" 
-                  : "border-border/40 text-muted-foreground"
+                  ? activeFilterControlClassName
+                  : "text-muted-foreground"
               )}
             >
               <Hash className="h-4 w-4" />
@@ -919,10 +917,11 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
               variant="outline"
               size="sm"
               className={cn(
-                "h-9 gap-2 text-sm",
+                filterControlClassName,
+                "gap-2",
                 hasSpecsFilters 
-                  ? "border-primary/50 bg-primary/5" 
-                  : "border-border/40 text-muted-foreground"
+                  ? activeFilterControlClassName
+                  : "text-muted-foreground"
               )}
             >
               <Target className="h-4 w-4" />
@@ -1046,13 +1045,13 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
             variant="ghost"
             size="sm"
             onClick={resetAllFilters}
-            className="h-9 gap-1.5 text-muted-foreground hover:text-foreground"
+            className="h-8 gap-1.5 rounded px-2.5 text-muted-foreground hover:text-foreground"
           >
             <RotateCcw className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">{t.common.reset}</span>
           </Button>
         )}
-      </div>
+      </FilterBar>
 
       {/* Row 3: Active Filter Pills */}
       {activePills.length > 0 && (

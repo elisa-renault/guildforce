@@ -185,6 +185,7 @@ export const MobileRosterCard = ({
 
   return (
     <GlowCard
+      surface="section"
       className={cn(
         'p-2.5 transition-colors',
         isOwnRow ? 'bg-primary/[0.04] border-primary/30' : 'hover:border-border/50',
@@ -195,7 +196,7 @@ export const MobileRosterCard = ({
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-1.5">
-            <span className="truncate text-sm font-semibold text-foreground">{member.username}</span>
+            <span className="truncate text-sm font-medium text-foreground">{member.username}</span>
             {member.isExternal && (
               <span
                 className="inline-flex h-4.5 w-4.5 items-center justify-center rounded-full border border-primary/40 bg-primary/10 text-primary"

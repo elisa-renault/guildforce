@@ -64,7 +64,7 @@ interface GuildWorkspaceNavItem {
   show: boolean;
 }
 
-const DESKTOP_NAV_HEIGHT = 'calc(4rem + var(--global-nav-extra-offset,0px))';
+const DESKTOP_NAV_HEIGHT = 'calc(3.5rem + var(--global-nav-extra-offset,0px))';
 
 const normalizeTab = (tab: GuildWorkspaceTab): GuildWorkspaceNavItem['id'] => {
   if (tab === 'dashboard') return 'overview';
@@ -208,7 +208,7 @@ export const GuildWorkspaceShell = ({
   const showSettings = isGM || resolvedSettingsPermission;
   const showVault = isGM || resolvedVaultAccess;
   const guildLocation = [guild.server, guild.region?.toUpperCase()].filter(Boolean).join(' • ');
-  const sidebarWidth = sidebarCollapsed ? 72 : 272;
+  const sidebarWidth = sidebarCollapsed ? 64 : 248;
   const navItems: GuildWorkspaceNavItem[] = [
     { id: 'overview', label: t.dashboard.overview, icon: LayoutDashboard, path: basePath, show: true },
     { id: 'roster', label: t.guildNav.wishesTable, icon: Table, path: `${basePath}/roster`, show: true },
@@ -234,17 +234,17 @@ export const GuildWorkspaceShell = ({
   };
 
   const expandedIdentity = (
-    <div className="rounded-xl border border-border/45 bg-card/25 p-3.5 backdrop-blur-sm">
-      <div className="flex min-w-0 items-start gap-3">
-        <Avatar className="h-11 w-11 shrink-0 border border-border/50 bg-muted/30">
+    <div className="px-2">
+      <div className="flex min-w-0 items-center gap-2.5">
+        <Avatar className="h-9 w-9 shrink-0 border border-border/45 bg-muted/30">
           {guild.avatar_url ? <AvatarImage src={guild.avatar_url} alt={guild.name} /> : null}
           <AvatarFallback className="text-sm font-semibold">{guild.name.charAt(0).toUpperCase()}</AvatarFallback>
         </Avatar>
-        <div className="min-w-0 flex-1 space-y-1">
+        <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-2">
-            <p className="truncate text-sm font-semibold text-foreground">{guild.name}</p>
+            <p className="truncate text-sm font-medium text-foreground">{guild.name}</p>
             {isGM ? (
-              <Badge variant="outline" className="h-5 shrink-0 gap-1 border-primary/30 bg-primary/10 px-1.5 text-[10px] text-primary">
+              <Badge variant="outline" className="h-5 shrink-0 gap-1 border-warning/35 bg-warning/10 px-1.5 text-[10px] text-warning">
                 <Crown className="h-3 w-3" />
                 GM
               </Badge>
@@ -258,7 +258,7 @@ export const GuildWorkspaceShell = ({
   );
 
   const expandedNavigation = (
-    <nav className="flex flex-col gap-1.5" aria-label={guild.name}>
+    <nav className="flex flex-col gap-0.5" aria-label={guild.name}>
       {visibleNavItems.map((item) => {
         const Icon = item.icon;
         const active = normalizedActiveTab === item.id;
@@ -274,9 +274,9 @@ export const GuildWorkspaceShell = ({
                 hover: 'accent',
                 fullWidth: true,
                 justifyStart: true,
-                className: 'h-10 rounded-xl px-3.5 text-sm',
+                className: 'h-9 rounded px-2.5 text-sm font-medium',
               }),
-              active && 'shadow-sm shadow-primary/15',
+              active && 'relative border-l-2 border-primary bg-primary/10 pl-2 text-foreground ring-0',
             )}
             aria-label={item.label}
             aria-current={active ? 'page' : undefined}
@@ -290,13 +290,13 @@ export const GuildWorkspaceShell = ({
   );
 
   const collapsedRail = (
-    <div className="sticky flex h-[calc(100dvh-4rem-var(--global-nav-extra-offset,0px))] flex-col items-center gap-4 px-2 py-4" style={{ top: DESKTOP_NAV_HEIGHT }}>
+    <div className="sticky flex h-[calc(100dvh-3.5rem-var(--global-nav-extra-offset,0px))] flex-col items-center gap-3 px-2 py-3" style={{ top: DESKTOP_NAV_HEIGHT }}>
       <Tooltip>
         <TooltipTrigger asChild>
           <button
             type="button"
             onClick={() => handleNavigate(basePath)}
-            className="grid h-11 w-11 place-items-center rounded-2xl border border-border/50 bg-card/25 shadow-sm shadow-primary/10 transition-colors hover:bg-accent/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className="grid h-10 w-10 place-items-center rounded bg-transparent transition-colors hover:bg-accent/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             aria-label={guild.name}
           >
             <Avatar className="h-9 w-9 border border-border/50 bg-muted/30">
@@ -313,7 +313,7 @@ export const GuildWorkspaceShell = ({
         </TooltipContent>
       </Tooltip>
 
-      <nav className="flex min-h-0 flex-1 flex-col items-center gap-2" aria-label={guild.name}>
+      <nav className="flex min-h-0 flex-1 flex-col items-center gap-1.5" aria-label={guild.name}>
         {visibleNavItems.map((item) => {
           const Icon = item.icon;
           const active = normalizedActiveTab === item.id;
@@ -325,13 +325,13 @@ export const GuildWorkspaceShell = ({
                   type="button"
                   onClick={() => handleNavigate(item.path)}
                   className={cn(
-                    'relative grid h-11 w-11 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-accent/15 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-                    active && 'bg-primary/15 text-foreground ring-1 ring-primary/35 shadow-[0_0_18px_hsl(var(--primary)/0.16)]',
+                    'relative grid h-9 w-9 place-items-center rounded text-muted-foreground transition-colors hover:bg-accent/15 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                    active && 'bg-primary/10 text-foreground ring-1 ring-primary/25',
                   )}
                   aria-label={item.label}
                   aria-current={active ? 'page' : undefined}
                 >
-                  {active ? <span className="absolute left-0 top-2 h-7 w-0.5 rounded-full bg-primary shadow-[0_0_10px_hsl(var(--primary)/0.65)]" aria-hidden="true" /> : null}
+                  {active ? <span className="absolute left-0 top-2 h-5 w-0.5 rounded-full bg-primary" aria-hidden="true" /> : null}
                   <Icon className="h-4 w-4 shrink-0" strokeWidth={1.7} />
                 </button>
               </TooltipTrigger>
@@ -347,7 +347,7 @@ export const GuildWorkspaceShell = ({
             type="button"
             variant="ghost"
             size="icon"
-            className="h-11 w-11 rounded-xl border border-border/35 bg-card/15 text-muted-foreground hover:bg-accent/15 hover:text-foreground"
+            className="h-9 w-9 rounded border border-border/35 bg-card/15 text-muted-foreground hover:bg-accent/15 hover:text-foreground"
             onClick={toggleSidebar}
             aria-label="Déployer la navigation"
           >
@@ -360,11 +360,11 @@ export const GuildWorkspaceShell = ({
   );
 
   const expandedCollapseControl = (
-    <div className="border-t border-border/35 pt-3">
+    <div className="border-t border-border/35 pt-2">
       <Button
         type="button"
         variant="ghost"
-        className="h-10 w-full justify-start gap-2 rounded-xl px-3 text-sm text-muted-foreground hover:bg-accent/10 hover:text-foreground"
+        className="h-9 w-full justify-start gap-2 rounded px-2.5 text-sm text-muted-foreground hover:bg-accent/10 hover:text-foreground"
         onClick={toggleSidebar}
         aria-label="Réduire la navigation"
       >
@@ -376,19 +376,19 @@ export const GuildWorkspaceShell = ({
 
   return (
     <div
-      className={cn('relative flex-1 pt-[calc(4rem+var(--global-nav-extra-offset,0px))]', className)}
+      className={cn('relative flex-1 pt-[calc(3.5rem+var(--global-nav-extra-offset,0px))]', className)}
       style={{ ['--guild-sidebar-width' as string]: `${sidebarWidth}px` }}
     >
       <CosmicBackground />
 
-      <div className="relative z-10 min-h-[calc(100dvh-4rem-var(--global-nav-extra-offset,0px))] lg:grid lg:grid-cols-[var(--guild-sidebar-width)_minmax(0,1fr)]">
-        <aside className="hidden border-r border-border/45 bg-background/78 backdrop-blur-xl lg:block">
+      <div className="relative z-10 min-h-[calc(100dvh-3.5rem-var(--global-nav-extra-offset,0px))] lg:grid lg:grid-cols-[var(--guild-sidebar-width)_minmax(0,1fr)]">
+        <aside className="hidden border-r border-border/35 bg-background/88 lg:block">
           {sidebarCollapsed ? (
             collapsedRail
           ) : (
-            <div className="sticky flex h-[calc(100dvh-4rem-var(--global-nav-extra-offset,0px))] flex-col gap-3 p-3" style={{ top: DESKTOP_NAV_HEIGHT }}>
+            <div className="sticky flex h-[calc(100dvh-3.5rem-var(--global-nav-extra-offset,0px))] flex-col gap-2.5 p-2.5" style={{ top: DESKTOP_NAV_HEIGHT }}>
               {expandedIdentity}
-              <div className="min-h-0 flex-1 overflow-y-auto px-1 py-1">
+              <div className="min-h-0 flex-1 overflow-y-auto px-1">
                 {expandedNavigation}
               </div>
               {expandedCollapseControl}
@@ -397,7 +397,7 @@ export const GuildWorkspaceShell = ({
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <div data-guild-workspace-topbar className="sticky z-40 border-b border-border/45 bg-background/88 backdrop-blur-xl lg:hidden" style={{ top: DESKTOP_NAV_HEIGHT }}>
+          <div data-guild-workspace-topbar className="sticky z-40 border-b border-border/35 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/90 lg:hidden" style={{ top: DESKTOP_NAV_HEIGHT }}>
             <div className="flex min-h-14 items-center gap-3 px-3">
               <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
                 <SheetTrigger asChild>
@@ -473,7 +473,10 @@ export const GuildWorkspaceShell = ({
           </div>
 
           {toolbar ? (
-            <div data-guild-workspace-toolbar className="sticky top-[calc(7.5rem+var(--global-nav-extra-offset,0px))] z-30 border-b border-border/35 bg-background/78 backdrop-blur-xl lg:top-[calc(4rem+var(--global-nav-extra-offset,0px))]">
+            <div
+              data-guild-workspace-toolbar
+              className="sticky top-[calc(7rem+var(--global-nav-extra-offset,0px))] z-30 border-b border-border/35 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/88 lg:top-[calc(3.5rem+var(--global-nav-extra-offset,0px))]"
+            >
               {toolbar}
             </div>
           ) : null}

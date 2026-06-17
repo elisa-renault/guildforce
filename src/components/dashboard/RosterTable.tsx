@@ -402,7 +402,7 @@ export const RosterTable = ({
 
   if (loading) {
     return (
-      <GlowCard className="overflow-hidden">
+      <GlowCard surface="section" className="overflow-hidden">
         <div
           className="space-y-4 p-4"
           role="status"
@@ -431,7 +431,7 @@ export const RosterTable = ({
 
   if (members.length === 0) {
     return (
-      <GlowCard className="overflow-hidden">
+      <GlowCard surface="section" className="overflow-hidden">
         <div className="text-center py-16 text-muted-foreground">{t.dashboard.noData}</div>
       </GlowCard>
     );
@@ -491,7 +491,7 @@ export const RosterTable = ({
   }
   // Desktop view - table layout
   return (
-    <GlowCard className="overflow-hidden">
+    <GlowCard surface="section" className="overflow-hidden p-0">
       <div className="overflow-x-auto">
         <Table className="table-auto min-w-[1400px]">
           <TableHeader>

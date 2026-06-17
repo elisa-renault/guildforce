@@ -78,7 +78,7 @@ const SummaryHeader = ({
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <ListChecks className="h-4 w-4 text-primary" />
-            <h2 className="text-sm font-semibold text-foreground">{t.dashboard.selectedValidatedView}</h2>
+            <h2 className="text-sm font-medium text-foreground">{t.dashboard.selectedValidatedView}</h2>
           </div>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
             {t.dashboard.selectedValidatedSubtitle}
@@ -203,7 +203,7 @@ const GroupSection = ({
     <section className="space-y-2">
       <div className="flex items-center gap-2">
         <Icon className={cn('h-4 w-4', iconClassName)} />
-        <h3 className="text-sm font-semibold text-foreground">
+        <h3 className="text-sm font-medium text-foreground">
           {title} ({count})
         </h3>
       </div>
@@ -214,6 +214,7 @@ const GroupSection = ({
 
           return (
             <GlowCard
+              surface="section"
               key={member.id}
               className={cn(
                 'p-2.5 transition-colors',
@@ -228,7 +229,7 @@ const GroupSection = ({
               <div className="flex min-w-0 items-start gap-2">
                 <div className="min-w-0 flex-1">
                   <div className="flex min-w-0 items-center gap-1.5">
-                    <div className="truncate text-sm font-semibold leading-none text-foreground">{member.username}</div>
+                    <div className="truncate text-sm font-medium leading-none text-foreground">{member.username}</div>
                     {member.id === currentUserId && (
                       <Badge variant="outline" className="h-4.5 border-border/35 px-1 text-[9px] text-muted-foreground">
                         {youLabel}
@@ -386,7 +387,7 @@ export const RosterSelectedTable = ({
           showingAll={showAllApproved}
           onToggle={() => setShowAllApproved((current) => !current)}
         />
-        <GlowCard className="overflow-hidden">
+        <GlowCard surface="section" className="overflow-hidden p-0">
           <div className="flex flex-col items-center gap-3 px-4 py-12 text-center">
             <div className="max-w-md space-y-2">
               <div className="text-sm font-medium text-foreground">{t.dashboard.selectedValidatedEmpty}</div>

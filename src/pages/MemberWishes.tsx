@@ -431,7 +431,7 @@ const MemberWishes = () => {
       <CosmicBackground />
 
       {/* Header bar */}
-      <div className="sticky top-14 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50">
+      <div className="sticky top-14 z-40 border-b border-border/35 bg-background/95 backdrop-blur-md">
         <PageContainer className="px-3 md:px-4 py-3 flex items-center justify-between" width="wide">
           <div className="flex items-center gap-2">
             <button
@@ -442,7 +442,7 @@ const MemberWishes = () => {
               <ArrowLeft className="h-4 w-4 text-muted-foreground" />
             </button>
             <div>
-              <h1 className="text-lg font-semibold text-foreground">{member?.username}</h1>
+              <h1 className="text-lg font-medium text-foreground">{member?.username}</h1>
               {canSeeBattletag && member?.battletag && (
                 <p className="text-xs text-muted-foreground">{member.battletag}</p>
               )}
@@ -519,7 +519,7 @@ const MemberWishes = () => {
 
       <PageContainer as="main" className="px-3 md:px-4 py-4 relative z-10" width="wide">
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-display cosmic-text">
+          <h2 className="font-sans text-xl font-medium text-foreground">
             {user?.id === memberId 
               ? t.wishes.title 
               : `${t.wishes.wishesOf} ${member?.username || ''}`
@@ -545,7 +545,7 @@ const MemberWishes = () => {
           </div>
         )}
 
-        <GlowCard className="p-4 mb-4" hoverable={false}>
+        <GlowCard surface="section" className="mb-4" hoverable={false}>
           <div className="space-y-2">
             <div className="text-sm uppercase tracking-wide text-muted-foreground">{t.wishes.rosterDecision.summaryTitle}</div>
             {canManageWishes && searchParams.get('rosterId') ? (
@@ -580,7 +580,7 @@ const MemberWishes = () => {
         </div>
 
         {wishes.length === 0 ? (
-          <GlowCard className="p-6 text-center" hoverable={false}>
+          <GlowCard surface="section" className="text-center" hoverable={false}>
             <p className="text-muted-foreground">
               {t.wishes.noWishes}
             </p>
@@ -592,7 +592,7 @@ const MemberWishes = () => {
               const specs = wish.spec_ids.map(id => getSpecById(id)).filter(Boolean) as Specialization[];
 
               return (
-                <GlowCard key={wish.choice_index} className="p-3 md:p-4" hoverable={false}>
+                <GlowCard key={wish.choice_index} surface="section" className="p-3 md:p-4" hoverable={false}>
                   <div className="grid grid-cols-1 lg:grid-cols-[40px_200px_1fr_1fr_auto] gap-3 lg:gap-4 items-center">
                     {/* Choice number */}
                     <div className="hidden lg:flex w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 items-center justify-center border border-primary/20">

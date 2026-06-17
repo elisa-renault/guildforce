@@ -18,14 +18,13 @@ import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
 import { ContextualToolbar } from '@/components/layout/ContextualToolbar';
 import { PageContainer } from '@/components/layout/PageContainer';
-import { PageHeader } from '@/components/layout/PageHeader';
 import { GuildWorkspaceShell } from '@/components/guild';
 import { RosterFilters, RosterTable, RosterAnalytics, RosterSelectedTable } from '@/components/dashboard';
 import { RosterSelector, RosterEditDialog } from '@/components/roster';
 import { SeasonSelector, SeasonStateCallout, type PrepareSeasonInput } from '@/components/seasons/SeasonSelector';
 import { MemberWish, WishData, RosterFilters as RosterFiltersType, ValidationStatus } from '@/types/guild';
 import type { GuildSeason } from '@/types/seasons';
-import { Loader2, Sparkles, Settings, TableIcon, BarChart3, Download, Eye, Lock, Unlock, Clock, UserPlus, MoreVertical } from 'lucide-react';
+import { Archive, Loader2, Pencil, Play, Plus, Sparkles, Settings, TableIcon, BarChart3, Download, Eye, Lock, Unlock, Clock, UserPlus, MoreVertical } from 'lucide-react';
 import { exportWishesToCSV } from '@/lib/exportWishes';
 import { getGuildWishesPath } from '@/lib/guildSlug';
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
@@ -40,9 +39,13 @@ import { getSelectedValidatedMembers } from '@/lib/selectedValidatedMembers';
 import { getRosterSelectionErrorMessage } from '@/lib/rosterSelectionErrors';
 import { toneCalloutClass, toneTextClass } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Label } from '@/components/ui/label';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 // Max wishes = number of WoW classes
 const MAX_WISHES = wowClasses.length;
@@ -141,6 +144,18 @@ const RosterWishes = () => {
   const [selectedSeasonId, setSelectedSeasonId] = useState<string | null>(null);
   const [seasonSupportMode, setSeasonSupportMode] = useState<SeasonSupportMode>('enabled');
   const [seasonBusy, setSeasonBusy] = useState(false);
+  const [seasonDialogOpen, setSeasonDialogOpen] = useState(false);
+  const [seasonRenameDialogOpen, setSeasonRenameDialogOpen] = useState(false);
+  const [seasonName, setSeasonName] = useState('');
+  const [seasonRenameName, setSeasonRenameName] = useState('');
+  const [seasonStartsAt, setSeasonStartsAt] = useState('');
+  const [seasonEndsAt, setSeasonEndsAt] = useState('');
+  const [seasonSourceId, setSeasonSourceId] = useState('');
+  const [seasonPrefillWishes, setSeasonPrefillWishes] = useState(false);
+  const [seasonResetCopiedWishes, setSeasonResetCopiedWishes] = useState(true);
+  const [seasonActivateImmediately, setSeasonActivateImmediately] = useState(true);
+  const [seasonDialogSaving, setSeasonDialogSaving] = useState(false);
+  const [seasonActionBusy, setSeasonActionBusy] = useState<null | 'archive' | 'activate' | 'rename'>(null);
   const [members, setMembers] = useState<MemberWish[]>([]);
   const [canManageWishes, setCanManageWishes] = useState(false);
   const [isGM, setIsGM] = useState(false);
@@ -601,8 +616,21 @@ const RosterWishes = () => {
   }, [lockDialogOpen, rosters, selectedRosterId]);
 
   const selectedSeason = seasons.find((season) => season.id === selectedSeasonId) || null;
+  const activeSeason = seasons.find((season) => season.state === 'active') || null;
+  const sortedSeasonOptions = useMemo(
+    () =>
+      [...seasons].sort((a, b) => {
+        const stateOrder = { active: 0, draft: 1, archived: 2 } as const;
+        const stateDiff = stateOrder[a.state] - stateOrder[b.state];
+        if (stateDiff !== 0) return stateDiff;
+        return (b.activated_at || b.created_at).localeCompare(a.activated_at || a.created_at);
+      }),
+    [seasons],
+  );
+  const seasonSourceOptions = sortedSeasonOptions.filter((season) => season.id !== selectedSeasonId);
   const isSelectedSeasonActive = seasonSupportMode === 'legacy' || selectedSeason?.state === 'active';
   const canMutateSelectedSeason = isSelectedSeasonActive && !isAdminReadOnly;
+  const canManageSeasonActions = canManageWishes && !isAdminReadOnly && seasonSupportMode === 'enabled' && seasons.length > 0;
 
   const handlePrepareSeason = async (input: PrepareSeasonInput) => {
     if (!guildId) return;
@@ -676,6 +704,79 @@ const RosterWishes = () => {
       toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
     } finally {
       setSeasonBusy(false);
+    }
+  };
+
+  const resetSeasonDialogForm = () => {
+    setSeasonName('');
+    setSeasonStartsAt('');
+    setSeasonEndsAt('');
+    setSeasonSourceId(activeSeason?.id || '');
+    setSeasonPrefillWishes(false);
+    setSeasonResetCopiedWishes(true);
+    setSeasonActivateImmediately(true);
+  };
+
+  const openSeasonDialog = () => {
+    resetSeasonDialogForm();
+    setSeasonDialogOpen(true);
+  };
+
+  const openSeasonRenameDialog = () => {
+    if (!selectedSeason) return;
+    setSeasonRenameName(selectedSeason.name);
+    setSeasonRenameDialogOpen(true);
+  };
+
+  const submitSeasonDialog = async () => {
+    if (!seasonName.trim()) return;
+    setSeasonDialogSaving(true);
+    try {
+      await handlePrepareSeason({
+        name: seasonName.trim(),
+        startsAt: seasonStartsAt || null,
+        endsAt: seasonEndsAt || null,
+        sourceSeasonId: seasonSourceId || activeSeason?.id || null,
+        prefillWishes: seasonPrefillWishes,
+        resetCopiedWishes: seasonResetCopiedWishes,
+        activateImmediately: seasonActivateImmediately,
+      });
+      setSeasonDialogOpen(false);
+      resetSeasonDialogForm();
+    } finally {
+      setSeasonDialogSaving(false);
+    }
+  };
+
+  const activateSelectedSeason = async () => {
+    if (!selectedSeason) return;
+    setSeasonActionBusy('activate');
+    try {
+      await handleActivateSeason(selectedSeason.id);
+    } finally {
+      setSeasonActionBusy(null);
+    }
+  };
+
+  const archiveSelectedSeason = async () => {
+    if (!selectedSeason) return;
+    if (!window.confirm(t.seasons.confirmArchive)) return;
+    setSeasonActionBusy('archive');
+    try {
+      await handleArchiveSeason(selectedSeason.id);
+    } finally {
+      setSeasonActionBusy(null);
+    }
+  };
+
+  const renameSelectedSeason = async () => {
+    if (!selectedSeason || !seasonRenameName.trim()) return;
+    setSeasonActionBusy('rename');
+    try {
+      await handleRenameSeason(selectedSeason.id, seasonRenameName.trim());
+      setSeasonRenameDialogOpen(false);
+    } finally {
+      setSeasonActionBusy(null);
     }
   };
 
@@ -1287,7 +1388,12 @@ const RosterWishes = () => {
     rosterLockState.isScheduled && rosterLockState.scheduledAt
       ? formatDateTimeLocalized(rosterLockState.scheduledAt, language, { dateStyle: 'medium', timeStyle: 'short' })
       : null;
-  const getMobileToolbarActions = () => [
+  const rosterLockLabel = rosterLockState.isLocked
+    ? `${t.wishes.lockedTitle}: ${t.wishes.lockedRosterDesc}`
+    : rosterScheduledLabel
+      ? interpolateMessage(t.wishes.lockScheduledDesc, { date: rosterScheduledLabel })
+      : null;
+  const rosterToolbarActions = [
     {
       key: 'export',
       label: t.dashboard.exportCSV,
@@ -1315,7 +1421,7 @@ const RosterWishes = () => {
     ...(canManageWishes && !isAdminReadOnly && selectedRosterId && isSelectedSeasonActive
       ? [{
           key: 'lock',
-          label: t.rosters.wishesLockTitle,
+          label: language === 'fr' ? `Verrouillage des vo${'eux'}` : t.rosters.wishesLockTitle,
           icon: Lock,
           disabled: false,
           onClick: () => setLockDialogOpen(true),
@@ -1331,40 +1437,126 @@ const RosterWishes = () => {
         }]
       : []),
   ];
+  const hasToolbarActions = canManageSeasonActions || rosterToolbarActions.length > 0;
+  const renderToolbarActionsMenu = () => {
+    if (!hasToolbarActions) return null;
+
+    return (
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger asChild>
+          <CosmicButton
+            size="sm"
+            variant="outline"
+            icon={<MoreVertical className="h-4 w-4" strokeWidth={1.5} />}
+            className="h-8 w-8 p-0"
+            aria-label={t.common.actions}
+          />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-64 border-border bg-card">
+          {canManageSeasonActions && (
+            <>
+              <DropdownMenuItem onClick={openSeasonDialog} className="cursor-pointer">
+                <Plus className="mr-2 h-4 w-4" />
+                {t.seasons.prepareNew}
+              </DropdownMenuItem>
+              {selectedSeason && (
+                <DropdownMenuItem
+                  onClick={openSeasonRenameDialog}
+                  disabled={seasonActionBusy === 'rename'}
+                  className="cursor-pointer"
+                >
+                  <Pencil className="mr-2 h-4 w-4" />
+                  {t.seasons.renameSeason}
+                </DropdownMenuItem>
+              )}
+              {selectedSeason?.state === 'draft' && (
+                <DropdownMenuItem
+                  onClick={activateSelectedSeason}
+                  disabled={seasonActionBusy === 'activate'}
+                  className="cursor-pointer"
+                >
+                  <Play className="mr-2 h-4 w-4" />
+                  {t.seasons.activateDraft}
+                </DropdownMenuItem>
+              )}
+              {selectedSeason?.state !== 'archived' && (
+                <DropdownMenuItem
+                  onClick={archiveSelectedSeason}
+                  disabled={seasonActionBusy === 'archive'}
+                  className="cursor-pointer"
+                >
+                  <Archive className="mr-2 h-4 w-4" />
+                  {t.seasons.archiveSeason}
+                </DropdownMenuItem>
+              )}
+              {rosterToolbarActions.length > 0 && <DropdownMenuSeparator />}
+            </>
+          )}
+          {rosterToolbarActions.map((action) => (
+            <DropdownMenuItem
+              key={action.key}
+              disabled={action.disabled}
+              onClick={action.onClick}
+              className="cursor-pointer"
+            >
+              <action.icon className="mr-2 h-4 w-4" />
+              {action.label}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
 
   const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
 
   if (!guild) return null;
 
   const workspaceToolbar = (
-    <PageContainer className="py-2.5" width="workspace">
+    <PageContainer className="py-2" width="workspace">
           <ContextualToolbar
-            className={cn('border-border/30 bg-card/10 p-2', isMobile && 'gap-2')}
+            className={cn('border-0 bg-transparent p-0 shadow-none backdrop-blur-0', isMobile && 'gap-2 overflow-hidden')}
             leading={(
-              <div className="flex min-w-0 flex-1 items-center gap-2">
+              <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
                 <RosterSelector
                   rosters={rosters}
                   selectedRosterId={selectedRosterId}
                   onSelect={setSelectedRosterId}
                   showAccessIndicator={true}
-                  showWishesLockIndicator={true}
                 />
                 <SeasonSelector
                   seasons={seasons}
                   selectedSeasonId={selectedSeasonId}
                   onSelect={selectSeasonInUrl}
                   emptyLabel={seasonSupportMode === 'legacy' ? t.seasons.legacyMode : undefined}
-                  canManage={canManageWishes && !isAdminReadOnly}
                   busy={seasonBusy}
-                  onPrepareSeason={handlePrepareSeason}
-                  onArchiveSeason={handleArchiveSeason}
-                  onActivateSeason={handleActivateSeason}
-                  onRenameSeason={handleRenameSeason}
                 />
               </div>
             )}
             trailing={isMobile ? (
               <>
+              {rosterLockLabel && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        className={cn(
+                          'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                          rosterLockState.isLocked ? toneTextClass('warning') : toneTextClass('info'),
+                        )}
+                        aria-label={rosterLockLabel}
+                      >
+                        {rosterLockState.isLocked ? <Lock className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
+                        <span className="sr-only">{rosterLockLabel}</span>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">{rosterLockLabel}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
               {!isAdminReadOnly && (
                 <CosmicButton
                   size="sm"
@@ -1383,33 +1575,32 @@ const RosterWishes = () => {
                   {t.wishes.editMyWishes}
                 </CosmicButton>
               )}
-              <DropdownMenu modal={false}>
-                <DropdownMenuTrigger asChild>
-                  <CosmicButton
-                    size="sm"
-                    variant="outline"
-                    icon={<MoreVertical className="h-4 w-4" strokeWidth={1.5} />}
-                    className="h-8 w-8 p-0"
-                    aria-label={t.common.actions}
-                  />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 border-border bg-card">
-                  {getMobileToolbarActions().map((action) => (
-                    <DropdownMenuItem
-                      key={action.key}
-                      disabled={action.disabled}
-                      onClick={action.onClick}
-                      className="cursor-pointer"
-                    >
-                      <action.icon className="mr-2 h-4 w-4" />
-                      {action.label}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              {renderToolbarActionsMenu()}
               </>
             ) : (
               <>
+              {rosterLockLabel && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        className={cn(
+                          'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                          rosterLockState.isLocked ? toneTextClass('warning') : toneTextClass('info'),
+                        )}
+                        aria-label={rosterLockLabel}
+                      >
+                        {rosterLockState.isLocked ? <Lock className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
+                        <span className="sr-only">{rosterLockLabel}</span>
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">{rosterLockLabel}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
               {!isAdminReadOnly && (
                 <CosmicButton
                   size="sm"
@@ -1428,32 +1619,7 @@ const RosterWishes = () => {
                   <span className="hidden md:inline">{t.wishes.editMyWishes}</span>
                 </CosmicButton>
               )}
-              {getMobileToolbarActions().length > 0 && (
-                <DropdownMenu modal={false}>
-                  <DropdownMenuTrigger asChild>
-                    <CosmicButton
-                      size="sm"
-                      variant="outline"
-                      icon={<MoreVertical className="h-4 w-4" strokeWidth={1.5} />}
-                      className="h-8 w-8 p-0"
-                      aria-label={t.common.actions}
-                    />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56 border-border bg-card">
-                    {getMobileToolbarActions().map((action) => (
-                      <DropdownMenuItem
-                        key={action.key}
-                        disabled={action.disabled}
-                        onClick={action.onClick}
-                        className="cursor-pointer"
-                      >
-                        <action.icon className="mr-2 h-4 w-4" />
-                        {action.label}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
+              {renderToolbarActionsMenu()}
               </>
             )}
           />
@@ -1487,19 +1653,7 @@ const RosterWishes = () => {
         </PageContainer>
       )}
 
-      <PageContainer as="main" className="relative z-10 py-4 md:py-6" width="workspace">
-        <PageHeader
-          className="mb-4 max-w-4xl xl:max-w-5xl"
-          icon={TableIcon}
-          title={t.guildNav.wishesTable}
-          description={currentRoster?.name || t.dashboard.roster}
-          meta={selectedSeason ? (
-            <span className="rounded-md border border-border/50 bg-muted/30 px-2 py-1 text-xs text-muted-foreground">
-              {selectedSeason.name}
-            </span>
-          ) : null}
-        />
-
+      <PageContainer as="main" className="relative z-10 py-3 md:py-4" width="workspace">
         {/* Access warning */}
         {currentRoster && !currentRoster.hasAccess && (
           <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-sm text-destructive">
@@ -1515,30 +1669,8 @@ const RosterWishes = () => {
           selectedSeason && <SeasonStateCallout season={selectedSeason} />
         )}
 
-        {currentRoster && rosterLockState.isLocked && (
-          <div className={cn("mb-4 p-3 rounded-lg border text-sm flex items-start gap-2", toneCalloutClass('warning'))}>
-            <Lock className={cn("h-4 w-4 mt-0.5", toneTextClass('warning'))} />
-            <div>
-              <div className="font-medium">{t.wishes.lockedTitle}</div>
-              <div className={cn("opacity-80", toneTextClass('warning'))}>{t.wishes.lockedRosterDesc}</div>
-            </div>
-          </div>
-        )}
-
-        {currentRoster && !rosterLockState.isLocked && rosterScheduledLabel && (
-          <div className={cn("mb-4 p-3 rounded-lg border text-sm flex items-start gap-2", toneCalloutClass('info'))}>
-            <Clock className={cn("h-4 w-4 mt-0.5", toneTextClass('info'))} />
-            <div>
-              <div className="font-medium">{t.wishes.lockScheduledTitle}</div>
-              <div className={cn("opacity-80", toneTextClass('info'))}>
-                {interpolateMessage(t.wishes.lockScheduledDesc, { date: rosterScheduledLabel })}
-              </div>
-            </div>
-          </div>
-        )}
-
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'table' | 'selected' | 'analytics')} className="w-full">
-          <TabsList className="mb-3 h-auto w-full justify-start overflow-x-auto p-1 lg:w-auto">
+          <TabsList className="mb-3 h-auto max-w-full justify-start overflow-x-auto p-1 lg:w-auto">
             <TabsTrigger value="table" className="gap-2 whitespace-nowrap px-3">
               <TableIcon className="h-4 w-4" />
               {t.dashboard.table}
@@ -1605,6 +1737,127 @@ const RosterWishes = () => {
           </TabsContent>
         </Tabs>
       </PageContainer>
+
+      {canManageSeasonActions && (
+        <Dialog open={seasonDialogOpen} onOpenChange={setSeasonDialogOpen}>
+          <DialogContent className="max-w-lg border-border bg-card">
+            <DialogHeader>
+              <DialogTitle>{t.seasons.dialogTitle}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="season-name">{t.seasons.name}</Label>
+                <Input
+                  id="season-name"
+                  value={seasonName}
+                  onChange={(event) => setSeasonName(event.target.value)}
+                  placeholder={t.seasons.namePlaceholder}
+                />
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="season-start">{t.seasons.startsAt}</Label>
+                  <Input id="season-start" type="date" value={seasonStartsAt} onChange={(event) => setSeasonStartsAt(event.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="season-end">{t.seasons.endsAt}</Label>
+                  <Input id="season-end" type="date" value={seasonEndsAt} onChange={(event) => setSeasonEndsAt(event.target.value)} />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>{t.seasons.sourceSeason}</Label>
+                <Select value={seasonSourceId || activeSeason?.id || ''} onValueChange={setSeasonSourceId}>
+                  <SelectTrigger className="border-border bg-background">
+                    <SelectValue placeholder={t.seasons.selectSeason} />
+                  </SelectTrigger>
+                  <SelectContent className="border-border bg-card">
+                    {(seasonSourceOptions.length > 0 ? seasonSourceOptions : sortedSeasonOptions).map((season) => (
+                      <SelectItem key={season.id} value={season.id}>
+                        {season.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-3 rounded-lg border border-border/50 bg-background/50 p-3">
+                <label className="flex items-start gap-3">
+                  <Checkbox checked={seasonPrefillWishes} onCheckedChange={(checked) => setSeasonPrefillWishes(checked === true)} />
+                  <span className="space-y-0.5">
+                    <span className="block text-sm font-medium">{t.seasons.prefillPrevious}</span>
+                    <span className="block text-xs text-muted-foreground">{t.seasons.prefillPreviousHint}</span>
+                  </span>
+                </label>
+                <label className="flex items-start gap-3">
+                  <Checkbox
+                    checked={seasonResetCopiedWishes}
+                    onCheckedChange={(checked) => setSeasonResetCopiedWishes(checked === true)}
+                    disabled={!seasonPrefillWishes}
+                  />
+                  <span className="space-y-0.5">
+                    <span className={cn('block text-sm font-medium', !seasonPrefillWishes && 'text-muted-foreground')}>{t.seasons.resetCopied}</span>
+                    <span className="block text-xs text-muted-foreground">{t.seasons.resetCopiedHint}</span>
+                  </span>
+                </label>
+                <label className="flex items-start gap-3">
+                  <Checkbox checked={seasonActivateImmediately} onCheckedChange={(checked) => setSeasonActivateImmediately(checked === true)} />
+                  <span className="space-y-0.5">
+                    <span className="block text-sm font-medium">{t.seasons.activateImmediately}</span>
+                    <span className="block text-xs text-muted-foreground">{t.seasons.activateImmediatelyHint}</span>
+                  </span>
+                </label>
+              </div>
+
+              {seasonActivateImmediately && activeSeason && (
+                <div className="rounded-lg border border-status-warning/30 bg-status-warning/10 p-3 text-xs text-status-warning">
+                  {interpolateMessage(t.seasons.viewingArchived, { season: activeSeason.name })}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 pt-2">
+                <CosmicButton variant="outline" onClick={() => setSeasonDialogOpen(false)}>
+                  {t.common.cancel}
+                </CosmicButton>
+                <CosmicButton onClick={submitSeasonDialog} loading={seasonDialogSaving} disabled={!seasonName.trim()}>
+                  {seasonActivateImmediately ? t.seasons.startSeason : t.seasons.createDraft}
+                </CosmicButton>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {canManageSeasonActions && selectedSeason && (
+        <Dialog open={seasonRenameDialogOpen} onOpenChange={setSeasonRenameDialogOpen}>
+          <DialogContent className="max-w-md border-border bg-card">
+            <DialogHeader>
+              <DialogTitle>{t.seasons.renameDialogTitle}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="season-rename-name">{t.seasons.renameNameLabel}</Label>
+                <Input
+                  id="season-rename-name"
+                  value={seasonRenameName}
+                  onChange={(event) => setSeasonRenameName(event.target.value)}
+                  placeholder={t.seasons.namePlaceholder}
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <CosmicButton variant="outline" onClick={() => setSeasonRenameDialogOpen(false)}>
+                  {t.common.cancel}
+                </CosmicButton>
+                <CosmicButton onClick={renameSelectedSeason} loading={seasonActionBusy === 'rename'} disabled={!seasonRenameName.trim()}>
+                  {t.seasons.renameConfirm}
+                </CosmicButton>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {selectedRosterId && (
         <Dialog

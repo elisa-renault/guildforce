@@ -782,8 +782,8 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
         {/* Main Grid: 6 columns - pie charts smaller, bar charts larger */}
         <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-6">
           {/* Range Pie - 1 column */}
-          <GlowCard className="p-3">
-            <h4 className="text-sm font-semibold mb-2">{t.dashboard.range}</h4>
+          <GlowCard surface="section" className="p-3">
+            <h4 className="text-sm font-medium mb-2">{t.dashboard.range}</h4>
             {totalRange > 0 ? (
               <div className="flex flex-col items-center gap-2">
                 <div className="w-24 h-24">
@@ -828,8 +828,8 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
           </GlowCard>
 
           {/* Roles Pie - 1 column */}
-          <GlowCard className="p-3">
-            <h4 className="text-sm font-semibold mb-2">{t.dashboard.rolesByPriority}</h4>
+          <GlowCard surface="section" className="p-3">
+            <h4 className="text-sm font-medium mb-2">{t.dashboard.rolesByPriority}</h4>
             {totalRoles > 0 ? (
               <div className="flex flex-col items-center gap-2">
                 <div className="w-24 h-24">
@@ -870,8 +870,8 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
           </GlowCard>
 
           {/* Class Distribution - 2 columns */}
-          <GlowCard className="p-3 lg:col-span-2">
-            <h4 className="text-sm font-semibold mb-2">{t.dashboard.classDistribution}</h4>
+          <GlowCard surface="section" className="p-3 lg:col-span-2">
+            <h4 className="text-sm font-medium mb-2">{t.dashboard.classDistribution}</h4>
             <div className="max-h-[200px] overflow-y-auto pr-1 space-y-1">
               {representedClasses.map((stat) => (
                 <UITooltip key={stat.id} delayDuration={100}>
@@ -925,8 +925,8 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
           </GlowCard>
 
           {/* Spec Popularity - 2 columns */}
-          <GlowCard className="p-3 lg:col-span-2">
-            <h4 className="text-sm font-semibold mb-2">{t.dashboard.topSpecs}</h4>
+          <GlowCard surface="section" className="p-3 lg:col-span-2">
+            <h4 className="text-sm font-medium mb-2">{t.dashboard.topSpecs}</h4>
             {specStats.length > 0 ? (
               <div className="max-h-[200px] overflow-y-auto pr-1 space-y-1">
                 {specStats.map((stat, index) => (
@@ -953,8 +953,8 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
           </GlowCard>
 
           {/* Token Distribution - 2 columns */}
-          <GlowCard className="p-3 lg:col-span-2">
-            <h4 className="text-sm font-semibold mb-2">{t.dashboard.tokenDistribution}</h4>
+          <GlowCard surface="section" className="p-3 lg:col-span-2">
+            <h4 className="text-sm font-medium mb-2">{t.dashboard.tokenDistribution}</h4>
             <p className="text-[11px] text-muted-foreground mb-2">
               {t.dashboard.tokenDistributionInfo}{' '}
               <a
@@ -1011,8 +1011,8 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
           </GlowCard>
 
           {showBuffsDebuffs && (
-            <GlowCard className="p-3 lg:col-span-3">
-              <h4 className="text-sm font-semibold mb-2">{t.dashboard.majorBuffsDebuffs}</h4>
+            <GlowCard surface="section" className="p-3 lg:col-span-3">
+              <h4 className="text-sm font-medium mb-2">{t.dashboard.majorBuffsDebuffs}</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <h5 className="text-xs font-semibold text-muted-foreground mb-1">

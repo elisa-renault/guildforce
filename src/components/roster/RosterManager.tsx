@@ -213,9 +213,9 @@ export const RosterManager = ({ guildId, rosters, members, ranks, onRosterChange
 
   return (
     <>
-      <GlowCard className="p-6">
+      <GlowCard surface="section">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display text-lg">{t.rosters.title}</h2>
+          <h2 className="font-sans text-base font-medium">{t.rosters.title}</h2>
           <CosmicButton
             size="sm"
             variant="outline"
