@@ -537,6 +537,7 @@ const GuildPollNew = () => {
           icon={ClipboardList}
           title={existingPoll ? t.polls.edit : t.polls.new}
           description={guild ? guild.name : undefined}
+          bordered={false}
         />
 
         {isActivePoll && (

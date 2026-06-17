@@ -362,7 +362,7 @@ export const PollPreviewDialog = ({
                 const hasCondition = !!question.condition;
                 
                 return (
-                  <GlowCard key={question.id} className="p-5">
+                  <GlowCard key={question.id} surface="section">
                     <div className="space-y-4">
                       <div className="flex items-start gap-2">
                         <span className="text-primary font-semibold">{getQuestionDisplayIndex(question.id)}.</span>
@@ -657,4 +657,3 @@ export const PollPreviewDialog = ({
     </Dialog>
   );
 };
-

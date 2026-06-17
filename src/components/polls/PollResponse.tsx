@@ -246,10 +246,10 @@ export const PollResponse = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {isAnonymous && (
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/30 text-primary text-sm">
-          <Lock className="h-4 w-4" />
+        <div className="inline-flex max-w-full items-center gap-2 rounded border border-primary/20 bg-primary/5 px-3 py-2 text-sm text-primary">
+          <Lock className="h-4 w-4 shrink-0" />
           {t.polls?.anonymousDesc}
         </div>
       )}
@@ -258,13 +258,13 @@ export const PollResponse = ({
         const hasCondition = !!question.condition;
         
         return (
-          <GlowCard key={question.id} className="p-5">
-            <div className="space-y-4">
+          <GlowCard key={question.id} surface="section" hoverable={false} className="p-3 md:p-3">
+            <div className="space-y-3">
               <div className="flex items-start gap-2">
-                <span className="text-primary font-semibold">{getQuestionDisplayIndex(question.id)}.</span>
+                <span className="text-primary font-medium">{getQuestionDisplayIndex(question.id)}.</span>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-medium text-foreground">
+                    <p className="font-medium leading-5 text-foreground">
                       {question.question_text}
                       {question.is_required && <span className="text-destructive ml-1">*</span>}
                     </p>
@@ -295,7 +295,7 @@ export const PollResponse = ({
                         />
                         <Label 
                           htmlFor={`${question.id}-${optionIndex}`} 
-                          className="cursor-pointer text-foreground"
+                          className="cursor-pointer text-sm text-foreground"
                         >
                           {option}
                         </Label>
@@ -312,7 +312,7 @@ export const PollResponse = ({
                           />
                           <Label 
                             htmlFor={`${question.id}-other`} 
-                            className="cursor-pointer text-foreground"
+                            className="cursor-pointer text-sm text-foreground"
                           >
                             {t.polls?.otherSpecify}
                           </Label>
@@ -352,7 +352,7 @@ export const PollResponse = ({
                         />
                         <Label 
                           htmlFor={`${question.id}-${optionIndex}`} 
-                          className="cursor-pointer text-foreground"
+                          className="cursor-pointer text-sm text-foreground"
                         >
                           {option}
                         </Label>
@@ -377,7 +377,7 @@ export const PollResponse = ({
                         />
                         <Label 
                           htmlFor={`${question.id}-other`} 
-                          className="cursor-pointer text-foreground"
+                          className="cursor-pointer text-sm text-foreground"
                         >
                           {t.polls?.otherSpecify}
                         </Label>
@@ -409,7 +409,7 @@ export const PollResponse = ({
               )}
 
               {question.question_type === 'rating' && (
-                <div className="pl-5 space-y-3">
+                <div className="space-y-2 pl-5">
                   <div className="flex flex-col items-center gap-2">
                     <StarRating
                       value={(responses[question.id] as { type: 'rating'; value: number })?.value ?? 0}
@@ -420,7 +420,7 @@ export const PollResponse = ({
                       disabled={readOnly}
                     />
                     <div className="text-center">
-                      <span className="text-lg font-semibold text-primary">
+                      <span className="text-base font-medium text-primary">
                         {(responses[question.id] as { type: 'rating'; value: number })?.value ?? 0}
                       </span>
                       <span className="text-muted-foreground"> / 5</span>
@@ -460,7 +460,7 @@ export const PollResponse = ({
               )}
 
               {question.question_type === 'scale' && (
-                <div className="pl-5 space-y-3">
+                <div className="space-y-2 pl-5">
                   {question.scale_config?.min_label || question.scale_config?.max_label ? (
                     <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
                       {question.scale_config?.min_label && <span>{question.scale_config.min_label}</span>}
@@ -517,7 +517,7 @@ export const PollResponse = ({
                             </div>
                           )}
                           <div className="text-center">
-                            <span className="text-lg font-semibold text-primary">
+                            <span className="text-base font-medium text-primary">
                               {formattedValue}
                             </span>
                             <span className="text-muted-foreground"> / {formattedMax}</span>

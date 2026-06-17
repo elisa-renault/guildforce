@@ -128,10 +128,10 @@ const GuildPolls = () => {
         status: `${activePolls.length} ${sm('guild.polls.tab.active').toLowerCase()}`,
       }}
     >
-      <PageContainer as="main" className="relative z-10 py-5 md:py-6" width="workspace">
-        <div className="max-w-5xl space-y-5">
+      <PageContainer as="main" className="relative z-10 py-4 md:py-5" width="workspace">
+        <div className="space-y-4">
           <PageHeader
-            className="max-w-4xl"
+            bordered={false}
             icon={BarChart3}
             title={sm('guild.polls.title')}
             description={`${activePolls.length} ${sm('guild.polls.tab.active').toLowerCase()} • ${closedPolls.length} ${sm('guild.polls.tab.closed').toLowerCase()}`}

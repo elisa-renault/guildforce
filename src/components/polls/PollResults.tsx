@@ -67,8 +67,6 @@ interface PollResultsProps {
   aiSummariesLoading?: boolean;
   aiSummariesError?: string | null;
   canGenerateAiSummaries?: boolean;
-  aiSummariesGenerating?: boolean;
-  onGenerateAiSummaries?: () => void | Promise<unknown>;
 }
 
 const QUESTION_TYPE_ICONS: Record<PollQuestionType, typeof BarChart3> = {
@@ -122,8 +120,6 @@ export const PollResults = ({
   aiSummariesLoading = false,
   aiSummariesError = null,
   canGenerateAiSummaries = false,
-  aiSummariesGenerating = false,
-  onGenerateAiSummaries,
 }: PollResultsProps) => {
   const { user } = useAuth();
   const { language, t } = useLanguage();
@@ -165,11 +161,6 @@ export const PollResults = ({
     () => new Map(aiSummaries.map((summary) => [summary.question_id, summary])),
     [aiSummaries],
   );
-  const hasTextQuestions = useMemo(
-    () => Boolean((poll.questions || []).some((question) => question.question_type === 'text')),
-    [poll.questions],
-  );
-  const hasGeneratedAiSummaries = aiSummaries.some((summary) => summary.status !== 'not_generated');
 
   useEffect(() => {
     if (!isFull) {
@@ -434,14 +425,11 @@ export const PollResults = ({
     });
   };
 
-  const getAiSummaryButtonLabel = () =>
-    hasGeneratedAiSummaries ? t.polls.resultsUi.aiSummary.regenerate : t.polls.resultsUi.aiSummary.generate;
-
   const renderAiSummary = (summary: PollQuestionAiSummary | undefined) => {
     if (!summary) {
       if (aiSummariesLoading) {
         return (
-          <div className="rounded-xl border border-border/70 bg-background/40 p-4 text-sm text-muted-foreground">
+          <div className="rounded border border-border/35 bg-background/25 p-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin text-primary" />
               <span>{t.polls.resultsUi.aiSummary.loading}</span>
@@ -452,7 +440,7 @@ export const PollResults = ({
 
       if (aiSummariesError) {
         return (
-          <div className="rounded-xl border border-border/70 bg-background/40 p-4 text-sm text-muted-foreground">
+          <div className="rounded border border-border/35 bg-background/25 p-4 text-sm text-muted-foreground">
             {t.polls.resultsUi.aiSummary.unavailable}
           </div>
         );
@@ -467,7 +455,7 @@ export const PollResults = ({
 
     if (summary.status === 'insufficient_data') {
       return (
-        <div className="rounded-xl border border-border/70 bg-background/40 p-4 text-sm text-muted-foreground">
+        <div className="rounded border border-border/35 bg-background/25 p-4 text-sm text-muted-foreground">
           {t.polls.resultsUi.aiSummary.insufficientData}
         </div>
       );
@@ -475,7 +463,7 @@ export const PollResults = ({
 
     if (summary.status === 'unavailable' || !summary.summary) {
       return (
-        <div className="rounded-xl border border-border/70 bg-background/40 p-4 text-sm text-muted-foreground">
+        <div className="rounded border border-border/35 bg-background/25 p-4 text-sm text-muted-foreground">
           {t.polls.resultsUi.aiSummary.unavailable}
         </div>
       );
@@ -489,7 +477,7 @@ export const PollResults = ({
     const isExpanded = expandedAiSummaries[summary.question_id] ?? false;
 
     return (
-      <div className="rounded-xl border border-border/70 bg-card/40 p-5 sm:p-6">
+      <div className="rounded border border-border/35 bg-card/25 p-5 sm:p-6">
         <div className="flex items-start gap-4">
           <div className={cn('mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border', toneCalloutClass('info'))}>
             <Sparkles className="h-4 w-4" />
@@ -628,7 +616,7 @@ export const PollResults = ({
   const renderHeader = () => {
     if (!isFull) {
       return (
-        <GlowCard className="p-4" hoverable={false}>
+        <GlowCard surface="section" hoverable={false}>
           <div className="flex flex-wrap items-center gap-3">
             <Badge variant="outline" className="border-border bg-card/60 text-foreground">
               <Users className="mr-1 h-3.5 w-3.5" />
@@ -668,7 +656,7 @@ export const PollResults = ({
           : t.polls.status.active;
 
     return (
-      <GlowCard className="p-6" hoverable={false}>
+      <GlowCard surface="section" hoverable={false}>
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between lg:gap-6">
           <div className="min-w-0 flex-1 space-y-3">
             <div className="flex flex-wrap items-center gap-2">
@@ -708,37 +696,6 @@ export const PollResults = ({
                 {interpolateMessage(t.polls.resultsUi.kpis.respondentsValue, { count: formatCount(model.respondentCount) })}
               </span>
             </div>
-            {isFull && hasTextQuestions && canGenerateAiSummaries && (
-              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold text-foreground">{t.polls.resultsUi.aiSummary.headerTitle}</p>
-                    <p className="text-sm text-muted-foreground">{t.polls.resultsUi.aiSummary.headerHint}</p>
-                    {aiSummariesError && <p className="text-sm text-destructive">{aiSummariesError}</p>}
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      void onGenerateAiSummaries?.();
-                    }}
-                    disabled={aiSummariesGenerating || !onGenerateAiSummaries}
-                  >
-                    {aiSummariesGenerating ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        {t.polls.resultsUi.aiSummary.generating}
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="h-4 w-4" />
-                        {getAiSummaryButtonLabel()}
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3 lg:min-w-[540px] lg:max-w-[760px] lg:flex-[0_0_48%] xl:min-w-[620px] xl:max-w-[860px]">
@@ -768,13 +725,13 @@ export const PollResults = ({
     }
 
     return (
-      <GlowCard className="p-4" hoverable={false}>
+      <GlowCard surface="section" hoverable={false}>
         <div className="space-y-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
                 <Filter className="h-4 w-4 text-primary" />
-                <p className="text-sm font-semibold text-foreground">{t.polls.resultsUi.cohortAnalysis}</p>
+                <p className="text-sm font-medium text-foreground">{t.polls.resultsUi.cohortAnalysis}</p>
               </div>
               <p className="mt-1 text-sm text-muted-foreground">{t.polls.resultsUi.cohortAnalysisHint}</p>
             </div>
@@ -791,7 +748,7 @@ export const PollResults = ({
           </div>
 
           {cohortFilters.length === 0 ? (
-            <div className="rounded-xl border border-border/70 bg-background/40 p-4 text-sm text-muted-foreground">
+            <div className="rounded border border-border/35 bg-background/25 p-4 text-sm text-muted-foreground">
               {t.polls.resultsUi.cohortEmpty}
             </div>
           ) : (
@@ -801,7 +758,7 @@ export const PollResults = ({
                 const matchValues = option?.matchValues || [];
 
                 return (
-                  <div key={`${filter.question_id}-${index}`} className="space-y-3 rounded-xl border border-border/70 bg-background/40 p-4">
+                  <div key={`${filter.question_id}-${index}`} className="space-y-3 rounded border border-border/35 bg-background/25 p-4">
                     {index > 0 && (
                       <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary">
                         {t.polls.resultsUi.cohortAnd}
@@ -888,7 +845,7 @@ export const PollResults = ({
       .join(` ${t.polls.resultsUi.cohortAnd} `);
 
     return (
-      <GlowCard className="p-4" hoverable={false}>
+      <GlowCard surface="section" hoverable={false}>
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div className="space-y-1">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary/80">
@@ -914,7 +871,7 @@ export const PollResults = ({
   };
 
   const renderControls = () => (
-    <GlowCard className="p-3 sm:p-4" hoverable={false}>
+    <GlowCard surface="section" className="p-3 sm:p-4" hoverable={false}>
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
@@ -1057,7 +1014,7 @@ export const PollResults = ({
     const viewerRanking = question.viewerRanking || [];
 
     return (
-      <GlowCard key={question.id} className="p-5" hoverable={false}>
+      <GlowCard key={question.id} surface="section" hoverable={false}>
         <div id={question.anchorId} data-question-id={question.id} className="space-y-4 scroll-mt-28">
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
@@ -1086,7 +1043,7 @@ export const PollResults = ({
               )}
             </div>
             <div>
-              <h3 className="text-base font-semibold text-foreground md:text-lg">{question.question.question_text}</h3>
+              <h3 className="text-base font-medium text-foreground md:text-lg">{question.question.question_text}</h3>
               <p className="mt-2 text-sm text-muted-foreground">
                 {question.isCohortRedacted ? t.polls.resultsUi.cohortHiddenForAnonymity : getTakeawayText(question)}
               </p>
@@ -1104,7 +1061,7 @@ export const PollResults = ({
           </div>
 
           {question.isCohortRedacted ? (
-            <div className="rounded-xl border border-border/70 bg-background/40 p-4">
+            <div className="rounded border border-border/35 bg-background/25 p-4">
               <p className="text-sm text-muted-foreground">{t.polls.resultsUi.cohortHiddenForAnonymity}</p>
             </div>
           ) : (
@@ -1257,7 +1214,7 @@ export const PollResults = ({
                   <span className="text-sm text-muted-foreground">/ {formatCount(question.scaleMax || 0)}</span>
                 </div>
                 {(question.scaleMinLabel || question.scaleMaxLabel) && (
-                  <div className="rounded-xl border border-border/70 bg-background/40 p-3">
+                  <div className="rounded border border-border/35 bg-background/25 p-3">
                     <div className="flex items-center justify-between gap-4 text-sm text-muted-foreground">
                       <div className="min-w-0 flex flex-1 items-center gap-2">
                         <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
@@ -1351,7 +1308,7 @@ export const PollResults = ({
       {renderControls()}
 
       {visibleQuestions.length === 0 ? (
-        <GlowCard className="p-8 text-center" hoverable={false}>
+        <GlowCard surface="section" className="text-center" hoverable={false}>
           <p className="text-sm text-muted-foreground">{t.polls.resultsUi.noVisibleQuestions}</p>
         </GlowCard>
       ) : (
@@ -1363,11 +1320,11 @@ export const PollResults = ({
               return (
                 <Collapsible key={section.id} open={!isCollapsed} onOpenChange={() => toggleSection(section.id)}>
                   <div id={`poll-section-${section.id}`} className="scroll-mt-24 space-y-4">
-                    <GlowCard className="p-4" hoverable={false}>
+                    <GlowCard surface="section" hoverable={false}>
                       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                         <div>
                           <div className="flex flex-wrap items-center gap-2">
-                            <h2 className="text-lg font-semibold text-foreground">{getSectionTitle(section)}</h2>
+                            <h2 className="text-lg font-medium text-foreground">{getSectionTitle(section)}</h2>
                             <Badge variant="outline" className={NEUTRAL_BADGE_CLASS}>
                               {getSectionSummaryText(section)}
                             </Badge>
@@ -1402,8 +1359,8 @@ export const PollResults = ({
           {isFull && (
             <aside className="hidden xl:block">
               <div className="sticky space-y-3" style={{ top: `${quickNavTopOffset}px` }}>
-                <GlowCard className="p-4" hoverable={false}>
-                  <div className="rounded-xl border border-border/70 bg-background/40 p-4">
+                <GlowCard surface="section" hoverable={false}>
+                  <div className="rounded border border-border/35 bg-background/25 p-4">
                     <div className="flex items-start gap-3">
                       <div
                         className={cn(
@@ -1417,7 +1374,7 @@ export const PollResults = ({
                         <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                           {t.polls.resultsUi.quickNavigation}
                         </p>
-                        <p className="mt-1 text-base font-semibold text-foreground">
+                        <p className="mt-1 text-base font-medium text-foreground">
                           {t.polls.resultsUi.jumpToQuestion}
                         </p>
                       </div>
@@ -1467,7 +1424,7 @@ interface SummaryTileProps {
 }
 
 const SummaryTile = ({ label, value, helper, icon: Icon }: SummaryTileProps) => (
-  <div className="rounded-xl border border-border/70 bg-background/50 p-4">
+  <div className="rounded border border-border/35 bg-background/25 p-4">
     <div className="flex items-center justify-between gap-3">
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{label}</p>
       <Icon className="h-4 w-4 text-primary" />

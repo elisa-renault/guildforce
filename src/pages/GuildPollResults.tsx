@@ -1,5 +1,5 @@
-import { BarChart3, Loader2, ArrowLeft, Lock } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import { Loader2, ArrowLeft, Lock, Sparkles } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { CosmicBackground } from '@/components/CosmicBackground';
@@ -140,6 +140,15 @@ const GuildPollResultsPage = () => {
     poll,
     enabled: userCanViewResults,
   });
+  const hasTextQuestions = useMemo(
+    () => Boolean((poll?.questions || []).some((question) => question.question_type === 'text')),
+    [poll?.questions],
+  );
+  const hasGeneratedAiSummaries = aiSummaries.some((summary) => summary.status !== 'not_generated');
+  const canGenerateAiSummaries = isGM && hasTextQuestions;
+  const aiSummaryActionLabel = hasGeneratedAiSummaries
+    ? t.polls.resultsUi.aiSummary.regenerate
+    : t.polls.resultsUi.aiSummary.generate;
 
   if (loading || accessLoading || resultsLoading) {
     return (
@@ -167,12 +176,12 @@ const GuildPollResultsPage = () => {
         activeTab="polls"
         context={{ status: t.common.results }}
       >
-        <PageContainer className="space-y-5 py-5 md:py-6" width="workspace">
+        <PageContainer className="mx-auto max-w-5xl space-y-4 py-4 md:py-5" width="workspace">
           <PageHeader
-            className="max-w-4xl"
-            icon={BarChart3}
+            className="mb-0"
             title={poll.title}
             description={t.common.results}
+            bordered={false}
             actions={(
               <Button
                 type="button"
@@ -212,29 +221,46 @@ const GuildPollResultsPage = () => {
       activeTab="polls"
       context={{ status: t.common.results }}
     >
-      <PageContainer className="space-y-6 py-5 md:py-6" width="workspace">
+      <PageContainer className="mx-auto max-w-5xl space-y-4 py-4 md:py-5" width="workspace">
         <PageHeader
-          className="max-w-4xl"
-          icon={BarChart3}
+          className="mb-0"
           title={poll.title}
           description={t.common.results}
+          bordered={false}
           actions={(
             <>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="rounded-lg bg-card/60"
-              onClick={handleBack}
-              aria-label={t.common.back}
-            >
-              <ArrowLeft className="h-5 w-5 text-muted-foreground" />
-            </Button>
-            {hasResponded && (
-              <Button variant="outline" onClick={() => navigate(personalResponsesPath)}>
-                {t.polls.reviewMyResponses}
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="rounded-lg bg-card/60"
+                onClick={handleBack}
+                aria-label={t.common.back}
+              >
+                <ArrowLeft className="h-5 w-5 text-muted-foreground" />
               </Button>
-            )}
+              {canGenerateAiSummaries && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    void generateAiSummaries();
+                  }}
+                  disabled={aiSummariesGenerating}
+                >
+                  {aiSummariesGenerating ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4" />
+                  )}
+                  {aiSummariesGenerating ? t.polls.resultsUi.aiSummary.generating : aiSummaryActionLabel}
+                </Button>
+              )}
+              {hasResponded && (
+                <Button variant="outline" onClick={() => navigate(personalResponsesPath)}>
+                  {t.polls.reviewMyResponses}
+                </Button>
+              )}
             </>
           )}
         />
@@ -246,9 +272,7 @@ const GuildPollResultsPage = () => {
           aiSummaries={aiSummaries}
           aiSummariesLoading={aiSummariesLoading}
           aiSummariesError={aiSummariesError}
-          canGenerateAiSummaries={isGM}
-          aiSummariesGenerating={aiSummariesGenerating}
-          onGenerateAiSummaries={generateAiSummaries}
+          canGenerateAiSummaries={canGenerateAiSummaries}
         />
       </PageContainer>
     </GuildWorkspaceShell>

@@ -202,15 +202,15 @@ const GuildPollView = () => {
       }}
     >
       <PageContainer
-        className={usesFullResultsLayout ? 'relative z-10 py-5 md:py-6' : 'relative z-10 max-w-4xl py-5 md:py-6'}
+        className="relative z-10 mx-auto max-w-5xl py-4 md:py-5"
         width="workspace"
       >
         {showOuterHeader && (
           <PageHeader
-            className="mb-5 max-w-4xl"
-            icon={BarChart3}
+            className="mb-4"
             title={poll.title}
             description={poll.description}
+            bordered={false}
             actions={(
               <>
                 <Button
@@ -221,7 +221,7 @@ const GuildPollView = () => {
                   className="h-10 w-10 shrink-0 rounded-lg bg-muted/50 hover:bg-muted"
                   aria-label={t.common.back}
                 >
-                  <ArrowLeft className="h-5 w-5 text-muted-foreground" />
+                  <ArrowLeft className="h-4 w-4 text-muted-foreground" />
                 </Button>
                 {canToggleResults && (
                   <Button
@@ -248,12 +248,12 @@ const GuildPollView = () => {
             meta={(
               <>
                 {poll.roster?.name && (
-                  <span className="rounded bg-muted/50 px-2 py-1">
+                  <span className="rounded bg-muted/45 px-2 py-1 text-xs font-medium text-foreground">
                     {poll.roster.name}
                   </span>
                 )}
                 {poll.ends_at && (
-                  <span className={isClosed ? 'text-destructive' : ''}>
+                  <span className={isClosed ? 'text-xs text-destructive' : 'text-xs text-muted-foreground'}>
                     {isClosed
                       ? t.polls.closed
                       : `${t.polls.endsOn}: ${formatDateLocalized(poll.ends_at, language, { dateStyle: 'medium' })}`}

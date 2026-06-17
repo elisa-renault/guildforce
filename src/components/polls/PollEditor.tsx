@@ -665,8 +665,8 @@ export const PollEditor = ({
 
   return (
     <div className="space-y-6 pb-0 sm:pb-0">
-      <GlowCard className="p-3 sm:p-6">
-        <h2 className="text-lg font-semibold mb-4">
+      <GlowCard surface="section" className="p-3 sm:p-4">
+        <h2 className="text-base font-medium mb-4">
           {sm('polls.editor.settings_title')}
         </h2>
 
@@ -760,7 +760,7 @@ export const PollEditor = ({
       </GlowCard>
 
       {/* Respondent Targeting */}
-      <GlowCard className="p-3 sm:p-6">
+      <GlowCard surface="section" className="p-3 sm:p-4">
         <PollRespondentEditor
           accessRules={respondentAccessRules}
           members={members}
@@ -772,7 +772,7 @@ export const PollEditor = ({
       </GlowCard>
 
       {/* Results Access Control */}
-      <GlowCard className="p-3 sm:p-6">
+      <GlowCard surface="section" className="p-3 sm:p-4">
         <PollResultsAccessEditor
           config={resultsAccessConfig}
           members={members}
@@ -802,9 +802,9 @@ export const PollEditor = ({
       </GlowCard>
 
       {/* Unified Questions & Sections Editor */}
-      <GlowCard className={`p-3 sm:p-6 ${metadataOnly ? 'opacity-60 pointer-events-none' : ''}`}>
+      <GlowCard surface="section" className={`p-3 sm:p-4 ${metadataOnly ? 'opacity-60 pointer-events-none' : ''}`}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">
+          <h2 className="text-base font-medium">
             {sm('polls.editor.questions_title')}
           </h2>
           {!metadataOnly && (

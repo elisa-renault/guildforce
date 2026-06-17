@@ -60,7 +60,7 @@ export const PollSectionEditor = ({
   };
 
   return (
-    <GlowCard className="p-4">
+    <GlowCard surface="section">
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <div className="flex items-start gap-3">
           <div className="flex items-center gap-2 pt-2 text-muted-foreground">

@@ -94,7 +94,7 @@ export const ActivePollWidget = forwardRef<HTMLDivElement, ActivePollWidgetProps
 
       return (
         <div ref={ref} className="mb-6">
-          <GlowCard className="p-4 overflow-hidden">
+          <GlowCard surface="section" className="overflow-hidden">
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-2">
                 <BarChart3 className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -103,7 +103,7 @@ export const ActivePollWidget = forwardRef<HTMLDivElement, ActivePollWidgetProps
                 </span>
               </div>
 
-              <h3 className="font-semibold text-foreground line-clamp-2">{closedPoll.title}</h3>
+              <h3 className="font-medium text-foreground line-clamp-2">{closedPoll.title}</h3>
 
               <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                 {closedPoll.response_count !== undefined && (
@@ -116,7 +116,7 @@ export const ActivePollWidget = forwardRef<HTMLDivElement, ActivePollWidgetProps
                 )}
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/30">
+              <div className="flex flex-wrap items-center gap-2 pt-1">
                 {hasRespondedToClosedPoll && (
                   <Button variant="outline" size="sm" onClick={handleReviewResponses}>
                     {t.polls.reviewMyResponses}
@@ -160,6 +160,7 @@ export const ActivePollWidget = forwardRef<HTMLDivElement, ActivePollWidgetProps
     return (
       <div ref={ref} className="mb-6">
         <GlowCard
+          surface="section"
           className="p-4 cursor-pointer hover:border-primary/50 transition-colors overflow-hidden"
           onClick={handleClick}
         >
@@ -169,7 +170,7 @@ export const ActivePollWidget = forwardRef<HTMLDivElement, ActivePollWidgetProps
               <span className="text-xs font-medium text-primary uppercase tracking-wide">{t.polls.activePoll}</span>
             </div>
 
-            <h3 className="font-semibold text-foreground line-clamp-2">{activePoll.title}</h3>
+            <h3 className="font-medium text-foreground line-clamp-2">{activePoll.title}</h3>
 
             <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
               {activePoll.response_count !== undefined && (
@@ -191,7 +192,7 @@ export const ActivePollWidget = forwardRef<HTMLDivElement, ActivePollWidgetProps
               )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/30" onClick={(event) => event.stopPropagation()}>
+            <div className="flex flex-wrap items-center gap-2 pt-1" onClick={(event) => event.stopPropagation()}>
               {isGM && (
                 <Button variant="outline" size="sm" onClick={handleResultsClick}>
                   <BarChart3 className="h-4 w-4 sm:mr-1.5" />
