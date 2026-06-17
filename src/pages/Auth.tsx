@@ -19,15 +19,60 @@ import { detectLanguageFromNavigator } from '@/i18n/config';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { supabase } from '@/integrations/supabase/client';
 import {
+  buildBattleNetDebugInfo,
+  getErrorMessage as getDiagnosticErrorMessage,
+  recordAuthDiagnostic,
+  type AuthDiagnosticStatus,
+} from '@/lib/authDiagnostics';
+import {
   type BattleNetRegion,
-  REGION_LABELS,
   ALL_REGIONS,
-  parseOAuthState,
-  getRedirectUri,
+  beginBattleNetCodeProcessing,
+  cleanupOAuthParams,
+  clearBattleNetCodeProcessing,
+  completeBattleNetCodeProcessing,
   generateOAuthState,
+  getRedirectUri,
+  getStoredOAuthParams,
+  getValidRegion,
+  parseOAuthState,
+  REGION_LABELS,
+  storeOAuthParams,
+  validateOAuthState,
 } from '@/lib/battlenetOAuth';
 import log from '@/lib/logger';
 import { getSupabaseUrl } from '@/lib/supabaseConfig';
+
+type BattleNetAuthResponse = Record<string, unknown> & {
+  access_token?: string;
+  authUrl?: string;
+  battletag?: string;
+  error?: string;
+  isNewUser?: boolean;
+  refresh_token?: string;
+  tokenType?: string;
+  verifyToken?: string;
+};
+
+type BattleNetDebugInfo = {
+  flowId: string;
+  step: string;
+  status: AuthDiagnosticStatus;
+  text: string;
+};
+
+const readBattleNetAuthResponse = async (response: Response): Promise<BattleNetAuthResponse> => {
+  const text = await response.text();
+  if (!text) return {};
+
+  try {
+    return JSON.parse(text) as BattleNetAuthResponse;
+  } catch {
+    return {
+      error: text.length > 500 ? `${text.slice(0, 500)}...` : text || response.statusText,
+    };
+  }
+};
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -41,39 +86,115 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState<BattleNetRegion>('eu');
   const [emailFormOpen, setEmailFormOpen] = useState(false);
+  const [battleNetDebugInfo, setBattleNetDebugInfo] = useState<BattleNetDebugInfo | null>(null);
   const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
     resolveSemanticMessage({ key, language, translations: t });
   const getErrorMessage = (error: unknown) =>
     error instanceof Error ? error.message : t.errors.generic;
+  const setDebugInfo = (
+    flowId: string,
+    step: string,
+    status: AuthDiagnosticStatus,
+    error?: unknown
+  ) => {
+    setBattleNetDebugInfo({
+      flowId,
+      step,
+      status,
+      text: buildBattleNetDebugInfo({
+        flowId,
+        step,
+        status,
+        errorMessage: getDiagnosticErrorMessage(error),
+      }),
+    });
+  };
+
+  const copyDebugInfo = async () => {
+    if (!battleNetDebugInfo) return;
+
+    try {
+      await navigator.clipboard.writeText(battleNetDebugInfo.text);
+      toast({ title: t.common.copied });
+    } catch {
+      toast({
+        title: t.common.error,
+        description: battleNetDebugInfo.text,
+        variant: 'destructive',
+      });
+    }
+  };
 
   // Check for Battle.net callback - only process once
   useEffect(() => {
     const code = searchParams.get('code');
     const state = searchParams.get('state');
     if (code && state) {
-      // Check if we already processed this code (stored in sessionStorage)
-      const processedCode = sessionStorage.getItem('bnet_processed_code');
-      if (processedCode === code) {
-        // Already processed, clear URL params and skip
+      const parsedState = parseOAuthState(state);
+      const storedParams = getStoredOAuthParams();
+      const flowId = parsedState.flowId || storedParams.flowId || generateOAuthState();
+
+      void recordAuthDiagnostic({
+        flowId,
+        step: 'callback_page_loaded',
+        status: 'ok',
+        metadata: {
+          hasCode: true,
+          hasState: true,
+          stateMode: parsedState.mode ?? 'login',
+          stateRegion: parsedState.region ?? null,
+          hasStoredState: Boolean(storedParams.state),
+        },
+      });
+
+      const processing = beginBattleNetCodeProcessing(code, flowId);
+      if (!processing.allowed) {
+        void recordAuthDiagnostic({
+          flowId,
+          step: 'callback_duplicate_skipped',
+          status: 'warning',
+          metadata: { reason: processing.reason },
+        });
         navigate('/auth', { replace: true });
         return;
       }
 
-      // Mark this code as being processed
-      sessionStorage.setItem('bnet_processed_code', code);
-      handleBattleNetCallback(code, state);
+      void handleBattleNetCallback(code, state, flowId);
     }
-  }, [searchParams]);
+    // This effect is intentionally tied to URL params; the callback clears/replaces the URL on every terminal path.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, navigate]);
 
   useEffect(() => {
     if (user) navigate('/guilds');
   }, [user, navigate]);
 
-  const handleBattleNetCallback = async (code: string, stateParam: string) => {
+  const handleBattleNetCallback = async (code: string, stateParam: string, callbackFlowId?: string) => {
     setBnetLoading(true);
+    const parsedState = parseOAuthState(stateParam);
+    const storedParams = getStoredOAuthParams();
+    const flowId = callbackFlowId || parsedState.flowId || storedParams.flowId || generateOAuthState();
+
     try {
-      const parsedState = parseOAuthState(stateParam);
-      const region = parsedState.region || 'eu';
+      const stateMatches = validateOAuthState(parsedState, storedParams.state);
+      if (!stateMatches) {
+        await recordAuthDiagnostic({
+          flowId,
+          step: 'state_validation_failed',
+          status: 'error',
+          metadata: { hasStoredState: Boolean(storedParams.state) },
+        });
+        throw new Error('Battle.net login state mismatch. Please try again.');
+      }
+
+      await recordAuthDiagnostic({
+        flowId,
+        step: 'state_validation_success',
+        status: storedParams.state ? 'ok' : 'warning',
+        metadata: { hasStoredState: Boolean(storedParams.state) },
+      });
+
+      const region = getValidRegion(parsedState.region || storedParams.region);
       const redirectUri = getRedirectUri('/auth');
 
       // Detect browser language for new accounts
@@ -82,28 +203,54 @@ const Auth = () => {
       const baseUrl = getSupabaseUrl();
       if (!baseUrl) throw new Error('Missing Supabase URL configuration');
 
+      await recordAuthDiagnostic({
+        flowId,
+        step: 'login_fetch_start',
+        status: 'ok',
+        metadata: { region, browserLanguage, redirectPath: '/auth' },
+      });
+
       const response = await fetch(`${baseUrl}/functions/v1/battlenet-auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, redirectUri, region, browserLanguage }),
+        body: JSON.stringify({ code, redirectUri, region, browserLanguage, flowId }),
       });
 
-      const data = await response.json();
+      const data = await readBattleNetAuthResponse(response);
+      await recordAuthDiagnostic({
+        flowId,
+        step: 'login_fetch_response',
+        status: response.ok ? 'ok' : 'error',
+        errorMessage: response.ok ? null : data?.error || 'Battle.net login failed',
+        metadata: { status: response.status, hasVerifyToken: Boolean(data?.verifyToken), hasAccessToken: Boolean(data?.access_token) },
+      });
+
       if (!response.ok) {
         throw new Error(data.error || 'Battle.net login failed');
       }
 
       if (data.access_token) {
-        const accessToken = data.access_token as string;
-        const refreshToken = (data.refresh_token as string) || accessToken;
+        await recordAuthDiagnostic({ flowId, step: 'set_session_start', status: 'ok' });
+        const accessToken = data.access_token;
+        const refreshToken = data.refresh_token || accessToken;
         const { error } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken,
         });
-        if (error) throw error;
+        if (error) {
+          await recordAuthDiagnostic({
+            flowId,
+            step: 'set_session_error',
+            status: 'error',
+            errorMessage: error.message,
+          });
+          throw error;
+        }
 
-        // Clear processed code from sessionStorage
-        sessionStorage.removeItem('bnet_processed_code');
+        await recordAuthDiagnostic({ flowId, step: 'set_session_success', status: 'ok' });
+
+        completeBattleNetCodeProcessing(code, flowId);
+        cleanupOAuthParams();
         toast({
           title: data.isNewUser ? t.auth.accountCreated : t.auth.welcomeBack,
           description: `${t.battlenet.connected} : ${data.battletag}`,
@@ -116,6 +263,7 @@ const Auth = () => {
           navigate('/guilds', { replace: true });
         }
       } else if (data.verifyToken) {
+        await recordAuthDiagnostic({ flowId, step: 'verify_otp_start', status: 'ok' });
         const token_hash = data.verifyToken as string;
         const type = (data.tokenType || 'magiclink') as
           | 'signup'
@@ -125,10 +273,20 @@ const Auth = () => {
           | 'email'
           | 'email_change';
         const { error } = await supabase.auth.verifyOtp({ token_hash, type });
-        if (error) throw error;
+        if (error) {
+          await recordAuthDiagnostic({
+            flowId,
+            step: 'verify_otp_error',
+            status: 'error',
+            errorMessage: error.message,
+          });
+          throw error;
+        }
 
-        // Clear processed code from sessionStorage
-        sessionStorage.removeItem('bnet_processed_code');
+        await recordAuthDiagnostic({ flowId, step: 'verify_otp_success', status: 'ok' });
+
+        completeBattleNetCodeProcessing(code, flowId);
+        cleanupOAuthParams();
         toast({
           title: data.isNewUser ? t.auth.accountCreated : t.auth.welcomeBack,
           description: `${t.battlenet.connected} : ${data.battletag}`,
@@ -140,8 +298,24 @@ const Auth = () => {
         } else {
           navigate('/guilds', { replace: true });
         }
+      } else {
+        await recordAuthDiagnostic({
+          flowId,
+          step: 'login_response_invalid',
+          status: 'error',
+          metadata: { keys: Object.keys(data || {}) },
+        });
+        throw new Error('Battle.net login returned an invalid response');
       }
     } catch (error: unknown) {
+      clearBattleNetCodeProcessing();
+      setDebugInfo(flowId, 'callback_error', 'error', error);
+      await recordAuthDiagnostic({
+        flowId,
+        step: 'callback_error',
+        status: 'error',
+        errorMessage: getDiagnosticErrorMessage(error),
+      });
       log.error('Battle.net callback error:', error);
       toast({
         title: t.auth.battlenetError,
@@ -156,26 +330,65 @@ const Auth = () => {
 
   const handleBattleNetLogin = async () => {
     setBnetLoading(true);
+    const flowId = generateOAuthState();
     try {
       const redirectUri = getRedirectUri('/auth');
       const state = generateOAuthState();
+      storeOAuthParams(state, selectedRegion, flowId);
+      setDebugInfo(flowId, 'login_clicked', 'ok');
+
+      await recordAuthDiagnostic({
+        flowId,
+        step: 'login_clicked',
+        status: 'ok',
+        metadata: { region: selectedRegion },
+      });
 
       const baseUrl = getSupabaseUrl();
       if (!baseUrl) throw new Error('Missing Supabase URL configuration');
 
+      await recordAuthDiagnostic({
+        flowId,
+        step: 'auth_url_request',
+        status: 'ok',
+        metadata: { region: selectedRegion, redirectPath: '/auth' },
+      });
+
       const response = await fetch(`${baseUrl}/functions/v1/battlenet-auth/auth-url`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ redirectUri, state, mode: 'login', region: selectedRegion }),
+        body: JSON.stringify({ redirectUri, state, mode: 'login', region: selectedRegion, flowId }),
       });
 
-      const data = await response.json();
+      const data = await readBattleNetAuthResponse(response);
+      await recordAuthDiagnostic({
+        flowId,
+        step: 'auth_url_response',
+        status: response.ok && data.authUrl ? 'ok' : 'error',
+        errorMessage: response.ok ? null : data?.error || 'Failed to get auth URL',
+        metadata: { status: response.status, hasAuthUrl: Boolean(data.authUrl) },
+      });
+
       if (data.authUrl) {
+        await recordAuthDiagnostic({
+          flowId,
+          step: 'redirect_to_battlenet',
+          status: 'ok',
+          metadata: { region: selectedRegion },
+        });
         window.location.href = data.authUrl;
       } else {
         throw new Error('Failed to get auth URL');
       }
     } catch (error: unknown) {
+      cleanupOAuthParams();
+      setDebugInfo(flowId, 'auth_url_error', 'error', error);
+      await recordAuthDiagnostic({
+        flowId,
+        step: 'auth_url_error',
+        status: 'error',
+        errorMessage: getDiagnosticErrorMessage(error),
+      });
       log.error('Battle.net auth error:', error);
       toast({
         title: t.auth.battlenetError,
@@ -290,6 +503,17 @@ const Auth = () => {
               >
                 {t.auth.loginWithBattleNet}
               </CosmicButton>
+
+              {battleNetDebugInfo && (
+                <div className="mt-4 rounded-md border border-border/60 bg-muted/30 p-3 text-xs text-muted-foreground">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="truncate">Flow ID: {battleNetDebugInfo.flowId}</span>
+                    <Button type="button" size="sm" variant="outline" onClick={copyDebugInfo}>
+                      {t.common.copy}
+                    </Button>
+                  </div>
+                </div>
+              )}
 
               {/* Divider */}
               <div className="relative my-6">

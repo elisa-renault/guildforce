@@ -88,6 +88,48 @@ export type Database = {
         }
         Relationships: []
       }
+      auth_diagnostics: {
+        Row: {
+          browser: string | null
+          created_at: string
+          error_message: string | null
+          flow_id: string
+          id: string
+          metadata: Json
+          provider: string
+          status: string
+          step: string
+          url_path: string | null
+          user_id: string | null
+        }
+        Insert: {
+          browser?: string | null
+          created_at?: string
+          error_message?: string | null
+          flow_id: string
+          id?: string
+          metadata?: Json
+          provider?: string
+          status: string
+          step: string
+          url_path?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          browser?: string | null
+          created_at?: string
+          error_message?: string | null
+          flow_id?: string
+          id?: string
+          metadata?: Json
+          provider?: string
+          status?: string
+          step?: string
+          url_path?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       battlenet_tokens: {
         Row: {
           access_token: string | null

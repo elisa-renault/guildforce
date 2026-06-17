@@ -87,6 +87,13 @@ const DOCUMENTATION: DocSection[] = [
         tags: ['auth', 'battlenet', 'oauth'],
       },
       {
+        titleEn: 'Battle.net login diagnostics',
+        titleFr: 'Diagnostics de connexion Battle.net',
+        contentEn: '`auth_diagnostics` stores sanitized Battle.net OAuth troubleshooting events keyed by `flow_id`. Frontend and `battlenet-auth` write non-sensitive steps such as auth URL creation, callback receipt, token exchange, user lookup, and session creation. OAuth codes, access tokens, refresh tokens, raw state values, passwords, and authorization headers must never be stored.',
+        contentFr: '`auth_diagnostics` stocke des événements de diagnostic OAuth Battle.net nettoyés et reliés par `flow_id`. Le frontend et `battlenet-auth` écrivent des étapes non sensibles comme la création d’URL auth, le retour callback, l’échange de token, la recherche utilisateur et la création de session. Les codes OAuth, access tokens, refresh tokens, valeurs `state` brutes, mots de passe et headers d’autorisation ne doivent jamais être stockés.',
+        tags: ['auth', 'battlenet', 'diagnostics', 'debug'],
+      },
+      {
         titleEn: 'Email fallback',
         titleFr: 'Fallback email',
         contentEn: 'A collapsible email/password form is available for existing accounts. It is a secondary fallback path; Battle.net remains the main entry point for guild synchronization features.',
@@ -499,8 +506,8 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Core tables',
         titleFr: 'Tables cœur',
-        contentEn: '- `profiles`, `battlenet_tokens`\n- `wow_characters`, `wow_guild_memberships`\n- `guilds`, `guild_members` (includes `wishes_locked`), `guild_roster_cache`, `guild_aliases`\n- `guild_atlas_documents` for guild knowledge articles, collections, and visibility rules\n- `user_guild_navigation_preferences` for self-owned switcher favorites and recent guilds\n- `command_palette_recent_items` for self-owned recent command palette items and action frequency',
-        contentFr: '- `profiles`, `battlenet_tokens`\n- `wow_characters`, `wow_guild_memberships`\n- `guilds`, `guild_members` (inclut `wishes_locked`), `guild_roster_cache`, `guild_aliases`\n- `guild_atlas_documents` pour les articles de connaissance de guilde, les collections et les règles de visibilité\n- `user_guild_navigation_preferences` pour les favoris et guildes récentes du switcher personnel\n- `command_palette_recent_items` pour les récents personnels de la palette de commandes et la fréquence des actions',
+        contentEn: '- `profiles`, `battlenet_tokens`, `auth_diagnostics`\n- `wow_characters`, `wow_guild_memberships`\n- `guilds`, `guild_members` (includes `wishes_locked`), `guild_roster_cache`, `guild_aliases`\n- `guild_atlas_documents` for guild knowledge articles, collections, and visibility rules\n- `user_guild_navigation_preferences` for self-owned switcher favorites and recent guilds\n- `command_palette_recent_items` for self-owned recent command palette items and action frequency',
+        contentFr: '- `profiles`, `battlenet_tokens`, `auth_diagnostics`\n- `wow_characters`, `wow_guild_memberships`\n- `guilds`, `guild_members` (inclut `wishes_locked`), `guild_roster_cache`, `guild_aliases`\n- `guild_atlas_documents` pour les articles de connaissance de guilde, les collections et les règles de visibilité\n- `user_guild_navigation_preferences` pour les favoris et guildes récentes du switcher personnel\n- `command_palette_recent_items` pour les récents personnels de la palette de commandes et la fréquence des actions',
         tags: ['database', 'core'],
       },
       {

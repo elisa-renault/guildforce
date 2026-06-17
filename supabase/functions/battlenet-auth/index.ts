@@ -165,6 +165,77 @@ function isMissingColumnError(error: unknown, column: string): boolean {
   return haystack.includes(`'${column}'`);
 }
 
+type AuthDiagnosticStatus = 'ok' | 'warning' | 'error';
+
+type AuthDiagnosticInput = {
+  flowId?: string | null;
+  userId?: string | null;
+  step: string;
+  status: AuthDiagnosticStatus;
+  browser?: string | null;
+  urlPath?: string | null;
+  errorMessage?: string | null;
+  metadata?: Record<string, unknown>;
+};
+
+type AuthDiagnosticInsertClient = {
+  from: (table: 'auth_diagnostics') => {
+    insert: (values: Record<string, unknown>) => Promise<{ error: { message?: string } | null }>;
+  };
+};
+
+const SENSITIVE_DIAGNOSTIC_KEY = /authorization|password|secret|token|refresh|access|code|state/i;
+const MAX_DIAGNOSTIC_STRING_LENGTH = 500;
+
+function truncateDiagnosticString(value: string): string {
+  return value.length > MAX_DIAGNOSTIC_STRING_LENGTH
+    ? `${value.slice(0, MAX_DIAGNOSTIC_STRING_LENGTH)}...`
+    : value;
+}
+
+function sanitizeDiagnosticValue(value: unknown): unknown {
+  if (value === null || value === undefined) return value;
+  if (typeof value === 'string') return truncateDiagnosticString(value);
+  if (typeof value !== 'object') return value;
+  if (Array.isArray(value)) return value.slice(0, 20).map(sanitizeDiagnosticValue);
+
+  const output: Record<string, unknown> = {};
+  for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
+    if (SENSITIVE_DIAGNOSTIC_KEY.test(key)) continue;
+    output[key] = sanitizeDiagnosticValue(nested);
+  }
+  return output;
+}
+
+function getRequestBrowser(req: Request): string | null {
+  const userAgent = req.headers.get('user-agent');
+  return userAgent ? truncateDiagnosticString(userAgent) : null;
+}
+
+async function recordAuthDiagnostic(supabase: AuthDiagnosticInsertClient, input: AuthDiagnosticInput): Promise<void> {
+  if (!input.flowId) return;
+
+  try {
+    const { error } = await supabase.from('auth_diagnostics').insert({
+      flow_id: input.flowId,
+      user_id: input.userId ?? null,
+      provider: 'battlenet',
+      step: input.step,
+      status: input.status,
+      browser: input.browser ?? null,
+      url_path: input.urlPath ?? null,
+      error_message: input.errorMessage ? truncateDiagnosticString(input.errorMessage) : null,
+      metadata: sanitizeDiagnosticValue(input.metadata ?? {}) as Record<string, unknown>,
+    });
+
+    if (error) {
+      log.debug('Failed to write auth diagnostic', error);
+    }
+  } catch (error) {
+    log.debug('Auth diagnostic write skipped', error);
+  }
+}
+
 // ============================================================================
 // UTILITY FUNCTIONS
 // ============================================================================
@@ -1022,10 +1093,40 @@ Deno.serve(async (req) => {
   const path = url.pathname.split('/').pop();
 
   try {
+    if (path === 'diagnostic' && req.method === 'POST') {
+      const payload = await req.json().catch(() => null);
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+      await recordAuthDiagnostic(supabase, {
+        flowId: typeof payload?.flowId === 'string' ? payload.flowId : null,
+        userId: typeof payload?.userId === 'string' ? payload.userId : null,
+        step: typeof payload?.step === 'string' ? payload.step : 'client_diagnostic',
+        status: ['ok', 'warning', 'error'].includes(payload?.status) ? payload.status : 'warning',
+        browser: typeof payload?.browser === 'string' ? payload.browser : getRequestBrowser(req),
+        urlPath: typeof payload?.urlPath === 'string' ? payload.urlPath : null,
+        errorMessage: typeof payload?.errorMessage === 'string' ? payload.errorMessage : null,
+        metadata: payload?.metadata && typeof payload.metadata === 'object' ? payload.metadata : {},
+      });
+
+      return new Response(JSON.stringify({ ok: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Generate OAuth URL for frontend to redirect to
     if (path === 'auth-url' && req.method === 'POST') {
-      const { redirectUri, state, mode, region: requestedRegion } = await req.json();
+      const { redirectUri, state, mode, region: requestedRegion, flowId } = await req.json();
       const region = getValidRegion(requestedRegion);
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+      await recordAuthDiagnostic(supabase, {
+        flowId,
+        step: 'auth_url_received',
+        status: 'ok',
+        browser: getRequestBrowser(req),
+        urlPath: '/functions/v1/battlenet-auth/auth-url',
+        metadata: { mode, region, hasRedirectUri: Boolean(redirectUri) },
+      });
       
       const authUrl = new URL(`${BATTLENET_OAUTH_URL}/authorize`);
       authUrl.searchParams.set('client_id', BATTLENET_CLIENT_ID);
@@ -1033,7 +1134,7 @@ Deno.serve(async (req) => {
       authUrl.searchParams.set('response_type', 'code');
       authUrl.searchParams.set('scope', 'wow.profile openid offline_access');
       authUrl.searchParams.set('prompt', 'consent');
-      authUrl.searchParams.set('state', JSON.stringify({ state, mode, region }));
+      authUrl.searchParams.set('state', JSON.stringify({ state, mode, region, flowId }));
 
       log.debug(`Generated auth URL for redirect (region: ${region})`);
 
@@ -1044,13 +1145,29 @@ Deno.serve(async (req) => {
 
     // Handle Battle.net login/signup (no existing Supabase session)
     if (path === 'login' && req.method === 'POST') {
-      const { code, redirectUri, region: requestedRegion, browserLanguage } = await req.json();
+      const { code, redirectUri, region: requestedRegion, browserLanguage, flowId } = await req.json();
       const region = getValidRegion(requestedRegion);
       const defaultLanguage = normalizePreferredLanguage(browserLanguage);
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
       log.info(`Battle.net login (${region.toUpperCase()}) - exchanging code for token...`);
+      await recordAuthDiagnostic(supabase, {
+        flowId,
+        step: 'login_received',
+        status: 'ok',
+        browser: getRequestBrowser(req),
+        urlPath: '/functions/v1/battlenet-auth/login',
+        metadata: { region, hasRedirectUri: Boolean(redirectUri), browserLanguage: defaultLanguage },
+      });
 
       // Exchange code for token
+      await recordAuthDiagnostic(supabase, {
+        flowId,
+        step: 'token_exchange_start',
+        status: 'ok',
+        metadata: { region },
+      });
+
       const tokenResponse = await fetch(`${BATTLENET_OAUTH_URL}/token`, {
         method: 'POST',
         headers: {
@@ -1067,6 +1184,13 @@ Deno.serve(async (req) => {
       if (!tokenResponse.ok) {
         const errorText = await tokenResponse.text();
         log.error('Token exchange failed:', errorText);
+        await recordAuthDiagnostic(supabase, {
+          flowId,
+          step: 'token_exchange_error',
+          status: 'error',
+          errorMessage: errorText,
+          metadata: { status: tokenResponse.status, region },
+        });
         return new Response(JSON.stringify({ error: 'Authentication failed. Please try again.' }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -1075,6 +1199,12 @@ Deno.serve(async (req) => {
 
       const tokenData: TokenResponse = await tokenResponse.json();
       log.info(`Token obtained successfully, scope: ${tokenData.scope}`);
+      await recordAuthDiagnostic(supabase, {
+        flowId,
+        step: 'token_exchange_success',
+        status: 'ok',
+        metadata: { region, scope: tokenData.scope, expiresIn: tokenData.expires_in },
+      });
 
       // Get user info (BattleTag)
       const userInfoResponse = await fetch(`${BATTLENET_OAUTH_URL}/userinfo`, {
@@ -1085,6 +1215,13 @@ Deno.serve(async (req) => {
 
       if (!userInfoResponse.ok) {
         log.error('Failed to get user info');
+        await recordAuthDiagnostic(supabase, {
+          flowId,
+          step: 'userinfo_error',
+          status: 'error',
+          errorMessage: 'Failed to get user info',
+          metadata: { status: userInfoResponse.status },
+        });
         return new Response(JSON.stringify({ error: 'Failed to get user info' }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -1093,8 +1230,12 @@ Deno.serve(async (req) => {
 
       const userInfo: UserInfo = await userInfoResponse.json();
       log.info(`Got BattleTag: ${sanitizePII(userInfo.battletag, 'battletag')}`);
-
-      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      await recordAuthDiagnostic(supabase, {
+        flowId,
+        step: 'userinfo_success',
+        status: 'ok',
+        metadata: { hasBattletag: Boolean(userInfo.battletag) },
+      });
 
       // Battle.net "technical" email used for accounts created via BNet-first flow
       const bnetEmail = `bnet_${userInfo.id}@battlenet.local`;
@@ -1135,6 +1276,12 @@ Deno.serve(async (req) => {
 
         if (createError || !newUser.user) {
           log.error('Failed to create user:', createError);
+          await recordAuthDiagnostic(supabase, {
+            flowId,
+            step: 'supabase_user_error',
+            status: 'error',
+            errorMessage: createError?.message || 'Failed to create user',
+          });
           throw new Error('Failed to create user');
         }
 
@@ -1199,6 +1346,12 @@ Deno.serve(async (req) => {
 
             if (createError || !newUser.user) {
               log.error('Failed to create user:', createError);
+              await recordAuthDiagnostic(supabase, {
+                flowId,
+                step: 'supabase_user_error',
+                status: 'error',
+                errorMessage: createError?.message || 'Failed to create user',
+              });
               return new Response(JSON.stringify({ error: 'Failed to create user' }), {
                 status: 500,
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -1211,6 +1364,14 @@ Deno.serve(async (req) => {
           }
         }
       }
+
+      await recordAuthDiagnostic(supabase, {
+        flowId,
+        userId,
+        step: 'supabase_user_success',
+        status: 'ok',
+        metadata: { isNewUser },
+      });
 
       // Ensure the profile exists and is updated with Battle.net info
       const expiresAt = new Date(Date.now() + tokenData.expires_in * 1000).toISOString();
@@ -1256,6 +1417,14 @@ Deno.serve(async (req) => {
 
       if (!profileUpsertSuccess) {
         log.error('Failed to upsert profile after retries:', lastError);
+        await recordAuthDiagnostic(supabase, {
+          flowId,
+          userId,
+          step: 'supabase_user_error',
+          status: 'error',
+          errorMessage: lastError?.message || 'Failed to update profile',
+          metadata: { phase: 'profile_upsert' },
+        });
         return new Response(JSON.stringify({ error: 'Failed to update profile' }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -1290,11 +1459,26 @@ Deno.serve(async (req) => {
 
       if (magicLinkError || !magicLinkData?.properties?.hashed_token) {
         log.error('Failed to generate magic link:', magicLinkError);
+        await recordAuthDiagnostic(supabase, {
+          flowId,
+          userId,
+          step: 'magic_link_error',
+          status: 'error',
+          errorMessage: magicLinkError?.message || 'Failed to generate session',
+        });
         return new Response(JSON.stringify({ error: 'Failed to generate session' }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
+
+      await recordAuthDiagnostic(supabase, {
+        flowId,
+        userId,
+        step: 'magic_link_success',
+        status: 'ok',
+        metadata: { isNewUser, region },
+      });
 
       return new Response(JSON.stringify({
         verifyToken: magicLinkData.properties.hashed_token,
