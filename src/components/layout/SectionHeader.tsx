@@ -17,9 +17,8 @@ export const SectionHeader = ({ title, description, icon: Icon, className }: Sec
       </div>
     ) : null}
     <div>
-      <h1 className="text-2xl md:text-3xl font-display text-foreground">{title}</h1>
+      <h1 className="font-sans text-2xl font-medium text-foreground md:text-3xl">{title}</h1>
       {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
     </div>
   </div>
 );
-

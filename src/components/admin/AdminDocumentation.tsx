@@ -17,6 +17,7 @@ import { GlowCard } from '@/components/GlowCard';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { FilterSearchField } from '@/components/ui/filter-controls';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getBilingualValue } from '@/i18n/config';
@@ -588,7 +589,7 @@ export const AdminDocumentation = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-xl font-display text-foreground">
+          <h2 className="font-sans text-xl font-medium text-foreground">
             {sm('admin.documentation.title')}
           </h2>
           <p className="text-sm text-muted-foreground">
@@ -604,12 +605,12 @@ export const AdminDocumentation = () => {
             </Link>
           </Button>
           <div className="relative w-full sm:w-64">
-            <input
-              type="text"
+            <FilterSearchField
               placeholder={sm('admin.documentation.search_placeholder')}
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
-              className="w-full px-3 py-2 text-sm rounded-md border border-border/50 bg-background/50 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-background"
+              containerClassName="w-full"
+              className={searchQuery ? 'pr-8' : undefined}
             />
             {searchQuery && (
               <button
@@ -626,7 +627,7 @@ export const AdminDocumentation = () => {
       <div className="flex flex-col lg:flex-row gap-6">
         {!searchQuery && (
           <div className="lg:w-56 flex-shrink-0">
-            <GlowCard className="p-3">
+            <GlowCard surface="section" className="p-3">
               <ScrollArea className="h-auto lg:h-[calc(100vh-320px)]">
                 <nav className="space-y-1">
                   {DOCUMENTATION.map((section) => {
@@ -659,7 +660,7 @@ export const AdminDocumentation = () => {
 
         <div className="flex-1 min-w-0">
           {searchQuery && filteredSections && filteredSections.length === 0 && (
-            <GlowCard className="p-6 text-center">
+            <GlowCard surface="section" className="text-center">
               <HelpCircle className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
               <p className="text-muted-foreground">
                 {sm('admin.documentation.no_results')}
@@ -671,12 +672,12 @@ export const AdminDocumentation = () => {
             const Icon = section.icon;
 
             return (
-              <GlowCard key={section.id} className="p-4 md:p-6 mb-4">
+              <GlowCard key={section.id} surface="section" className="mb-4">
                 <div className="flex items-center gap-3 mb-4">
                   <div className={cn('p-2 rounded-lg bg-primary/10', section.color)}>
                     <Icon className="h-5 w-5" />
                   </div>
-                  <h3 className="text-lg font-display text-foreground">
+                  <h3 className="font-sans text-lg font-medium text-foreground">
                     {getBilingualValue(language, { en: section.titleEn, fr: section.titleFr })}
                   </h3>
                 </div>

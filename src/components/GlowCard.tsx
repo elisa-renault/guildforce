@@ -8,10 +8,11 @@ interface GlowCardProps {
   hoverable?: boolean;
   onClick?: (e: MouseEvent<HTMLDivElement>) => void;
   style?: CSSProperties;
+  surface?: 'panel' | 'section' | 'flat';
 }
 
 export const GlowCard = forwardRef<HTMLDivElement, GlowCardProps>(
-  ({ children, className, hoverable = true, onClick, style }, ref) => {
+  ({ children, className, hoverable = true, onClick, style, surface = 'panel' }, ref) => {
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
       const rect = e.currentTarget.getBoundingClientRect();
       const x = e.clientX - rect.left;
@@ -24,8 +25,11 @@ export const GlowCard = forwardRef<HTMLDivElement, GlowCardProps>(
       <div
         ref={ref}
         className={cn(
-          'glass-card min-w-0 p-6 transition-all duration-500',
-          hoverable && 'hover:border-primary/30',
+          'min-w-0 transition-colors duration-150',
+          surface === 'panel' && 'glass-card p-4',
+          surface === 'section' && 'section-surface p-3 md:p-4',
+          surface === 'flat' && 'relative overflow-visible',
+          hoverable && surface !== 'flat' && 'hover:border-primary/30',
           onClick && 'cursor-pointer',
           className
         )}
@@ -33,7 +37,7 @@ export const GlowCard = forwardRef<HTMLDivElement, GlowCardProps>(
         onMouseMove={hoverable ? handleMouseMove : undefined}
         style={style}
       >
-        <span className="spotlight" />
+        {surface === 'panel' ? <span className="spotlight" /> : null}
         {children}
       </div>
     );

@@ -55,7 +55,7 @@ export const GlobalNav = () => {
     const headerEl = headerRef.current;
     if (!headerEl) return;
 
-    const baseNavHeight = 64;
+    const baseNavHeight = 56;
     const updateOffset = () => {
       const measuredHeight = Math.ceil(headerEl.getBoundingClientRect().height);
       const extraOffset = Math.max(measuredHeight - baseNavHeight, 0);
@@ -124,17 +124,17 @@ export const GlobalNav = () => {
         </div>
       )}
 
-      <PageContainer className="flex h-16 items-center gap-3 md:h-[72px] md:gap-6" width="app">
+      <PageContainer className="relative flex h-14 items-center gap-3 md:gap-5" width="app">
         <div className="flex shrink-0 items-center gap-2.5 lg:mr-1">
           <button
             onClick={() => navigate('/')}
-            className="group inline-flex shrink-0 items-center gap-2 rounded px-1 font-display text-base text-foreground/90 transition-all duration-300 hover:text-foreground hover:drop-shadow-[0_0_10px_hsl(var(--primary)/0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background md:text-lg"
+            className="group inline-flex shrink-0 items-center gap-2 rounded px-1 font-display text-base text-foreground/90 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             aria-label={sm('globalnav.home.aria_label')}
           >
             <img
               src="/logos/logo-white.svg"
               alt=""
-              className="h-5 w-5 opacity-90 transition-all duration-300 group-hover:opacity-100 group-hover:drop-shadow-[0_0_10px_hsl(var(--primary)/0.45)]"
+              className="h-5 w-5 opacity-90 transition-opacity group-hover:opacity-100"
               aria-hidden="true"
             />
             <span className="hidden sm:inline">Guildforce</span>
@@ -150,17 +150,16 @@ export const GlobalNav = () => {
             <div className="flex min-w-0 items-center gap-2 md:gap-3">
               <GuildSwitcher className="max-w-[196px] sm:max-w-[280px] lg:max-w-[340px]" />
             </div>
-
-            <div className="hidden min-w-0 flex-1 items-center justify-center lg:flex">
-              <CommandPaletteTrigger />
-            </div>
+          </div>
+          <div className="pointer-events-none absolute left-1/2 top-1/2 hidden w-[min(400px,32vw)] -translate-x-1/2 -translate-y-1/2 lg:flex">
+            <CommandPaletteTrigger className="pointer-events-auto max-w-none" />
           </div>
           </>
         ) : (
           <div className="flex-1" />
         )}
 
-        <div className="ml-auto flex shrink-0 items-center gap-2 rounded-xl bg-card/10 px-2 py-1.5 ring-1 ring-border/10" role="group" aria-label={sm('globalnav.auth.aria_label')}>
+        <div className="ml-auto flex shrink-0 items-center gap-1.5" role="group" aria-label={sm('globalnav.auth.aria_label')}>
           {user ? (
             <>
               <CommandPaletteTrigger variant="icon" className="lg:hidden" />
@@ -170,7 +169,7 @@ export const GlobalNav = () => {
                     type="button"
                     className={navItemClass({
                       hover: 'accent',
-                      className: 'h-10 max-w-[180px] bg-transparent px-3',
+                      className: 'h-8 max-w-[180px] bg-transparent px-2.5',
                     })}
                     aria-label={menuCopy.account}
                   >

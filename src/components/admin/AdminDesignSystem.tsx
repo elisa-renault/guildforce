@@ -184,9 +184,9 @@ const CODE_EXAMPLES = {
     </TableRow>
   </TableBody>
 </Table>`,
-  glow: `<GlowCard className="p-4">
+  glow: `<GlowCard surface="section">
   <h3>Guild Summary</h3>
-  <p>Use GlowCard for primary glass surfaces in player/admin spaces.</p>
+  <p>Use one framed surface per functional group.</p>
 </GlowCard>`,
   overlays: `<TooltipProvider>
   <Tooltip>
@@ -208,6 +208,7 @@ const CODE_EXAMPLES = {
   icon={Users}
   title="Guild members"
   description="Roster cache, linked players, ranks, and mains."
+  bordered={false}
   actions={<Button size="sm">Sync</Button>}
 />`,
   toolbar: `<ContextualToolbar
@@ -249,7 +250,7 @@ const CODE_EXAMPLES = {
 
 const SectionTitle = ({ id, title, description }: { id: string; title: string; description: string }) => (
   <div id={id} className="scroll-mt-24 space-y-1">
-    <h2 className="text-xl md:text-2xl font-display text-foreground">{title}</h2>
+    <h2 className="text-xl md:text-2xl font-sans font-medium text-foreground">{title}</h2>
     <p className="text-sm text-muted-foreground">{description}</p>
   </div>
 );
@@ -299,7 +300,7 @@ export const AdminDesignSystem = () => {
   return (
     <div className="space-y-6">
       <CosmicBackground />
-      <GlowCard className="p-4 md:p-6">
+      <GlowCard surface="section" className="p-4 md:p-6">
         <div className="flex flex-col gap-3">
           <Breadcrumb>
             <BreadcrumbList>
@@ -318,7 +319,7 @@ export const AdminDesignSystem = () => {
           </Breadcrumb>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h1 className="text-2xl md:text-3xl font-display text-foreground">{t({ en: 'Guildforce Design System' })}</h1>
+              <h1 className="text-2xl md:text-3xl font-sans font-medium text-foreground">{t({ en: 'Guildforce Design System' })}</h1>
               <p className="text-sm text-muted-foreground">{t({ en: 'Single source of truth for public pages, player app, and admin.' })}</p>
             </div>
             <Button asChild variant="outline" size="sm">
@@ -350,8 +351,8 @@ export const AdminDesignSystem = () => {
               description={t({ en: 'Visual primitives shared by landing, in-guild pages, and admin tooling.' })}
             />
 
-            <GlowCard className="space-y-4 p-4">
-              <h3 className="text-base font-semibold">{t({ en: 'Color semantics' })}</h3>
+            <GlowCard surface="section" className="space-y-4 p-4">
+              <h3 className="text-base font-medium">{t({ en: 'Color semantics' })}</h3>
               <p className="text-sm text-muted-foreground">{t({ en: 'Use semantic intent first, then visual style.' })}</p>
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {COLORS.map((item) => (
@@ -371,11 +372,11 @@ export const AdminDesignSystem = () => {
               />
             </GlowCard>
 
-            <GlowCard className="space-y-4 p-4">
-              <h3 className="text-base font-semibold">{t({ en: 'Typography, spacing and recurring iconography' })}</h3>
+            <GlowCard surface="section" className="space-y-4 p-4">
+              <h3 className="text-base font-medium">{t({ en: 'Typography, spacing and recurring iconography' })}</h3>
               <div className="space-y-3">
-                <h1 className="text-2xl font-display">Display / Section title</h1>
-                <h2 className="text-lg font-semibold">Card title</h2>
+                <h1 className="text-2xl font-sans font-medium">App section title</h1>
+                <h2 className="text-lg font-medium">Operational section title</h2>
                 <p className="text-sm">Body copy for context and guidance.</p>
                 <p className="text-xs text-muted-foreground">Caption / helper text / metadata</p>
                 <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -393,12 +394,12 @@ export const AdminDesignSystem = () => {
                 </div>
               </div>
               <DoDont
-                doText={t({ en: 'Keep one display heading per section.' })}
-                dontText={t({ en: 'Avoid caption size for body paragraphs.' })}
+                doText={t({ en: 'Use sans/medium headers for operational UI; reserve display type for brand, landing, setup, and editorial states.' })}
+                dontText={t({ en: 'Do not use display type or heavy weight on repeated app section headers.' })}
               />
             </GlowCard>
-            <GlowCard className="space-y-4 p-4">
-              <h3 className="text-base font-semibold">{t({ en: 'WoW color tokens: classes, roles, factions' })}</h3>
+            <GlowCard surface="section" className="space-y-4 p-4">
+              <h3 className="text-base font-medium">{t({ en: 'WoW color tokens: classes, roles, factions' })}</h3>
               <p className="text-sm text-muted-foreground">
                 {t({ en: 'Canonical palette for class tags, role indicators and faction visuals.' })}
               </p>
@@ -445,7 +446,7 @@ export const AdminDesignSystem = () => {
               title={t({ en: 'Coverage matrix' })}
               description={t({ en: 'Quick audit of what is documented and what remains to factorize.' })}
             />
-            <GlowCard className="space-y-4 p-4">
+            <GlowCard surface="section" className="space-y-4 p-4">
               <div className="grid gap-2 md:grid-cols-2 text-sm">
                 <div className="rounded-md border border-border/50 p-3">
                   <p className="font-medium mb-2">Covered</p>
@@ -517,8 +518,8 @@ export const AdminDesignSystem = () => {
               title={t({ en: 'Layout archetypes' })}
               description={t({ en: 'Choose page width and navigation structure from content density and task depth.' })}
             />
-            <GlowCard className="space-y-4 p-4">
-              <h3 className="text-base font-semibold">Width strategy</h3>
+            <GlowCard surface="section" className="space-y-4 p-4">
+              <h3 className="text-base font-medium">Width strategy</h3>
               <p className="text-sm text-muted-foreground">
                 {t({ en: 'Use `PageContainer` as the default wrapper and choose width by content density and shell ownership.' })}
               </p>
@@ -548,8 +549,8 @@ export const AdminDesignSystem = () => {
               />
             </GlowCard>
 
-            <GlowCard className="space-y-4 p-4">
-              <h3 className="text-base font-semibold">Navigation strategy</h3>
+            <GlowCard surface="section" className="space-y-4 p-4">
+              <h3 className="text-base font-medium">Navigation strategy</h3>
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="rounded-md border border-border/50 p-3">
                   <p className="font-medium text-sm mb-2">App topbar</p>
@@ -603,7 +604,7 @@ export const AdminDesignSystem = () => {
                   <div className="grid overflow-hidden rounded border border-border/40 bg-background/70 md:grid-cols-[160px_1fr]">
                     <div className="border-r border-border/40 bg-card/20 p-3">
                       <div className="mb-3 rounded-md border border-border/50 bg-muted/20 p-2">
-                        <p className="truncate text-xs font-semibold">Midnight</p>
+                        <p className="truncate text-xs font-medium">Midnight</p>
                         <p className="truncate text-[11px] text-muted-foreground">Tarren Mill - EU</p>
                       </div>
                       <div className="space-y-1 text-xs">
@@ -652,8 +653,8 @@ export const AdminDesignSystem = () => {
               description={t({ en: 'Reusable building blocks and recommended variants.' })}
             />
 
-            <GlowCard className="space-y-4 p-4">
-              <h3 className="text-base font-semibold">Buttons</h3>
+            <GlowCard surface="section" className="space-y-4 p-4">
+              <h3 className="text-base font-medium">Buttons</h3>
               <p className="text-sm text-muted-foreground">{t({ en: 'Primary confirms, secondary supports, ghost is low emphasis, danger is destructive only.' })}</p>
               <div className="flex flex-wrap gap-2">
                 <Button>Primary</Button>
@@ -673,15 +674,15 @@ export const AdminDesignSystem = () => {
               <CodePreview code={CODE_EXAMPLES.button} />
             </GlowCard>
 
-            <GlowCard className="space-y-4 p-4">
-              <h3 className="text-base font-semibold">Guildforce custom surfaces</h3>
+            <GlowCard surface="section" className="space-y-4 p-4">
+              <h3 className="text-base font-medium">Guildforce custom surfaces</h3>
               <p className="text-sm text-muted-foreground">
-                {t({ en: 'GlowCard and CosmicButton are first-class UI primitives used across landing, player, and admin pages.' })}
+                {t({ en: 'GlowCard and CosmicButton are first-class UI primitives. Prefer flat or section surfaces for app screens, and use plum or gold accents only when they carry emphasis.' })}
               </p>
               <div className="grid gap-3 md:grid-cols-2">
-                <GlowCard className="p-4" hoverable={false}>
+                <GlowCard surface="section" className="p-4" hoverable={false}>
                   <h4 className="text-sm font-medium">GlowCard</h4>
-                  <p className="text-xs text-muted-foreground mt-1">Glass surface for grouped content and actions.</p>
+                  <p className="text-xs text-muted-foreground mt-1">Flat-first surface for grouped content and actions.</p>
                 </GlowCard>
                 <div className="rounded-md border border-border/50 p-4 flex flex-col gap-3">
                   <h4 className="text-sm font-medium">CosmicButton</h4>
@@ -694,8 +695,8 @@ export const AdminDesignSystem = () => {
               <CodePreview code={CODE_EXAMPLES.glow} />
             </GlowCard>
 
-            <GlowCard className="space-y-4 p-4">
-              <h3 className="text-base font-semibold">Form inputs</h3>
+            <GlowCard surface="section" className="space-y-4 p-4">
+              <h3 className="text-base font-medium">Form inputs</h3>
               <p className="text-sm text-muted-foreground">{t({ en: 'Text, select, search, checkbox or radio and textarea follow the same spacing and labels.' })}</p>
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="space-y-2">
@@ -749,8 +750,18 @@ export const AdminDesignSystem = () => {
               <CodePreview code={CODE_EXAMPLES.input} />
             </GlowCard>
 
-            <GlowCard className="space-y-4 p-4">
-              <h3 className="text-base font-semibold">Navigation and layout</h3>
+            <GlowCard surface="section" className="space-y-4 p-4">
+              <h3 className="text-base font-medium">Navigation and layout</h3>
+              <div className="grid gap-2 text-xs md:grid-cols-2">
+                <div className="rounded border border-border/40 bg-background/35 p-3">
+                  <p className="font-medium text-foreground">Header budget</p>
+                  <p className="mt-1 text-muted-foreground">Skip page headers when sidebar, subnav, or toolbar already carries the context. Use `bordered=false` when a header is still useful.</p>
+                </div>
+                <div className="rounded border border-border/40 bg-background/35 p-3">
+                  <p className="font-medium text-foreground">Profile-style grouping</p>
+                  <p className="mt-1 text-muted-foreground">Group object, actions, and read-only facts in one flat section when they describe the same thing.</p>
+                </div>
+              </div>
               <div className="space-y-4">
                 <Tabs defaultValue="overview" className="w-full">
                   <TabsList>
@@ -814,8 +825,8 @@ export const AdminDesignSystem = () => {
               <CodePreview code={CODE_EXAMPLES.nav} />
             </GlowCard>
 
-            <GlowCard className="space-y-4 p-4">
-              <h3 className="text-base font-semibold">Feedback and states</h3>
+            <GlowCard surface="section" className="space-y-4 p-4">
+              <h3 className="text-base font-medium">Feedback and states</h3>
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 rounded-md border border-status-success/30 bg-status-success/10 p-2 text-sm text-status-success"><CheckCircle2 className="h-4 w-4" /> Success state</div>
@@ -851,8 +862,8 @@ export const AdminDesignSystem = () => {
               </div>
             </GlowCard>
 
-            <GlowCard className="space-y-4 p-4">
-              <h3 className="text-base font-semibold">Overlays and disclosure primitives</h3>
+            <GlowCard surface="section" className="space-y-4 p-4">
+              <h3 className="text-base font-medium">Overlays and disclosure primitives</h3>
               <p className="text-sm text-muted-foreground">
                 {t({ en: 'Used in guild members, profile and auth pages for contextual help and confirmations.' })}
               </p>
@@ -914,8 +925,8 @@ export const AdminDesignSystem = () => {
               <CodePreview code={CODE_EXAMPLES.overlays} />
             </GlowCard>
 
-            <GlowCard className="space-y-4 p-4">
-              <h3 className="text-base font-semibold">Extended primitives</h3>
+            <GlowCard surface="section" className="space-y-4 p-4">
+              <h3 className="text-base font-medium">Extended primitives</h3>
               <p className="text-sm text-muted-foreground">
                 {t({ en: 'Advanced primitives used in markdown editors, polls, and operational dashboards.' })}
               </p>
@@ -1043,8 +1054,8 @@ export const AdminDesignSystem = () => {
               description={t({ en: 'Domain-specific UI for player cards, wishes, rosters, and events.' })}
             />
 
-            <GlowCard className="space-y-4 p-4">
-              <h3 className="text-base font-semibold">Page header</h3>
+            <GlowCard surface="section" className="space-y-4 p-4">
+              <h3 className="text-base font-medium">Page header</h3>
               <p className="text-sm text-muted-foreground">{t({ en: 'Use PageHeader at the top of product pages to separate context, metadata, and primary actions from page content.' })}</p>
               <PageHeader
                 icon={Users}
@@ -1061,8 +1072,8 @@ export const AdminDesignSystem = () => {
               <CodePreview code={CODE_EXAMPLES.pageHeader} />
             </GlowCard>
 
-            <GlowCard className="space-y-4 p-4">
-              <h3 className="text-base font-semibold">Contextual toolbar</h3>
+            <GlowCard surface="section" className="space-y-4 p-4">
+              <h3 className="text-base font-medium">Contextual toolbar</h3>
               <p className="text-sm text-muted-foreground">{t({ en: 'Use ContextualToolbar for filters, selectors, and secondary actions tied to the current page or roster. Keep navigation outside this area.' })}</p>
               <ContextualToolbar
                 leading={<Input className="md:w-64" placeholder="Search players" />}
@@ -1080,26 +1091,26 @@ export const AdminDesignSystem = () => {
               <CodePreview code={CODE_EXAMPLES.toolbar} />
             </GlowCard>
 
-            <GlowCard className="space-y-4 p-4">
-              <h3 className="text-base font-semibold">Guild workspace layout</h3>
+            <GlowCard surface="section" className="space-y-4 p-4">
+              <h3 className="text-base font-medium">Guild workspace layout</h3>
               <p className="text-sm text-muted-foreground">{t({ en: 'Authenticated pages use a minimal app topbar for app scope. GuildWorkspaceShell owns guild scope; PageHeader states page context; ContextualToolbar carries current-page actions. The page surface owns vertical scroll.' })}</p>
               <div className="grid gap-3 md:grid-cols-3">
                 <div className="rounded-md border border-border/50 bg-card/40 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">App shell</p>
+                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">App shell</p>
                   <p className="mt-1 text-sm">The topbar is grouped: Brand, global navigation, compact command search, and user zone. GuildSwitcher is the strongest item because it anchors workspace context, but it stays inside the app chrome rather than the guild sidebar.</p>
                 </div>
                 <div className="rounded-md border border-border/50 bg-card/40 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Guild scope</p>
+                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Guild scope</p>
                   <p className="mt-1 text-sm">GuildWorkspaceShell uses two dedicated states: an expanded contextual sidebar at 272px, and a collapsed navigation rail at 72px. Expanded keeps the labeled reduce control at the bottom of the sidebar rhythm; rail mode gives the reclaimed width back to content immediately.</p>
                 </div>
                 <div className="rounded-md border border-border/50 bg-card/40 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Rail rules</p>
+                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Rail rules</p>
                   <p className="mt-1 text-sm">Collapsed mode shows only the guild emblem, navigation icons, active indicators, and tooltips. Do not render guild names, GM badges, roster, season, status, or visible labels in the rail.</p>
                 </div>
               </div>
               <div className="grid gap-3 md:grid-cols-[272px_72px_minmax(0,1fr)]">
                 <div className="rounded-md border border-border/50 bg-card/30 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Expanded</p>
+                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Expanded</p>
                   <div className="mt-3 rounded-lg border border-border/50 bg-background/50 p-3">
                     <div className="mb-3 flex items-center gap-2">
                       <div className="h-9 w-9 rounded-full bg-primary/20" />
@@ -1116,7 +1127,7 @@ export const AdminDesignSystem = () => {
                   </div>
                 </div>
                 <div className="rounded-md border border-border/50 bg-card/30 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Rail</p>
+                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Rail</p>
                   <div className="mt-3 flex flex-col items-center gap-2 rounded-lg border border-border/50 bg-background/50 py-3">
                     <div className="h-11 w-11 rounded-2xl border border-border/50 bg-primary/10" />
                     <div className="relative grid h-11 w-11 place-items-center rounded-xl bg-primary/15 ring-1 ring-primary/35">
@@ -1129,7 +1140,7 @@ export const AdminDesignSystem = () => {
                   </div>
                 </div>
                 <div className="rounded-md border border-border/50 bg-card/30 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tooltip navigation</p>
+                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Tooltip navigation</p>
                   <p className="mt-2 text-sm text-muted-foreground">Every rail icon must have a right-side tooltip. Active state uses a subtle glow, a primary ring, and a vertical indicator so the current section remains clear without labels.</p>
                 </div>
               </div>
@@ -1140,8 +1151,8 @@ export const AdminDesignSystem = () => {
               <CodePreview code={CODE_EXAMPLES.workspace} />
             </GlowCard>
 
-            <GlowCard className="space-y-4 p-4">
-              <h3 className="text-base font-semibold">Command palette</h3>
+            <GlowCard surface="section" className="space-y-4 p-4">
+              <h3 className="text-base font-medium">Command palette</h3>
               <p className="text-sm text-muted-foreground">{t({ en: 'Use the command palette as the primary global accelerator for navigation, contextual search, recents, and safe quick actions.' })}</p>
               <div className="rounded-md border border-border/50 bg-background/70 p-3">
                 <Command shouldFilter={false} loop className="mx-auto max-w-xl overflow-hidden rounded-lg border border-border/60 bg-background/95 shadow-lg">
@@ -1150,7 +1161,7 @@ export const AdminDesignSystem = () => {
                     <kbd className="hidden rounded border border-border/60 bg-muted/40 px-1.5 py-0.5 text-[10px] text-muted-foreground sm:inline-flex">Ctrl K</kbd>
                   </div>
                   <CommandList className="max-h-none space-y-1 p-2">
-                    <CommandGroup heading="Actions" className="[&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider">
+                    <CommandGroup heading="Actions" className="[&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider">
                       <CommandItem value="create-poll" className="gap-3 rounded-md bg-primary/15 px-2.5 py-2 data-[selected=true]:bg-primary/15">
                         <Sparkles className="h-4 w-4 text-primary" />
                         <div className="min-w-0">
@@ -1159,7 +1170,7 @@ export const AdminDesignSystem = () => {
                         </div>
                       </CommandItem>
                     </CommandGroup>
-                    <CommandGroup heading="Members" className="[&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider">
+                    <CommandGroup heading="Members" className="[&_[cmdk-group-heading]]:text-[10px] [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider">
                       <CommandItem value="elisara" className="gap-3 rounded-md px-2.5 py-2">
                         <div className="grid h-8 w-8 place-items-center rounded-lg border border-border/45 bg-card/35">
                           <User className="h-4 w-4 text-status-info" />
@@ -1191,8 +1202,8 @@ export const AdminDesignSystem = () => {
               <CodePreview code={CODE_EXAMPLES.commandPalette} />
             </GlowCard>
 
-            <GlowCard className="space-y-4 p-4">
-              <h3 className="text-base font-semibold">Empty state</h3>
+            <GlowCard surface="section" className="space-y-4 p-4">
+              <h3 className="text-base font-medium">Empty state</h3>
               <p className="text-sm text-muted-foreground">{t({ en: 'Empty states should explain the local state and expose the next valid action when one exists.' })}</p>
               <EmptyState
                 icon={BookOpen}
@@ -1203,8 +1214,8 @@ export const AdminDesignSystem = () => {
               <CodePreview code={CODE_EXAMPLES.emptyState} />
             </GlowCard>
 
-            <GlowCard className="space-y-4 p-4">
-              <h3 className="text-base font-semibold">Player profile card</h3>
+            <GlowCard surface="section" className="space-y-4 p-4">
+              <h3 className="text-base font-medium">Player profile card</h3>
               <p className="text-sm text-muted-foreground">{t({ en: 'Structure: identity, main or alt badge, role tags, ilvl and recruitment tags.' })}</p>
               <Card className="bg-card/50 border-border/50">
                 <CardHeader>
@@ -1231,8 +1242,8 @@ export const AdminDesignSystem = () => {
               <CodePreview code={CODE_EXAMPLES.player} />
             </GlowCard>
 
-            <GlowCard className="space-y-4 p-4">
-              <h3 className="text-base font-semibold">Wish priority and lock flow</h3>
+            <GlowCard surface="section" className="space-y-4 p-4">
+              <h3 className="text-base font-medium">Wish priority and lock flow</h3>
               <p className="text-sm text-muted-foreground">{t({ en: 'Show rank order, validation, and lock visibility at row level.' })}</p>
               <div className="rounded-md border border-border/50 p-3">
                 <Table>
@@ -1263,8 +1274,8 @@ export const AdminDesignSystem = () => {
               <CodePreview code={CODE_EXAMPLES.wishes} />
             </GlowCard>
 
-            <GlowCard className="space-y-4 p-4">
-              <h3 className="text-base font-semibold">Roster management panel</h3>
+            <GlowCard surface="section" className="space-y-4 p-4">
+              <h3 className="text-base font-medium">Roster management panel</h3>
               <p className="text-sm text-muted-foreground">{t({ en: 'Combine roster selector, filters, and bulk actions in one horizontal control area.' })}</p>
               <div className="space-y-3 rounded-md border border-border/50 p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1282,8 +1293,8 @@ export const AdminDesignSystem = () => {
               </div>
             </GlowCard>
 
-            <GlowCard className="space-y-4 p-4">
-              <h3 className="text-base font-semibold">Event attendance workflow</h3>
+            <GlowCard surface="section" className="space-y-4 p-4">
+              <h3 className="text-base font-medium">Event attendance workflow</h3>
               <p className="text-sm text-muted-foreground">{t({ en: 'Attendance cards should expose status, role demand and confirmation controls.' })}</p>
               <div className="grid gap-3 md:grid-cols-2">
                 <Card className="border-border/50 bg-card/60">
@@ -1321,14 +1332,19 @@ export const AdminDesignSystem = () => {
               description={t({ en: 'Decision rules for consistency and baseline accessibility.' })}
             />
 
-            <GlowCard className="space-y-4 p-4">
-              <h3 className="text-base font-semibold">Core do/don't</h3>
+            <GlowCard surface="section" className="space-y-4 p-4">
+              <h3 className="text-base font-medium">Core do/don't</h3>
               <div className="grid gap-2 md:grid-cols-2 text-sm">
                 <div className="rounded-md border border-border/60 p-3">
                   <p className="font-medium">Do</p>
                   <ul className="mt-2 list-disc pl-4 text-muted-foreground space-y-1">
                     <li>Use semantic badges for status (approved, pending, rejected).</li>
                     <li>Keep primary CTA unique within a card or panel.</li>
+                    <li>Use one framed surface per functional group; keep nested frames for dialogs, list items, or tables only.</li>
+                    <li>Spend page headers deliberately: skip them when sidebar, subnav, or toolbar already carries the context.</li>
+                    <li>Use the full workspace width by default for guild overview, tables, polls, vault, and member operations.</li>
+                    <li>Use plum for active or primary emphasis and gold for GM, premium, or high-importance accents.</li>
+                    <li>Use full callout panels only for blocking alerts; prefer icon, tooltip, and screen-reader copy for contextual state.</li>
                     <li>Pair every input with a visible label.</li>
                     <li>Use skeletons for loading lists and tables, not generic spinners everywhere.</li>
                   </ul>
@@ -1345,8 +1361,8 @@ export const AdminDesignSystem = () => {
               </div>
             </GlowCard>
 
-            <GlowCard className="space-y-4 p-4">
-              <h3 className="text-base font-semibold">Accessibility baseline</h3>
+            <GlowCard surface="section" className="space-y-4 p-4">
+              <h3 className="text-base font-medium">Accessibility baseline</h3>
               <div className="grid gap-2 md:grid-cols-2 text-sm">
                 <div className="rounded-md border border-border/60 p-3 space-y-2">
                   <p className="font-medium">Contrast and focus</p>
@@ -1367,7 +1383,7 @@ export const AdminDesignSystem = () => {
             </GlowCard>
           </section>
 
-          <GlowCard className="p-4">
+          <GlowCard surface="section" className="p-4">
             <div className="flex flex-col gap-2 text-sm">
               <p className="font-medium">{t({ en: 'Documentation shortcut in admin' })}</p>
               <p className="text-muted-foreground">{t({ en: 'Use this entry inside Admin Documentation to access the global design system route.' })}</p>

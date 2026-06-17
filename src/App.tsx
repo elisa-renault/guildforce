@@ -33,7 +33,7 @@ const AppLayout = () => {
       <div
         className={cn(
           "relative z-10 flex flex-1 flex-col transition-[padding-top] duration-200",
-          routeLayout === "app" && "pt-[calc(4rem+var(--global-nav-extra-offset,0px))]",
+          routeLayout === "app" && "pt-[calc(3.5rem+var(--global-nav-extra-offset,0px))]",
         )}
         style={routeLayout === "public" ? { paddingTop: 'var(--global-nav-extra-offset, 0px)' } : undefined}
       >

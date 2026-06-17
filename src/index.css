@@ -14,7 +14,7 @@
     --foreground: 30 15% 92%;
 
     /* Card with subtle transparency (slightly brighter for contrast) */
-    --card: 240 10% 9%;
+    --card: 220 10% 10%;
     --card-foreground: 30 15% 92%;
 
     --popover: 240 10% 8%;
@@ -29,7 +29,7 @@
     --secondary-foreground: 0 0% 100%;
 
     /* Raised contrast to avoid "invisible" muted text on dark backgrounds */
-    --muted: 240 10% 16%;
+    --muted: 220 9% 15%;
     --muted-foreground: 240 6% 70%;
 
     /* Accent - slightly different plum tone */
@@ -65,8 +65,8 @@
     --chart-4: 267 84% 68%;
     --chart-5: 145 60% 45%;
 
-    --border: 240 10% 24%;
-    --input: 240 10% 14%;
+    --border: 220 9% 23%;
+    --input: 220 9% 13%;
     --ring: 292 63% 26%;
 
     --radius: 0.5rem;
@@ -181,52 +181,29 @@
 }
 
 @layer components {
-  /* Glass card - liquid glass effect with transparency */
+  /* Calm app surface for operational screens */
   .glass-card {
     @apply relative overflow-hidden;
-    background: linear-gradient(
-      135deg,
-      hsl(var(--primary) / 0.12) 0%,
-      hsl(var(--surface-glass-mid) / 0.25) 50%,
-      hsl(var(--primary) / 0.08) 100%
-    );
-    backdrop-filter: blur(24px) saturate(150%);
-    -webkit-backdrop-filter: blur(24px) saturate(150%);
-    border: 1px solid hsl(var(--surface-warm-base) / 0.1);
-    border-top-color: hsl(var(--surface-warm-strong) / 0.15);
+    background: hsl(var(--card) / 0.45);
+    border: 1px solid hsl(var(--border) / 0.35);
     border-radius: var(--radius);
-    box-shadow: 
-      inset 0 1px 2px hsl(var(--surface-warm-soft) / 0.06),
-      0 8px 32px hsl(var(--surface-shadow) / 0.2);
+    box-shadow: none;
+  }
+
+  .section-surface {
+    @apply relative overflow-hidden;
+    background: hsl(var(--card) / 0.28);
+    border: 1px solid hsl(var(--border) / 0.28);
+    border-radius: var(--radius);
+    box-shadow: none;
   }
 
   .glass-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 5%;
-    right: 5%;
-    height: 1px;
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      hsl(var(--surface-warm-strong) / 0.2) 50%,
-      transparent 100%
-    );
-    pointer-events: none;
+    content: none;
   }
 
   .glass-card::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      180deg,
-      hsl(var(--surface-warm-soft) / 0.04) 0%,
-      transparent 40%
-    );
-    pointer-events: none;
-    border-radius: inherit;
+    content: none;
   }
 
   /* Glass button - transparent liquid glass */
@@ -238,14 +215,11 @@
       hsl(var(--surface-warm-soft) / 0.08) 0%,
       hsl(var(--surface-warm-base) / 0.03) 100%
     );
-    backdrop-filter: blur(20px) saturate(150%);
-    -webkit-backdrop-filter: blur(20px) saturate(150%);
-    border: 1px solid hsl(var(--surface-warm-base) / 0.1);
-    border-top-color: hsl(var(--surface-warm-strong) / 0.15);
-    box-shadow: 
-      inset 0 1px 2px hsl(var(--surface-warm-soft) / 0.06),
-      0 4px 16px hsl(var(--surface-shadow) / 0.15);
-    transition: all 0.3s ease;
+    backdrop-filter: blur(10px) saturate(120%);
+    -webkit-backdrop-filter: blur(10px) saturate(120%);
+    border: 1px solid hsl(var(--border) / 0.55);
+    box-shadow: none;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
   }
 
   .glass-button::before {
@@ -271,9 +245,7 @@
       hsl(var(--surface-warm-base) / 0.04) 100%
     );
     border-color: hsl(var(--surface-warm-strong) / 0.18);
-    box-shadow: 
-      inset 0 1px 2px hsl(var(--surface-warm-soft) / 0.08),
-      0 8px 24px hsl(var(--surface-shadow) / 0.2);
+    box-shadow: none;
   }
 
   /* Primary liquid glass button - darker, glassy, semi-transparent */
@@ -292,10 +264,9 @@
     border-top-color: hsl(var(--surface-primary-border-top) / 0.5);
     border-bottom-color: hsl(var(--surface-primary-border-bottom) / 0.55);
     box-shadow: 
-      inset 0 1px 2px hsl(var(--surface-warm-soft) / 0.08),
-      inset 0 -1px 2px hsl(var(--surface-primary-shadow-inner) / 0.2),
-      0 2px 8px hsl(var(--surface-primary-shadow-outer) / 0.35);
-    transition: all 0.3s ease;
+      inset 0 1px 1px hsl(var(--surface-warm-soft) / 0.05),
+      0 1px 4px hsl(var(--surface-primary-shadow-outer) / 0.22);
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
   }
 
   .primary-button::before {
@@ -340,8 +311,8 @@
     border-color: hsl(var(--surface-primary-border-top) / 0.55);
     transform: translateY(-1px);
     box-shadow: 
-      inset 0 1px 2px hsl(var(--surface-warm-soft) / 0.1),
-      0 4px 12px hsl(var(--surface-primary-shadow-outer-hover) / 0.4);
+      inset 0 1px 1px hsl(var(--surface-warm-soft) / 0.06),
+      0 2px 8px hsl(var(--surface-primary-shadow-outer-hover) / 0.25);
   }
 
   /* Spotlight effect for buttons - small and dense */
@@ -374,15 +345,15 @@
     z-index: 1;
   }
 
-  /* Spotlight effect for cards - large and diffuse */
+  /* Spotlight effect for cards - subtle enough for dense app surfaces */
   .glass-card > .spotlight {
     position: absolute;
     inset: 0;
     border-radius: inherit;
     background: radial-gradient(
       circle 400px at var(--mouse-x, 50%) var(--mouse-y, 50%),
-      hsl(var(--surface-warm-strong) / 0.08) 0%,
-      hsl(var(--surface-warm-base) / 0.03) 50%,
+      hsl(var(--surface-warm-strong) / 0.035) 0%,
+      hsl(var(--surface-warm-base) / 0.015) 50%,
       transparent 100%
     );
     opacity: 0;
@@ -395,8 +366,7 @@
   .primary-button:hover > .spotlight,
   .horde-button:hover > .spotlight,
   .alliance-button:hover > .spotlight,
-  .glass-button:hover > .spotlight,
-  .glass-card:hover > .spotlight {
+  .glass-button:hover > .spotlight {
     opacity: 1;
   }
 
@@ -749,8 +719,7 @@
   }
 
   .glow-card:hover {
-    border-color: hsl(var(--primary) / 0.3);
-    box-shadow: 0 0 30px hsl(var(--primary) / 0.15);
+    border-color: hsl(var(--primary) / 0.25);
   }
 }
 

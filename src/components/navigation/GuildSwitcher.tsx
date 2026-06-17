@@ -313,7 +313,7 @@ export const GuildSwitcher = ({ className }: GuildSwitcherProps) => {
         <button
           type="button"
           className={cn(
-            'inline-flex h-10 min-w-0 max-w-[240px] items-center gap-2.5 rounded-lg bg-card/25 px-3.5 text-sm font-semibold text-foreground ring-1 ring-primary/20 transition-colors hover:bg-accent/15 hover:ring-primary/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:max-w-[280px]',
+            'inline-flex h-9 min-w-0 max-w-[240px] items-center gap-2 rounded border border-border/35 bg-card/20 px-3 text-sm font-medium text-foreground transition-colors hover:border-primary/25 hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:max-w-[280px]',
             className,
           )}
         >

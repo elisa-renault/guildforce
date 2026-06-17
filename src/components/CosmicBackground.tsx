@@ -14,33 +14,17 @@ export const CosmicBackground = React.forwardRef<HTMLDivElement, React.HTMLAttri
 
         {/* Subtle top gradient glow */}
         <div 
-          className="absolute top-0 left-0 right-0 h-[600px]"
+          className="absolute top-0 left-0 right-0 h-[420px]"
           style={{
-            background: `radial-gradient(ellipse 80% 50% at 50% 0%, hsl(var(--primary) / 0.08) 0%, transparent 70%)`
+            background: `radial-gradient(ellipse 80% 50% at 50% 0%, hsl(var(--primary) / 0.045) 0%, transparent 72%)`
           }}
         />
 
-        {/* Central ellipse glow */}
+        {/* Central low-contrast ambient glow */}
         <div 
           className="absolute top-[40%] left-1/2 -translate-x-1/2 w-[800px] h-[400px]"
           style={{
-            background: `radial-gradient(ellipse 50% 40% at 50% 50%, hsl(var(--primary) / 0.1) 0%, transparent 70%)`
-          }}
-        />
-
-        {/* Arc lines - decorative curves */}
-        <div 
-          className="absolute top-[35%] left-1/2 -translate-x-1/2 w-[900px] h-[450px] border border-white/[0.03] rounded-[50%]"
-        />
-        <div 
-          className="absolute top-[38%] left-1/2 -translate-x-1/2 w-[700px] h-[350px] border border-white/[0.02] rounded-[50%]"
-        />
-
-        {/* Light beam from center bottom */}
-        <div 
-          className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[2px] h-[300px]"
-          style={{
-            background: `linear-gradient(to top, hsl(var(--primary) / 0.4) 0%, hsl(var(--primary) / 0.1) 50%, transparent 100%)`
+            background: `radial-gradient(ellipse 50% 40% at 50% 50%, hsl(var(--primary) / 0.035) 0%, transparent 72%)`
           }}
         />
 
@@ -48,7 +32,7 @@ export const CosmicBackground = React.forwardRef<HTMLDivElement, React.HTMLAttri
         <div 
           className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[200px] h-[150px]"
           style={{
-            background: `radial-gradient(ellipse 50% 50% at 50% 100%, hsl(var(--primary) / 0.2) 0%, transparent 70%)`
+            background: `radial-gradient(ellipse 50% 50% at 50% 100%, hsl(var(--primary) / 0.055) 0%, transparent 72%)`
           }}
         />
 
@@ -56,7 +40,7 @@ export const CosmicBackground = React.forwardRef<HTMLDivElement, React.HTMLAttri
         <div 
           className="absolute top-0 left-0 w-[400px] h-full"
           style={{
-            background: `linear-gradient(135deg, hsl(var(--primary) / 0.03) 0%, transparent 50%)`
+            background: `linear-gradient(135deg, hsl(var(--primary) / 0.018) 0%, transparent 50%)`
           }}
         />
 
@@ -64,7 +48,7 @@ export const CosmicBackground = React.forwardRef<HTMLDivElement, React.HTMLAttri
         <div 
           className="absolute top-0 right-0 w-[400px] h-full"
           style={{
-            background: `linear-gradient(225deg, hsl(var(--primary) / 0.03) 0%, transparent 50%)`
+            background: `linear-gradient(225deg, hsl(var(--primary) / 0.018) 0%, transparent 50%)`
           }}
         />
 

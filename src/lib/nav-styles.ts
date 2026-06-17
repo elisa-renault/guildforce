@@ -33,11 +33,10 @@ export const navItemClass = ({
   className,
 }: NavItemClassOptions) =>
   cn(
-    'inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background whitespace-nowrap',
+    'inline-flex items-center justify-center gap-2 rounded font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background whitespace-nowrap',
     SIZE_MAP[size],
     fullWidth && 'w-full',
     justifyStart && 'justify-start',
-    active ? 'bg-primary/20 text-foreground ring-1 ring-primary/50' : HOVER_MAP[hover],
+    active ? 'bg-primary/10 text-foreground' : HOVER_MAP[hover],
     className,
   );
-

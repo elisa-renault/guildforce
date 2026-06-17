@@ -20,7 +20,7 @@ export const CommandPaletteTrigger = ({ variant = 'search', className }: Command
         type="button"
         onClick={open}
         className={cn(
-          'grid h-10 w-10 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent/15 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+          'grid h-8 w-8 place-items-center rounded text-muted-foreground transition-colors hover:bg-accent/15 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
           className,
         )}
         aria-label={t.commandPalette.open}
@@ -35,7 +35,7 @@ export const CommandPaletteTrigger = ({ variant = 'search', className }: Command
       type="button"
       onClick={open}
       className={cn(
-        'flex h-10 w-full max-w-[320px] items-center gap-2 rounded-lg bg-background/35 px-3.5 text-sm text-muted-foreground/85 ring-1 ring-border/30 transition-colors hover:bg-accent/10 hover:text-foreground hover:ring-primary/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background xl:max-w-[360px] 2xl:max-w-[400px]',
+        'flex h-9 w-full max-w-[320px] items-center gap-2 rounded border border-border/35 bg-background/45 px-3 text-sm text-muted-foreground/85 transition-colors hover:border-primary/25 hover:bg-accent/10 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background xl:max-w-[360px] 2xl:max-w-[400px]',
         className,
       )}
       aria-label={t.commandPalette.open}
