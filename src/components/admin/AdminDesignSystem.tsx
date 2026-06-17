@@ -80,6 +80,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { FilterBar, FilterSearchField } from '@/components/ui/filter-controls';
 import {
   Form,
   FormControl,
@@ -705,6 +706,17 @@ export const AdminDesignSystem = () => {
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input id="guild-search" className="pl-9" placeholder="Search player" value={search} onChange={(event) => setSearch(event.target.value)} />
                   </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="filter-search">Filter bar</Label>
+                  <FilterBar className="mb-0">
+                    <FilterSearchField
+                      id="filter-search"
+                      placeholder="Search roster"
+                      containerClassName="min-w-0 flex-1"
+                    />
+                    <Button size="sm" variant="outline" className="h-8">All classes</Button>
+                  </FilterBar>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="event-date">Date/Time</Label>
