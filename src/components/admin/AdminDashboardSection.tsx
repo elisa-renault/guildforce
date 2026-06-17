@@ -404,7 +404,7 @@ export const AdminDashboardSection = ({
                         const deltaValue = 'deltaPct' in stat ? stat.deltaPct : null;
                         const deltaText = formatSignedPercentDelta(deltaValue);
                         return (
-                          <GlowCard key={`${group.title}-${statKey}`} className="p-4">
+                          <GlowCard key={`${group.title}-${statKey}`} surface="section">
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0">
                                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -478,8 +478,9 @@ export const AdminDashboardSection = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {visibleSections.map((section, index) => (
             <GlowCard 
+              surface="section"
               key={index} 
-              className="p-5 cursor-pointer hover:ring-primary/50 transition-all"
+              className="cursor-pointer hover:ring-primary/50 transition-all"
               onClick={section.onClick}
             >
               <div className="flex items-start justify-between">

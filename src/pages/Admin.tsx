@@ -365,12 +365,13 @@ export default function Admin() {
           {isMobile && <div style={{ height: mobileTabsHeight }} />}
           
           {/* Header */}
-          <div className="border-b border-border/50 bg-background/80 backdrop-blur-sm">
+          <div className="border-b border-border/30 bg-background/95">
             <PageContainer className="py-4" width="app">
               <PageHeader
                 icon={Crown}
                 title={t.admin.administration}
                 description={isAdmin ? t.admin.adminDashboard : t.admin.moderatorDashboard}
+                bordered={false}
               />
             </PageContainer>
           </div>

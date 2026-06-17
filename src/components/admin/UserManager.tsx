@@ -7,7 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { BattleNetRegion, REGION_LABELS } from '@/lib/battlenetOAuth';
 import { GlowCard } from '@/components/GlowCard';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { FilterSearchField } from '@/components/ui/filter-controls';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -29,7 +29,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { 
-  Search, 
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
@@ -381,23 +380,22 @@ export function UserManager() {
   return (
     <div className="space-y-4">
       {/* Search */}
-      <div className="relative">
+      <div>
         <label htmlFor="user-search" className="sr-only">
           {s('admin.user_manager.search_label')}
         </label>
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
+        <FilterSearchField
           id="user-search"
           name="user-search"
           placeholder={s('admin.user_manager.search_placeholder')}
           value={searchQuery}
           onChange={(e) => handleSearch(e.target.value)}
-          className="pl-10"
+          containerClassName="w-full"
         />
       </div>
 
       {/* Table */}
-      <GlowCard className="overflow-x-auto">
+      <GlowCard surface="section" className="overflow-x-auto p-0">
         <Table className="w-full min-w-[960px] text-xs md:text-sm lg:min-w-[1120px] xl:min-w-[1240px]">
           <TableHeader className="[&_th]:h-10 [&_th]:px-2 sm:[&_th]:px-3">
             <TableRow>

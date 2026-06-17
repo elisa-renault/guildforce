@@ -316,7 +316,7 @@ export const PatchNotesEditor = () => {
     return (
       <div className="space-y-4">
         {[1, 2, 3].map((i) => (
-          <GlowCard key={i} className="p-4">
+          <GlowCard key={i} surface="section" className="p-4">
             <Skeleton className="h-6 w-32 mb-2" />
             <Skeleton className="h-4 w-48" />
           </GlowCard>
@@ -357,7 +357,7 @@ export const PatchNotesEditor = () => {
           </div>
         </div>
 
-        <GlowCard className="p-4 space-y-4">
+        <GlowCard surface="section" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="version">{t.patchnotes.version}</Label>
@@ -512,7 +512,7 @@ export const PatchNotesEditor = () => {
       </div>
 
       {notes.length === 0 ? (
-        <GlowCard className="p-6 text-center">
+        <GlowCard surface="section" className="text-center">
           <ScrollText className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
           <p className="text-muted-foreground">{t.patchnotes.noNotes}</p>
           <Button size="sm" onClick={handleNew} className="mt-4 gap-1.5">
@@ -527,6 +527,7 @@ export const PatchNotesEditor = () => {
             const missingDe = !hasGermanTranslation(note.patch_note_translations || []);
             return (
               <GlowCard
+                surface="section"
                 key={note.id}
                 className="p-4 hover:bg-card/60 transition-colors cursor-pointer"
                 onClick={() => handleEdit(note)}

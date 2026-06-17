@@ -49,7 +49,7 @@ export const AdminDashboardCharts = ({ timeseries, loading }: AdminDashboardChar
     return (
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         {Array.from({ length: 4 }).map((_, index) => (
-          <GlowCard key={index} className="p-4 space-y-3">
+          <GlowCard key={index} surface="section" className="space-y-3">
             <Skeleton className="h-5 w-48" />
             <Skeleton className="h-48 w-full" />
           </GlowCard>
@@ -60,7 +60,7 @@ export const AdminDashboardCharts = ({ timeseries, loading }: AdminDashboardChar
 
   if (!hasData) {
     return (
-      <GlowCard className="p-4">
+      <GlowCard surface="section">
         <p className="text-sm text-muted-foreground">{t.admin.stats.chartsInsufficientHistory}</p>
       </GlowCard>
     );
@@ -68,8 +68,8 @@ export const AdminDashboardCharts = ({ timeseries, loading }: AdminDashboardChar
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-      <GlowCard className="p-4">
-        <h4 className="text-sm font-semibold text-foreground">{t.admin.stats.chartActivityTrendTitle}</h4>
+      <GlowCard surface="section">
+        <h4 className="text-sm font-medium text-foreground">{t.admin.stats.chartActivityTrendTitle}</h4>
         <p className="text-xs text-muted-foreground mb-3">{t.admin.stats.chartActivityTrendDesc}</p>
         <ChartContainer
           className="h-52 w-full"
@@ -115,8 +115,8 @@ export const AdminDashboardCharts = ({ timeseries, loading }: AdminDashboardChar
         </ChartContainer>
       </GlowCard>
 
-      <GlowCard className="p-4">
-        <h4 className="text-sm font-semibold text-foreground">{t.admin.stats.chartCriticalIssuesTitle}</h4>
+      <GlowCard surface="section">
+        <h4 className="text-sm font-medium text-foreground">{t.admin.stats.chartCriticalIssuesTitle}</h4>
         <p className="text-xs text-muted-foreground mb-3">{t.admin.stats.chartCriticalIssuesDesc}</p>
         <ChartContainer
           className="h-52 w-full"
@@ -159,8 +159,8 @@ export const AdminDashboardCharts = ({ timeseries, loading }: AdminDashboardChar
         </ChartContainer>
       </GlowCard>
 
-      <GlowCard className="p-4">
-        <h4 className="text-sm font-semibold text-foreground">{t.admin.stats.chartSignupActivationTitle}</h4>
+      <GlowCard surface="section">
+        <h4 className="text-sm font-medium text-foreground">{t.admin.stats.chartSignupActivationTitle}</h4>
         <p className="text-xs text-muted-foreground mb-3">{t.admin.stats.chartSignupActivationDesc}</p>
         <ChartContainer
           className="h-52 w-full"
@@ -203,8 +203,8 @@ export const AdminDashboardCharts = ({ timeseries, loading }: AdminDashboardChar
         </ChartContainer>
       </GlowCard>
 
-      <GlowCard className="p-4">
-        <h4 className="text-sm font-semibold text-foreground">{t.admin.stats.chartEngagementTrendTitle}</h4>
+      <GlowCard surface="section">
+        <h4 className="text-sm font-medium text-foreground">{t.admin.stats.chartEngagementTrendTitle}</h4>
         <p className="text-xs text-muted-foreground mb-3">{t.admin.stats.chartEngagementTrendDesc}</p>
         <ChartContainer
           className="h-52 w-full"
@@ -232,8 +232,8 @@ export const AdminDashboardCharts = ({ timeseries, loading }: AdminDashboardChar
         </ChartContainer>
       </GlowCard>
 
-      <GlowCard className="p-4 xl:col-span-2">
-        <h4 className="text-sm font-semibold text-foreground">{t.admin.stats.chartRetentionTitle}</h4>
+      <GlowCard surface="section" className="xl:col-span-2">
+        <h4 className="text-sm font-medium text-foreground">{t.admin.stats.chartRetentionTitle}</h4>
         <p className="text-xs text-muted-foreground">{t.admin.stats.chartRetentionInsufficient}</p>
       </GlowCard>
     </div>

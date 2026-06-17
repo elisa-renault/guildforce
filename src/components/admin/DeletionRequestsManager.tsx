@@ -136,7 +136,7 @@ export function DeletionRequestsManager() {
         <div className="space-y-4">
           <h3 className="text-sm font-medium text-muted-foreground">{s('admin.deletion.pending_section')}</h3>
           {pendingRequests.map((request) => (
-            <GlowCard key={request.id} className="p-4" hoverable={false}>
+            <GlowCard key={request.id} surface="section" hoverable={false}>
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 min-w-0">
                   <Avatar className="h-10 w-10 flex-shrink-0">
@@ -182,7 +182,7 @@ export function DeletionRequestsManager() {
         <div className="space-y-4">
           <h3 className="text-sm font-medium text-muted-foreground">{s('admin.deletion.processed_section')}</h3>
           {processedRequests.map((request) => (
-            <GlowCard key={request.id} className="p-4 opacity-60" hoverable={false}>
+            <GlowCard key={request.id} surface="section" className="opacity-60" hoverable={false}>
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 min-w-0">
                   <Avatar className="h-10 w-10 flex-shrink-0">
@@ -218,7 +218,7 @@ export function DeletionRequestsManager() {
       )}
 
       {requests.length === 0 && (
-        <GlowCard className="p-8 text-center" hoverable={false}>
+        <GlowCard surface="section" className="text-center" hoverable={false}>
           <Trash2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <p className="text-muted-foreground">{s('admin.deletion.empty')}</p>
         </GlowCard>

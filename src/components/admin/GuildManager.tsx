@@ -3,6 +3,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { GlowCard } from '@/components/GlowCard';
 import { Button } from '@/components/ui/button';
+import { FilterBar, FilterSearchField, filterSelectTriggerClassName } from '@/components/ui/filter-controls';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -41,7 +42,6 @@ import {
 } from '@/components/ui/select';
 import { 
   Shield, 
-  Search, 
   Pencil, 
   Trash2, 
   ExternalLink,
@@ -514,22 +514,19 @@ export function GuildManager() {
   return (
     <div className="space-y-4">
       {/* Header with Sync button */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder={t.admin.searchGuilds}
-            value={searchQuery}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="pl-10"
-          />
-        </div>
+      <FilterBar className="mb-0">
+        <FilterSearchField
+          placeholder={t.admin.searchGuilds}
+          value={searchQuery}
+          onChange={(e) => handleSearch(e.target.value)}
+          containerClassName="min-w-[240px] flex-1"
+        />
         <div className="flex items-center gap-2">
           <Label className="text-xs text-muted-foreground whitespace-nowrap">
             {s('admin.guild_manager.members_filter_label')}
           </Label>
           <Select value={membersCacheFilter} onValueChange={(v) => handleMembersCacheFilterChange(v as MembersCacheFilter)}>
-            <SelectTrigger className="w-[220px]">
+            <SelectTrigger className={cn(filterSelectTriggerClassName, 'w-[220px]')}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -552,10 +549,10 @@ export function GuildManager() {
           )}
           {t.admin.syncBattlenet}
         </Button>
-      </div>
+      </FilterBar>
 
       {/* Table */}
-      <GlowCard className="overflow-hidden">
+      <GlowCard surface="section" className="overflow-hidden p-0">
         <Table>
           <TableHeader>
             <TableRow>

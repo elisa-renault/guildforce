@@ -107,7 +107,7 @@ export const AdminSettingsSidebar = ({
     return (
       <div
         ref={mobileTabsRef}
-        className="fixed left-0 right-0 z-30 border-b border-border/50 bg-background/95 backdrop-blur-sm px-3"
+        className="fixed left-0 right-0 z-30 border-b border-border/35 bg-background/95 backdrop-blur-sm px-3"
         style={{ top: tabsTop }}
       >
         <ScrollArea className="w-full">

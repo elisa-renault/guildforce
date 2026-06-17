@@ -184,7 +184,7 @@ export const LegalPagesEditor = () => {
     return (
       <div className="space-y-4">
         {[1, 2, 3].map((i) => (
-          <GlowCard key={i} className="p-4">
+          <GlowCard key={i} surface="section" className="p-4">
             <Skeleton className="h-6 w-48 mb-2" />
             <Skeleton className="h-4 w-32" />
           </GlowCard>
@@ -253,13 +253,13 @@ export const LegalPagesEditor = () => {
         </div>
 
         {previewMode ? (
-          <GlowCard className="p-6">
-            <h1 className="font-display text-2xl text-foreground mb-4">{currentTranslation.title}</h1>
+          <GlowCard surface="section">
+            <h1 className="font-sans text-2xl font-medium text-foreground mb-4">{currentTranslation.title}</h1>
             <div className="prose prose-invert prose-sm max-w-none">
               <ReactMarkdown
                 components={{
                   h2: ({ children }) => (
-                    <h2 className="text-lg font-semibold text-foreground mt-6 mb-3 first:mt-0">{children}</h2>
+                    <h2 className="text-lg font-medium text-foreground mt-6 mb-3 first:mt-0">{children}</h2>
                   ),
                   h3: ({ children }) => (
                     <h3 className="text-base font-medium text-foreground mt-4 mb-2">{children}</h3>
@@ -368,7 +368,7 @@ export const LegalPagesEditor = () => {
         const missingDe = !hasGermanTranslation(page.legal_page_translations || []);
 
         return (
-          <GlowCard key={page.id} className="p-4">
+          <GlowCard key={page.id} surface="section" className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="p-2 rounded-lg bg-primary/10">

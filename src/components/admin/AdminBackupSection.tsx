@@ -1,8 +1,8 @@
 import { useState } from 'react';
+import { GlowCard } from '@/components/GlowCard';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Download, Loader2, ShieldAlert } from 'lucide-react';
@@ -61,8 +61,8 @@ export function AdminBackupSection() {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-    } catch (e: any) {
-      setError(e?.message || 'Download failed');
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Download failed');
     } finally {
       setBusy(false);
     }
@@ -73,12 +73,12 @@ export function AdminBackupSection() {
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-display">{backupUi.title}</CardTitle>
-          <CardDescription>{backupUi.description}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <GlowCard surface="section" className="space-y-4 p-4">
+        <div>
+          <h2 className="font-sans text-lg font-medium text-foreground">{backupUi.title}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{backupUi.description}</p>
+        </div>
+
           <Alert>
             <ShieldAlert className="h-4 w-4" />
             <AlertTitle>{backupUi.warningTitle}</AlertTitle>
@@ -125,8 +125,7 @@ export function AdminBackupSection() {
               )}
             </Button>
           </div>
-        </CardContent>
-      </Card>
+      </GlowCard>
     </div>
   );
 }

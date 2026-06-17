@@ -3,19 +3,12 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { GlowCard } from '@/components/GlowCard';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { FilterSearchField } from '@/components/ui/filter-controls';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { Search, Shield, ShieldCheck, User, X, Plus } from 'lucide-react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Shield, ShieldCheck, User, X, Plus } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -219,20 +212,19 @@ export const AdminPermissionsManager = () => {
 
   return (
     <div className="space-y-6">
-      <GlowCard className="p-6">
-        <h2 className="text-lg font-semibold text-foreground mb-4">
+      <GlowCard surface="section">
+        <h2 className="text-lg font-medium text-foreground mb-4">
           {t.admin.roleManagement}
         </h2>
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
+        <div>
+          <FilterSearchField
             id="admin-search-user"
             name="admin-search-user"
             placeholder={t.common.search}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            containerClassName="w-full"
           />
         </div>
 
@@ -296,8 +288,8 @@ export const AdminPermissionsManager = () => {
         )}
       </GlowCard>
 
-      <GlowCard className="p-6">
-        <h2 className="text-lg font-semibold text-foreground mb-4">
+      <GlowCard surface="section">
+        <h2 className="text-lg font-medium text-foreground mb-4">
           {t.admin.users}
         </h2>
 
