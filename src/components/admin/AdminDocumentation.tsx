@@ -518,6 +518,13 @@ const DOCUMENTATION: DocSection[] = [
         tags: ['database', 'features'],
       },
       {
+        titleEn: 'Retired forum schema',
+        titleFr: 'Schema forum retire',
+        contentEn: 'Migration `20260616110000_remove_forum` removes the forum product tables, realtime publication entries, forum helper functions, and the `forum_sanction_type` enum. It also drops leftover `staging.forum_*` copies so the enum can be removed cleanly.',
+        contentFr: 'La migration `20260616110000_remove_forum` retire les tables produit du forum, les entrees de publication realtime, les fonctions helper forum et l enum `forum_sanction_type`. Elle supprime aussi les copies restantes `staging.forum_*` afin que l enum puisse etre retire proprement.',
+        tags: ['database', 'forum', 'migration'],
+      },
+      {
         titleEn: 'Admin/content tables',
         titleFr: 'Tables admin/contenu',
         contentEn: '- `user_roles`\n- `bug_reports`\n- `legal_pages`, `legal_page_translations`\n- `patch_notes`, `patch_note_translations`\n- `account_deletion_requests`\n- `admin_impersonation_sessions`',

@@ -9,6 +9,7 @@ export type Json =
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  // Forum tables are intentionally absent after migration 20260616110000.
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
