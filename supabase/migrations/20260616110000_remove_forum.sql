@@ -652,7 +652,18 @@ DROP TABLE IF EXISTS public.forum_user_sanctions CASCADE;
 DROP TABLE IF EXISTS public.forum_posts CASCADE;
 DROP TABLE IF EXISTS public.forum_topics CASCADE;
 DROP TABLE IF EXISTS public.forum_categories CASCADE;
-DROP TYPE IF EXISTS public.forum_sanction_type;
+
+DROP TABLE IF EXISTS staging.forum_notifications CASCADE;
+DROP TABLE IF EXISTS staging.forum_topic_subscriptions CASCADE;
+DROP TABLE IF EXISTS staging.forum_reports CASCADE;
+DROP TABLE IF EXISTS staging.forum_reactions CASCADE;
+DROP TABLE IF EXISTS staging.forum_moderators CASCADE;
+DROP TABLE IF EXISTS staging.forum_user_sanctions CASCADE;
+DROP TABLE IF EXISTS staging.forum_posts CASCADE;
+DROP TABLE IF EXISTS staging.forum_topics CASCADE;
+DROP TABLE IF EXISTS staging.forum_categories CASCADE;
+
+DROP TYPE IF EXISTS public.forum_sanction_type CASCADE;
 
 UPDATE public.legal_page_translations
 SET
