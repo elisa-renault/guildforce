@@ -33,10 +33,10 @@ import {
   completeBattleNetCodeProcessing,
   generateOAuthState,
   getRedirectUri,
+  getRegionLabel,
   getStoredOAuthParams,
   getValidRegion,
   parseOAuthState,
-  REGION_LABELS,
   storeOAuthParams,
   validateOAuthState,
 } from '@/lib/battlenetOAuth';
@@ -442,7 +442,12 @@ const Auth = () => {
         <CosmicBackground />
         <div className="relative z-10 flex flex-col items-center gap-4 text-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <p className="text-lg text-muted-foreground">{t.battlenet.connecting}</p>
+          <div className="space-y-1">
+            <p className="text-lg text-muted-foreground">{t.battlenet.connecting}</p>
+            <p className="mx-auto max-w-xs text-sm leading-6 text-muted-foreground/80">
+              {t.battlenet.connectingHint}
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -504,7 +509,7 @@ const Auth = () => {
                   <SelectContent>
                     {ALL_REGIONS.map(region => (
                       <SelectItem key={region} value={region}>
-                        {REGION_LABELS[region]}
+                        {getRegionLabel(region, language)}
                       </SelectItem>
                     ))}
                   </SelectContent>

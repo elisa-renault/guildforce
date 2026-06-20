@@ -1,14 +1,11 @@
+import { Shield } from 'lucide-react';
 import { useState } from 'react';
-import log from '@/lib/logger';
 import { useNavigate } from 'react-router-dom';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+
+import { BattleNetIcon } from '@/components/BattleNetIcon';
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { CosmicButton } from '@/components/CosmicButton';
 import { PageContainer } from '@/components/layout/PageContainer';
-import { BattleNetIcon } from '@/components/BattleNetIcon';
-import { Shield } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -16,24 +13,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useToast } from '@/hooks/use-toast';
 import {
   type BattleNetRegion,
-  REGION_LABELS,
   ALL_REGIONS,
   getRedirectUri,
+  getRegionLabel,
   generateOAuthState,
 } from '@/lib/battlenetOAuth';
+import { splitHeroTitleForEffect } from '@/lib/heroTitle';
+import log from '@/lib/logger';
 import { getSupabaseUrl } from '@/lib/supabaseConfig';
 
 const Index = () => {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { user } = useAuth();
   const { toast } = useToast();
   const getErrorMessage = (error: unknown) =>
     error instanceof Error ? error.message : t.auth.battlenetError;
   const [bnetLoading, setBnetLoading] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState<BattleNetRegion>('eu');
+  const heroTitle = splitHeroTitleForEffect(t.home.subtitle);
 
   const handleBattleNetLogin = async () => {
     setBnetLoading(true);
@@ -80,9 +83,9 @@ const Index = () => {
         <PageContainer width="full" className="text-center max-w-4xl mx-auto px-6">
           {/* Title with gradient */}
           <h1 className="font-display text-5xl md:text-7xl mb-8 leading-tight min-h-[7.5rem] md:min-h-[10rem]">
-            <span className="text-foreground">{t.home.subtitle.split(' ').slice(0, 2).join(' ')}</span>
+            <span className="text-foreground">{heroTitle.plain}</span>
             {' '}
-            <span className="gradient-text">{t.home.subtitle.split(' ').slice(2).join(' ')}</span>
+            <span className="gradient-text">{heroTitle.accent}</span>
           </h1>
 
           {/* Subtitle */}
@@ -103,7 +106,7 @@ const Index = () => {
                 <SelectContent>
                   {ALL_REGIONS.map((r) => (
                     <SelectItem key={r} value={r}>
-                      {REGION_LABELS[r]}
+                      {getRegionLabel(r, language)}
                     </SelectItem>
                   ))}
                 </SelectContent>

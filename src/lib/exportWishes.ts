@@ -11,7 +11,7 @@ const filenameSuffixByLanguage: Partial<Record<Language, string>> = {
   'pt-BR': 'desejos',
   it: 'desideri',
   ru: 'zhelaniya',
-  'zh-CN': 'zhiyuan',
+  'zh-TW': 'xinyuan',
   ko: 'hui-mang',
 };
 

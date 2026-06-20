@@ -19,8 +19,8 @@ import { useUserGuilds } from '@/hooks/useUserGuilds';
 import { supabase } from '@/integrations/supabase/client';
 import {
   type BattleNetRegion,
-  REGION_LABELS,
   ALL_REGIONS,
+  getRegionLabel,
   parseOAuthState,
   validateOAuthState,
   getStoredOAuthParams,
@@ -35,7 +35,7 @@ import { cn } from '@/lib/utils';
 
 const GuildList = () => {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { user, profile, loading: authLoading, refreshProfile } = useAuth();
   const { guilds, loading, refresh: refreshGuilds } = useUserGuilds({ enabled: Boolean(user?.id) });
   const [isConnecting, setIsConnecting] = useState(false);
@@ -297,7 +297,7 @@ const GuildList = () => {
                 <SelectContent className="cosmic-glass border-border/50">
                   {ALL_REGIONS.map((region) => (
                     <SelectItem key={region} value={region}>
-                      {REGION_LABELS[region]}
+                      {getRegionLabel(region, language)}
                     </SelectItem>
                   ))}
                 </SelectContent>

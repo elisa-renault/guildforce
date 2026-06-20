@@ -6,6 +6,7 @@ import {
   clearBattleNetCodeProcessing,
   completeBattleNetCodeProcessing,
   fingerprintOAuthCode,
+  getRegionLabel,
   getStoredOAuthParams,
   parseOAuthState,
   storeOAuthParams,
@@ -68,6 +69,15 @@ describe('battlenetOAuth', () => {
     expect(validateOAuthState({ state: 'expected' }, 'expected')).toBe(true);
     expect(validateOAuthState({ state: 'actual' }, 'expected')).toBe(false);
     expect(validateOAuthState({ state: 'actual' }, null)).toBe(true);
+  });
+
+  it('localizes display labels without changing region codes', () => {
+    expect(getRegionLabel('eu')).toBe('Europe');
+    expect(getRegionLabel('us', 'fr')).toBe('Americas');
+    expect(getRegionLabel('eu', 'zh-TW')).toBe('歐洲');
+    expect(getRegionLabel('us', 'zh-TW')).toBe('美洲');
+    expect(getRegionLabel('kr', 'zh-TW')).toBe('韓國');
+    expect(getRegionLabel('tw', 'zh-TW')).toBe('台灣');
   });
 
   it('tracks processing without storing the raw OAuth code', () => {

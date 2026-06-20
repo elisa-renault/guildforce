@@ -16,8 +16,8 @@ import { BattleNetIcon } from './BattleNetIcon';
 import { isBattleNetResyncAlreadyRunning, readFunctionErrorPayload } from '@/lib/battlenetSync';
 import {
   type BattleNetRegion,
-  REGION_LABELS,
   ALL_REGIONS,
+  getRegionLabel,
   parseOAuthState,
   validateOAuthState,
   getStoredOAuthParams,
@@ -46,8 +46,9 @@ interface BattleNetConnectProps {
 export const BattleNetConnect: React.FC<BattleNetConnectProps> = ({ embedded = false }) => {
   const { profile, session, refreshProfile } = useAuth();
   const { t } = useLanguage();
+  const language = t.lang;
   const s = (key: SemanticKey, fallback?: string) =>
-    resolveSemanticMessage({ key, language: t.lang, translations: t, fallback });
+    resolveSemanticMessage({ key, language, translations: t, fallback });
   const [isLoading, setIsLoading] = useState(false);
   const [isResyncing, setIsResyncing] = useState(false);
   const [characters, setCharacters] = useState<WoWCharacter[]>([]);
@@ -276,7 +277,7 @@ export const BattleNetConnect: React.FC<BattleNetConnectProps> = ({ embedded = f
         const newRegion = getValidRegion(data.detectedRegion);
         setConnectedRegion(newRegion);
         if (newRegion !== connectedRegion) {
-          toast.success(`${t.battlenet.resyncSuccess} (${REGION_LABELS[newRegion]})`);
+          toast.success(`${t.battlenet.resyncSuccess} (${getRegionLabel(newRegion, language)})`);
         } else {
           toast.success(t.battlenet.resyncSuccess);
         }
@@ -329,7 +330,7 @@ export const BattleNetConnect: React.FC<BattleNetConnectProps> = ({ embedded = f
           <div className="ml-auto flex items-center gap-2">
             {connectedRegion && (
               <Badge variant="outline" className="text-xs">
-                {REGION_LABELS[connectedRegion]}
+                {getRegionLabel(connectedRegion, language)}
               </Badge>
             )}
             <Badge variant="secondary" className="h-5 px-1.5 text-[11px] font-medium">
@@ -356,7 +357,7 @@ export const BattleNetConnect: React.FC<BattleNetConnectProps> = ({ embedded = f
               <SelectContent>
                 {ALL_REGIONS.map((region) => (
                   <SelectItem key={region} value={region}>
-                    {REGION_LABELS[region]}
+                    {getRegionLabel(region, language)}
                   </SelectItem>
                 ))}
               </SelectContent>

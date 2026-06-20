@@ -1,30 +1,32 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { User, Save, Globe, Loader2, Upload, Trash2, ExternalLink, Shield, AlertTriangle, Settings, Info, Users, EyeOff, Pencil } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { useLanguage, Language } from '@/contexts/LanguageContext';
-import { getLanguageDisplayLabel, LANGUAGE_OPTIONS, isSupportedLanguage } from '@/i18n/config';
-import { interpolateMessage } from '@/i18n/format';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+
+import { AvatarCropDialog } from '@/components/AvatarCropDialog';
+import { BattleNetConnect } from '@/components/BattleNetConnect';
 import { CosmicBackground } from '@/components/CosmicBackground';
-import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
+import { GlowCard } from '@/components/GlowCard';
+import { LanguageDisplayLabel } from '@/components/LanguageDisplayLabel';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { BattleNetConnect } from '@/components/BattleNetConnect';
-import { AvatarCropDialog } from '@/components/AvatarCropDialog';
+import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage, Language } from '@/contexts/LanguageContext';
+import { useToast } from '@/hooks/use-toast';
+import { getLanguageDisplayLabel, LANGUAGE_OPTIONS, isSupportedLanguage } from '@/i18n/config';
+import { interpolateMessage } from '@/i18n/format';
+import { supabase } from '@/integrations/supabase/client';
 
-import { User, Save, Globe, Loader2, Upload, Trash2, ExternalLink, Shield, AlertTriangle, Settings, Info, Users, EyeOff, Pencil } from 'lucide-react';
 
 type BattletagVisibility = 'everyone' | 'guild_only' | 'nobody';
 
@@ -388,7 +390,9 @@ const Profile = () => {
                         </SelectTrigger>
                         <SelectContent className="bg-card border-border">
                           {LANGUAGE_OPTIONS.map((option) => (
-                            <SelectItem key={option.code} value={option.code}>{getLanguageDisplayLabel(option.code)}</SelectItem>
+                            <SelectItem key={option.code} value={option.code}>
+                              <LanguageDisplayLabel language={option.code} />
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -456,7 +460,9 @@ const Profile = () => {
                     </SelectTrigger>
                     <SelectContent className="bg-card border-border">
                       {LANGUAGE_OPTIONS.map((option) => (
-                        <SelectItem key={option.code} value={option.code}>{getLanguageDisplayLabel(option.code)}</SelectItem>
+                        <SelectItem key={option.code} value={option.code}>
+                          <LanguageDisplayLabel language={option.code} />
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

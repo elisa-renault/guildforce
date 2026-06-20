@@ -4,7 +4,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { BattleNetRegion, REGION_LABELS } from '@/lib/battlenetOAuth';
+import { BattleNetRegion, getRegionLabel } from '@/lib/battlenetOAuth';
 import { GlowCard } from '@/components/GlowCard';
 import { Button } from '@/components/ui/button';
 import { FilterSearchField } from '@/components/ui/filter-controls';
@@ -336,7 +336,7 @@ export function UserManager() {
   const formatRegion = (region?: string | null) => {
     if (!region) return '-';
     const normalized = region.toLowerCase() as BattleNetRegion;
-    return REGION_LABELS[normalized] || region.toUpperCase();
+    return getRegionLabel(normalized, language) || region.toUpperCase();
   };
 
   const formatServerName = (serverSlug: string) => {

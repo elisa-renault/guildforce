@@ -34,17 +34,23 @@ export const GlobalNav = () => {
   const routeMeta = getRouteMeta(location.pathname);
   const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
     resolveSemanticMessage({ key, language, translations: t });
-  const menuCopy = language === 'fr'
-    ? {
-        account: 'Compte',
-        adminTools: 'Administration',
-        preferences: 'Preferences',
-      }
-    : {
-        account: 'Account',
-        adminTools: 'Admin tools',
-        preferences: 'Preferences',
-      };
+  const menuCopyByLanguage: Partial<Record<typeof language, { account: string; adminTools: string; preferences: string }>> = {
+    fr: {
+      account: 'Compte',
+      adminTools: 'Administration',
+      preferences: 'Préférences',
+    },
+    'zh-TW': {
+      account: '帳號',
+      adminTools: '管理工具',
+      preferences: '偏好設定',
+    },
+  };
+  const menuCopy = menuCopyByLanguage[language] ?? {
+    account: 'Account',
+    adminTools: 'Admin tools',
+    preferences: 'Preferences',
+  };
 
   useLayoutEffect(() => {
     if (routeMeta?.hideGlobalNav) {

@@ -18,7 +18,19 @@ export const REGION_LABELS: Record<BattleNetRegion, string> = {
   tw: 'Taiwan',
 };
 
+const LOCALIZED_REGION_LABELS: Partial<Record<string, Record<BattleNetRegion, string>>> = {
+  'zh-TW': {
+    eu: '歐洲',
+    us: '美洲',
+    kr: '韓國',
+    tw: '台灣',
+  },
+};
+
 export const ALL_REGIONS: BattleNetRegion[] = ['eu', 'us', 'kr', 'tw'];
+
+export const getRegionLabel = (region: BattleNetRegion, language?: string) =>
+  LOCALIZED_REGION_LABELS[language ?? '']?.[region] ?? REGION_LABELS[region];
 
 // =============================================================================
 // OAUTH STATE MANAGEMENT

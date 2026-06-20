@@ -43,7 +43,7 @@ export const GuildSwitcher = ({ className }: GuildSwitcherProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const { guilds, loading } = useUserGuilds({ enabled: Boolean(user?.id) });
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -51,23 +51,7 @@ export const GuildSwitcher = ({ className }: GuildSwitcherProps) => {
   const preferenceWriteVersionRef = useRef(0);
   const userId = user?.id;
 
-  const copy = language === 'fr'
-    ? {
-        allGuilds: 'Toutes les guildes',
-        empty: 'Aucune guilde disponible',
-        favorites: 'Favorites',
-        guilds: 'Guildes',
-        recent: 'Guildes recentes',
-        search: 'Rechercher une guilde',
-      }
-    : {
-        allGuilds: 'All guilds',
-        empty: 'No guilds available',
-        favorites: 'Favorites',
-        guilds: 'Guilds',
-        recent: 'Recent guilds',
-        search: 'Search guilds',
-      };
+  const copy = t.guildSwitcher;
 
   const navigableGuilds = useMemo(
     () => guilds.filter(isNavigableGuild),
@@ -280,7 +264,7 @@ export const GuildSwitcher = ({ className }: GuildSwitcherProps) => {
             'grid h-7 w-7 shrink-0 place-items-center rounded-md text-muted-foreground opacity-80 transition hover:bg-muted hover:text-foreground group-hover:opacity-100',
             favorite && 'text-primary opacity-100',
           )}
-          aria-label={favorite ? 'Remove favorite' : 'Add favorite'}
+          aria-label={favorite ? copy.removeFavorite : copy.addFavorite}
           onClick={(event) => {
             event.stopPropagation();
             toggleFavorite(guild);
@@ -337,7 +321,7 @@ export const GuildSwitcher = ({ className }: GuildSwitcherProps) => {
 
         <div className="max-h-[420px] overflow-y-auto pr-1">
           {loading ? (
-            <p className="px-2 py-6 text-center text-sm text-muted-foreground">Loading...</p>
+            <p className="px-2 py-6 text-center text-sm text-muted-foreground">{copy.loading}</p>
           ) : filteredGuilds.length === 0 ? (
             <p className="px-2 py-6 text-center text-sm text-muted-foreground">{copy.empty}</p>
           ) : (

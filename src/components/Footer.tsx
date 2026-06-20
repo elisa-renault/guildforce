@@ -2,6 +2,7 @@ import { Beer, Cookie, Globe } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { openCookiePreferences } from './CookieBanner';
+import { LanguageDisplayLabel } from './LanguageDisplayLabel';
 import { TipeeeIcon } from './TipeeeIcon';
 
 import {
@@ -67,7 +68,7 @@ export const Footer = () => {
               <SelectContent>
                 {LANGUAGE_OPTIONS.map((lang) => (
                   <SelectItem key={lang.code} value={lang.code}>
-                    {getLanguageDisplayLabel(lang.code)}
+                    <LanguageDisplayLabel language={lang.code} />
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -133,7 +134,7 @@ export const Footer = () => {
               <SelectContent>
                 {LANGUAGE_OPTIONS.map((lang) => (
                   <SelectItem key={lang.code} value={lang.code}>
-                    {getLanguageDisplayLabel(lang.code)}
+                    <LanguageDisplayLabel language={lang.code} />
                   </SelectItem>
                 ))}
               </SelectContent>
