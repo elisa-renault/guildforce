@@ -8,7 +8,7 @@ import type { translationsIt } from './translations.it';
 import type { translationsKo } from './translations.ko';
 import type { translationsPtBr } from './translations.pt-BR';
 import type { translationsRu } from './translations.ru';
-import type { translationsZhCn } from './translations.zh-CN';
+import type { translationsZhTw } from './translations.zh-TW';
 export type { Language } from './config';
 
 export interface Translations {
@@ -138,6 +138,17 @@ export interface Translations {
       open: string;
       close: string;
     };
+  };
+  guildSwitcher: {
+    allGuilds: string;
+    empty: string;
+    favorites: string;
+    guilds: string;
+    recent: string;
+    search: string;
+    loading: string;
+    addFavorite: string;
+    removeFavorite: string;
   };
   guildVault: {
     title: string;
@@ -320,6 +331,7 @@ export interface Translations {
     mainSet: string;
     refresh: string;
     connecting: string;
+    connectingHint: string;
     region: string;
     selectRegion: string;
     connectedTo: string;
@@ -989,7 +1001,9 @@ export interface Translations {
     detailReasonGiven: string;
     detailSurface: string;
     detailVersion: string;
+    auditSurfaces: Record<string, string>;
     vaultSecretCreated: string;
+    vaultSecretRevealed: string;
     vaultSecretArchived: string;
     vaultSecretRotated: string;
     vaultAccessUpdated: string;
@@ -1325,7 +1339,7 @@ type TranslationModule =
   | { translationsPtBr: typeof translationsPtBr }
   | { translationsIt: typeof translationsIt }
   | { translationsRu: typeof translationsRu }
-  | { translationsZhCn: typeof translationsZhCn }
+  | { translationsZhTw: typeof translationsZhTw }
   | { translationsKo: typeof translationsKo };
 
 const TRANSLATION_LOADERS: Record<Language, () => Promise<Translations>> = {
@@ -1354,9 +1368,9 @@ const TRANSLATION_LOADERS: Record<Language, () => Promise<Translations>> = {
     const mod = (await import('./translations.ru')) as TranslationModule;
     return mod.translationsRu;
   },
-  'zh-CN': async () => {
-    const mod = (await import('./translations.zh-CN')) as TranslationModule;
-    return mod.translationsZhCn;
+  'zh-TW': async () => {
+    const mod = (await import('./translations.zh-TW')) as TranslationModule;
+    return mod.translationsZhTw;
   },
   ko: async () => {
     const mod = (await import('./translations.ko')) as TranslationModule;
@@ -1423,9 +1437,9 @@ if (import.meta.env?.DEV && !import.meta.env?.VITEST) {
     loadTranslations('pt-BR'),
     loadTranslations('it'),
     loadTranslations('ru'),
-    loadTranslations('zh-CN'),
+    loadTranslations('zh-TW'),
     loadTranslations('ko'),
-  ]).then(([en, fr, de, es, ptBr, it, ru, zhCn, ko]) => {
-    checkTranslationCompleteness({ en, fr, de, es, 'pt-BR': ptBr, it, ru, 'zh-CN': zhCn, ko });
+  ]).then(([en, fr, de, es, ptBr, it, ru, zhTw, ko]) => {
+    checkTranslationCompleteness({ en, fr, de, es, 'pt-BR': ptBr, it, ru, 'zh-TW': zhTw, ko });
   });
 }

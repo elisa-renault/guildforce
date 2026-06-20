@@ -1,4 +1,14 @@
 import "@fontsource/faculty-glyphic/latin-400.css";
+import "@fontsource/noto-sans-kr/korean-300.css";
+import "@fontsource/noto-sans-kr/korean-400.css";
+import "@fontsource/noto-sans-kr/korean-500.css";
+import "@fontsource/noto-sans-kr/korean-700.css";
+import "@fontsource/noto-sans-tc/chinese-traditional-300.css";
+import "@fontsource/noto-sans-tc/chinese-traditional-400.css";
+import "@fontsource/noto-sans-tc/chinese-traditional-500.css";
+import "@fontsource/noto-sans-tc/chinese-traditional-700.css";
+import "@fontsource/noto-serif-kr/korean-400.css";
+import "@fontsource/noto-serif-tc/chinese-traditional-400.css";
 import "@fontsource/roboto/latin-300.css";
 import "@fontsource/roboto/latin-400.css";
 import "@fontsource/roboto/latin-500.css";

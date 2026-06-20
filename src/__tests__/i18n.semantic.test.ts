@@ -40,6 +40,178 @@ describe('semantic i18n', () => {
     expect(value).toBe('An English title is required.');
   });
 
+  it('returns Italian semantic copy for guild members, Atlas, activity, and Battle.net settings', () => {
+    const cases: Array<[Parameters<typeof resolveSemanticMessage>[0]['key'], string]> = [
+      ['guild.members.search_placeholder', 'Cerca personaggio o giocatore...'],
+      ['guild.members.all_ranks', 'Tutti i ranghi'],
+      ['guild.members.on_guildforce', 'Su Guildforce'],
+      ['guild.members.not_registered', 'Non registrato'],
+      ['guild.members.main_alt', 'Main/Alt'],
+      ['guild.atlas.empty.filtered_title', 'Nessun documento corrispondente'],
+      ['guild.atlas.reader.empty_title', 'Seleziona un documento Atlas'],
+      ['guild.atlas.new_doc', 'Nuovo doc'],
+      ['polls.respondent.title', 'Chi può inviare desideri'],
+      ['settings.guild_battlenet.resync_title', 'Sincronizza cache membri'],
+      ['settings.guild_battlenet.rename_action', 'Gilda rinominata'],
+      ['settings.guild_battlenet.rename_cta', 'Rinomina in Guildforce'],
+      ['activity.log.title', 'Registro attività'],
+      ['activity.log.action.member_joined', 'Membro entrato'],
+      ['activity.log.action.roster_wishes_locked', 'Desideri roster bloccati'],
+      ['activity.log.action.atlas_doc_restored', 'Doc Atlas ripristinato'],
+    ];
+
+    for (const [key, expected] of cases) {
+      expect(resolveSemanticMessage({ key, language: 'it', translations: asTranslations({}) })).toBe(expected);
+    }
+  });
+
+  it('returns Spanish semantic copy for guild members, Atlas, poll access, Battle.net, and activity', () => {
+    const cases: Array<[Parameters<typeof resolveSemanticMessage>[0]['key'], string]> = [
+      ['guild.members.search_placeholder', 'Buscar personaje o jugador...'],
+      ['guild.members.table_rank', 'Rango'],
+      ['guild.members.main_alt', 'Main/Alt'],
+      ['guild.atlas.empty.filtered_title', 'No hay documentos coincidentes'],
+      ['guild.atlas.editor.collection_placeholder', 'Banda, onboarding, addons...'],
+      ['polls.results_access.rank_rule_title', 'Por rango de hermandad'],
+      ['polls.respondent.title', 'Target de encuestados'],
+      ['settings.guild_battlenet.resync_title', 'Sincronizar caché de miembros'],
+      ['settings.guild_battlenet.rename_cta', 'Renombrar en Guildforce'],
+      ['dashboard.roster_table.total_wishes_suffix', 'deseos en total'],
+      ['roster_wishes.manual_entry_label', 'Entrada manual'],
+      ['activity.log.title', 'Registro de actividad'],
+      ['activity.log.action.atlas_doc_restored', 'Doc Atlas restaurado'],
+      ['activity.log.filter.roster_wishes_locked', 'Bloqueos de roster'],
+    ];
+
+    for (const [key, expected] of cases) {
+      expect(resolveSemanticMessage({ key, language: 'es', translations: asTranslations({}) })).toBe(expected);
+    }
+  });
+
+  it('prefers Spanish semantic copy over legacy auto keys when available', () => {
+    const value = resolveSemanticMessage({
+      key: 'polls.respondent.title',
+      language: 'es',
+      translations: asTranslations({
+        components_polls_PollRespondentEditor_263: 'Respondent targeting (legacy)',
+      }),
+    });
+
+    expect(value).toBe('Target de encuestados');
+  });
+
+  it('returns Brazilian Portuguese semantic copy for guild, Atlas, poll access, Battle.net, and activity', () => {
+    const cases: Array<[Parameters<typeof resolveSemanticMessage>[0]['key'], string]> = [
+      ['guild.members.search_placeholder', 'Buscar personagem ou jogador...'],
+      ['guild.members.table_rank', 'Ranque'],
+      ['guild.atlas.editor.collection_placeholder', 'Raide, onboarding, addons...'],
+      ['polls.results_access.rank_rule_title', 'Por ranque de guilda'],
+      ['polls.respondent.title', 'Alvo dos respondentes'],
+      ['settings.guild_battlenet.resync_title', 'Sincronizar cache de membros'],
+      ['settings.guild_battlenet.rename_cta', 'Renomear no Guildforce'],
+      ['dashboard.roster_table.total_wishes_suffix', 'desejos no total'],
+      ['roster_wishes.manual_entry_label', 'Entrada manual'],
+      ['activity.log.title', 'Registro de atividade'],
+      ['activity.log.action.atlas_doc_restored', 'Doc Atlas restaurado'],
+      ['activity.log.filter.roster_wishes_locked', 'Bloqueios de roster'],
+    ];
+
+    for (const [key, expected] of cases) {
+      expect(resolveSemanticMessage({ key, language: 'pt-BR', translations: asTranslations({}) })).toBe(expected);
+    }
+  });
+
+  it('prefers Brazilian Portuguese semantic copy over legacy auto keys when available', () => {
+    const value = resolveSemanticMessage({
+      key: 'polls.respondent.title',
+      language: 'pt-BR',
+      translations: asTranslations({
+        components_polls_PollRespondentEditor_263: 'Respondent targeting (legacy)',
+      }),
+    });
+
+    expect(value).toBe('Alvo dos respondentes');
+  });
+
+  it('returns Traditional Chinese semantic copy for guild members, Atlas, poll access, Battle.net, and activity', () => {
+    const cases: Array<[Parameters<typeof resolveSemanticMessage>[0]['key'], string]> = [
+      ['guild.members.title', '公會成員'],
+      ['guild.members.search_placeholder', '搜尋角色或玩家...'],
+      ['guild.members.table_rank', '階級'],
+      ['guild.members.main_alt', 'Main/Alt'],
+      ['guild.atlas.editor.collection_placeholder', '團隊副本、入會導覽、addons...'],
+      ['guild.atlas.empty.filtered_title', '沒有符合條件的文件'],
+      ['polls.results_access.rank_rule_title', '依公會階級'],
+      ['polls.respondent.title', '回覆對象'],
+      ['polls.editor.general_questions', '一般問題'],
+      ['polls.editor.publish', '發布投票'],
+      ['settings.sidebar.section.profile', '設定檔'],
+      ['settings.sidebar.section.activity', '活動'],
+      ['settings.sidebar.category.management', '管理'],
+      ['settings.guild_battlenet.resync_title', '同步成員快取'],
+      ['settings.guild_battlenet.rename_cta', '在 Guildforce 重新命名'],
+      ['dashboard.roster_table.total_wishes_suffix', '總心願數'],
+      ['roster_wishes.manual_entry_label', '手動項目'],
+      ['activity.log.title', '活動紀錄'],
+      ['activity.log.action.atlas_doc_restored', 'Atlas 文件已還原'],
+      ['activity.log.filter.roster_wishes_locked', '名單鎖定'],
+    ];
+
+    for (const [key, expected] of cases) {
+      expect(resolveSemanticMessage({ key, language: 'zh-TW', translations: asTranslations({}) })).toBe(expected);
+    }
+  });
+
+  it('returns Korean semantic copy for guild members, Atlas, poll access, Battle.net, and activity', () => {
+    const cases: Array<[Parameters<typeof resolveSemanticMessage>[0]['key'], string]> = [
+      ['guild.members.title', '길드 멤버'],
+      ['guild.members.search_placeholder', '캐릭터 또는 플레이어 검색...'],
+      ['guild.members.table_rank', '등급'],
+      ['guild.members.main_alt', '본캐/부캐'],
+      ['guild.atlas.editor.collection_placeholder', '공격대, 온보딩, addons...'],
+      ['guild.atlas.empty.filtered_title', '일치하는 문서 없음'],
+      ['polls.results_access.rank_rule_title', '길드 등급별'],
+      ['polls.respondent.title', '응답 대상'],
+      ['settings.guild_battlenet.resync_title', '멤버 캐시 동기화'],
+      ['settings.guild_battlenet.rename_cta', 'Guildforce에서 이름 변경'],
+      ['dashboard.roster_table.total_wishes_suffix', '총 희망'],
+      ['roster_wishes.manual_entry_label', '수동 항목'],
+      ['activity.log.title', '활동 로그'],
+      ['activity.log.action.wish_season_drafted', '희망 시즌 초안 생성됨'],
+      ['activity.log.action.atlas_doc_restored', 'Atlas 문서 복원됨'],
+      ['activity.log.filter.wish_season_drafted', '초안 시즌'],
+      ['activity.log.filter.roster_wishes_locked', '로스터 잠금'],
+    ];
+
+    for (const [key, expected] of cases) {
+      expect(resolveSemanticMessage({ key, language: 'ko', translations: asTranslations({}) })).toBe(expected);
+    }
+  });
+
+  it('prefers Korean semantic copy over legacy auto keys when available', () => {
+    const value = resolveSemanticMessage({
+      key: 'polls.respondent.title',
+      language: 'ko',
+      translations: asTranslations({
+        components_polls_PollRespondentEditor_263: 'Respondent targeting (legacy)',
+      }),
+    });
+
+    expect(value).toBe('응답 대상');
+  });
+
+  it('prefers Traditional Chinese semantic copy over legacy auto keys when available', () => {
+    const value = resolveSemanticMessage({
+      key: 'polls.respondent.title',
+      language: 'zh-TW',
+      translations: asTranslations({
+        components_polls_PollRespondentEditor_263: 'Respondent targeting (legacy)',
+      }),
+    });
+
+    expect(value).toBe('回覆對象');
+  });
+
   it('returns dedicated DE semantic copy for release-scope keys', () => {
     const releasePrefixes = ['admin.', 'markdown.', 'polls.', 'guild.', 'settings.', 'ui.', 'globalnav.', 'activity.'];
     const allowedIdentical = new Set([
@@ -193,16 +365,16 @@ describe('semantic i18n', () => {
     expect(value).toBe('Admin Nur-Lese-Modus (legacy)');
   });
 
-  it('keeps final auto compatibility keys for wishes/dashboard', () => {
+  it('returns Korean semantic copy for final wishes/dashboard keys', () => {
     const value = resolveSemanticMessage({
       key: 'wishes.session_expired',
-      language: 'it',
+      language: 'ko',
       translations: asTranslations({
         pages_Wishes_session_expired: 'Sitzung abgelaufen (legacy)',
       }),
     });
 
-    expect(value).toBe('Sitzung abgelaufen (legacy)');
+    expect(value).toBe('세션이 만료되었습니다');
   });
 
   it('exposes semantic keys for migration checks', () => {
@@ -231,5 +403,6 @@ describe('semantic i18n', () => {
     expect(listSemanticKeys()).toContain('wishes.session_expired');
     expect(listSemanticKeys()).toContain('guild.polls.title');
     expect(listSemanticKeys()).toContain('activity.log.title');
+    expect(listSemanticKeys()).toContain('activity.log.action.wish_season_drafted');
   });
 });

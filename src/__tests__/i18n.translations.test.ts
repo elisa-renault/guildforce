@@ -9,7 +9,8 @@ import { translationsIt } from '@/i18n/translations.it';
 import { translationsKo } from '@/i18n/translations.ko';
 import { translationsPtBr } from '@/i18n/translations.pt-BR';
 import { translationsRu } from '@/i18n/translations.ru';
-import { translationsZhCn } from '@/i18n/translations.zh-CN';
+import { translationsZhTw } from '@/i18n/translations.zh-TW';
+import { buildVaultAuditDetails, getVaultAuditActionLabel } from '@/lib/guildVaultAuditLabels';
 
 const flatten = (value: unknown, prefix = '', acc: Record<string, string> = {}) => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -47,7 +48,7 @@ describe('i18n translations loader', () => {
     const ptBrValue = await loadTranslations('pt-BR');
     const itValue = await loadTranslations('it');
     const ruValue = await loadTranslations('ru');
-    const zhValue = await loadTranslations('zh-CN');
+    const zhTwValue = await loadTranslations('zh-TW');
     const koValue = await loadTranslations('ko');
 
     expect(deValue).toBe(translationsDe);
@@ -55,18 +56,89 @@ describe('i18n translations loader', () => {
     expect(ptBrValue).toBe(translationsPtBr);
     expect(itValue).toBe(translationsIt);
     expect(ruValue).toBe(translationsRu);
-    expect(zhValue).toBe(translationsZhCn);
+    expect(zhTwValue).toBe(translationsZhTw);
     expect(koValue).toBe(translationsKo);
     expect(deValue.common.save).toBe('Speichern');
     expect(deValue.common.myGuilds).toBe('Meine Gilden');
     expect(deValue.battlenet.connect).toBe('Mein Battle.net-Konto verbinden');
+    expect(deValue.guildSwitcher.search).toBe('Gilden suchen');
+    expect(esValue.guildSwitcher.favorites).toBe('Favoritas');
+    expect(esValue.dashboard.analytics).toBe('Análisis');
+    expect(esValue.cookies.analytics).toBe('Cookies analíticas');
+    expect(ptBrValue.guildSwitcher.recent).toBe('Guildas recentes');
+    expect(ptBrValue.dashboard.analytics).toBe('Análises');
+    expect(ptBrValue.cookies.analytics).toBe('Cookies analíticos');
     expect(itValue.common.save).toBe('Salva');
+    expect(itValue.guildSwitcher.allGuilds).toBe('Tutte le gilde');
+    expect(itValue.dashboard.analytics).toBe('Analisi');
+    expect(itValue.cookies.analytics).toBe('Cookie di analisi');
+    expect(ruValue.guildSwitcher.search).toBe('Поиск гильдий');
+    expect(zhTwValue.guildSwitcher.empty).toBe('沒有可用公會');
+    expect(zhTwValue.dashboard.analytics).toBe('分析');
+    expect(zhTwValue.guild.guildMaster).toBe('公會會長');
+    expect(zhTwValue.wishes.rosterDecision.bench).toBe('候補');
+    expect(zhTwValue.legal.legalNotice).toBe('法律聲明');
+    expect(zhTwValue.legal.privacyPolicy).toBe('隱私權政策');
+    expect(zhTwValue.patchnotes.changelog).toBe('更新紀錄');
+    expect(zhTwValue.bugReport.title).toBe('問題回報');
+    expect(zhTwValue.bugReport.titlePlaceholder).toBe('簡短描述問題');
+    expect(zhTwValue.profile.title).toBe('我的個人檔案');
+    expect(zhTwValue.profile.accountConnection).toBe('帳號連結');
+    expect(zhTwValue.profile.ui.viewPublicProfile).toBe('查看公開個人檔案');
+    expect(zhTwValue.profile.battletagVisibility.guildOnly).toBe('僅公會成員');
+    expect(zhTwValue.cookies.preferencesTitle).toBe('Cookie 偏好設定');
+    expect(zhTwValue.cookies.essential).toBe('必要 Cookie');
+    expect(zhTwValue.cookies.analytics).toBe('分析 Cookie');
+    expect(zhTwValue.cookies.marketing).toBe('行銷 Cookie');
+    expect(zhTwValue.cookies.savePreferences).toBe('儲存偏好設定');
+    expect(zhTwValue.guildVault.title).toBe('公會保管庫');
+    expect(zhTwValue.guildVault.addSecret).toBe('新增機密');
+    expect(zhTwValue.guildVault.actions.reveal).toBe('顯示');
+    expect(zhTwValue.guildSettings.guildInfo).toBe('公會資訊');
+    expect(zhTwValue.guildSettings.rankLabels.title).toBe('階級標籤');
+    expect(zhTwValue.guildSettings.rankLabels.placeholder).toBe('留空即可使用預設標籤');
+    expect(zhTwValue.polls.resultsUi.controls).toBe('閱讀控制');
+    expect(zhTwValue.polls.resultsUi.sort.original).toBe('原始順序');
+    expect(zhTwValue.polls.resultsUi.cohortEmpty).toBe('尚無子群組篩選。新增一個或多個篩選以聚焦分析。');
+    expect(koValue.guildSwitcher.removeFavorite).toBe('즐겨찾기에서 제거');
+    expect(koValue.dashboard.analytics).toBe('분석');
+  });
+
+  it('localizes vault audit action and surface labels in every locale', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const locales = [
+      await loadTranslations('en'),
+      await loadTranslations('fr'),
+      await loadTranslations('de'),
+      await loadTranslations('es'),
+      await loadTranslations('pt-BR'),
+      await loadTranslations('it'),
+      await loadTranslations('ru'),
+      await loadTranslations('zh-TW'),
+      await loadTranslations('ko'),
+    ];
+
+    for (const locale of locales) {
+      expect(locale.activityLog.vaultSecretRevealed).toBeTruthy();
+      expect(locale.activityLog.vaultSecretRevealed).not.toBe('revealed');
+      expect(locale.activityLog.auditSurfaces.guild_vault).toBeTruthy();
+      expect(locale.activityLog.auditSurfaces.guild_vault).not.toBe('guild_vault');
+    }
+
+    expect(getVaultAuditActionLabel('revealed', translationsKo.activityLog)).toBe('비밀 정보 표시됨');
+    expect(
+      buildVaultAuditDetails(
+        { client_surface: 'guild_vault', version_number: 3 },
+        translationsKo.activityLog,
+      ),
+    ).toBe('표면: 길드 금고 • 버전 3');
   });
 
   it('keeps DE release-scope dictionary out of EN fallback', () => {
     const scope = [
       'common',
       'routeMeta',
+      'guildSwitcher',
       'battlenet',
       'home',
       'auth',

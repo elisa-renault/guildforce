@@ -18,7 +18,9 @@ describe('i18n config', () => {
     expect(resolveLanguage('it_IT')).toBe('it');
     expect(resolveLanguage('ru')).toBe('ru');
     expect(resolveLanguage('ko-KR')).toBe('ko');
-    expect(resolveLanguage('zh-TW')).toBe('zh-CN');
+    expect(resolveLanguage('zh')).toBe('zh-TW');
+    expect(resolveLanguage('zh-TW')).toBe('zh-TW');
+    expect(resolveLanguage('zh-Hant-TW')).toBe('zh-TW');
   });
 
   it('falls back to EN for unknown or empty locales', () => {
@@ -34,14 +36,14 @@ describe('i18n config', () => {
   });
 
   it('exposes the recommended supported language list', () => {
-    expect(SUPPORTED_LANGUAGES).toEqual(['en', 'fr', 'de', 'es', 'pt-BR', 'it', 'ru', 'zh-CN', 'ko']);
+    expect(SUPPORTED_LANGUAGES).toEqual(['en', 'fr', 'de', 'es', 'pt-BR', 'it', 'ru', 'zh-TW', 'ko']);
   });
 
   it('maps app locales to legacy bilingual content locales', () => {
     expect(getBilingualContentLanguage('fr')).toBe('fr');
     expect(getBilingualContentLanguage('en')).toBe('en');
     expect(getBilingualContentLanguage('de')).toBe('en');
-    expect(getBilingualContentLanguage('zh-CN')).toBe('en');
+    expect(getBilingualContentLanguage('zh-TW')).toBe('en');
   });
 
   it('resolves bilingual values through the locale registry', () => {

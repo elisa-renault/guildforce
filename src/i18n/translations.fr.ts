@@ -74,7 +74,7 @@ export const translationsFr: Translations = {
       guildAtlasEdit: 'Modifier document Atlas',
       notFound: 'Introuvable',
     },
-    commandPalette: {
+  commandPalette: {
       title: 'Palette de commandes',
       open: 'Rechercher ou naviguer...',
       placeholder: 'Rechercher pages, guildes, membres, sondages...',
@@ -125,9 +125,20 @@ export const translationsFr: Translations = {
         navigate: 'Naviguer',
         open: 'Ouvrir',
         close: 'Fermer',
-      },
     },
-    guildVault: {
+  },
+  guildSwitcher: {
+    allGuilds: 'Toutes les guildes',
+    empty: 'Aucune guilde disponible',
+    favorites: 'Favorites',
+    guilds: 'Guildes',
+    recent: 'Guildes récentes',
+    search: 'Rechercher une guilde',
+    loading: 'Chargement...',
+    addFavorite: 'Ajouter aux favorites',
+    removeFavorite: 'Retirer des favorites',
+  },
+  guildVault: {
       title: 'Coffre de guilde',
       subtitle: 'Identifiants et secrets partagés de la guilde, utilisez le coffre pour partager des identifiants, des token, ou des notes, de façon sécurisée. Accès gérés par rang ou par membre.',
       empty: 'Aucun secret ne vous est visible pour le moment.',
@@ -241,6 +252,7 @@ export const translationsFr: Translations = {
       mainSet: 'Personnage principal défini',
       refresh: 'Actualiser',
       connecting: 'Connexion avec Battle.net...',
+      connectingHint: 'Cela peut prendre quelques instants pendant que Battle.net finalise la connexion sécurisée.',
       region: 'Région',
       selectRegion: 'Sélectionnez votre région',
       connectedTo: 'Connecté sur',
@@ -751,7 +763,11 @@ export const translationsFr: Translations = {
       detailReasonGiven: 'Raison fournie',
       detailSurface: 'Surface',
       detailVersion: 'Version',
+      auditSurfaces: {
+        guild_vault: 'Coffre de guilde',
+      },
       vaultSecretCreated: 'Secret créé',
+      vaultSecretRevealed: 'Secret révélé',
       vaultSecretArchived: 'Secret archivé',
       vaultSecretRotated: 'Secret renouvelé',
       vaultAccessUpdated: 'Accès du coffre modifiés',

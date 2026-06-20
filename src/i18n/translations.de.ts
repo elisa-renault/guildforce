@@ -129,6 +129,17 @@ export const translationsDe: Translations = createLocaleTranslations(translation
       "close": "Schließen"
     }
   },
+  "guildSwitcher": {
+    "allGuilds": "Alle Gilden",
+    "empty": "Keine Gilden verfügbar",
+    "favorites": "Favoriten",
+    "guilds": "Gilden",
+    "recent": "Zuletzt besuchte Gilden",
+    "search": "Gilden suchen",
+    "loading": "Wird geladen...",
+    "addFavorite": "Zu Favoriten hinzufügen",
+    "removeFavorite": "Aus Favoriten entfernen"
+  },
   "guildVault": {
     "title": "Gildentresor",
     "subtitle": "Geteilte Gilden-Zugangsdaten und Geheimnisse. Nutze den Tresor, um Zugangsdaten, Tokens oder Notizen sicher zu teilen, mit Zugriffssteuerung nach Rang oder Mitglied.",
@@ -243,6 +254,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "mainSet": "Main-Charakter gesetzt",
     "refresh": "Aktualisieren",
     "connecting": "Verbinde mit Battle.net...",
+    "connectingHint": "Das kann einige Augenblicke dauern, während Battle.net die sichere Anmeldung abschließt.",
     "region": "Region",
     "selectRegion": "Region ausw\u00e4hlen",
     "connectedTo": "Verbunden mit",
@@ -708,7 +720,11 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "detailReasonGiven": "Grund angegeben",
     "detailSurface": "Oberfläche",
     "detailVersion": "Version",
+    "auditSurfaces": {
+      "guild_vault": "Gildentresor"
+    },
     "vaultSecretCreated": "Geheimnis erstellt",
+    "vaultSecretRevealed": "Geheimnis aufgedeckt",
     "vaultSecretArchived": "Geheimnis archiviert",
     "vaultSecretRotated": "Geheimnis erneuert",
     "vaultAccessUpdated": "Tresor-Zugriff aktualisiert",

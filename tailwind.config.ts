@@ -1,5 +1,6 @@
-import type { Config } from "tailwindcss";
 import tailwindcssAnimate from "tailwindcss-animate";
+
+import type { Config } from "tailwindcss";
 
 export default {
   darkMode: ["class"],
@@ -172,8 +173,8 @@ export default {
         "gradient-shift": "gradient-shift 5s ease infinite",
       },
       fontFamily: {
-        sans: ["Roboto", "system-ui", "sans-serif"],
-        display: ["Faculty Glyphic", "Georgia", "serif"],
+        sans: ["var(--font-sans)"],
+        display: ["var(--font-display)"],
       },
     },
   },

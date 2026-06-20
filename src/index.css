@@ -9,6 +9,9 @@
 
 @layer base {
   :root {
+    --font-sans: "Roboto", system-ui, sans-serif;
+    --font-display: "Faculty Glyphic", Georgia, serif;
+
     /* Very dark background - almost black */
     --background: 240 10% 4%;
     --foreground: 30 15% 92%;
@@ -131,6 +134,24 @@
     --sidebar-accent-foreground: 0 0% 90%;
     --sidebar-border: 240 10% 15%;
     --sidebar-ring: 292 63% 26%;
+  }
+
+  html[lang="zh-TW"] {
+    --font-sans: "Roboto", "Noto Sans TC", "Noto Sans CJK TC", "PingFang TC", "Microsoft JhengHei", "Heiti TC", sans-serif;
+    --font-display: "Faculty Glyphic", "Noto Serif TC", "Noto Serif CJK TC", "Songti TC", "PMingLiU", serif;
+  }
+
+  html[lang="ko"] {
+    --font-sans: "Roboto", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    --font-display: "Faculty Glyphic", "Noto Serif KR", "AppleMyungjo", "Batang", serif;
+  }
+
+  html[lang="zh-TW"] .language-display-label {
+    font-family: "Roboto", system-ui, sans-serif;
+  }
+
+  html[lang="zh-TW"] .language-display-label:lang(zh) {
+    font-family: var(--font-sans);
   }
 }
 
@@ -724,6 +745,56 @@
 }
 
 @layer utilities {
+  html[lang="zh-TW"] :where(.text-\[10px\]) {
+    font-size: 0.75rem !important;
+    line-height: 1rem !important;
+  }
+
+  html[lang="ko"] :where(.text-\[10px\]) {
+    font-size: 0.75rem !important;
+    line-height: 1rem !important;
+  }
+
+  html[lang="zh-TW"] :where(.text-\[11px\]) {
+    font-size: 0.8125rem !important;
+    line-height: 1.125rem !important;
+  }
+
+  html[lang="ko"] :where(.text-\[11px\]) {
+    font-size: 0.8125rem !important;
+    line-height: 1.125rem !important;
+  }
+
+  html[lang="zh-TW"] :where(.text-xs) {
+    font-size: 0.8125rem !important;
+    line-height: 1.125rem !important;
+  }
+
+  html[lang="ko"] :where(.text-xs) {
+    font-size: 0.8125rem !important;
+    line-height: 1.125rem !important;
+  }
+
+  html[lang="zh-TW"] :where(.text-sm) {
+    font-size: 0.9375rem !important;
+    line-height: 1.375rem !important;
+  }
+
+  html[lang="ko"] :where(.text-sm) {
+    font-size: 0.9375rem !important;
+    line-height: 1.375rem !important;
+  }
+
+  html[lang="zh-TW"] :where(.text-base) {
+    font-size: 1.0625rem !important;
+    line-height: 1.625rem !important;
+  }
+
+  html[lang="ko"] :where(.text-base) {
+    font-size: 1.0625rem !important;
+    line-height: 1.625rem !important;
+  }
+
   .animate-fade-in {
     animation: fade-in 0.6s ease-out forwards;
   }

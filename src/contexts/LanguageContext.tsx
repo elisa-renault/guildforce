@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 import { LoadingScreen } from '@/components/ui/loading-screen';
-import { detectLanguageFromNavigator, getBilingualContentLanguage, getBilingualValue, resolveLanguage } from '@/i18n/config';
+import { detectLanguageFromNavigator, getBilingualValue, resolveLanguage } from '@/i18n/config';
 import { Language, Translations, loadTranslations } from '@/i18n/translations';
 import { translationsEn } from '@/i18n/translations.en';
 
@@ -27,9 +27,8 @@ const getInitialLanguage = (): Language => {
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(() => getInitialLanguage());
-  const initialContentLanguage = getBilingualContentLanguage(language);
   const [t, setT] = useState<RuntimeTranslations | null>(() =>
-    initialContentLanguage === 'fr' ? null : ({ ...translationsEn, lang: language } as RuntimeTranslations),
+    language === 'en' ? ({ ...translationsEn, lang: language } as RuntimeTranslations) : null,
   );
 
   const setLanguage = (lang: Language) => {
@@ -43,6 +42,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   useEffect(() => {
     let cancelled = false;
+    setT(language === 'en' ? ({ ...translationsEn, lang: language } as RuntimeTranslations) : null);
     loadTranslations(language).then((loaded) => {
       if (!cancelled) {
         setT({ ...(loaded as Translations), lang: language });

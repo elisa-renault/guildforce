@@ -1,4 +1,4 @@
-export const SUPPORTED_LANGUAGES = ['en', 'fr', 'de', 'es', 'pt-BR', 'it', 'ru', 'zh-CN', 'ko'] as const;
+export const SUPPORTED_LANGUAGES = ['en', 'fr', 'de', 'es', 'pt-BR', 'it', 'ru', 'zh-TW', 'ko'] as const;
 
 export type Language = (typeof SUPPORTED_LANGUAGES)[number];
 export type BilingualContentLanguage = 'en' | 'fr';
@@ -14,7 +14,7 @@ export const LANGUAGE_OPTIONS: ReadonlyArray<{ code: Language; label: string }> 
   { code: 'pt-BR', label: 'Portugu\u00eas (Brasil)' },
   { code: 'it', label: 'Italiano' },
   { code: 'ru', label: '\u0420\u0443\u0441\u0441\u043a\u0438\u0439' },
-  { code: 'zh-CN', label: '\u4e2d\u6587 (\u7b80\u4f53)' },
+  { code: 'zh-TW', label: '\u4e2d\u6587\uff08\u7e41\u9ad4\uff09' },
   { code: 'ko', label: '\ud55c\uad6d\uc5b4' },
 ];
 
@@ -26,7 +26,7 @@ export const LANGUAGE_FLAG_BY_CODE: Readonly<Record<Language, string>> = {
   'pt-BR': '🇧🇷',
   it: '🇮🇹',
   ru: '🇷🇺',
-  'zh-CN': '🇨🇳',
+  'zh-TW': '🇹🇼',
   ko: '🇰🇷',
 };
 
@@ -45,7 +45,7 @@ export const INTL_LOCALE_BY_LANGUAGE: Record<Language, string> = {
   'pt-BR': 'pt-BR',
   it: 'it-IT',
   ru: 'ru-RU',
-  'zh-CN': 'zh-CN',
+  'zh-TW': 'zh-TW',
   ko: 'ko-KR',
 };
 
@@ -58,7 +58,11 @@ const LANGUAGE_ALIAS_BY_PREFIX: Array<{ prefix: string; language: Language }> = 
   { prefix: 'it', language: 'it' },
   { prefix: 'ru', language: 'ru' },
   { prefix: 'ko', language: 'ko' },
-  { prefix: 'zh', language: 'zh-CN' },
+  { prefix: 'zh-tw', language: 'zh-TW' },
+  { prefix: 'zh-hant', language: 'zh-TW' },
+  { prefix: 'zh-hk', language: 'zh-TW' },
+  { prefix: 'zh-mo', language: 'zh-TW' },
+  { prefix: 'zh', language: 'zh-TW' },
 ];
 
 export const resolveLanguage = (candidate: string | null | undefined): Language => {
@@ -93,7 +97,7 @@ const BILINGUAL_CONTENT_LANGUAGE_BY_LANGUAGE: Record<Language, BilingualContentL
   'pt-BR': 'en',
   it: 'en',
   ru: 'en',
-  'zh-CN': 'en',
+  'zh-TW': 'en',
   ko: 'en',
 };
 
