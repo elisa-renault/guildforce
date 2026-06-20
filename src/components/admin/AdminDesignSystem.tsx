@@ -57,11 +57,13 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { DataListSkeleton } from '@/components/ui/data-list-skeleton';
 import {
   Dialog,
   DialogContent,
@@ -108,7 +110,6 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { DataListSkeleton } from '@/components/ui/data-list-skeleton';
 import {
   Sheet,
   SheetContent,
@@ -282,6 +283,7 @@ export const AdminDesignSystem = () => {
   const [progressValue, setProgressValue] = useState(68);
   const [showLoadingPreview, setShowLoadingPreview] = useState(false);
   const [menuPinned, setMenuPinned] = useState(true);
+  const [calendarDate, setCalendarDate] = useState<Date | undefined>(new Date(2026, 5, 20));
 
   const dsForm = useForm<{ raidNote: string }>({
     defaultValues: { raidNote: '' },
@@ -460,6 +462,7 @@ export const AdminDesignSystem = () => {
                     <Badge>Layout</Badge>
                     <Badge>Feedback</Badge>
                     <Badge>Avatar</Badge>
+                    <Badge>Calendar</Badge>
                     <Badge>Popover</Badge>
                     <Badge>Tooltip</Badge>
                     <Badge>AlertDialog</Badge>
@@ -722,6 +725,18 @@ export const AdminDesignSystem = () => {
                 <div className="space-y-2">
                   <Label htmlFor="event-date">Date/Time</Label>
                   <Input id="event-date" type="datetime-local" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Calendar picker</Label>
+                  <div className="rounded-md border border-border/50 bg-background/60 p-2">
+                    <Calendar
+                      mode="single"
+                      selected={calendarDate}
+                      onSelect={setCalendarDate}
+                      defaultMonth={calendarDate}
+                      className="mx-auto"
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="ds-role-select">Role select</Label>
