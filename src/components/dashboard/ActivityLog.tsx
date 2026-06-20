@@ -51,6 +51,7 @@ const ACTION_ICONS: Record<ActionType, React.ReactNode> = {
   wish_created: <PlusCircle className="h-4 w-4" />,
   wish_updated: <Edit3 className="h-4 w-4" />,
   wish_deleted: <Trash2 className="h-4 w-4" />,
+  wish_season_drafted: <FileText className="h-4 w-4" />,
   member_joined: <UserPlus className="h-4 w-4" />,
   member_removed: <UserMinus className="h-4 w-4" />,
   commitment_changed: <UserCog className="h-4 w-4" />,
@@ -79,6 +80,7 @@ const ACTION_COLORS: Record<ActionType, string> = {
   wish_created: toneBadgeClass('success'),
   wish_updated: toneBadgeClass('warning'),
   wish_deleted: toneBadgeClass('error'),
+  wish_season_drafted: toneBadgeClass('info'),
   member_joined: toneBadgeClass('info'),
   member_removed: toneBadgeClass('error'),
   commitment_changed: toneBadgeClass('info'),
@@ -140,6 +142,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
       wish_created: resolveSemanticMessage({ key: 'activity.log.action.wish_created', language, translations: t }),
       wish_updated: resolveSemanticMessage({ key: 'activity.log.action.wish_updated', language, translations: t }),
       wish_deleted: resolveSemanticMessage({ key: 'activity.log.action.wish_deleted', language, translations: t }),
+      wish_season_drafted: resolveSemanticMessage({ key: 'activity.log.action.wish_season_drafted', language, translations: t }),
       member_joined: resolveSemanticMessage({ key: 'activity.log.action.member_joined', language, translations: t }),
       commitment_changed: resolveSemanticMessage({ key: 'activity.log.action.commitment_changed', language, translations: t }),
       roster_wishes_locked: resolveSemanticMessage({ key: 'activity.log.action.roster_wishes_locked', language, translations: t }),
@@ -162,6 +165,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
       wish_created: resolveSemanticMessage({ key: 'activity.log.filter.wish_created', language, translations: t }),
       wish_updated: resolveSemanticMessage({ key: 'activity.log.filter.wish_updated', language, translations: t }),
       wish_deleted: resolveSemanticMessage({ key: 'activity.log.filter.wish_deleted', language, translations: t }),
+      wish_season_drafted: resolveSemanticMessage({ key: 'activity.log.filter.wish_season_drafted', language, translations: t }),
       wish_validation: resolveSemanticMessage({ key: 'activity.log.filter.wish_validation', language, translations: t }),
       member_joined: resolveSemanticMessage({ key: 'activity.log.filter.member_joined', language, translations: t }),
       commitment_changed: resolveSemanticMessage({ key: 'activity.log.filter.commitment_changed', language, translations: t }),
@@ -599,6 +603,9 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
               </SelectItem>
               <SelectItem value="wish_deleted">
                 {ui.filterLabels.wish_deleted}
+              </SelectItem>
+              <SelectItem value="wish_season_drafted">
+                {ui.filterLabels.wish_season_drafted}
               </SelectItem>
               <SelectItem value="wish_validation">
                 {ui.filterLabels.wish_validation}

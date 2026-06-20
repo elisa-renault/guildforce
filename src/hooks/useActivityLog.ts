@@ -8,6 +8,7 @@ export type ActionType =
   | 'wish_created'
   | 'wish_updated'
   | 'wish_deleted'
+  | 'wish_season_drafted'
   | 'member_joined'
   | 'member_removed'
   | 'commitment_changed'

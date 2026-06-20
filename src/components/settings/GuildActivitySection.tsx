@@ -13,58 +13,11 @@ import {
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useGuildVault } from '@/hooks/useGuildVault';
 import { toneBadgeClass } from '@/lib/design-tokens';
+import { buildVaultAuditDetails, getVaultAuditActionLabel } from '@/lib/guildVaultAuditLabels';
 
 interface GuildActivitySectionProps {
   guildId: string;
   showVaultAudit?: boolean;
-}
-
-function buildAuditDetails(
-  actionContext: Record<string, unknown>,
-  labels: {
-    detailReasonGiven: string;
-    detailSurface: string;
-    detailVersion: string;
-  },
-) {
-  const details: string[] = [];
-
-  if (actionContext.reason_provided === true) {
-    details.push(labels.detailReasonGiven);
-  }
-
-  if (typeof actionContext.client_surface === 'string' && actionContext.client_surface.trim()) {
-    details.push(`${labels.detailSurface}: ${actionContext.client_surface}`);
-  }
-
-  if (typeof actionContext.version_number === 'number') {
-    details.push(`${labels.detailVersion} ${actionContext.version_number}`);
-  }
-
-  return details.join(' • ') || '—';
-}
-
-function getAuditActionLabel(
-  actionType: string,
-  labels: {
-    vaultSecretCreated: string;
-    vaultSecretArchived: string;
-    vaultSecretRotated: string;
-    vaultAccessUpdated: string;
-  },
-) {
-  switch (actionType) {
-    case 'created':
-      return labels.vaultSecretCreated;
-    case 'archived':
-      return labels.vaultSecretArchived;
-    case 'rotated':
-      return labels.vaultSecretRotated;
-    case 'updated':
-      return labels.vaultAccessUpdated;
-    default:
-      return actionType;
-  }
 }
 
 export const GuildActivitySection = ({
@@ -123,14 +76,14 @@ export const GuildActivitySection = ({
                       </TableCell>
                       <TableCell className="px-3 py-2">
                         <Badge variant="outline" className={`h-6 px-2 text-[11px] ${toneBadgeClass('info')}`}>
-                          {getAuditActionLabel(event.action_type, activity)}
+                          {getVaultAuditActionLabel(event.action_type, activity)}
                         </Badge>
                       </TableCell>
                       <TableCell className="px-3 py-2 text-sm font-medium">
                         {event.secret_label}
                       </TableCell>
                       <TableCell className="px-3 py-2 text-xs text-muted-foreground">
-                        {buildAuditDetails(event.action_context, activity)}
+                        {buildVaultAuditDetails(event.action_context, activity)}
                       </TableCell>
                     </TableRow>
                   ))}
