@@ -21,12 +21,35 @@ const mockedGetPostHogClient = vi.mocked(getPostHogClient);
 const createPostHogMock = () => ({
   capture: vi.fn(),
   get_distinct_id: vi.fn(() => 'distinct-user-1'),
+  get_session_id: vi.fn(() => 'session-1'),
   has_opted_out_capturing: vi.fn(() => false),
 });
 
+const createStorageMock = (): Storage => {
+  const map = new Map<string, string>();
+  return {
+    get length() {
+      return map.size;
+    },
+    clear: vi.fn(() => map.clear()),
+    getItem: vi.fn((key: string) => map.get(key) ?? null),
+    key: vi.fn((index: number) => Array.from(map.keys())[index] ?? null),
+    removeItem: vi.fn((key: string) => map.delete(key)),
+    setItem: vi.fn((key: string, value: string) => map.set(key, value)),
+  };
+};
+
 describe('product event analytics', () => {
   beforeEach(() => {
-    localStorage.clear();
+    Object.defineProperty(window, 'localStorage', {
+      value: createStorageMock(),
+      configurable: true,
+    });
+    Object.defineProperty(window, 'sessionStorage', {
+      value: createStorageMock(),
+      configurable: true,
+    });
+    window.localStorage.clear();
     vi.clearAllMocks();
     mockedHasAnalyticsConsent.mockReturnValue(false);
     mockedGetPostHogClient.mockReturnValue(null);
@@ -57,12 +80,49 @@ describe('product event analytics', () => {
     });
 
     expect(posthog.capture).toHaveBeenCalledWith('poll_voted', {
+      url_host: window.location.host,
+      url_path: window.location.pathname,
       source: 'poll_widget',
       feature_area: 'polls',
       guild_id: 'guild-1',
       poll_id: 'poll-1',
       $groups: { guild: 'guild-1' },
+    }, undefined);
+  });
+
+  it('deduplicates first login by deterministic PostHog uuid and local marker', () => {
+    const posthog = createPostHogMock();
+    mockedHasAnalyticsConsent.mockReturnValue(true);
+    mockedGetPostHogClient.mockReturnValue(posthog as unknown as ReturnType<typeof getPostHogClient>);
+
+    capturePostHogProductEvent('first_login', {
+      source: 'auth_context',
+      feature_area: 'auth',
     });
+    capturePostHogProductEvent('first_login', {
+      source: 'auth_context',
+      feature_area: 'auth',
+    });
+
+    expect(posthog.capture).toHaveBeenCalledTimes(1);
+    expect(posthog.capture.mock.calls[0][2]?.uuid).toMatch(/^[0-9a-f-]{36}$/);
+  });
+
+  it('deduplicates app session started per PostHog session', () => {
+    const posthog = createPostHogMock();
+    mockedHasAnalyticsConsent.mockReturnValue(true);
+    mockedGetPostHogClient.mockReturnValue(posthog as unknown as ReturnType<typeof getPostHogClient>);
+
+    capturePostHogProductEvent('app_session_started', {
+      source: 'auth_context',
+      feature_area: 'auth',
+    });
+    capturePostHogProductEvent('app_session_started', {
+      source: 'auth_context',
+      feature_area: 'auth',
+    });
+
+    expect(posthog.capture).toHaveBeenCalledTimes(1);
   });
 
   it('sends a filtered safe context to the Supabase RPC', async () => {

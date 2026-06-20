@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   beginBattleNetCodeProcessing,
@@ -12,8 +12,30 @@ import {
   validateOAuthState,
 } from '@/lib/battlenetOAuth';
 
+const createStorageMock = (): Storage => {
+  const map = new Map<string, string>();
+  return {
+    get length() {
+      return map.size;
+    },
+    clear: vi.fn(() => map.clear()),
+    getItem: vi.fn((key: string) => map.get(key) ?? null),
+    key: vi.fn((index: number) => Array.from(map.keys())[index] ?? null),
+    removeItem: vi.fn((key: string) => map.delete(key)),
+    setItem: vi.fn((key: string, value: string) => map.set(key, value)),
+  };
+};
+
 describe('battlenetOAuth', () => {
   beforeEach(() => {
+    Object.defineProperty(window, 'localStorage', {
+      value: createStorageMock(),
+      configurable: true,
+    });
+    Object.defineProperty(window, 'sessionStorage', {
+      value: createStorageMock(),
+      configurable: true,
+    });
     cleanupOAuthParams();
     clearBattleNetCodeProcessing();
   });
@@ -55,8 +77,8 @@ describe('battlenetOAuth', () => {
 
     expect(first.allowed).toBe(true);
     expect(second).toEqual({ allowed: false, reason: 'already_processing' });
-    expect(sessionStorage.getItem('bnet_processed_code')).not.toContain(code);
-    expect(sessionStorage.getItem('bnet_processed_code')).toContain(fingerprintOAuthCode(code));
+    expect(window.sessionStorage.getItem('bnet_processed_code')).not.toContain(code);
+    expect(window.sessionStorage.getItem('bnet_processed_code')).toContain(fingerprintOAuthCode(code));
   });
 
   it('allows retry after clearing failed processing and blocks completed codes', () => {

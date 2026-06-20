@@ -4,6 +4,7 @@ import type { PostHog } from 'posthog-js';
 
 import { hasAnalyticsConsent } from '@/lib/analyticsConsent';
 import { getPostHogConfig } from '@/lib/posthogConfig';
+import { sanitizePostHogCapture } from '@/lib/posthogPrivacy';
 
 let initialized = false;
 
@@ -35,6 +36,9 @@ export const initializePostHog = (): PostHog | null => {
       capture_pageview: false,
       capture_pageleave: false,
       disable_session_recording: true,
+      before_send: sanitizePostHogCapture,
+      mask_personal_data_properties: true,
+      custom_personal_data_properties: ['code', 'state', 'access_token', 'refresh_token', 'token'],
       opt_out_capturing_by_default: true,
       mask_all_text: true,
       mask_all_element_attributes: true,

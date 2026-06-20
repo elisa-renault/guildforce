@@ -4,6 +4,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { hasAnalyticsConsent } from '@/lib/analyticsConsent';
 import log from '@/lib/logger';
 import { getPostHogClient } from '@/lib/posthogClient';
+import { getSafeCurrentLocationProperties } from '@/lib/posthogPrivacy';
+import { safeStorage } from '@/lib/safeStorage';
 
 export type ProductEventName =
   | 'app_session_started'
@@ -29,6 +31,8 @@ interface ProductEventProperties {
   guild_id?: string | null;
   roster_id?: string | null;
   poll_id?: string | null;
+  url_host?: string | null;
+  url_path?: string | null;
 }
 
 interface TrackProductEventOptions {
@@ -40,26 +44,62 @@ interface TrackProductEventOptions {
   occurredAt?: string | null;
 }
 
-const POSTHOG_ONCE_EVENT_NAMES = new Set<ProductEventName>(['first_login']);
+const POSTHOG_ONCE_EVENT_NAMES = new Set<ProductEventName>(['first_login', 'app_session_started']);
 
-const getOnceEventStorageKey = (eventName: ProductEventName, distinctId: string): string | null => {
+const stableHash = (value: string, seed: number): string => {
+  let hash = seed;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = Math.imul(hash ^ value.charCodeAt(index), 16777619);
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0');
+};
+
+const stableCaptureUuid = (eventName: ProductEventName, dedupeKey: string): string => {
+  const input = `${eventName}:${dedupeKey}`;
+  const hex = [
+    stableHash(input, 2166136261),
+    stableHash(input, 2166136261 ^ 0x9e3779b9),
+    stableHash(input, 2166136261 ^ 0x85ebca6b),
+    stableHash(input, 2166136261 ^ 0xc2b2ae35),
+  ].join('');
+
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
+};
+
+const getOnceEventStorageKey = (
+  eventName: ProductEventName,
+  distinctId: string,
+  sessionId?: string | null,
+): string | null => {
   if (!POSTHOG_ONCE_EVENT_NAMES.has(eventName)) return null;
 
-  return `guildforce_posthog_once_${eventName}_${distinctId}`;
+  const scope = eventName === 'app_session_started'
+    ? `${distinctId}_${sessionId || 'unknown-session'}`
+    : distinctId;
+
+  return `guildforce_posthog_once_${eventName}_${scope}`;
 };
 
-const hasCapturedOnceEvent = (eventName: ProductEventName, distinctId: string): boolean => {
-  const key = getOnceEventStorageKey(eventName, distinctId);
-  if (!key || typeof window === 'undefined') return false;
+const hasCapturedOnceEvent = (
+  eventName: ProductEventName,
+  distinctId: string,
+  sessionId?: string | null,
+): boolean => {
+  const key = getOnceEventStorageKey(eventName, distinctId, sessionId);
+  if (!key) return false;
 
-  return window.localStorage.getItem(key) === 'true';
+  return safeStorage.get('local', key) === 'true';
 };
 
-const markOnceEventCaptured = (eventName: ProductEventName, distinctId: string) => {
-  const key = getOnceEventStorageKey(eventName, distinctId);
-  if (!key || typeof window === 'undefined') return;
+const markOnceEventCaptured = (
+  eventName: ProductEventName,
+  distinctId: string,
+  sessionId?: string | null,
+) => {
+  const key = getOnceEventStorageKey(eventName, distinctId, sessionId);
+  if (!key) return;
 
-  window.localStorage.setItem(key, 'true');
+  safeStorage.set('local', key, 'true');
 };
 
 const toProductEventProperties = (options: TrackProductEventOptions): ProductEventProperties => {
@@ -96,11 +136,17 @@ export const capturePostHogProductEvent = (
   if (!posthog || posthog.has_opted_out_capturing()) return;
 
   const distinctId = posthog.get_distinct_id();
-  if (hasCapturedOnceEvent(eventName, distinctId)) return;
+  const sessionId = typeof posthog.get_session_id === 'function' ? posthog.get_session_id() : null;
+  const dedupeKey = eventName === 'app_session_started'
+    ? `${distinctId}:${sessionId || 'unknown-session'}`
+    : distinctId;
+
+  if (hasCapturedOnceEvent(eventName, distinctId, sessionId)) return;
 
   const eventProperties: Record<string, string | Record<string, string>> = {};
+  const safeLocationProperties = getSafeCurrentLocationProperties();
 
-  for (const [key, value] of Object.entries(properties)) {
+  for (const [key, value] of Object.entries({ ...safeLocationProperties, ...properties })) {
     if (typeof value === 'string' && value.length > 0) {
       eventProperties[key] = value;
     }
@@ -111,8 +157,11 @@ export const capturePostHogProductEvent = (
   }
 
   try {
-    posthog.capture(eventName, eventProperties);
-    markOnceEventCaptured(eventName, distinctId);
+    const captureOptions = POSTHOG_ONCE_EVENT_NAMES.has(eventName)
+      ? { uuid: stableCaptureUuid(eventName, dedupeKey) }
+      : undefined;
+    posthog.capture(eventName, eventProperties, captureOptions);
+    markOnceEventCaptured(eventName, distinctId, sessionId);
   } catch (error) {
     log.debug('capturePostHogProductEvent skipped:', error);
   }

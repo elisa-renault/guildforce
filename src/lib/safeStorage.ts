@@ -36,4 +36,17 @@ export const safeStorage = {
       // Storage can be unavailable in private or restricted browser contexts.
     }
   },
+
+  isAvailable(area: SafeStorageArea): boolean {
+    const key = '__guildforce_storage_probe__';
+    try {
+      const storage = getStorage(area);
+      if (!storage) return false;
+      storage.setItem(key, '1');
+      storage.removeItem(key);
+      return true;
+    } catch {
+      return false;
+    }
+  },
 };

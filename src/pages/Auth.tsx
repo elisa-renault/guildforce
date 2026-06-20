@@ -41,6 +41,7 @@ import {
   validateOAuthState,
 } from '@/lib/battlenetOAuth';
 import log from '@/lib/logger';
+import { safeStorage } from '@/lib/safeStorage';
 import { getSupabaseUrl } from '@/lib/supabaseConfig';
 
 type BattleNetAuthResponse = Record<string, unknown> & {
@@ -73,6 +74,14 @@ const readBattleNetAuthResponse = async (response: Response): Promise<BattleNetA
     };
   }
 };
+
+const getAuthStorageDiagnosticMetadata = (storedParams: ReturnType<typeof getStoredOAuthParams>) => ({
+  hasStoredState: Boolean(storedParams.state),
+  hasStoredFlowId: Boolean(storedParams.flowId),
+  hostname: typeof window === 'undefined' ? null : window.location.hostname,
+  localStorageAvailable: safeStorage.isAvailable('local'),
+  sessionStorageAvailable: safeStorage.isAvailable('session'),
+});
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -143,7 +152,8 @@ const Auth = () => {
           hasState: true,
           stateMode: parsedState.mode ?? 'login',
           stateRegion: parsedState.region ?? null,
-          hasStoredState: Boolean(storedParams.state),
+          parsedStateHasFlowId: Boolean(parsedState.flowId),
+          ...getAuthStorageDiagnosticMetadata(storedParams),
         },
       });
 
@@ -182,7 +192,7 @@ const Auth = () => {
           flowId,
           step: 'state_validation_failed',
           status: 'error',
-          metadata: { hasStoredState: Boolean(storedParams.state) },
+          metadata: getAuthStorageDiagnosticMetadata(storedParams),
         });
         throw new Error('Battle.net login state mismatch. Please try again.');
       }
@@ -191,7 +201,11 @@ const Auth = () => {
         flowId,
         step: 'state_validation_success',
         status: storedParams.state ? 'ok' : 'warning',
-        metadata: { hasStoredState: Boolean(storedParams.state) },
+        metadata: {
+          matchedStoredState: Boolean(storedParams.state),
+          parsedStateHasFlowId: Boolean(parsedState.flowId),
+          ...getAuthStorageDiagnosticMetadata(storedParams),
+        },
       });
 
       const region = getValidRegion(parsedState.region || storedParams.region);
@@ -341,7 +355,12 @@ const Auth = () => {
         flowId,
         step: 'login_clicked',
         status: 'ok',
-        metadata: { region: selectedRegion },
+        metadata: {
+          region: selectedRegion,
+          hostname: typeof window === 'undefined' ? null : window.location.hostname,
+          localStorageAvailable: safeStorage.isAvailable('local'),
+          sessionStorageAvailable: safeStorage.isAvailable('session'),
+        },
       });
 
       const baseUrl = getSupabaseUrl();
