@@ -1329,6 +1329,7 @@ export const translationsFr: Translations = {
       components_admin_UserManager_452: 'Rôles',
       components_admin_UserManager_456: 'Actions',
       components_admin_UserManager_471: 'Aucun utilisateur trouvé',
+      components_dashboard_RosterFilters_wishes_title: 'Vœux',
       components_dashboard_RosterFilters_168: 'vœux',
       components_dashboard_RosterFilters_497: 'Rôles',
       components_dashboard_RosterFilters_551: 'Classes',
