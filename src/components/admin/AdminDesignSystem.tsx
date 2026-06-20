@@ -108,6 +108,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { DataListSkeleton } from '@/components/ui/data-list-skeleton';
 import {
   Sheet,
   SheetContent,
@@ -870,6 +871,13 @@ export const AdminDesignSystem = () => {
                     <Skeleton className="h-4 w-[60%]" />
                   </div>
                   <div className="rounded-md border border-dashed border-border p-3 text-sm text-muted-foreground">Empty state: no applicants yet.</div>
+                  <DataListSkeleton
+                    rows={2}
+                    showToolbar={false}
+                    showMeta={false}
+                    variant="table"
+                    className="max-w-full"
+                  />
                 </div>
               </div>
             </GlowCard>
