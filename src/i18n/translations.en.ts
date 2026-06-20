@@ -253,7 +253,7 @@ export const translationsEn: Translations = {
     },
     home: {
       title: 'Guildforce',
-      subtitle: 'Plan your raid roster for the next expansion',
+      subtitle: 'Plan your raid roster for the next season',
       description: 'Collect class and specialization preferences from your guild members to build the perfect roster.',
       createGuild: 'Manage my Guild',
       joinGuild: 'Join my Guild',

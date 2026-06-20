@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Skeleton } from '@/components/ui/skeleton';
+import { DataListSkeleton } from '@/components/ui/data-list-skeleton';
 import { CheckCircle, HelpCircle, XCircle, Pencil, Save, Shield, Heart, Sword, Swords, Crosshair, MessageSquare, Plus, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Lock, Unlock, MoreVertical, Loader2, UserPlus } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getClassById, getLocalizedClassName, getLocalizedSpecName, getSpecById } from '@/data/wowClasses';
@@ -403,28 +403,13 @@ export const RosterTable = ({
   if (loading) {
     return (
       <GlowCard surface="section" className="overflow-hidden">
-        <div
-          className="space-y-4 p-4"
-          role="status"
-          aria-live="polite"
-          aria-busy="true"
-        >
-          <div className="flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin text-primary" />
-            <span>{t.common.loading}</span>
-          </div>
-          <div className="space-y-3">
-            {Array.from({ length: isMobile ? 3 : 6 }).map((_, index) => (
-              <div key={index} className="flex items-center gap-3">
-                <Skeleton className="h-10 w-36 flex-shrink-0" />
-                <Skeleton className="h-8 w-28 flex-shrink-0" />
-                <Skeleton className="h-8 flex-1" />
-                <Skeleton className="hidden h-8 flex-1 md:block" />
-                <Skeleton className="hidden h-8 flex-1 lg:block" />
-              </div>
-            ))}
-          </div>
-        </div>
+        <DataListSkeleton
+          rows={isMobile ? 3 : 6}
+          showToolbar={false}
+          showMeta={false}
+          variant={isMobile ? 'cards' : 'table'}
+          className="p-3"
+        />
       </GlowCard>
     );
   }
@@ -591,18 +576,6 @@ export const RosterTable = ({
                               </Tooltip>
                             </TooltipProvider>
                           )}
-                          {effectiveLocked && (
-                            <TooltipProvider delayDuration={200}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Lock className="h-3.5 w-3.5 text-warning flex-shrink-0" />
-                                </TooltipTrigger>
-                                <TooltipContent side="top" className="text-xs max-w-[220px]">
-                                  {lockTooltip}
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
                           {!isEditing && extraWishes > 0 && (
                             <TooltipProvider delayDuration={200}>
                               <Tooltip>
@@ -701,7 +674,21 @@ export const RosterTable = ({
                       {isEditing ? renderEditWishCell(2, editWishes.length > 1) : renderWishCell(member.id, member.wishes, 3, !!member.isExternal)}
                     </TableCell>
                     <TableCell className="py-1 pl-0 pr-1">
-                      <div className="flex justify-end gap-1">
+                      <div className="flex items-center justify-end gap-1">
+                        {effectiveLocked && (
+                          <TooltipProvider delayDuration={200}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="inline-flex h-8 w-8 items-center justify-center text-warning">
+                                  <Lock className="h-3.5 w-3.5" />
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent side="left" className="text-xs max-w-[220px]">
+                                {lockTooltip}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
                         {rowActions.length <= 1 && rowActions.map((action) => (
                           <TooltipProvider key={action.key} delayDuration={200}>
                             <Tooltip>

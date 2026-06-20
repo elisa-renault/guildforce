@@ -253,7 +253,7 @@ export const translationsFr: Translations = {
     },
     home: {
       title: 'Guildforce',
-      subtitle: 'Préparez votre roster pour la prochaine extension',
+      subtitle: 'Préparez votre roster pour la prochaine saison',
       description: 'Collectez les préférences de classes et spécialisations de vos membres pour construire le roster parfait.',
       createGuild: 'Gérer ma guilde',
       joinGuild: 'Rejoindre ma guilde',

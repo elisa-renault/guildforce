@@ -255,7 +255,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
   },
   "home": {
     "title": "Guildforce",
-    "subtitle": "Plane dein Raid-Roster f\u00fcr die n\u00e4chste Erweiterung",
+    "subtitle": "Plane dein Raid-Roster f\u00fcr die n\u00e4chste Saison",
     "description": "Sammle Klassen- und Spezialisierungsw\u00fcnsche deiner Gildenmitglieder, um das perfekte Roster aufzubauen.",
     "createGuild": "Meine Gilde verwalten",
     "joinGuild": "Meiner Gilde beitreten",

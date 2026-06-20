@@ -14,6 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface MobileRosterCardProps {
@@ -99,7 +100,7 @@ export const MobileRosterCard = ({
           <div className="min-w-0 flex-1 space-y-1">
             <div className="flex items-center gap-2">
               <div
-                className="min-w-0 flex-1 rounded-md px-2 py-1 text-xs font-medium"
+                className="flex h-7 min-w-0 flex-1 items-center rounded-md px-2 text-xs font-medium"
                 style={{
                   backgroundColor: `hsl(var(--class-${cls.id}) / 0.15)`,
                   color: `hsl(var(--class-${cls.id}))`,
@@ -134,7 +135,29 @@ export const MobileRosterCard = ({
                 <span className="text-muted-foreground/50">-</span>
               )}
               {specs.length > 2 && <span>+{specs.length - 2}</span>}
-              {wish.comment && <MessageSquare className="h-3 w-3 text-primary" />}
+              {wish.comment && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="inline-flex h-5 w-5 items-center justify-center rounded-md text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                      aria-label={t.wishes.comment}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <MessageSquare className="h-3 w-3" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    align="end"
+                    side="top"
+                    className="w-[min(18rem,calc(100vw-2rem))] border-border bg-card p-3 text-xs leading-relaxed text-foreground"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="mb-1 text-[11px] font-medium text-muted-foreground">{t.wishes.comment}</div>
+                    <p className="whitespace-pre-wrap break-words">{wish.comment}</p>
+                  </PopoverContent>
+                </Popover>
+              )}
             </div>
           </div>
         </div>
@@ -173,6 +196,32 @@ export const MobileRosterCard = ({
       disabled: effectiveLocked,
     }] : []),
   ];
+  const statusBadge = (
+    <Badge
+      variant={member.status === 'confirmed' ? 'default' : 'outline'}
+      className={cn(
+        'h-7 shrink-0 px-2 text-[10px]',
+        member.status === 'confirmed'
+          ? 'bg-healer/20 text-healer border-healer/30'
+          : member.status === 'withdrawn'
+            ? 'bg-destructive/20 text-destructive border-destructive/30'
+            : 'bg-warning/20 text-warning border-warning/30'
+      )}
+    >
+      {member.status === 'confirmed' ? (
+        <CheckCircle className="mr-1 h-3 w-3" strokeWidth={1.5} />
+      ) : member.status === 'withdrawn' ? (
+        <XCircle className="mr-1 h-3 w-3" strokeWidth={1.5} />
+      ) : (
+        <HelpCircle className="mr-1 h-3 w-3" strokeWidth={1.5} />
+      )}
+      {member.status === 'confirmed'
+        ? t.wishes.commitment.confirmed
+        : member.status === 'withdrawn'
+          ? t.wishes.commitment.withdrawn
+          : t.wishes.commitment.undecided}
+    </Badge>
+  );
 
   const handleCardClick = (e: React.MouseEvent) => {
     // Don't trigger card click if clicking on interactive elements
@@ -196,7 +245,12 @@ export const MobileRosterCard = ({
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-1.5">
-            <span className="truncate text-sm font-medium text-foreground">{member.username}</span>
+            <span className="min-w-0 flex-shrink truncate text-sm font-medium text-foreground">{member.username}</span>
+            {member.mainCharacterName && (
+              <span className="max-w-[42%] shrink-0 truncate text-[11px] text-muted-foreground">
+                {member.mainCharacterName}
+              </span>
+            )}
             {member.isExternal && (
               <span
                 className="inline-flex h-4.5 w-4.5 items-center justify-center rounded-full border border-primary/40 bg-primary/10 text-primary"
@@ -206,90 +260,65 @@ export const MobileRosterCard = ({
                 <UserPlus className="h-2.5 w-2.5" />
               </span>
             )}
-            {effectiveLocked && <Lock className="h-3.5 w-3.5 flex-shrink-0 text-warning" />}
           </div>
-          {member.mainCharacterName && (
-            <div className="mt-0.5 truncate text-[11px] text-muted-foreground">{member.mainCharacterName}</div>
+          {extraWishesCount > 0 && (
+            <div className="mt-1 flex min-w-0 items-center gap-1.5">
+              <Badge variant="outline" className="h-5 shrink-0 border-border/40 px-1.5 text-[10px] text-muted-foreground">
+                +{extraWishesCount}
+              </Badge>
+            </div>
           )}
         </div>
-        {actionItems.length > 0 && (
-          <DropdownMenu modal={false}>
-            <DropdownMenuTrigger asChild>
-              <CosmicButton
-                size="sm"
-                variant="outline"
-                onClick={(e) => e.stopPropagation()}
-                icon={<MoreVertical className="h-3.5 w-3.5" strokeWidth={1.5} />}
-                className="h-7 w-7 p-0"
-                aria-label={t.common.actions}
-              />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="border-border bg-card">
-              {actionItems.map((action) => (
-                <DropdownMenuItem
-                  key={action.key}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (!action.disabled && !action.loading) {
-                      action.onClick();
-                    }
-                  }}
-                  disabled={action.disabled || action.loading}
-                  className="cursor-pointer"
-                >
-                  {action.loading ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <action.icon className="mr-2 h-4 w-4" />
-                  )}
-                  {action.label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+        <div className="flex shrink-0 items-center gap-1.5">
+          {effectiveLocked && <Lock className="h-3.5 w-3.5 text-warning" />}
+          {actionItems.length > 0 && (
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger asChild>
+                <CosmicButton
+                  size="sm"
+                  variant="outline"
+                  onClick={(e) => e.stopPropagation()}
+                  icon={<MoreVertical className="h-3.5 w-3.5" strokeWidth={1.5} />}
+                  className="h-7 w-7 p-0"
+                  aria-label={t.common.actions}
+                />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="border-border bg-card">
+                {actionItems.map((action) => (
+                  <DropdownMenuItem
+                    key={action.key}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!action.disabled && !action.loading) {
+                        action.onClick();
+                      }
+                    }}
+                    disabled={action.disabled || action.loading}
+                    className="cursor-pointer"
+                  >
+                    {action.loading ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <action.icon className="mr-2 h-4 w-4" />
+                    )}
+                    {action.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
       </div>
 
-      <div className="mt-2 flex flex-wrap items-center gap-1.5">
-        <Badge 
-          variant={member.status === 'confirmed' ? 'default' : 'outline'}
-          className={cn(
-            'h-5 px-1.5 text-[10px]',
-            member.status === 'confirmed' 
-              ? 'bg-healer/20 text-healer border-healer/30' 
-              : member.status === 'withdrawn'
-              ? 'bg-destructive/20 text-destructive border-destructive/30'
-              : 'bg-warning/20 text-warning border-warning/30'
-          )}
-        >
-          {member.status === 'confirmed' ? (
-            <CheckCircle className="mr-1 h-3 w-3" strokeWidth={1.5} />
-          ) : member.status === 'withdrawn' ? (
-            <XCircle className="mr-1 h-3 w-3" strokeWidth={1.5} />
-          ) : (
-            <HelpCircle className="mr-1 h-3 w-3" strokeWidth={1.5} />
-          )}
-          {member.status === 'confirmed'
-            ? t.wishes.commitment.confirmed
-            : member.status === 'withdrawn'
-              ? t.wishes.commitment.withdrawn
-              : t.wishes.commitment.undecided}
-        </Badge>
-        {extraWishesCount > 0 && (
-          <Badge variant="outline" className="h-5 border-border/40 px-1.5 text-[10px] text-muted-foreground">
-            +{extraWishesCount}
-          </Badge>
-        )}
-      </div>
-
-      <div className="mt-2">
+      <div className="mt-2 flex items-center gap-2">
+        {statusBadge}
         {canManageWishes && onSelectionStatusChange ? (
           <Select
             value={member.selectionStatus || 'undecided'}
             onValueChange={(value) => onSelectionStatusChange(member.id, value as RosterSelectionStatus)}
             disabled={updatingSelectionMemberId === member.id}
           >
-            <SelectTrigger className="h-8 w-full border-border/50 bg-background/60 px-2.5 text-xs">
+            <SelectTrigger className="h-7 min-w-0 flex-1 border-border/50 bg-background/60 px-2.5 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -302,14 +331,14 @@ export const MobileRosterCard = ({
         ) : (
           <Badge
             variant="outline"
-            className={cn('h-6 px-2 text-[10px]', getRosterDecisionBadge(member.selectionStatus).className)}
+            className={cn('h-7 min-w-0 px-2 text-[10px]', getRosterDecisionBadge(member.selectionStatus).className)}
           >
             {getRosterDecisionBadge(member.selectionStatus).label}
           </Badge>
         )}
       </div>
 
-      <div className="mt-2">
+      <div className="mt-1.5">
         {primaryWish ? (
           <div onClick={(e) => e.stopPropagation()}>
             {renderPrimaryWish(primaryWish)}

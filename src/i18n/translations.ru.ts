@@ -249,7 +249,7 @@ export const translationsRu: Translations = createLocaleTranslations(translation
   },
   home: {
     title: 'Guildforce',
-    subtitle: 'Планирование состава рейда к следующему дополнению',
+    subtitle: 'Планирование состава рейда к следующему сезону',
     description: 'Собирай предпочтения по классам и специализациям, чтобы сформировать оптимальный состав гильдии.',
     createGuild: 'Управление гильдией',
     joinGuild: 'Вступление в гильдию',

@@ -3,6 +3,9 @@ import type { Translations } from './translations';
 import { translationsEn } from './translations.en';
 
 export const translationsKo: Translations = createLocaleTranslations(translationsEn, {
+  home: {
+    subtitle: '다음 시즌을 위한 공격대 로스터를 계획하세요',
+  },
   commandPalette: {
     title: '명령 팔레트',
     open: '검색 또는 이동...',
@@ -72,4 +75,3 @@ export const translationsKo: Translations = createLocaleTranslations(translation
     firstApprovedWish: '\uccab \uc2b9\uc778 \ud76c\ub9dd',
   },
 });
-

@@ -1670,18 +1670,18 @@ const RosterWishes = () => {
         )}
 
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'table' | 'selected' | 'analytics')} className="w-full">
-          <TabsList className="mb-3 h-auto max-w-full justify-start overflow-x-auto p-1 lg:w-auto">
-            <TabsTrigger value="table" className="gap-2 whitespace-nowrap px-3">
-              <TableIcon className="h-4 w-4" />
-              {t.dashboard.table}
+          <TabsList className="mb-3 grid h-auto w-full max-w-full grid-cols-3 overflow-hidden p-1 lg:inline-flex lg:w-auto lg:justify-start">
+            <TabsTrigger value="table" className="min-w-0 gap-1.5 px-2 text-xs sm:gap-2 sm:px-3 sm:text-sm">
+              <TableIcon className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
+              <span className="truncate">{t.dashboard.table}</span>
             </TabsTrigger>
-            <TabsTrigger value="selected" className="gap-2 whitespace-nowrap px-3">
-              <Sparkles className="h-4 w-4" />
-              {t.dashboard.selectedValidatedView}
+            <TabsTrigger value="selected" className="min-w-0 gap-1.5 px-2 text-xs sm:gap-2 sm:px-3 sm:text-sm">
+              <Sparkles className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
+              <span className="truncate">{t.dashboard.selectedValidatedView}</span>
             </TabsTrigger>
-            <TabsTrigger value="analytics" className="gap-2 whitespace-nowrap px-3">
-              <BarChart3 className="h-4 w-4" />
-              {t.dashboard.analytics}
+            <TabsTrigger value="analytics" className="min-w-0 gap-1.5 px-2 text-xs sm:gap-2 sm:px-3 sm:text-sm">
+              <BarChart3 className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
+              <span className="truncate">{t.dashboard.analytics}</span>
             </TabsTrigger>
           </TabsList>
 

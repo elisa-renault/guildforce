@@ -196,12 +196,12 @@ const GuildAtlas = () => {
     >
       <PageContainer as="main" className="relative z-10 space-y-5 py-5 md:py-6" width="workspace">
         <PageHeader
-          className="max-w-6xl py-3 md:py-3"
+          className="max-w-6xl flex-row items-center justify-between py-3 md:py-3"
           icon={Compass}
           title={s('guild.atlas.title')}
           bordered={false}
           actions={canManageAtlas ? (
-            <Button size="sm" onClick={() => openCreate()}>
+            <Button size="sm" onClick={() => openCreate()} className="h-9 w-9 p-0 sm:w-auto sm:px-3">
               <Plus className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">{s('guild.atlas.new_doc')}</span>
             </Button>

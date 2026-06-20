@@ -7,9 +7,9 @@ import { PageContainer } from '@/components/layout/PageContainer';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { DataListSkeleton } from '@/components/ui/data-list-skeleton';
 import { FilterBar, FilterSearchField, activeFilterControlClassName, filterControlClassName } from '@/components/ui/filter-controls';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -72,25 +72,7 @@ interface GuildInfo {
 
 const ITEMS_PER_PAGE = 20;
 
-const MembersTableSkeleton = () => (
-  <div className="space-y-4">
-    <div className="flex flex-wrap gap-2">
-      <Skeleton className="h-8 w-full md:w-[280px]" />
-      <Skeleton className="h-8 w-36" />
-      <Skeleton className="h-8 w-32" />
-      <Skeleton className="h-8 w-32" />
-      <Skeleton className="h-8 w-28" />
-    </div>
-    <Skeleton className="h-4 w-72 max-w-full" />
-    <div className="overflow-hidden rounded-lg border border-border/50 bg-card/30">
-      <div className="space-y-px">
-        {Array.from({ length: 10 }).map((_, index) => (
-          <Skeleton key={index} className="h-12 w-full rounded-none" />
-        ))}
-      </div>
-    </div>
-  </div>
-);
+const MembersTableSkeleton = () => <DataListSkeleton rows={10} />;
 
 // eslint-disable-next-line complexity
 const GuildMembers = () => {
@@ -451,15 +433,7 @@ const GuildMembers = () => {
 
   if (!guild) return null;
 
-  const guildforceCount = members.filter(m => m.matched_user_id).length;
-  const notOnGuildforceCount = members.filter(m => !m.matched_user_id).length;
-  
-  // Count unique Guildforce members (distinct players)
-  const uniqueGuildforceMembers = new Set(
-    members
-      .filter(m => m.matched_user_id)
-      .map(m => m.matched_user_id)
-  ).size;
+  const mobileFilterButtonClassName = 'w-full min-w-0 justify-between gap-2 whitespace-nowrap px-2.5 text-xs md:text-sm';
 
   return (
     <GuildWorkspaceShell
@@ -469,9 +443,6 @@ const GuildMembers = () => {
       isGM={isGM}
       hasSettingsPermission={isGM || hasActivityPermission}
       activeTab="members"
-      context={{
-        status: `${uniqueGuildforceMembers} ${uniqueGuildforceMembers === 1 ? t.guild.uniqueMember : t.guild.uniqueMembers}`,
-      }}
     >
       <PageContainer as="main" className="py-4 md:py-6" width="workspace">
         {loading ? (
@@ -489,7 +460,7 @@ const GuildMembers = () => {
         )}
 
         {/* Filters */}
-        <FilterBar>
+        <FilterBar className="grid grid-cols-2 gap-2 overflow-visible pb-0 md:flex">
           <label htmlFor="member-search" className="sr-only">
             {t.common.search}
           </label>
@@ -499,7 +470,7 @@ const GuildMembers = () => {
             placeholder={memberUi.searchPlaceholder}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            containerClassName="w-full md:w-[280px] flex-none"
+            containerClassName="col-span-2 w-full min-w-0 md:w-[280px] md:flex-none"
           />
             
             {/* Class Filter */}
@@ -510,7 +481,8 @@ const GuildMembers = () => {
                   size="sm"
                   className={cn(
                     filterControlClassName,
-                    "min-w-[130px] justify-between gap-2 whitespace-nowrap md:min-w-[180px]",
+                    mobileFilterButtonClassName,
+                    "md:min-w-[180px]",
                     hasClassFilters && activeFilterControlClassName
                   )}
                 >
@@ -579,7 +551,8 @@ const GuildMembers = () => {
                   size="sm"
                   className={cn(
                     filterControlClassName,
-                    "min-w-[110px] justify-between gap-2 whitespace-nowrap md:min-w-[150px]",
+                    mobileFilterButtonClassName,
+                    "md:min-w-[150px]",
                     hasRankFilters && activeFilterControlClassName
                   )}
                 >
@@ -645,7 +618,8 @@ const GuildMembers = () => {
                   size="sm"
                   className={cn(
                     filterControlClassName,
-                    "min-w-[120px] justify-between gap-2 whitespace-nowrap md:min-w-[150px]",
+                    mobileFilterButtonClassName,
+                    "md:min-w-[150px]",
                     hasGuildforceFilter && activeFilterControlClassName
                   )}
                 >
@@ -712,7 +686,8 @@ const GuildMembers = () => {
                   size="sm"
                   className={cn(
                     filterControlClassName,
-                    "min-w-[110px] justify-between gap-2 whitespace-nowrap md:min-w-[130px]",
+                    mobileFilterButtonClassName,
+                    "md:min-w-[130px]",
                     hasMainFilter && activeFilterControlClassName
                   )}
                 >
@@ -768,26 +743,89 @@ const GuildMembers = () => {
             </Popover>
         </FilterBar>
 
-        {/* Stats summary */}
-        <div className="flex flex-wrap gap-2 mb-4 text-sm text-muted-foreground">
-          <span>
-            {filteredMembers.length} {t.guild.charactersShown}
-          </span>
-          <span aria-hidden="true">/</span>
-          <span className="text-healer">
-            {uniqueGuildforceMembers} {uniqueGuildforceMembers === 1 ? t.guild.uniqueMember : t.guild.uniqueMembers}
-          </span>
-          <span className="text-muted-foreground/70">
-            ({guildforceCount} {t.guild.characters})
-          </span>
-          <span aria-hidden="true">/</span>
-          <span className="text-muted-foreground">
-            {notOnGuildforceCount} {t.guild.charactersNotRegistered}
-          </span>
+        {/* Members table */}
+        <div className="space-y-2 md:hidden">
+          {paginatedMembers.length === 0 ? (
+            <div className="rounded border border-border/45 bg-card/25 px-3 py-8 text-center text-sm text-muted-foreground">
+              {memberUi.noMembers}
+            </div>
+          ) : (
+            paginatedMembers.map((member, index) => (
+              <button
+                key={member.id}
+                type="button"
+                disabled={!member.profile}
+                className={cn(
+                  'w-full rounded border border-border/40 bg-card/25 p-3 text-left transition-colors',
+                  member.profile ? 'hover:border-primary/35 hover:bg-primary/5' : 'cursor-default disabled:opacity-100',
+                )}
+                onClick={() => {
+                  if (member.profile) {
+                    navigate(`/u/${member.profile.username}`);
+                  }
+                }}
+              >
+                <div className="flex min-w-0 items-start gap-2.5">
+                  <span className="mt-0.5 w-5 shrink-0 text-xs text-muted-foreground">
+                    {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex min-w-0 items-center gap-1.5">
+                      {member.is_guild_master && <Crown className="h-3.5 w-3.5 shrink-0 text-warning" />}
+                      {!member.is_guild_master && member.rank_index <= (guild?.officer_rank_threshold ?? 2) && (
+                        <Shield className="h-3.5 w-3.5 shrink-0 text-primary" />
+                      )}
+                      <span
+                        className="truncate text-sm font-medium"
+                        style={{ color: getClassColor(member.character_class_id) }}
+                      >
+                        {member.character_name}
+                      </span>
+                      {member.is_main_character && <Star className="h-3.5 w-3.5 shrink-0 fill-warning text-warning" />}
+                      {member.character_level > 0 && (
+                        <span className="shrink-0 text-[11px] text-muted-foreground">Lv.{member.character_level}</span>
+                      )}
+                    </div>
+                    <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          'h-5 max-w-full px-1.5 text-[10px]',
+                          member.is_guild_master && 'border-warning/30 bg-warning/20 text-warning',
+                          !member.is_guild_master && member.rank_index <= (guild?.officer_rank_threshold ?? 2) && 'border-primary/30 bg-primary/20 text-primary',
+                        )}
+                      >
+                        <span className="truncate">{getRankLabel(member.rank_name, member.rank_index)}</span>
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-1.5">
+                    {member.profile ? (
+                      <div className="flex max-w-[120px] items-center gap-1.5">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={member.profile.avatar_url || undefined} />
+                          <AvatarFallback className="text-xs">
+                            {member.profile.username.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="truncate text-xs font-medium text-foreground">{member.profile.username}</span>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">{memberUi.notRegistered}</span>
+                    )}
+                    {member.matched_user_id ? (
+                      <CheckCircle2 className="h-4 w-4 text-healer" />
+                    ) : (
+                      <XCircle className="h-4 w-4 text-muted-foreground/50" />
+                    )}
+                  </div>
+                </div>
+              </button>
+            ))
+          )}
         </div>
 
-        {/* Members table */}
-        <div className="rounded-lg border border-border/50 bg-card/30 backdrop-blur-sm overflow-hidden">
+        <div className="hidden overflow-hidden rounded-lg border border-border/50 bg-card/30 backdrop-blur-sm md:block">
           <Table>
             <TableHeader>
               <TableRow className="border-border/50 hover:bg-transparent">

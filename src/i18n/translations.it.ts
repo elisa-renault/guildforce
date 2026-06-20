@@ -21,6 +21,9 @@ export const translationsIt: Translations = createLocaleTranslations(translation
     approvedWishPlural: '{{count}} desideri approvati',
     firstApprovedWish: '1\u00b0 desiderio approvato',
   },
+  home: {
+    subtitle: 'Pianifica il roster d’incursione per la prossima stagione',
+  },
   common: {
     loading: 'Caricamento',
     open: 'Apri',

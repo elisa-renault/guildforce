@@ -44,7 +44,7 @@ export const RosterSelector = ({
     if (!selectedRoster) return null;
     
     return (
-      <div className="flex items-center gap-1.5 md:gap-2 min-w-0">
+      <div className="flex max-w-[34vw] items-center gap-1.5 md:max-w-none md:gap-2 min-w-0">
         <Layers className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
         <span className="text-sm md:text-base font-medium truncate">{selectedRoster.name}</span>
         {selectedRoster.is_default && (
@@ -63,7 +63,7 @@ export const RosterSelector = ({
       <Select value={selectedRosterId || ''} onValueChange={onSelect}>
         <SelectTrigger
           aria-label={t.rosters.selectRoster}
-          className="h-7 md:h-8 w-[140px] md:w-[300px] max-w-[35vw] md:max-w-[45vw] bg-card border-border text-xs md:text-sm"
+          className="h-7 w-[128px] max-w-[34vw] border-border bg-card text-xs md:h-8 md:w-[300px] md:max-w-[45vw] md:text-sm"
         >
           <SelectValue className="truncate" placeholder={t.rosters.selectRoster} />
         </SelectTrigger>

@@ -23,7 +23,7 @@ export const Footer = () => {
 
   return (
     <footer className="relative z-10 border-t border-border/30 bg-background/60 backdrop-blur-md mt-auto">
-      <div className="container mx-auto px-4 py-5">
+      <div className="container mx-auto px-4 py-4 md:py-5">
         {/* Desktop: Single row with 4 logical groups */}
         <div className="hidden md:flex items-center justify-between">
           {/* Group 1: Identité (Branding) */}
@@ -95,9 +95,9 @@ export const Footer = () => {
         </div>
 
         {/* Mobile: Stacked layout with logical grouping */}
-        <div className="flex flex-col gap-3.5 md:hidden">
+        <div className="flex flex-col gap-2.5 md:hidden">
           {/* Row 1: Identité + Support CTA */}
-          <div className="flex items-center justify-center gap-3">
+          <div className="flex items-center justify-center gap-2.5">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-foreground/80">{sm('footer.brand')}</span>
               <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded bg-primary/35 text-primary-foreground border border-primary/50">
@@ -119,13 +119,13 @@ export const Footer = () => {
           </div>
 
           {/* Row 2: Préférences (Langue + Cookies) */}
-          <div className="flex items-center justify-center gap-3">
+          <div className="flex items-center justify-center gap-2">
             <span id="footer-language-label-mobile" className="sr-only">{t.profile.language}</span>
             <Select value={language} onValueChange={(value) => isSupportedLanguage(value) && setLanguage(value)}>
               <SelectTrigger
                 aria-label={t.profile.language}
                 aria-labelledby="footer-language-label-mobile"
-                className="w-[115px] h-7 bg-transparent border-border/50 text-muted-foreground text-xs rounded-full px-2.5 gap-1.5"
+                className="h-7 w-[104px] gap-1.5 rounded-full border-border/50 bg-transparent px-2 text-xs text-muted-foreground"
               >
                 <Globe className="h-3.5 w-3.5" />
                 <SelectValue placeholder={getLanguageDisplayLabel(language)} />
@@ -140,15 +140,15 @@ export const Footer = () => {
             </Select>
             <button
               onClick={openCookiePreferences}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs text-muted-foreground hover:text-foreground transition-colors border border-border/50"
+              className="flex h-7 max-w-[10.75rem] items-center gap-1.5 rounded-full border border-border/50 px-2.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
             >
               <Cookie className="h-3.5 w-3.5" />
-              <span>{t.cookies.manageCookies}</span>
+              <span className="truncate">{t.cookies.manageCookies}</span>
             </button>
           </div>
 
           {/* Row 3: Navigation légale */}
-          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px]">
+          <div className="flex flex-wrap items-center justify-center gap-x-2.5 gap-y-0.5 text-[11px] leading-tight">
             <Link to="/legal" className="text-muted-foreground hover:text-foreground transition-colors">
               {t.legal.legalNotice}
             </Link>

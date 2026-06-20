@@ -24,7 +24,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { BattleNetConnect } from '@/components/BattleNetConnect';
 import { AvatarCropDialog } from '@/components/AvatarCropDialog';
 
-import { User, Save, Globe, Loader2, Sparkles, Upload, Trash2, ExternalLink, Shield, AlertTriangle, Settings, Info, Users, EyeOff } from 'lucide-react';
+import { User, Save, Globe, Loader2, Upload, Trash2, ExternalLink, Shield, AlertTriangle, Settings, Info, Users, EyeOff, Pencil } from 'lucide-react';
 
 type BattletagVisibility = 'everyone' | 'guild_only' | 'nobody';
 
@@ -308,54 +308,101 @@ const Profile = () => {
   // Setup mode
   if (isSetupMode) {
     return (
-      <div className="flex-1 flex items-center justify-center p-4 relative">
+      <div className="relative flex flex-1 flex-col">
         <CosmicBackground />
-        <GlowCard className="w-full max-w-md p-8 relative z-10" hoverable={false}>
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/25">
-              <Sparkles className="h-8 w-8 text-white" strokeWidth={1.5} />
-            </div>
-            <h1 className="font-display text-2xl text-foreground mb-2">{ui.welcomeTitle}</h1>
-            <p className="text-muted-foreground text-sm">{ui.welcomeSubtitle}</p>
-            {profile?.battletag && (
-              <p className="text-xs text-muted-foreground mt-2">{interpolateMessage(ui.connectedAs, { battletag: profile.battletag })}</p>
-            )}
-          </div>
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField control={form.control} name="username" render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-foreground">{t.auth.pseudo}</FormLabel>
-                  <FormControl>
-                    <Input placeholder={ui.usernamePlaceholder} {...field} className="cosmic-input h-12 text-center text-lg" autoFocus />
-                  </FormControl>
-                  <FormMessage />
-                  <p className="text-xs text-muted-foreground mt-1">{ui.usernameHint}</p>
-                </FormItem>
-              )} />
-
-              <div>
-                <FormLabel htmlFor="profile-language-setup" className="text-foreground text-sm mb-2 block">
-                  <Globe className="h-4 w-4 inline mr-2" strokeWidth={1.5} />
-                  {t.profile.language}
-                </FormLabel>
-                <Select value={language} onValueChange={(val) => isSupportedLanguage(val) && handleLanguageChange(val)}>
-                  <SelectTrigger id="profile-language-setup" className="cosmic-input">
-                    <SelectValue placeholder={getLanguageDisplayLabel(language)} />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border">
-                    {LANGUAGE_OPTIONS.map((option) => (
-                      <SelectItem key={option.code} value={option.code}>{getLanguageDisplayLabel(option.code)}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+        <PageContainer width="full" className="relative z-10 flex flex-1 flex-col items-center justify-start px-5 pb-4 pt-14 sm:justify-center sm:py-8 sm:pt-20">
+          <div className="w-full max-w-5xl grid items-center gap-8 lg:grid-cols-2 lg:gap-16 lg:-translate-y-[calc((3.5rem+var(--global-nav-extra-offset,0px))/2)]">
+            <div className="hidden lg:flex flex-col items-start gap-6">
+              <div className="flex items-center gap-4">
+                <div className="p-4 rounded-2xl bg-primary/20 border border-primary/30">
+                  <img src="/logos/logo-white.svg" alt="" aria-hidden="true" className="h-12 w-12" />
+                </div>
+                <h1 className="text-4xl font-display text-foreground">Guildforce</h1>
               </div>
 
-              <CosmicButton type="submit" className="w-full" size="lg" loading={saving}>{ui.getStarted}</CosmicButton>
-            </form>
-          </Form>
-        </GlowCard>
+              <div className="space-y-4">
+                <h2 className="text-3xl font-semibold text-foreground">
+                  {ui.welcomeTitle}
+                </h2>
+                {profile?.battletag && (
+                  <p className="text-lg text-muted-foreground leading-relaxed max-w-md">
+                    {interpolateMessage(ui.connectedAs, { battletag: profile.battletag })}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex w-full flex-col items-center lg:items-stretch">
+              <div className="mb-4 text-center lg:hidden">
+                <div className="mb-3 flex items-center justify-center gap-3">
+                  <img src="/logos/logo-white.svg" alt="" aria-hidden="true" className="h-7 w-7" />
+                  <span className="text-[1.65rem] font-display leading-none text-foreground">Guildforce</span>
+                </div>
+                <h1 className="text-xl font-semibold text-foreground">
+                  {ui.welcomeTitle}
+                </h1>
+                {profile?.battletag && (
+                  <p className="mx-auto mt-2 max-w-[18rem] text-sm leading-relaxed text-muted-foreground">
+                    {interpolateMessage(ui.connectedAs, { battletag: profile.battletag })}
+                  </p>
+                )}
+              </div>
+
+              <GlowCard className="w-full max-w-md p-5 sm:p-8" hoverable={false}>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <FormField control={form.control} name="username" render={({ field }) => (
+                      <FormItem className="space-y-2">
+                        <FormLabel className="flex h-5 items-center gap-2 text-sm text-foreground">
+                          <User className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={1.5} />
+                          {t.auth.pseudo}
+                        </FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              placeholder={ui.usernamePlaceholder}
+                              {...field}
+                              className="h-12 border-border bg-card/60 pr-11 text-left text-lg"
+                              autoFocus
+                            />
+                            <Pencil
+                              className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70"
+                              strokeWidth={1.5}
+                              aria-hidden="true"
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+
+                    <div className="space-y-2">
+                      <FormLabel htmlFor="profile-language-setup" className="flex h-5 items-center gap-2 text-sm text-foreground">
+                        <Globe className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={1.5} />
+                        {t.profile.language}
+                      </FormLabel>
+                      <Select value={language} onValueChange={(val) => isSupportedLanguage(val) && handleLanguageChange(val)}>
+                        <SelectTrigger id="profile-language-setup" className="h-12 w-full border-border bg-card/60">
+                          <SelectValue placeholder={getLanguageDisplayLabel(language)} />
+                        </SelectTrigger>
+                        <SelectContent className="bg-card border-border">
+                          {LANGUAGE_OPTIONS.map((option) => (
+                            <SelectItem key={option.code} value={option.code}>{getLanguageDisplayLabel(option.code)}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="pt-1">
+                      <CosmicButton type="submit" className="w-full" size="lg" loading={saving}>{ui.getStarted}</CosmicButton>
+                    </div>
+                  </form>
+                </Form>
+              </GlowCard>
+            </div>
+          </div>
+        </PageContainer>
       </div>
     );
   }

@@ -96,7 +96,7 @@ const Index = () => {
               <Select value={selectedRegion} onValueChange={(v) => setSelectedRegion(v as BattleNetRegion)}>
                 <SelectTrigger
                   aria-label={t.battlenet.selectRegion}
-                  className="w-full md:w-36 h-14 bg-card/80 border-border/50 hover:border-primary/50 transition-colors"
+                  className="h-14 w-full max-w-[312px] bg-card/80 border-border/50 transition-colors hover:border-primary/50 md:w-36"
                 >
                   <SelectValue />
                 </SelectTrigger>
@@ -111,7 +111,7 @@ const Index = () => {
             )}
             <CosmicButton
               size="lg"
-              className="h-auto md:h-14"
+              className="h-12 w-full max-w-[312px] px-7 text-base md:h-14 md:w-auto md:min-w-[170px] md:px-8 md:text-lg"
               onClick={() => user ? navigate('/guilds') : handleBattleNetLogin()}
               loading={bnetLoading}
               icon={user ? <Shield className="h-5 w-5" strokeWidth={1.5} /> : <BattleNetIcon className="h-7 w-7" />}

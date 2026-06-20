@@ -131,12 +131,13 @@ const GuildPolls = () => {
       <PageContainer as="main" className="relative z-10 py-4 md:py-5" width="workspace">
         <div className="space-y-4">
           <PageHeader
+            className="flex-row items-center justify-between"
             bordered={false}
             icon={BarChart3}
             title={sm('guild.polls.title')}
             description={`${activePolls.length} ${sm('guild.polls.tab.active').toLowerCase()} • ${closedPolls.length} ${sm('guild.polls.tab.closed').toLowerCase()}`}
             actions={canManagePolls ? (
-              <Button onClick={() => navigate(`${basePath}/polls/new`)} size="sm">
+              <Button onClick={() => navigate(`${basePath}/polls/new`)} size="sm" className="h-9 w-9 p-0 sm:w-auto sm:px-3">
                 <Plus className="h-4 w-4 sm:mr-2" />
                 <span className="hidden sm:inline">{sm('guild.polls.new')}</span>
               </Button>
@@ -160,21 +161,25 @@ const GuildPolls = () => {
             />
           ) : (
             <Tabs defaultValue={defaultTab}>
-              <TabsList className="mb-5 h-auto w-full justify-start overflow-x-auto p-1 sm:w-auto">
-                <TabsTrigger value="active">
-                  {sm('guild.polls.tab.active')} ({activePolls.length})
+              <TabsList
+                className={`mb-3 grid h-auto w-full max-w-full overflow-hidden p-1 sm:inline-flex sm:w-auto sm:justify-start ${
+                  canManagePolls ? 'grid-cols-3' : 'grid-cols-2'
+                }`}
+              >
+                <TabsTrigger value="active" className="min-w-0 px-2 text-xs sm:px-3 sm:text-sm">
+                  <span className="truncate">{sm('guild.polls.tab.active')} ({activePolls.length})</span>
                 </TabsTrigger>
                 {canManagePolls && (
-                  <TabsTrigger value="draft">
-                    {sm('guild.polls.tab.draft')} ({draftPolls.length})
+                  <TabsTrigger value="draft" className="min-w-0 px-2 text-xs sm:px-3 sm:text-sm">
+                    <span className="truncate">{sm('guild.polls.tab.draft')} ({draftPolls.length})</span>
                   </TabsTrigger>
                 )}
-                <TabsTrigger value="closed">
-                  {sm('guild.polls.tab.closed')} ({closedPolls.length})
+                <TabsTrigger value="closed" className="min-w-0 px-2 text-xs sm:px-3 sm:text-sm">
+                  <span className="truncate">{sm('guild.polls.tab.closed')} ({closedPolls.length})</span>
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="active" className="space-y-4">
+              <TabsContent value="active" className="mt-0 space-y-3 sm:space-y-4">
                 {activePolls.map((poll) => (
                   <PollCard
                     key={poll.id}
@@ -191,7 +196,7 @@ const GuildPolls = () => {
               </TabsContent>
 
               {canManagePolls && (
-                <TabsContent value="draft" className="space-y-4">
+                <TabsContent value="draft" className="mt-0 space-y-3 sm:space-y-4">
                   {draftPolls.map((poll) => (
                     <PollCard
                       key={poll.id}
@@ -209,7 +214,7 @@ const GuildPolls = () => {
                 </TabsContent>
               )}
 
-              <TabsContent value="closed" className="space-y-4">
+              <TabsContent value="closed" className="mt-0 space-y-3 sm:space-y-4">
                 {closedPolls.map((poll) => (
                   <PollCard
                     key={poll.id}

@@ -85,7 +85,7 @@ export const SeasonSelector = ({
       <Select value={selectedSeasonId || ''} onValueChange={onSelect} disabled={busy}>
         <SelectTrigger
           aria-label={t.seasons.selectSeason}
-          className="h-7 w-[118px] max-w-[32vw] border-border bg-card text-xs md:h-8 md:w-[280px] md:max-w-[40vw] md:text-sm"
+          className="h-7 w-[168px] max-w-[48vw] border-border bg-card text-xs md:h-8 md:w-[280px] md:max-w-[40vw] md:text-sm"
         >
           <SelectValue placeholder={t.seasons.selectSeason} />
         </SelectTrigger>

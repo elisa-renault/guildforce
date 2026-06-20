@@ -1,4 +1,4 @@
-import { ArrowLeft, Loader2, Shield, ChevronDown, Mail } from 'lucide-react';
+import { ArrowLeft, Loader2, ChevronDown, Mail } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -438,9 +438,9 @@ const Auth = () => {
   // Loading state during Battle.net callback
   if (bnetLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="relative flex min-h-0 flex-1 items-center justify-center px-5 py-10">
         <CosmicBackground />
-        <div className="relative z-10 flex flex-col items-center gap-4">
+        <div className="relative z-10 flex flex-col items-center gap-4 text-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
           <p className="text-lg text-muted-foreground">{t.battlenet.connecting}</p>
         </div>
@@ -453,7 +453,7 @@ const Auth = () => {
       <CosmicBackground />
 
       {/* Main Content */}
-      <PageContainer width="full" className="flex-1 flex flex-col items-center justify-center py-8 pt-20 relative z-10">
+      <PageContainer width="full" className="relative z-10 flex flex-1 flex-col items-center justify-start px-5 pb-4 pt-14 sm:justify-center sm:py-8 sm:pt-20">
         {/* Grid for Card alignment only */}
         <div className="w-full max-w-5xl grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
           
@@ -461,7 +461,7 @@ const Auth = () => {
           <div className="hidden lg:flex flex-col items-start gap-6">
             <div className="flex items-center gap-4">
               <div className="p-4 rounded-2xl bg-primary/20 border border-primary/30">
-                <Shield className="h-12 w-12 text-primary" />
+                <img src="/logos/logo-white.svg" alt="" aria-hidden="true" className="h-12 w-12" />
               </div>
               <h1 className="text-4xl font-display text-foreground">{sm('auth.brand')}</h1>
             </div>
@@ -477,25 +477,25 @@ const Auth = () => {
           </div>
 
           {/* Right Column - Auth Form (Card only for alignment) */}
-          <div className="flex flex-col items-center lg:items-stretch">
+          <div className="flex w-full flex-col items-center lg:items-stretch">
             
             {/* Mobile Header */}
-            <div className="lg:hidden text-center space-y-2 mb-4">
-              <div className="flex items-center justify-center gap-3 mb-4">
-                <Shield className="h-8 w-8 text-primary" />
-                <span className="text-2xl font-display text-foreground">{sm('auth.brand')}</span>
+            <div className="mb-4 text-center lg:hidden">
+              <div className="mb-3 flex items-center justify-center gap-3">
+                <img src="/logos/logo-white.svg" alt="" aria-hidden="true" className="h-7 w-7" />
+                <span className="text-[1.65rem] font-display leading-none text-foreground">{sm('auth.brand')}</span>
               </div>
-              <h1 className="text-2xl font-semibold text-foreground">
+              <h1 className="text-xl font-semibold text-foreground">
                 {t.auth.loginTitle}
               </h1>
-              <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+              <p className="mx-auto mt-2 max-w-[18rem] text-sm leading-relaxed text-muted-foreground">
                 {t.auth.bnetNote}
               </p>
             </div>
 
-            <GlowCard className="w-full max-w-md p-6 sm:p-8">
+            <GlowCard className="w-full max-w-md p-5 sm:p-8">
               {/* Region Selector */}
-              <div className="space-y-2 mb-6">
+              <div className="mb-5 space-y-2">
                 <Label htmlFor="auth-region" className="text-sm text-muted-foreground">{t.battlenet.selectRegion}</Label>
                 <Select value={selectedRegion} onValueChange={value => setSelectedRegion(value as BattleNetRegion)}>
                   <SelectTrigger id="auth-region" className="w-full bg-card/60 border-border">
@@ -535,13 +535,10 @@ const Auth = () => {
               )}
 
               {/* Divider */}
-              <div className="relative my-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-border/50" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="px-3 text-muted-foreground bg-[hsl(var(--card))]">{t.auth.orContinueWith}</span>
-                </div>
+              <div className="my-5 flex items-center gap-3 text-xs uppercase text-muted-foreground sm:my-6">
+                <div className="h-px flex-1 bg-border/50" />
+                <span className="shrink-0 leading-none">{t.auth.orContinueWith}</span>
+                <div className="h-px flex-1 bg-border/50" />
               </div>
 
               {/* Email Form - Collapsible */}
@@ -599,7 +596,7 @@ const Auth = () => {
         </div>
 
         {/* Back Button - Outside grid, aligned under card */}
-        <div className="w-full max-w-5xl mt-4 grid lg:grid-cols-2 gap-8 lg:gap-16">
+        <div className="mt-3 grid w-full max-w-5xl gap-8 lg:mt-4 lg:grid-cols-2 lg:gap-16">
           <div className="hidden lg:block" /> {/* Spacer for left column */}
           <div className="flex justify-center lg:justify-start">
             <div className="w-full max-w-md flex justify-center">

@@ -3,6 +3,9 @@ import type { Translations } from './translations';
 import { translationsEn } from './translations.en';
 
 export const translationsZhCn: Translations = createLocaleTranslations(translationsEn, {
+  home: {
+    subtitle: '为下个赛季规划你的团队副本名册',
+  },
   commandPalette: {
     title: '命令面板',
     open: '搜索或跳转...',
@@ -72,4 +75,3 @@ export const translationsZhCn: Translations = createLocaleTranslations(translati
     firstApprovedWish: '\u7b2c\u4e00\u4e2a\u5df2\u901a\u8fc7\u5fd7\u613f',
   },
 });
-

@@ -4,6 +4,9 @@ import { translationsEn } from './translations.en';
 
 // Placeholder locale pack for progressive rollout; currently falls back to EN copy.
 export const translationsEs: Translations = createLocaleTranslations(translationsEn, {
+  home: {
+    subtitle: 'Planifica tu roster de banda para la próxima temporada',
+  },
   commandPalette: {
     title: 'Paleta de comandos',
     open: 'Buscar o ir a...',
@@ -81,5 +84,4 @@ export const translationsEs: Translations = createLocaleTranslations(translation
     },
   },
 });
-
 

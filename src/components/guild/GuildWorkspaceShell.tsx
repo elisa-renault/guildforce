@@ -405,17 +405,17 @@ export const GuildWorkspaceShell = ({
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-[300px] border-border/50 bg-background p-0">
-                  <div className="flex h-full flex-col p-3">
-                    <div className="min-w-0 rounded-xl border border-border/45 bg-card/25 p-3">
-                      <div className="flex min-w-0 items-center gap-3">
-                        <Avatar className="h-10 w-10 shrink-0 border border-border/50 bg-muted/30">
+                <SheetContent side="left" className="w-[min(22rem,calc(100vw-2rem))] border-border/45 bg-background/95 p-0 backdrop-blur-xl">
+                  <div className="flex h-full min-h-0 flex-col p-2.5">
+                    <div className="px-2 py-2 pr-12">
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        <Avatar className="h-9 w-9 shrink-0 border border-border/50 bg-muted/30">
                           {guild.avatar_url ? <AvatarImage src={guild.avatar_url} alt={guild.name} /> : null}
                           <AvatarFallback className="text-sm font-semibold">{guild.name.charAt(0).toUpperCase()}</AvatarFallback>
                         </Avatar>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <div className="flex min-w-0 items-center gap-2">
-                            <p className="truncate text-sm font-semibold text-foreground">{guild.name}</p>
+                            <p className="truncate text-sm font-medium text-foreground">{guild.name}</p>
                             {isGM ? (
                               <Badge variant="outline" className="h-5 shrink-0 border-primary/30 bg-primary/10 px-1.5 text-[10px] text-primary">
                                 GM
@@ -426,34 +426,36 @@ export const GuildWorkspaceShell = ({
                         </div>
                       </div>
                     </div>
-                    <nav className="mt-3 flex flex-col gap-1.5" aria-label={guild.name}>
-                      {visibleNavItems.map((item) => {
-                        const Icon = item.icon;
-                        const active = normalizedActiveTab === item.id;
+                    <div className="min-h-0 flex-1 overflow-y-auto px-1 pt-1">
+                      <nav className="flex flex-col gap-0.5" aria-label={guild.name}>
+                        {visibleNavItems.map((item) => {
+                          const Icon = item.icon;
+                          const active = normalizedActiveTab === item.id;
 
-                        return (
-                          <button
-                            key={item.id}
-                            type="button"
-                            onClick={() => handleNavigate(item.path)}
-                            className={cn(
-                              navItemClass({
-                                active,
-                                hover: 'accent',
-                                fullWidth: true,
-                                justifyStart: true,
-                                className: 'h-10 rounded-xl px-3.5 text-sm',
-                              }),
-                              active && 'shadow-sm shadow-primary/15',
-                            )}
-                            aria-current={active ? 'page' : undefined}
-                          >
-                            <Icon className="h-4 w-4 shrink-0" strokeWidth={1.6} />
-                            <span className="truncate">{item.label}</span>
-                          </button>
-                        );
-                      })}
-                    </nav>
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => handleNavigate(item.path)}
+                              className={cn(
+                                navItemClass({
+                                  active,
+                                  hover: 'accent',
+                                  fullWidth: true,
+                                  justifyStart: true,
+                                  className: 'h-9 rounded px-2.5 text-sm font-medium',
+                                }),
+                                active && 'relative border-l-2 border-primary bg-primary/10 pl-2 text-foreground ring-0',
+                              )}
+                              aria-current={active ? 'page' : undefined}
+                            >
+                              <Icon className="h-4 w-4 shrink-0" strokeWidth={1.6} />
+                              <span className="truncate">{item.label}</span>
+                            </button>
+                          );
+                        })}
+                      </nav>
+                    </div>
                   </div>
                 </SheetContent>
               </Sheet>
