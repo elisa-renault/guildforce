@@ -139,6 +139,15 @@ Note: a legacy `characters` table still exists in migrations; avoid adding new p
 - If implementation drifts or fails, stop and re-plan.
 - Include verification steps in the plan (not only implementation).
 
+### 1b) Local Codex budget and scope discipline
+- Start narrow: inspect only the files, routes, scripts, or migrations directly related to the user request before broad searches.
+- Prefer `rg` targeted by feature name, route, table, hook, or component. Avoid scanning `tasks/archive`, `dist`, `node_modules`, generated outputs, or large historical logs unless the task explicitly needs them.
+- For normal implementation tasks, aim to modify 1-4 files. If the likely change exceeds 5 files, touches multiple layers (DB + Edge Function + UI + i18n + docs), or changes auth/RLS/dependencies, pause and provide a short plan before editing further.
+- Do not combine unrelated work in one run. Split database/RLS, generated types/docs, API/hooks, UI, i18n, tests, and deployment into separate tasks unless the user explicitly asks for an end-to-end change.
+- Use stop conditions: stop and ask for more context if the relevant files cannot be identified after targeted inspection, if behavior depends on missing credentials/external state, or if the requested fix becomes a product decision.
+- Keep final diffs proportional to the prompt. Avoid opportunistic cleanup, broad refactors, route-wide restyling, or translation churn that is not required by the requested change.
+- Choose verification by risk: run the narrowest relevant command first, then escalate only when the touched surface justifies it.
+
 ### 2) Task tracking discipline
 
 1. Create one run file per task in `tasks/runs/YYYY-MM-DD_<slug>.md` (`npm run task:new -- "Title"`).
@@ -191,6 +200,13 @@ Use existing npm scripts (canonical):
 - `npm run task:archive`
 - `npm run task:guard`
 - `npm run e2e:snapshots:rolepack`
+
+Verification selection guidance:
+- Copy/text/i18n changes: `npm run i18n:check:encoding` and `npm run i18n:check:diacritics`; add `npm run i18n:check:strict` when translation keys or fallback behavior changed.
+- Local TS/React changes: prefer `npm run lint:changed` plus the most relevant Vitest file; use `npm run lint` when shared code or lint configuration changed.
+- Schema/RLS changes: run `npm run ci:schema-triad`; add targeted tests or manual Supabase checks when policies/RPC behavior changed.
+- UI behavior or layout changes: use targeted browser verification or role screenshots when authenticated states are available; avoid full E2E packs for tiny copy/layout tweaks.
+- Release-critical or cross-cutting changes: finish with `npm run verify:quick`; use `npm run verify:full` before critical merges/deployments or when build/runtime boundaries changed.
 
 ## Autonomous E2E Role Screenshots
 
