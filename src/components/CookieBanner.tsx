@@ -167,8 +167,8 @@ export const CookieBanner: React.FC = () => {
 
           <div className="space-y-4 py-4">
             {/* Essential Cookies */}
-            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-              <div className="space-y-0.5">
+            <div className="flex items-center gap-4 rounded-lg bg-muted/50 p-3">
+              <div className="min-w-0 flex-1 space-y-0.5">
                 <Label className="text-sm font-medium">
                   {t.cookies.essential}
                 </Label>
@@ -176,12 +176,12 @@ export const CookieBanner: React.FC = () => {
                   {t.cookies.essentialDesc}
                 </p>
               </div>
-              <Switch checked={true} disabled />
+              <Switch className="ml-2 shrink-0" checked={true} disabled />
             </div>
 
             {/* Analytics Cookies */}
-            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-              <div className="space-y-0.5">
+            <div className="flex items-center gap-4 rounded-lg bg-muted/50 p-3">
+              <div className="min-w-0 flex-1 space-y-0.5">
                 <Label className="text-sm font-medium">
                   {t.cookies.analytics}
                 </Label>
@@ -190,6 +190,7 @@ export const CookieBanner: React.FC = () => {
                 </p>
               </div>
               <Switch
+                className="ml-2 shrink-0"
                 checked={preferences.analytics}
                 onCheckedChange={(checked) =>
                   setPreferences((prev) => ({ ...prev, analytics: checked }))
@@ -198,8 +199,8 @@ export const CookieBanner: React.FC = () => {
             </div>
 
             {/* Marketing Cookies */}
-            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-              <div className="space-y-0.5">
+            <div className="flex items-center gap-4 rounded-lg bg-muted/50 p-3">
+              <div className="min-w-0 flex-1 space-y-0.5">
                 <Label className="text-sm font-medium">
                   {t.cookies.marketing}
                 </Label>
@@ -208,6 +209,7 @@ export const CookieBanner: React.FC = () => {
                 </p>
               </div>
               <Switch
+                className="ml-2 shrink-0"
                 checked={preferences.marketing}
                 onCheckedChange={(checked) =>
                   setPreferences((prev) => ({ ...prev, marketing: checked }))

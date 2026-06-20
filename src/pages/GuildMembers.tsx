@@ -433,7 +433,7 @@ const GuildMembers = () => {
 
   if (!guild) return null;
 
-  const mobileFilterButtonClassName = 'w-full min-w-0 justify-between gap-2 whitespace-nowrap px-2.5 text-xs md:text-sm';
+  const mobileFilterButtonClassName = 'w-full min-w-0 justify-between gap-2 whitespace-nowrap px-2.5 text-xs md:w-auto md:flex-none md:text-sm';
 
   return (
     <GuildWorkspaceShell
@@ -460,7 +460,7 @@ const GuildMembers = () => {
         )}
 
         {/* Filters */}
-        <FilterBar className="grid grid-cols-2 gap-2 overflow-visible pb-0 md:flex">
+        <FilterBar className="grid grid-cols-2 gap-2 overflow-visible pb-0 md:flex md:flex-wrap md:items-center">
           <label htmlFor="member-search" className="sr-only">
             {t.common.search}
           </label>
