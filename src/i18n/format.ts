@@ -72,6 +72,98 @@ export const formatDateTimeLocalized = (
 ): string =>
   formatDateLocalized(value, language, options);
 
+const DATE_TIME_INPUT_PLACEHOLDER_SAMPLE = new Date(2026, 5, 20, 21, 30);
+const DATE_TIME_INPUT_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+};
+type DateTimeInputPart = 'year' | 'month' | 'day' | 'hour' | 'minute';
+type DateTimeInputParts = Record<DateTimeInputPart, number>;
+const DATE_TIME_INPUT_TOKEN_BY_PART: Record<DateTimeInputPart, string> = {
+  year: 'YYYY',
+  month: 'MM',
+  day: 'DD',
+  hour: 'HH',
+  minute: 'mm',
+};
+
+const getDateTimeInputPartOrder = (language: Language): DateTimeInputPart[] =>
+  new Intl.DateTimeFormat(getIntlLocale(language), DATE_TIME_INPUT_FORMAT_OPTIONS)
+    .formatToParts(DATE_TIME_INPUT_PLACEHOLDER_SAMPLE)
+    .map((part) => part.type)
+    .filter((type): type is DateTimeInputPart =>
+      ['year', 'month', 'day', 'hour', 'minute'].includes(type),
+    );
+
+const hasValidDateTimeInputRanges = ({ year, month, day, hour, minute }: DateTimeInputParts) =>
+  year >= 1000 &&
+  month >= 1 &&
+  month <= 12 &&
+  day >= 1 &&
+  day <= 31 &&
+  hour >= 0 &&
+  hour <= 23 &&
+  minute >= 0 &&
+  minute <= 59;
+
+const isExactLocalDateTime = (
+  date: Date,
+  { year, month, day, hour, minute }: DateTimeInputParts,
+) =>
+  date.getFullYear() === year &&
+  date.getMonth() === month - 1 &&
+  date.getDate() === day &&
+  date.getHours() === hour &&
+  date.getMinutes() === minute;
+
+export const formatDateTimeInputPlaceholder = (language: Language): string =>
+  new Intl.DateTimeFormat(getIntlLocale(language), DATE_TIME_INPUT_FORMAT_OPTIONS)
+    .formatToParts(DATE_TIME_INPUT_PLACEHOLDER_SAMPLE)
+    .map((part) =>
+      part.type in DATE_TIME_INPUT_TOKEN_BY_PART
+        ? DATE_TIME_INPUT_TOKEN_BY_PART[part.type as DateTimeInputPart]
+        : part.value,
+    )
+    .join('');
+
+export const formatDateTimeInputValue = (
+  value: string | number | Date,
+  language: Language,
+): string =>
+  new Intl.DateTimeFormat(getIntlLocale(language), DATE_TIME_INPUT_FORMAT_OPTIONS).format(
+    toDate(value),
+  );
+
+export const parseDateTimeInputValue = (value: string, language: Language): Date | null => {
+  const numericParts = value.match(/\d+/g);
+  if (!numericParts || numericParts.length < 5) return null;
+
+  const values: Partial<DateTimeInputParts> = {};
+  for (const [index, type] of getDateTimeInputPartOrder(language).entries()) {
+    values[type] = Number(numericParts[index]);
+  }
+
+  if (!values.year || !values.month || !values.day) return null;
+  if (values.hour === undefined || values.minute === undefined) return null;
+
+  const dateTimeParts = values as DateTimeInputParts;
+  if (!hasValidDateTimeInputRanges(dateTimeParts)) return null;
+
+  const parsed = new Date(
+    dateTimeParts.year,
+    dateTimeParts.month - 1,
+    dateTimeParts.day,
+    dateTimeParts.hour,
+    dateTimeParts.minute,
+  );
+
+  return isExactLocalDateTime(parsed, dateTimeParts) ? parsed : null;
+};
+
 export const formatNumberLocalized = (
   value: number,
   language: Language,

@@ -19,7 +19,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Plus, Save, Play, Loader2, Layers, GripHorizontal, Trash2, ChevronUp, ChevronDown, Eye } from 'lucide-react';
+import { Plus, Save, Play, Loader2, Layers, GripHorizontal, Trash2, ChevronUp, ChevronDown, Eye, CalendarIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -31,15 +31,23 @@ import type { PollFormData, QuestionFormData, SectionFormData } from '@/types/po
 
 import { GlowCard } from '@/components/GlowCard';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { interpolateMessage } from '@/i18n/format';
+import {
+  formatDateTimeInputPlaceholder,
+  formatDateTimeInputValue,
+  interpolateMessage,
+  parseDateTimeInputValue,
+} from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
+import { DATE_LOCALE_BY_LANGUAGE } from '@/lib/dateLocale';
 
 
 interface Roster {
@@ -209,6 +217,11 @@ export const PollEditor = ({
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const [overId, setOverId] = useState<UniqueIdentifier | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [endsAtText, setEndsAtText] = useState(() =>
+    initialData?.ends_at ? formatDateTimeInputValue(initialData.ends_at, language) : '',
+  );
+  const endsAtLanguageRef = useRef(language);
   
   // Results access state
   const [resultsAccessConfig, setResultsAccessConfig] = useState<ResultsAccessConfig>(initialAccessConfig);
@@ -227,6 +240,22 @@ export const PollEditor = ({
     sections: [],
     questions: [{ ...defaultQuestion }],
   });
+  const endsAtPlaceholder = formatDateTimeInputPlaceholder(language);
+  const parsedEndsAtText = parseDateTimeInputValue(endsAtText, language);
+  const selectedEndsAt = formData.ends_at ? new Date(formData.ends_at) : parsedEndsAtText;
+  const endsAtInvalid = endsAtText.trim().length > 0 && !parsedEndsAtText;
+  const selectedHour = String(selectedEndsAt?.getHours() ?? 21).padStart(2, '0');
+  const selectedMinute = String(selectedEndsAt?.getMinutes() ?? 30).padStart(2, '0');
+
+  const normalizeTimePart = (value: string, max: number) =>
+    String(Math.min(max, Math.max(0, Number(value) || 0))).padStart(2, '0');
+
+  const setEndsAtFromDate = (date: Date, hour = selectedHour, minute = selectedMinute) => {
+    const nextDate = new Date(date);
+    nextDate.setHours(Number(hour), Number(minute), 0, 0);
+    setEndsAtText(formatDateTimeInputValue(nextDate, language));
+    setFormData((prev) => ({ ...prev, ends_at: nextDate.toISOString() }));
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -247,6 +276,7 @@ export const PollEditor = ({
       sections: initialData.sections || [],
       questions: initialData.questions || [{ ...defaultQuestion }],
     });
+    setEndsAtText(initialData.ends_at ? formatDateTimeInputValue(initialData.ends_at, language) : '');
 
     // Open all sections by default
     const openState: Record<number, boolean> = {};
@@ -254,7 +284,13 @@ export const PollEditor = ({
       openState[i] = true;
     });
     setOpenSections(openState);
-  }, [initialData]);
+  }, [initialData, language]);
+
+  useEffect(() => {
+    if (endsAtLanguageRef.current === language) return;
+    endsAtLanguageRef.current = language;
+    setEndsAtText(formData.ends_at ? formatDateTimeInputValue(formData.ends_at, language) : '');
+  }, [formData.ends_at, language]);
 
   useEffect(() => {
     const ids = [
@@ -731,16 +767,76 @@ export const PollEditor = ({
               <Label htmlFor="ends_at">
                 {sm('polls.editor.field_end_at')}
               </Label>
-              <Input
-                id="ends_at"
-                type="datetime-local"
-                value={formData.ends_at ? formData.ends_at.slice(0, 16) : ''}
-                onChange={(e) => setFormData((prev) => ({ 
-                  ...prev, 
-                  ends_at: e.target.value ? new Date(e.target.value).toISOString() : null 
-                }))}
-                className="bg-background"
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="ends_at"
+                  type="text"
+                  inputMode="numeric"
+                  value={endsAtText}
+                  placeholder={endsAtPlaceholder}
+                  aria-invalid={endsAtInvalid}
+                  onChange={(e) => {
+                    const nextValue = e.target.value;
+                    const parsed = parseDateTimeInputValue(nextValue, language);
+
+                    setEndsAtText(nextValue);
+                    setFormData((prev) => ({
+                      ...prev,
+                      ends_at: parsed ? parsed.toISOString() : null
+                    }));
+                  }}
+                  className={`bg-background ${endsAtInvalid ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                />
+                <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-9 w-9 shrink-0 border-border bg-background"
+                      aria-label={sm('polls.editor.field_end_at')}
+                    >
+                      <CalendarIcon className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-auto border-border bg-popover p-3">
+                    <Calendar
+                      mode="single"
+                      locale={DATE_LOCALE_BY_LANGUAGE[language]}
+                      selected={selectedEndsAt ?? undefined}
+                      onSelect={(date) => {
+                        if (!date) return;
+                        setEndsAtFromDate(date);
+                      }}
+                      initialFocus
+                    />
+                    <div className="mt-3 grid grid-cols-[1fr_1fr] gap-2 border-t border-border/60 pt-3">
+                      <Input
+                        type="number"
+                        min={0}
+                        max={23}
+                        value={selectedHour}
+                        onChange={(event) => {
+                          const hour = normalizeTimePart(event.target.value, 23);
+                          setEndsAtFromDate(selectedEndsAt ?? new Date(), hour, selectedMinute);
+                        }}
+                        className="h-8 bg-background text-center"
+                      />
+                      <Input
+                        type="number"
+                        min={0}
+                        max={59}
+                        value={selectedMinute}
+                        onChange={(event) => {
+                          const minute = normalizeTimePart(event.target.value, 59);
+                          setEndsAtFromDate(selectedEndsAt ?? new Date(), selectedHour, minute);
+                        }}
+                        className="h-8 bg-background text-center"
+                      />
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
           </div>
 
