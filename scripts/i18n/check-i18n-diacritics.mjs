@@ -67,12 +67,27 @@ const CHECKS = [
 
 const findings = [];
 
+const sliceSemanticLocaleBlock = (source, locale) => {
+  if (locale !== 'fr') return source;
+
+  const startMarker = 'const FR_SEMANTIC_MESSAGES';
+  const endMarker = 'const IT_SEMANTIC_MESSAGES';
+  const start = source.indexOf(startMarker);
+  const end = source.indexOf(endMarker);
+
+  if (start === -1 || end === -1 || end <= start) return source;
+  return source.slice(start, end);
+};
+
 for (const check of CHECKS) {
   for (const relPath of check.files) {
     const absPath = path.join(ROOT_DIR, relPath);
     if (!fs.existsSync(absPath)) continue;
 
-    const source = fs.readFileSync(absPath, 'utf8');
+    const fullSource = fs.readFileSync(absPath, 'utf8');
+    const source = relPath === 'src/i18n/semantic.ts'
+      ? sliceSemanticLocaleBlock(fullSource, check.locale)
+      : fullSource;
     for (const rx of check.patterns) {
       rx.lastIndex = 0;
       const match = rx.exec(source);
