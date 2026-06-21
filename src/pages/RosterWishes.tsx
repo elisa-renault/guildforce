@@ -1747,7 +1747,7 @@ const RosterWishes = () => {
     });
   };
   const rosterColumnSelector = (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="h-8 gap-2 border-border/45 bg-card/55 px-2.5 text-sm font-medium text-foreground/85 shadow-none hover:bg-card/75">
           <Columns3 className="h-4 w-4" />
