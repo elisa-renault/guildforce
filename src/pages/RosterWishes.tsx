@@ -1346,6 +1346,31 @@ const RosterWishes = () => {
     setEditWishes(updated);
   };
 
+  const normalizeWishSnapshot = (wishes: WishData[]) => (
+    wishes
+      .filter((wish) => !!wish.classId)
+      .map((wish) => ({
+        classId: wish.classId,
+        specIds: [...wish.specIds],
+        comment: wish.comment?.trim() || '',
+      }))
+  );
+
+  const getMemberWishSnapshot = (member: MemberWish) => (
+    member.wishes
+      .filter((wish) => !!wish.class_id)
+      .sort((a, b) => a.choice_index - b.choice_index)
+      .map((wish) => ({
+        classId: wish.class_id,
+        specIds: [...(wish.spec_ids || [])],
+        comment: wish.comment?.trim() || '',
+      }))
+  );
+
+  const wishSnapshotsEqual = (left: ReturnType<typeof normalizeWishSnapshot>, right: ReturnType<typeof normalizeWishSnapshot>) => (
+    JSON.stringify(left) === JSON.stringify(right)
+  );
+
   const saveEditing = async () => {
     if (!user || !guildId || !editingUserId || !selectedRosterId || !isSelectedSeasonActive) return;
 
@@ -1386,6 +1411,17 @@ const RosterWishes = () => {
 
     try {
       const dbStatus = editStatus === 'withdrawn' ? 'withdrawn' : (editStatus === 'confirmed' ? 'confirmed' : 'potential');
+      const currentWishSnapshot = getMemberWishSnapshot(currentMember);
+      const nextWishSnapshot = normalizeWishSnapshot(editWishes);
+      const hasWishChanges = !wishSnapshotsEqual(currentWishSnapshot, nextWishSnapshot);
+      const hasStatusChanges = currentMember.status !== dbStatus;
+
+      if (!hasWishChanges && !hasStatusChanges) {
+        setEditingUserId(null);
+        toast({ title: t.wishes.noChangesToSave });
+        return;
+      }
+
       if (isEditingExternal) {
         if (!canEditAsManager || !currentMember.rosterCacheId) {
           throw new Error(s('roster_wishes.external_edit_unauthorized'));
@@ -1433,7 +1469,11 @@ const RosterWishes = () => {
         if (error) throw error;
       }
 
-      toast({ title: t.wishes.wishesSaved });
+      toast({
+        title: currentMember.id === user.id
+          ? t.wishes.wishesSaved
+          : interpolateMessage(t.wishes.wishesSavedForMember, { member: currentMember.username }),
+      });
       setEditingUserId(null);
       await fetchWishes();
     } catch (error: unknown) {

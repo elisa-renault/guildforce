@@ -367,6 +367,8 @@ export const translationsZhTw: Translations = createLocaleTranslations(translati
     noWishes: '尚未提交心願',
     saveWishes: '儲存我的心願',
     wishesSaved: '你的心願已儲存！',
+    wishesSavedForMember: '{{member}} 的心願已儲存。',
+    noChangesToSave: '沒有需要儲存的變更。',
     clickToExpand: '點擊查看詳情',
     clickToEdit: '點擊編輯你的心願',
     editMyWishes: '編輯我的心願',

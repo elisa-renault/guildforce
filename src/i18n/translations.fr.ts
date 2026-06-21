@@ -365,6 +365,8 @@ export const translationsFr: Translations = {
       noWishes: 'Aucun vœu soumis pour l\'instant',
       saveWishes: 'Enregistrer mes vœux',
       wishesSaved: 'Vos vœux ont été enregistrés !',
+      wishesSavedForMember: 'Les vœux de {{member}} ont été enregistrés.',
+      noChangesToSave: 'Aucune modification à enregistrer.',
       clickToExpand: 'Cliquez pour voir les détails',
       clickToEdit: 'Cliquez pour modifier vos vœux',
       editMyWishes: 'Modifier mes vœux',

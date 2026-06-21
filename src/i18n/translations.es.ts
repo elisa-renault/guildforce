@@ -367,6 +367,8 @@ export const translationsEs: Translations = createLocaleTranslations(translation
     noWishes: 'Aún no se han enviado deseos',
     saveWishes: 'Guardar mis deseos',
     wishesSaved: 'Tus deseos se han guardado',
+    wishesSavedForMember: 'Los deseos de {{member}} se han guardado.',
+    noChangesToSave: 'No hay cambios que guardar.',
     clickToExpand: 'Haz clic para ver detalles',
     clickToEdit: 'Haz clic para editar tus deseos',
     editMyWishes: 'Editar mis deseos',

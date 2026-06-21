@@ -350,6 +350,8 @@ export const translationsRu: Translations = createLocaleTranslations(translation
     noWishes: 'Пожелания еще не отправлены',
     saveWishes: 'Сохранить пожелания',
     wishesSaved: 'Пожелания сохранены!',
+    wishesSavedForMember: 'Пожелания игрока {{member}} сохранены.',
+    noChangesToSave: 'Нет изменений для сохранения.',
     clickToExpand: 'Нажми, чтобы открыть детали',
     clickToEdit: 'Нажми, чтобы изменить пожелания',
     editMyWishes: 'Изменить пожелания',

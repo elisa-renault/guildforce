@@ -365,6 +365,8 @@ export const translationsEn: Translations = {
       noWishes: 'No wishes submitted yet',
       saveWishes: 'Save my wishes',
       wishesSaved: 'Your wishes have been saved!',
+      wishesSavedForMember: '{{member}}’s wishes have been saved.',
+      noChangesToSave: 'No changes to save.',
       clickToExpand: 'Click to see details',
       clickToEdit: 'Click to edit your wishes',
       editMyWishes: 'Edit my wishes',

@@ -367,6 +367,8 @@ export const translationsKo: Translations = createLocaleTranslations(translation
     noWishes: '아직 제출된 희망이 없습니다',
     saveWishes: '내 희망 저장',
     wishesSaved: '희망이 저장되었습니다!',
+    wishesSavedForMember: '{{member}}님의 희망이 저장되었습니다.',
+    noChangesToSave: '저장할 변경 사항이 없습니다.',
     clickToExpand: '클릭해 자세히 보기',
     clickToEdit: '클릭해 희망 수정',
     editMyWishes: '내 희망 수정',

@@ -367,6 +367,8 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "noWishes": "Noch keine W\u00fcnsche eingereicht",
     "saveWishes": "Meine W\u00fcnsche speichern",
     "wishesSaved": "Ihre W\u00fcnsche wurden gespeichert!",
+    "wishesSavedForMember": "Die W\u00fcnsche von {{member}} wurden gespeichert.",
+    "noChangesToSave": "Keine \u00c4nderungen zu speichern.",
     "clickToExpand": "Klicken Sie hier, um Details anzuzeigen",
     "clickToEdit": "Klicken Sie hier, um Ihre W\u00fcnsche zu bearbeiten",
     "editMyWishes": "Meine W\u00fcnsche bearbeiten",

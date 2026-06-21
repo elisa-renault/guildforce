@@ -522,6 +522,7 @@ export type Database = {
         ]
       }
       guild_activity_logs: {
+        // Wish activity user_id stores the authenticated actor; target_user_id stores the member whose wishes changed.
         Row: {
           action_details: Json | null
           action_type: string

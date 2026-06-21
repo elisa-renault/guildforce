@@ -485,6 +485,8 @@ export const translationsPtBr: Translations = createLocaleTranslations(translati
     noWishes: 'Nenhum desejo enviado ainda',
     saveWishes: 'Salvar meus desejos',
     wishesSaved: 'Seus desejos foram salvos!',
+    wishesSavedForMember: 'Os desejos de {{member}} foram salvos.',
+    noChangesToSave: 'Nenhuma alteração para salvar.',
     clickToExpand: 'Clique para ver detalhes',
     clickToEdit: 'Clique para editar seus desejos',
     editMyWishes: 'Editar meus desejos',

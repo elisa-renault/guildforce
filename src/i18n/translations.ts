@@ -440,6 +440,8 @@ export interface Translations {
     noWishes: string;
     saveWishes: string;
     wishesSaved: string;
+    wishesSavedForMember: string;
+    noChangesToSave: string;
     clickToExpand: string;
     clickToEdit: string;
     editMyWishes: string;
