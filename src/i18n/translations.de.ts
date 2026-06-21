@@ -455,7 +455,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
         "selectSpec": "Spezialisierung auswählen",
         "effectiveDate": "Gültigkeitsdatum",
         "managerComment": "Manager-Kommentar",
-        "optional": "Optional",
+          "optional": "Optionaler Kommentar",
         "updated": "Zuweisung aktualisiert"
       },
       "assignmentSource": {
