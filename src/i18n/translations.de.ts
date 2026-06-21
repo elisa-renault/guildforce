@@ -460,7 +460,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "wishesCount": "Gesamt",
     "rosterTable": {
       "player": "Spieler",
-      "status": "Status",
+      "status": "Spielerstatus",
       "decision": "Entscheidung",
       "assignment": "Zuweisung",
       "total": "Gesamt",
