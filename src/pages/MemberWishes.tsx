@@ -840,11 +840,11 @@ const MemberWishes = () => {
   }
 
   return (
-    <div className="flex-1 relative pt-16">
+    <div className="flex-1 relative pt-[calc(3.5rem+var(--global-nav-extra-offset,0px))]">
       <CosmicBackground />
 
       {/* Header bar */}
-      <div className="sticky top-14 z-40 border-b border-border/35 bg-background/95 backdrop-blur-md">
+      <div className="sticky top-[calc(3.5rem+var(--global-nav-extra-offset,0px))] z-40 border-b border-border/35 bg-background/95 backdrop-blur-md">
         <PageContainer className="px-3 md:px-4 py-3 flex items-center justify-between" width="wide">
           <div className="flex items-center gap-2">
             <button
