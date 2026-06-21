@@ -21,7 +21,7 @@ import { Loader2, Save, GripVertical, Plus, Trash2, ChevronUp, ChevronDown, Lock
 
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
 import { resolveSpecOrder } from '@/lib/wishOrder';
-import { formatDateTimeLocalized, interpolateMessage } from '@/i18n/format';
+import { formatDateTimeLocalized, formatLabelValue, interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import { isSeasonFilteringEnabled, isSeasonSchemaUnavailable, type SeasonSupportMode } from '@/lib/seasonSupport';
 import { resolveWishLockState } from '@/lib/wishLock';
@@ -744,18 +744,18 @@ const Wishes = () => {
                               'inline-flex h-8 w-8 items-center justify-center rounded border border-border/40 bg-background/40',
                               lockState.isLocked ? toneTextClass('warning') : toneTextClass('info'),
                             )}
-                            aria-label={lockState.isLocked ? `${t.wishes.lockedTitle}: ${lockMessage}` : interpolateMessage(t.wishes.lockScheduledDesc, { date: scheduledLabel || '' })}
+                            aria-label={lockState.isLocked ? formatLabelValue(t.wishes.lockedTitle, lockMessage, language) : interpolateMessage(t.wishes.lockScheduledDesc, { date: scheduledLabel || '' })}
                           >
                             {lockState.isLocked ? <Lock className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
                             <span className="sr-only">
-                              {lockState.isLocked ? `${t.wishes.lockedTitle}: ${lockMessage}` : interpolateMessage(t.wishes.lockScheduledDesc, { date: scheduledLabel || '' })}
+                              {lockState.isLocked ? formatLabelValue(t.wishes.lockedTitle, lockMessage, language) : interpolateMessage(t.wishes.lockScheduledDesc, { date: scheduledLabel || '' })}
                             </span>
                           </button>
                         </TooltipTrigger>
                         <TooltipContent>
                           <p className="max-w-xs">
                             {lockState.isLocked
-                              ? `${t.wishes.lockedTitle}: ${lockMessage}`
+                              ? formatLabelValue(t.wishes.lockedTitle, lockMessage, language)
                               : interpolateMessage(t.wishes.lockScheduledDesc, { date: scheduledLabel || '' })}
                           </p>
                         </TooltipContent>

@@ -1,7 +1,7 @@
 import { useLanguage } from '@/contexts/LanguageContext';
-import { toneBadgeClass } from '@/lib/design-tokens';
+import { commitmentBadgeClass, commitmentTextClass } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, HelpCircle, XCircle, ChevronDown } from 'lucide-react';
+import { UserCheck, UserMinus, UserX, ChevronDown } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
@@ -18,19 +18,19 @@ interface CommitmentToggleProps {
 
 const statusConfig = {
   confirmed: {
-    icon: CheckCircle2,
-    colorClass: 'bg-healer/20 border-healer/50 text-healer',
-    activeClass: 'bg-healer/20 text-healer',
+    icon: UserCheck,
+    colorClass: commitmentBadgeClass('confirmed'),
+    activeClass: 'bg-status-info/20 text-status-info',
   },
   undecided: {
-    icon: HelpCircle,
-    colorClass: toneBadgeClass('warning'),
-    activeClass: 'bg-warning/20 text-warning',
+    icon: UserMinus,
+    colorClass: commitmentBadgeClass('undecided'),
+    activeClass: 'bg-primary/20 text-primary',
   },
   withdrawn: {
-    icon: XCircle,
-    colorClass: 'bg-destructive/20 border-destructive/50 text-destructive',
-    activeClass: 'bg-destructive/20 text-destructive',
+    icon: UserX,
+    colorClass: commitmentBadgeClass('withdrawn'),
+    activeClass: 'bg-muted text-muted-foreground',
   },
 };
 
@@ -70,7 +70,7 @@ export const CommitmentToggle = ({
         <PopoverTrigger asChild>
           <button
             className={cn(
-              "inline-flex items-center gap-1 text-[10px] md:text-xs px-1.5 py-0.5 rounded-md border cursor-pointer transition-colors hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+              "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] md:text-xs cursor-pointer transition-colors hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               config.colorClass,
               disabled && "opacity-60 cursor-not-allowed"
             )}
@@ -92,7 +92,7 @@ export const CommitmentToggle = ({
                   onClick={() => { if (!disabled) { onChange(s); setOpen(false); } }}
                   className={cn(
                     "w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-xs transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-                    isActive ? statusConfig[s].activeClass : "hover:bg-primary/10"
+                    isActive ? statusConfig[s].activeClass : cn(commitmentTextClass(s), "hover:bg-primary/10")
                   )}
                   disabled={disabled}
                 >
@@ -134,7 +134,7 @@ export const CommitmentToggle = ({
                   onClick={() => { if (!disabled) { onChange(s); setOpen(false); } }}
                   className={cn(
                     "w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-sm transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-                    isActive ? statusConfig[s].activeClass : "hover:bg-primary/10"
+                    isActive ? statusConfig[s].activeClass : cn(commitmentTextClass(s), "hover:bg-primary/10")
                   )}
                   disabled={disabled}
                 >

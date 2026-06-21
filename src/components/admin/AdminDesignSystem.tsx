@@ -798,7 +798,7 @@ export const AdminDesignSystem = () => {
                     <TabsTrigger value="events">Events</TabsTrigger>
                   </TabsList>
                   <TabsContent value="overview" className="text-sm text-muted-foreground">Guild high-level summary.</TabsContent>
-                  <TabsContent value="roster" className="text-sm text-muted-foreground">Roster lists and assignment tables.</TabsContent>
+                  <TabsContent value="roster" className="text-sm text-muted-foreground">Roster lists and planning tables.</TabsContent>
                   <TabsContent value="events" className="text-sm text-muted-foreground">Attendance management views.</TabsContent>
                 </Tabs>
 
@@ -915,7 +915,7 @@ export const AdminDesignSystem = () => {
                         <TooltipTrigger asChild>
                           <Button size="sm" variant="ghost">Role hint</Button>
                         </TooltipTrigger>
-                        <TooltipContent>Main healer assignment</TooltipContent>
+                        <TooltipContent>Main healer planning note</TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                     <Popover>
@@ -1407,7 +1407,7 @@ export const AdminDesignSystem = () => {
                 <div className="rounded-md border border-border/60 p-3 space-y-2">
                   <p className="font-medium">Labels and state copy</p>
                   <Label htmlFor="a11y-sample">Raid note</Label>
-                  <Input id="a11y-sample" placeholder="Explain assignment" />
+                  <Input id="a11y-sample" placeholder="Explain the decision" />
                   <p className="text-xs text-muted-foreground">Error and success states should include text, not icon-only feedback.</p>
                 </div>
               </div>

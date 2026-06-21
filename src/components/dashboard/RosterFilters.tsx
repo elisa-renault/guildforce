@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import { 
-  ChevronDown, Check, Shield, Heart, Swords, X, Clock, CheckCircle2, 
+  ChevronDown, Check, Shield, Heart, Swords, X, Clock, CheckCircle2, Armchair,
   XCircle, UserCheck, UserMinus, UserX, Sword, Crosshair, MessageSquare, 
   Hash, RotateCcw, Users, Target, SlidersHorizontal
 } from 'lucide-react';
@@ -12,13 +12,14 @@ import { getLocalizedClassName, wowClasses, Role } from '@/data/wowClasses';
 import { RosterFilters as RosterFiltersType, ValidationStatus, CommitmentFilter, RangeFilter, RosterSelectionStatus } from '@/types/guild';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
-import { interpolateMessage } from '@/i18n/format';
+import { formatLabelValue, interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { FilterBar, FilterSearchField, activeFilterControlClassName, filterControlClassName } from '@/components/ui/filter-controls';
+import { commitmentTextClass } from '@/lib/design-tokens';
 
 interface RosterFiltersProps {
   filters: RosterFiltersType;
@@ -41,14 +42,14 @@ const validationConfig: Record<ValidationStatus, { icon: typeof Clock; color: st
 };
 
 const commitmentConfig: Record<CommitmentFilter, { icon: typeof UserCheck; color: string; labelKey: 'confirmed' | 'undecided' | 'withdrawn' }> = {
-  confirmed: { icon: UserCheck, color: 'text-status-success', labelKey: 'confirmed' },
-  undecided: { icon: UserMinus, color: 'text-status-warning', labelKey: 'undecided' },
-  withdrawn: { icon: UserX, color: 'text-status-error', labelKey: 'withdrawn' },
+  confirmed: { icon: UserCheck, color: commitmentTextClass('confirmed'), labelKey: 'confirmed' },
+  undecided: { icon: UserMinus, color: commitmentTextClass('undecided'), labelKey: 'undecided' },
+  withdrawn: { icon: UserX, color: commitmentTextClass('withdrawn'), labelKey: 'withdrawn' },
 };
 
 const rosterDecisionConfig: Record<RosterSelectionStatus, { icon: typeof CheckCircle2; color: string; labelKey: 'selected' | 'bench' | 'notSelected' | 'undecided' }> = {
   selected: { icon: CheckCircle2, color: 'text-status-success', labelKey: 'selected' },
-  bench: { icon: UserMinus, color: 'text-status-warning', labelKey: 'bench' },
+  bench: { icon: Armchair, color: 'text-status-warning', labelKey: 'bench' },
   not_selected: { icon: XCircle, color: 'text-status-error', labelKey: 'notSelected' },
   undecided: { icon: Clock, color: 'text-muted-foreground', labelKey: 'undecided' },
 };
@@ -173,6 +174,10 @@ export const RosterFilters = ({ filters, onFiltersChange, sortSummary, actions }
         return 'bg-status-warning/12 border-status-warning/35';
       case 'text-status-error':
         return 'bg-status-error/12 border-status-error/35';
+      case 'text-status-info':
+        return 'bg-status-info/12 border-status-info/35';
+      case 'text-primary':
+        return 'bg-primary/12 border-primary/35';
       case 'text-info':
         return 'bg-info/12 border-info/35';
       case 'text-tank':
@@ -1065,7 +1070,7 @@ export const RosterFilters = ({ filters, onFiltersChange, sortSummary, actions }
         <div className="flex items-center gap-2 flex-wrap">
           {sortSummary && (
             <Badge variant="outline" className="h-6 border-primary/30 bg-primary/10 px-2 text-xs font-medium text-primary">
-              {t.dashboard.rosterTable.sortLabel}: {sortSummary}
+              {formatLabelValue(t.dashboard.rosterTable.sortLabel, sortSummary, t.lang)}
             </Badge>
           )}
           {activePills.length > 0 && (

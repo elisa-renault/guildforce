@@ -47,9 +47,6 @@ export const RosterSelector = ({
       <div className="flex max-w-[34vw] items-center gap-1.5 md:max-w-none md:gap-2 min-w-0">
         <Layers className="h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
         <span className="text-sm md:text-base font-medium truncate">{selectedRoster.name}</span>
-        {selectedRoster.is_default && (
-          <span className="text-xs text-muted-foreground flex-shrink-0">({t.rosters.default})</span>
-        )}
         {showWishesLockIndicator && selectedLockState?.isLocked && (
           <Lock className={`h-3.5 w-3.5 flex-shrink-0 ${toneTextClass('warning')}`} />
         )}
@@ -83,9 +80,6 @@ export const RosterSelector = ({
               >
                 <span className="flex items-center gap-2 min-w-0">
                   <span className="truncate">{roster.name}</span>
-                  {roster.is_default && (
-                    <span className="text-xs text-muted-foreground flex-shrink-0">({t.rosters.default})</span>
-                  )}
                   {showAccessIndicator && !roster.hasAccess && (
                     <Lock className="h-3.5 w-3.5 text-destructive flex-shrink-0" />
                   )}

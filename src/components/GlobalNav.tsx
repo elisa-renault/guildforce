@@ -1,4 +1,4 @@
-import { Crown, LogOut, Settings, Undo2, User } from 'lucide-react';
+import { Crown, LogOut, Undo2, User } from 'lucide-react';
 import { useLayoutEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -34,22 +34,19 @@ export const GlobalNav = () => {
   const routeMeta = getRouteMeta(location.pathname);
   const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
     resolveSemanticMessage({ key, language, translations: t });
-  const menuCopyByLanguage: Partial<Record<typeof language, { account: string; adminTools: string; preferences: string }>> = {
+  const menuCopyByLanguage: Partial<Record<typeof language, { account: string; adminTools: string }>> = {
     fr: {
       account: 'Compte',
       adminTools: 'Administration',
-      preferences: 'Préférences',
     },
     'zh-TW': {
       account: '帳號',
       adminTools: '管理工具',
-      preferences: '偏好設定',
     },
   };
   const menuCopy = menuCopyByLanguage[language] ?? {
     account: 'Account',
     adminTools: 'Admin tools',
-    preferences: 'Preferences',
   };
 
   useLayoutEffect(() => {
@@ -201,10 +198,6 @@ export const GlobalNav = () => {
                       {menuCopy.adminTools}
                     </DropdownMenuItem>
                   ) : null}
-                  <DropdownMenuItem disabled>
-                    <Settings className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                    {menuCopy.preferences}
-                  </DropdownMenuItem>
                   {isImpersonating ? (
                     <DropdownMenuItem onClick={handleRestoreAdmin}>
                       <Undo2 className="mr-2 h-4 w-4" strokeWidth={1.5} />

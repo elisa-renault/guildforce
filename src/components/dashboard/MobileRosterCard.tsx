@@ -1,12 +1,13 @@
 import { Badge } from '@/components/ui/badge';
 import { CosmicButton } from '@/components/CosmicButton';
 import { GlowCard } from '@/components/GlowCard';
-import { CheckCircle, HelpCircle, XCircle, Pencil, Shield, Heart, Sword, Swords, Crosshair, MessageSquare, Lock, Unlock, MoreVertical, Loader2, Trash2, UserPlus, History } from 'lucide-react';
+import { CheckCircle2, XCircle, Pencil, Shield, Heart, Sword, Swords, Crosshair, MessageSquare, Lock, Unlock, MoreVertical, Loader2, Trash2, UserPlus, History, UserCheck, UserMinus, UserX, Armchair, Clock } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getClassById, getLocalizedClassName, getLocalizedSpecName, getSpecById } from '@/data/wowClasses';
 import { MemberWish, RosterSelectionStatus, WishChoice, ValidationStatus } from '@/types/guild';
 import { WishValidationBadge } from './WishValidationBadge';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
+import { commitmentBadgeClass } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -21,7 +22,6 @@ interface MobileRosterCardProps {
   member: MemberWish;
   isOwnRow: boolean;
   canManageWishes: boolean;
-  canManageAssignments?: boolean;
   isRosterLocked?: boolean;
   onStartEditing: (member: MemberWish) => void;
   onValidateWish?: (userId: string, choiceIndex: number, status: ValidationStatus) => void;
@@ -32,9 +32,7 @@ interface MobileRosterCardProps {
   deletingMemberId?: string | null;
   onSelectionStatusChange?: (memberId: string, status: RosterSelectionStatus) => void;
   updatingSelectionMemberId?: string | null;
-  onEditAssignment?: (member: MemberWish) => void;
   onViewHistory?: (member: MemberWish) => void;
-  updatingAssignmentMemberId?: string | null;
 }
 
 const roleConfig: Record<string, { icon: typeof Shield; color: string }> = {
@@ -47,7 +45,6 @@ export const MobileRosterCard = ({
   member,
   isOwnRow,
   canManageWishes,
-  canManageAssignments = canManageWishes,
   isRosterLocked = false,
   onStartEditing,
   onValidateWish,
@@ -58,9 +55,7 @@ export const MobileRosterCard = ({
   deletingMemberId = null,
   onSelectionStatusChange,
   updatingSelectionMemberId = null,
-  onEditAssignment,
   onViewHistory,
-  updatingAssignmentMemberId = null,
 }: MobileRosterCardProps) => {
   const { t, language } = useLanguage();
   const s = (key: SemanticKey, fallback?: string) =>
@@ -72,21 +67,25 @@ export const MobileRosterCard = ({
       case 'selected':
         return {
           label: t.wishes.rosterDecision.selected,
+          icon: CheckCircle2,
           className: 'bg-healer/20 text-healer border-healer/30',
         };
       case 'bench':
         return {
           label: t.wishes.rosterDecision.bench,
+          icon: Armchair,
           className: 'bg-warning/20 text-warning border-warning/30',
         };
       case 'not_selected':
         return {
           label: t.wishes.rosterDecision.notSelected,
+          icon: XCircle,
           className: 'bg-destructive/20 text-destructive border-destructive/30',
         };
       default:
         return {
           label: t.wishes.rosterDecision.undecided,
+          icon: Clock,
           className: 'bg-muted text-muted-foreground border-border',
         };
     }
@@ -179,9 +178,9 @@ export const MobileRosterCard = ({
   const memberLocked = Boolean(member.wishes_locked);
   const effectiveLocked = isRosterLocked || memberLocked;
   const actionItems = [
-    ...(canManageAssignments && onViewHistory && member.seasonMemberId ? [{
+    ...(canManageWishes && onViewHistory && member.seasonMemberId ? [{
       key: 'history',
-      label: language === 'fr' ? 'Historique' : 'History',
+      label: t.wishes.memberDetail.history,
       icon: History,
       onClick: () => onViewHistory(member),
       loading: false,
@@ -189,7 +188,7 @@ export const MobileRosterCard = ({
     }] : []),
     ...(canManageWishes && onRemoveMember && !isOwnRow ? [{
       key: 'delete',
-      label: language === 'fr' ? 'Retirer' : 'Remove',
+      label: t.wishes.removeMember,
       icon: Trash2,
       onClick: () => onRemoveMember(member.id),
       loading: deletingMemberId === member.id,
@@ -197,41 +196,39 @@ export const MobileRosterCard = ({
     }] : []),
     ...(canManageWishes && onToggleMemberLock && !member.isExternal ? [{
       key: 'lock',
-      label: memberLocked
-        ? (language === 'fr' ? 'Déverrouiller' : 'Unlock')
-        : (language === 'fr' ? 'Verrouiller' : 'Lock'),
+      label: memberLocked ? t.wishes.unlockMember : t.wishes.lockMember,
       icon: memberLocked ? Unlock : Lock,
       onClick: () => onToggleMemberLock(member.id, !memberLocked),
       loading: lockingMemberId === member.id,
       disabled: false,
     }] : []),
-    ...((isOwnRow || canManageWishes || (canManageAssignments && onEditAssignment && member.seasonMemberId)) ? [{
+    ...((isOwnRow || canManageWishes) ? [{
       key: 'edit',
       label: t.common.edit,
       icon: Pencil,
       onClick: () => onStartEditing(member),
-      loading: updatingAssignmentMemberId === member.id,
-      disabled: !(canManageAssignments && onEditAssignment && member.seasonMemberId) && effectiveLocked,
+      loading: false,
+      disabled: effectiveLocked,
     }] : []),
   ];
   const statusBadge = (
     <Badge
-      variant={member.status === 'confirmed' ? 'default' : 'outline'}
+      variant="outline"
       className={cn(
         'h-7 shrink-0 px-2 text-[10px]',
         member.status === 'confirmed'
-          ? 'bg-healer/20 text-healer border-healer/30'
+          ? commitmentBadgeClass('confirmed')
           : member.status === 'withdrawn'
-            ? 'bg-destructive/20 text-destructive border-destructive/30'
-            : 'bg-warning/20 text-warning border-warning/30'
+            ? commitmentBadgeClass('withdrawn')
+            : commitmentBadgeClass('undecided')
       )}
     >
       {member.status === 'confirmed' ? (
-        <CheckCircle className="mr-1 h-3 w-3" strokeWidth={1.5} />
+        <UserCheck className="mr-1 h-3 w-3" strokeWidth={1.5} />
       ) : member.status === 'withdrawn' ? (
-        <XCircle className="mr-1 h-3 w-3" strokeWidth={1.5} />
+        <UserX className="mr-1 h-3 w-3" strokeWidth={1.5} />
       ) : (
-        <HelpCircle className="mr-1 h-3 w-3" strokeWidth={1.5} />
+        <UserMinus className="mr-1 h-3 w-3" strokeWidth={1.5} />
       )}
       {member.status === 'confirmed'
         ? t.wishes.commitment.confirmed
@@ -347,12 +344,19 @@ export const MobileRosterCard = ({
             </SelectContent>
           </Select>
         ) : (
-          <Badge
-            variant="outline"
-            className={cn('h-7 min-w-0 px-2 text-[10px]', getRosterDecisionBadge(member.selectionStatus).className)}
-          >
-            {getRosterDecisionBadge(member.selectionStatus).label}
-          </Badge>
+          (() => {
+            const decisionBadge = getRosterDecisionBadge(member.selectionStatus);
+            const DecisionIcon = decisionBadge.icon;
+            return (
+              <Badge
+                variant="outline"
+                className={cn('h-7 min-w-0 px-2 text-[10px]', decisionBadge.className)}
+              >
+                <DecisionIcon className="mr-1 h-3 w-3" strokeWidth={1.5} />
+                {decisionBadge.label}
+              </Badge>
+            );
+          })()
         )}
       </div>
 

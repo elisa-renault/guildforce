@@ -12,7 +12,6 @@ import {
   getLocalizedSpecName,
   getSpecById,
   getRolesFromSpecs,
-  Role,
   wowClasses,
 } from '@/data/wowClasses';
 import { CosmicBackground } from '@/components/CosmicBackground';
@@ -25,13 +24,13 @@ import { RosterSelector, RosterEditDialog } from '@/components/roster';
 import { SeasonSelector, SeasonStateCallout, type PrepareSeasonInput } from '@/components/seasons/SeasonSelector';
 import { MemberWish, WishData, RosterFilters as RosterFiltersType, ValidationStatus } from '@/types/guild';
 import type { GuildSeason } from '@/types/seasons';
-import { Archive, Loader2, Pencil, Play, Plus, Sparkles, Settings, TableIcon, BarChart3, Download, Eye, Lock, Unlock, Clock, UserPlus, MoreVertical, RefreshCw, Check, ChevronDown, Shield, Heart, Swords, Crosshair, Columns3 } from 'lucide-react';
+import { Archive, Loader2, Pencil, Play, Plus, Sparkles, Settings, TableIcon, BarChart3, Download, Eye, Lock, Unlock, Clock, UserPlus, MoreVertical, RefreshCw, Columns3 } from 'lucide-react';
 import { exportWishesToCSV } from '@/lib/exportWishes';
 import { getGuildWishesPath } from '@/lib/guildSlug';
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
 import { CommitmentStatus } from '@/components/CommitmentToggle';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { formatDateTimeLocalized, interpolateMessage } from '@/i18n/format';
+import { formatDateTimeLocalized, formatLabelValue, interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import { resolveSpecOrder } from '@/lib/wishOrder';
 import { isWishEditingLocked, resolveWishLockState } from '@/lib/wishLock';
@@ -40,43 +39,27 @@ import { getSelectedValidatedMembers } from '@/lib/selectedValidatedMembers';
 import { getRosterSelectionErrorMessage } from '@/lib/rosterSelectionErrors';
 import { toneCalloutClass, toneTextClass } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import { WOW_CLASS_TO_BATTLENET_ID } from '@/data/battlenetClasses';
-import { Badge } from '@/components/ui/badge';
+import { resolveCurrentWowSeasonName } from '@/lib/wowSeasonName';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 // Max wishes = number of WoW classes
 const MAX_WISHES = wowClasses.length;
 const DEFAULT_ROSTER_TABLE_COLUMNS: RosterTableColumnId[] = [
   'status',
   'rosterDecision',
-  'currentAssignment',
   'wishesCount',
   'wish1',
   'wish2',
   'wish3',
 ];
-
-const specRoleStyles: Record<Role, string> = {
-  tank: 'text-tank',
-  healer: 'text-healer',
-  dps: 'text-dps',
-};
-
-const getSpecRoleIcon = (spec: NonNullable<ReturnType<typeof getSpecById>>) => {
-  if (spec.role === 'tank') return Shield;
-  if (spec.role === 'healer') return Heart;
-  return spec.range === 'ranged' ? Crosshair : Swords;
-};
 
 interface RosterData {
   id: string;
@@ -131,7 +114,6 @@ interface RosterSeasonTableRow {
   roster_cache_id: string | null;
   rank_index: number | null;
   season_status: string;
-  current_assignment: MemberWish['currentAssignment'] | null;
   outcome: MemberWish['seasonOutcome'] | null;
 }
 
@@ -140,22 +122,6 @@ interface RosterSeasonHistoryRow {
   event_type: string;
   actor_id: string | null;
   payload: Record<string, unknown> | null;
-}
-
-interface AssignmentCharacterOption {
-  id: string;
-  name: string;
-  realm: string;
-  realm_slug: string;
-  level: number;
-  is_main: boolean;
-}
-
-interface ActiveAssignmentCharacterRow {
-  roster_season_member_id: string;
-  character_id: string | null;
-  character_name_snapshot: string | null;
-  character_realm_snapshot: string | null;
 }
 
 const FR_REALM_DISPLAY_MAP: Record<string, string> = {
@@ -254,6 +220,7 @@ const RosterWishes = () => {
   const [activeTab, setActiveTab] = useState<'table' | 'selected' | 'analytics'>('table');
   const [rosterSortSummary, setRosterSortSummary] = useState('');
   const [visibleRosterColumns, setVisibleRosterColumns] = useState<RosterTableColumnId[]>(DEFAULT_ROSTER_TABLE_COLUMNS);
+  const [rosterColumnsCustomized, setRosterColumnsCustomized] = useState(false);
   const getErrorMessage = (error: unknown) => {
     if (error instanceof Error) return error.message;
     if (typeof error === 'object' && error) {
@@ -279,19 +246,6 @@ const RosterWishes = () => {
   const [externalClassId, setExternalClassId] = useState('');
   const [externalComment, setExternalComment] = useState('');
   const [savingExternalWish, setSavingExternalWish] = useState(false);
-  const [assignmentDialogOpen, setAssignmentDialogOpen] = useState(false);
-  const [assignmentMember, setAssignmentMember] = useState<MemberWish | null>(null);
-  const [assignmentClassId, setAssignmentClassId] = useState('');
-  const [assignmentSpecId, setAssignmentSpecId] = useState('');
-  const [assignmentDate, setAssignmentDate] = useState('');
-  const [assignmentComment, setAssignmentComment] = useState('');
-  const [assignmentClassOpen, setAssignmentClassOpen] = useState(false);
-  const [assignmentSpecOpen, setAssignmentSpecOpen] = useState(false);
-  const [assignmentCharacterOpen, setAssignmentCharacterOpen] = useState(false);
-  const [assignmentCharacterId, setAssignmentCharacterId] = useState<string | null>(null);
-  const [assignmentCharacters, setAssignmentCharacters] = useState<AssignmentCharacterOption[]>([]);
-  const [assignmentCharactersLoading, setAssignmentCharactersLoading] = useState(false);
-  const [savingAssignment, setSavingAssignment] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyMember, setHistoryMember] = useState<MemberWish | null>(null);
   const [historyRows, setHistoryRows] = useState<RosterSeasonHistoryRow[]>([]);
@@ -299,53 +253,6 @@ const RosterWishes = () => {
   const [syncingSeason, setSyncingSeason] = useState(false);
 
   const isMobile = useIsMobile();
-
-  useEffect(() => {
-    if (!assignmentDialogOpen || !assignmentMember || assignmentMember.isExternal || !assignmentClassId) {
-      setAssignmentCharacters([]);
-      setAssignmentCharactersLoading(false);
-      return;
-    }
-
-    const classId = WOW_CLASS_TO_BATTLENET_ID[assignmentClassId];
-    if (!classId) {
-      setAssignmentCharacters([]);
-      setAssignmentCharacterId(null);
-      return;
-    }
-
-    let cancelled = false;
-    setAssignmentCharactersLoading(true);
-
-    supabase
-      .from('wow_characters')
-      .select('id, name, realm, realm_slug, level, is_main')
-      .eq('user_id', assignmentMember.id)
-      .eq('class_id', classId)
-      .order('is_main', { ascending: false })
-      .order('level', { ascending: false })
-      .order('name', { ascending: true })
-      .then(({ data, error }) => {
-        if (cancelled) return;
-        if (error) {
-          setAssignmentCharacters([]);
-          setAssignmentCharacterId(null);
-          return;
-        }
-        const nextCharacters = (data || []) as AssignmentCharacterOption[];
-        setAssignmentCharacters(nextCharacters);
-        setAssignmentCharacterId((current) => (
-          current && nextCharacters.some((character) => character.id === current) ? current : null
-        ));
-      })
-      .finally(() => {
-        if (!cancelled) setAssignmentCharactersLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [assignmentClassId, assignmentDialogOpen, assignmentMember]);
 
   const toLocalInputValue = (value?: string | null) => {
     if (!value) return '';
@@ -385,13 +292,14 @@ const RosterWishes = () => {
 
   const fetchSeasons = async (foundGuildId = guildId, rosterId = selectedRosterId) => {
     if (!foundGuildId || !rosterId) return [];
-    const { data, error } = await supabase
+    const loadRosterSeasons = () => supabase
       .from('roster_wish_seasons')
       .select('*')
       .eq('guild_id', foundGuildId)
       .eq('roster_id', rosterId)
       .order('state', { ascending: true })
       .order('created_at', { ascending: false });
+    const { data, error } = await loadRosterSeasons();
 
     if (error && isSeasonSchemaUnavailable(error)) {
       setSeasonSupportMode('legacy');
@@ -399,13 +307,38 @@ const RosterWishes = () => {
       setSelectedSeasonId(null);
       return [];
     }
+    if (error) throw error;
 
-    const nextSeasons = (data || []) as GuildSeason[];
+    let nextSeasons = (data || []) as GuildSeason[];
     if (nextSeasons.length === 0) {
-      setSeasonSupportMode('legacy');
-      setSeasons([]);
-      setSelectedSeasonId(null);
-      return [];
+      if (canManageWishes && !isAdminReadOnly) {
+        const seasonName = await resolveCurrentWowSeasonName();
+        const { error: createError } = await supabase.rpc('prepare_roster_wish_season', {
+          p_roster_id: rosterId,
+          p_name: seasonName,
+          p_starts_at: null,
+          p_ends_at: null,
+          p_source_season_id: null,
+          p_activate: false,
+        });
+        if (createError && isSeasonSchemaUnavailable(createError)) {
+          setSeasonSupportMode('legacy');
+          setSeasons([]);
+          setSelectedSeasonId(null);
+          return [];
+        }
+        if (createError) throw createError;
+        const reloaded = await loadRosterSeasons();
+        if (reloaded.error) throw reloaded.error;
+        nextSeasons = (reloaded.data || []) as GuildSeason[];
+      }
+
+      if (nextSeasons.length === 0) {
+        setSeasonSupportMode('enabled');
+        setSeasons([]);
+        setSelectedSeasonId(null);
+        return [];
+      }
     }
 
     setSeasonSupportMode('enabled');
@@ -690,30 +623,6 @@ const RosterWishes = () => {
       const seasonTableByRosterCacheId = new Map(
         seasonTableList.filter((row) => !!row.roster_cache_id).map((row) => [row.roster_cache_id as string, row])
       );
-      const seasonMemberIds = seasonTableList.map((row) => row.season_member_id).filter(Boolean);
-      const { data: activeAssignmentCharacters } = seasonMemberIds.length > 0
-        ? await supabase
-          .from('roster_member_assignments')
-          .select('roster_season_member_id, character_id, character_name_snapshot, character_realm_snapshot')
-          .in('roster_season_member_id', seasonMemberIds)
-          .is('valid_to', null)
-        : { data: [] };
-      const assignmentCharacterBySeasonMemberId = new Map(
-        ((activeAssignmentCharacters || []) as ActiveAssignmentCharacterRow[])
-          .map((row) => [row.roster_season_member_id, row])
-      );
-      const getCurrentAssignment = (seasonRow?: RosterSeasonTableRow | null) => {
-        if (!seasonRow?.current_assignment) return null;
-        const assignmentCharacter = assignmentCharacterBySeasonMemberId.get(seasonRow.season_member_id);
-        if (!assignmentCharacter) return seasonRow.current_assignment;
-        return {
-          ...seasonRow.current_assignment,
-          character_id: assignmentCharacter.character_id,
-          character_name_snapshot: assignmentCharacter.character_name_snapshot,
-          character_realm_snapshot: assignmentCharacter.character_realm_snapshot,
-        };
-      };
-
       // Fetch validator profiles if there are any
       const validatorIds = [
         ...new Set([
@@ -764,7 +673,7 @@ const RosterWishes = () => {
           username: profile?.username || 'Unknown',
           mainCharacterName: getMainCharacterName(profile?.main_character_name),
           rankIndex: seasonRow?.rank_index ?? null,
-          status: intentByUserId.get(m.user_id) || m.status,
+          status: intentByUserId.get(m.user_id) || (seasonFilteringEnabled ? 'undecided' : m.status),
           wishes_locked: m.wishes_locked,
           wishes: memberWishes.sort((a, b) => a.choice_index - b.choice_index),
           selectionStatus: selection?.selection_status || 'undecided',
@@ -773,7 +682,6 @@ const RosterWishes = () => {
           selectionDecidedBy: selection?.decided_by || null,
           selectionDecidedAt: selection?.decided_at || null,
           selectionUpdatedAt: selection?.updated_at || null,
-          currentAssignment: getCurrentAssignment(seasonRow),
           seasonOutcome: seasonRow?.outcome || null,
         };
       });
@@ -813,7 +721,6 @@ const RosterWishes = () => {
             selectionDecidedBy: selection?.decided_by || null,
             selectionDecidedAt: selection?.decided_at || null,
             selectionUpdatedAt: selection?.updated_at || null,
-            currentAssignment: getCurrentAssignment(seasonRow),
             seasonOutcome: seasonRow?.outcome || null,
           }];
         });
@@ -856,7 +763,7 @@ const RosterWishes = () => {
   useEffect(() => {
     if (!guildId || !selectedRosterId || seasonSupportMode === 'legacy') return;
     fetchSeasons(guildId, selectedRosterId);
-  }, [guildId, selectedRosterId]);
+  }, [guildId, selectedRosterId, canManageWishes, isAdminReadOnly]);
 
   useEffect(() => {
     if (!lockDialogOpen) return;
@@ -878,7 +785,8 @@ const RosterWishes = () => {
   );
   const seasonSourceOptions = sortedSeasonOptions.filter((season) => season.id !== selectedSeasonId);
   const isSelectedSeasonActive = seasonSupportMode === 'legacy' || selectedSeason?.state === 'active';
-  const canMutateSelectedSeason = isSelectedSeasonActive && !isAdminReadOnly;
+  const canEditArchivedSeasonAsManager = canManageWishes && !isAdminReadOnly && selectedSeason?.state === 'archived';
+  const canMutateSelectedSeason = (isSelectedSeasonActive || canEditArchivedSeasonAsManager) && !isAdminReadOnly;
   const canManageSeasonActions = canManageWishes && !isAdminReadOnly && seasonSupportMode === 'enabled' && seasons.length > 0;
 
   const handlePrepareSeason = async (input: PrepareSeasonInput) => {
@@ -954,20 +862,6 @@ const RosterWishes = () => {
     }
   };
 
-  const toLocalDateInputValue = (value?: string | null) => {
-    const date = value ? new Date(value) : new Date();
-    if (Number.isNaN(date.getTime())) return '';
-    const pad = (num: number) => String(num).padStart(2, '0');
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-  };
-
-  const toIsoFromLocalDateInput = (value: string) => {
-    if (!value) return null;
-    const [year, month, day] = value.split('-').map(Number);
-    if ([year, month, day].some(n => Number.isNaN(n))) return null;
-    return new Date(year, month - 1, day, 0, 0, 0, 0).toISOString();
-  };
-
   const resetSeasonDialogForm = () => {
     setSeasonName('');
     setSeasonStartsAt('');
@@ -1019,6 +913,17 @@ const RosterWishes = () => {
     }
   };
 
+  const unarchiveSelectedSeason = async () => {
+    if (!selectedSeason) return;
+    if (!window.confirm(t.seasons.confirmUnarchive)) return;
+    setSeasonActionBusy('activate');
+    try {
+      await handleActivateSeason(selectedSeason.id);
+    } finally {
+      setSeasonActionBusy(null);
+    }
+  };
+
   const archiveSelectedSeason = async () => {
     if (!selectedSeason) return;
     if (!window.confirm(t.seasons.confirmArchive)) return;
@@ -1038,66 +943,6 @@ const RosterWishes = () => {
       setSeasonRenameDialogOpen(false);
     } finally {
       setSeasonActionBusy(null);
-    }
-  };
-
-  const openAssignmentDialog = (member: MemberWish) => {
-    if (!member.seasonMemberId) return;
-    const currentClassId = member.currentAssignment?.class_id || member.wishes.find(wish => wish.class_id)?.class_id || '';
-    const currentSpecId = member.currentAssignment?.spec_id
-      || member.wishes.find(wish => wish.class_id === currentClassId)?.spec_ids?.[0]
-      || '';
-
-    setAssignmentMember(member);
-    setAssignmentClassId(currentClassId);
-    setAssignmentSpecId(currentSpecId);
-    setAssignmentDate(toLocalDateInputValue(member.currentAssignment?.valid_from));
-    setAssignmentComment(member.currentAssignment?.manager_comment || '');
-    setAssignmentCharacterId(member.currentAssignment?.character_id || null);
-    setAssignmentClassOpen(false);
-    setAssignmentSpecOpen(false);
-    setAssignmentCharacterOpen(false);
-    setAssignmentDialogOpen(true);
-
-    if (!member.currentAssignment?.character_id) {
-      void supabase
-        .from('roster_member_assignments')
-        .select('character_id')
-        .eq('roster_season_member_id', member.seasonMemberId)
-        .is('valid_to', null)
-        .maybeSingle()
-        .then(({ data }) => {
-          setAssignmentCharacterId(data?.character_id || null);
-        });
-    }
-  };
-
-  const saveAssignment = async () => {
-    if (!assignmentMember?.seasonMemberId || !assignmentClassId) return;
-    const selectedSpec = assignmentSpecId ? getSpecById(assignmentSpecId) : null;
-    setSavingAssignment(true);
-    try {
-      const { error } = await supabase.rpc('set_roster_member_assignment', {
-        p_roster_season_member_id: assignmentMember.seasonMemberId,
-        p_class_id: assignmentClassId,
-        p_spec_id: assignmentSpecId || null,
-        p_role: selectedSpec?.role || null,
-        p_source: 'manager_decision',
-        p_choice_index: null,
-        p_reason_code: null,
-        p_manager_comment: assignmentComment.trim() || null,
-        p_valid_from: toIsoFromLocalDateInput(assignmentDate) || new Date().toISOString(),
-        p_character_id: assignmentCharacterId || null,
-      });
-      if (error) throw error;
-      toast({ title: t.wishes.memberDetail.assignmentDialog.updated });
-      setAssignmentDialogOpen(false);
-      setAssignmentMember(null);
-      await fetchWishes();
-    } catch (error: unknown) {
-      toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
-    } finally {
-      setSavingAssignment(false);
     }
   };
 
@@ -1133,10 +978,12 @@ const RosterWishes = () => {
       if (error) throw error;
       const result = (data || {}) as Record<string, unknown>;
       toast({
-        title: language === 'fr' ? 'Synchronisation appliquée' : 'Sync delta applied',
-        description: language === 'fr'
-          ? `${result.added_or_refreshed_count ?? 0} ajoutés/actualisés, ${result.left_roster_count ?? 0} sortis roster, ${result.left_guild_count ?? 0} sortis guilde`
-          : `${result.added_or_refreshed_count ?? 0} added/refreshed, ${result.left_roster_count ?? 0} left roster, ${result.left_guild_count ?? 0} left guild`,
+        title: t.wishes.memberDetail.historyEvent.syncDeltaApplied,
+        description: interpolateMessage(t.wishes.memberDetail.syncDeltaSummary, {
+          added: result.added_or_refreshed_count ?? 0,
+          leftRoster: result.left_roster_count ?? 0,
+          leftGuild: result.left_guild_count ?? 0,
+        }),
       });
       await fetchWishes();
     } catch (error: unknown) {
@@ -1147,17 +994,15 @@ const RosterWishes = () => {
   };
 
   const getHistoryEventLabel = (eventType: string) => {
-    const labels: Record<string, { fr: string; en: string }> = {
-      season_member_snapshot: { fr: 'Snapshot saison', en: 'Season snapshot' },
-      assignment_changed: { fr: 'Affectation modifiée', en: 'Assignment changed' },
-      roster_assignments_seeded_from_wishes: { fr: 'Affectation initialisée depuis les vœux', en: 'Assignment seeded from wishes' },
-      roster_season_materialized: { fr: 'Feuille matérialisée', en: 'Season sheet materialized' },
-      external_member_matched: { fr: 'Externe rattaché', en: 'External member matched' },
-      member_left_roster: { fr: 'Sorti du roster', en: 'Left roster' },
-      member_left_guild: { fr: 'Sorti de guilde', en: 'Left guild' },
-      roster_season_sync_delta_applied: { fr: 'Delta de sync appliqué', en: 'Sync delta applied' },
+    const labels: Record<string, string> = {
+      season_member_snapshot: t.wishes.memberDetail.historyEvent.snapshot,
+      roster_season_materialized: t.wishes.memberDetail.historyEvent.materialized,
+      external_member_matched: t.wishes.memberDetail.historyEvent.externalMatched,
+      member_left_roster: t.wishes.memberDetail.historyEvent.memberLeftRoster,
+      member_left_guild: t.wishes.memberDetail.historyEvent.memberLeftGuild,
+      roster_season_sync_delta_applied: t.wishes.memberDetail.historyEvent.syncDeltaApplied,
     };
-    return labels[eventType]?.[language === 'fr' ? 'fr' : 'en'] || eventType;
+    return labels[eventType] || t.wishes.memberDetail.historyEvent.fallback;
   };
 
   const formatHistoryPayload = (payload: Record<string, unknown> | null) => {
@@ -1174,19 +1019,24 @@ const RosterWishes = () => {
       parts.push(payload.manager_comment.trim());
     }
     if (typeof payload.left_roster_at === 'string') {
-      parts.push(`${language === 'fr' ? 'Sortie roster' : 'Left roster'}: ${formatDateTimeLocalized(payload.left_roster_at, language, { dateStyle: 'medium' })}`);
+      parts.push(formatLabelValue(
+        t.wishes.memberDetail.historyEvent.memberLeftRoster,
+        formatDateTimeLocalized(payload.left_roster_at, language, { dateStyle: 'medium' }),
+        language,
+      ));
     }
     if (typeof payload.left_guild_at === 'string') {
-      parts.push(`${language === 'fr' ? 'Sortie guilde' : 'Left guild'}: ${formatDateTimeLocalized(payload.left_guild_at, language, { dateStyle: 'medium' })}`);
-    }
-    if (typeof payload.valid_from === 'string') {
-      parts.push(`${language === 'fr' ? 'Depuis' : 'From'}: ${formatDateTimeLocalized(payload.valid_from, language, { dateStyle: 'medium' })}`);
+      parts.push(formatLabelValue(
+        t.wishes.memberDetail.historyEvent.memberLeftGuild,
+        formatDateTimeLocalized(payload.left_guild_at, language, { dateStyle: 'medium' }),
+        language,
+      ));
     }
     return parts.length > 0 ? parts.join(' · ') : null;
   };
 
   const startEditing = (member: MemberWish) => {
-    if (!isSelectedSeasonActive) {
+    if (!isSelectedSeasonActive && !canEditArchivedSeasonAsManager) {
       toast({ title: t.seasons.archived, description: selectedSeason?.state === 'draft' ? t.seasons.draftHint : t.seasons.archivedHint, variant: 'destructive' });
       return;
     }
@@ -1321,7 +1171,7 @@ const RosterWishes = () => {
   };
 
   const handleSaveExternalWish = async () => {
-    if (!guildId || !selectedRosterId || !canManageWishes || !isSelectedSeasonActive) return;
+    if (!guildId || !selectedRosterId || !canManageWishes || !canMutateSelectedSeason) return;
     if (!externalCandidateId || !externalClassId) return;
 
     setSavingExternalWish(true);
@@ -1389,7 +1239,7 @@ const RosterWishes = () => {
 
 
   const handleSelectionStatusChange = async (memberId: string, status: MemberWish['selectionStatus']) => {
-    if (!selectedRosterId || !user || !canManageWishes || !isSelectedSeasonActive) return;
+    if (!selectedRosterId || !user || !canManageWishes || !canMutateSelectedSeason) return;
     if (!status) return;
 
     const currentMember = members.find((m) => m.id === memberId);
@@ -1514,7 +1364,7 @@ const RosterWishes = () => {
   );
 
   const saveEditing = async () => {
-    if (!user || !guildId || !editingUserId || !selectedRosterId || !isSelectedSeasonActive) return;
+    if (!user || !guildId || !editingUserId || !selectedRosterId || !canMutateSelectedSeason) return;
 
     const currentRoster = rosters.find(r => r.id === selectedRosterId);
     const currentMember = members.find(m => m.id === editingUserId);
@@ -1556,7 +1406,8 @@ const RosterWishes = () => {
       const currentWishSnapshot = getMemberWishSnapshot(currentMember);
       const nextWishSnapshot = normalizeWishSnapshot(editWishes);
       const hasWishChanges = !wishSnapshotsEqual(currentWishSnapshot, nextWishSnapshot);
-      const hasStatusChanges = currentMember.status !== dbStatus;
+      const currentCommitmentStatus = currentMember.status === 'potential' ? 'undecided' : currentMember.status;
+      const hasStatusChanges = currentCommitmentStatus !== editStatus;
 
       if (!hasWishChanges && !hasStatusChanges) {
         setEditingUserId(null);
@@ -1627,7 +1478,7 @@ const RosterWishes = () => {
 
   // Validate a wish (GM or users with manage_wishes permission)
   const validateWish = async (userId: string, choiceIndex: number, status: ValidationStatus) => {
-    if (!user || !guildId || !selectedRosterId || !canManageWishes || !isSelectedSeasonActive) return;
+    if (!user || !guildId || !selectedRosterId || !canManageWishes || !canMutateSelectedSeason) return;
 
     // Optimistic UI update so the badge changes instantly
     setMembers((prev) =>
@@ -1802,6 +1653,13 @@ const RosterWishes = () => {
     () => getSelectedValidatedMembers(members),
     [members],
   );
+  const defaultVisibleRosterColumns = useMemo(() => DEFAULT_ROSTER_TABLE_COLUMNS, []);
+
+  useEffect(() => {
+    if (!rosterColumnsCustomized) {
+      setVisibleRosterColumns(defaultVisibleRosterColumns);
+    }
+  }, [defaultVisibleRosterColumns, rosterColumnsCustomized]);
 
   // Calculate stats
 
@@ -1837,20 +1695,20 @@ const RosterWishes = () => {
       ? formatDateTimeLocalized(rosterLockState.scheduledAt, language, { dateStyle: 'medium', timeStyle: 'short' })
       : null;
   const rosterLockLabel = rosterLockState.isLocked
-    ? `${t.wishes.lockedTitle}: ${t.wishes.lockedRosterDesc}`
+    ? formatLabelValue(t.wishes.lockedTitle, t.wishes.lockedRosterDesc, language)
     : rosterScheduledLabel
       ? interpolateMessage(t.wishes.lockScheduledDesc, { date: rosterScheduledLabel })
       : null;
   const rosterColumnOptions: { id: RosterTableColumnId; label: string }[] = [
     { id: 'status', label: t.dashboard.rosterTable.status },
     { id: 'rosterDecision', label: t.dashboard.rosterTable.decision },
-    { id: 'currentAssignment', label: t.dashboard.rosterTable.assignment },
     { id: 'wishesCount', label: t.dashboard.rosterTable.total },
     { id: 'wish1', label: t.dashboard.rosterTable.choice1 },
     { id: 'wish2', label: t.dashboard.rosterTable.choice2 },
     { id: 'wish3', label: t.dashboard.rosterTable.choice3 },
   ];
   const toggleRosterColumn = (columnId: RosterTableColumnId, nextChecked: boolean) => {
+    setRosterColumnsCustomized(true);
     setVisibleRosterColumns((current) => {
       if (nextChecked) {
         return current.includes(columnId) ? current : [...current, columnId];
@@ -1880,7 +1738,10 @@ const RosterWishes = () => {
         ))}
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onClick={() => setVisibleRosterColumns(DEFAULT_ROSTER_TABLE_COLUMNS)}
+          onClick={() => {
+            setRosterColumnsCustomized(false);
+            setVisibleRosterColumns(defaultVisibleRosterColumns);
+          }}
           className="cursor-pointer"
         >
           <RefreshCw className="mr-2 h-4 w-4" />
@@ -1905,7 +1766,7 @@ const RosterWishes = () => {
         toast({ title: t.dashboard.exportSuccess });
       },
     },
-    ...(canManageWishes && !isAdminReadOnly && selectedRosterId && isSelectedSeasonActive
+    ...(canManageWishes && !isAdminReadOnly && selectedRosterId && canMutateSelectedSeason
       ? [{
           key: 'add-external',
           label: t.dashboard.externalMember.addButton,
@@ -1914,10 +1775,10 @@ const RosterWishes = () => {
           onClick: () => setExternalDialogOpen(true),
         }]
       : []),
-    ...(canManageWishes && !isAdminReadOnly && selectedRosterId && isSelectedSeasonActive
+    ...(canManageWishes && !isAdminReadOnly && selectedRosterId && canMutateSelectedSeason
       ? [{
           key: 'lock',
-          label: language === 'fr' ? `Verrouillage des vo${'eux'}` : t.rosters.wishesLockTitle,
+          label: t.rosters.wishesLockTitle,
           icon: Lock,
           disabled: false,
           onClick: () => setLockDialogOpen(true),
@@ -1926,7 +1787,7 @@ const RosterWishes = () => {
     ...(canManageWishes && !isAdminReadOnly && selectedRosterId && selectedSeasonId && selectedSeason?.state !== 'archived'
       ? [{
           key: 'sync-delta',
-          label: language === 'fr' ? 'Synchroniser la saison' : 'Sync season',
+          label: t.wishes.memberDetail.historyEvent.syncDeltaApplied,
           icon: RefreshCw,
           disabled: syncingSeason,
           onClick: applySyncDelta,
@@ -1943,10 +1804,6 @@ const RosterWishes = () => {
       : []),
   ];
   const hasToolbarActions = canManageSeasonActions || rosterToolbarActions.length > 0;
-  const assignmentClass = assignmentClassId ? getClassById(assignmentClassId) : null;
-  const assignmentSpecs = assignmentClass?.specs || [];
-  const assignmentSpec = assignmentSpecId ? getSpecById(assignmentSpecId) : null;
-  const assignmentCharacter = assignmentCharacters.find((character) => character.id === assignmentCharacterId) || null;
   const renderToolbarActionsMenu = () => {
     if (!hasToolbarActions) return null;
 
@@ -1986,6 +1843,16 @@ const RosterWishes = () => {
                 >
                   <Play className="mr-2 h-4 w-4" />
                   {t.seasons.activateDraft}
+                </DropdownMenuItem>
+              )}
+              {selectedSeason?.state === 'archived' && (
+                <DropdownMenuItem
+                  onClick={unarchiveSelectedSeason}
+                  disabled={seasonActionBusy === 'activate'}
+                  className="cursor-pointer"
+                >
+                  <Play className="mr-2 h-4 w-4" />
+                  {t.seasons.unarchiveSeason}
                 </DropdownMenuItem>
               )}
               {selectedSeason?.state !== 'archived' && (
@@ -2077,7 +1944,7 @@ const RosterWishes = () => {
                     const query = params.toString();
                     navigate(`${getGuildWishesPath(guild.region, guild.server, guild.name)}${query ? `?${query}` : ''}`);
                   }}
-                  disabled={!isSelectedSeasonActive}
+                  disabled={!canMutateSelectedSeason}
                   icon={<Sparkles className="h-3.5 w-3.5" strokeWidth={1.5} />}
                   className="h-8 flex-1 justify-center px-3 text-xs"
                 >
@@ -2121,7 +1988,7 @@ const RosterWishes = () => {
                     const query = params.toString();
                     navigate(`${getGuildWishesPath(guild.region, guild.server, guild.name)}${query ? `?${query}` : ''}`);
                   }}
-                  disabled={!isSelectedSeasonActive}
+                  disabled={!canMutateSelectedSeason}
                   icon={<Sparkles className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />}
                   className="h-7 w-7 md:h-8 md:w-auto p-0 md:px-3"
                 >
@@ -2194,7 +2061,7 @@ const RosterWishes = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="table" className="space-y-4">
+          <TabsContent value="table" className="space-y-2 p-1 md:p-2">
             <RosterFilters
               filters={filters}
               onFiltersChange={setFilters}
@@ -2214,9 +2081,8 @@ const RosterWishes = () => {
               saving={saving}
               maxWishes={MAX_WISHES}
               canManageWishes={canManageWishes && canMutateSelectedSeason}
-              canManageAssignments={canManageWishes && !isAdminReadOnly}
               isRosterLocked={rosterLockState.isLocked}
-              isEditingLocked={isEditingLocked || !isSelectedSeasonActive}
+              isEditingLocked={isEditingLocked || !canMutateSelectedSeason}
               onStartEditing={startEditing}
               onUpdateEditWish={updateEditWish}
               onEditStatusChange={setEditStatus}
@@ -2231,9 +2097,7 @@ const RosterWishes = () => {
               deletingMemberId={deletingMemberId}
               onSelectionStatusChange={canManageWishes && canMutateSelectedSeason ? handleSelectionStatusChange : undefined}
               updatingSelectionMemberId={updatingSelectionMemberId}
-              onEditAssignment={canManageWishes && !isAdminReadOnly ? openAssignmentDialog : undefined}
               onViewHistory={canManageWishes && !isAdminReadOnly ? openHistoryDrawer : undefined}
-              updatingAssignmentMemberId={savingAssignment ? assignmentMember?.id || null : null}
               onSortSummaryChange={setRosterSortSummary}
               visibleColumns={visibleRosterColumns}
             />
@@ -2526,258 +2390,10 @@ const RosterWishes = () => {
         </Dialog>
       )}
 
-      <Dialog modal={false} open={assignmentDialogOpen} onOpenChange={setAssignmentDialogOpen}>
-        <DialogContent className="max-w-md border-border bg-card">
-          <DialogHeader>
-            <DialogTitle>{language === 'fr' ? 'Modifier affectation' : 'Edit assignment'}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            {assignmentMember && (
-              <div className="rounded-md border border-border/40 bg-background/40 px-3 py-2">
-                <div className="text-sm font-medium text-foreground">{assignmentMember.username}</div>
-                {assignmentMember.mainCharacterName && (
-                  <div className="text-xs text-muted-foreground">{assignmentMember.mainCharacterName}</div>
-                )}
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label>{language === 'fr' ? 'Classe' : 'Class'}</Label>
-              <Popover open={assignmentClassOpen} onOpenChange={setAssignmentClassOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className={cn(
-                      'h-11 w-full justify-between gap-2 text-sm font-medium',
-                      assignmentClass
-                        ? 'border-transparent'
-                        : 'border-dashed border-muted-foreground/40 bg-transparent text-muted-foreground hover:bg-muted/20'
-                    )}
-                    style={assignmentClass ? {
-                      backgroundColor: `hsl(var(--class-${assignmentClass.id}) / 0.2)`,
-                      color: `hsl(var(--class-${assignmentClass.id}))`,
-                    } : undefined}
-                  >
-                    <span className="truncate">
-                      {assignmentClass ? getLocalizedClassName(assignmentClass.id, language) : (language === 'fr' ? 'Choisir une classe' : 'Select class')}
-                    </span>
-                    <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  className="max-h-[min(280px,var(--radix-popover-content-available-height))] w-56 overflow-y-auto overscroll-contain border-border bg-card p-1.5"
-                  align="start"
-                  onWheel={(event) => event.stopPropagation()}
-                >
-                  <div className="flex flex-col gap-0.5">
-                    {wowClasses.map((wowClass) => {
-                      const isSelected = assignmentClassId === wowClass.id;
-                      return (
-                        <button
-                          key={wowClass.id}
-                          type="button"
-                          onClick={() => {
-                            setAssignmentClassId(wowClass.id);
-                            setAssignmentSpecId(wowClass.specs[0]?.id || '');
-                            setAssignmentCharacterId(null);
-                            setAssignmentClassOpen(false);
-                          }}
-                          className={cn(
-                            'flex items-center gap-2 rounded px-2 py-1.5 text-left text-xs transition-colors',
-                            isSelected ? 'bg-primary/20' : 'hover:bg-primary/10'
-                          )}
-                          style={{ color: `hsl(var(--class-${wowClass.id}))` }}
-                        >
-                          {isSelected && <Check className="h-3 w-3 shrink-0" />}
-                          <span className="truncate">{getLocalizedClassName(wowClass.id, language)}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            <div className="space-y-2">
-              <Label>{language === 'fr' ? 'Spé principale' : 'Main spec'}</Label>
-              {assignmentClass ? (
-                <Popover open={assignmentSpecOpen} onOpenChange={setAssignmentSpecOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className={cn(
-                        'h-10 w-full justify-between gap-2 bg-background/50 text-sm hover:bg-muted/50',
-                        assignmentSpec ? 'border-border/60' : 'border-dashed border-muted-foreground/30 text-muted-foreground'
-                      )}
-                    >
-                      {assignmentSpec ? (
-                        <span className="flex min-w-0 items-center gap-2">
-                          {(() => {
-                            const Icon = getSpecRoleIcon(assignmentSpec);
-                            return <Icon className={cn('h-4 w-4 shrink-0', specRoleStyles[assignmentSpec.role])} />;
-                          })()}
-                          <span className="truncate">{getLocalizedSpecName(assignmentSpec.id, language)}</span>
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">{language === 'fr' ? 'Choisir une spé' : 'Select spec'}</span>
-                      )}
-                      <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    className="max-h-[min(280px,var(--radix-popover-content-available-height))] w-60 overflow-y-auto overscroll-contain border-border bg-card p-1.5"
-                    align="start"
-                    onWheel={(event) => event.stopPropagation()}
-                  >
-                    <div className="space-y-0.5">
-                      {assignmentSpecs.map((spec) => {
-                        const isSelected = assignmentSpecId === spec.id;
-                        const Icon = getSpecRoleIcon(spec);
-                        return (
-                          <button
-                            key={spec.id}
-                            type="button"
-                            onClick={() => {
-                              setAssignmentSpecId(spec.id);
-                              setAssignmentSpecOpen(false);
-                            }}
-                            className={cn(
-                              'flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs transition-colors',
-                              isSelected ? 'bg-primary/20' : 'hover:bg-primary/10'
-                            )}
-                          >
-                            <Icon className={cn('h-3.5 w-3.5 shrink-0', specRoleStyles[spec.role])} />
-                            <span className="flex-1 truncate">{getLocalizedSpecName(spec.id, language)}</span>
-                            {isSelected && <Check className="h-3 w-3 shrink-0 text-primary" />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              ) : (
-                <div className="flex h-10 items-center justify-center gap-2 rounded-md border border-dashed border-muted-foreground/20 bg-transparent">
-                  <Shield className="h-4 w-4 text-muted-foreground/20" />
-                  <Heart className="h-4 w-4 text-muted-foreground/20" />
-                  <Swords className="h-4 w-4 text-muted-foreground/20" />
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label>{language === 'fr' ? 'Personnage assigné (optionnel)' : 'Assigned character (optional)'}</Label>
-              <Popover open={assignmentCharacterOpen} onOpenChange={setAssignmentCharacterOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={!assignmentClassId || assignmentCharactersLoading}
-                    className={cn(
-                      'h-10 w-full justify-between gap-2 bg-background/50 text-sm hover:bg-muted/50',
-                      assignmentCharacter ? 'border-border/60' : 'border-dashed border-muted-foreground/30 text-muted-foreground'
-                    )}
-                  >
-                    <span className="min-w-0 truncate">
-                      {assignmentCharactersLoading
-                        ? (language === 'fr' ? 'Chargement...' : 'Loading...')
-                        : assignmentCharacter
-                          ? `${assignmentCharacter.name} - ${assignmentCharacter.realm}`
-                          : assignmentCharacters.length === 0
-                            ? (language === 'fr' ? 'Aucun personnage de cette classe' : 'No character for this class')
-                            : (language === 'fr' ? 'Aucun personnage sélectionné' : 'No character selected')}
-                    </span>
-                    <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  className="max-h-[min(280px,var(--radix-popover-content-available-height))] w-72 overflow-y-auto overscroll-contain border-border bg-card p-1.5"
-                  align="start"
-                  onWheel={(event) => event.stopPropagation()}
-                >
-                  <div className="flex flex-col gap-0.5">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setAssignmentCharacterId(null);
-                        setAssignmentCharacterOpen(false);
-                      }}
-                      className={cn(
-                        'flex items-center gap-2 rounded px-2 py-1.5 text-left text-xs transition-colors',
-                        !assignmentCharacterId ? 'bg-primary/20' : 'hover:bg-primary/10'
-                      )}
-                    >
-                      {!assignmentCharacterId && <Check className="h-3 w-3 shrink-0 text-primary" />}
-                      <span className="truncate">{language === 'fr' ? 'Aucun personnage' : 'No character'}</span>
-                    </button>
-                    {assignmentCharacters.map((character) => {
-                      const isSelected = assignmentCharacterId === character.id;
-                      return (
-                        <button
-                          key={character.id}
-                          type="button"
-                          onClick={() => {
-                            setAssignmentCharacterId(character.id);
-                            setAssignmentCharacterOpen(false);
-                          }}
-                          className={cn(
-                            'flex items-center gap-2 rounded px-2 py-1.5 text-left text-xs transition-colors',
-                            isSelected ? 'bg-primary/20' : 'hover:bg-primary/10'
-                          )}
-                        >
-                          {isSelected && <Check className="h-3 w-3 shrink-0 text-primary" />}
-                          <span className="min-w-0 flex-1 truncate">{character.name} - {character.realm}</span>
-                          {character.is_main && (
-                            <Badge variant="outline" className="h-5 shrink-0 px-1.5 text-[10px]">
-                              {language === 'fr' ? 'Main' : 'Main'}
-                            </Badge>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="assignment-date">{language === 'fr' ? 'Date effective' : 'Effective date'}</Label>
-              <Input
-                id="assignment-date"
-                type="date"
-                value={assignmentDate}
-                onChange={(event) => setAssignmentDate(event.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="assignment-comment">{language === 'fr' ? 'Commentaire manager' : 'Manager comment'}</Label>
-              <Textarea
-                id="assignment-comment"
-                value={assignmentComment}
-                onChange={(event) => setAssignmentComment(event.target.value)}
-                placeholder={language === 'fr' ? 'Optionnel' : 'Optional'}
-                rows={3}
-              />
-            </div>
-
-            <div className="flex justify-end gap-2">
-              <CosmicButton variant="outline" onClick={() => setAssignmentDialogOpen(false)}>
-                {t.common.cancel}
-              </CosmicButton>
-              <CosmicButton onClick={saveAssignment} loading={savingAssignment} disabled={!assignmentClassId || !assignmentDate}>
-                {t.common.save}
-              </CosmicButton>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
       <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>
         <SheetContent side="right" className="w-full border-border bg-background/95 sm:max-w-xl">
           <SheetHeader>
-            <SheetTitle>{language === 'fr' ? 'Historique' : 'History'}</SheetTitle>
+            <SheetTitle>{t.wishes.memberDetail.history}</SheetTitle>
           </SheetHeader>
           <div className="mt-6 space-y-4">
             {historyMember && (
@@ -2792,11 +2408,11 @@ const RosterWishes = () => {
             {historyLoading ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                {language === 'fr' ? 'Chargement...' : 'Loading...'}
+                {t.common.loading}
               </div>
             ) : historyRows.length === 0 ? (
               <div className="text-sm text-muted-foreground">
-                {language === 'fr' ? 'Aucun historique disponible.' : 'No history available.'}
+                {t.wishes.memberDetail.historyEmpty}
               </div>
             ) : (
               <div className="space-y-3">

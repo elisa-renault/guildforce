@@ -23,22 +23,6 @@ export interface WishChoice {
   validated_by_username?: string | null;
 }
 
-export interface CurrentRosterAssignment {
-  id: string;
-  class_id: string;
-  spec_id: string | null;
-  role: string | null;
-  source: 'wish' | 'manager_decision' | 'recruitment' | 'change_request' | 'raid_need' | string;
-  choice_index: number | null;
-  reason_code: RosterSelectionReasonCode | null;
-  manager_comment: string | null;
-  valid_from: string;
-  approved_by: string | null;
-  character_id?: string | null;
-  character_name_snapshot?: string | null;
-  character_realm_snapshot?: string | null;
-}
-
 export interface RosterSeasonOutcome {
   first_choice_granted?: boolean;
   granted_choice_index?: number | null;
@@ -73,7 +57,6 @@ export interface MemberWish {
   selectionDecidedBy?: string | null;
   selectionDecidedAt?: string | null;
   selectionUpdatedAt?: string | null;
-  currentAssignment?: CurrentRosterAssignment | null;
   seasonOutcome?: RosterSeasonOutcome | null;
 }
 

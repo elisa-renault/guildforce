@@ -58,6 +58,7 @@ import {
 import { toast } from 'sonner';
 import { interpolateMessage } from '@/i18n/format';
 import { toSlug } from '@/lib/guildSlug';
+import { cn } from '@/lib/utils';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 
 interface Guild {

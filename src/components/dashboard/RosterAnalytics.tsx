@@ -157,7 +157,7 @@ type RoleFilter = 'all' | 'tank' | 'healer' | 'dps';
 type RangeFilter = 'all' | 'melee' | 'ranged';
 type ValidationFilter = 'all' | 'pending' | 'approved' | 'rejected';
 type WishScopeFilter = 'first_approved' | '1' | '2' | '3' | '4' | '5' | '6' | '13';
-type CompositionView = 'wished' | 'rosterized' | 'effective';
+type CompositionView = 'wished' | 'rosterized';
 type OutcomeFilter = 'all' | 'first_choice' | 'changed' | 'joined' | 'left_roster' | 'left_guild';
 
 export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
@@ -255,17 +255,9 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     if (compositionView === 'wished') return members;
 
     return members.flatMap((member) => {
-      const assignment = member.currentAssignment;
       const fallbackWish = getFirstApprovedWish(member) || member.wishes.find(wish => wish.class_id);
-      const classId = compositionView === 'effective'
-        ? assignment?.class_id
-        : assignment?.class_id || fallbackWish?.class_id;
-      const specId = compositionView === 'effective'
-        ? assignment?.spec_id
-        : assignment?.spec_id || fallbackWish?.spec_ids?.[0];
-
-      if (!classId) return [];
-      if (compositionView === 'rosterized' && !['selected', 'bench'].includes(member.selectionStatus || 'undecided')) {
+      if (!fallbackWish?.class_id) return [];
+      if (!['selected', 'bench'].includes(member.selectionStatus || 'undecided')) {
         return [];
       }
 
@@ -273,8 +265,8 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
         ...member,
         wishes: [{
           choice_index: 1,
-          class_id: classId,
-          spec_ids: specId ? [specId] : [],
+          class_id: fallbackWish.class_id,
+          spec_ids: fallbackWish.spec_ids?.[0] ? [fallbackWish.spec_ids[0]] : [],
           comment: null,
           validation_status: 'approved' as const,
           validated_by: null,
@@ -742,9 +734,6 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
               </SelectItem>
               <SelectItem value="rosterized" className="text-xs">
                 {language === 'fr' ? 'Compo rosterisée' : 'Rostered comp'}
-              </SelectItem>
-              <SelectItem value="effective" className="text-xs">
-                {language === 'fr' ? 'Compo effective' : 'Effective comp'}
               </SelectItem>
             </SelectContent>
           </Select>

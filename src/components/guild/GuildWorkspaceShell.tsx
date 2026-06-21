@@ -64,7 +64,8 @@ interface GuildWorkspaceNavItem {
   show: boolean;
 }
 
-const DESKTOP_NAV_HEIGHT = 'calc(3.5rem + var(--global-nav-extra-offset,0px))';
+const DESKTOP_NAV_HEIGHT = 'calc(3.5rem + var(--global-nav-extra-offset, 0px))';
+const WORKSPACE_VIEWPORT_HEIGHT = 'calc(100dvh - 3.5rem - var(--global-nav-extra-offset, 0px))';
 
 const normalizeTab = (tab: GuildWorkspaceTab): GuildWorkspaceNavItem['id'] => {
   if (tab === 'dashboard') return 'overview';
@@ -290,7 +291,7 @@ export const GuildWorkspaceShell = ({
   );
 
   const collapsedRail = (
-    <div className="sticky flex h-[calc(100dvh-3.5rem-var(--global-nav-extra-offset,0px))] flex-col items-center gap-3 px-2 py-3" style={{ top: DESKTOP_NAV_HEIGHT }}>
+    <div className="flex h-full min-h-0 flex-col items-center gap-3 px-2 py-3">
       <Tooltip>
         <TooltipTrigger asChild>
           <button
@@ -381,19 +382,24 @@ export const GuildWorkspaceShell = ({
     >
       <CosmicBackground />
 
-      <div className="relative z-10 min-h-[calc(100dvh-3.5rem-var(--global-nav-extra-offset,0px))] lg:grid lg:grid-cols-[var(--guild-sidebar-width)_minmax(0,1fr)]">
-        <aside className="hidden border-r border-border/35 bg-background/88 lg:block">
-          {sidebarCollapsed ? (
-            collapsedRail
-          ) : (
-            <div className="sticky flex h-[calc(100dvh-3.5rem-var(--global-nav-extra-offset,0px))] flex-col gap-2.5 p-2.5" style={{ top: DESKTOP_NAV_HEIGHT }}>
-              {expandedIdentity}
-              <div className="min-h-0 flex-1 overflow-y-auto px-1">
-                {expandedNavigation}
+      <div className="relative z-10 lg:grid lg:grid-cols-[var(--guild-sidebar-width)_minmax(0,1fr)]" style={{ minHeight: WORKSPACE_VIEWPORT_HEIGHT }}>
+        <aside className="hidden lg:block" aria-label={guild.name}>
+          <div
+            className="fixed bottom-0 left-0 z-20 flex min-h-0 flex-col border-r border-border/35 bg-background/88"
+            style={{ top: DESKTOP_NAV_HEIGHT, width: 'var(--guild-sidebar-width)' }}
+          >
+            {sidebarCollapsed ? (
+              collapsedRail
+            ) : (
+              <div className="flex h-full min-h-0 flex-col gap-2.5 p-2.5">
+                {expandedIdentity}
+                <div className="min-h-0 flex-1 overflow-y-auto px-1">
+                  {expandedNavigation}
+                </div>
+                {expandedCollapseControl}
               </div>
-              {expandedCollapseControl}
-            </div>
-          )}
+            )}
+          </div>
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">

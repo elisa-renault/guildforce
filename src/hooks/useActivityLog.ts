@@ -8,6 +8,7 @@ export type ActionType =
   | 'wish_created'
   | 'wish_updated'
   | 'wish_deleted'
+  | 'roster_selection_changed'
   | 'wish_season_drafted'
   | 'member_joined'
   | 'member_removed'
@@ -39,6 +40,7 @@ export interface ActivityLog {
   action_details: Record<string, unknown>;
   target_user_id: string | null;
   roster_id: string | null;
+  season_id: string | null;
   created_at: string;
   // Joined data
   user_profile?: {
@@ -104,6 +106,7 @@ export const useActivityLog = ({ guildId, limit = 50, actionTypes, page = 1 }: U
           action_details,
           target_user_id,
           roster_id,
+          season_id,
           created_at
         `)
         .eq('guild_id', guildId)

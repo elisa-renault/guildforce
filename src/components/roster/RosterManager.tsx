@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Plus, Pencil, Trash2, Users, Crown } from 'lucide-react';
 import { RosterAccessEditor } from './RosterAccessEditor';
+import { resolveCurrentWowSeasonName } from '@/lib/wowSeasonName';
 
 interface AccessRule {
   id: string;
@@ -60,6 +61,19 @@ export const RosterManager = ({ guildId, rosters, members, ranks, onRosterChange
   const maxRankIndex = ranks.length > 0 ? Math.max(...ranks.map(r => r.rank_index)) : 9;
   const getErrorMessage = (error: unknown) =>
     error instanceof Error ? error.message : t.errors.generic;
+  const isMissingSchemaError = (error: unknown) => {
+    const candidate = error as { code?: string; message?: string } | null;
+    const message = candidate?.message || '';
+    return (
+      candidate?.code === 'PGRST202'
+      || candidate?.code === 'PGRST205'
+      || candidate?.code === '42P01'
+      || message.includes('Could not find the function')
+      || message.includes('Could not find the table')
+      || message.includes('schema cache')
+      || message.includes('does not exist')
+    );
+  };
   const getRankName = (index: number) => {
     const rank = ranks.find((entry) => entry.rank_index === index);
     if (rank?.rank_name) return rank.rank_name;
@@ -101,6 +115,78 @@ export const RosterManager = ({ guildId, rosters, members, ranks, onRosterChange
     setEditingRoster(null);
   };
 
+  const createRosterWithSeasonFallback = async (seasonName: string) => {
+    const accessRules = formAccessRules.map(r => ({
+      access_type: r.access_type,
+      user_id: r.access_type === 'user' ? r.user_id : null,
+      min_rank_index: r.access_type === 'rank' ? r.min_rank_index : null,
+      max_rank_index: r.access_type === 'rank' ? r.max_rank_index : null,
+    }));
+
+    const { error: rpcError } = await supabase.rpc('create_roster_with_wish_season', {
+      p_guild_id: guildId,
+      p_name: formName.trim(),
+      p_description: formDescription.trim() || null,
+      p_access_rules: formAccessRules,
+      p_season_name: seasonName,
+    });
+
+    if (!rpcError) return;
+    if (!isMissingSchemaError(rpcError)) throw rpcError;
+
+    const { data: roster, error: rosterError } = await supabase
+      .from('rosters')
+      .insert({
+        guild_id: guildId,
+        name: formName.trim(),
+        description: formDescription.trim() || null,
+      })
+      .select('id')
+      .single();
+
+    if (rosterError) throw rosterError;
+
+    if (accessRules.length > 0) {
+      const { error: rulesError } = await supabase
+        .from('roster_access_rules')
+        .insert(accessRules.map((rule) => ({
+          roster_id: roster.id,
+          ...rule,
+        })));
+
+      if (rulesError) throw rulesError;
+    }
+
+    const { data: authData } = await supabase.auth.getUser();
+    const { data: season, error: seasonError } = await supabase
+      .from('roster_wish_seasons')
+      .insert({
+        guild_id: guildId,
+        roster_id: roster.id,
+        name: seasonName,
+        state: 'draft',
+        created_by: authData.user?.id || null,
+      })
+      .select('id')
+      .maybeSingle();
+
+    if (seasonError) {
+      if (isMissingSchemaError(seasonError)) return;
+      throw seasonError;
+    }
+
+    if (season?.id) {
+      const { error: materializeError } = await supabase.rpc('materialize_roster_season_members', {
+        p_roster_id: roster.id,
+        p_season_id: season.id,
+      });
+
+      if (materializeError && !isMissingSchemaError(materializeError)) {
+        throw materializeError;
+      }
+    }
+  };
+
   const handleSave = async () => {
     if (!formName.trim()) return;
     setSaving(true);
@@ -138,33 +224,8 @@ export const RosterManager = ({ guildId, rosters, members, ranks, onRosterChange
 
         toast({ title: t.rosters.rosterUpdated });
       } else {
-        // Create roster
-        const { data: newRoster, error: createError } = await supabase
-          .from('rosters')
-          .insert({
-            guild_id: guildId,
-            name: formName.trim(),
-            description: formDescription.trim() || null,
-          })
-          .select()
-          .single();
-
-        if (createError) throw createError;
-
-        // Insert access rules
-        if (formAccessRules.length > 0) {
-          const { error: rulesError } = await supabase
-            .from('roster_access_rules')
-            .insert(formAccessRules.map(r => ({
-              roster_id: newRoster.id,
-              access_type: r.access_type,
-              user_id: r.access_type === 'user' ? r.user_id : null,
-              min_rank_index: r.access_type === 'rank' ? r.min_rank_index : null,
-              max_rank_index: r.access_type === 'rank' ? r.max_rank_index : null,
-            })));
-
-          if (rulesError) throw rulesError;
-        }
+        const seasonName = await resolveCurrentWowSeasonName();
+        await createRosterWithSeasonFallback(seasonName);
 
         toast({ title: t.rosters.rosterCreated });
       }

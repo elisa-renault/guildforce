@@ -22,7 +22,7 @@ import { interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import { resolveSpecOrder } from '@/lib/wishOrder';
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
-import { toneCalloutClass, toneTextClass, wowClassTextClass } from '@/lib/design-tokens';
+import { commitmentCalloutClass, commitmentTextClass, wowClassTextClass } from '@/lib/design-tokens';
 
 interface WishSummary {
   choice_index: number;
@@ -230,22 +230,22 @@ const Overview = () => {
       case 'confirmed':
         return {
           label: t.wishes.commitment.confirmed,
-          color: toneTextClass('success'),
-          bgColor: toneCalloutClass('success'),
+          color: commitmentTextClass('confirmed'),
+          bgColor: commitmentCalloutClass('confirmed'),
           icon: CheckCircle2,
         };
       case 'withdrawn':
         return {
           label: t.wishes.commitment.withdrawn,
-          color: toneTextClass('error'),
-          bgColor: toneCalloutClass('error'),
+          color: commitmentTextClass('withdrawn'),
+          bgColor: commitmentCalloutClass('withdrawn'),
           icon: Shield,
         };
       default:
         return {
           label: t.wishes.commitment.undecided,
-          color: toneTextClass('warning'),
-          bgColor: toneCalloutClass('warning'),
+          color: commitmentTextClass('undecided'),
+          bgColor: commitmentCalloutClass('undecided'),
           icon: Heart,
         };
     }

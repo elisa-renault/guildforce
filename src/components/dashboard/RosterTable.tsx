@@ -6,7 +6,7 @@ import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { DataListSkeleton } from '@/components/ui/data-list-skeleton';
-import { CheckCircle, HelpCircle, XCircle, Pencil, Save, Shield, Heart, Sword, Swords, Crosshair, MessageSquare, Plus, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Lock, Unlock, MoreVertical, Loader2, UserPlus, History } from 'lucide-react';
+import { HelpCircle, XCircle, Pencil, Save, Shield, Heart, Sword, Swords, Crosshair, MessageSquare, Plus, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Lock, Unlock, MoreVertical, Loader2, UserPlus, History, UserCheck, UserMinus, UserX, CheckCircle2, Armchair, Clock } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getClassById, getLocalizedClassName, getLocalizedSpecName, getSpecById } from '@/data/wowClasses';
 import { MemberWish, RosterSelectionStatus, WishData, WishChoice, ValidationStatus } from '@/types/guild';
@@ -16,6 +16,7 @@ import { CommitmentToggle, CommitmentStatus } from '@/components/CommitmentToggl
 import { MobileRosterCard } from './MobileRosterCard';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
+import { commitmentBadgeClass } from '@/lib/design-tokens';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,14 +25,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-type SortColumn = 'player' | 'status' | 'rosterDecision' | 'currentAssignment' | 'wish1' | 'wish2' | 'wish3' | 'wishesCount';
+type SortColumn = 'player' | 'status' | 'rosterDecision' | 'wish1' | 'wish2' | 'wish3' | 'wishesCount';
 type SortDirection = 'asc' | 'desc';
-export type RosterTableColumnId = 'status' | 'rosterDecision' | 'currentAssignment' | 'wishesCount' | 'wish1' | 'wish2' | 'wish3';
+export type RosterTableColumnId = 'status' | 'rosterDecision' | 'wishesCount' | 'wish1' | 'wish2' | 'wish3';
 
 const defaultVisibleColumns: RosterTableColumnId[] = [
   'status',
   'rosterDecision',
-  'currentAssignment',
   'wishesCount',
   'wish1',
   'wish2',
@@ -50,7 +50,6 @@ interface RosterTableProps {
   saving: boolean;
   maxWishes: number;
   canManageWishes?: boolean;
-  canManageAssignments?: boolean;
   isRosterLocked?: boolean;
   isEditingLocked?: boolean;
   onStartEditing: (member: MemberWish) => void;
@@ -71,9 +70,7 @@ interface RosterTableProps {
   deletingMemberId?: string | null;
   onSelectionStatusChange?: (memberId: string, status: RosterSelectionStatus) => void;
   updatingSelectionMemberId?: string | null;
-  onEditAssignment?: (member: MemberWish) => void;
   onViewHistory?: (member: MemberWish) => void;
-  updatingAssignmentMemberId?: string | null;
   onSortSummaryChange?: (summary: string) => void;
   visibleColumns?: RosterTableColumnId[];
 }
@@ -97,7 +94,6 @@ export const RosterTable = ({
   saving,
   maxWishes,
   canManageWishes = false,
-  canManageAssignments = canManageWishes,
   isRosterLocked = false,
   isEditingLocked = false,
   onStartEditing,
@@ -114,20 +110,18 @@ export const RosterTable = ({
   deletingMemberId = null,
   onSelectionStatusChange,
   updatingSelectionMemberId = null,
-  onEditAssignment,
   onViewHistory,
-  updatingAssignmentMemberId = null,
   onSortSummaryChange,
   visibleColumns = defaultVisibleColumns,
 }: RosterTableProps) => {
   const wishColumnClassName = 'w-[210px] min-w-[210px]';
+  const cellPaddingClassName = 'px-1 py-1';
   const isColumnVisible = (column: RosterTableColumnId) => visibleColumns.includes(column);
   const visibleDataColumnCount = visibleColumns.length;
-  const leadingColSpan = 1 + Number(isColumnVisible('status')) + Number(isColumnVisible('rosterDecision')) + Number(isColumnVisible('currentAssignment')) + Number(isColumnVisible('wishesCount'));
+  const leadingColSpan = 1 + Number(isColumnVisible('status')) + Number(isColumnVisible('rosterDecision')) + Number(isColumnVisible('wishesCount'));
   const tableMinWidth = 160
     + (isColumnVisible('status') ? 118 : 0)
     + (isColumnVisible('rosterDecision') ? 160 : 0)
-    + (isColumnVisible('currentAssignment') ? 160 : 0)
     + (isColumnVisible('wishesCount') ? 82 : 0)
     + (isColumnVisible('wish1') ? 210 : 0)
     + (isColumnVisible('wish2') ? 210 : 0)
@@ -140,15 +134,12 @@ export const RosterTable = ({
   const [validatingWish, setValidatingWish] = useState<string | null>(null);
   const [sortColumn, setSortColumn] = useState<SortColumn | null>('wishesCount');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-  const manualEntryHelp = language === 'fr'
-    ? 'Ce personnage a été ajouté manuellement. L’icône disparaîtra une fois le personnage claim via Guildforce.'
-    : 'This character was added manually. The icon will disappear once the character is claimed via Guildforce.';
   const rosterTableLabels = t.dashboard.rosterTable;
+  const manualEntryHelp = rosterTableLabels.manualEntryHelp;
   const sortColumnLabels: Record<SortColumn, string> = {
     player: rosterTableLabels.player,
     status: rosterTableLabels.status,
     rosterDecision: rosterTableLabels.decision,
-    currentAssignment: rosterTableLabels.assignment,
     wishesCount: rosterTableLabels.total,
     wish1: rosterTableLabels.choice1,
     wish2: rosterTableLabels.choice2,
@@ -168,21 +159,25 @@ export const RosterTable = ({
       case 'selected':
         return {
           label: t.wishes.rosterDecision.selected,
+          icon: CheckCircle2,
           className: 'bg-healer/20 text-healer border-healer/30',
         };
       case 'bench':
         return {
           label: t.wishes.rosterDecision.bench,
+          icon: Armchair,
           className: 'bg-warning/20 text-warning border-warning/30',
         };
       case 'not_selected':
         return {
           label: t.wishes.rosterDecision.notSelected,
+          icon: XCircle,
           className: 'bg-destructive/20 text-destructive border-destructive/30',
         };
       default:
         return {
           label: t.wishes.rosterDecision.undecided,
+          icon: Clock,
           className: 'bg-muted text-muted-foreground border-border',
         };
     }
@@ -203,23 +198,6 @@ export const RosterTable = ({
     if (!wish) return '';
     const cls = getClassById(wish.class_id);
     return cls ? getLocalizedClassName(cls.id, language).toLowerCase() : '';
-  };
-
-  const getAssignmentMainSpecId = (member: MemberWish): string | null => {
-    const assignment = member.currentAssignment;
-    if (!assignment?.class_id) return null;
-    if (assignment.spec_id) return assignment.spec_id;
-
-    const matchingWish = member.wishes.find((wish) => (
-      wish.class_id === assignment.class_id
-      && (
-        assignment.choice_index === null
-        || assignment.choice_index === undefined
-        || wish.choice_index === assignment.choice_index
-      )
-    )) || member.wishes.find((wish) => wish.class_id === assignment.class_id);
-
-    return matchingWish?.spec_ids?.[0] || null;
   };
 
   // Sort members
@@ -245,12 +223,6 @@ export const RosterTable = ({
           const decisionA = a.selectionStatus || 'undecided';
           const decisionB = b.selectionStatus || 'undecided';
           comparison = (rosterDecisionOrder[decisionA] ?? 2) - (rosterDecisionOrder[decisionB] ?? 2);
-          break;
-        }
-        case 'currentAssignment': {
-          const assignmentA = a.currentAssignment?.class_id || '';
-          const assignmentB = b.currentAssignment?.class_id || '';
-          comparison = assignmentA.localeCompare(assignmentB);
           break;
         }
         case 'wish1':
@@ -344,7 +316,7 @@ export const RosterTable = ({
       <TableHead
         aria-sort={ariaSort}
         className={cn(
-          'group/header cursor-pointer select-none px-2 py-1.5 text-xs transition-colors',
+          'group/header cursor-pointer select-none px-1.5 py-1 text-xs transition-colors',
           isActive
             ? 'bg-primary/5 text-foreground'
             : 'text-muted-foreground hover:bg-muted/30 hover:text-foreground',
@@ -352,7 +324,7 @@ export const RosterTable = ({
         )}
         onClick={() => handleSort(column)}
       >
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1">
           <span className="whitespace-nowrap">{children}</span>
           <HeaderHelp tooltip={tooltip} />
           <SortIcon column={column} />
@@ -378,7 +350,7 @@ export const RosterTable = ({
           <div className="h-7 w-full rounded-md border border-dashed border-muted-foreground/20 bg-transparent flex items-center justify-center">
             <span className="text-[10px] text-muted-foreground/30">{t.wishes.selectClass}</span>
           </div>
-          <div className="h-6 w-full rounded-md border border-dashed border-muted-foreground/20 bg-transparent flex items-center justify-center gap-1">
+          <div className="h-5 w-full rounded-md border border-dashed border-muted-foreground/20 bg-transparent flex items-center justify-center gap-1">
             <Shield className="h-3 w-3 text-muted-foreground/20" />
             <Heart className="h-3 w-3 text-muted-foreground/20" />
             <Swords className="h-3 w-3 text-muted-foreground/20" />
@@ -394,7 +366,7 @@ export const RosterTable = ({
           <div className="h-7 w-full rounded-md border border-dashed border-muted-foreground/20 bg-transparent flex items-center justify-center">
             <span className="text-[10px] text-muted-foreground/30">{t.wishes.selectClass}</span>
           </div>
-          <div className="h-6 w-full rounded-md border border-dashed border-muted-foreground/20 bg-transparent flex items-center justify-center gap-1">
+          <div className="h-5 w-full rounded-md border border-dashed border-muted-foreground/20 bg-transparent flex items-center justify-center gap-1">
             <Shield className="h-3 w-3 text-muted-foreground/20" />
             <Heart className="h-3 w-3 text-muted-foreground/20" />
             <Swords className="h-3 w-3 text-muted-foreground/20" />
@@ -409,11 +381,11 @@ export const RosterTable = ({
     const isValidating = validatingWish === `${memberId}-${choiceIndex}`;
 
     return (
-      <div className="flex min-w-0 flex-col gap-1.5">
+      <div className="flex min-w-0 flex-col gap-1">
         {/* Class with validation badge */}
-        <div className="flex min-w-0 items-center gap-1.5">
+        <div className="flex min-w-0 items-center gap-1">
           <div 
-            className="h-7 min-w-0 flex-1 rounded-md flex items-center px-2 text-xs font-medium"
+            className="h-7 min-w-0 flex-1 rounded-md flex items-center px-1.5 text-xs font-medium"
             style={{ 
               backgroundColor: `hsl(var(--class-${cls.id}) / 0.2)`,
               color: `hsl(var(--class-${cls.id}))`
@@ -435,7 +407,7 @@ export const RosterTable = ({
         </div>
         
         {/* Spec row - display all selected specs */}
-        <div className="min-h-6 w-full flex items-center gap-1.5 text-[10px] flex-wrap overflow-hidden">
+        <div className="min-h-5 w-full flex items-center gap-x-1 gap-y-0.5 text-[10px] flex-wrap overflow-hidden">
           {specs.length > 0 ? (
             specs.map((spec) => {
               const config = roleConfig[spec.role];
@@ -445,7 +417,7 @@ export const RosterTable = ({
                 : config?.icon;
               return (
                 <div key={spec.id} className="flex min-w-0 items-center gap-0.5">
-                  {Icon && <Icon className={cn("h-3 w-3 flex-shrink-0", config?.color)} />}
+                  {Icon && <Icon className={cn("h-2.5 w-2.5 flex-shrink-0", config?.color)} />}
                   <span className="truncate text-muted-foreground">{getLocalizedSpecName(spec.id, language)}</span>
                 </div>
               );
@@ -459,60 +431,13 @@ export const RosterTable = ({
             <TooltipProvider delayDuration={200}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <MessageSquare className="h-3 w-3 text-primary flex-shrink-0 cursor-help" />
+                  <MessageSquare className="h-2.5 w-2.5 text-primary flex-shrink-0 cursor-help" />
                 </TooltipTrigger>
                 <TooltipContent side="top" className="max-w-[200px] text-xs">
                   {wish.comment}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-          )}
-        </div>
-      </div>
-    );
-  };
-
-  const renderCurrentAssignmentCell = (member: MemberWish) => {
-    const assignment = member.currentAssignment;
-    if (!assignment?.class_id) {
-      return <span className="text-xs text-muted-foreground/60">—</span>;
-    }
-
-    const cls = getClassById(assignment.class_id);
-    const spec = getAssignmentMainSpecId(member);
-    const specDetails = spec ? getSpecById(spec) : null;
-    const config = specDetails ? roleConfig[specDetails.role] : null;
-    const Icon = specDetails?.role === 'dps'
-      ? (specDetails.range === 'ranged' ? Crosshair : Swords)
-      : config?.icon;
-
-    return (
-      <div className="flex min-w-0 flex-col gap-1.5">
-        <div
-          className={cn(
-            'h-7 w-full rounded-md flex items-center px-2 text-xs font-medium',
-            !cls && 'bg-muted/50 text-muted-foreground'
-          )}
-          style={cls ? {
-            backgroundColor: `hsl(var(--class-${cls.id}) / 0.2)`,
-            color: `hsl(var(--class-${cls.id}))`,
-          } : undefined}
-        >
-          <span className="truncate">
-            {cls ? getLocalizedClassName(cls.id, language) : assignment.class_id}
-          </span>
-        </div>
-
-        <div className="min-h-6 w-full flex min-w-0 items-center gap-1 text-[10px]">
-          {specDetails ? (
-            <>
-              {Icon && <Icon className={cn('h-3 w-3 flex-shrink-0', config?.color)} />}
-              <span className="truncate text-muted-foreground">{getLocalizedSpecName(specDetails.id, language)}</span>
-            </>
-          ) : spec ? (
-            <span className="truncate text-muted-foreground">{spec}</span>
-          ) : (
-            <span className="text-muted-foreground/50">—</span>
           )}
         </div>
       </div>
@@ -571,7 +496,116 @@ export const RosterTable = ({
     );
   };
 
+  const SkeletonBar = ({ className }: { className: string }) => (
+    <div className={cn('animate-pulse rounded-md bg-muted/45', className)} />
+  );
+
+  const renderSkeletonWishCell = (variant: 0 | 1 | 2) => {
+    const classWidths = ['w-[62%]', 'w-[74%]', 'w-[54%]'] as const;
+    const validationWidths = ['w-[72px]', 'w-[82px]', 'w-[64px]'] as const;
+    return (
+      <div className="flex min-w-0 flex-col gap-1">
+        <div className="flex min-w-0 items-center gap-1">
+          <SkeletonBar className={cn('h-7 min-w-0 flex-1', classWidths[variant])} />
+          <SkeletonBar className={cn('h-7 shrink-0', validationWidths[variant])} />
+        </div>
+        <div className="flex min-h-5 items-center gap-1">
+          <SkeletonBar className="h-2.5 w-2.5 rounded-full" />
+          <SkeletonBar className="h-3 w-16" />
+          {variant !== 2 && (
+            <>
+              <SkeletonBar className="h-2.5 w-2.5 rounded-full" />
+              <SkeletonBar className="h-3 w-12" />
+            </>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
+    if (!isMobile) {
+      return (
+        <GlowCard surface="section" className="overflow-hidden !p-1 md:!p-2">
+          <div className="overflow-x-auto">
+            <Table className="table-fixed" style={{ minWidth: `${tableMinWidth}px` }}>
+              <TableHeader>
+                <TableRow className="border-border/30 hover:bg-transparent">
+                  <TableHead className="w-[160px] px-1.5 py-1 text-xs text-muted-foreground">{rosterTableLabels.player}</TableHead>
+                  {isColumnVisible('status') && (
+                    <TableHead className="w-[118px] px-1.5 py-1 text-xs text-muted-foreground">{rosterTableLabels.status}</TableHead>
+                  )}
+                  {isColumnVisible('rosterDecision') && (
+                    <TableHead className="w-[160px] px-1.5 py-1 text-xs text-muted-foreground">{rosterTableLabels.decision}</TableHead>
+                  )}
+                  {isColumnVisible('wishesCount') && (
+                    <TableHead className="w-[82px] px-1.5 py-1 text-xs text-muted-foreground">{rosterTableLabels.total}</TableHead>
+                  )}
+                  {isColumnVisible('wish1') && (
+                    <TableHead className={cn('px-1.5 py-1 text-xs text-muted-foreground', wishColumnClassName)}>{rosterTableLabels.choice1}</TableHead>
+                  )}
+                  {isColumnVisible('wish2') && (
+                    <TableHead className={cn('px-1.5 py-1 text-xs text-muted-foreground', wishColumnClassName)}>{rosterTableLabels.choice2}</TableHead>
+                  )}
+                  {isColumnVisible('wish3') && (
+                    <TableHead className={cn('px-1.5 py-1 text-xs text-muted-foreground', wishColumnClassName)}>{rosterTableLabels.choice3}</TableHead>
+                  )}
+                  <TableHead className="w-[48px] px-1 py-1 text-xs text-muted-foreground" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {Array.from({ length: 6 }).map((_, rowIndex) => (
+                  <TableRow key={rowIndex} className="border-border/20">
+                    <TableCell className="px-1.5 py-1">
+                      <div className="flex min-w-0 flex-col gap-1">
+                        <SkeletonBar className="h-4 w-20" />
+                        <SkeletonBar className="h-3 w-16" />
+                      </div>
+                    </TableCell>
+                    {isColumnVisible('status') && (
+                      <TableCell className={cellPaddingClassName}>
+                        <SkeletonBar className="h-6 w-[86px] rounded-full" />
+                      </TableCell>
+                    )}
+                    {isColumnVisible('rosterDecision') && (
+                      <TableCell className={cellPaddingClassName}>
+                        <SkeletonBar className="h-8 w-full" />
+                      </TableCell>
+                    )}
+                    {isColumnVisible('wishesCount') && (
+                      <TableCell className="px-1 py-1 text-center">
+                        <SkeletonBar className="mx-auto h-4 w-4" />
+                      </TableCell>
+                    )}
+                    {isColumnVisible('wish1') && (
+                      <TableCell className={cn(cellPaddingClassName, wishColumnClassName)}>
+                        {renderSkeletonWishCell((rowIndex % 3) as 0 | 1 | 2)}
+                      </TableCell>
+                    )}
+                    {isColumnVisible('wish2') && (
+                      <TableCell className={cn(cellPaddingClassName, wishColumnClassName)}>
+                        {renderSkeletonWishCell(((rowIndex + 1) % 3) as 0 | 1 | 2)}
+                      </TableCell>
+                    )}
+                    {isColumnVisible('wish3') && (
+                      <TableCell className={cn(cellPaddingClassName, wishColumnClassName)}>
+                        {renderSkeletonWishCell(((rowIndex + 2) % 3) as 0 | 1 | 2)}
+                      </TableCell>
+                    )}
+                    <TableCell className="px-1 py-1">
+                      <div className="flex justify-end">
+                        <SkeletonBar className="h-9 w-9" />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </GlowCard>
+      );
+    }
+
     return (
       <GlowCard surface="section" className="overflow-hidden">
         <DataListSkeleton
@@ -640,10 +674,7 @@ export const RosterTable = ({
               deletingMemberId={deletingMemberId}
               onSelectionStatusChange={onSelectionStatusChange}
               updatingSelectionMemberId={updatingSelectionMemberId}
-              canManageAssignments={canManageAssignments}
-              onEditAssignment={onEditAssignment}
               onViewHistory={onViewHistory}
-              updatingAssignmentMemberId={updatingAssignmentMemberId}
             />
           );
         })}
@@ -652,7 +683,7 @@ export const RosterTable = ({
   }
   // Desktop view - table layout
   return (
-    <GlowCard surface="section" className="overflow-hidden p-0">
+    <GlowCard surface="section" className="overflow-hidden !p-1 md:!p-2">
       <div className="overflow-x-auto">
         <Table className="table-fixed" style={{ minWidth: `${tableMinWidth}px` }}>
           <TableHeader>
@@ -666,11 +697,6 @@ export const RosterTable = ({
               {isColumnVisible('rosterDecision') && (
                 <SortableHeader column="rosterDecision" className="w-[160px]" tooltip={rosterTableLabels.decisionTooltip}>
                   {rosterTableLabels.decision}
-                </SortableHeader>
-              )}
-              {isColumnVisible('currentAssignment') && (
-                <SortableHeader column="currentAssignment" className="w-[160px]" tooltip={rosterTableLabels.assignmentTooltip}>
-                  {rosterTableLabels.assignment}
                 </SortableHeader>
               )}
               {isColumnVisible('wishesCount') && (
@@ -687,7 +713,7 @@ export const RosterTable = ({
               {isColumnVisible('wish3') && (
                 <SortableHeader column="wish3" className={wishColumnClassName}><span className="hidden md:inline">{rosterTableLabels.choice3}</span><span className="md:hidden">#3</span></SortableHeader>
               )}
-              <TableHead className="w-[48px] px-1 py-1.5 text-xs text-muted-foreground"></TableHead>
+              <TableHead className="w-[48px] px-1 py-1 text-xs text-muted-foreground"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -703,9 +729,9 @@ export const RosterTable = ({
                   : '';
 
               const rowActions = [
-                ...(canManageAssignments && onViewHistory && member.seasonMemberId ? [{
+                ...(canManageWishes && onViewHistory && member.seasonMemberId ? [{
                   key: 'history',
-                  label: language === 'fr' ? 'Historique' : 'History',
+                  label: t.wishes.memberDetail.history,
                   icon: History,
                   onClick: () => onViewHistory(member),
                   loading: false,
@@ -713,7 +739,7 @@ export const RosterTable = ({
                 }] : []),
                 ...(canManageWishes && onRemoveMember && !isOwnRow ? [{
                   key: 'delete',
-                  label: language === 'fr' ? 'Retirer' : 'Remove',
+                  label: t.wishes.removeMember,
                   icon: Trash2,
                   onClick: () => onRemoveMember(member.id),
                   loading: deletingMemberId === member.id,
@@ -721,15 +747,13 @@ export const RosterTable = ({
                 }] : []),
                 ...(canManageWishes && onToggleMemberLock && !member.isExternal ? [{
                   key: 'lock',
-                  label: memberLocked
-                    ? (language === 'fr' ? 'Déverrouiller' : 'Unlock')
-                    : (language === 'fr' ? 'Verrouiller' : 'Lock'),
+                  label: memberLocked ? t.wishes.unlockMember : t.wishes.lockMember,
                   icon: memberLocked ? Unlock : Lock,
                   onClick: () => onToggleMemberLock(member.id, !memberLocked),
                   loading: lockingMemberId === member.id,
                   disabled: false,
                 }] : []),
-                ...((isOwnRow || canManageWishes || (canManageAssignments && onEditAssignment && member.seasonMemberId)) ? [{
+                ...((isOwnRow || canManageWishes) && !isEditingLocked ? [{
                   key: 'edit',
                   label: isEditing ? t.common.save : t.common.edit,
                   icon: isEditing ? Save : Pencil,
@@ -740,18 +764,11 @@ export const RosterTable = ({
                       onStartEditing(member);
                     }
                   },
-                  loading: (isEditing && saving) || updatingAssignmentMemberId === member.id,
-                  disabled: !(canManageAssignments && onEditAssignment && member.seasonMemberId) && isEditingLocked,
+                  loading: isEditing && saving,
+                  disabled: false,
                 }] : []),
               ];
-              
-              const canOpenAssignmentEditor = Boolean(
-                isEditing
-                && canManageAssignments
-                && onEditAssignment
-                && member.seasonMemberId
-              );
-              const playerSubtitle = member.currentAssignment?.character_name_snapshot || member.mainCharacterName;
+              const playerSubtitle = member.mainCharacterName;
 
               const handleRowClick = () => {
                 // Navigate to member wishes page (read-only view) for all members
@@ -774,7 +791,7 @@ export const RosterTable = ({
                     )}
                     onClick={handleRowClick}
                   >
-                    <TableCell className="px-2 py-1.5 text-sm font-medium text-foreground">
+                    <TableCell className="px-1.5 py-1 text-sm font-medium text-foreground">
                       <div className="flex min-w-0 flex-col gap-0.5">
                         <div className="flex items-center gap-1.5">
                           <span className="min-w-0 truncate">{member.username}</span>
@@ -801,7 +818,7 @@ export const RosterTable = ({
                       </div>
                     </TableCell>
                     {isColumnVisible('status') && (
-                    <TableCell className="px-1.5 py-1.5">
+                    <TableCell className={cellPaddingClassName}>
                       {isEditing ? (
                         <CommitmentToggle 
                           status={editStatus} 
@@ -812,29 +829,29 @@ export const RosterTable = ({
                         />
                       ) : (
                         <Badge 
-                          variant={member.status === 'confirmed' ? 'default' : 'outline'}
+                          variant="outline"
                           className={cn(
-                            "text-[10px] md:text-xs px-2 py-0.5 whitespace-nowrap",
+                            "px-2.5 py-0.5 text-[10px] md:text-xs whitespace-nowrap",
                             member.status === 'confirmed' 
-                              ? 'bg-healer/20 text-healer border-healer/30' 
+                              ? commitmentBadgeClass('confirmed')
                               : member.status === 'withdrawn'
-                              ? 'bg-destructive/20 text-destructive border-destructive/30'
-                              : 'bg-warning/20 text-warning border-warning/30'
+                              ? commitmentBadgeClass('withdrawn')
+                              : commitmentBadgeClass('undecided')
                           )}
                         >
                           {member.status === 'confirmed' ? (
-                            <><CheckCircle className="h-3 w-3" strokeWidth={1.5} /><span className="hidden md:inline ml-1">{t.wishes.commitment.confirmed}</span></>
+                            <><UserCheck className="h-3 w-3" strokeWidth={1.5} /><span className="hidden md:inline ml-1">{t.wishes.commitment.confirmed}</span></>
                           ) : member.status === 'withdrawn' ? (
-                            <><XCircle className="h-3 w-3" strokeWidth={1.5} /><span className="hidden md:inline ml-1">{t.wishes.commitment.withdrawn}</span></>
+                            <><UserX className="h-3 w-3" strokeWidth={1.5} /><span className="hidden md:inline ml-1">{t.wishes.commitment.withdrawn}</span></>
                           ) : (
-                            <><HelpCircle className="h-3 w-3" strokeWidth={1.5} /><span className="hidden md:inline ml-1">{t.wishes.commitment.undecided}</span></>
+                            <><UserMinus className="h-3 w-3" strokeWidth={1.5} /><span className="hidden md:inline ml-1">{t.wishes.commitment.undecided}</span></>
                           )}
                         </Badge>
                       )}
                     </TableCell>
                     )}
                     {isColumnVisible('rosterDecision') && (
-                    <TableCell className="px-1.5 py-1.5">
+                    <TableCell className={cellPaddingClassName}>
                       {canManageWishes && onSelectionStatusChange ? (
                         <div onClick={(e) => e.stopPropagation()}>
                           <Select
@@ -843,7 +860,7 @@ export const RosterTable = ({
                             disabled={updatingSelectionMemberId === member.id}
                           >
                             <SelectTrigger
-                              className="h-7 w-full min-w-0 text-[10px] md:text-xs px-1.5"
+                              className="h-8 w-full min-w-0 px-3 text-xs md:text-sm"
                               onClick={(e) => e.stopPropagation()}
                               onPointerDown={(e) => e.stopPropagation()}
                             >
@@ -858,61 +875,49 @@ export const RosterTable = ({
                           </Select>
                         </div>
                       ) : (
-                        <Badge
-                          variant="outline"
-                          className={cn('text-[10px] md:text-xs px-2 py-0.5 whitespace-nowrap', getRosterDecisionBadge(member.selectionStatus).className)}
-                        >
-                          {getRosterDecisionBadge(member.selectionStatus).label}
-                        </Badge>
-                      )}
-                    </TableCell>
-                    )}
-                    {isColumnVisible('currentAssignment') && (
-                    <TableCell className="px-1.5 py-1.5">
-                      {canOpenAssignmentEditor ? (
-                        <button
-                          type="button"
-                          className="w-full rounded-md text-left transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            onEditAssignment?.(member);
-                          }}
-                          disabled={updatingAssignmentMemberId === member.id}
-                        >
-                          {renderCurrentAssignmentCell(member)}
-                        </button>
-                      ) : (
-                        renderCurrentAssignmentCell(member)
+                        (() => {
+                          const decisionBadge = getRosterDecisionBadge(member.selectionStatus);
+                          const DecisionIcon = decisionBadge.icon;
+                          return (
+                            <Badge
+                              variant="outline"
+                              className={cn('px-2.5 py-0.5 text-[10px] md:text-xs whitespace-nowrap', decisionBadge.className)}
+                            >
+                              <DecisionIcon className="h-3 w-3" strokeWidth={1.5} />
+                              <span className="hidden md:inline ml-1">{decisionBadge.label}</span>
+                            </Badge>
+                          );
+                        })()
                       )}
                     </TableCell>
                     )}
                     {isColumnVisible('wishesCount') && (
-                    <TableCell className="px-1 py-1.5 text-center">
+                    <TableCell className="px-1 py-1 text-center">
                       <span className="text-sm text-muted-foreground">{member.wishes.filter(w => w.class_id).length}</span>
                     </TableCell>
                     )}
                     {isColumnVisible('wish1') && (
-                    <TableCell className={cn("px-1.5 py-1.5", wishColumnClassName)}>
+                    <TableCell className={cn(cellPaddingClassName, wishColumnClassName)}>
                       {isEditing ? renderEditWishCell(0, editWishes.length > 1) : renderWishCell(member.id, member.wishes, 1, !!member.isExternal)}
                     </TableCell>
                     )}
                     {isColumnVisible('wish2') && (
-                    <TableCell className={cn("px-1.5 py-1.5", wishColumnClassName)}>
+                    <TableCell className={cn(cellPaddingClassName, wishColumnClassName)}>
                       {isEditing ? renderEditWishCell(1, editWishes.length > 1) : renderWishCell(member.id, member.wishes, 2, !!member.isExternal)}
                     </TableCell>
                     )}
                     {isColumnVisible('wish3') && (
-                    <TableCell className={cn("px-1.5 py-1.5", wishColumnClassName)}>
+                    <TableCell className={cn(cellPaddingClassName, wishColumnClassName)}>
                       {isEditing ? renderEditWishCell(2, editWishes.length > 1) : renderWishCell(member.id, member.wishes, 3, !!member.isExternal)}
                     </TableCell>
                     )}
-                    <TableCell className="px-1 py-1.5">
+                    <TableCell className="px-1 py-1">
                       <div className="flex items-center justify-end gap-1">
                         {effectiveLocked && (
                           <TooltipProvider delayDuration={200}>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <span className="inline-flex h-8 w-8 items-center justify-center text-warning">
+                                <span className="inline-flex h-7 w-7 items-center justify-center text-warning">
                                   <Lock className="h-3.5 w-3.5" />
                                 </span>
                               </TooltipTrigger>
@@ -940,7 +945,7 @@ export const RosterTable = ({
                                       ? undefined
                                       : <action.icon className={action.key === 'edit' ? "h-4 w-4" : "h-3.5 w-3.5"} strokeWidth={1.5} />
                                   }
-                                  className="h-8 px-2"
+                                  className="!h-9 !max-h-9 !min-h-9 !w-9 !min-w-9 !max-w-9 !p-0"
                                 />
                               </TooltipTrigger>
                               <TooltipContent side="left">
@@ -956,7 +961,7 @@ export const RosterTable = ({
                                 size="sm"
                                 variant="outline"
                                 onClick={(e) => e.stopPropagation()}
-                                className="!h-8 !max-h-8 !min-h-8 !w-8 !min-w-8 !max-w-8 !p-0 flex-none"
+                                className="!h-9 !max-h-9 !min-h-9 !w-9 !min-w-9 !max-w-9 !p-0 flex-none"
                                 aria-label={t.common.actions}
                                 icon={<MoreVertical className="h-4 w-4" strokeWidth={1.5} />}
                               />
@@ -998,19 +1003,19 @@ export const RosterTable = ({
                         
                         return (
                           <TableRow key={`extra-${rowIdx}`} className="border-border/10 bg-primary/[0.03]">
-                            <TableCell colSpan={leadingColSpan} className="px-2 py-1.5">
+                            <TableCell colSpan={leadingColSpan} className="px-1.5 py-1">
                               <span className="text-xs text-muted-foreground">
                                 {t.dashboard.additionalWishes} ({startIdx + 1}-{Math.min(startIdx + 3, editWishes.length)})
                               </span>
                             </TableCell>
                             {(['wish1', 'wish2', 'wish3'] as const).map((columnId, idx) => (
                               isColumnVisible(columnId) ? (
-                                <TableCell key={columnId} className={cn("px-2 py-1.5", wishColumnClassName)}>
+                                <TableCell key={columnId} className={cn(cellPaddingClassName, wishColumnClassName)}>
                                   {rowWishes[idx] ? renderEditWishCell(startIdx + idx, editWishes.length > 1) : null}
                                 </TableCell>
                               ) : null
                             ))}
-                            <TableCell className="px-2 py-1.5" />
+                            <TableCell className="px-1 py-1" />
                           </TableRow>
                         );
                       })}
@@ -1020,7 +1025,7 @@ export const RosterTable = ({
                   {/* Add wish button row when editing */}
                   {isEditing && editWishes.length < maxWishes && (
                     <TableRow className="border-border/10 bg-primary/[0.02]">
-                      <TableCell colSpan={visibleDataColumnCount + 2} className="px-2 py-1.5">
+                      <TableCell colSpan={visibleDataColumnCount + 2} className="px-1.5 py-1">
                         <button
                           onClick={onAddWish}
                           disabled={isEditingLocked}

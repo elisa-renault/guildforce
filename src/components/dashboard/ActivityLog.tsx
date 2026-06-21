@@ -40,7 +40,7 @@ import { getClassById, getLocalizedClassName, getLocalizedSpecName, getSpecById 
 import { useActivityLog, ActionType } from '@/hooks/useActivityLog';
 import { formatDistanceFromNowLocalized, interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
-import { toneBadgeClass } from '@/lib/design-tokens';
+import { commitmentTextClass, toneBadgeClass } from '@/lib/design-tokens';
 
 interface ActivityLogProps {
   guildId: string;
@@ -51,6 +51,7 @@ const ACTION_ICONS: Record<ActionType, React.ReactNode> = {
   wish_created: <PlusCircle className="h-4 w-4" />,
   wish_updated: <Edit3 className="h-4 w-4" />,
   wish_deleted: <Trash2 className="h-4 w-4" />,
+  roster_selection_changed: <CheckCircle2 className="h-4 w-4" />,
   wish_season_drafted: <FileText className="h-4 w-4" />,
   member_joined: <UserPlus className="h-4 w-4" />,
   member_removed: <UserMinus className="h-4 w-4" />,
@@ -80,6 +81,7 @@ const ACTION_COLORS: Record<ActionType, string> = {
   wish_created: toneBadgeClass('success'),
   wish_updated: toneBadgeClass('warning'),
   wish_deleted: toneBadgeClass('error'),
+  roster_selection_changed: toneBadgeClass('info'),
   wish_season_drafted: toneBadgeClass('info'),
   member_joined: toneBadgeClass('info'),
   member_removed: toneBadgeClass('error'),
@@ -125,6 +127,9 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
     wishCreatedText: resolveSemanticMessage({ key: 'activity.log.wish_created', language, translations: t }),
     wishUpdatedText: resolveSemanticMessage({ key: 'activity.log.wish_updated', language, translations: t }),
     wishDeletedText: resolveSemanticMessage({ key: 'activity.log.wish_deleted', language, translations: t }),
+    wishCreatedForTargetText: resolveSemanticMessage({ key: 'activity.log.wish_created_for_target', language, translations: t }),
+    wishUpdatedForTargetText: resolveSemanticMessage({ key: 'activity.log.wish_updated_for_target', language, translations: t }),
+    wishDeletedForTargetText: resolveSemanticMessage({ key: 'activity.log.wish_deleted_for_target', language, translations: t }),
     memberJoinedText: resolveSemanticMessage({ key: 'activity.log.member_joined', language, translations: t }),
     commitmentChangedText: resolveSemanticMessage({ key: 'activity.log.commitment_changed', language, translations: t }),
     rosterWishesLockedText: resolveSemanticMessage({ key: 'activity.log.roster_wishes_locked', language, translations: t }),
@@ -142,6 +147,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
       wish_created: resolveSemanticMessage({ key: 'activity.log.action.wish_created', language, translations: t }),
       wish_updated: resolveSemanticMessage({ key: 'activity.log.action.wish_updated', language, translations: t }),
       wish_deleted: resolveSemanticMessage({ key: 'activity.log.action.wish_deleted', language, translations: t }),
+      roster_selection_changed: t.wishes.memberDetail.historyEvent.selectionChanged,
       wish_season_drafted: resolveSemanticMessage({ key: 'activity.log.action.wish_season_drafted', language, translations: t }),
       member_joined: resolveSemanticMessage({ key: 'activity.log.action.member_joined', language, translations: t }),
       commitment_changed: resolveSemanticMessage({ key: 'activity.log.action.commitment_changed', language, translations: t }),
@@ -165,6 +171,7 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
       wish_created: resolveSemanticMessage({ key: 'activity.log.filter.wish_created', language, translations: t }),
       wish_updated: resolveSemanticMessage({ key: 'activity.log.filter.wish_updated', language, translations: t }),
       wish_deleted: resolveSemanticMessage({ key: 'activity.log.filter.wish_deleted', language, translations: t }),
+      roster_selection_changed: t.wishes.memberDetail.historyEvent.selectionChanged,
       wish_season_drafted: resolveSemanticMessage({ key: 'activity.log.filter.wish_season_drafted', language, translations: t }),
       wish_validation: resolveSemanticMessage({ key: 'activity.log.filter.wish_validation', language, translations: t }),
       member_joined: resolveSemanticMessage({ key: 'activity.log.filter.member_joined', language, translations: t }),
@@ -222,6 +229,21 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
     return <Clock className="h-3 w-3 text-status-warning" />;
   };
 
+  const getActorName = (log: typeof logs[0]) => log.user_profile?.username || ui.system;
+
+  const getWishActionText = (
+    log: typeof logs[0],
+    defaultText: string,
+    targetText: string,
+  ) => {
+    const targetName = log.target_user_profile?.username || ui.unknown;
+    const hasSeparateTarget = Boolean(log.target_user_id && log.target_user_id !== log.user_id);
+
+    return hasSeparateTarget
+      ? interpolateMessage(targetText, { target: targetName })
+      : defaultText;
+  };
+
   const renderLogDetails = (log: typeof logs[0]) => {
     const details = log.action_details;
 
@@ -277,9 +299,9 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
         return (
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
-              <span className="font-medium">{log.target_user_profile?.username || ui.unknown}</span>
+              <span className="font-medium">{getActorName(log)}</span>
               <span className="text-muted-foreground text-sm">
-                {ui.wishCreatedText}
+                {getWishActionText(log, ui.wishCreatedText, ui.wishCreatedForTargetText)}
               </span>
             </div>
             <div className="flex items-center gap-2 text-sm">
@@ -308,9 +330,9 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
         return (
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
-              <span className="font-medium">{log.target_user_profile?.username || ui.unknown}</span>
+              <span className="font-medium">{getActorName(log)}</span>
               <span className="text-muted-foreground text-sm">
-                {ui.wishUpdatedText}
+                {getWishActionText(log, ui.wishUpdatedText, ui.wishUpdatedForTargetText)}
               </span>
             </div>
             {classChanged ? (
@@ -353,9 +375,9 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
         return (
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
-              <span className="font-medium">{log.target_user_profile?.username || ui.unknown}</span>
+              <span className="font-medium">{getActorName(log)}</span>
               <span className="text-muted-foreground text-sm">
-                {ui.wishDeletedText}
+                {getWishActionText(log, ui.wishDeletedText, ui.wishDeletedForTargetText)}
               </span>
             </div>
             <div className="flex items-center gap-2 text-sm">
@@ -395,9 +417,9 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
         };
 
         const getStatusColor = (status: string) => {
-          if (status === 'confirmed') return 'text-status-success';
-          if (status === 'withdrawn') return 'text-status-error';
-          return 'text-status-warning';
+          if (status === 'confirmed') return commitmentTextClass('confirmed');
+          if (status === 'withdrawn') return commitmentTextClass('withdrawn');
+          return commitmentTextClass('undecided');
         };
 
         return (
@@ -609,6 +631,9 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ guildId }) => {
               </SelectItem>
               <SelectItem value="wish_validation">
                 {ui.filterLabels.wish_validation}
+              </SelectItem>
+              <SelectItem value="roster_selection_changed">
+                {ui.filterLabels.roster_selection_changed}
               </SelectItem>
               <SelectItem value="member_joined">
                 {ui.filterLabels.member_joined}
