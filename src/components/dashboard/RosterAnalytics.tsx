@@ -167,9 +167,11 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   const [compositionView, setCompositionView] = useState<CompositionView>('wished');
   const [outcomeFilter, setOutcomeFilter] = useState<OutcomeFilter>('all');
   const [wishScopeFilter, setWishScopeFilter] = useState<WishScopeFilter>('first_approved');
+  const [wishScopeFilterTouched, setWishScopeFilterTouched] = useState(false);
   const [hoveredClass, setHoveredClass] = useState<string | null>(null);
   const [commitmentFilter, setCommitmentFilter] = useState<CommitmentFilter>('confirmed');
   const [rosterDecisionFilter, setRosterDecisionFilter] = useState<RosterDecisionFilter>('selected');
+  const [rosterDecisionFilterTouched, setRosterDecisionFilterTouched] = useState(false);
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
   const [rangeFilter, setRangeFilter] = useState<RangeFilter>('all');
   const [validationFilter, setValidationFilter] = useState<ValidationFilter>('all');
@@ -283,16 +285,51 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     });
   }, [members, compositionView]);
 
-  const hasValidatedWishes = useMemo(() => {
-    return sourceMembers.some(member =>
-      (member.wishes || []).some(wish => (wish.validation_status || 'pending') === 'approved')
+  const defaultAnalyticsFilters = useMemo(() => {
+    const hasApprovedWishes = members.some(member => getFirstApprovedWish(member));
+    const hasSelectedMembersWithApprovedWishes = members.some(
+      (member) => (member.selectionStatus || 'undecided') === 'selected' && getFirstApprovedWish(member),
     );
-  }, [sourceMembers]);
+
+    if (hasSelectedMembersWithApprovedWishes) {
+      return {
+        rosterDecision: 'selected' as RosterDecisionFilter,
+        validation: 'approved' as ValidationFilter,
+        wishScope: 'first_approved' as WishScopeFilter,
+      };
+    }
+
+    if (hasApprovedWishes) {
+      return {
+        rosterDecision: 'all' as RosterDecisionFilter,
+        validation: 'approved' as ValidationFilter,
+        wishScope: 'first_approved' as WishScopeFilter,
+      };
+    }
+
+    return {
+      rosterDecision: 'all' as RosterDecisionFilter,
+      validation: 'all' as ValidationFilter,
+      wishScope: '1' as WishScopeFilter,
+    };
+  }, [members]);
 
   useEffect(() => {
-    if (validationFilterTouched) return;
-    setValidationFilter(hasValidatedWishes ? 'approved' : 'all');
-  }, [hasValidatedWishes, validationFilterTouched]);
+    if (!wishScopeFilterTouched) {
+      setWishScopeFilter(defaultAnalyticsFilters.wishScope);
+    }
+    if (!validationFilterTouched) {
+      setValidationFilter(defaultAnalyticsFilters.validation);
+    }
+    if (!rosterDecisionFilterTouched) {
+      setRosterDecisionFilter(defaultAnalyticsFilters.rosterDecision);
+    }
+  }, [
+    defaultAnalyticsFilters,
+    rosterDecisionFilterTouched,
+    validationFilterTouched,
+    wishScopeFilterTouched,
+  ]);
 
   // Pre-filter members based on commitment and exclude those with 0 wishes
   const filteredMembers = useMemo(() => {
@@ -726,7 +763,13 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
             </SelectContent>
           </Select>
           
-          <Select value={wishScopeFilter} onValueChange={(v) => setWishScopeFilter(v as WishScopeFilter)}>
+          <Select
+            value={wishScopeFilter}
+            onValueChange={(v) => {
+              setWishScopeFilterTouched(true);
+              setWishScopeFilter(v as WishScopeFilter);
+            }}
+          >
             <SelectTrigger className="h-7 w-auto min-w-[100px] text-xs">
               <SelectValue>{getWishRangeLabel(wishScopeFilter)}</SelectValue>
             </SelectTrigger>
@@ -782,7 +825,13 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
             </SelectContent>
           </Select>
 
-          <Select value={rosterDecisionFilter} onValueChange={(v) => setRosterDecisionFilter(v as RosterDecisionFilter)}>
+          <Select
+            value={rosterDecisionFilter}
+            onValueChange={(v) => {
+              setRosterDecisionFilterTouched(true);
+              setRosterDecisionFilter(v as RosterDecisionFilter);
+            }}
+          >
             <SelectTrigger className="h-7 w-auto min-w-[110px] text-xs">
               <SelectValue>
                 {rosterDecisionFilter === 'all' ? `${t.common.all} ${t.wishes.rosterDecision.title}` :
