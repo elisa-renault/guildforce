@@ -6,7 +6,6 @@ import { appRoutes, getRouteMeta } from "./routes";
 
 import { PostHogAuthSync } from "@/components/analytics/PostHogAuthSync";
 import { PostHogConsentSync } from "@/components/analytics/PostHogConsentSync";
-import { PostHogPageviewTracker } from "@/components/analytics/PostHogPageviewTracker";
 import { Footer } from "@/components/Footer";
 import { GlobalNav } from "@/components/GlobalNav";
 import { StickyBottomBar } from "@/components/StickyBottomBar";
@@ -62,7 +61,6 @@ const App = () => (
           <div className="dark flex min-h-dvh min-h-screen flex-col">
             <Sonner />
             <BrowserRouter>
-              <PostHogPageviewTracker />
               <CommandPaletteProvider>
                 <AppLayout />
               </CommandPaletteProvider>

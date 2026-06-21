@@ -33,8 +33,9 @@ export const initializePostHog = (): PostHog | null => {
     posthog.init(config.projectToken, {
       api_host: config.host,
       autocapture: false,
-      capture_pageview: false,
-      capture_pageleave: false,
+      defaults: '2026-01-30',
+      capture_pageview: 'history_change',
+      capture_pageleave: 'if_capture_pageview',
       disable_session_recording: true,
       before_send: sanitizePostHogCapture,
       mask_personal_data_properties: true,
