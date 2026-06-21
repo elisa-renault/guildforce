@@ -20,12 +20,12 @@ import { CosmicButton } from '@/components/CosmicButton';
 import { ContextualToolbar } from '@/components/layout/ContextualToolbar';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { GuildWorkspaceShell } from '@/components/guild';
-import { RosterFilters, RosterTable, RosterAnalytics, RosterSelectedTable } from '@/components/dashboard';
+import { RosterFilters, RosterTable, RosterAnalytics, RosterSelectedTable, type RosterTableColumnId } from '@/components/dashboard';
 import { RosterSelector, RosterEditDialog } from '@/components/roster';
 import { SeasonSelector, SeasonStateCallout, type PrepareSeasonInput } from '@/components/seasons/SeasonSelector';
 import { MemberWish, WishData, RosterFilters as RosterFiltersType, ValidationStatus } from '@/types/guild';
 import type { GuildSeason } from '@/types/seasons';
-import { Archive, Loader2, Pencil, Play, Plus, Sparkles, Settings, TableIcon, BarChart3, Download, Eye, Lock, Unlock, Clock, UserPlus, MoreVertical, RefreshCw, Check, ChevronDown, Shield, Heart, Swords, Crosshair } from 'lucide-react';
+import { Archive, Loader2, Pencil, Play, Plus, Sparkles, Settings, TableIcon, BarChart3, Download, Eye, Lock, Unlock, Clock, UserPlus, MoreVertical, RefreshCw, Check, ChevronDown, Shield, Heart, Swords, Crosshair, Columns3 } from 'lucide-react';
 import { exportWishesToCSV } from '@/lib/exportWishes';
 import { getGuildWishesPath } from '@/lib/guildSlug';
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
@@ -46,7 +46,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -54,6 +54,15 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 
 // Max wishes = number of WoW classes
 const MAX_WISHES = wowClasses.length;
+const DEFAULT_ROSTER_TABLE_COLUMNS: RosterTableColumnId[] = [
+  'status',
+  'rosterDecision',
+  'currentAssignment',
+  'wishesCount',
+  'wish1',
+  'wish2',
+  'wish3',
+];
 
 const specRoleStyles: Record<Role, string> = {
   tank: 'text-tank',
@@ -226,6 +235,7 @@ const RosterWishes = () => {
   const [deletingMemberId, setDeletingMemberId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'table' | 'selected' | 'analytics'>('table');
   const [rosterSortSummary, setRosterSortSummary] = useState('');
+  const [visibleRosterColumns, setVisibleRosterColumns] = useState<RosterTableColumnId[]>(DEFAULT_ROSTER_TABLE_COLUMNS);
   const getErrorMessage = (error: unknown) =>
     error instanceof Error ? error.message : t.errors.generic;
 
@@ -1718,6 +1728,54 @@ const RosterWishes = () => {
     : rosterScheduledLabel
       ? interpolateMessage(t.wishes.lockScheduledDesc, { date: rosterScheduledLabel })
       : null;
+  const rosterColumnOptions: { id: RosterTableColumnId; label: string }[] = [
+    { id: 'status', label: t.dashboard.rosterTable.status },
+    { id: 'rosterDecision', label: t.dashboard.rosterTable.decision },
+    { id: 'currentAssignment', label: t.dashboard.rosterTable.assignment },
+    { id: 'wishesCount', label: t.dashboard.rosterTable.total },
+    { id: 'wish1', label: t.dashboard.rosterTable.choice1 },
+    { id: 'wish2', label: t.dashboard.rosterTable.choice2 },
+    { id: 'wish3', label: t.dashboard.rosterTable.choice3 },
+  ];
+  const toggleRosterColumn = (columnId: RosterTableColumnId, nextChecked: boolean) => {
+    setVisibleRosterColumns((current) => {
+      if (nextChecked) {
+        return current.includes(columnId) ? current : [...current, columnId];
+      }
+      if (current.length <= 1) return current;
+      return current.filter((id) => id !== columnId);
+    });
+  };
+  const rosterColumnSelector = (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm" className="h-8 gap-2 border-border/45 bg-card/55 px-2.5 text-sm font-medium text-foreground/85 shadow-none hover:bg-card/75">
+          <Columns3 className="h-4 w-4" />
+          {language === 'fr' ? 'Colonnes' : 'Columns'}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56 border-border bg-card">
+        {rosterColumnOptions.map((option) => (
+          <DropdownMenuCheckboxItem
+            key={option.id}
+            checked={visibleRosterColumns.includes(option.id)}
+            disabled={visibleRosterColumns.length <= 1 && visibleRosterColumns.includes(option.id)}
+            onCheckedChange={(checked) => toggleRosterColumn(option.id, checked === true)}
+          >
+            {option.label}
+          </DropdownMenuCheckboxItem>
+        ))}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => setVisibleRosterColumns(DEFAULT_ROSTER_TABLE_COLUMNS)}
+          className="cursor-pointer"
+        >
+          <RefreshCw className="mr-2 h-4 w-4" />
+          {t.common.reset}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
   const rosterToolbarActions = [
     {
       key: 'export',
@@ -2027,6 +2085,7 @@ const RosterWishes = () => {
               filters={filters}
               onFiltersChange={setFilters}
               sortSummary={rosterSortSummary}
+              actions={rosterColumnSelector}
             />
 
             <RosterTable
@@ -2062,6 +2121,7 @@ const RosterWishes = () => {
               onViewHistory={canManageWishes && !isAdminReadOnly ? openHistoryDrawer : undefined}
               updatingAssignmentMemberId={savingAssignment ? assignmentMember?.id || null : null}
               onSortSummaryChange={setRosterSortSummary}
+              visibleColumns={visibleRosterColumns}
             />
           </TabsContent>
 

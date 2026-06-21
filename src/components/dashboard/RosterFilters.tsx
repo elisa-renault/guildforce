@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +24,7 @@ interface RosterFiltersProps {
   filters: RosterFiltersType;
   onFiltersChange: (filters: RosterFiltersType) => void;
   sortSummary?: string;
+  actions?: ReactNode;
 }
 
 
@@ -72,7 +73,7 @@ const defaultFilters: RosterFiltersType = {
   maxWishIndex: null,
 };
 
-export const RosterFilters = ({ filters, onFiltersChange, sortSummary }: RosterFiltersProps) => {
+export const RosterFilters = ({ filters, onFiltersChange, sortSummary, actions }: RosterFiltersProps) => {
   const { t, language } = useLanguage();
   const s = (key: SemanticKey, fallback?: string) =>
     resolveSemanticMessage({ key, language: t.lang, translations: t, fallback });
@@ -1051,6 +1052,11 @@ export const RosterFilters = ({ filters, onFiltersChange, sortSummary }: RosterF
             <RotateCcw className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">{t.common.reset}</span>
           </Button>
+        )}
+        {actions && (
+          <div className="ml-auto hidden shrink-0 items-center lg:flex">
+            {actions}
+          </div>
         )}
       </FilterBar>
 
