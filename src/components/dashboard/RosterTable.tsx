@@ -16,7 +16,6 @@ import { CommitmentToggle, CommitmentStatus } from '@/components/CommitmentToggl
 import { MobileRosterCard } from './MobileRosterCard';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
-import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -135,8 +134,6 @@ export const RosterTable = ({
     + (isColumnVisible('wish3') ? 210 : 0)
     + 48;
   const { t, language } = useLanguage();
-  const s = (key: SemanticKey, fallback?: string) =>
-    resolveSemanticMessage({ key, language: t.lang, translations: t, fallback });
   const navigate = useNavigate();
   const { regionSlug, serverSlug, guildSlug } = useParams();
   const isMobile = useIsMobile();
@@ -574,12 +571,6 @@ export const RosterTable = ({
     );
   };
 
-  // Count extra wishes beyond 3 for display indicator
-  const getExtraWishesCount = (wishes: WishChoice[]) => {
-    const filledWishes = wishes.filter(w => w.class_id);
-    return Math.max(0, filledWishes.length - 3);
-  };
-
   if (loading) {
     return (
       <GlowCard surface="section" className="overflow-hidden">
@@ -703,7 +694,6 @@ export const RosterTable = ({
             {sortedMembers.map((member) => {
               const isOwnRow = member.id === currentUserId;
               const isEditing = editingUserId === member.id;
-              const extraWishes = getExtraWishesCount(member.wishes);
               const memberLocked = Boolean(member.wishes_locked);
               const effectiveLocked = isRosterLocked || memberLocked;
               const lockTooltip = isRosterLocked
@@ -797,20 +787,6 @@ export const RosterTable = ({
                                 </TooltipTrigger>
                                 <TooltipContent side="top" className="text-xs max-w-[240px]">
                                   {manualEntryHelp}
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                          {!isEditing && extraWishes > 0 && (
-                            <TooltipProvider delayDuration={200}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Badge variant="outline" className="text-[10px] px-1 py-0 text-muted-foreground border-muted-foreground/30 flex-shrink-0">
-                                    +{extraWishes}
-                                  </Badge>
-                                </TooltipTrigger>
-                                <TooltipContent side="top" className="text-xs">
-                                  {extraWishes + 3} {s('dashboard.roster_table.total_wishes_suffix')}
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
