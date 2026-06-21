@@ -6,6 +6,7 @@ interface DataListSkeletonProps {
   showToolbar?: boolean;
   showMeta?: boolean;
   variant?: 'table' | 'cards';
+  framed?: boolean;
   className?: string;
 }
 
@@ -14,6 +15,7 @@ export const DataListSkeleton = ({
   showToolbar = true,
   showMeta = true,
   variant = 'table',
+  framed = true,
   className,
 }: DataListSkeletonProps) => (
   <div
@@ -33,7 +35,7 @@ export const DataListSkeleton = ({
 
     {showMeta ? <Skeleton className="h-4 w-72 max-w-full" /> : null}
 
-    <div className="overflow-hidden rounded-lg border border-border/45 bg-card/25">
+    <div className={cn('overflow-hidden', framed && 'rounded-lg border border-border/45 bg-card/25')}>
       <div className={cn(variant === 'cards' ? 'space-y-2 p-2' : 'space-y-px')}>
         {Array.from({ length: rows }).map((_, index) => (
           <div

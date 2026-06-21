@@ -563,6 +563,7 @@ export const RosterTable = ({
           showToolbar={false}
           showMeta={false}
           variant={isMobile ? 'cards' : 'table'}
+          framed={false}
           className="p-3"
         />
       </GlowCard>
