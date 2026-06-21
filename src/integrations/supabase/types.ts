@@ -530,6 +530,7 @@ export type Database = {
           guild_id: string
           id: string
           roster_id: string | null
+          season_id: string | null
           target_user_id: string | null
           user_id: string | null
         }
@@ -540,6 +541,7 @@ export type Database = {
           guild_id: string
           id?: string
           roster_id?: string | null
+          season_id?: string | null
           target_user_id?: string | null
           user_id?: string | null
         }
@@ -550,6 +552,7 @@ export type Database = {
           guild_id?: string
           id?: string
           roster_id?: string | null
+          season_id?: string | null
           target_user_id?: string | null
           user_id?: string | null
         }
@@ -566,6 +569,13 @@ export type Database = {
             columns: ["roster_id"]
             isOneToOne: false
             referencedRelation: "rosters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_activity_logs_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "roster_wish_seasons"
             referencedColumns: ["id"]
           },
           {
@@ -2156,63 +2166,6 @@ export type Database = {
         }
         Relationships: []
       }
-      roster_member_assignments: {
-        Row: {
-          approved_by: string | null
-          character_id: string | null
-          character_name_snapshot: string | null
-          character_realm_snapshot: string | null
-          choice_index: number | null
-          class_id: string
-          created_at: string
-          id: string
-          manager_comment: string | null
-          reason_code: Database["public"]["Enums"]["roster_selection_reason_code"] | null
-          role: string | null
-          roster_season_member_id: string
-          source: Database["public"]["Enums"]["roster_assignment_source"]
-          spec_id: string | null
-          valid_from: string
-          valid_to: string | null
-        }
-        Insert: {
-          approved_by?: string | null
-          character_id?: string | null
-          character_name_snapshot?: string | null
-          character_realm_snapshot?: string | null
-          choice_index?: number | null
-          class_id: string
-          created_at?: string
-          id?: string
-          manager_comment?: string | null
-          reason_code?: Database["public"]["Enums"]["roster_selection_reason_code"] | null
-          role?: string | null
-          roster_season_member_id: string
-          source?: Database["public"]["Enums"]["roster_assignment_source"]
-          spec_id?: string | null
-          valid_from?: string
-          valid_to?: string | null
-        }
-        Update: {
-          approved_by?: string | null
-          character_id?: string | null
-          character_name_snapshot?: string | null
-          character_realm_snapshot?: string | null
-          choice_index?: number | null
-          class_id?: string
-          created_at?: string
-          id?: string
-          manager_comment?: string | null
-          reason_code?: Database["public"]["Enums"]["roster_selection_reason_code"] | null
-          role?: string | null
-          roster_season_member_id?: string
-          source?: Database["public"]["Enums"]["roster_assignment_source"]
-          spec_id?: string | null
-          valid_from?: string
-          valid_to?: string | null
-        }
-        Relationships: []
-      }
       roster_season_events: {
         Row: {
           actor_id: string | null
@@ -2603,6 +2556,16 @@ export type Database = {
         Args: { p_poll_id: string; p_user_id: string }
         Returns: boolean
       }
+      create_roster_with_wish_season: {
+        Args: {
+          p_guild_id: string
+          p_name: string
+          p_description?: string | null
+          p_access_rules?: Json
+          p_season_name?: string | null
+        }
+        Returns: Database["public"]["Tables"]["rosters"]["Row"]
+      }
       get_poll_question_results_visibility: {
         Args: { p_question_id: string; p_user_id: string }
         Returns: string
@@ -2706,10 +2669,6 @@ export type Database = {
         Args: { p_roster_id: string; p_season_id: string }
         Returns: number
       }
-      seed_roster_assignments_from_first_approved_wish: {
-        Args: { p_roster_id: string; p_season_id: string }
-        Returns: number
-      }
       get_roster_season_table: {
         Args: { p_roster_id: string; p_season_id: string }
         Returns: {
@@ -2730,7 +2689,6 @@ export type Database = {
           selection_decided_by: string | null
           selection_decided_at: string | null
           selection_updated_at: string | null
-          current_assignment: Json
           outcome: Json
         }[]
       }
@@ -2768,21 +2726,6 @@ export type Database = {
       apply_roster_season_sync_delta: {
         Args: { p_roster_id: string; p_season_id: string }
         Returns: Json
-      }
-      set_roster_member_assignment: {
-        Args: {
-          p_roster_season_member_id: string
-          p_class_id: string
-          p_spec_id?: string | null
-          p_role?: string | null
-          p_source?: Database["public"]["Enums"]["roster_assignment_source"]
-          p_choice_index?: number | null
-          p_reason_code?: Database["public"]["Enums"]["roster_selection_reason_code"] | null
-          p_manager_comment?: string | null
-          p_valid_from?: string | null
-          p_character_id?: string | null
-        }
-        Returns: string
       }
       prepare_roster_wish_season: {
         Args: {
@@ -2958,6 +2901,7 @@ export type Database = {
           p_action_type: string
           p_guild_id: string
           p_roster_id?: string
+          p_season_id?: string | null
           p_target_user_id?: string
           p_user_id: string
         }
@@ -3125,12 +3069,6 @@ export type Database = {
         | "departed"
         | "removed"
         | "declined"
-      roster_assignment_source:
-        | "wish"
-        | "manager_decision"
-        | "recruitment"
-        | "change_request"
-        | "raid_need"
     }
     CompositeTypes: {
       [_ in never]: never
