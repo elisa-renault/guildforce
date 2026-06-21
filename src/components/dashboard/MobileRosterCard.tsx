@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { CosmicButton } from '@/components/CosmicButton';
 import { GlowCard } from '@/components/GlowCard';
-import { CheckCircle, HelpCircle, XCircle, Pencil, Shield, Heart, Sword, Swords, Crosshair, MessageSquare, Lock, Unlock, MoreVertical, Loader2, Trash2, UserPlus } from 'lucide-react';
+import { CheckCircle, HelpCircle, XCircle, Pencil, Shield, Heart, Sword, Swords, Crosshair, MessageSquare, Lock, Unlock, MoreVertical, Loader2, Trash2, UserPlus, History } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getClassById, getLocalizedClassName, getLocalizedSpecName, getSpecById } from '@/data/wowClasses';
 import { MemberWish, RosterSelectionStatus, WishChoice, ValidationStatus } from '@/types/guild';
@@ -21,6 +21,7 @@ interface MobileRosterCardProps {
   member: MemberWish;
   isOwnRow: boolean;
   canManageWishes: boolean;
+  canManageAssignments?: boolean;
   isRosterLocked?: boolean;
   onStartEditing: (member: MemberWish) => void;
   onValidateWish?: (userId: string, choiceIndex: number, status: ValidationStatus) => void;
@@ -31,6 +32,9 @@ interface MobileRosterCardProps {
   deletingMemberId?: string | null;
   onSelectionStatusChange?: (memberId: string, status: RosterSelectionStatus) => void;
   updatingSelectionMemberId?: string | null;
+  onEditAssignment?: (member: MemberWish) => void;
+  onViewHistory?: (member: MemberWish) => void;
+  updatingAssignmentMemberId?: string | null;
 }
 
 const roleConfig: Record<string, { icon: typeof Shield; color: string }> = {
@@ -43,6 +47,7 @@ export const MobileRosterCard = ({
   member,
   isOwnRow,
   canManageWishes,
+  canManageAssignments = canManageWishes,
   isRosterLocked = false,
   onStartEditing,
   onValidateWish,
@@ -53,6 +58,9 @@ export const MobileRosterCard = ({
   deletingMemberId = null,
   onSelectionStatusChange,
   updatingSelectionMemberId = null,
+  onEditAssignment,
+  onViewHistory,
+  updatingAssignmentMemberId = null,
 }: MobileRosterCardProps) => {
   const { t, language } = useLanguage();
   const s = (key: SemanticKey, fallback?: string) =>
@@ -171,9 +179,25 @@ export const MobileRosterCard = ({
   const memberLocked = Boolean(member.wishes_locked);
   const effectiveLocked = isRosterLocked || memberLocked;
   const actionItems = [
+    ...(canManageAssignments && onEditAssignment && member.seasonMemberId ? [{
+      key: 'assignment',
+      label: language === 'fr' ? 'Modifier affectation' : 'Edit assignment',
+      icon: Pencil,
+      onClick: () => onEditAssignment(member),
+      loading: updatingAssignmentMemberId === member.id,
+      disabled: false,
+    }] : []),
+    ...(canManageAssignments && onViewHistory && member.seasonMemberId ? [{
+      key: 'history',
+      label: language === 'fr' ? 'Historique saison' : 'Season history',
+      icon: History,
+      onClick: () => onViewHistory(member),
+      loading: false,
+      disabled: false,
+    }] : []),
     ...(canManageWishes && onRemoveMember && !isOwnRow ? [{
       key: 'delete',
-      label: t.common.delete,
+      label: t.wishes.removeMember,
       icon: Trash2,
       onClick: () => onRemoveMember(member.id),
       loading: deletingMemberId === member.id,

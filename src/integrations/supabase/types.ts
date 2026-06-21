@@ -2101,6 +2101,7 @@ export type Database = {
           id: string
           joined_wishlist_at: string
           left_guild_at: string | null
+          left_roster_at: string | null
           locked: boolean
           rank_index_snapshot: number | null
           realm_snapshot: string | null
@@ -2120,6 +2121,7 @@ export type Database = {
           id?: string
           joined_wishlist_at?: string
           left_guild_at?: string | null
+          left_roster_at?: string | null
           locked?: boolean
           rank_index_snapshot?: number | null
           realm_snapshot?: string | null
@@ -2139,6 +2141,7 @@ export type Database = {
           id?: string
           joined_wishlist_at?: string
           left_guild_at?: string | null
+          left_roster_at?: string | null
           locked?: boolean
           rank_index_snapshot?: number | null
           realm_snapshot?: string | null
@@ -2750,6 +2753,10 @@ export type Database = {
           left_mid_season: boolean
           final_status: Database["public"]["Enums"]["roster_season_member_status"]
         }[]
+      }
+      apply_roster_season_sync_delta: {
+        Args: { p_roster_id: string; p_season_id: string }
+        Returns: Json
       }
       set_roster_member_assignment: {
         Args: {

@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   getClassById,
   getLocalizedClassName,
+  getLocalizedSpecName,
   getSpecById,
   getRolesFromSpecs,
   Role,
@@ -24,7 +25,7 @@ import { RosterSelector, RosterEditDialog } from '@/components/roster';
 import { SeasonSelector, SeasonStateCallout, type PrepareSeasonInput } from '@/components/seasons/SeasonSelector';
 import { MemberWish, WishData, RosterFilters as RosterFiltersType, ValidationStatus } from '@/types/guild';
 import type { GuildSeason } from '@/types/seasons';
-import { Archive, Loader2, Pencil, Play, Plus, Sparkles, Settings, TableIcon, BarChart3, Download, Eye, Lock, Unlock, Clock, UserPlus, MoreVertical } from 'lucide-react';
+import { Archive, Loader2, Pencil, Play, Plus, Sparkles, Settings, TableIcon, BarChart3, Download, Eye, Lock, Unlock, Clock, UserPlus, MoreVertical, RefreshCw } from 'lucide-react';
 import { exportWishesToCSV } from '@/lib/exportWishes';
 import { getGuildWishesPath } from '@/lib/guildSlug';
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
@@ -43,9 +44,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 // Max wishes = number of WoW classes
 const MAX_WISHES = wowClasses.length;
@@ -105,6 +108,13 @@ interface RosterSeasonTableRow {
   season_status: string;
   current_assignment: MemberWish['currentAssignment'] | null;
   outcome: MemberWish['seasonOutcome'] | null;
+}
+
+interface RosterSeasonHistoryRow {
+  event_at: string;
+  event_type: string;
+  actor_id: string | null;
+  payload: Record<string, unknown> | null;
 }
 
 const FR_REALM_DISPLAY_MAP: Record<string, string> = {
@@ -220,6 +230,18 @@ const RosterWishes = () => {
   const [externalClassId, setExternalClassId] = useState('');
   const [externalComment, setExternalComment] = useState('');
   const [savingExternalWish, setSavingExternalWish] = useState(false);
+  const [assignmentDialogOpen, setAssignmentDialogOpen] = useState(false);
+  const [assignmentMember, setAssignmentMember] = useState<MemberWish | null>(null);
+  const [assignmentClassId, setAssignmentClassId] = useState('');
+  const [assignmentSpecId, setAssignmentSpecId] = useState('');
+  const [assignmentDate, setAssignmentDate] = useState('');
+  const [assignmentComment, setAssignmentComment] = useState('');
+  const [savingAssignment, setSavingAssignment] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyMember, setHistoryMember] = useState<MemberWish | null>(null);
+  const [historyRows, setHistoryRows] = useState<RosterSeasonHistoryRow[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [syncingSeason, setSyncingSeason] = useState(false);
 
   const isMobile = useIsMobile();
 
@@ -807,6 +829,20 @@ const RosterWishes = () => {
     }
   };
 
+  const toLocalDateInputValue = (value?: string | null) => {
+    const date = value ? new Date(value) : new Date();
+    if (Number.isNaN(date.getTime())) return '';
+    const pad = (num: number) => String(num).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  };
+
+  const toIsoFromLocalDateInput = (value: string) => {
+    if (!value) return null;
+    const [year, month, day] = value.split('-').map(Number);
+    if ([year, month, day].some(n => Number.isNaN(n))) return null;
+    return new Date(year, month - 1, day, 0, 0, 0, 0).toISOString();
+  };
+
   const resetSeasonDialogForm = () => {
     setSeasonName('');
     setSeasonStartsAt('');
@@ -878,6 +914,133 @@ const RosterWishes = () => {
     } finally {
       setSeasonActionBusy(null);
     }
+  };
+
+  const openAssignmentDialog = (member: MemberWish) => {
+    if (!member.seasonMemberId) return;
+    const currentClassId = member.currentAssignment?.class_id || member.wishes.find(wish => wish.class_id)?.class_id || '';
+    const currentSpecId = member.currentAssignment?.spec_id
+      || member.wishes.find(wish => wish.class_id === currentClassId)?.spec_ids?.[0]
+      || '';
+
+    setAssignmentMember(member);
+    setAssignmentClassId(currentClassId);
+    setAssignmentSpecId(currentSpecId);
+    setAssignmentDate(toLocalDateInputValue(member.currentAssignment?.valid_from));
+    setAssignmentComment(member.currentAssignment?.manager_comment || '');
+    setAssignmentDialogOpen(true);
+  };
+
+  const saveAssignment = async () => {
+    if (!assignmentMember?.seasonMemberId || !assignmentClassId) return;
+    const selectedSpec = assignmentSpecId ? getSpecById(assignmentSpecId) : null;
+    setSavingAssignment(true);
+    try {
+      const { error } = await supabase.rpc('set_roster_member_assignment', {
+        p_roster_season_member_id: assignmentMember.seasonMemberId,
+        p_class_id: assignmentClassId,
+        p_spec_id: assignmentSpecId || null,
+        p_role: selectedSpec?.role || null,
+        p_source: 'manager_decision',
+        p_choice_index: null,
+        p_reason_code: null,
+        p_manager_comment: assignmentComment.trim() || null,
+        p_valid_from: toIsoFromLocalDateInput(assignmentDate) || new Date().toISOString(),
+      });
+      if (error) throw error;
+      toast({ title: language === 'fr' ? 'Affectation mise à jour' : 'Assignment updated' });
+      setAssignmentDialogOpen(false);
+      setAssignmentMember(null);
+      await fetchWishes();
+    } catch (error: unknown) {
+      toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
+    } finally {
+      setSavingAssignment(false);
+    }
+  };
+
+  const openHistoryDrawer = async (member: MemberWish) => {
+    if (!selectedRosterId || !selectedSeasonId || !member.seasonMemberId) return;
+    setHistoryMember(member);
+    setHistoryRows([]);
+    setHistoryOpen(true);
+    setHistoryLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('get_roster_season_history', {
+        p_roster_id: selectedRosterId,
+        p_season_id: selectedSeasonId,
+        p_roster_season_member_id: member.seasonMemberId,
+      });
+      if (error) throw error;
+      setHistoryRows((data || []) as RosterSeasonHistoryRow[]);
+    } catch (error: unknown) {
+      toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const applySyncDelta = async () => {
+    if (!selectedRosterId || !selectedSeasonId) return;
+    setSyncingSeason(true);
+    try {
+      const { data, error } = await supabase.rpc('apply_roster_season_sync_delta', {
+        p_roster_id: selectedRosterId,
+        p_season_id: selectedSeasonId,
+      });
+      if (error) throw error;
+      const result = (data || {}) as Record<string, unknown>;
+      toast({
+        title: language === 'fr' ? 'Synchronisation appliquée' : 'Sync delta applied',
+        description: language === 'fr'
+          ? `${result.added_or_refreshed_count ?? 0} ajoutés/actualisés, ${result.left_roster_count ?? 0} sortis roster, ${result.left_guild_count ?? 0} sortis guilde`
+          : `${result.added_or_refreshed_count ?? 0} added/refreshed, ${result.left_roster_count ?? 0} left roster, ${result.left_guild_count ?? 0} left guild`,
+      });
+      await fetchWishes();
+    } catch (error: unknown) {
+      toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
+    } finally {
+      setSyncingSeason(false);
+    }
+  };
+
+  const getHistoryEventLabel = (eventType: string) => {
+    const labels: Record<string, { fr: string; en: string }> = {
+      season_member_snapshot: { fr: 'Snapshot saison', en: 'Season snapshot' },
+      assignment_changed: { fr: 'Affectation modifiée', en: 'Assignment changed' },
+      roster_assignments_seeded_from_wishes: { fr: 'Affectation initialisée depuis les vœux', en: 'Assignment seeded from wishes' },
+      roster_season_materialized: { fr: 'Feuille matérialisée', en: 'Season sheet materialized' },
+      external_member_matched: { fr: 'Externe rattaché', en: 'External member matched' },
+      member_left_roster: { fr: 'Sorti du roster', en: 'Left roster' },
+      member_left_guild: { fr: 'Sorti de guilde', en: 'Left guild' },
+      roster_season_sync_delta_applied: { fr: 'Delta de sync appliqué', en: 'Sync delta applied' },
+    };
+    return labels[eventType]?.[language === 'fr' ? 'fr' : 'en'] || eventType;
+  };
+
+  const formatHistoryPayload = (payload: Record<string, unknown> | null) => {
+    if (!payload) return null;
+    const parts: string[] = [];
+    const classId = typeof payload.class_id === 'string' ? payload.class_id : null;
+    const specId = typeof payload.spec_id === 'string' ? payload.spec_id : null;
+    const classLabel = classId ? getLocalizedClassName(classId, language) : null;
+    const specLabel = specId ? getLocalizedSpecName(specId, language) : null;
+    if (classLabel) parts.push(specLabel ? `${classLabel} ${specLabel}` : classLabel);
+    if (typeof payload.season_status === 'string') parts.push(payload.season_status);
+    if (typeof payload.source === 'string') parts.push(payload.source);
+    if (typeof payload.manager_comment === 'string' && payload.manager_comment.trim()) {
+      parts.push(payload.manager_comment.trim());
+    }
+    if (typeof payload.left_roster_at === 'string') {
+      parts.push(`${language === 'fr' ? 'Sortie roster' : 'Left roster'}: ${formatDateTimeLocalized(payload.left_roster_at, language, { dateStyle: 'medium' })}`);
+    }
+    if (typeof payload.left_guild_at === 'string') {
+      parts.push(`${language === 'fr' ? 'Sortie guilde' : 'Left guild'}: ${formatDateTimeLocalized(payload.left_guild_at, language, { dateStyle: 'medium' })}`);
+    }
+    if (typeof payload.valid_from === 'string') {
+      parts.push(`${language === 'fr' ? 'Depuis' : 'From'}: ${formatDateTimeLocalized(payload.valid_from, language, { dateStyle: 'medium' })}`);
+    }
+    return parts.length > 0 ? parts.join(' · ') : null;
   };
 
   const startEditing = (member: MemberWish) => {
@@ -1530,6 +1693,15 @@ const RosterWishes = () => {
           onClick: () => setLockDialogOpen(true),
         }]
       : []),
+    ...(canManageWishes && !isAdminReadOnly && selectedRosterId && selectedSeasonId && selectedSeason?.state !== 'archived'
+      ? [{
+          key: 'sync-delta',
+          label: language === 'fr' ? 'Synchroniser la saison' : 'Sync season',
+          icon: RefreshCw,
+          disabled: syncingSeason,
+          onClick: applySyncDelta,
+        }]
+      : []),
     ...(isGM && selectedRosterId
       ? [{
           key: 'roster-settings',
@@ -1541,6 +1713,8 @@ const RosterWishes = () => {
       : []),
   ];
   const hasToolbarActions = canManageSeasonActions || rosterToolbarActions.length > 0;
+  const assignmentClass = assignmentClassId ? getClassById(assignmentClassId) : null;
+  const assignmentSpecs = assignmentClass?.specs || [];
   const renderToolbarActionsMenu = () => {
     if (!hasToolbarActions) return null;
 
@@ -1806,6 +1980,7 @@ const RosterWishes = () => {
               saving={saving}
               maxWishes={MAX_WISHES}
               canManageWishes={canManageWishes && canMutateSelectedSeason}
+              canManageAssignments={canManageWishes && !isAdminReadOnly}
               isRosterLocked={rosterLockState.isLocked}
               isEditingLocked={isEditingLocked || !isSelectedSeasonActive}
               onStartEditing={startEditing}
@@ -1822,6 +1997,9 @@ const RosterWishes = () => {
               deletingMemberId={deletingMemberId}
               onSelectionStatusChange={canManageWishes && canMutateSelectedSeason ? handleSelectionStatusChange : undefined}
               updatingSelectionMemberId={updatingSelectionMemberId}
+              onEditAssignment={canManageWishes && !isAdminReadOnly ? openAssignmentDialog : undefined}
+              onViewHistory={canManageWishes && !isAdminReadOnly ? openHistoryDrawer : undefined}
+              updatingAssignmentMemberId={savingAssignment ? assignmentMember?.id || null : null}
             />
           </TabsContent>
 
@@ -2111,6 +2289,138 @@ const RosterWishes = () => {
           </DialogContent>
         </Dialog>
       )}
+
+      <Dialog open={assignmentDialogOpen} onOpenChange={setAssignmentDialogOpen}>
+        <DialogContent className="max-w-md border-border bg-card">
+          <DialogHeader>
+            <DialogTitle>{language === 'fr' ? 'Modifier affectation' : 'Edit assignment'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {assignmentMember && (
+              <div className="rounded-md border border-border/40 bg-background/40 px-3 py-2">
+                <div className="text-sm font-medium text-foreground">{assignmentMember.username}</div>
+                {assignmentMember.mainCharacterName && (
+                  <div className="text-xs text-muted-foreground">{assignmentMember.mainCharacterName}</div>
+                )}
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label>{language === 'fr' ? 'Classe' : 'Class'}</Label>
+              <Select
+                value={assignmentClassId}
+                onValueChange={(value) => {
+                  const nextClass = getClassById(value);
+                  setAssignmentClassId(value);
+                  setAssignmentSpecId(nextClass?.specs[0]?.id || '');
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={language === 'fr' ? 'Choisir une classe' : 'Select class'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {wowClasses.map((wowClass) => (
+                    <SelectItem key={wowClass.id} value={wowClass.id}>
+                      {getLocalizedClassName(wowClass.id, language)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>{language === 'fr' ? 'Spé principale' : 'Main spec'}</Label>
+              <Select value={assignmentSpecId} onValueChange={setAssignmentSpecId} disabled={!assignmentClassId}>
+                <SelectTrigger>
+                  <SelectValue placeholder={language === 'fr' ? 'Choisir une spé' : 'Select spec'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {assignmentSpecs.map((spec) => (
+                    <SelectItem key={spec.id} value={spec.id}>
+                      {getLocalizedSpecName(spec.id, language)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="assignment-date">{language === 'fr' ? 'Date effective' : 'Effective date'}</Label>
+              <Input
+                id="assignment-date"
+                type="date"
+                value={assignmentDate}
+                onChange={(event) => setAssignmentDate(event.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="assignment-comment">{language === 'fr' ? 'Commentaire manager' : 'Manager comment'}</Label>
+              <Textarea
+                id="assignment-comment"
+                value={assignmentComment}
+                onChange={(event) => setAssignmentComment(event.target.value)}
+                placeholder={language === 'fr' ? 'Optionnel' : 'Optional'}
+                rows={3}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <CosmicButton variant="outline" onClick={() => setAssignmentDialogOpen(false)}>
+                {t.common.cancel}
+              </CosmicButton>
+              <CosmicButton onClick={saveAssignment} loading={savingAssignment} disabled={!assignmentClassId || !assignmentDate}>
+                {t.common.save}
+              </CosmicButton>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>
+        <SheetContent side="right" className="w-full border-border bg-background/95 sm:max-w-xl">
+          <SheetHeader>
+            <SheetTitle>{language === 'fr' ? 'Historique saison' : 'Season history'}</SheetTitle>
+          </SheetHeader>
+          <div className="mt-6 space-y-4">
+            {historyMember && (
+              <div className="rounded-md border border-border/40 bg-card/70 px-3 py-2">
+                <div className="text-sm font-medium text-foreground">{historyMember.username}</div>
+                {historyMember.mainCharacterName && (
+                  <div className="text-xs text-muted-foreground">{historyMember.mainCharacterName}</div>
+                )}
+              </div>
+            )}
+
+            {historyLoading ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {language === 'fr' ? 'Chargement...' : 'Loading...'}
+              </div>
+            ) : historyRows.length === 0 ? (
+              <div className="text-sm text-muted-foreground">
+                {language === 'fr' ? 'Aucun historique disponible.' : 'No history available.'}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {historyRows.map((row, index) => {
+                  const detail = formatHistoryPayload(row.payload);
+                  return (
+                    <div key={`${row.event_type}-${row.event_at}-${index}`} className="relative border-l border-border/60 pl-4">
+                      <span className="absolute -left-[5px] top-1 h-2.5 w-2.5 rounded-full bg-primary" />
+                      <div className="text-xs text-muted-foreground">
+                        {formatDateTimeLocalized(row.event_at, language, { dateStyle: 'medium', timeStyle: 'short' })}
+                      </div>
+                      <div className="text-sm font-medium text-foreground">{getHistoryEventLabel(row.event_type)}</div>
+                      {detail && <div className="mt-1 text-xs leading-relaxed text-muted-foreground">{detail}</div>}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Roster Settings Dialog */}
       {guildId && selectedRosterId && (

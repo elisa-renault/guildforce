@@ -157,11 +157,15 @@ type RoleFilter = 'all' | 'tank' | 'healer' | 'dps';
 type RangeFilter = 'all' | 'melee' | 'ranged';
 type ValidationFilter = 'all' | 'pending' | 'approved' | 'rejected';
 type WishScopeFilter = 'first_approved' | '1' | '2' | '3' | '4' | '5' | '6' | '13';
+type CompositionView = 'wished' | 'rosterized' | 'effective';
+type OutcomeFilter = 'all' | 'first_choice' | 'changed' | 'joined' | 'left_roster' | 'left_guild';
 
 export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   const { t, language } = useLanguage();
   const s = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
     resolveSemanticMessage({ key, language, translations: t });
+  const [compositionView, setCompositionView] = useState<CompositionView>('wished');
+  const [outcomeFilter, setOutcomeFilter] = useState<OutcomeFilter>('all');
   const [wishScopeFilter, setWishScopeFilter] = useState<WishScopeFilter>('first_approved');
   const [hoveredClass, setHoveredClass] = useState<string | null>(null);
   const [commitmentFilter, setCommitmentFilter] = useState<CommitmentFilter>('confirmed');
@@ -235,17 +239,6 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     };
   }, [showBuffsDebuffs]);
 
-  const hasValidatedWishes = useMemo(() => {
-    return members.some(member =>
-      (member.wishes || []).some(wish => (wish.validation_status || 'pending') === 'approved')
-    );
-  }, [members]);
-
-  useEffect(() => {
-    if (validationFilterTouched) return;
-    setValidationFilter(hasValidatedWishes ? 'approved' : 'all');
-  }, [hasValidatedWishes, validationFilterTouched]);
-
   const maxWishIndex = wishScopeFilter === 'first_approved' ? 13 : Number(wishScopeFilter);
 
   const getFirstApprovedWish = (member: MemberWish) =>
@@ -256,9 +249,54 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
       )
       .sort((a, b) => a.choice_index - b.choice_index)[0] || null;
 
+  const sourceMembers = useMemo(() => {
+    if (compositionView === 'wished') return members;
+
+    return members.flatMap((member) => {
+      const assignment = member.currentAssignment;
+      const fallbackWish = getFirstApprovedWish(member) || member.wishes.find(wish => wish.class_id);
+      const classId = compositionView === 'effective'
+        ? assignment?.class_id
+        : assignment?.class_id || fallbackWish?.class_id;
+      const specId = compositionView === 'effective'
+        ? assignment?.spec_id
+        : assignment?.spec_id || fallbackWish?.spec_ids?.[0];
+
+      if (!classId) return [];
+      if (compositionView === 'rosterized' && !['selected', 'bench'].includes(member.selectionStatus || 'undecided')) {
+        return [];
+      }
+
+      return [{
+        ...member,
+        wishes: [{
+          choice_index: 1,
+          class_id: classId,
+          spec_ids: specId ? [specId] : [],
+          comment: null,
+          validation_status: 'approved' as const,
+          validated_by: null,
+          validated_at: null,
+          validated_by_username: null,
+        }],
+      }];
+    });
+  }, [members, compositionView]);
+
+  const hasValidatedWishes = useMemo(() => {
+    return sourceMembers.some(member =>
+      (member.wishes || []).some(wish => (wish.validation_status || 'pending') === 'approved')
+    );
+  }, [sourceMembers]);
+
+  useEffect(() => {
+    if (validationFilterTouched) return;
+    setValidationFilter(hasValidatedWishes ? 'approved' : 'all');
+  }, [hasValidatedWishes, validationFilterTouched]);
+
   // Pre-filter members based on commitment and exclude those with 0 wishes
   const filteredMembers = useMemo(() => {
-    let filtered = members.filter(m => {
+    let filtered = sourceMembers.filter(m => {
       const hasWishes = m.wishes && m.wishes.length > 0 && m.wishes.some(w => w.class_id);
       if (!hasWishes) return false;
       return true;
@@ -272,8 +310,20 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
       filtered = filtered.filter((m) => (m.selectionStatus || 'undecided') === rosterDecisionFilter);
     }
 
+    if (outcomeFilter !== 'all') {
+      filtered = filtered.filter((m) => {
+        const outcome = m.seasonOutcome;
+        if (outcomeFilter === 'first_choice') return outcome?.first_choice_granted === true;
+        if (outcomeFilter === 'changed') return outcome?.changed_class_during_season === true;
+        if (outcomeFilter === 'joined') return outcome?.joined_mid_season === true;
+        if (outcomeFilter === 'left_roster') return outcome?.final_status === 'removed';
+        if (outcomeFilter === 'left_guild') return outcome?.final_status === 'departed';
+        return true;
+      });
+    }
+
     return filtered;
-  }, [members, commitmentFilter, rosterDecisionFilter]);
+  }, [sourceMembers, commitmentFilter, rosterDecisionFilter, outcomeFilter]);
 
   const spellMap = useMemo(() => {
     const contentLanguage = getBilingualContentLanguage(language);
@@ -644,6 +694,37 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
         {/* Compact Filter Bar + KPIs */}
         <div className="flex flex-wrap items-center gap-2 p-2.5 bg-card/50 rounded-lg border border-border/50">
           <Filter className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+
+          <Select value={compositionView} onValueChange={(v) => setCompositionView(v as CompositionView)}>
+            <SelectTrigger className="h-7 w-auto min-w-[150px] text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="wished" className="text-xs">
+                {language === 'fr' ? 'Compo souhaitée' : 'Desired comp'}
+              </SelectItem>
+              <SelectItem value="rosterized" className="text-xs">
+                {language === 'fr' ? 'Compo rosterisée' : 'Rostered comp'}
+              </SelectItem>
+              <SelectItem value="effective" className="text-xs">
+                {language === 'fr' ? 'Compo effective' : 'Effective comp'}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={outcomeFilter} onValueChange={(v) => setOutcomeFilter(v as OutcomeFilter)}>
+            <SelectTrigger className="h-7 w-auto min-w-[150px] text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all" className="text-xs">{language === 'fr' ? 'Tous outcomes' : 'All outcomes'}</SelectItem>
+              <SelectItem value="first_choice" className="text-xs">{language === 'fr' ? 'Vœu 1 obtenu' : 'First choice granted'}</SelectItem>
+              <SelectItem value="changed" className="text-xs">{language === 'fr' ? 'Changé en saison' : 'Changed in season'}</SelectItem>
+              <SelectItem value="joined" className="text-xs">{language === 'fr' ? 'Arrivé en cours' : 'Joined mid-season'}</SelectItem>
+              <SelectItem value="left_roster" className="text-xs">{language === 'fr' ? 'Sorti roster' : 'Left roster'}</SelectItem>
+              <SelectItem value="left_guild" className="text-xs">{language === 'fr' ? 'Sorti guilde' : 'Left guild'}</SelectItem>
+            </SelectContent>
+          </Select>
           
           <Select value={wishScopeFilter} onValueChange={(v) => setWishScopeFilter(v as WishScopeFilter)}>
             <SelectTrigger className="h-7 w-auto min-w-[100px] text-xs">

@@ -6,7 +6,7 @@ import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { DataListSkeleton } from '@/components/ui/data-list-skeleton';
-import { CheckCircle, HelpCircle, XCircle, Pencil, Save, Shield, Heart, Sword, Swords, Crosshair, MessageSquare, Plus, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Lock, Unlock, MoreVertical, Loader2, UserPlus } from 'lucide-react';
+import { CheckCircle, HelpCircle, XCircle, Pencil, Save, Shield, Heart, Sword, Swords, Crosshair, MessageSquare, Plus, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Lock, Unlock, MoreVertical, Loader2, UserPlus, History } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getClassById, getLocalizedClassName, getLocalizedSpecName, getSpecById } from '@/data/wowClasses';
 import { MemberWish, RosterSelectionStatus, WishData, WishChoice, ValidationStatus } from '@/types/guild';
@@ -40,6 +40,7 @@ interface RosterTableProps {
   saving: boolean;
   maxWishes: number;
   canManageWishes?: boolean;
+  canManageAssignments?: boolean;
   isRosterLocked?: boolean;
   isEditingLocked?: boolean;
   onStartEditing: (member: MemberWish) => void;
@@ -60,6 +61,9 @@ interface RosterTableProps {
   deletingMemberId?: string | null;
   onSelectionStatusChange?: (memberId: string, status: RosterSelectionStatus) => void;
   updatingSelectionMemberId?: string | null;
+  onEditAssignment?: (member: MemberWish) => void;
+  onViewHistory?: (member: MemberWish) => void;
+  updatingAssignmentMemberId?: string | null;
 }
 
 // Role config for icons
@@ -81,6 +85,7 @@ export const RosterTable = ({
   saving,
   maxWishes,
   canManageWishes = false,
+  canManageAssignments = canManageWishes,
   isRosterLocked = false,
   isEditingLocked = false,
   onStartEditing,
@@ -97,6 +102,9 @@ export const RosterTable = ({
   deletingMemberId = null,
   onSelectionStatusChange,
   updatingSelectionMemberId = null,
+  onEditAssignment,
+  onViewHistory,
+  updatingAssignmentMemberId = null,
 }: RosterTableProps) => {
   const wishColumnClassName = 'w-[260px] min-w-[260px] xl:w-[280px] xl:min-w-[280px]';
   const { t, language } = useLanguage();
@@ -152,6 +160,23 @@ export const RosterTable = ({
     if (!wish) return '';
     const cls = getClassById(wish.class_id);
     return cls ? getLocalizedClassName(cls.id, language).toLowerCase() : '';
+  };
+
+  const getAssignmentMainSpecId = (member: MemberWish): string | null => {
+    const assignment = member.currentAssignment;
+    if (!assignment?.class_id) return null;
+    if (assignment.spec_id) return assignment.spec_id;
+
+    const matchingWish = member.wishes.find((wish) => (
+      wish.class_id === assignment.class_id
+      && (
+        assignment.choice_index === null
+        || assignment.choice_index === undefined
+        || wish.choice_index === assignment.choice_index
+      )
+    )) || member.wishes.find((wish) => wish.class_id === assignment.class_id);
+
+    return matchingWish?.spec_ids?.[0] || null;
   };
 
   // Sort members
@@ -348,6 +373,53 @@ export const RosterTable = ({
     );
   };
 
+  const renderCurrentAssignmentCell = (member: MemberWish) => {
+    const assignment = member.currentAssignment;
+    if (!assignment?.class_id) {
+      return <span className="text-xs text-muted-foreground/60">—</span>;
+    }
+
+    const cls = getClassById(assignment.class_id);
+    const spec = getAssignmentMainSpecId(member);
+    const specDetails = spec ? getSpecById(spec) : null;
+    const config = specDetails ? roleConfig[specDetails.role] : null;
+    const Icon = specDetails?.role === 'dps'
+      ? (specDetails.range === 'ranged' ? Crosshair : Swords)
+      : config?.icon;
+
+    return (
+      <div className="flex flex-col gap-1.5">
+        <div
+          className={cn(
+            'h-7 w-full rounded-md flex items-center px-2 text-xs font-medium',
+            !cls && 'bg-muted/50 text-muted-foreground'
+          )}
+          style={cls ? {
+            backgroundColor: `hsl(var(--class-${cls.id}) / 0.2)`,
+            color: `hsl(var(--class-${cls.id}))`,
+          } : undefined}
+        >
+          <span className="truncate">
+            {cls ? getLocalizedClassName(cls.id, language) : assignment.class_id}
+          </span>
+        </div>
+
+        <div className="min-h-6 w-full flex items-center gap-1 text-[10px]">
+          {specDetails ? (
+            <>
+              {Icon && <Icon className={cn('h-3 w-3 flex-shrink-0', config?.color)} />}
+              <span className="truncate text-muted-foreground">{getLocalizedSpecName(specDetails.id, language)}</span>
+            </>
+          ) : spec ? (
+            <span className="truncate text-muted-foreground">{spec}</span>
+          ) : (
+            <span className="text-muted-foreground/50">—</span>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const renderEditWishCell = (wishIndex: number, canRemove: boolean) => {
     const wish = editWishes[wishIndex];
     if (!wish) return null;
@@ -474,6 +546,10 @@ export const RosterTable = ({
               deletingMemberId={deletingMemberId}
               onSelectionStatusChange={onSelectionStatusChange}
               updatingSelectionMemberId={updatingSelectionMemberId}
+              canManageAssignments={canManageAssignments}
+              onEditAssignment={onEditAssignment}
+              onViewHistory={onViewHistory}
+              updatingAssignmentMemberId={updatingAssignmentMemberId}
             />
           );
         })}
@@ -514,6 +590,22 @@ export const RosterTable = ({
                   : '';
 
               const rowActions = [
+                ...(canManageAssignments && onEditAssignment && member.seasonMemberId ? [{
+                  key: 'assignment',
+                  label: language === 'fr' ? 'Modifier affectation' : 'Edit assignment',
+                  icon: Pencil,
+                  onClick: () => onEditAssignment(member),
+                  loading: updatingAssignmentMemberId === member.id,
+                  disabled: false,
+                }] : []),
+                ...(canManageAssignments && onViewHistory && member.seasonMemberId ? [{
+                  key: 'history',
+                  label: language === 'fr' ? 'Historique saison' : 'Season history',
+                  icon: History,
+                  onClick: () => onViewHistory(member),
+                  loading: false,
+                  disabled: false,
+                }] : []),
                 ...(canManageWishes && onRemoveMember && !isOwnRow ? [{
                   key: 'delete',
                   label: t.wishes.removeMember,
@@ -671,26 +763,7 @@ export const RosterTable = ({
                       )}
                     </TableCell>
                     <TableCell className="py-2 px-2 md:px-3">
-                      {member.currentAssignment?.class_id ? (
-                        <div className="flex flex-col gap-0.5">
-                          <Badge variant="outline" className="w-fit text-[10px] md:text-xs px-2 py-0.5">
-                            {(() => {
-                              const cls = getClassById(member.currentAssignment.class_id);
-                              return cls ? getLocalizedClassName(cls.id, language) : member.currentAssignment.class_id;
-                            })()}
-                          </Badge>
-                          {member.currentAssignment.spec_id && (
-                            <span className="text-[11px] text-muted-foreground">
-                              {(() => {
-                                const spec = getSpecById(member.currentAssignment?.spec_id || '');
-                                return spec ? getLocalizedSpecName(spec.id, language) : member.currentAssignment?.spec_id;
-                              })()}
-                            </span>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-xs text-muted-foreground/60">—</span>
-                      )}
+                      {renderCurrentAssignmentCell(member)}
                     </TableCell>
                     <TableCell className="py-2 px-2 md:px-3 text-center">
                       <span className="text-sm text-muted-foreground">{member.wishes.filter(w => w.class_id).length}</span>
@@ -796,8 +869,8 @@ export const RosterTable = ({
                         
                         return (
                           <TableRow key={`extra-${rowIdx}`} className="border-border/10 bg-primary/[0.03]">
-                            {/* colSpan=4 covers: Player + Status + Roster decision + WishesCount */}
-                            <TableCell colSpan={4} className="py-2 px-2 md:px-3">
+                            {/* colSpan=5 covers: Player + Status + Roster decision + Current assignment + WishesCount */}
+                            <TableCell colSpan={5} className="py-2 px-2 md:px-3">
                               <span className="text-xs text-muted-foreground">
                                 {t.dashboard.additionalWishes} ({startIdx + 1}-{Math.min(startIdx + 3, editWishes.length)})
                               </span>
@@ -821,7 +894,7 @@ export const RosterTable = ({
                   {/* Add wish button row when editing */}
                   {isEditing && editWishes.length < maxWishes && (
                     <TableRow className="border-border/10 bg-primary/[0.02]">
-                      <TableCell colSpan={8} className="py-2 px-2 md:px-3">
+                      <TableCell colSpan={9} className="py-2 px-2 md:px-3">
                         <button
                           onClick={onAddWish}
                           disabled={isEditingLocked}
