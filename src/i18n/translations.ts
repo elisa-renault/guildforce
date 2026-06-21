@@ -494,10 +494,6 @@ export interface Translations {
       hint: string;
     };
     memberDetail: {
-      assignmentButton: string;
-      currentAssignment: string;
-      editAssignment: string;
-      noAssignment: string;
       seasonSheet: string;
       seasonStatus: string;
       snapshotRank: string;
@@ -509,8 +505,6 @@ export interface Translations {
       historyEmpty: string;
       historyEvent: {
         snapshot: string;
-        assignmentChanged: string;
-        assignmentsSeeded: string;
         materialized: string;
         syncDeltaApplied: string;
         externalMatched: string;
@@ -518,25 +512,10 @@ export interface Translations {
         memberLeftGuild: string;
         selectionChanged: string;
         wishesChanged: string;
-        fallback: string;
-      };
-      assignmentDialog: {
-        title: string;
-        classLabel: string;
-        selectClass: string;
-        specLabel: string;
-        selectSpec: string;
-        effectiveDate: string;
-        managerComment: string;
-        optional: string;
-        updated: string;
-      };
-      assignmentSource: {
-        wish: string;
-        managerDecision: string;
-        recruitment: string;
-        changeRequest: string;
-        raidNeed: string;
+        wishCreated: string;
+        wishUpdated: string;
+        wishDeleted: string;
+        wishValidation: string;
         fallback: string;
       };
     };
@@ -629,7 +608,6 @@ export interface Translations {
       player: string;
       status: string;
       decision: string;
-      assignment: string;
       total: string;
       choice1: string;
       choice2: string;
@@ -639,8 +617,8 @@ export interface Translations {
       sortDescending: string;
       statusTooltip: string;
       decisionTooltip: string;
-      assignmentTooltip: string;
       totalTooltip: string;
+      manualEntryHelp: string;
     };
     additionalWishes: string;
     addWish: string;

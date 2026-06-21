@@ -23,6 +23,9 @@ export const interpolateMessage = (template: string, values: MessageValues = {})
     return value === null || value === undefined ? '' : String(value);
   });
 
+export const formatLabelValue = (label: string, value: string, language: Language): string =>
+  language === 'fr' ? `${label} : ${value}` : `${label}: ${value}`;
+
 type PluralForm = 'zero' | 'one' | 'two' | 'few' | 'many' | 'other';
 
 interface PluralForms {

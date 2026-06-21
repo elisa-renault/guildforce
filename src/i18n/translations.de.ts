@@ -407,24 +407,20 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "lockScheduledDesc": "Die W\u00fcnsche werden am {date} gesperrt.",
     "memberLockedToast": "Mitgliedsw\u00fcnsche gesperrt",
     "memberUnlockedToast": "Mitgliedsw\u00fcnsche entsperrt",
-    "lockMember": "Mitglied sperren",
-    "unlockMember": "Mitglied entsperren",
-    "removeMember": "Aus dieser Saison entfernen",
+    "lockMember": "Sperren",
+    "unlockMember": "Entsperren",
+    "removeMember": "Entfernen",
     "rosterDecision": {
       "title": "Externes Mitglied hinzuf\u00fcgen",
-      "summaryTitle": "Zusammenfassung der Roster-Entscheidung",
+      "summaryTitle": "Entscheidung",
       "validationDetailsTitle": "Validierungsdetails meiner W\u00fcnsche",
       "selected": "Ausgew\u00e4hlt",
       "bench": "Bank",
       "notSelected": "Nicht ausgew\u00e4hlt",
-      "undecided": "Unentschieden",
+      "undecided": "Ausstehend",
       "hint": "Die Ablehnung eines Wunsches bedeutet nicht automatisch, dass das Mitglied nicht f\u00fcr das Roster ausgew\u00e4hlt wurde."
     },
     "memberDetail": {
-      "assignmentButton": "Zuweisung",
-      "currentAssignment": "Aktuelle Zuweisung",
-      "editAssignment": "Zuweisung bearbeiten",
-      "noAssignment": "Keine Zuweisung erfasst.",
       "seasonSheet": "Saisonblatt",
       "seasonStatus": "Saisonstatus",
       "snapshotRank": "Snapshot-Rang",
@@ -433,11 +429,10 @@ export const translationsDe: Translations = createLocaleTranslations(translation
       "yes": "Ja",
       "no": "Nein",
       "history": "Verlauf",
-      "historyEmpty": "Noch kein Saisonverlauf vorhanden.",
+      "historyEmpty": "Noch keine Wunschänderungen für diese Saison.",
+      "syncDeltaSummary": "{{added}} hinzugefügt/aktualisiert · {{leftRoster}} haben das Roster verlassen · {{leftGuild}} haben die Gilde verlassen",
       "historyEvent": {
         "snapshot": "Mitglied für die Saison zum Roster hinzugefügt",
-        "assignmentChanged": "Zuweisung geändert",
-        "assignmentsSeeded": "Zuweisung aus Wünschen initialisiert",
         "materialized": "Saisonblatt materialisiert",
         "syncDeltaApplied": "Roster-Synchronisierung angewendet",
         "externalMatched": "Externes Mitglied verknüpft",
@@ -445,28 +440,17 @@ export const translationsDe: Translations = createLocaleTranslations(translation
         "memberLeftGuild": "Gilde verlassen",
         "selectionChanged": "Roster-Entscheidung geändert",
         "wishesChanged": "Wünsche geändert",
+        "wishCreated": "Wunsch hinzugefügt",
+        "wishUpdated": "Wunsch geändert",
+        "wishDeleted": "Wunsch entfernt",
+        "wishValidation": "Wunschvalidierung geändert",
         "fallback": "Saisonereignis"
-      },
-      "assignmentDialog": {
-        "title": "Zuweisung bearbeiten",
-        "classLabel": "Klasse",
-        "selectClass": "Klasse auswählen",
-        "specLabel": "Hauptspezialisierung",
-        "selectSpec": "Spezialisierung auswählen",
-        "effectiveDate": "Gültigkeitsdatum",
-        "managerComment": "Manager-Kommentar",
-          "optional": "Optionaler Kommentar",
-        "updated": "Zuweisung aktualisiert"
-      },
-      "assignmentSource": {
-        "wish": "Wunsch",
-        "managerDecision": "Manager-Entscheidung",
-        "recruitment": "Rekrutierung",
-        "changeRequest": "Änderungsanfrage",
-        "raidNeed": "Raid-Bedarf",
-        "fallback": "Quelle"
       }
     }
+  },
+  "seasons": {
+    "unarchiveSeason": "Saison wiederherstellen",
+    "confirmUnarchive": "Diese Saison wiederherstellen und erneut aktivieren? Die derzeit aktive Saison wird archiviert, falls es eine gibt."
   },
   "dashboard": {
     "title": "Aufstellung-Dashboard",
@@ -511,7 +495,6 @@ export const translationsDe: Translations = createLocaleTranslations(translation
       "player": "Spieler",
       "status": "Spielerstatus",
       "decision": "Entscheidung",
-      "assignment": "Zuweisung",
       "total": "Gesamt",
       "choice1": "Wahl 1",
       "choice2": "Wahl 2",
@@ -522,8 +505,8 @@ export const translationsDe: Translations = createLocaleTranslations(translation
       "sortDescending": "{{column}} absteigend",
       "statusTooltip": "Angabe des Mitglieds: best\u00e4tigt, unentschieden oder zur\u00fcckgezogen.",
       "decisionTooltip": "Entscheidung der Verwalter f\u00fcr diesen Roster: ausgew\u00e4hlt, Bench, nicht ausgew\u00e4hlt…",
-      "assignmentTooltip": "Aktuell f\u00fcr die Saison zugewiesene Klasse/Spezialisierung.",
-      "totalTooltip": "Anzahl der von diesem Spieler eingereichten W\u00fcnsche."
+      "totalTooltip": "Anzahl der von diesem Spieler eingereichten W\u00fcnsche.",
+      "manualEntryHelp": "Dieser Charakter wurde manuell hinzugefügt. Das Symbol verschwindet, sobald der Charakter über Guildforce beansprucht wurde."
     },
     "additionalWishes": "Zus\u00e4tzliche W\u00fcnsche",
     "addWish": "F\u00fcge einen Wunsch hinzu",

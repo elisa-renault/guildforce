@@ -34,6 +34,35 @@ const TONE_CALLOUT_CLASSES: Record<SemanticTone, string> = {
 export const toneCalloutClass = (tone: SemanticTone): string =>
   TONE_CALLOUT_CLASSES[tone];
 
+export type CommitmentTone = "confirmed" | "undecided" | "withdrawn";
+
+const COMMITMENT_BADGE_CLASSES: Record<CommitmentTone, string> = {
+  confirmed: "bg-sky-500/20 text-sky-300 border-sky-400/30",
+  undecided: "bg-violet-500/20 text-violet-300 border-violet-400/30",
+  withdrawn: "bg-zinc-800/80 text-zinc-400 border-zinc-700",
+};
+
+export const commitmentBadgeClass = (status: CommitmentTone): string =>
+  COMMITMENT_BADGE_CLASSES[status];
+
+const COMMITMENT_TEXT_CLASSES: Record<CommitmentTone, string> = {
+  confirmed: "text-sky-300",
+  undecided: "text-violet-300",
+  withdrawn: "text-zinc-400",
+};
+
+export const commitmentTextClass = (status: CommitmentTone): string =>
+  COMMITMENT_TEXT_CLASSES[status];
+
+const COMMITMENT_CALLOUT_CLASSES: Record<CommitmentTone, string> = {
+  confirmed: "bg-sky-500/10 border-sky-400/30 text-sky-300",
+  undecided: "bg-violet-500/10 border-violet-400/30 text-violet-300",
+  withdrawn: "bg-zinc-800/80 border-zinc-700 text-zinc-400",
+};
+
+export const commitmentCalloutClass = (status: CommitmentTone): string =>
+  COMMITMENT_CALLOUT_CLASSES[status];
+
 export type RoleToken = "tank" | "healer" | "dps";
 
 const ROLE_CLASSES: Record<RoleToken, string> = {

@@ -173,6 +173,11 @@
     overflow-x: hidden;
   }
 
+  body[data-scroll-locked] {
+    margin-right: 0 !important;
+    padding-right: 0 !important;
+  }
+
   /* Subtle noise overlay */
   .noise-overlay {
     position: fixed;
