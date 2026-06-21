@@ -63,7 +63,7 @@ export const RosterSelector = ({
       <Select value={selectedRosterId || ''} onValueChange={onSelect}>
         <SelectTrigger
           aria-label={t.rosters.selectRoster}
-          className="h-7 w-[128px] max-w-[34vw] border-border bg-card text-xs md:h-8 md:w-[300px] md:max-w-[45vw] md:text-sm"
+          className="h-7 w-[128px] max-w-[34vw] border-border bg-card text-xs focus:ring-0 focus:ring-offset-0 focus-visible:border-primary/60 focus-visible:shadow-[0_0_0_1px_hsl(var(--primary))] md:h-8 md:w-[300px] md:max-w-[45vw] md:text-sm"
         >
           <SelectValue className="truncate" placeholder={t.rosters.selectRoster} />
         </SelectTrigger>
