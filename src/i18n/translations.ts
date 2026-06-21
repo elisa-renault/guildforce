@@ -493,6 +493,53 @@ export interface Translations {
       undecided: string;
       hint: string;
     };
+    memberDetail: {
+      assignmentButton: string;
+      currentAssignment: string;
+      editAssignment: string;
+      noAssignment: string;
+      seasonSheet: string;
+      seasonStatus: string;
+      snapshotRank: string;
+      firstWishGranted: string;
+      seasonChange: string;
+      yes: string;
+      no: string;
+      history: string;
+      historyEmpty: string;
+      historyEvent: {
+        snapshot: string;
+        assignmentChanged: string;
+        assignmentsSeeded: string;
+        materialized: string;
+        syncDeltaApplied: string;
+        externalMatched: string;
+        memberLeftRoster: string;
+        memberLeftGuild: string;
+        selectionChanged: string;
+        wishesChanged: string;
+        fallback: string;
+      };
+      assignmentDialog: {
+        title: string;
+        classLabel: string;
+        selectClass: string;
+        specLabel: string;
+        selectSpec: string;
+        effectiveDate: string;
+        managerComment: string;
+        optional: string;
+        updated: string;
+      };
+      assignmentSource: {
+        wish: string;
+        managerDecision: string;
+        recruitment: string;
+        changeRequest: string;
+        raidNeed: string;
+        fallback: string;
+      };
+    };
   };
   seasons: {
     label: string;

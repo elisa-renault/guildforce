@@ -691,7 +691,7 @@ const MemberWishes = () => {
       });
       if (error) throw error;
       setAssignmentDialogOpen(false);
-      toast.success(language === 'fr' ? 'Affectation mise à jour' : 'Assignment updated');
+      toast.success(memberDetailText.assignmentDialog.updated);
       setRefreshNonce((value) => value + 1);
     } catch (error: unknown) {
       toast.error(getErrorMessage(error));
@@ -748,6 +748,7 @@ const MemberWishes = () => {
   const selectedSeason = seasons.find((season) => season.id === selectedSeasonId) || null;
   const isSelectedSeasonActive = seasonSupportMode === 'legacy' || selectedSeason?.state === 'active';
   const isSelfPage = user?.id === memberId;
+  const memberDetailText = t.wishes.memberDetail;
   const canEditWishesHere = !!user && (canManageWishes || (isSelfPage && isSelectedSeasonActive && !memberWishesLocked));
   const canEditAssignment = canManageWishes && !!seasonMember?.seasonMemberId;
   const currentAssignment = seasonMember?.currentAssignment || null;
@@ -756,6 +757,50 @@ const MemberWishes = () => {
   const assignmentDialogClass = assignmentClassId ? getClassById(assignmentClassId) : null;
   const assignmentDialogSpecs = assignmentDialogClass?.specs || [];
   const assignmentDialogSpec = assignmentSpecId ? getSpecById(assignmentSpecId) : null;
+  const getAssignmentSourceLabel = (source?: string | null) => {
+    if (!source) return memberDetailText.assignmentSource.fallback;
+    const normalized = source.replace(/_([a-z])/g, (_, letter: string) => letter.toUpperCase()) as keyof typeof memberDetailText.assignmentSource;
+    return memberDetailText.assignmentSource[normalized] || source;
+  };
+  const getSeasonStatusLabel = (status?: string | null) => {
+    if (status === 'selected') return t.wishes.rosterDecision.selected;
+    if (status === 'bench') return t.wishes.rosterDecision.bench;
+    if (status === 'not_selected') return t.wishes.rosterDecision.notSelected;
+    if (status === 'undecided') return t.wishes.rosterDecision.undecided;
+    if (status === 'departed') return memberDetailText.historyEvent.memberLeftRoster;
+    return status || '-';
+  };
+  const getHistoryEventLabel = (eventType: string) => {
+    const eventLabels = memberDetailText.historyEvent;
+    switch (eventType) {
+      case 'season_member_snapshot':
+        return eventLabels.snapshot;
+      case 'assignment_changed':
+        return eventLabels.assignmentChanged;
+      case 'roster_assignments_seeded_from_wishes':
+        return eventLabels.assignmentsSeeded;
+      case 'roster_season_materialized':
+        return eventLabels.materialized;
+      case 'roster_season_sync_delta_applied':
+        return eventLabels.syncDeltaApplied;
+      case 'external_member_matched':
+        return eventLabels.externalMatched;
+      case 'member_left_roster':
+        return eventLabels.memberLeftRoster;
+      case 'member_left_guild':
+        return eventLabels.memberLeftGuild;
+      case 'selection_changed':
+      case 'roster_selection_changed':
+        return eventLabels.selectionChanged;
+      case 'wishes_changed':
+      case 'wish_created':
+      case 'wish_updated':
+      case 'wish_deleted':
+        return eventLabels.wishesChanged;
+      default:
+        return eventLabels.fallback;
+    }
+  };
   const selectSeason = (seasonId: string) => {
     setSelectedSeasonId(seasonId);
     const next = new URLSearchParams(searchParams);
@@ -854,7 +899,7 @@ const MemberWishes = () => {
                 icon={<Save className="h-3.5 w-3.5" strokeWidth={1.5} />}
                 onClick={openAssignmentDialog}
               >
-                {language === 'fr' ? 'Affectation' : 'Assignment'}
+                {memberDetailText.assignmentButton}
               </CosmicButton>
             )}
 
@@ -936,7 +981,7 @@ const MemberWishes = () => {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
-                <div className="text-xs uppercase tracking-wide text-muted-foreground">{language === 'fr' ? 'Affectation actuelle' : 'Current assignment'}</div>
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">{memberDetailText.currentAssignment}</div>
                 {canEditAssignment && (
                   <button
                     type="button"
@@ -968,9 +1013,9 @@ const MemberWishes = () => {
                     </div>
                   )}
                   <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                    <span>{currentAssignment.source}</span>
+                    <span>{getAssignmentSourceLabel(currentAssignment.source)}</span>
                     <span>•</span>
-                    <span>{new Date(currentAssignment.valid_from).toLocaleDateString()}</span>
+                    <span>{new Date(currentAssignment.valid_from).toLocaleDateString(language)}</span>
                   </div>
                   {currentAssignment.manager_comment && canManageWishes && (
                     <p className="text-xs text-muted-foreground">{currentAssignment.manager_comment}</p>
@@ -978,60 +1023,38 @@ const MemberWishes = () => {
                 </div>
               ) : (
                 <div className="rounded-md border border-dashed border-border/60 px-3 py-2 text-sm text-muted-foreground">
-                  {language === 'fr' ? 'Aucune affectation enregistrée.' : 'No assignment recorded.'}
+                  {memberDetailText.noAssignment}
                 </div>
               )}
             </div>
 
             <div className="space-y-2">
-              <div className="text-xs uppercase tracking-wide text-muted-foreground">{language === 'fr' ? 'Feuille de saison' : 'Season sheet'}</div>
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">{memberDetailText.seasonSheet}</div>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div className="rounded-md border border-border/50 bg-card/40 px-3 py-2">
-                  <div className="text-muted-foreground">{language === 'fr' ? 'Statut saison' : 'Season status'}</div>
-                  <div className="mt-1 font-medium text-foreground">{seasonMember?.seasonStatus || '-'}</div>
+                  <div className="text-muted-foreground">{memberDetailText.seasonStatus}</div>
+                  <div className="mt-1 font-medium text-foreground">{getSeasonStatusLabel(seasonMember?.seasonStatus)}</div>
                 </div>
                 <div className="rounded-md border border-border/50 bg-card/40 px-3 py-2">
-                  <div className="text-muted-foreground">{language === 'fr' ? 'Rang snapshot' : 'Snapshot rank'}</div>
+                  <div className="text-muted-foreground">{memberDetailText.snapshotRank}</div>
                   <div className="mt-1 font-medium text-foreground">{seasonMember?.rankIndex ?? '-'}</div>
                 </div>
                 <div className="rounded-md border border-border/50 bg-card/40 px-3 py-2">
-                  <div className="text-muted-foreground">{language === 'fr' ? 'Vœu 1 obtenu' : 'First wish'}</div>
+                  <div className="text-muted-foreground">{memberDetailText.firstWishGranted}</div>
                   <div className="mt-1 font-medium text-foreground">
-                    {seasonMember?.outcome?.first_choice_granted === true ? (language === 'fr' ? 'Oui' : 'Yes') : seasonMember?.outcome?.first_choice_granted === false ? (language === 'fr' ? 'Non' : 'No') : '-'}
+                    {seasonMember?.outcome?.first_choice_granted === true ? memberDetailText.yes : seasonMember?.outcome?.first_choice_granted === false ? memberDetailText.no : '-'}
                   </div>
                 </div>
                 <div className="rounded-md border border-border/50 bg-card/40 px-3 py-2">
-                  <div className="text-muted-foreground">{language === 'fr' ? 'Changement saison' : 'Season change'}</div>
+                  <div className="text-muted-foreground">{memberDetailText.seasonChange}</div>
                   <div className="mt-1 font-medium text-foreground">
-                    {seasonMember?.outcome?.changed_class_during_season ? (language === 'fr' ? 'Oui' : 'Yes') : (language === 'fr' ? 'Non' : 'No')}
+                    {seasonMember?.outcome?.changed_class_during_season ? memberDetailText.yes : memberDetailText.no}
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </GlowCard>
-
-        {historyRows.length > 0 && (
-          <GlowCard surface="section" className="mb-4" hoverable={false}>
-            <div className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
-              <History className="h-4 w-4 text-primary" />
-              {language === 'fr' ? 'Historique' : 'History'}
-            </div>
-            <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
-              {historyRows.slice(0, 6).map((row) => (
-                <div key={`${row.event_type}-${row.event_at}`} className="rounded-md border border-border/50 bg-card/40 px-3 py-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-sm font-medium text-foreground">{row.event_type}</span>
-                    <span className="shrink-0 text-xs text-muted-foreground">{new Date(row.event_at).toLocaleDateString()}</span>
-                  </div>
-                  {row.actor_id && canManageWishes && (
-                    <div className="mt-1 truncate text-xs text-muted-foreground">{row.actor_id}</div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </GlowCard>
-        )}
 
         <div className="mb-3">
           <h3 className="text-sm font-medium text-foreground">{t.wishes.rosterDecision.validationDetailsTitle}</h3>
@@ -1149,12 +1172,37 @@ const MemberWishes = () => {
             })}
           </div>
         )}
+
+        {seasonSupportMode !== 'legacy' && selectedSeason && (
+          <GlowCard surface="section" className="mt-4" hoverable={false}>
+            <div className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
+              <History className="h-4 w-4 text-primary" />
+              {memberDetailText.history}
+            </div>
+            {historyRows.length === 0 ? (
+              <p className="text-sm text-muted-foreground">{memberDetailText.historyEmpty}</p>
+            ) : (
+              <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+                {historyRows.map((row) => (
+                  <div key={`${row.event_type}-${row.event_at}`} className="rounded-md border border-border/50 bg-card/40 px-3 py-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="truncate text-sm font-medium text-foreground">{getHistoryEventLabel(row.event_type)}</span>
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        {new Date(row.event_at).toLocaleString(language, { dateStyle: 'medium', timeStyle: 'short' })}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </GlowCard>
+        )}
       </PageContainer>
 
       <Dialog open={assignmentDialogOpen} onOpenChange={setAssignmentDialogOpen}>
         <DialogContent className="max-w-md border-border bg-card">
           <DialogHeader>
-            <DialogTitle>{language === 'fr' ? 'Modifier affectation' : 'Edit assignment'}</DialogTitle>
+            <DialogTitle>{memberDetailText.assignmentDialog.title}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="rounded-md border border-border/40 bg-background/40 px-3 py-2">
@@ -1167,7 +1215,7 @@ const MemberWishes = () => {
             </div>
 
             <div className="space-y-2">
-              <Label>{language === 'fr' ? 'Classe' : 'Class'}</Label>
+              <Label>{memberDetailText.assignmentDialog.classLabel}</Label>
               <Popover open={assignmentClassOpen} onOpenChange={setAssignmentClassOpen}>
                 <PopoverTrigger asChild>
                   <Button
@@ -1185,7 +1233,7 @@ const MemberWishes = () => {
                     } : undefined}
                   >
                     <span className="truncate">
-                      {assignmentDialogClass ? getLocalizedClassName(assignmentDialogClass.id, language) : (language === 'fr' ? 'Choisir une classe' : 'Select class')}
+                      {assignmentDialogClass ? getLocalizedClassName(assignmentDialogClass.id, language) : memberDetailText.assignmentDialog.selectClass}
                     </span>
                     <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
                   </Button>
@@ -1220,7 +1268,7 @@ const MemberWishes = () => {
             </div>
 
             <div className="space-y-2">
-              <Label>{language === 'fr' ? 'Spé principale' : 'Main spec'}</Label>
+              <Label>{memberDetailText.assignmentDialog.specLabel}</Label>
               {assignmentDialogClass ? (
                 <Popover open={assignmentSpecOpen} onOpenChange={setAssignmentSpecOpen}>
                   <PopoverTrigger asChild>
@@ -1241,7 +1289,7 @@ const MemberWishes = () => {
                           <span className="truncate">{getLocalizedSpecName(assignmentDialogSpec.id, language)}</span>
                         </span>
                       ) : (
-                        <span className="text-muted-foreground">{language === 'fr' ? 'Choisir une spé' : 'Select spec'}</span>
+                        <span className="text-muted-foreground">{memberDetailText.assignmentDialog.selectSpec}</span>
                       )}
                       <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
                     </Button>
@@ -1283,7 +1331,7 @@ const MemberWishes = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="member-assignment-date">{language === 'fr' ? 'Date effective' : 'Effective date'}</Label>
+              <Label htmlFor="member-assignment-date">{memberDetailText.assignmentDialog.effectiveDate}</Label>
               <Input
                 id="member-assignment-date"
                 type="date"
@@ -1293,12 +1341,12 @@ const MemberWishes = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="member-assignment-comment">{language === 'fr' ? 'Commentaire manager' : 'Manager comment'}</Label>
+              <Label htmlFor="member-assignment-comment">{memberDetailText.assignmentDialog.managerComment}</Label>
               <Textarea
                 id="member-assignment-comment"
                 value={assignmentComment}
                 onChange={(event) => setAssignmentComment(event.target.value)}
-                placeholder={language === 'fr' ? 'Optionnel' : 'Optional'}
+                placeholder={memberDetailText.assignmentDialog.optional}
                 rows={3}
               />
             </div>

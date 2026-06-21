@@ -419,6 +419,53 @@ export const translationsDe: Translations = createLocaleTranslations(translation
       "notSelected": "Nicht ausgew\u00e4hlt",
       "undecided": "Unentschieden",
       "hint": "Die Ablehnung eines Wunsches bedeutet nicht automatisch, dass das Mitglied nicht f\u00fcr das Roster ausgew\u00e4hlt wurde."
+    },
+    "memberDetail": {
+      "assignmentButton": "Zuweisung",
+      "currentAssignment": "Aktuelle Zuweisung",
+      "editAssignment": "Zuweisung bearbeiten",
+      "noAssignment": "Keine Zuweisung erfasst.",
+      "seasonSheet": "Saisonblatt",
+      "seasonStatus": "Saisonstatus",
+      "snapshotRank": "Snapshot-Rang",
+      "firstWishGranted": "Erstwunsch erfüllt",
+      "seasonChange": "Saisonänderung",
+      "yes": "Ja",
+      "no": "Nein",
+      "history": "Verlauf",
+      "historyEmpty": "Noch kein Saisonverlauf vorhanden.",
+      "historyEvent": {
+        "snapshot": "Saison-Snapshot erstellt",
+        "assignmentChanged": "Zuweisung geändert",
+        "assignmentsSeeded": "Zuweisung aus Wünschen initialisiert",
+        "materialized": "Saisonblatt materialisiert",
+        "syncDeltaApplied": "Roster-Synchronisierung angewendet",
+        "externalMatched": "Externes Mitglied verknüpft",
+        "memberLeftRoster": "Roster verlassen",
+        "memberLeftGuild": "Gilde verlassen",
+        "selectionChanged": "Roster-Entscheidung geändert",
+        "wishesChanged": "Wünsche geändert",
+        "fallback": "Saisonereignis"
+      },
+      "assignmentDialog": {
+        "title": "Zuweisung bearbeiten",
+        "classLabel": "Klasse",
+        "selectClass": "Klasse auswählen",
+        "specLabel": "Hauptspezialisierung",
+        "selectSpec": "Spezialisierung auswählen",
+        "effectiveDate": "Gültigkeitsdatum",
+        "managerComment": "Manager-Kommentar",
+        "optional": "Optional",
+        "updated": "Zuweisung aktualisiert"
+      },
+      "assignmentSource": {
+        "wish": "Wunsch",
+        "managerDecision": "Manager-Entscheidung",
+        "recruitment": "Rekrutierung",
+        "changeRequest": "Änderungsanfrage",
+        "raidNeed": "Raid-Bedarf",
+        "fallback": "Quelle"
+      }
     }
   },
   "dashboard": {
