@@ -12,6 +12,7 @@ END;
 $$;
 
 DROP FUNCTION IF EXISTS public.seed_roster_assignments_from_first_approved_wish(UUID, UUID);
+DROP FUNCTION IF EXISTS public.get_roster_season_table(UUID, UUID);
 
 DROP TABLE IF EXISTS public.roster_member_assignments CASCADE;
 DROP TYPE IF EXISTS public.roster_assignment_source;
