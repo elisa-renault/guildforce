@@ -7,19 +7,23 @@ import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Shield, Heart, Swords, Crosshair, CheckCircle, HelpCircle, XCircle, Pencil, ArrowLeft, Lock, Unlock } from 'lucide-react';
+import { Loader2, Shield, Heart, Swords, Crosshair, CheckCircle, HelpCircle, XCircle, Pencil, ArrowLeft, Lock, Unlock, History, Save, ChevronDown, Check } from 'lucide-react';
 import { CosmicButton } from '@/components/CosmicButton';
 import { getGuildPath } from '@/lib/guildSlug';
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
 import {
+  wowClasses,
   getClassById,
   getLocalizedClassName,
   getLocalizedSpecName,
   getSpecById,
+  Role,
   Specialization,
 } from '@/data/wowClasses';
 import { WishValidationBadge } from '@/components/dashboard/WishValidationBadge';
-import { RosterSelectionStatus, ValidationStatus } from '@/types/guild';
+import { MemberWishEditor } from '@/components/dashboard/MemberWishEditor';
+import { CommitmentStatus } from '@/components/CommitmentToggle';
+import { CurrentRosterAssignment, RosterSeasonOutcome, RosterSelectionStatus, ValidationStatus, WishData } from '@/types/guild';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useBattletagVisibility } from '@/hooks/useBattletagVisibility';
@@ -30,6 +34,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { SeasonSelector, SeasonStateCallout } from '@/components/seasons/SeasonSelector';
 import { isSeasonSchemaUnavailable, type SeasonSupportMode } from '@/lib/seasonSupport';
 import type { GuildSeason } from '@/types/seasons';
+import { interpolateMessage } from '@/i18n/format';
+import { resolveWishLockState } from '@/lib/wishLock';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 
 interface WishChoice {
   choice_index: number;
@@ -39,6 +51,55 @@ interface WishChoice {
   validation_status: ValidationStatus;
   validated_by: string | null;
   validated_at: string | null;
+}
+
+interface SeasonMemberDetails {
+  seasonMemberId: string | null;
+  rosterCacheId: string | null;
+  displayName: string | null;
+  characterName: string | null;
+  realm: string | null;
+  rankIndex: number | null;
+  source: string | null;
+  seasonStatus: string | null;
+  locked: boolean;
+  selectionStatus: RosterSelectionStatus;
+  selectionReasonCode: string | null;
+  selectionComment: string | null;
+  selectionDecidedBy: string | null;
+  selectionDecidedAt: string | null;
+  selectionUpdatedAt: string | null;
+  currentAssignment: CurrentRosterAssignment | null;
+  outcome: RosterSeasonOutcome | null;
+}
+
+interface RosterSeasonTableRow {
+  season_member_id: string;
+  user_id: string | null;
+  roster_cache_id: string | null;
+  display_name: string;
+  character_name: string | null;
+  realm: string | null;
+  rank_index: number | null;
+  source: string;
+  season_status: string;
+  locked: boolean;
+  wishes: unknown;
+  selection_status: RosterSelectionStatus;
+  selection_reason_code: string | null;
+  selection_comment: string | null;
+  selection_decided_by: string | null;
+  selection_decided_at: string | null;
+  selection_updated_at: string | null;
+  current_assignment: CurrentRosterAssignment | null;
+  outcome: RosterSeasonOutcome | null;
+}
+
+interface RosterSeasonHistoryRow {
+  event_at: string;
+  event_type: string;
+  actor_id: string | null;
+  payload: Record<string, unknown> | null;
 }
 
 // Get the appropriate icon for a spec based on role and range
@@ -54,6 +115,64 @@ const roleConfig: Record<string, { color: string }> = {
   dps: { color: 'text-dps' },
 };
 
+const specRoleStyles: Record<Role, string> = {
+  tank: 'text-tank',
+  healer: 'text-healer',
+  dps: 'text-dps',
+};
+
+const toLocalDateInputValue = (value?: string | null) => {
+  const date = value ? new Date(value) : new Date();
+  if (Number.isNaN(date.getTime())) return new Date().toISOString().slice(0, 10);
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const toIsoFromLocalDateInput = (value: string) => {
+  if (!value) return null;
+  const date = new Date(`${value}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+};
+
+const getSpecRoleIcon = (spec: Specialization) => {
+  if (spec.role === 'tank') return Shield;
+  if (spec.role === 'healer') return Heart;
+  return spec.range === 'ranged' ? Crosshair : Swords;
+};
+
+const normalizeDbStatus = (status: CommitmentStatus) => (
+  status === 'withdrawn' ? 'withdrawn' : status === 'confirmed' ? 'confirmed' : 'potential'
+);
+
+const toCommitmentStatus = (status: string | null | undefined): CommitmentStatus => {
+  if (status === 'confirmed') return 'confirmed';
+  if (status === 'withdrawn') return 'withdrawn';
+  return 'undecided';
+};
+
+const normalizeWishSnapshot = (wishes: WishData[]) => (
+  wishes
+    .filter((wish) => !!wish.classId)
+    .map((wish) => ({
+      classId: wish.classId,
+      specIds: [...wish.specIds],
+      comment: wish.comment?.trim() || '',
+    }))
+);
+
+const getWishSnapshot = (wishes: WishChoice[]) => (
+  wishes
+    .filter((wish) => !!wish.class_id)
+    .sort((a, b) => a.choice_index - b.choice_index)
+    .map((wish) => ({
+      classId: wish.class_id,
+      specIds: [...(wish.spec_ids || [])],
+      comment: wish.comment?.trim() || '',
+    }))
+);
+
 const MemberWishes = () => {
   const navigate = useNavigate();
   const { regionSlug, serverSlug, guildSlug, memberId } = useParams();
@@ -66,19 +185,33 @@ const MemberWishes = () => {
   const [selectedSeasonId, setSelectedSeasonId] = useState<string | null>(null);
   const [seasonSupportMode, setSeasonSupportMode] = useState<SeasonSupportMode>('enabled');
   const [member, setMember] = useState<{ username: string; battletag: string | null; status: string; rosterDecision: RosterSelectionStatus } | null>(null);
+  const [seasonMember, setSeasonMember] = useState<SeasonMemberDetails | null>(null);
+  const [historyRows, setHistoryRows] = useState<RosterSeasonHistoryRow[]>([]);
   const [wishes, setWishes] = useState<WishChoice[]>([]);
-  const [isGM, setIsGM] = useState(false);
   const [canManageWishes, setCanManageWishes] = useState(false);
   const [memberWishesLocked, setMemberWishesLocked] = useState(false);
   const [lockingMember, setLockingMember] = useState(false);
   const [validatingWish, setValidatingWish] = useState<number | null>(null);
   const [updatingRosterDecision, setUpdatingRosterDecision] = useState(false);
+  const [editingWishes, setEditingWishes] = useState(false);
+  const [editWishes, setEditWishes] = useState<WishData[]>([]);
+  const [editStatus, setEditStatus] = useState<CommitmentStatus>('undecided');
+  const [savingWishes, setSavingWishes] = useState(false);
+  const [assignmentDialogOpen, setAssignmentDialogOpen] = useState(false);
+  const [assignmentClassId, setAssignmentClassId] = useState('');
+  const [assignmentSpecId, setAssignmentSpecId] = useState('');
+  const [assignmentDate, setAssignmentDate] = useState('');
+  const [assignmentComment, setAssignmentComment] = useState('');
+  const [assignmentClassOpen, setAssignmentClassOpen] = useState(false);
+  const [assignmentSpecOpen, setAssignmentSpecOpen] = useState(false);
+  const [savingAssignment, setSavingAssignment] = useState(false);
+  const [refreshNonce, setRefreshNonce] = useState(0);
   const getErrorMessage = (error: unknown) =>
     error instanceof Error ? error.message : t.errors.generic;
   
   // Use the centralized hook for BattleTag visibility
   // skipSelfCheck: true ensures user sees what OTHERS would see on their member page
-  const { canSeeBattletag, isLoading: battletagLoading } = useBattletagVisibility(
+  const { canSeeBattletag } = useBattletagVisibility(
     memberId,
     { skipSelfCheck: true }
   );
@@ -100,6 +233,7 @@ const MemberWishes = () => {
     }
 
     const fetchData = async () => {
+      setLoading(true);
       const matchedGuild = await findGuildByRouteSlugs({
         supabase,
         regionSlug,
@@ -157,8 +291,6 @@ const MemberWishes = () => {
           .maybeSingle();
 
         const userIsGM = memberRole?.role === 'gm';
-        setIsGM(userIsGM);
-
         const { data: manageWishesPerm } = await supabase.rpc('has_guild_permission', {
           p_guild_id: matchedGuild.id,
           p_permission: 'manage_wishes',
@@ -232,6 +364,73 @@ const MemberWishes = () => {
         })));
       }
 
+      if (rosterId && initialSeason?.id) {
+        const { data: seasonTableData } = await supabase.rpc('get_roster_season_table', {
+          p_roster_id: rosterId,
+          p_season_id: initialSeason.id,
+        });
+        const seasonRow = ((seasonTableData || []) as RosterSeasonTableRow[]).find((row) => row.user_id === memberId) || null;
+        if (seasonRow) {
+          const rowWishes = Array.isArray(seasonRow.wishes) ? seasonRow.wishes as Array<{
+            choice_index?: number;
+            class_id?: string;
+            spec_ids?: string[];
+            spec_order?: string[];
+            comment?: string | null;
+            validation_status?: ValidationStatus;
+            validated_by?: string | null;
+            validated_at?: string | null;
+          }> : [];
+          if (rowWishes.length > 0) {
+            setWishes(rowWishes.map((wish, index) => ({
+              choice_index: wish.choice_index || index + 1,
+              class_id: wish.class_id || '',
+              spec_ids: resolveSpecOrder(wish.spec_ids || [], wish.spec_order),
+              comment: wish.comment || null,
+              validation_status: wish.validation_status || 'pending',
+              validated_by: wish.validated_by || null,
+              validated_at: wish.validated_at || null,
+            })).sort((a, b) => a.choice_index - b.choice_index));
+          }
+          setSeasonMember({
+            seasonMemberId: seasonRow.season_member_id,
+            rosterCacheId: seasonRow.roster_cache_id,
+            displayName: seasonRow.display_name,
+            characterName: seasonRow.character_name,
+            realm: seasonRow.realm,
+            rankIndex: seasonRow.rank_index,
+            source: seasonRow.source,
+            seasonStatus: seasonRow.season_status,
+            locked: seasonRow.locked,
+            selectionStatus: seasonRow.selection_status || 'undecided',
+            selectionReasonCode: seasonRow.selection_reason_code,
+            selectionComment: seasonRow.selection_comment,
+            selectionDecidedBy: seasonRow.selection_decided_by,
+            selectionDecidedAt: seasonRow.selection_decided_at,
+            selectionUpdatedAt: seasonRow.selection_updated_at,
+            currentAssignment: seasonRow.current_assignment,
+            outcome: seasonRow.outcome,
+          });
+          setMember((prev) => prev ? {
+            ...prev,
+            rosterDecision: seasonRow.selection_status || prev.rosterDecision,
+          } : prev);
+
+          const { data: historyData } = await supabase.rpc('get_roster_season_history', {
+            p_roster_id: rosterId,
+            p_season_id: initialSeason.id,
+            p_roster_season_member_id: seasonRow.season_member_id,
+          });
+          setHistoryRows((historyData || []) as RosterSeasonHistoryRow[]);
+        } else {
+          setSeasonMember(null);
+          setHistoryRows([]);
+        }
+      } else {
+        setSeasonMember(null);
+        setHistoryRows([]);
+      }
+
       if (rosterId) {
         const { data: rosterInGuild } = await supabase
           .from('rosters')
@@ -256,13 +455,12 @@ const MemberWishes = () => {
     };
 
     fetchData();
-  }, [user, authLoading, regionSlug, serverSlug, guildSlug, memberId, navigate, searchParams]);
+  }, [user, authLoading, regionSlug, serverSlug, guildSlug, memberId, navigate, searchParams, refreshNonce]);
 
   // Handle validation
   const handleValidation = async (choiceIndex: number, status: ValidationStatus) => {
-    if (!guild || !memberId || !user) return;
+    if (!guild || !memberId || !user || !canManageWishes) return;
     const rosterId = searchParams.get('rosterId');
-    if (seasonSupportMode === 'enabled' && (!selectedSeasonId || selectedSeason?.state !== 'active')) return;
     
     setValidatingWish(choiceIndex);
     
@@ -332,43 +530,173 @@ const MemberWishes = () => {
 
   const handleRosterDecisionChange = async (status: RosterSelectionStatus) => {
     if (!guild || !memberId || !user || !canManageWishes) return;
-    if (seasonSupportMode === 'enabled' && (!selectedSeasonId || selectedSeason?.state !== 'active')) return;
     const rosterId = searchParams.get('rosterId');
     if (!rosterId) return;
 
     const previous = member?.rosterDecision || 'undecided';
-    const now = new Date().toISOString();
     setUpdatingRosterDecision(true);
     setMember((prev) => (prev ? { ...prev, rosterDecision: status } : prev));
 
     try {
-      const { error } = await supabase
-        .from('roster_member_selection')
-        .upsert(
-          seasonSupportMode === 'enabled' && selectedSeasonId
-            ? {
-                roster_id: rosterId,
-                season_id: selectedSeasonId,
-                user_id: memberId,
-                selection_status: status,
-                decided_by: user.id,
-                decided_at: now,
-              }
-            : {
-                roster_id: rosterId,
-                user_id: memberId,
-                selection_status: status,
-                decided_by: user.id,
-                decided_at: now,
-              },
-          { onConflict: seasonSupportMode === 'enabled' ? 'roster_id,season_id,user_id' : 'roster_id,user_id' }
-        );
+      const { error } = await supabase.rpc('set_roster_member_selection', {
+        p_roster_id: rosterId,
+        p_selection_status: status,
+        p_user_id: memberId,
+        p_roster_cache_id: null,
+        p_season_id: seasonSupportMode === 'enabled' ? selectedSeasonId : null,
+        p_reason_code: seasonMember?.selectionReasonCode || null,
+        p_comment: seasonMember?.selectionComment || null,
+      });
       if (error) throw error;
+      setRefreshNonce((value) => value + 1);
     } catch (error: unknown) {
       setMember((prev) => (prev ? { ...prev, rosterDecision: previous } : prev));
       toast.error(getErrorMessage(error));
     } finally {
       setUpdatingRosterDecision(false);
+    }
+  };
+
+  const getEditWishRows = () => {
+    const rows = wishes
+      .sort((a, b) => a.choice_index - b.choice_index)
+      .map((wish) => ({
+        classId: wish.class_id,
+        specIds: [...(wish.spec_ids || [])],
+        comment: wish.comment || '',
+      }));
+    while (rows.length < 3) {
+      rows.push({ classId: '', specIds: [], comment: '' });
+    }
+    return rows.slice(0, 13);
+  };
+
+  const startWishEditing = () => {
+    setEditWishes(getEditWishRows());
+    setEditStatus(toCommitmentStatus(member?.status));
+    setEditingWishes(true);
+  };
+
+  const handleEditWishChange = (index: number, field: keyof WishData, value: WishData[keyof WishData]) => {
+    setEditWishes((prev) => prev.map((wish, wishIndex) => (
+      wishIndex === index ? { ...wish, [field]: value } : wish
+    )));
+  };
+
+  const saveWishEditing = async () => {
+    if (!guild || !memberId || !user) return;
+    const rosterId = searchParams.get('rosterId');
+    if (!rosterId) {
+      toast.error(t.wishes.noRosterSelected);
+      return;
+    }
+    const isSelfEdit = user.id === memberId;
+    const canEditAsManager = canManageWishes && !isSelfEdit;
+    if (!isSelfEdit && !canEditAsManager) return;
+    if (isSelfEdit && seasonSupportMode === 'enabled' && (!selectedSeasonId || selectedSeason?.state !== 'active')) {
+      toast.error(selectedSeason?.state === 'draft' ? t.seasons.draftHint : t.seasons.archivedHint);
+      return;
+    }
+
+    const lockState = resolveWishLockState({
+      rosterLocked: false,
+      rosterLockAt: null,
+      memberLocked: memberWishesLocked,
+    });
+    if (!canEditAsManager && lockState.isLocked) {
+      toast.error(lockState.reason === 'member' ? t.wishes.lockedMemberDesc : t.wishes.lockedRosterDesc);
+      return;
+    }
+
+    const invalidWish = editWishes.find((wish) => wish.classId && wish.specIds.length === 0);
+    if (invalidWish) {
+      const cls = getClassById(invalidWish.classId);
+      toast.error(interpolateMessage(t.wishes.specRequiredDesc, {
+        class: cls ? getLocalizedClassName(cls.id, language) : '',
+      }));
+      return;
+    }
+
+    const nextStatus = normalizeDbStatus(editStatus);
+    const hasWishChanges = JSON.stringify(getWishSnapshot(wishes)) !== JSON.stringify(normalizeWishSnapshot(editWishes));
+    const hasStatusChanges = (member?.status || 'potential') !== nextStatus;
+    if (!hasWishChanges && !hasStatusChanges) {
+      setEditingWishes(false);
+      toast(t.wishes.noChangesToSave);
+      return;
+    }
+
+    setSavingWishes(true);
+    try {
+      const payload: Record<string, unknown> = {
+        p_guild_id: guild.id,
+        p_roster_id: rosterId,
+        p_member_id: memberId,
+        p_commitment_status: nextStatus,
+        p_wishes: editWishes
+          .filter((wish) => !!wish.classId)
+          .map((wish) => ({
+            class_id: wish.classId,
+            spec_ids: wish.specIds,
+            comment: wish.comment || null,
+          })),
+        p_manager_edit: canEditAsManager,
+      };
+      if (seasonSupportMode === 'enabled' && selectedSeasonId) {
+        payload.p_season_id = selectedSeasonId;
+      }
+      const { error } = await supabase.rpc('upsert_member_roster_wishes', payload);
+      if (error) throw error;
+
+      setEditingWishes(false);
+      toast.success(isSelfEdit ? t.wishes.wishesSaved : interpolateMessage(t.wishes.wishesSavedForMember, { member: member?.username || '' }));
+      setRefreshNonce((value) => value + 1);
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setSavingWishes(false);
+    }
+  };
+
+  const openAssignmentDialog = () => {
+    if (!seasonMember?.seasonMemberId) return;
+    const currentClassId = seasonMember.currentAssignment?.class_id || wishes.find((wish) => wish.class_id)?.class_id || '';
+    const currentSpecId = seasonMember.currentAssignment?.spec_id
+      || wishes.find((wish) => wish.class_id === currentClassId)?.spec_ids?.[0]
+      || '';
+    setAssignmentClassId(currentClassId);
+    setAssignmentSpecId(currentSpecId);
+    setAssignmentDate(toLocalDateInputValue(seasonMember.currentAssignment?.valid_from));
+    setAssignmentComment(seasonMember.currentAssignment?.manager_comment || '');
+    setAssignmentClassOpen(false);
+    setAssignmentSpecOpen(false);
+    setAssignmentDialogOpen(true);
+  };
+
+  const saveAssignment = async () => {
+    if (!seasonMember?.seasonMemberId || !assignmentClassId || !canManageWishes) return;
+    const selectedSpec = assignmentSpecId ? getSpecById(assignmentSpecId) : null;
+    setSavingAssignment(true);
+    try {
+      const { error } = await supabase.rpc('set_roster_member_assignment', {
+        p_roster_season_member_id: seasonMember.seasonMemberId,
+        p_class_id: assignmentClassId,
+        p_spec_id: assignmentSpecId || null,
+        p_role: selectedSpec?.role || null,
+        p_source: 'manager_decision',
+        p_choice_index: null,
+        p_reason_code: null,
+        p_manager_comment: assignmentComment.trim() || null,
+        p_valid_from: toIsoFromLocalDateInput(assignmentDate) || new Date().toISOString(),
+      });
+      if (error) throw error;
+      setAssignmentDialogOpen(false);
+      toast.success(language === 'fr' ? 'Affectation mise à jour' : 'Assignment updated');
+      setRefreshNonce((value) => value + 1);
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setSavingAssignment(false);
     }
   };
 
@@ -417,13 +745,17 @@ const MemberWishes = () => {
     }
   };
 
-  const choiceLabels = [
-    t.wishes.preferredChoice,
-    t.wishes.secondChoice,
-    t.wishes.thirdChoice,
-  ];
   const selectedSeason = seasons.find((season) => season.id === selectedSeasonId) || null;
   const isSelectedSeasonActive = seasonSupportMode === 'legacy' || selectedSeason?.state === 'active';
+  const isSelfPage = user?.id === memberId;
+  const canEditWishesHere = !!user && (canManageWishes || (isSelfPage && isSelectedSeasonActive && !memberWishesLocked));
+  const canEditAssignment = canManageWishes && !!seasonMember?.seasonMemberId;
+  const currentAssignment = seasonMember?.currentAssignment || null;
+  const assignmentClass = currentAssignment?.class_id ? getClassById(currentAssignment.class_id) : null;
+  const assignmentSpec = currentAssignment?.spec_id ? getSpecById(currentAssignment.spec_id) : null;
+  const assignmentDialogClass = assignmentClassId ? getClassById(assignmentClassId) : null;
+  const assignmentDialogSpecs = assignmentDialogClass?.specs || [];
+  const assignmentDialogSpec = assignmentSpecId ? getSpecById(assignmentSpecId) : null;
   const selectSeason = (seasonId: string) => {
     setSelectedSeasonId(seasonId);
     const next = new URLSearchParams(searchParams);
@@ -503,16 +835,26 @@ const MemberWishes = () => {
               </Badge>
             )}
             
-            {/* Edit button for own wishes */}
-            {user?.id === memberId && guild && (
+            {canEditWishesHere && guild && (
               <CosmicButton
                 size="sm"
                 variant="outline"
                 icon={<Pencil className="h-3.5 w-3.5" strokeWidth={1.5} />}
-                disabled={!isSelectedSeasonActive}
-                onClick={() => navigate(`${getGuildPath(guild.region, guild.server, guild.name)}/wishes${selectedSeasonId ? `?seasonId=${encodeURIComponent(selectedSeasonId)}` : ''}`)}
+                disabled={editingWishes}
+                onClick={startWishEditing}
               >
                 {t.common.edit}
+              </CosmicButton>
+            )}
+
+            {canEditAssignment && (
+              <CosmicButton
+                size="sm"
+                variant="outline"
+                icon={<Save className="h-3.5 w-3.5" strokeWidth={1.5} />}
+                onClick={openAssignmentDialog}
+              >
+                {language === 'fr' ? 'Affectation' : 'Assignment'}
               </CosmicButton>
             )}
 
@@ -560,38 +902,154 @@ const MemberWishes = () => {
         )}
 
         <GlowCard surface="section" className="mb-4" hoverable={false}>
-          <div className="space-y-2">
-            <div className="text-sm uppercase tracking-wide text-muted-foreground">{t.wishes.rosterDecision.summaryTitle}</div>
-            {canManageWishes && searchParams.get('rosterId') ? (
-              <Select
-                value={member?.rosterDecision || 'undecided'}
-                onValueChange={(value) => handleRosterDecisionChange(value as RosterSelectionStatus)}
-                disabled={updatingRosterDecision || !isSelectedSeasonActive}
-              >
-                <SelectTrigger className="w-full sm:w-[220px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="undecided">{t.wishes.rosterDecision.undecided}</SelectItem>
-                  <SelectItem value="selected">{t.wishes.rosterDecision.selected}</SelectItem>
-                  <SelectItem value="bench">{t.wishes.rosterDecision.bench}</SelectItem>
-                  <SelectItem value="not_selected">{t.wishes.rosterDecision.notSelected}</SelectItem>
-                </SelectContent>
-              </Select>
-            ) : (
-              <Badge
-                variant="outline"
-                className={cn('text-xs px-2 py-1', getRosterDecisionBadge(member?.rosterDecision).className)}
-              >
-                {getRosterDecisionBadge(member?.rosterDecision).label}
-              </Badge>
-            )}
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
+            <div className="space-y-2">
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">{t.wishes.rosterDecision.summaryTitle}</div>
+              {canManageWishes && searchParams.get('rosterId') ? (
+                <Select
+                  value={member?.rosterDecision || 'undecided'}
+                  onValueChange={(value) => handleRosterDecisionChange(value as RosterSelectionStatus)}
+                  disabled={updatingRosterDecision}
+                >
+                  <SelectTrigger className="w-full sm:w-[220px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="undecided">{t.wishes.rosterDecision.undecided}</SelectItem>
+                    <SelectItem value="selected">{t.wishes.rosterDecision.selected}</SelectItem>
+                    <SelectItem value="bench">{t.wishes.rosterDecision.bench}</SelectItem>
+                    <SelectItem value="not_selected">{t.wishes.rosterDecision.notSelected}</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Badge
+                  variant="outline"
+                  className={cn('text-xs px-2 py-1', getRosterDecisionBadge(member?.rosterDecision).className)}
+                >
+                  {getRosterDecisionBadge(member?.rosterDecision).label}
+                </Badge>
+              )}
+              {seasonMember?.selectionComment && canManageWishes && (
+                <p className="text-xs text-muted-foreground">{seasonMember.selectionComment}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">{language === 'fr' ? 'Affectation actuelle' : 'Current assignment'}</div>
+                {canEditAssignment && (
+                  <button
+                    type="button"
+                    onClick={openAssignmentDialog}
+                    className="text-xs text-primary hover:text-primary/80"
+                  >
+                    {t.common.edit}
+                  </button>
+                )}
+              </div>
+              {currentAssignment?.class_id ? (
+                <div className="space-y-2">
+                  <div
+                    className="rounded-md px-3 py-2 text-sm font-medium"
+                    style={assignmentClass ? {
+                      backgroundColor: `hsl(var(--class-${assignmentClass.id}) / 0.18)`,
+                      color: `hsl(var(--class-${assignmentClass.id}))`,
+                    } : undefined}
+                  >
+                    {assignmentClass ? getLocalizedClassName(assignmentClass.id, language) : currentAssignment.class_id}
+                  </div>
+                  {assignmentSpec && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      {(() => {
+                        const Icon = getSpecRoleIcon(assignmentSpec);
+                        return <Icon className={cn('h-4 w-4', specRoleStyles[assignmentSpec.role])} />;
+                      })()}
+                      <span>{getLocalizedSpecName(assignmentSpec.id, language)}</span>
+                    </div>
+                  )}
+                  <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                    <span>{currentAssignment.source}</span>
+                    <span>•</span>
+                    <span>{new Date(currentAssignment.valid_from).toLocaleDateString()}</span>
+                  </div>
+                  {currentAssignment.manager_comment && canManageWishes && (
+                    <p className="text-xs text-muted-foreground">{currentAssignment.manager_comment}</p>
+                  )}
+                </div>
+              ) : (
+                <div className="rounded-md border border-dashed border-border/60 px-3 py-2 text-sm text-muted-foreground">
+                  {language === 'fr' ? 'Aucune affectation enregistrée.' : 'No assignment recorded.'}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">{language === 'fr' ? 'Feuille de saison' : 'Season sheet'}</div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="rounded-md border border-border/50 bg-card/40 px-3 py-2">
+                  <div className="text-muted-foreground">{language === 'fr' ? 'Statut saison' : 'Season status'}</div>
+                  <div className="mt-1 font-medium text-foreground">{seasonMember?.seasonStatus || '-'}</div>
+                </div>
+                <div className="rounded-md border border-border/50 bg-card/40 px-3 py-2">
+                  <div className="text-muted-foreground">{language === 'fr' ? 'Rang snapshot' : 'Snapshot rank'}</div>
+                  <div className="mt-1 font-medium text-foreground">{seasonMember?.rankIndex ?? '-'}</div>
+                </div>
+                <div className="rounded-md border border-border/50 bg-card/40 px-3 py-2">
+                  <div className="text-muted-foreground">{language === 'fr' ? 'Vœu 1 obtenu' : 'First wish'}</div>
+                  <div className="mt-1 font-medium text-foreground">
+                    {seasonMember?.outcome?.first_choice_granted === true ? (language === 'fr' ? 'Oui' : 'Yes') : seasonMember?.outcome?.first_choice_granted === false ? (language === 'fr' ? 'Non' : 'No') : '-'}
+                  </div>
+                </div>
+                <div className="rounded-md border border-border/50 bg-card/40 px-3 py-2">
+                  <div className="text-muted-foreground">{language === 'fr' ? 'Changement saison' : 'Season change'}</div>
+                  <div className="mt-1 font-medium text-foreground">
+                    {seasonMember?.outcome?.changed_class_during_season ? (language === 'fr' ? 'Oui' : 'Yes') : (language === 'fr' ? 'Non' : 'No')}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </GlowCard>
+
+        {historyRows.length > 0 && (
+          <GlowCard surface="section" className="mb-4" hoverable={false}>
+            <div className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
+              <History className="h-4 w-4 text-primary" />
+              {language === 'fr' ? 'Historique' : 'History'}
+            </div>
+            <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+              {historyRows.slice(0, 6).map((row) => (
+                <div key={`${row.event_type}-${row.event_at}`} className="rounded-md border border-border/50 bg-card/40 px-3 py-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate text-sm font-medium text-foreground">{row.event_type}</span>
+                    <span className="shrink-0 text-xs text-muted-foreground">{new Date(row.event_at).toLocaleDateString()}</span>
+                  </div>
+                  {row.actor_id && canManageWishes && (
+                    <div className="mt-1 truncate text-xs text-muted-foreground">{row.actor_id}</div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </GlowCard>
+        )}
 
         <div className="mb-3">
           <h3 className="text-sm font-medium text-foreground">{t.wishes.rosterDecision.validationDetailsTitle}</h3>
         </div>
+
+        {editingWishes && (
+          <GlowCard surface="section" className="mb-4 overflow-hidden p-0" hoverable={false}>
+            <MemberWishEditor
+              wishes={editWishes}
+              status={editStatus}
+              saving={savingWishes}
+              onWishChange={handleEditWishChange}
+              onStatusChange={setEditStatus}
+              onSave={saveWishEditing}
+              onCancel={() => setEditingWishes(false)}
+            />
+          </GlowCard>
+        )}
 
         {wishes.length === 0 ? (
           <GlowCard surface="section" className="text-center" hoverable={false}>
@@ -680,8 +1138,8 @@ const MemberWishes = () => {
                         status={wish.validation_status}
                         validatedBy={wish.validated_by}
                         validatedAt={wish.validated_at}
-                        isGM={isGM}
-                        onValidate={isGM && isSelectedSeasonActive ? (status) => handleValidation(wish.choice_index, status) : undefined}
+                        isGM={canManageWishes}
+                        onValidate={canManageWishes ? (status) => handleValidation(wish.choice_index, status) : undefined}
                         loading={validatingWish === wish.choice_index}
                       />
                     </div>
@@ -692,6 +1150,170 @@ const MemberWishes = () => {
           </div>
         )}
       </PageContainer>
+
+      <Dialog open={assignmentDialogOpen} onOpenChange={setAssignmentDialogOpen}>
+        <DialogContent className="max-w-md border-border bg-card">
+          <DialogHeader>
+            <DialogTitle>{language === 'fr' ? 'Modifier affectation' : 'Edit assignment'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="rounded-md border border-border/40 bg-background/40 px-3 py-2">
+              <div className="text-sm font-medium text-foreground">{member?.username}</div>
+              {seasonMember?.characterName && (
+                <div className="text-xs text-muted-foreground">
+                  {seasonMember.characterName}{seasonMember.realm ? ` - ${seasonMember.realm}` : ''}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>{language === 'fr' ? 'Classe' : 'Class'}</Label>
+              <Popover open={assignmentClassOpen} onOpenChange={setAssignmentClassOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className={cn(
+                      'h-11 w-full justify-between gap-2 text-sm font-medium',
+                      assignmentDialogClass
+                        ? 'border-transparent'
+                        : 'border-dashed border-muted-foreground/40 bg-transparent text-muted-foreground hover:bg-muted/20'
+                    )}
+                    style={assignmentDialogClass ? {
+                      backgroundColor: `hsl(var(--class-${assignmentDialogClass.id}) / 0.2)`,
+                      color: `hsl(var(--class-${assignmentDialogClass.id}))`,
+                    } : undefined}
+                  >
+                    <span className="truncate">
+                      {assignmentDialogClass ? getLocalizedClassName(assignmentDialogClass.id, language) : (language === 'fr' ? 'Choisir une classe' : 'Select class')}
+                    </span>
+                    <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-56 border-border bg-card p-1.5" align="start">
+                  <div className="flex max-h-[280px] flex-col gap-0.5 overflow-y-auto">
+                    {wowClasses.map((wowClass) => {
+                      const isSelected = assignmentClassId === wowClass.id;
+                      return (
+                        <button
+                          key={wowClass.id}
+                          type="button"
+                          onClick={() => {
+                            setAssignmentClassId(wowClass.id);
+                            setAssignmentSpecId(wowClass.specs[0]?.id || '');
+                            setAssignmentClassOpen(false);
+                          }}
+                          className={cn(
+                            'flex items-center gap-2 rounded px-2 py-1.5 text-left text-xs transition-colors',
+                            isSelected ? 'bg-primary/20' : 'hover:bg-primary/10'
+                          )}
+                          style={{ color: `hsl(var(--class-${wowClass.id}))` }}
+                        >
+                          {isSelected && <Check className="h-3 w-3 shrink-0" />}
+                          <span className="truncate">{getLocalizedClassName(wowClass.id, language)}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div className="space-y-2">
+              <Label>{language === 'fr' ? 'Spé principale' : 'Main spec'}</Label>
+              {assignmentDialogClass ? (
+                <Popover open={assignmentSpecOpen} onOpenChange={setAssignmentSpecOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className={cn(
+                        'h-10 w-full justify-between gap-2 bg-background/50 text-sm hover:bg-muted/50',
+                        assignmentDialogSpec ? 'border-border/60' : 'border-dashed border-muted-foreground/30 text-muted-foreground'
+                      )}
+                    >
+                      {assignmentDialogSpec ? (
+                        <span className="flex min-w-0 items-center gap-2">
+                          {(() => {
+                            const Icon = getSpecRoleIcon(assignmentDialogSpec);
+                            return <Icon className={cn('h-4 w-4 shrink-0', specRoleStyles[assignmentDialogSpec.role])} />;
+                          })()}
+                          <span className="truncate">{getLocalizedSpecName(assignmentDialogSpec.id, language)}</span>
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">{language === 'fr' ? 'Choisir une spé' : 'Select spec'}</span>
+                      )}
+                      <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-60 border-border bg-card p-1.5" align="start">
+                    <div className="space-y-0.5">
+                      {assignmentDialogSpecs.map((spec) => {
+                        const isSelected = assignmentSpecId === spec.id;
+                        const Icon = getSpecRoleIcon(spec);
+                        return (
+                          <button
+                            key={spec.id}
+                            type="button"
+                            onClick={() => {
+                              setAssignmentSpecId(spec.id);
+                              setAssignmentSpecOpen(false);
+                            }}
+                            className={cn(
+                              'flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs transition-colors',
+                              isSelected ? 'bg-primary/20' : 'hover:bg-primary/10'
+                            )}
+                          >
+                            <Icon className={cn('h-3.5 w-3.5 shrink-0', specRoleStyles[spec.role])} />
+                            <span className="flex-1 truncate">{getLocalizedSpecName(spec.id, language)}</span>
+                            {isSelected && <Check className="h-3 w-3 shrink-0 text-primary" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              ) : (
+                <div className="flex h-10 items-center justify-center gap-2 rounded-md border border-dashed border-muted-foreground/20 bg-transparent">
+                  <Shield className="h-4 w-4 text-muted-foreground/20" />
+                  <Heart className="h-4 w-4 text-muted-foreground/20" />
+                  <Swords className="h-4 w-4 text-muted-foreground/20" />
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="member-assignment-date">{language === 'fr' ? 'Date effective' : 'Effective date'}</Label>
+              <Input
+                id="member-assignment-date"
+                type="date"
+                value={assignmentDate}
+                onChange={(event) => setAssignmentDate(event.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="member-assignment-comment">{language === 'fr' ? 'Commentaire manager' : 'Manager comment'}</Label>
+              <Textarea
+                id="member-assignment-comment"
+                value={assignmentComment}
+                onChange={(event) => setAssignmentComment(event.target.value)}
+                placeholder={language === 'fr' ? 'Optionnel' : 'Optional'}
+                rows={3}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <CosmicButton variant="outline" onClick={() => setAssignmentDialogOpen(false)}>
+                {t.common.cancel}
+              </CosmicButton>
+              <CosmicButton onClick={saveAssignment} loading={savingAssignment} disabled={!assignmentClassId || !assignmentDate}>
+                {t.common.save}
+              </CosmicButton>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
