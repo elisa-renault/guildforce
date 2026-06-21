@@ -23,6 +23,7 @@ import { FilterBar, FilterSearchField, activeFilterControlClassName, filterContr
 interface RosterFiltersProps {
   filters: RosterFiltersType;
   onFiltersChange: (filters: RosterFiltersType) => void;
+  sortSummary?: string;
 }
 
 
@@ -71,7 +72,7 @@ const defaultFilters: RosterFiltersType = {
   maxWishIndex: null,
 };
 
-export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) => {
+export const RosterFilters = ({ filters, onFiltersChange, sortSummary }: RosterFiltersProps) => {
   const { t, language } = useLanguage();
   const s = (key: SemanticKey, fallback?: string) =>
     resolveSemanticMessage({ key, language: t.lang, translations: t, fallback });
@@ -1053,12 +1054,19 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
         )}
       </FilterBar>
 
-      {/* Row 3: Active Filter Pills */}
-      {activePills.length > 0 && (
+      {/* Row 3: Sort and active filter pills */}
+      {(sortSummary || activePills.length > 0) && (
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-muted-foreground">
-            {s('dashboard.roster_filters.active_label')}
-          </span>
+          {sortSummary && (
+            <Badge variant="outline" className="h-6 border-primary/30 bg-primary/10 px-2 text-xs font-medium text-primary">
+              {t.dashboard.rosterTable.sortLabel}: {sortSummary}
+            </Badge>
+          )}
+          {activePills.length > 0 && (
+            <span className="text-xs text-muted-foreground">
+              {s('dashboard.roster_filters.active_label')}
+            </span>
+          )}
           {activePills.map((pill) => (
             <Badge
               key={pill.key}
@@ -1076,12 +1084,14 @@ export const RosterFilters = ({ filters, onFiltersChange }: RosterFiltersProps) 
               <X className="h-3 w-3 opacity-60 hover:opacity-100" />
             </Badge>
           ))}
-          <button
-            onClick={resetAllFilters}
-            className="text-xs text-muted-foreground hover:text-foreground underline"
-          >
-            {s('dashboard.roster_filters.clear_all')}
-          </button>
+          {activePills.length > 0 && (
+            <button
+              onClick={resetAllFilters}
+              className="text-xs text-muted-foreground hover:text-foreground underline"
+            >
+              {s('dashboard.roster_filters.clear_all')}
+            </button>
+          )}
         </div>
       )}
     </div>

@@ -225,6 +225,7 @@ const RosterWishes = () => {
   const [saving, setSaving] = useState(false);
   const [deletingMemberId, setDeletingMemberId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'table' | 'selected' | 'analytics'>('table');
+  const [rosterSortSummary, setRosterSortSummary] = useState('');
   const getErrorMessage = (error: unknown) =>
     error instanceof Error ? error.message : t.errors.generic;
 
@@ -2025,6 +2026,7 @@ const RosterWishes = () => {
             <RosterFilters
               filters={filters}
               onFiltersChange={setFilters}
+              sortSummary={rosterSortSummary}
             />
 
             <RosterTable
@@ -2059,6 +2061,7 @@ const RosterWishes = () => {
               onEditAssignment={canManageWishes && !isAdminReadOnly ? openAssignmentDialog : undefined}
               onViewHistory={canManageWishes && !isAdminReadOnly ? openHistoryDrawer : undefined}
               updatingAssignmentMemberId={savingAssignment ? assignmentMember?.id || null : null}
+              onSortSummaryChange={setRosterSortSummary}
             />
           </TabsContent>
 
