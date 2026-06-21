@@ -623,8 +623,6 @@ export const RosterTable = ({
                   onClick: () => {
                     if (isEditing) {
                       onSaveEditing();
-                    } else if (canManageAssignments && onEditAssignment && member.seasonMemberId) {
-                      onEditAssignment(member);
                     } else {
                       onStartEditing(member);
                     }
@@ -634,6 +632,13 @@ export const RosterTable = ({
                 }] : []),
               ];
               
+              const canOpenAssignmentEditor = Boolean(
+                isEditing
+                && canManageAssignments
+                && onEditAssignment
+                && member.seasonMemberId
+              );
+
               const handleRowClick = () => {
                 // Navigate to member wishes page (read-only view) for all members
                 if (!isEditing && regionSlug && serverSlug && guildSlug) {
@@ -759,7 +764,21 @@ export const RosterTable = ({
                       )}
                     </TableCell>
                     <TableCell className="py-2 px-2 md:px-3">
-                      {renderCurrentAssignmentCell(member)}
+                      {canOpenAssignmentEditor ? (
+                        <button
+                          type="button"
+                          className="w-full rounded-md text-left transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onEditAssignment?.(member);
+                          }}
+                          disabled={updatingAssignmentMemberId === member.id}
+                        >
+                          {renderCurrentAssignmentCell(member)}
+                        </button>
+                      ) : (
+                        renderCurrentAssignmentCell(member)
+                      )}
                     </TableCell>
                     <TableCell className="py-2 px-2 md:px-3 text-center">
                       <span className="text-sm text-muted-foreground">{member.wishes.filter(w => w.class_id).length}</span>

@@ -209,13 +209,7 @@ export const MobileRosterCard = ({
       key: 'edit',
       label: t.common.edit,
       icon: Pencil,
-      onClick: () => {
-        if (canManageAssignments && onEditAssignment && member.seasonMemberId) {
-          onEditAssignment(member);
-          return;
-        }
-        onStartEditing(member);
-      },
+      onClick: () => onStartEditing(member),
       loading: updatingAssignmentMemberId === member.id,
       disabled: !(canManageAssignments && onEditAssignment && member.seasonMemberId) && effectiveLocked,
     }] : []),
