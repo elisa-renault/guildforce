@@ -407,6 +407,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "memberUnlockedToast": "Mitgliedsw\u00fcnsche entsperrt",
     "lockMember": "Mitglied sperren",
     "unlockMember": "Mitglied entsperren",
+    "removeMember": "Aus dieser Saison entfernen",
     "rosterDecision": {
       "title": "Externes Mitglied hinzuf\u00fcgen",
       "summaryTitle": "Zusammenfassung der Roster-Entscheidung",
@@ -456,7 +457,24 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "withoutComment": "Ohne Kommentar",
     "allComments": "Alle Kommentare",
     "wishesMin": "\u2265{{count}} W\u00fcnsche",
-    "wishesCount": "W\u00fcnsche",
+    "wishesCount": "Gesamt",
+    "rosterTable": {
+      "player": "Spieler",
+      "status": "Status",
+      "decision": "Entscheidung",
+      "assignment": "Zuweisung",
+      "total": "Gesamt",
+      "choice1": "Wahl 1",
+      "choice2": "Wahl 2",
+      "choice3": "Wahl 3",
+      "sortLabel": "Sortierung",
+      "sortAscending": "{{column}} aufsteigend",
+      "sortDescending": "{{column}} absteigend",
+      "statusTooltip": "Angabe des Mitglieds: best\u00e4tigt, unentschieden oder zur\u00fcckgezogen.",
+      "decisionTooltip": "Entscheidung der Verwalter f\u00fcr diesen Roster: ausgew\u00e4hlt, Bench, nicht ausgew\u00e4hlt…",
+      "assignmentTooltip": "Aktuell f\u00fcr die Saison zugewiesene Klasse/Spezialisierung.",
+      "totalTooltip": "Anzahl der von diesem Spieler eingereichten W\u00fcnsche."
+    },
     "additionalWishes": "Zus\u00e4tzliche W\u00fcnsche",
     "addWish": "F\u00fcge einen Wunsch hinzu",
     "externalMember": {

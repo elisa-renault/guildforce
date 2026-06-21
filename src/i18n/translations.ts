@@ -480,6 +480,7 @@ export interface Translations {
     memberUnlockedToast: string;
     lockMember: string;
     unlockMember: string;
+    removeMember: string;
     rosterDecision: {
       title: string;
       summaryTitle: string;
@@ -575,6 +576,23 @@ export interface Translations {
     allComments: string;
     wishesMin: string;
     wishesCount: string;
+    rosterTable: {
+      player: string;
+      status: string;
+      decision: string;
+      assignment: string;
+      total: string;
+      choice1: string;
+      choice2: string;
+      choice3: string;
+      sortLabel: string;
+      sortAscending: string;
+      sortDescending: string;
+      statusTooltip: string;
+      decisionTooltip: string;
+      assignmentTooltip: string;
+      totalTooltip: string;
+    };
     additionalWishes: string;
     addWish: string;
     externalMember: {

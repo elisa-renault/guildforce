@@ -119,6 +119,21 @@ export const RosterTable = ({
   const manualEntryHelp = language === 'fr'
     ? 'Ce personnage a été ajouté manuellement. L’icône disparaîtra une fois le personnage claim via Guildforce.'
     : 'This character was added manually. The icon will disappear once the character is claimed via Guildforce.';
+  const rosterTableLabels = t.dashboard.rosterTable;
+  const sortColumnLabels: Record<SortColumn, string> = {
+    player: rosterTableLabels.player,
+    status: rosterTableLabels.status,
+    rosterDecision: rosterTableLabels.decision,
+    currentAssignment: rosterTableLabels.assignment,
+    wishesCount: rosterTableLabels.total,
+    wish1: rosterTableLabels.choice1,
+    wish2: rosterTableLabels.choice2,
+    wish3: rosterTableLabels.choice3,
+  };
+  const sortSummary = sortColumn
+    ? (sortDirection === 'asc' ? rosterTableLabels.sortAscending : rosterTableLabels.sortDescending)
+      .replace('{{column}}', sortColumnLabels[sortColumn])
+    : '';
 
   const getRosterDecisionBadge = (selectionStatus: MemberWish['selectionStatus']) => {
     switch (selectionStatus) {
@@ -242,25 +257,81 @@ export const RosterTable = ({
   }, [members, sortColumn, sortDirection, language]);
 
   const SortIcon = ({ column }: { column: SortColumn }) => {
-    if (sortColumn !== column) {
-      return <ArrowUpDown className="h-4 w-4 text-muted-foreground/50" />;
-    }
-    return sortDirection === 'asc' 
-      ? <ArrowUp className="h-4 w-4 text-primary" />
-      : <ArrowDown className="h-4 w-4 text-primary" />;
+    const isActive = sortColumn === column;
+    const Icon = isActive
+      ? (sortDirection === 'asc' ? ArrowUp : ArrowDown)
+      : ArrowUpDown;
+
+    return (
+      <Icon
+        className={cn(
+          'h-3.5 w-3.5 shrink-0 transition-opacity',
+          isActive
+            ? 'text-primary opacity-100'
+            : 'text-muted-foreground/50 opacity-0 group-hover/header:opacity-100'
+        )}
+      />
+    );
   };
 
-  const SortableHeader = ({ column, children, className }: { column: SortColumn; children: React.ReactNode; className?: string }) => (
-    <TableHead 
-      className={cn("text-muted-foreground text-xs py-2 px-2 md:px-3 cursor-pointer hover:text-foreground transition-colors select-none", className)}
-      onClick={() => handleSort(column)}
-    >
-      <div className="flex items-center gap-1">
-        {children}
-        <SortIcon column={column} />
-      </div>
-    </TableHead>
-  );
+  const HeaderHelp = ({ tooltip }: { tooltip?: string }) => {
+    if (!tooltip) return null;
+
+    return (
+      <TooltipProvider delayDuration={150}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              className="inline-flex h-4 w-4 items-center justify-center rounded-full text-muted-foreground/70 transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+              onClick={(event) => event.stopPropagation()}
+              aria-label={tooltip}
+            >
+              <HelpCircle className="h-3 w-3" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-[240px] text-xs">
+            {tooltip}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  };
+
+  const SortableHeader = ({
+    column,
+    children,
+    className,
+    tooltip,
+  }: {
+    column: SortColumn;
+    children: React.ReactNode;
+    className?: string;
+    tooltip?: string;
+  }) => {
+    const isActive = sortColumn === column;
+    const ariaSort = isActive ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none';
+
+    return (
+      <TableHead
+        aria-sort={ariaSort}
+        className={cn(
+          'group/header cursor-pointer select-none py-2 px-2 text-xs transition-colors md:px-3',
+          isActive
+            ? 'bg-primary/5 text-foreground'
+            : 'text-muted-foreground hover:bg-muted/30 hover:text-foreground',
+          className
+        )}
+        onClick={() => handleSort(column)}
+      >
+        <div className="flex items-center gap-1.5">
+          <span className="truncate">{children}</span>
+          <HeaderHelp tooltip={tooltip} />
+          <SortIcon column={column} />
+        </div>
+      </TableHead>
+    );
+  };
 
   const handleValidation = async (memberId: string, choiceIndex: number, status: ValidationStatus) => {
     if (!onValidateWish) return;
@@ -559,20 +630,33 @@ export const RosterTable = ({
   // Desktop view - table layout
   return (
     <GlowCard surface="section" className="overflow-hidden p-0">
+      {sortColumn && (
+        <div className="border-b border-border/30 px-3 py-2">
+          <Badge variant="outline" className="border-primary/30 bg-primary/10 text-xs font-medium text-primary">
+            {rosterTableLabels.sortLabel}: {sortSummary}
+          </Badge>
+        </div>
+      )}
       <div className="overflow-x-auto">
         <Table className="table-auto min-w-[1400px]">
           <TableHeader>
             <TableRow className="border-border/30 hover:bg-transparent">
-              <SortableHeader column="player" className="w-[180px] md:w-[240px]">{t.dashboard.player}</SortableHeader>
-              <SortableHeader column="status" className="w-[120px] md:w-[150px]">{t.wishes.status}</SortableHeader>
-              <SortableHeader column="rosterDecision" className="w-[160px] md:w-[200px]">{t.wishes.rosterDecision.title}</SortableHeader>
-              <SortableHeader column="currentAssignment" className="w-[180px] md:w-[220px]">
-                {language === 'fr' ? 'Affectation actuelle' : 'Current assignment'}
+              <SortableHeader column="player" className="w-[180px] md:w-[240px]">{rosterTableLabels.player}</SortableHeader>
+              <SortableHeader column="status" className="w-[120px] md:w-[150px]" tooltip={rosterTableLabels.statusTooltip}>
+                {rosterTableLabels.status}
               </SortableHeader>
-              <SortableHeader column="wishesCount" className="w-[80px] md:w-[90px]"><span className="hidden md:inline">{t.dashboard.wishesCount}</span><span className="md:hidden">#</span></SortableHeader>
-              <SortableHeader column="wish1" className={wishColumnClassName}><span className="hidden md:inline">{t.dashboard.firstChoice}</span><span className="md:hidden">#1</span></SortableHeader>
-              <SortableHeader column="wish2" className={wishColumnClassName}><span className="hidden md:inline">{t.dashboard.secondChoice}</span><span className="md:hidden">#2</span></SortableHeader>
-              <SortableHeader column="wish3" className={wishColumnClassName}><span className="hidden md:inline">{t.dashboard.thirdChoice}</span><span className="md:hidden">#3</span></SortableHeader>
+              <SortableHeader column="rosterDecision" className="w-[160px] md:w-[200px]" tooltip={rosterTableLabels.decisionTooltip}>
+                {rosterTableLabels.decision}
+              </SortableHeader>
+              <SortableHeader column="currentAssignment" className="w-[180px] md:w-[220px]" tooltip={rosterTableLabels.assignmentTooltip}>
+                {rosterTableLabels.assignment}
+              </SortableHeader>
+              <SortableHeader column="wishesCount" className="w-[90px] md:w-[100px]" tooltip={rosterTableLabels.totalTooltip}>
+                <span className="hidden md:inline">{rosterTableLabels.total}</span><span className="md:hidden">#</span>
+              </SortableHeader>
+              <SortableHeader column="wish1" className={wishColumnClassName}><span className="hidden md:inline">{rosterTableLabels.choice1}</span><span className="md:hidden">#1</span></SortableHeader>
+              <SortableHeader column="wish2" className={wishColumnClassName}><span className="hidden md:inline">{rosterTableLabels.choice2}</span><span className="md:hidden">#2</span></SortableHeader>
+              <SortableHeader column="wish3" className={wishColumnClassName}><span className="hidden md:inline">{rosterTableLabels.choice3}</span><span className="md:hidden">#3</span></SortableHeader>
               <TableHead className="text-muted-foreground text-xs py-2 px-0 w-[72px]"></TableHead>
             </TableRow>
           </TableHeader>
