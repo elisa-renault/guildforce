@@ -152,22 +152,46 @@ const Overview = () => {
       if (rostersData && !adminReadOnly) {
         setDefaultRoster(rostersData);
 
-        // Fetch my wishes for the default roster
-        const { data: wishesData } = await supabase
-          .from('class_wishes')
-          .select('choice_index, class_id, spec_ids, spec_order, validation_status')
+        const { data: activeSeason } = await supabase
+          .from('roster_wish_seasons')
+          .select('id')
           .eq('guild_id', foundGuildId)
-          .eq('user_id', user.id)
           .eq('roster_id', rostersData.id)
-          .order('choice_index');
+          .eq('state', 'active')
+          .order('activated_at', { ascending: false, nullsFirst: false })
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-        if (wishesData) {
-          setMyWishes(wishesData.map(wish => ({
-            choice_index: wish.choice_index,
-            class_id: wish.class_id,
-            spec_ids: resolveSpecOrder(wish.spec_ids || [], wish.spec_order),
-            validation_status: wish.validation_status,
-          })));
+        if (!activeSeason) {
+          setMyWishes([]);
+        } else {
+          // Fetch my wishes for the active season of the default roster.
+          const { data: wishesData } = await supabase
+            .from('class_wishes')
+            .select('choice_index, class_id, spec_ids, spec_order, validation_status')
+            .eq('guild_id', foundGuildId)
+            .eq('user_id', user.id)
+            .eq('roster_id', rostersData.id)
+            .eq('season_id', activeSeason.id)
+            .order('choice_index');
+
+          if (wishesData) {
+            const uniqueWishes = new Map<number, WishSummary>();
+
+            for (const wish of wishesData) {
+              if (uniqueWishes.has(wish.choice_index)) continue;
+
+              uniqueWishes.set(wish.choice_index, {
+                choice_index: wish.choice_index,
+                class_id: wish.class_id,
+                spec_ids: resolveSpecOrder(wish.spec_ids || [], wish.spec_order),
+                validation_status: wish.validation_status,
+              });
+            }
+
+            setMyWishes(Array.from(uniqueWishes.values()));
+          }
         }
       } else if (rostersData) {
         setDefaultRoster(rostersData);
