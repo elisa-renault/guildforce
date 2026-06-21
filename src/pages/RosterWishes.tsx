@@ -2380,7 +2380,7 @@ const RosterWishes = () => {
       <Sheet open={historyOpen} onOpenChange={setHistoryOpen}>
         <SheetContent side="right" className="w-full border-border bg-background/95 sm:max-w-xl">
           <SheetHeader>
-            <SheetTitle>{language === 'fr' ? 'Historique saison' : 'Season history'}</SheetTitle>
+            <SheetTitle>{language === 'fr' ? 'Historique' : 'History'}</SheetTitle>
           </SheetHeader>
           <div className="mt-6 space-y-4">
             {historyMember && (

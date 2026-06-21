@@ -2725,6 +2725,7 @@ export type Database = {
         }[]
       }
       get_roster_season_history: {
+        // Signature unchanged; the RPC body orders history rows by the event timestamp.
         Args: {
           p_roster_id: string
           p_season_id: string
