@@ -936,16 +936,6 @@ const MemberWishes = () => {
           selectedSeason && <SeasonStateCallout season={selectedSeason} />
         )}
 
-        {memberWishesLocked && (
-          <div className={cn("mb-4 rounded-lg border p-3 flex items-start gap-2", toneCalloutClass('warning'))}>
-            <Lock className={cn("h-4 w-4 mt-0.5", toneTextClass('warning'))} />
-            <div className="text-sm">
-              <div className="font-medium">{t.wishes.lockedTitle}</div>
-              <div className={cn("opacity-80", toneTextClass('warning'))}>{t.wishes.lockedMemberDesc}</div>
-            </div>
-          </div>
-        )}
-
         <GlowCard surface="section" className="mb-4" hoverable={false}>
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
             <div className="space-y-2">
