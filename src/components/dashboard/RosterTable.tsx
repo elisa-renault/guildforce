@@ -590,17 +590,9 @@ export const RosterTable = ({
                   : '';
 
               const rowActions = [
-                ...(canManageAssignments && onEditAssignment && member.seasonMemberId ? [{
-                  key: 'assignment',
-                  label: language === 'fr' ? 'Modifier affectation' : 'Edit assignment',
-                  icon: Pencil,
-                  onClick: () => onEditAssignment(member),
-                  loading: updatingAssignmentMemberId === member.id,
-                  disabled: false,
-                }] : []),
                 ...(canManageAssignments && onViewHistory && member.seasonMemberId ? [{
                   key: 'history',
-                  label: language === 'fr' ? 'Historique saison' : 'Season history',
+                  label: language === 'fr' ? 'Historique' : 'History',
                   icon: History,
                   onClick: () => onViewHistory(member),
                   loading: false,
@@ -608,7 +600,7 @@ export const RosterTable = ({
                 }] : []),
                 ...(canManageWishes && onRemoveMember && !isOwnRow ? [{
                   key: 'delete',
-                  label: t.wishes.removeMember,
+                  label: language === 'fr' ? 'Retirer' : 'Remove',
                   icon: Trash2,
                   onClick: () => onRemoveMember(member.id),
                   loading: deletingMemberId === member.id,
@@ -616,25 +608,29 @@ export const RosterTable = ({
                 }] : []),
                 ...(canManageWishes && onToggleMemberLock && !member.isExternal ? [{
                   key: 'lock',
-                  label: memberLocked ? t.wishes.unlockMember : t.wishes.lockMember,
+                  label: memberLocked
+                    ? (language === 'fr' ? 'Déverrouiller' : 'Unlock')
+                    : (language === 'fr' ? 'Verrouiller' : 'Lock'),
                   icon: memberLocked ? Unlock : Lock,
                   onClick: () => onToggleMemberLock(member.id, !memberLocked),
                   loading: lockingMemberId === member.id,
                   disabled: false,
                 }] : []),
-                ...((isOwnRow || canManageWishes) ? [{
+                ...((isOwnRow || canManageWishes || (canManageAssignments && onEditAssignment && member.seasonMemberId)) ? [{
                   key: 'edit',
                   label: isEditing ? t.common.save : t.common.edit,
                   icon: isEditing ? Save : Pencil,
                   onClick: () => {
                     if (isEditing) {
                       onSaveEditing();
+                    } else if (canManageAssignments && onEditAssignment && member.seasonMemberId) {
+                      onEditAssignment(member);
                     } else {
                       onStartEditing(member);
                     }
                   },
-                  loading: isEditing && saving,
-                  disabled: isEditingLocked,
+                  loading: (isEditing && saving) || updatingAssignmentMemberId === member.id,
+                  disabled: !(canManageAssignments && onEditAssignment && member.seasonMemberId) && isEditingLocked,
                 }] : []),
               ];
               

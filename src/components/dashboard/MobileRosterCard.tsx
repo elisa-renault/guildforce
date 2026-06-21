@@ -179,17 +179,9 @@ export const MobileRosterCard = ({
   const memberLocked = Boolean(member.wishes_locked);
   const effectiveLocked = isRosterLocked || memberLocked;
   const actionItems = [
-    ...(canManageAssignments && onEditAssignment && member.seasonMemberId ? [{
-      key: 'assignment',
-      label: language === 'fr' ? 'Modifier affectation' : 'Edit assignment',
-      icon: Pencil,
-      onClick: () => onEditAssignment(member),
-      loading: updatingAssignmentMemberId === member.id,
-      disabled: false,
-    }] : []),
     ...(canManageAssignments && onViewHistory && member.seasonMemberId ? [{
       key: 'history',
-      label: language === 'fr' ? 'Historique saison' : 'Season history',
+      label: language === 'fr' ? 'Historique' : 'History',
       icon: History,
       onClick: () => onViewHistory(member),
       loading: false,
@@ -197,7 +189,7 @@ export const MobileRosterCard = ({
     }] : []),
     ...(canManageWishes && onRemoveMember && !isOwnRow ? [{
       key: 'delete',
-      label: t.wishes.removeMember,
+      label: language === 'fr' ? 'Retirer' : 'Remove',
       icon: Trash2,
       onClick: () => onRemoveMember(member.id),
       loading: deletingMemberId === member.id,
@@ -205,19 +197,27 @@ export const MobileRosterCard = ({
     }] : []),
     ...(canManageWishes && onToggleMemberLock && !member.isExternal ? [{
       key: 'lock',
-      label: memberLocked ? t.wishes.unlockMember : t.wishes.lockMember,
+      label: memberLocked
+        ? (language === 'fr' ? 'Déverrouiller' : 'Unlock')
+        : (language === 'fr' ? 'Verrouiller' : 'Lock'),
       icon: memberLocked ? Unlock : Lock,
       onClick: () => onToggleMemberLock(member.id, !memberLocked),
       loading: lockingMemberId === member.id,
       disabled: false,
     }] : []),
-    ...((isOwnRow || canManageWishes) ? [{
+    ...((isOwnRow || canManageWishes || (canManageAssignments && onEditAssignment && member.seasonMemberId)) ? [{
       key: 'edit',
       label: t.common.edit,
       icon: Pencil,
-      onClick: () => onStartEditing(member),
-      loading: false,
-      disabled: effectiveLocked,
+      onClick: () => {
+        if (canManageAssignments && onEditAssignment && member.seasonMemberId) {
+          onEditAssignment(member);
+          return;
+        }
+        onStartEditing(member);
+      },
+      loading: updatingAssignmentMemberId === member.id,
+      disabled: !(canManageAssignments && onEditAssignment && member.seasonMemberId) && effectiveLocked,
     }] : []),
   ];
   const statusBadge = (
