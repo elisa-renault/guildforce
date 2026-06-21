@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-type SortColumn = 'player' | 'status' | 'rosterDecision' | 'wish1' | 'wish2' | 'wish3' | 'wishesCount';
+type SortColumn = 'player' | 'status' | 'rosterDecision' | 'currentAssignment' | 'wish1' | 'wish2' | 'wish3' | 'wishesCount';
 type SortDirection = 'asc' | 'desc';
 
 interface RosterTableProps {
@@ -177,6 +177,12 @@ export const RosterTable = ({
           const decisionA = a.selectionStatus || 'undecided';
           const decisionB = b.selectionStatus || 'undecided';
           comparison = (rosterDecisionOrder[decisionA] ?? 2) - (rosterDecisionOrder[decisionB] ?? 2);
+          break;
+        }
+        case 'currentAssignment': {
+          const assignmentA = a.currentAssignment?.class_id || '';
+          const assignmentB = b.currentAssignment?.class_id || '';
+          comparison = assignmentA.localeCompare(assignmentB);
           break;
         }
         case 'wish1':
@@ -484,6 +490,9 @@ export const RosterTable = ({
               <SortableHeader column="player" className="w-[180px] md:w-[240px]">{t.dashboard.player}</SortableHeader>
               <SortableHeader column="status" className="w-[120px] md:w-[150px]">{t.wishes.status}</SortableHeader>
               <SortableHeader column="rosterDecision" className="w-[160px] md:w-[200px]">{t.wishes.rosterDecision.title}</SortableHeader>
+              <SortableHeader column="currentAssignment" className="w-[180px] md:w-[220px]">
+                {language === 'fr' ? 'Affectation actuelle' : 'Current assignment'}
+              </SortableHeader>
               <SortableHeader column="wishesCount" className="w-[80px] md:w-[90px]"><span className="hidden md:inline">{t.dashboard.wishesCount}</span><span className="md:hidden">#</span></SortableHeader>
               <SortableHeader column="wish1" className={wishColumnClassName}><span className="hidden md:inline">{t.dashboard.firstChoice}</span><span className="md:hidden">#1</span></SortableHeader>
               <SortableHeader column="wish2" className={wishColumnClassName}><span className="hidden md:inline">{t.dashboard.secondChoice}</span><span className="md:hidden">#2</span></SortableHeader>
@@ -507,7 +516,7 @@ export const RosterTable = ({
               const rowActions = [
                 ...(canManageWishes && onRemoveMember && !isOwnRow ? [{
                   key: 'delete',
-                  label: t.common.delete,
+                  label: t.wishes.removeMember,
                   icon: Trash2,
                   onClick: () => onRemoveMember(member.id),
                   loading: deletingMemberId === member.id,
@@ -659,6 +668,28 @@ export const RosterTable = ({
                         >
                           {getRosterDecisionBadge(member.selectionStatus).label}
                         </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="py-2 px-2 md:px-3">
+                      {member.currentAssignment?.class_id ? (
+                        <div className="flex flex-col gap-0.5">
+                          <Badge variant="outline" className="w-fit text-[10px] md:text-xs px-2 py-0.5">
+                            {(() => {
+                              const cls = getClassById(member.currentAssignment.class_id);
+                              return cls ? getLocalizedClassName(cls.id, language) : member.currentAssignment.class_id;
+                            })()}
+                          </Badge>
+                          {member.currentAssignment.spec_id && (
+                            <span className="text-[11px] text-muted-foreground">
+                              {(() => {
+                                const spec = getSpecById(member.currentAssignment?.spec_id || '');
+                                return spec ? getLocalizedSpecName(spec.id, language) : member.currentAssignment?.spec_id;
+                              })()}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground/60">—</span>
                       )}
                     </TableCell>
                     <TableCell className="py-2 px-2 md:px-3 text-center">

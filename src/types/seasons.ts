@@ -5,6 +5,7 @@ export type GuildSeasonState = Database['public']['Enums']['guild_season_state']
 export interface GuildSeason {
   id: string;
   guild_id: string;
+  roster_id?: string | null;
   name: string;
   state: GuildSeasonState;
   starts_at: string | null;
@@ -16,4 +17,3 @@ export interface GuildSeason {
   created_at: string;
   updated_at: string;
 }
-

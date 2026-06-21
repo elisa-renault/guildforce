@@ -339,7 +339,7 @@ export type Database = {
             foreignKeyName: "class_wishes_season_id_fkey"
             columns: ["season_id"]
             isOneToOne: false
-            referencedRelation: "guild_seasons"
+            referencedRelation: "roster_wish_seasons"
             referencedColumns: ["id"]
           },
           {
@@ -509,7 +509,7 @@ export type Database = {
             foreignKeyName: "external_member_wishes_season_id_fkey"
             columns: ["season_id"]
             isOneToOne: false
-            referencedRelation: "guild_seasons"
+            referencedRelation: "roster_wish_seasons"
             referencedColumns: ["id"]
           },
           {
@@ -729,6 +729,7 @@ export type Database = {
           commitment_status: string
           guild_id: string
           id: string
+          roster_id: string
           season_id: string
           updated_at: string
           user_id: string
@@ -737,6 +738,7 @@ export type Database = {
           commitment_status?: string
           guild_id: string
           id?: string
+          roster_id: string
           season_id: string
           updated_at?: string
           user_id: string
@@ -745,6 +747,7 @@ export type Database = {
           commitment_status?: string
           guild_id?: string
           id?: string
+          roster_id?: string
           season_id?: string
           updated_at?: string
           user_id?: string
@@ -761,7 +764,14 @@ export type Database = {
             foreignKeyName: "guild_season_member_intents_season_id_fkey"
             columns: ["season_id"]
             isOneToOne: false
-            referencedRelation: "guild_seasons"
+            referencedRelation: "roster_wish_seasons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_season_member_intents_roster_id_fkey"
+            columns: ["roster_id"]
+            isOneToOne: false
+            referencedRelation: "rosters"
             referencedColumns: ["id"]
           },
           {
@@ -2016,6 +2026,216 @@ export type Database = {
         ]
       }
       // Data backfills can target roster selections without changing the table shape.
+      roster_wish_seasons: {
+        Row: {
+          activated_at: string | null
+          archived_at: string | null
+          created_at: string
+          created_by: string | null
+          ends_at: string | null
+          guild_id: string
+          guild_season_id: string | null
+          id: string
+          name: string
+          roster_id: string
+          source_season_id: string | null
+          starts_at: string | null
+          state: Database["public"]["Enums"]["guild_season_state"]
+          updated_at: string
+        }
+        Insert: {
+          activated_at?: string | null
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          guild_id: string
+          guild_season_id?: string | null
+          id?: string
+          name: string
+          roster_id: string
+          source_season_id?: string | null
+          starts_at?: string | null
+          state?: Database["public"]["Enums"]["guild_season_state"]
+          updated_at?: string
+        }
+        Update: {
+          activated_at?: string | null
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          guild_id?: string
+          guild_season_id?: string | null
+          id?: string
+          name?: string
+          roster_id?: string
+          source_season_id?: string | null
+          starts_at?: string | null
+          state?: Database["public"]["Enums"]["guild_season_state"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roster_wish_seasons_roster_id_fkey"
+            columns: ["roster_id"]
+            isOneToOne: false
+            referencedRelation: "rosters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "roster_wish_seasons_guild_season_id_fkey"
+            columns: ["guild_season_id"]
+            isOneToOne: false
+            referencedRelation: "guild_seasons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      roster_season_members: {
+        Row: {
+          character_name_snapshot: string | null
+          created_at: string
+          display_name_snapshot: string
+          guild_id: string
+          id: string
+          joined_wishlist_at: string
+          left_guild_at: string | null
+          locked: boolean
+          rank_index_snapshot: number | null
+          realm_snapshot: string | null
+          roster_cache_id: string | null
+          roster_id: string
+          season_id: string
+          season_status: Database["public"]["Enums"]["roster_season_member_status"]
+          source: Database["public"]["Enums"]["roster_season_member_source"]
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          character_name_snapshot?: string | null
+          created_at?: string
+          display_name_snapshot: string
+          guild_id: string
+          id?: string
+          joined_wishlist_at?: string
+          left_guild_at?: string | null
+          locked?: boolean
+          rank_index_snapshot?: number | null
+          realm_snapshot?: string | null
+          roster_cache_id?: string | null
+          roster_id: string
+          season_id: string
+          season_status?: Database["public"]["Enums"]["roster_season_member_status"]
+          source?: Database["public"]["Enums"]["roster_season_member_source"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          character_name_snapshot?: string | null
+          created_at?: string
+          display_name_snapshot?: string
+          guild_id?: string
+          id?: string
+          joined_wishlist_at?: string
+          left_guild_at?: string | null
+          locked?: boolean
+          rank_index_snapshot?: number | null
+          realm_snapshot?: string | null
+          roster_cache_id?: string | null
+          roster_id?: string
+          season_id?: string
+          season_status?: Database["public"]["Enums"]["roster_season_member_status"]
+          source?: Database["public"]["Enums"]["roster_season_member_source"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      roster_member_assignments: {
+        Row: {
+          approved_by: string | null
+          choice_index: number | null
+          class_id: string
+          created_at: string
+          id: string
+          manager_comment: string | null
+          reason_code: Database["public"]["Enums"]["roster_selection_reason_code"] | null
+          role: string | null
+          roster_season_member_id: string
+          source: Database["public"]["Enums"]["roster_assignment_source"]
+          spec_id: string | null
+          valid_from: string
+          valid_to: string | null
+        }
+        Insert: {
+          approved_by?: string | null
+          choice_index?: number | null
+          class_id: string
+          created_at?: string
+          id?: string
+          manager_comment?: string | null
+          reason_code?: Database["public"]["Enums"]["roster_selection_reason_code"] | null
+          role?: string | null
+          roster_season_member_id: string
+          source?: Database["public"]["Enums"]["roster_assignment_source"]
+          spec_id?: string | null
+          valid_from?: string
+          valid_to?: string | null
+        }
+        Update: {
+          approved_by?: string | null
+          choice_index?: number | null
+          class_id?: string
+          created_at?: string
+          id?: string
+          manager_comment?: string | null
+          reason_code?: Database["public"]["Enums"]["roster_selection_reason_code"] | null
+          role?: string | null
+          roster_season_member_id?: string
+          source?: Database["public"]["Enums"]["roster_assignment_source"]
+          spec_id?: string | null
+          valid_from?: string
+          valid_to?: string | null
+        }
+        Relationships: []
+      }
+      roster_season_events: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          event_type: string
+          guild_id: string
+          id: string
+          payload: Json
+          roster_id: string
+          roster_season_member_id: string | null
+          season_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          event_type: string
+          guild_id: string
+          id?: string
+          payload?: Json
+          roster_id: string
+          roster_season_member_id?: string | null
+          season_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          event_type?: string
+          guild_id?: string
+          id?: string
+          payload?: Json
+          roster_id?: string
+          roster_season_member_id?: string | null
+          season_id?: string
+        }
+        Relationships: []
+      }
       roster_member_selection: {
         Row: {
           comment: string | null
@@ -2082,7 +2302,7 @@ export type Database = {
             foreignKeyName: "roster_member_selection_season_id_fkey"
             columns: ["season_id"]
             isOneToOne: false
-            referencedRelation: "guild_seasons"
+            referencedRelation: "roster_wish_seasons"
             referencedColumns: ["id"]
           },
           {
@@ -2469,6 +2689,97 @@ export type Database = {
           username: string
         }[]
       }
+      materialize_roster_season_members: {
+        Args: { p_roster_id: string; p_season_id: string }
+        Returns: number
+      }
+      get_roster_season_table: {
+        Args: { p_roster_id: string; p_season_id: string }
+        Returns: {
+          season_member_id: string
+          user_id: string | null
+          roster_cache_id: string | null
+          display_name: string
+          character_name: string | null
+          realm: string | null
+          rank_index: number | null
+          source: Database["public"]["Enums"]["roster_season_member_source"]
+          season_status: Database["public"]["Enums"]["roster_season_member_status"]
+          locked: boolean
+          wishes: Json
+          selection_status: Database["public"]["Enums"]["roster_selection_status"]
+          selection_reason_code: Database["public"]["Enums"]["roster_selection_reason_code"] | null
+          selection_comment: string | null
+          selection_decided_by: string | null
+          selection_decided_at: string | null
+          selection_updated_at: string | null
+          current_assignment: Json
+          outcome: Json
+        }[]
+      }
+      get_roster_season_history: {
+        Args: {
+          p_roster_id: string
+          p_season_id: string
+          p_roster_season_member_id: string
+        }
+        Returns: {
+          event_at: string
+          event_type: string
+          actor_id: string | null
+          payload: Json
+        }[]
+      }
+      get_roster_season_outcomes: {
+        Args: { p_roster_id: string; p_season_id: string }
+        Returns: {
+          roster_season_member_id: string
+          user_id: string | null
+          roster_cache_id: string | null
+          first_choice_granted: boolean
+          granted_choice_index: number | null
+          final_class_id: string | null
+          final_spec_id: string | null
+          changed_class_during_season: boolean
+          changed_for_raid_need: boolean
+          joined_mid_season: boolean
+          left_mid_season: boolean
+          final_status: Database["public"]["Enums"]["roster_season_member_status"]
+        }[]
+      }
+      set_roster_member_assignment: {
+        Args: {
+          p_roster_season_member_id: string
+          p_class_id: string
+          p_spec_id?: string | null
+          p_role?: string | null
+          p_source?: Database["public"]["Enums"]["roster_assignment_source"]
+          p_choice_index?: number | null
+          p_reason_code?: Database["public"]["Enums"]["roster_selection_reason_code"] | null
+          p_manager_comment?: string | null
+          p_valid_from?: string | null
+        }
+        Returns: string
+      }
+      prepare_roster_wish_season: {
+        Args: {
+          p_roster_id: string
+          p_name: string
+          p_starts_at?: string | null
+          p_ends_at?: string | null
+          p_source_season_id?: string | null
+          p_activate?: boolean
+        }
+        Returns: Database["public"]["Tables"]["roster_wish_seasons"]["Row"]
+      }
+      archive_roster_wish_season: {
+        Args: { p_season_id: string }
+        Returns: Database["public"]["Tables"]["roster_wish_seasons"]["Row"]
+      }
+      activate_roster_wish_season: {
+        Args: { p_season_id: string }
+        Returns: Database["public"]["Tables"]["roster_wish_seasons"]["Row"]
+      }
       get_roster_member_selection: {
         Args: { p_roster_id: string; p_season_id?: string | null }
         Returns: {
@@ -2641,6 +2952,15 @@ export type Database = {
         Args: { p_guild_id: string; p_member_id: string }
         Returns: undefined
       }
+      remove_roster_wish_row: {
+        Args: {
+          p_guild_id: string
+          p_member_id: string
+          p_roster_id: string
+          p_season_id: string
+        }
+        Returns: undefined
+      }
       record_command_palette_use: {
         Args: {
           p_guild_id?: string | null
@@ -2698,6 +3018,16 @@ export type Database = {
           p_occurred_at?: string
         }
         Returns: undefined
+      }
+      // Trigger function; keeps legal_pages.updated_at aligned with translation changes.
+      sync_legal_page_parent_updated_at: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown
+      }
+      // Trigger function; keeps patch_notes.updated_at aligned with translation changes.
+      sync_patch_note_parent_updated_at: {
+        Args: Record<PropertyKey, never>
+        Returns: unknown
       }
       unlock_roster_wishes: {
         Args: { p_roster_id: string }
@@ -2757,6 +3087,27 @@ export type Database = {
         | "conflict"
         | "other"
       roster_selection_status: "undecided" | "selected" | "bench" | "not_selected"
+      roster_season_member_source:
+        | "target_rule"
+        | "manual_external"
+        | "manual_user"
+        | "sync_auto_add"
+        | "selection"
+        | "wish"
+      roster_season_member_status:
+        | "candidate"
+        | "confirmed"
+        | "selected"
+        | "bench"
+        | "departed"
+        | "removed"
+        | "declined"
+      roster_assignment_source:
+        | "wish"
+        | "manager_decision"
+        | "recruitment"
+        | "change_request"
+        | "raid_need"
     }
     CompositeTypes: {
       [_ in never]: never

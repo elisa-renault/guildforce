@@ -270,34 +270,7 @@ const Wishes = () => {
       });
 
       let initialSeason: GuildSeason | null = null;
-      const { data: seasonsData, error: seasonsError } = await supabase
-        .from('guild_seasons')
-        .select('*')
-        .eq('guild_id', foundGuildId)
-        .order('state', { ascending: true })
-        .order('created_at', { ascending: false });
-      if (seasonsError && isSeasonSchemaUnavailable(seasonsError)) {
-        setSeasonSupportMode('legacy');
-        setSeasons([]);
-        setSelectedSeasonId(null);
-      } else {
-        const nextSeasons = (seasonsData || []) as GuildSeason[];
-        if (nextSeasons.length === 0) {
-          setSeasonSupportMode('legacy');
-          setSeasons([]);
-          setSelectedSeasonId(null);
-        } else {
-          setSeasonSupportMode('enabled');
-          setSeasons(nextSeasons);
-          initialSeason =
-            nextSeasons.find((season) => season.id === requestedSeasonId) ||
-            nextSeasons.find((season) => season.state === 'active') ||
-            nextSeasons[0];
-          if (initialSeason) {
-            setSelectedSeasonId(initialSeason.id);
-          }
-        }
-      }
+      let initialRosterId: string | null = null;
 
       // Check if user is GM
       const { data: gmCheck } = await supabase.rpc('is_guild_gm', {
@@ -350,7 +323,38 @@ const Wishes = () => {
         const defaultRoster = rostersWithAccess.find(r => r.is_default) || rostersWithAccess[0];
         const initialRoster = requested || defaultRoster;
         if (initialRoster) {
+          initialRosterId = initialRoster.id;
           setSelectedRosterId(initialRoster.id);
+
+          const { data: seasonsData, error: seasonsError } = await supabase
+            .from('roster_wish_seasons')
+            .select('*')
+            .eq('guild_id', foundGuildId)
+            .eq('roster_id', initialRoster.id)
+            .order('state', { ascending: true })
+            .order('created_at', { ascending: false });
+          if (seasonsError && isSeasonSchemaUnavailable(seasonsError)) {
+            setSeasonSupportMode('legacy');
+            setSeasons([]);
+            setSelectedSeasonId(null);
+          } else {
+            const nextSeasons = (seasonsData || []) as GuildSeason[];
+            if (nextSeasons.length === 0) {
+              setSeasonSupportMode('legacy');
+              setSeasons([]);
+              setSelectedSeasonId(null);
+            } else {
+              setSeasonSupportMode('enabled');
+              setSeasons(nextSeasons);
+              initialSeason =
+                nextSeasons.find((season) => season.id === requestedSeasonId) ||
+                nextSeasons.find((season) => season.state === 'active') ||
+                nextSeasons[0];
+              if (initialSeason) {
+                setSelectedSeasonId(initialSeason.id);
+              }
+            }
+          }
         }
       }
 
@@ -367,6 +371,7 @@ const Wishes = () => {
               .from('guild_season_member_intents')
               .select('commitment_status')
               .eq('guild_id', foundGuildId)
+              .eq('roster_id', initialRosterId)
               .eq('season_id', initialSeason.id)
               .eq('user_id', user.id)
               .maybeSingle()
@@ -400,6 +405,7 @@ const Wishes = () => {
             .from('guild_season_member_intents')
             .select('commitment_status')
             .eq('guild_id', guildId)
+            .eq('roster_id', selectedRosterId)
             .eq('season_id', selectedSeasonId!)
             .eq('user_id', user.id)
             .maybeSingle()
@@ -444,6 +450,41 @@ const Wishes = () => {
 
     fetchWishes();
   }, [guildId, selectedRosterId, selectedSeasonId, user, seasonSupportMode]);
+
+  useEffect(() => {
+    if (!guildId || !selectedRosterId || seasonSupportMode === 'legacy') return;
+
+    let cancelled = false;
+    const loadRosterSeasons = async () => {
+      const { data, error } = await supabase
+        .from('roster_wish_seasons')
+        .select('*')
+        .eq('guild_id', guildId)
+        .eq('roster_id', selectedRosterId)
+        .order('state', { ascending: true })
+        .order('created_at', { ascending: false });
+
+      if (cancelled) return;
+      if (error && isSeasonSchemaUnavailable(error)) {
+        setSeasonSupportMode('legacy');
+        setSeasons([]);
+        setSelectedSeasonId(null);
+        return;
+      }
+
+      const nextSeasons = (data || []) as GuildSeason[];
+      setSeasons(nextSeasons);
+      setSelectedSeasonId((current) => {
+        if (current && nextSeasons.some((season) => season.id === current)) return current;
+        return nextSeasons.find((season) => season.state === 'active')?.id || nextSeasons[0]?.id || null;
+      });
+    };
+
+    loadRosterSeasons();
+    return () => {
+      cancelled = true;
+    };
+  }, [guildId, selectedRosterId, seasonSupportMode]);
 
   const updateWish = (
     index: number,
@@ -572,6 +613,7 @@ const Wishes = () => {
               .from('guild_season_member_intents')
               .select('commitment_status')
               .eq('guild_id', guildId)
+              .eq('roster_id', selectedRosterId)
               .eq('season_id', selectedSeasonId)
               .eq('user_id', user.id)
               .maybeSingle()

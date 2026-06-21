@@ -28,7 +28,7 @@ import { resolveSpecOrder } from '@/lib/wishOrder';
 import { toneBadgeClass, toneCalloutClass, toneTextClass } from '@/lib/design-tokens';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SeasonSelector, SeasonStateCallout } from '@/components/seasons/SeasonSelector';
-import { isSeasonFilteringEnabled, isSeasonSchemaUnavailable, type SeasonSupportMode } from '@/lib/seasonSupport';
+import { isSeasonSchemaUnavailable, type SeasonSupportMode } from '@/lib/seasonSupport';
 import type { GuildSeason } from '@/types/seasons';
 
 interface WishChoice {
@@ -114,32 +114,36 @@ const MemberWishes = () => {
       
       setGuild({ id: matchedGuild.id, name: matchedGuild.name, server: matchedGuild.server, region: matchedGuild.region || 'eu' });
       const requestedSeasonId = searchParams.get('seasonId');
+      const rosterId = searchParams.get('rosterId');
       let initialSeason: GuildSeason | null = null;
-      const { data: seasonsData, error: seasonsError } = await supabase
-        .from('guild_seasons')
-        .select('*')
-        .eq('guild_id', matchedGuild.id)
-        .order('state', { ascending: true })
-        .order('created_at', { ascending: false });
-      if (seasonsError && isSeasonSchemaUnavailable(seasonsError)) {
-        setSeasonSupportMode('legacy');
-        setSeasons([]);
-        setSelectedSeasonId(null);
-      } else {
-        const nextSeasons = (seasonsData || []) as GuildSeason[];
-        if (nextSeasons.length === 0) {
+      if (rosterId) {
+        const { data: seasonsData, error: seasonsError } = await supabase
+          .from('roster_wish_seasons')
+          .select('*')
+          .eq('guild_id', matchedGuild.id)
+          .eq('roster_id', rosterId)
+          .order('state', { ascending: true })
+          .order('created_at', { ascending: false });
+        if (seasonsError && isSeasonSchemaUnavailable(seasonsError)) {
           setSeasonSupportMode('legacy');
           setSeasons([]);
           setSelectedSeasonId(null);
         } else {
-          setSeasonSupportMode('enabled');
-          setSeasons(nextSeasons);
-          initialSeason =
-            nextSeasons.find((season) => season.id === requestedSeasonId) ||
-            nextSeasons.find((season) => season.state === 'active') ||
-            nextSeasons[0] ||
-            null;
-          setSelectedSeasonId(initialSeason?.id || null);
+          const nextSeasons = (seasonsData || []) as GuildSeason[];
+          if (nextSeasons.length === 0) {
+            setSeasonSupportMode('legacy');
+            setSeasons([]);
+            setSelectedSeasonId(null);
+          } else {
+            setSeasonSupportMode('enabled');
+            setSeasons(nextSeasons);
+            initialSeason =
+              nextSeasons.find((season) => season.id === requestedSeasonId) ||
+              nextSeasons.find((season) => season.state === 'active') ||
+              nextSeasons[0] ||
+              null;
+            setSelectedSeasonId(initialSeason?.id || null);
+          }
         }
       }
 
@@ -182,11 +186,12 @@ const MemberWishes = () => {
         .single();
 
       if (profileData) {
-        const { data: intentData } = initialSeason
+        const { data: intentData } = initialSeason && rosterId
           ? await supabase
               .from('guild_season_member_intents')
               .select('commitment_status')
               .eq('guild_id', matchedGuild.id)
+              .eq('roster_id', rosterId)
               .eq('season_id', initialSeason.id)
               .eq('user_id', memberId)
               .maybeSingle()
@@ -207,6 +212,9 @@ const MemberWishes = () => {
         .select('choice_index, class_id, spec_ids, spec_order, comment, validation_status, validated_by, validated_at')
         .eq('guild_id', matchedGuild.id)
         .eq('user_id', memberId);
+      if (rosterId) {
+        wishesQuery = wishesQuery.eq('roster_id', rosterId);
+      }
       if (initialSeason?.id) {
         wishesQuery = wishesQuery.eq('season_id', initialSeason.id);
       }
@@ -224,7 +232,6 @@ const MemberWishes = () => {
         })));
       }
 
-      const rosterId = searchParams.get('rosterId');
       if (rosterId) {
         const { data: rosterInGuild } = await supabase
           .from('rosters')
@@ -254,6 +261,7 @@ const MemberWishes = () => {
   // Handle validation
   const handleValidation = async (choiceIndex: number, status: ValidationStatus) => {
     if (!guild || !memberId || !user) return;
+    const rosterId = searchParams.get('rosterId');
     if (seasonSupportMode === 'enabled' && (!selectedSeasonId || selectedSeason?.state !== 'active')) return;
     
     setValidatingWish(choiceIndex);
@@ -275,6 +283,9 @@ const MemberWishes = () => {
       .eq('guild_id', guild.id)
       .eq('user_id', memberId)
       .eq('choice_index', choiceIndex);
+    if (rosterId) {
+      updateQuery = updateQuery.eq('roster_id', rosterId);
+    }
     if (seasonSupportMode === 'enabled' && selectedSeasonId) {
       updateQuery = updateQuery.eq('season_id', selectedSeasonId);
     }
@@ -288,6 +299,9 @@ const MemberWishes = () => {
         .select('choice_index, class_id, spec_ids, spec_order, comment, validation_status, validated_by, validated_at')
         .eq('guild_id', guild.id)
         .eq('user_id', memberId);
+      if (rosterId) {
+        reloadQuery = reloadQuery.eq('roster_id', rosterId);
+      }
       if (seasonSupportMode === 'enabled' && selectedSeasonId) {
         reloadQuery = reloadQuery.eq('season_id', selectedSeasonId);
       }

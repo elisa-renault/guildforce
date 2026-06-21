@@ -23,13 +23,41 @@ export interface WishChoice {
   validated_by_username?: string | null;
 }
 
+export interface CurrentRosterAssignment {
+  id: string;
+  class_id: string;
+  spec_id: string | null;
+  role: string | null;
+  source: 'wish' | 'manager_decision' | 'recruitment' | 'change_request' | 'raid_need' | string;
+  choice_index: number | null;
+  reason_code: RosterSelectionReasonCode | null;
+  manager_comment: string | null;
+  valid_from: string;
+  approved_by: string | null;
+}
+
+export interface RosterSeasonOutcome {
+  first_choice_granted?: boolean;
+  granted_choice_index?: number | null;
+  final_class_id?: string | null;
+  final_spec_id?: string | null;
+  changed_class_during_season?: boolean;
+  changed_for_raid_need?: boolean;
+  joined_mid_season?: boolean;
+  left_mid_season?: boolean;
+  final_status?: string | null;
+}
+
 /**
  * Represents a guild member with their wishes
  */
 export interface MemberWish {
   id: string;
+  seasonMemberId?: string | null;
   username: string;
   mainCharacterName?: string | null;
+  realmName?: string | null;
+  rankIndex?: number | null;
   status: 'confirmed' | 'potential' | string;
   wishes: WishChoice[];
   wishes_locked?: boolean;
@@ -42,6 +70,8 @@ export interface MemberWish {
   selectionDecidedBy?: string | null;
   selectionDecidedAt?: string | null;
   selectionUpdatedAt?: string | null;
+  currentAssignment?: CurrentRosterAssignment | null;
+  seasonOutcome?: RosterSeasonOutcome | null;
 }
 
 /**

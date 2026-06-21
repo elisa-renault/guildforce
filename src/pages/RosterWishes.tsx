@@ -90,6 +90,23 @@ interface ExternalWishRow {
   validated_at: string | null;
 }
 
+interface RosterAccessRuleRow {
+  access_type: 'rank' | 'user';
+  user_id: string | null;
+  min_rank_index: number | null;
+  max_rank_index: number | null;
+}
+
+interface RosterSeasonTableRow {
+  season_member_id: string;
+  user_id: string | null;
+  roster_cache_id: string | null;
+  rank_index: number | null;
+  season_status: string;
+  current_assignment: MemberWish['currentAssignment'] | null;
+  outcome: MemberWish['seasonOutcome'] | null;
+}
+
 const FR_REALM_DISPLAY_MAP: Record<string, string> = {
   archimonde: 'Archimonde',
   hyjal: 'Hyjal',
@@ -242,12 +259,13 @@ const RosterWishes = () => {
     );
   };
 
-  const fetchSeasons = async (foundGuildId = guildId) => {
-    if (!foundGuildId) return [];
+  const fetchSeasons = async (foundGuildId = guildId, rosterId = selectedRosterId) => {
+    if (!foundGuildId || !rosterId) return [];
     const { data, error } = await supabase
-      .from('guild_seasons')
+      .from('roster_wish_seasons')
       .select('*')
       .eq('guild_id', foundGuildId)
+      .eq('roster_id', rosterId)
       .order('state', { ascending: true })
       .order('created_at', { ascending: false });
 
@@ -310,7 +328,6 @@ const RosterWishes = () => {
     const foundGuildId = matchedGuild.id;
     setGuildId(foundGuildId);
     setGuild({ name: matchedGuild.name, server: matchedGuild.server, region: matchedGuild.region || 'eu', faction: matchedGuild.faction, avatar_url: matchedGuild.avatar_url });
-    await fetchSeasons(foundGuildId);
 
     // Check if user is a member of this guild
     const { data: membershipData, error: membershipError } = await supabase
@@ -395,6 +412,9 @@ const RosterWishes = () => {
       if (defaultRoster && !selectedRosterId) {
         setSelectedRosterId(defaultRoster.id);
       }
+      if (defaultRoster) {
+        await fetchSeasons(foundGuildId, selectedRosterId || defaultRoster.id);
+      }
       if (!defaultRoster) {
         setWishesLoading(false);
       }
@@ -421,10 +441,19 @@ const RosterWishes = () => {
         setExternalCandidates([]);
         return;
       }
+      if (seasonFilteringEnabled && canManageWishes && !isAdminReadOnly) {
+        const { error: materializeError } = await supabase.rpc('materialize_roster_season_members', {
+          p_roster_id: selectedRosterId,
+          p_season_id: selectedSeasonId!,
+        });
+        if (materializeError && !isSeasonSchemaUnavailable(materializeError)) {
+          console.error('Failed to materialize roster season members:', materializeError);
+        }
+      }
 
       const { data: membersData } = await supabase
         .from('guild_members')
-        .select('user_id, status, wishes_locked')
+        .select('user_id, status, wishes_locked, role')
         .eq('guild_id', guildId);
 
       const safeMembers = membersData || [];
@@ -442,6 +471,7 @@ const RosterWishes = () => {
             .from('guild_season_member_intents')
             .select('user_id, commitment_status')
             .eq('guild_id', guildId)
+            .eq('roster_id', selectedRosterId)
             .eq('season_id', selectedSeasonId!)
             .in('user_id', userIds)
         : { data: [] };
@@ -471,8 +501,35 @@ const RosterWishes = () => {
 
       const { data: rosterCacheData } = await supabase
         .from('guild_roster_cache')
-        .select('id, character_name, character_realm, character_realm_slug, matched_user_id')
+        .select('id, character_name, character_realm, character_realm_slug, matched_user_id, rank_index')
         .eq('guild_id', guildId);
+
+      const { data: rosterAccessRulesData } = await supabase
+        .from('roster_access_rules')
+        .select('access_type, user_id, min_rank_index, max_rank_index')
+        .eq('roster_id', selectedRosterId);
+      const rosterAccessRules = (rosterAccessRulesData || []) as RosterAccessRuleRow[];
+      const explicitUserIds = new Set(
+        rosterAccessRules
+          .filter((rule) => rule.access_type === 'user' && !!rule.user_id)
+          .map((rule) => rule.user_id as string),
+      );
+      const rankRules = rosterAccessRules.filter((rule) => rule.access_type === 'rank');
+      const isRankInRosterScope = (rankIndex: number | null | undefined) =>
+        rankIndex !== null && rankIndex !== undefined && rankRules.some((rule) => {
+          const minRank = rule.min_rank_index ?? 0;
+          const maxRank = rule.max_rank_index ?? minRank;
+          return rankIndex >= minRank && rankIndex <= maxRank;
+        });
+
+      const bestRankByUserId = new Map<string, number>();
+      (rosterCacheData || []).forEach((row) => {
+        if (!row.matched_user_id || row.rank_index === null || row.rank_index === undefined) return;
+        const currentRank = bestRankByUserId.get(row.matched_user_id);
+        if (currentRank === undefined || row.rank_index < currentRank) {
+          bestRankByUserId.set(row.matched_user_id, row.rank_index);
+        }
+      });
 
       const { data: selectionRows } = await supabase.rpc(
         'get_roster_member_selection',
@@ -493,6 +550,23 @@ const RosterWishes = () => {
           .map((row) => [row.roster_cache_id as string, row])
       );
 
+      const { data: seasonTableRows, error: seasonTableError } = seasonFilteringEnabled
+        ? await supabase.rpc('get_roster_season_table', {
+            p_roster_id: selectedRosterId,
+            p_season_id: selectedSeasonId!,
+          })
+        : { data: null, error: null };
+      if (seasonTableError && !isSeasonSchemaUnavailable(seasonTableError)) {
+        console.error('Failed to load roster season table:', seasonTableError);
+      }
+      const seasonTableList = (seasonTableRows || []) as RosterSeasonTableRow[];
+      const seasonTableByUserId = new Map(
+        seasonTableList.filter((row) => !!row.user_id).map((row) => [row.user_id as string, row])
+      );
+      const seasonTableByRosterCacheId = new Map(
+        seasonTableList.filter((row) => !!row.roster_cache_id).map((row) => [row.roster_cache_id as string, row])
+      );
+
       // Fetch validator profiles if there are any
       const validatorIds = [
         ...new Set([
@@ -506,10 +580,23 @@ const RosterWishes = () => {
 
       const profilesById = new Map((profiles || []).map((p) => [p.id, p]));
       const validatorById = new Map((validatorProfiles || []).map((p) => [p.id, p.username]));
+      const wishUserIds = new Set((wishesData || []).map((wish) => wish.user_id));
+      const intentUserIds = new Set((intentData || []).map((intent) => intent.user_id));
+      const selectionUserIds = new Set(selectionsByUserId.keys());
+      const shouldShowLinkedMember = (member: typeof safeMembers[number]) => {
+        const hasRosterSeasonData =
+          wishUserIds.has(member.user_id)
+          || intentUserIds.has(member.user_id)
+          || selectionUserIds.has(member.user_id);
+        if (hasRosterSeasonData) return true;
+        if (member.role === 'gm') return true;
+        if (explicitUserIds.has(member.user_id)) return true;
+        return isRankInRosterScope(bestRankByUserId.get(member.user_id));
+      };
 
       // Keep only members that still have an active profile.
       // This avoids showing stale lines for accounts that were removed.
-      const mergedMembers: MemberWish[] = safeMembers.flatMap(m => {
+      const mergedMembers: MemberWish[] = safeMembers.filter(shouldShowLinkedMember).flatMap(m => {
         const profile = profilesById.get(m.user_id);
         if (!profile) return [];
         const memberWishes = wishesData?.filter(w => w.user_id === m.user_id).map(w => ({
@@ -523,10 +610,13 @@ const RosterWishes = () => {
           validated_by_username: w.validated_by ? validatorById.get(w.validated_by) || null : null,
         })) || [];
         const selection = selectionsByUserId.get(m.user_id);
+        const seasonRow = seasonTableByUserId.get(m.user_id);
         return {
           id: m.user_id,
+          seasonMemberId: seasonRow?.season_member_id || null,
           username: profile?.username || 'Unknown',
           mainCharacterName: getMainCharacterName(profile?.main_character_name),
+          rankIndex: seasonRow?.rank_index ?? null,
           status: intentByUserId.get(m.user_id) || m.status,
           wishes_locked: m.wishes_locked,
           wishes: memberWishes.sort((a, b) => a.choice_index - b.choice_index),
@@ -536,6 +626,8 @@ const RosterWishes = () => {
           selectionDecidedBy: selection?.decided_by || null,
           selectionDecidedAt: selection?.decided_at || null,
           selectionUpdatedAt: selection?.updated_at || null,
+          currentAssignment: seasonRow?.current_assignment || null,
+          seasonOutcome: seasonRow?.outcome || null,
         };
       });
 
@@ -546,10 +638,13 @@ const RosterWishes = () => {
           const ext = externalByCache.get(row.id);
           if (!ext) return [];
           const selection = selectionsByRosterCacheId.get(row.id);
+          const seasonRow = seasonTableByRosterCacheId.get(row.id);
           return [{
             id: `external:${ext.id}`,
+            seasonMemberId: seasonRow?.season_member_id || null,
             username: row.character_name,
             mainCharacterName: formatRealmDisplayName(row.character_realm, row.character_realm_slug),
+            rankIndex: row.rank_index,
             status: ext.commitment_status || 'potential',
             wishes_locked: false,
             isExternal: true,
@@ -571,13 +666,15 @@ const RosterWishes = () => {
             selectionDecidedBy: selection?.decided_by || null,
             selectionDecidedAt: selection?.decided_at || null,
             selectionUpdatedAt: selection?.updated_at || null,
+            currentAssignment: seasonRow?.current_assignment || null,
+            seasonOutcome: seasonRow?.outcome || null,
           }];
         });
 
       setMembers([...mergedMembers, ...externalMembers]);
 
       const candidates: ExternalRosterCandidate[] = (rosterCacheData || [])
-        .filter((row) => !row.matched_user_id)
+        .filter((row) => !row.matched_user_id && isRankInRosterScope(row.rank_index))
         .map((row) => ({
           id: row.id,
           character_name: row.character_name,
@@ -610,6 +707,11 @@ const RosterWishes = () => {
   }, [guildId, selectedRosterId, selectedSeasonId, seasonSupportMode]);
 
   useEffect(() => {
+    if (!guildId || !selectedRosterId || seasonSupportMode === 'legacy') return;
+    fetchSeasons(guildId, selectedRosterId);
+  }, [guildId, selectedRosterId]);
+
+  useEffect(() => {
     if (!lockDialogOpen) return;
     const roster = rosters.find(r => r.id === selectedRosterId);
     setLockAtInput(toLocalInputValue(roster?.wishes_lock_at));
@@ -633,21 +735,19 @@ const RosterWishes = () => {
   const canManageSeasonActions = canManageWishes && !isAdminReadOnly && seasonSupportMode === 'enabled' && seasons.length > 0;
 
   const handlePrepareSeason = async (input: PrepareSeasonInput) => {
-    if (!guildId) return;
+    if (!guildId || !selectedRosterId) return;
     setSeasonBusy(true);
     try {
-      const { data, error } = await supabase.rpc('prepare_guild_wish_season', {
-        p_guild_id: guildId,
+      const { data, error } = await supabase.rpc('prepare_roster_wish_season', {
+        p_roster_id: selectedRosterId,
         p_name: input.name,
         p_starts_at: input.startsAt,
         p_ends_at: input.endsAt,
         p_source_season_id: input.sourceSeasonId,
-        p_prefill_wishes: input.prefillWishes,
-        p_reset_copied_wishes: input.resetCopiedWishes,
         p_activate: input.activateImmediately,
       });
       if (error) throw error;
-      const nextSeasons = await fetchSeasons(guildId);
+      const nextSeasons = await fetchSeasons(guildId, selectedRosterId);
       const nextSeasonId = data?.id || resolveInitialSeason(nextSeasons)?.id;
       if (nextSeasonId) selectSeasonInUrl(nextSeasonId);
       toast({ title: input.activateImmediately ? t.seasons.activated : t.seasons.created });
@@ -662,9 +762,9 @@ const RosterWishes = () => {
   const handleArchiveSeason = async (seasonId: string) => {
     setSeasonBusy(true);
     try {
-      const { error } = await supabase.rpc('archive_guild_wish_season', { p_season_id: seasonId });
+      const { error } = await supabase.rpc('archive_roster_wish_season', { p_season_id: seasonId });
       if (error) throw error;
-      const nextSeasons = await fetchSeasons(guildId);
+      const nextSeasons = await fetchSeasons(guildId, selectedRosterId);
       const nextSeasonId = resolveInitialSeason(nextSeasons)?.id;
       if (nextSeasonId) selectSeasonInUrl(nextSeasonId);
       toast({ title: t.seasons.archivedToast });
@@ -678,9 +778,9 @@ const RosterWishes = () => {
   const handleActivateSeason = async (seasonId: string) => {
     setSeasonBusy(true);
     try {
-      const { data, error } = await supabase.rpc('activate_guild_wish_season', { p_season_id: seasonId });
+      const { data, error } = await supabase.rpc('activate_roster_wish_season', { p_season_id: seasonId });
       if (error) throw error;
-      await fetchSeasons(guildId);
+      await fetchSeasons(guildId, selectedRosterId);
       if (data?.id) selectSeasonInUrl(data.id);
       toast({ title: t.seasons.activated });
     } catch (error: unknown) {
@@ -694,11 +794,11 @@ const RosterWishes = () => {
     setSeasonBusy(true);
     try {
       const { error } = await supabase
-        .from('guild_seasons')
+        .from('roster_wish_seasons')
         .update({ name })
         .eq('id', seasonId);
       if (error) throw error;
-      await fetchSeasons(guildId);
+      await fetchSeasons(guildId, selectedRosterId);
       toast({ title: t.seasons.renamed });
     } catch (error: unknown) {
       toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
@@ -949,7 +1049,7 @@ const RosterWishes = () => {
   };
 
   const handleRemoveMember = async (memberId: string) => {
-    if (!guildId || !canManageWishes || memberId === user?.id) return;
+    if (!guildId || !selectedRosterId || !selectedSeasonId || !canManageWishes || memberId === user?.id) return;
     const member = members.find((m) => m.id === memberId);
     if (!member) return;
 
@@ -964,15 +1064,17 @@ const RosterWishes = () => {
         ? await supabase.rpc('delete_external_member_wish', {
             p_external_wish_id: member.externalWishId,
           })
-        : await supabase.rpc('remove_guild_member_with_wishes', {
+        : await supabase.rpc('remove_roster_wish_row', {
             p_guild_id: guildId,
+            p_roster_id: selectedRosterId,
+            p_season_id: selectedSeasonId,
             p_member_id: memberId,
           });
       if (error) throw error;
+      setMembers((prev) => prev.filter((item) => item.id !== memberId));
       toast({
         title: s('roster_wishes.member_removed'),
       });
-      await fetchWishes();
     } catch (error: unknown) {
       toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
     } finally {
@@ -991,6 +1093,7 @@ const RosterWishes = () => {
     const previousSelectionStatus = currentMember.selectionStatus || 'undecided';
     const previousDecidedBy = currentMember.selectionDecidedBy || null;
     const previousDecidedAt = currentMember.selectionDecidedAt || null;
+    const previousUpdatedAt = currentMember.selectionUpdatedAt || null;
 
     setUpdatingSelectionMemberId(memberId);
 
@@ -1004,6 +1107,7 @@ const RosterWishes = () => {
               selectionStatus: nextStatus,
               selectionDecidedBy: user.id,
               selectionDecidedAt: now,
+              selectionUpdatedAt: now,
             }
           : m
       )
@@ -1024,8 +1128,6 @@ const RosterWishes = () => {
         p_comment: currentMember.selectionComment ?? null,
       });
       if (error) throw error;
-
-      await fetchWishes();
     } catch (error: unknown) {
       setMembers((prev) =>
         prev.map((m) =>
@@ -1035,6 +1137,7 @@ const RosterWishes = () => {
                 selectionStatus: previousSelectionStatus,
                 selectionDecidedBy: previousDecidedBy,
                 selectionDecidedAt: previousDecidedAt,
+                selectionUpdatedAt: previousUpdatedAt,
               }
             : m
         )
