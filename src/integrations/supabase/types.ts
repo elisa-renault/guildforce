@@ -2693,6 +2693,10 @@ export type Database = {
         Args: { p_roster_id: string; p_season_id: string }
         Returns: number
       }
+      seed_roster_assignments_from_first_approved_wish: {
+        Args: { p_roster_id: string; p_season_id: string }
+        Returns: number
+      }
       get_roster_season_table: {
         Args: { p_roster_id: string; p_season_id: string }
         Returns: {
