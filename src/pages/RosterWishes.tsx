@@ -25,7 +25,7 @@ import { RosterSelector, RosterEditDialog } from '@/components/roster';
 import { SeasonSelector, SeasonStateCallout, type PrepareSeasonInput } from '@/components/seasons/SeasonSelector';
 import { MemberWish, WishData, RosterFilters as RosterFiltersType, ValidationStatus } from '@/types/guild';
 import type { GuildSeason } from '@/types/seasons';
-import { Archive, Loader2, Pencil, Play, Plus, Sparkles, Settings, TableIcon, BarChart3, Download, Eye, Lock, Unlock, Clock, UserPlus, MoreVertical, RefreshCw } from 'lucide-react';
+import { Archive, Loader2, Pencil, Play, Plus, Sparkles, Settings, TableIcon, BarChart3, Download, Eye, Lock, Unlock, Clock, UserPlus, MoreVertical, RefreshCw, Check, ChevronDown, Shield, Heart, Swords, Crosshair } from 'lucide-react';
 import { exportWishesToCSV } from '@/lib/exportWishes';
 import { getGuildWishesPath } from '@/lib/guildSlug';
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
@@ -41,6 +41,7 @@ import { getRosterSelectionErrorMessage } from '@/lib/rosterSelectionErrors';
 import { toneCalloutClass, toneTextClass } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -49,9 +50,22 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 // Max wishes = number of WoW classes
 const MAX_WISHES = wowClasses.length;
+
+const specRoleStyles: Record<Role, string> = {
+  tank: 'text-tank',
+  healer: 'text-healer',
+  dps: 'text-dps',
+};
+
+const getSpecRoleIcon = (spec: NonNullable<ReturnType<typeof getSpecById>>) => {
+  if (spec.role === 'tank') return Shield;
+  if (spec.role === 'healer') return Heart;
+  return spec.range === 'ranged' ? Crosshair : Swords;
+};
 
 interface RosterData {
   id: string;
@@ -236,6 +250,8 @@ const RosterWishes = () => {
   const [assignmentSpecId, setAssignmentSpecId] = useState('');
   const [assignmentDate, setAssignmentDate] = useState('');
   const [assignmentComment, setAssignmentComment] = useState('');
+  const [assignmentClassOpen, setAssignmentClassOpen] = useState(false);
+  const [assignmentSpecOpen, setAssignmentSpecOpen] = useState(false);
   const [savingAssignment, setSavingAssignment] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyMember, setHistoryMember] = useState<MemberWish | null>(null);
@@ -928,6 +944,8 @@ const RosterWishes = () => {
     setAssignmentSpecId(currentSpecId);
     setAssignmentDate(toLocalDateInputValue(member.currentAssignment?.valid_from));
     setAssignmentComment(member.currentAssignment?.manager_comment || '');
+    setAssignmentClassOpen(false);
+    setAssignmentSpecOpen(false);
     setAssignmentDialogOpen(true);
   };
 
@@ -1755,6 +1773,7 @@ const RosterWishes = () => {
   const hasToolbarActions = canManageSeasonActions || rosterToolbarActions.length > 0;
   const assignmentClass = assignmentClassId ? getClassById(assignmentClassId) : null;
   const assignmentSpecs = assignmentClass?.specs || [];
+  const assignmentSpec = assignmentSpecId ? getSpecById(assignmentSpecId) : null;
   const renderToolbarActionsMenu = () => {
     if (!hasToolbarActions) return null;
 
@@ -2347,41 +2366,118 @@ const RosterWishes = () => {
 
             <div className="space-y-2">
               <Label>{language === 'fr' ? 'Classe' : 'Class'}</Label>
-              <Select
-                value={assignmentClassId}
-                onValueChange={(value) => {
-                  const nextClass = getClassById(value);
-                  setAssignmentClassId(value);
-                  setAssignmentSpecId(nextClass?.specs[0]?.id || '');
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={language === 'fr' ? 'Choisir une classe' : 'Select class'} />
-                </SelectTrigger>
-                <SelectContent>
-                  {wowClasses.map((wowClass) => (
-                    <SelectItem key={wowClass.id} value={wowClass.id}>
-                      {getLocalizedClassName(wowClass.id, language)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={assignmentClassOpen} onOpenChange={setAssignmentClassOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className={cn(
+                      'h-11 w-full justify-between gap-2 text-sm font-medium',
+                      assignmentClass
+                        ? 'border-transparent'
+                        : 'border-dashed border-muted-foreground/40 bg-transparent text-muted-foreground hover:bg-muted/20'
+                    )}
+                    style={assignmentClass ? {
+                      backgroundColor: `hsl(var(--class-${assignmentClass.id}) / 0.2)`,
+                      color: `hsl(var(--class-${assignmentClass.id}))`,
+                    } : undefined}
+                  >
+                    <span className="truncate">
+                      {assignmentClass ? getLocalizedClassName(assignmentClass.id, language) : (language === 'fr' ? 'Choisir une classe' : 'Select class')}
+                    </span>
+                    <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-56 border-border bg-card p-1.5" align="start">
+                  <div className="flex max-h-[280px] flex-col gap-0.5 overflow-y-auto">
+                    {wowClasses.map((wowClass) => {
+                      const isSelected = assignmentClassId === wowClass.id;
+                      return (
+                        <button
+                          key={wowClass.id}
+                          type="button"
+                          onClick={() => {
+                            setAssignmentClassId(wowClass.id);
+                            setAssignmentSpecId(wowClass.specs[0]?.id || '');
+                            setAssignmentClassOpen(false);
+                          }}
+                          className={cn(
+                            'flex items-center gap-2 rounded px-2 py-1.5 text-left text-xs transition-colors',
+                            isSelected ? 'bg-primary/20' : 'hover:bg-primary/10'
+                          )}
+                          style={{ color: `hsl(var(--class-${wowClass.id}))` }}
+                        >
+                          {isSelected && <Check className="h-3 w-3 shrink-0" />}
+                          <span className="truncate">{getLocalizedClassName(wowClass.id, language)}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="space-y-2">
               <Label>{language === 'fr' ? 'Spé principale' : 'Main spec'}</Label>
-              <Select value={assignmentSpecId} onValueChange={setAssignmentSpecId} disabled={!assignmentClassId}>
-                <SelectTrigger>
-                  <SelectValue placeholder={language === 'fr' ? 'Choisir une spé' : 'Select spec'} />
-                </SelectTrigger>
-                <SelectContent>
-                  {assignmentSpecs.map((spec) => (
-                    <SelectItem key={spec.id} value={spec.id}>
-                      {getLocalizedSpecName(spec.id, language)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {assignmentClass ? (
+                <Popover open={assignmentSpecOpen} onOpenChange={setAssignmentSpecOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className={cn(
+                        'h-10 w-full justify-between gap-2 bg-background/50 text-sm hover:bg-muted/50',
+                        assignmentSpec ? 'border-border/60' : 'border-dashed border-muted-foreground/30 text-muted-foreground'
+                      )}
+                    >
+                      {assignmentSpec ? (
+                        <span className="flex min-w-0 items-center gap-2">
+                          {(() => {
+                            const Icon = getSpecRoleIcon(assignmentSpec);
+                            return <Icon className={cn('h-4 w-4 shrink-0', specRoleStyles[assignmentSpec.role])} />;
+                          })()}
+                          <span className="truncate">{getLocalizedSpecName(assignmentSpec.id, language)}</span>
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">{language === 'fr' ? 'Choisir une spé' : 'Select spec'}</span>
+                      )}
+                      <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-60 border-border bg-card p-1.5" align="start">
+                    <div className="space-y-0.5">
+                      {assignmentSpecs.map((spec) => {
+                        const isSelected = assignmentSpecId === spec.id;
+                        const Icon = getSpecRoleIcon(spec);
+                        return (
+                          <button
+                            key={spec.id}
+                            type="button"
+                            onClick={() => {
+                              setAssignmentSpecId(spec.id);
+                              setAssignmentSpecOpen(false);
+                            }}
+                            className={cn(
+                              'flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs transition-colors',
+                              isSelected ? 'bg-primary/20' : 'hover:bg-primary/10'
+                            )}
+                          >
+                            <Icon className={cn('h-3.5 w-3.5 shrink-0', specRoleStyles[spec.role])} />
+                            <span className="flex-1 truncate">{getLocalizedSpecName(spec.id, language)}</span>
+                            {isSelected && <Check className="h-3 w-3 shrink-0 text-primary" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              ) : (
+                <div className="flex h-10 items-center justify-center gap-2 rounded-md border border-dashed border-muted-foreground/20 bg-transparent">
+                  <Shield className="h-4 w-4 text-muted-foreground/20" />
+                  <Heart className="h-4 w-4 text-muted-foreground/20" />
+                  <Swords className="h-4 w-4 text-muted-foreground/20" />
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
