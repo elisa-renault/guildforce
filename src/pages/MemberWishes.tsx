@@ -745,6 +745,28 @@ const MemberWishes = () => {
     }
   };
 
+  const getCommitmentBadge = (status: string | null | undefined) => {
+    if (status === 'confirmed') {
+      return {
+        label: t.wishes.commitment.confirmed,
+        icon: CheckCircle,
+        className: 'bg-healer/20 text-healer border-healer/30',
+      };
+    }
+    if (status === 'withdrawn') {
+      return {
+        label: t.wishes.commitment.withdrawn,
+        icon: XCircle,
+        className: 'bg-destructive/20 text-destructive border-destructive/30',
+      };
+    }
+    return {
+      label: t.wishes.commitment.undecided,
+      icon: HelpCircle,
+      className: toneBadgeClass('warning'),
+    };
+  };
+
   const selectedSeason = seasons.find((season) => season.id === selectedSeasonId) || null;
   const isSelectedSeasonActive = seasonSupportMode === 'legacy' || selectedSeason?.state === 'active';
   const isSelfPage = user?.id === memberId;
@@ -847,28 +869,6 @@ const MemberWishes = () => {
               onSelect={selectSeason}
               emptyLabel={seasonSupportMode === 'legacy' ? t.seasons.legacyMode : undefined}
             />
-            {/* Status badge */}
-            {member && (
-              <Badge 
-                variant={member.status === 'confirmed' ? 'default' : 'outline'}
-                className={cn(
-                  "text-xs px-2 py-1",
-                  member.status === 'confirmed' 
-                    ? 'bg-healer/20 text-healer border-healer/30' 
-                    : member.status === 'withdrawn'
-                    ? 'bg-destructive/20 text-destructive border-destructive/30'
-                    : toneBadgeClass('warning')
-                )}
-              >
-                {member.status === 'confirmed' ? (
-                  <><CheckCircle className="h-3.5 w-3.5 mr-1" strokeWidth={1.5} />{t.wishes.commitment.confirmed}</>
-                ) : member.status === 'withdrawn' ? (
-                  <><XCircle className="h-3.5 w-3.5 mr-1" strokeWidth={1.5} />{t.wishes.commitment.withdrawn}</>
-                ) : (
-                  <><HelpCircle className="h-3.5 w-3.5 mr-1" strokeWidth={1.5} />{t.wishes.commitment.undecided}</>
-                )}
-              </Badge>
-            )}
 
             {memberWishesLocked && (
               <Badge
@@ -976,6 +976,24 @@ const MemberWishes = () => {
               )}
               {seasonMember?.selectionComment && canManageWishes && (
                 <p className="text-xs text-muted-foreground">{seasonMember.selectionComment}</p>
+              )}
+              {member && (
+                <div className="pt-3">
+                  <div className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">{t.dashboard.commitment}</div>
+                  {(() => {
+                    const commitmentBadge = getCommitmentBadge(member.status);
+                    const Icon = commitmentBadge.icon;
+                    return (
+                      <Badge
+                        variant="outline"
+                        className={cn('text-xs px-2 py-1', commitmentBadge.className)}
+                      >
+                        <Icon className="h-3.5 w-3.5 mr-1" strokeWidth={1.5} />
+                        {commitmentBadge.label}
+                      </Badge>
+                    );
+                  })()}
+                </div>
               )}
             </div>
 
