@@ -34,6 +34,7 @@
     "task:close": "node scripts/tasks/close.mjs",
     "task:archive": "node scripts/tasks/archive.mjs",
     "task:guard": "node scripts/tasks/check-index-size.mjs",
+    "changelog:publish": "node scripts/changelog/publish-from-tasks.mjs",
     "i18n:auto-audit": "node scripts/i18n/audit-auto-keys.mjs",
     "i18n:check:encoding": "node scripts/i18n/check-mojibake.mjs",
     "i18n:check:diacritics": "node scripts/i18n/check-i18n-diacritics.mjs",

@@ -14,8 +14,8 @@ import { useCallback, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { toast } from 'sonner';
 
-import { MarkdownEditor } from '@/components/markdown/MarkdownEditor';
 import { GlowCard } from '@/components/GlowCard';
+import { MarkdownEditor } from '@/components/markdown/MarkdownEditor';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,22 +31,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { isSupportedLanguage, LANGUAGE_OPTIONS, type Language } from '@/i18n/config';
 import { formatDateLocalized } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { supabase } from '@/integrations/supabase/client';
-import {
-  collectPersistedTranslations,
-  isTranslationMissingOrUntranslated,
-  selectContentTranslation,
-  toEditableTranslationMap,
-  type EditableContentTranslationMap,
-} from '@/lib/contentTranslations';
-
 
 interface PatchNoteTranslation {
   id?: string;
@@ -74,14 +64,16 @@ interface EditablePatchNote {
   created_at: string;
   updated_at: string;
   created_by: string | null;
-  translations: EditableContentTranslationMap;
+  title: string;
+  content: string;
 }
 
-const getLanguageLabel = (language: Language): string =>
-  LANGUAGE_OPTIONS.find((option) => option.code === language)?.label || language;
-
-const hasGermanTranslation = (translations: PatchNoteTranslation[]): boolean =>
-  !isTranslationMissingOrUntranslated(translations, 'de');
+const getEnglishTranslation = (translations: PatchNoteTranslation[]) =>
+  translations.find((translation) => translation.language === 'en') || {
+    language: 'en',
+    title: '',
+    content: '',
+  };
 
 export const PatchNotesEditor = () => {
   const { language, t } = useLanguage();
@@ -91,7 +83,6 @@ export const PatchNotesEditor = () => {
   const [saving, setSaving] = useState(false);
   const [editingNote, setEditingNote] = useState<EditablePatchNote | null>(null);
   const [previewMode, setPreviewMode] = useState(false);
-  const [editLang, setEditLang] = useState<Language>('en');
   const [isNew, setIsNew] = useState(false);
   const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
     resolveSemanticMessage({ key, language, translations: t });
@@ -145,14 +136,15 @@ export const PatchNotesEditor = () => {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       created_by: user?.id || null,
-      translations: toEditableTranslationMap([]),
+      title: '',
+      content: '',
     });
     setIsNew(true);
     setPreviewMode(false);
-    setEditLang(language);
   };
 
   const handleEdit = (note: PatchNote) => {
+    const english = getEnglishTranslation(note.patch_note_translations || []);
     setEditingNote({
       id: note.id,
       version: note.version,
@@ -161,11 +153,11 @@ export const PatchNotesEditor = () => {
       created_at: note.created_at,
       updated_at: note.updated_at,
       created_by: note.created_by,
-      translations: toEditableTranslationMap(note.patch_note_translations || []),
+      title: english.title,
+      content: english.content,
     });
     setIsNew(false);
     setPreviewMode(false);
-    setEditLang(language);
   };
 
   const handleSave = async () => {
@@ -178,10 +170,7 @@ export const PatchNotesEditor = () => {
       return;
     }
 
-    const translationRows = collectPersistedTranslations(editingNote.translations, ['en']);
-    const hasEnglishTitle = translationRows.some((row) => row.language === 'en' && row.title.length > 0);
-
-    if (!hasEnglishTitle) {
+    if (!editingNote.title.trim()) {
       toast.error(t.errors.generic, {
         description: sm('admin.patch.required_en_title'),
         style: { background: 'hsl(var(--card))', borderColor: 'hsl(var(--destructive) / 0.3)' },
@@ -248,12 +237,12 @@ export const PatchNotesEditor = () => {
     const { error: translationError } = await supabase
       .from('patch_note_translations')
       .upsert(
-        translationRows.map((row) => ({
+        [{
           patch_note_id: targetNoteId,
-          language: row.language,
-          title: row.title,
-          content: row.content,
-        })),
+          language: 'en',
+          title: editingNote.title.trim(),
+          content: editingNote.content,
+        }],
         { onConflict: 'patch_note_id,language' },
       );
 
@@ -326,7 +315,6 @@ export const PatchNotesEditor = () => {
   }
 
   if (editingNote) {
-    const currentTranslation = editingNote.translations[editLang];
     const titlePlaceholder = getPatchPlaceholder('title');
     const contentPlaceholder = getPatchPlaceholder('content');
     const emptyPreview = '*No content*';
@@ -397,50 +385,18 @@ export const PatchNotesEditor = () => {
             </div>
           </div>
 
-          <div className="space-y-2 max-w-xs">
-            <Label>{t.auth.language}</Label>
-            <Select
-              value={editLang}
-              onValueChange={(value) => {
-                if (isSupportedLanguage(value)) {
-                  setEditLang(value);
-                }
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {LANGUAGE_OPTIONS.map((option) => (
-                  <SelectItem key={option.code} value={option.code}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
           <div className="space-y-2">
-            <Label htmlFor={`title-${editLang}`}>
-              {t.patchnotes.title} ({getLanguageLabel(editLang)})
-            </Label>
+            <Label htmlFor="title-en">{t.patchnotes.title} (English)</Label>
             <Input
-              id={`title-${editLang}`}
-              value={currentTranslation.title}
+              id="title-en"
+              value={editingNote.title}
               onChange={(event) => {
                 const title = event.target.value;
                 setEditingNote((prev) => {
                   if (!prev) return prev;
                   return {
                     ...prev,
-                    translations: {
-                      ...prev.translations,
-                      [editLang]: {
-                        ...prev.translations[editLang],
-                        title,
-                        exists: true,
-                      },
-                    },
+                    title,
                   };
                 });
               }}
@@ -450,28 +406,19 @@ export const PatchNotesEditor = () => {
 
           {previewMode ? (
             <div className="prose prose-invert max-w-none p-4 bg-background/50 rounded-lg border border-border/50">
-              <ReactMarkdown>{currentTranslation.content || emptyPreview}</ReactMarkdown>
+              <ReactMarkdown>{editingNote.content || emptyPreview}</ReactMarkdown>
             </div>
           ) : (
             <div className="space-y-2">
-              <Label>
-                {t.patchnotes.content} ({getLanguageLabel(editLang)})
-              </Label>
+              <Label>{t.patchnotes.content} (English)</Label>
               <MarkdownEditor
-                value={currentTranslation.content}
+                value={editingNote.content}
                 onChange={(content) => {
                   setEditingNote((prev) => {
                     if (!prev) return prev;
                     return {
                       ...prev,
-                      translations: {
-                        ...prev.translations,
-                        [editLang]: {
-                          ...prev.translations[editLang],
-                          content,
-                          exists: true,
-                        },
-                      },
+                      content,
                     };
                   });
                 }}
@@ -486,7 +433,6 @@ export const PatchNotesEditor = () => {
 
   const publishedCount = notes.filter((note) => note.status === 'published').length;
   const draftCount = notes.filter((note) => note.status === 'draft').length;
-  const missingDeCount = notes.filter((note) => !hasGermanTranslation(note.patch_note_translations || [])).length;
 
   return (
     <div className="space-y-4">
@@ -499,10 +445,6 @@ export const PatchNotesEditor = () => {
           <span className="flex items-center gap-1.5">
             <FileEdit className="h-4 w-4 text-status-warning" />
             {draftCount} {t.patchnotes.draft.toLowerCase()}
-          </span>
-          <span className="flex items-center gap-1.5">
-            <ScrollText className="h-4 w-4 text-status-warning" />
-            DE missing: {missingDeCount}
           </span>
         </div>
         <Button size="sm" onClick={handleNew} className="gap-1.5">
@@ -523,8 +465,7 @@ export const PatchNotesEditor = () => {
       ) : (
         <div className="space-y-3">
           {notes.map((note) => {
-            const localized = selectContentTranslation(note.patch_note_translations ?? [], language);
-            const missingDe = !hasGermanTranslation(note.patch_note_translations || []);
+            const english = getEnglishTranslation(note.patch_note_translations ?? []);
             return (
               <GlowCard
                 surface="section"
@@ -542,16 +483,14 @@ export const PatchNotesEditor = () => {
                       >
                         {note.status === 'published' ? t.patchnotes.published : t.patchnotes.draft}
                       </Badge>
-                      {missingDe ? (
-                        <Badge variant="secondary" className="text-[10px] uppercase tracking-wide">
-                          DE missing
-                        </Badge>
-                      ) : null}
+                      <Badge variant="secondary" className="text-[10px] uppercase tracking-wide">
+                        EN only
+                      </Badge>
                       {note.status === 'published' && isRecent(note.published_at) && (
                         <Badge className="bg-primary/20 text-primary border-primary/30">{t.common.new}</Badge>
                       )}
                     </div>
-                    <p className="text-sm text-foreground truncate">{localized.title}</p>
+                    <p className="text-sm text-foreground truncate">{english.title}</p>
                     <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
                       {note.published_at

@@ -43,6 +43,7 @@ import { toast } from 'sonner';
 import { formatDateTimeLocalized, formatPluralMessage, interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import { canImpersonateUser, type ImpersonationTargetSummary } from '@/lib/adminImpersonation';
+import { getPostHogPersonLabel } from '@/lib/posthogPersonLabel';
 import { useIsAdmin } from '@/hooks/useAdmin';
 
 type AppRole = 'admin' | 'moderator' | 'user';
@@ -518,13 +519,18 @@ export function UserManager() {
                     </Avatar>
                   </TableCell>
                   <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      {user.username}
-                      {user.id === currentUser?.id && (
-                        <Badge variant="outline" className="text-xs">
-                          {s('admin.user_manager.me_badge')}
-                        </Badge>
-                      )}
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        {user.username}
+                        {user.id === currentUser?.id && (
+                          <Badge variant="outline" className="text-xs">
+                            {s('admin.user_manager.me_badge')}
+                          </Badge>
+                        )}
+                      </div>
+                      <span className="text-xs font-normal text-muted-foreground">
+                        PH: {getPostHogPersonLabel(user.id)}
+                      </span>
                     </div>
                   </TableCell>
                   <TableCell className="hidden sm:table-cell text-muted-foreground">

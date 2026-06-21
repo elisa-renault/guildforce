@@ -435,7 +435,7 @@ export const translationsIt: Translations = createLocaleTranslations(translation
       history: 'Cronologia',
       historyEmpty: 'Nessuna cronologia di stagione per ora.',
       historyEvent: {
-        snapshot: 'Snapshot di stagione creato',
+        snapshot: 'Membro aggiunto al roster per la stagione',
         assignmentChanged: 'Assegnazione modificata',
         assignmentsSeeded: 'Assegnazione inizializzata dai desideri',
         materialized: 'Scheda stagione materializzata',
@@ -558,6 +558,7 @@ export const translationsIt: Translations = createLocaleTranslations(translation
       choice1: 'Scelta 1',
       choice2: 'Scelta 2',
       choice3: 'Scelta 3',
+      columnSelector: 'Colonne',
       sortLabel: 'Ordine',
       sortAscending: '{{column}} crescente',
       sortDescending: '{{column}} decrescente',

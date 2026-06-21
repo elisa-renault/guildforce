@@ -1,8 +1,8 @@
-import { lazy } from "react";
-import type { ReactNode } from "react";
+import { lazy, type ReactNode } from "react";
 import { matchPath } from "react-router-dom";
-import type { Translations } from "@/i18n/translations";
+
 import Index from "./pages/Index";
+import type { Translations } from "@/i18n/translations";
 
 export type RouteLabelKey = keyof Translations["routeMeta"];
 
@@ -22,6 +22,7 @@ type AppRoute = {
   navLabel?: RouteLabelKey;
   showInNav?: boolean;
   hideGlobalNav?: boolean;
+  showFooter?: boolean;
 };
 
 const Auth = lazy(() => import("./pages/Auth"));
@@ -70,6 +71,7 @@ export const appRoutes: AppRoute[] = [
     requiresAuth: true,
     navLabel: "guilds",
     showInNav: true,
+    showFooter: true,
     breadcrumb: [{ labelKey: "guilds", href: "/guilds" }],
   },
   {
@@ -80,6 +82,7 @@ export const appRoutes: AppRoute[] = [
     requiresAuth: true,
     navLabel: "profile",
     showInNav: true,
+    showFooter: true,
     breadcrumb: [{ labelKey: "profile", href: "/profile" }],
   },
   {
@@ -124,6 +127,12 @@ export const appRoutes: AppRoute[] = [
   },
   {
     path: "/changelog",
+    element: <Changelog />,
+    title: "changelog",
+    layout: "public",
+  },
+  {
+    path: "/changelog/:version",
     element: <Changelog />,
     title: "changelog",
     layout: "public",

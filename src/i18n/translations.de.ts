@@ -435,7 +435,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
       "history": "Verlauf",
       "historyEmpty": "Noch kein Saisonverlauf vorhanden.",
       "historyEvent": {
-        "snapshot": "Saison-Snapshot erstellt",
+        "snapshot": "Mitglied für die Saison zum Roster hinzugefügt",
         "assignmentChanged": "Zuweisung geändert",
         "assignmentsSeeded": "Zuweisung aus Wünschen initialisiert",
         "materialized": "Saisonblatt materialisiert",
@@ -516,6 +516,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
       "choice1": "Wahl 1",
       "choice2": "Wahl 2",
       "choice3": "Wahl 3",
+      "columnSelector": "Spalten",
       "sortLabel": "Sortierung",
       "sortAscending": "{{column}} aufsteigend",
       "sortDescending": "{{column}} absteigend",

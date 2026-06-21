@@ -418,7 +418,7 @@ export const translationsRu: Translations = createLocaleTranslations(translation
       history: 'История',
       historyEmpty: 'Истории сезона пока нет.',
       historyEvent: {
-        snapshot: 'Снимок сезона создан',
+        snapshot: 'Участник добавлен в состав на сезон',
         assignmentChanged: 'Назначение изменено',
         assignmentsSeeded: 'Назначение создано из пожеланий',
         materialized: 'Лист сезона создан',
@@ -510,6 +510,7 @@ export const translationsRu: Translations = createLocaleTranslations(translation
       choice1: 'Выбор 1',
       choice2: 'Выбор 2',
       choice3: 'Выбор 3',
+      columnSelector: 'Столбцы',
       sortLabel: 'Сортировка',
       sortAscending: '{{column}} по возрастанию',
       sortDescending: '{{column}} по убыванию',

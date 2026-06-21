@@ -7,6 +7,7 @@ import {
   hasAnalyticsConsent,
 } from '@/lib/analyticsConsent';
 import { getPostHogClient } from '@/lib/posthogClient';
+import { getPostHogPersonLabel } from '@/lib/posthogPersonLabel';
 import { capturePostHogProductEvent } from '@/lib/productEvents';
 
 export const PostHogAuthSync = () => {
@@ -39,7 +40,11 @@ export const PostHogAuthSync = () => {
     }
 
     if (identifiedUserIdRef.current !== user.id) {
+      const personLabel = getPostHogPersonLabel(user.id);
+
       posthog.identify(user.id, {
+        name: personLabel,
+        guildforce_user_label: personLabel,
         preferred_language: profile?.preferred_language ?? null,
         has_battlenet: Boolean(profile?.battlenet_id),
         is_impersonating: false,

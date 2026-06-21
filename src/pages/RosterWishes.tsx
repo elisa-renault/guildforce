@@ -40,6 +40,8 @@ import { getSelectedValidatedMembers } from '@/lib/selectedValidatedMembers';
 import { getRosterSelectionErrorMessage } from '@/lib/rosterSelectionErrors';
 import { toneCalloutClass, toneTextClass } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
+import { WOW_CLASS_TO_BATTLENET_ID } from '@/data/battlenetClasses';
+import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -140,6 +142,22 @@ interface RosterSeasonHistoryRow {
   payload: Record<string, unknown> | null;
 }
 
+interface AssignmentCharacterOption {
+  id: string;
+  name: string;
+  realm: string;
+  realm_slug: string;
+  level: number;
+  is_main: boolean;
+}
+
+interface ActiveAssignmentCharacterRow {
+  roster_season_member_id: string;
+  character_id: string | null;
+  character_name_snapshot: string | null;
+  character_realm_snapshot: string | null;
+}
+
 const FR_REALM_DISPLAY_MAP: Record<string, string> = {
   archimonde: 'Archimonde',
   hyjal: 'Hyjal',
@@ -236,8 +254,14 @@ const RosterWishes = () => {
   const [activeTab, setActiveTab] = useState<'table' | 'selected' | 'analytics'>('table');
   const [rosterSortSummary, setRosterSortSummary] = useState('');
   const [visibleRosterColumns, setVisibleRosterColumns] = useState<RosterTableColumnId[]>(DEFAULT_ROSTER_TABLE_COLUMNS);
-  const getErrorMessage = (error: unknown) =>
-    error instanceof Error ? error.message : t.errors.generic;
+  const getErrorMessage = (error: unknown) => {
+    if (error instanceof Error) return error.message;
+    if (typeof error === 'object' && error) {
+      const candidate = error as { message?: unknown; details?: unknown; hint?: unknown };
+      return [candidate.message, candidate.details, candidate.hint].filter(Boolean).map(String).join(' ') || t.errors.generic;
+    }
+    return t.errors.generic;
+  };
 
   // Roster state
   const [rosters, setRosters] = useState<RosterData[]>([]);
@@ -263,6 +287,10 @@ const RosterWishes = () => {
   const [assignmentComment, setAssignmentComment] = useState('');
   const [assignmentClassOpen, setAssignmentClassOpen] = useState(false);
   const [assignmentSpecOpen, setAssignmentSpecOpen] = useState(false);
+  const [assignmentCharacterOpen, setAssignmentCharacterOpen] = useState(false);
+  const [assignmentCharacterId, setAssignmentCharacterId] = useState<string | null>(null);
+  const [assignmentCharacters, setAssignmentCharacters] = useState<AssignmentCharacterOption[]>([]);
+  const [assignmentCharactersLoading, setAssignmentCharactersLoading] = useState(false);
   const [savingAssignment, setSavingAssignment] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyMember, setHistoryMember] = useState<MemberWish | null>(null);
@@ -271,6 +299,53 @@ const RosterWishes = () => {
   const [syncingSeason, setSyncingSeason] = useState(false);
 
   const isMobile = useIsMobile();
+
+  useEffect(() => {
+    if (!assignmentDialogOpen || !assignmentMember || assignmentMember.isExternal || !assignmentClassId) {
+      setAssignmentCharacters([]);
+      setAssignmentCharactersLoading(false);
+      return;
+    }
+
+    const classId = WOW_CLASS_TO_BATTLENET_ID[assignmentClassId];
+    if (!classId) {
+      setAssignmentCharacters([]);
+      setAssignmentCharacterId(null);
+      return;
+    }
+
+    let cancelled = false;
+    setAssignmentCharactersLoading(true);
+
+    supabase
+      .from('wow_characters')
+      .select('id, name, realm, realm_slug, level, is_main')
+      .eq('user_id', assignmentMember.id)
+      .eq('class_id', classId)
+      .order('is_main', { ascending: false })
+      .order('level', { ascending: false })
+      .order('name', { ascending: true })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) {
+          setAssignmentCharacters([]);
+          setAssignmentCharacterId(null);
+          return;
+        }
+        const nextCharacters = (data || []) as AssignmentCharacterOption[];
+        setAssignmentCharacters(nextCharacters);
+        setAssignmentCharacterId((current) => (
+          current && nextCharacters.some((character) => character.id === current) ? current : null
+        ));
+      })
+      .finally(() => {
+        if (!cancelled) setAssignmentCharactersLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [assignmentClassId, assignmentDialogOpen, assignmentMember]);
 
   const toLocalInputValue = (value?: string | null) => {
     if (!value) return '';
@@ -615,6 +690,29 @@ const RosterWishes = () => {
       const seasonTableByRosterCacheId = new Map(
         seasonTableList.filter((row) => !!row.roster_cache_id).map((row) => [row.roster_cache_id as string, row])
       );
+      const seasonMemberIds = seasonTableList.map((row) => row.season_member_id).filter(Boolean);
+      const { data: activeAssignmentCharacters } = seasonMemberIds.length > 0
+        ? await supabase
+          .from('roster_member_assignments')
+          .select('roster_season_member_id, character_id, character_name_snapshot, character_realm_snapshot')
+          .in('roster_season_member_id', seasonMemberIds)
+          .is('valid_to', null)
+        : { data: [] };
+      const assignmentCharacterBySeasonMemberId = new Map(
+        ((activeAssignmentCharacters || []) as ActiveAssignmentCharacterRow[])
+          .map((row) => [row.roster_season_member_id, row])
+      );
+      const getCurrentAssignment = (seasonRow?: RosterSeasonTableRow | null) => {
+        if (!seasonRow?.current_assignment) return null;
+        const assignmentCharacter = assignmentCharacterBySeasonMemberId.get(seasonRow.season_member_id);
+        if (!assignmentCharacter) return seasonRow.current_assignment;
+        return {
+          ...seasonRow.current_assignment,
+          character_id: assignmentCharacter.character_id,
+          character_name_snapshot: assignmentCharacter.character_name_snapshot,
+          character_realm_snapshot: assignmentCharacter.character_realm_snapshot,
+        };
+      };
 
       // Fetch validator profiles if there are any
       const validatorIds = [
@@ -675,7 +773,7 @@ const RosterWishes = () => {
           selectionDecidedBy: selection?.decided_by || null,
           selectionDecidedAt: selection?.decided_at || null,
           selectionUpdatedAt: selection?.updated_at || null,
-          currentAssignment: seasonRow?.current_assignment || null,
+          currentAssignment: getCurrentAssignment(seasonRow),
           seasonOutcome: seasonRow?.outcome || null,
         };
       });
@@ -715,7 +813,7 @@ const RosterWishes = () => {
             selectionDecidedBy: selection?.decided_by || null,
             selectionDecidedAt: selection?.decided_at || null,
             selectionUpdatedAt: selection?.updated_at || null,
-            currentAssignment: seasonRow?.current_assignment || null,
+            currentAssignment: getCurrentAssignment(seasonRow),
             seasonOutcome: seasonRow?.outcome || null,
           }];
         });
@@ -955,9 +1053,23 @@ const RosterWishes = () => {
     setAssignmentSpecId(currentSpecId);
     setAssignmentDate(toLocalDateInputValue(member.currentAssignment?.valid_from));
     setAssignmentComment(member.currentAssignment?.manager_comment || '');
+    setAssignmentCharacterId(member.currentAssignment?.character_id || null);
     setAssignmentClassOpen(false);
     setAssignmentSpecOpen(false);
+    setAssignmentCharacterOpen(false);
     setAssignmentDialogOpen(true);
+
+    if (!member.currentAssignment?.character_id) {
+      void supabase
+        .from('roster_member_assignments')
+        .select('character_id')
+        .eq('roster_season_member_id', member.seasonMemberId)
+        .is('valid_to', null)
+        .maybeSingle()
+        .then(({ data }) => {
+          setAssignmentCharacterId(data?.character_id || null);
+        });
+    }
   };
 
   const saveAssignment = async () => {
@@ -975,9 +1087,10 @@ const RosterWishes = () => {
         p_reason_code: null,
         p_manager_comment: assignmentComment.trim() || null,
         p_valid_from: toIsoFromLocalDateInput(assignmentDate) || new Date().toISOString(),
+        p_character_id: assignmentCharacterId || null,
       });
       if (error) throw error;
-      toast({ title: language === 'fr' ? 'Affectation mise à jour' : 'Assignment updated' });
+      toast({ title: t.wishes.memberDetail.assignmentDialog.updated });
       setAssignmentDialogOpen(false);
       setAssignmentMember(null);
       await fetchWishes();
@@ -1751,7 +1864,7 @@ const RosterWishes = () => {
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="h-8 gap-2 border-border/45 bg-card/55 px-2.5 text-sm font-medium text-foreground/85 shadow-none hover:bg-card/75">
           <Columns3 className="h-4 w-4" />
-          {language === 'fr' ? 'Colonnes' : 'Columns'}
+          {t.dashboard.rosterTable.columnSelector}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56 border-border bg-card">
@@ -1833,6 +1946,7 @@ const RosterWishes = () => {
   const assignmentClass = assignmentClassId ? getClassById(assignmentClassId) : null;
   const assignmentSpecs = assignmentClass?.specs || [];
   const assignmentSpec = assignmentSpecId ? getSpecById(assignmentSpecId) : null;
+  const assignmentCharacter = assignmentCharacters.find((character) => character.id === assignmentCharacterId) || null;
   const renderToolbarActionsMenu = () => {
     if (!hasToolbarActions) return null;
 
@@ -2412,7 +2526,7 @@ const RosterWishes = () => {
         </Dialog>
       )}
 
-      <Dialog open={assignmentDialogOpen} onOpenChange={setAssignmentDialogOpen}>
+      <Dialog modal={false} open={assignmentDialogOpen} onOpenChange={setAssignmentDialogOpen}>
         <DialogContent className="max-w-md border-border bg-card">
           <DialogHeader>
             <DialogTitle>{language === 'fr' ? 'Modifier affectation' : 'Edit assignment'}</DialogTitle>
@@ -2451,8 +2565,12 @@ const RosterWishes = () => {
                     <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-56 border-border bg-card p-1.5" align="start">
-                  <div className="flex max-h-[280px] flex-col gap-0.5 overflow-y-auto">
+                <PopoverContent
+                  className="max-h-[min(280px,var(--radix-popover-content-available-height))] w-56 overflow-y-auto overscroll-contain border-border bg-card p-1.5"
+                  align="start"
+                  onWheel={(event) => event.stopPropagation()}
+                >
+                  <div className="flex flex-col gap-0.5">
                     {wowClasses.map((wowClass) => {
                       const isSelected = assignmentClassId === wowClass.id;
                       return (
@@ -2462,6 +2580,7 @@ const RosterWishes = () => {
                           onClick={() => {
                             setAssignmentClassId(wowClass.id);
                             setAssignmentSpecId(wowClass.specs[0]?.id || '');
+                            setAssignmentCharacterId(null);
                             setAssignmentClassOpen(false);
                           }}
                           className={cn(
@@ -2507,7 +2626,11 @@ const RosterWishes = () => {
                       <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-60 border-border bg-card p-1.5" align="start">
+                  <PopoverContent
+                    className="max-h-[min(280px,var(--radix-popover-content-available-height))] w-60 overflow-y-auto overscroll-contain border-border bg-card p-1.5"
+                    align="start"
+                    onWheel={(event) => event.stopPropagation()}
+                  >
                     <div className="space-y-0.5">
                       {assignmentSpecs.map((spec) => {
                         const isSelected = assignmentSpecId === spec.id;
@@ -2541,6 +2664,81 @@ const RosterWishes = () => {
                   <Swords className="h-4 w-4 text-muted-foreground/20" />
                 </div>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>{language === 'fr' ? 'Personnage assigné (optionnel)' : 'Assigned character (optional)'}</Label>
+              <Popover open={assignmentCharacterOpen} onOpenChange={setAssignmentCharacterOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={!assignmentClassId || assignmentCharactersLoading}
+                    className={cn(
+                      'h-10 w-full justify-between gap-2 bg-background/50 text-sm hover:bg-muted/50',
+                      assignmentCharacter ? 'border-border/60' : 'border-dashed border-muted-foreground/30 text-muted-foreground'
+                    )}
+                  >
+                    <span className="min-w-0 truncate">
+                      {assignmentCharactersLoading
+                        ? (language === 'fr' ? 'Chargement...' : 'Loading...')
+                        : assignmentCharacter
+                          ? `${assignmentCharacter.name} - ${assignmentCharacter.realm}`
+                          : assignmentCharacters.length === 0
+                            ? (language === 'fr' ? 'Aucun personnage de cette classe' : 'No character for this class')
+                            : (language === 'fr' ? 'Aucun personnage sélectionné' : 'No character selected')}
+                    </span>
+                    <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="max-h-[min(280px,var(--radix-popover-content-available-height))] w-72 overflow-y-auto overscroll-contain border-border bg-card p-1.5"
+                  align="start"
+                  onWheel={(event) => event.stopPropagation()}
+                >
+                  <div className="flex flex-col gap-0.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAssignmentCharacterId(null);
+                        setAssignmentCharacterOpen(false);
+                      }}
+                      className={cn(
+                        'flex items-center gap-2 rounded px-2 py-1.5 text-left text-xs transition-colors',
+                        !assignmentCharacterId ? 'bg-primary/20' : 'hover:bg-primary/10'
+                      )}
+                    >
+                      {!assignmentCharacterId && <Check className="h-3 w-3 shrink-0 text-primary" />}
+                      <span className="truncate">{language === 'fr' ? 'Aucun personnage' : 'No character'}</span>
+                    </button>
+                    {assignmentCharacters.map((character) => {
+                      const isSelected = assignmentCharacterId === character.id;
+                      return (
+                        <button
+                          key={character.id}
+                          type="button"
+                          onClick={() => {
+                            setAssignmentCharacterId(character.id);
+                            setAssignmentCharacterOpen(false);
+                          }}
+                          className={cn(
+                            'flex items-center gap-2 rounded px-2 py-1.5 text-left text-xs transition-colors',
+                            isSelected ? 'bg-primary/20' : 'hover:bg-primary/10'
+                          )}
+                        >
+                          {isSelected && <Check className="h-3 w-3 shrink-0 text-primary" />}
+                          <span className="min-w-0 flex-1 truncate">{character.name} - {character.realm}</span>
+                          {character.is_main && (
+                            <Badge variant="outline" className="h-5 shrink-0 px-1.5 text-[10px]">
+                              {language === 'fr' ? 'Main' : 'Main'}
+                            </Badge>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="space-y-2">

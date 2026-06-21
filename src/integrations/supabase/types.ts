@@ -2159,6 +2159,9 @@ export type Database = {
       roster_member_assignments: {
         Row: {
           approved_by: string | null
+          character_id: string | null
+          character_name_snapshot: string | null
+          character_realm_snapshot: string | null
           choice_index: number | null
           class_id: string
           created_at: string
@@ -2174,6 +2177,9 @@ export type Database = {
         }
         Insert: {
           approved_by?: string | null
+          character_id?: string | null
+          character_name_snapshot?: string | null
+          character_realm_snapshot?: string | null
           choice_index?: number | null
           class_id: string
           created_at?: string
@@ -2189,6 +2195,9 @@ export type Database = {
         }
         Update: {
           approved_by?: string | null
+          character_id?: string | null
+          character_name_snapshot?: string | null
+          character_realm_snapshot?: string | null
           choice_index?: number | null
           class_id?: string
           created_at?: string
@@ -2771,6 +2780,7 @@ export type Database = {
           p_reason_code?: Database["public"]["Enums"]["roster_selection_reason_code"] | null
           p_manager_comment?: string | null
           p_valid_from?: string | null
+          p_character_id?: string | null
         }
         Returns: string
       }

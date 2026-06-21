@@ -435,7 +435,7 @@ export const translationsZhTw: Translations = createLocaleTranslations(translati
       history: '歷史',
       historyEmpty: '目前沒有賽季歷史。',
       historyEvent: {
-        snapshot: '已建立賽季快照',
+        snapshot: '成員已加入本賽季名單',
         assignmentChanged: '分配已變更',
         assignmentsSeeded: '已從心願初始化分配',
         materialized: '賽季表已建立',
@@ -558,6 +558,7 @@ export const translationsZhTw: Translations = createLocaleTranslations(translati
       choice1: '選擇 1',
       choice2: '選擇 2',
       choice3: '選擇 3',
+      columnSelector: '欄位',
       sortLabel: '排序',
       sortAscending: '{{column}} 升冪',
       sortDescending: '{{column}} 降冪',

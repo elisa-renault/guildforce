@@ -126,7 +126,8 @@ Note: a legacy `characters` table still exists in migrations; avoid adding new p
 - Prefer `apply_patch` for text edits. Avoid shell redirection or shell-based file rewrites for textual content unless the command guarantees UTF-8 output.
 - Do not use PowerShell `Set-Content`, `Add-Content`, `Out-File`, or `>` / `>>` to rewrite user-facing text files unless encoding is explicitly controlled.
 - If a script generates or rewrites text files, it must write UTF-8 explicitly.
-- Keep user-facing copy in translation or content files when practical instead of scattering localized strings across many React components.
+- Keep user-facing UI copy in translation or content files; do not add inline FR/EN ternaries, hardcoded English fallback labels, or component-local user-facing strings for shipped UI.
+- Any new or changed UI label, tooltip, toast, dialog copy, table header, menu item, empty state, or validation message must be translated in every supported locale under `src/i18n/translations.*.ts` before completion.
 - After changing front-end copy, translations, docs, SQL content, or admin content, run `npm run i18n:check:encoding` and `npm run i18n:check:diacritics`.
 - If mojibake appears in the terminal only, verify the file bytes and repository diff before changing application code.
 

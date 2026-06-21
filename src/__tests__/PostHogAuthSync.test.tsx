@@ -58,6 +58,8 @@ describe('PostHogAuthSync', () => {
     await waitFor(() => {
       expect(posthog.identify).toHaveBeenCalledTimes(1);
       expect(posthog.identify).toHaveBeenCalledWith('user-1', {
+        name: 'Quartz Keystone user1',
+        guildforce_user_label: 'Quartz Keystone user1',
         preferred_language: 'fr',
         has_battlenet: true,
         is_impersonating: false,
@@ -122,6 +124,8 @@ describe('PostHogAuthSync', () => {
 
     await waitFor(() => {
       expect(posthog.identify).toHaveBeenCalledWith('user-2', {
+        name: 'Amber Lantern user2',
+        guildforce_user_label: 'Amber Lantern user2',
         preferred_language: 'fr',
         has_battlenet: false,
         is_impersonating: false,

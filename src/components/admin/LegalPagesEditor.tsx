@@ -3,24 +3,17 @@ import { useCallback, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { toast } from 'sonner';
 
-import { MarkdownEditor } from '@/components/markdown/MarkdownEditor';
 import { GlowCard } from '@/components/GlowCard';
+import { MarkdownEditor } from '@/components/markdown/MarkdownEditor';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { FALLBACK_LANGUAGE, isSupportedLanguage, LANGUAGE_OPTIONS, type Language } from '@/i18n/config';
 import { formatDateLocalized } from '@/i18n/format';
-import { resolveSemanticMessage } from '@/i18n/semantic';
 import { supabase } from '@/integrations/supabase/client';
 import {
-  collectPersistedTranslations,
-  isTranslationMissingOrUntranslated,
-  selectContentTranslation,
   toEditableTranslationMap,
   type EditableContentTranslationMap,
 } from '@/lib/contentTranslations';
@@ -49,9 +42,6 @@ interface EditableLegalPage {
   translations: EditableContentTranslationMap;
 }
 
-const hasGermanTranslation = (translations: LegalPageTranslation[]): boolean =>
-  !isTranslationMissingOrUntranslated(translations, 'de');
-
 const slugLabels: Record<string, string> = {
   'legal-notice': 'Legal Notice',
   'privacy-policy': 'Privacy Policy',
@@ -64,20 +54,20 @@ const getSlugLabel = (slug: string) => {
   return label;
 };
 
-const getLanguageLabel = (language: Language): string =>
-  LANGUAGE_OPTIONS.find((option) => option.code === language)?.label || language;
+const getEnglishTranslation = (translations: LegalPageTranslation[]) =>
+  translations.find((translation) => translation.language === 'en') || {
+    language: 'en',
+    title: '',
+    content: '',
+  };
 
 export const LegalPagesEditor = () => {
-  const { language, t } = useLanguage();
   const { user } = useAuth();
   const [pages, setPages] = useState<LegalPage[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
   const [editingPage, setEditingPage] = useState<EditableLegalPage | null>(null);
   const [previewMode, setPreviewMode] = useState(false);
-  const [editLang, setEditLang] = useState<Language>('en');
-  const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
-    resolveSemanticMessage({ key, language, translations: t });
 
   const fetchPages = useCallback(async () => {
     const { data, error } = await supabase
@@ -86,13 +76,13 @@ export const LegalPagesEditor = () => {
       .order('slug');
 
     if (error) {
-      toast.error(t.errors.generic);
+      toast.error('Something went wrong.');
       return;
     }
 
     setPages((data as LegalPage[]) || []);
     setLoading(false);
-  }, [t.errors.generic]);
+  }, []);
 
   useEffect(() => {
     void fetchPages();
@@ -107,22 +97,16 @@ export const LegalPagesEditor = () => {
       translations: toEditableTranslationMap(page.legal_page_translations || []),
     });
     setPreviewMode(false);
-    setEditLang(language);
   };
 
   const handleSave = async () => {
     if (!editingPage || !user) return;
 
-    const translationRows = collectPersistedTranslations(editingPage.translations, [FALLBACK_LANGUAGE]);
+    const englishTranslation = editingPage.translations.en;
 
-    const hasFallbackLanguage =
-      translationRows.some(
-        (row) => row.language === FALLBACK_LANGUAGE && row.title.length > 0 && row.content.length > 0,
-      );
-
-    if (!hasFallbackLanguage) {
-      toast.error(t.errors.generic, {
-        description: sm('admin.legal.required_en_fr'),
+    if (!englishTranslation.title.trim() || !englishTranslation.content.trim()) {
+      toast.error('Something went wrong.', {
+        description: 'English title and content are required.',
         style: { background: 'hsl(var(--card))', borderColor: 'hsl(var(--destructive) / 0.3)' },
       });
       return;
@@ -133,18 +117,18 @@ export const LegalPagesEditor = () => {
     const { error: translationError } = await supabase
       .from('legal_page_translations')
       .upsert(
-        translationRows.map((row) => ({
+        [{
           legal_page_id: editingPage.id,
-          language: row.language,
-          title: row.title,
-          content: row.content,
-        })),
+          language: 'en',
+          title: englishTranslation.title.trim(),
+          content: englishTranslation.content,
+        }],
         { onConflict: 'legal_page_id,language' },
       );
 
     if (translationError) {
       setSaving(null);
-      toast.error(t.errors.generic, {
+      toast.error('Something went wrong.', {
         style: { background: 'hsl(var(--card))', borderColor: 'hsl(var(--destructive) / 0.3)' },
       });
       return;
@@ -161,13 +145,13 @@ export const LegalPagesEditor = () => {
     setSaving(null);
 
     if (pageError) {
-      toast.error(t.errors.generic, {
+      toast.error('Something went wrong.', {
         style: { background: 'hsl(var(--card))', borderColor: 'hsl(var(--destructive) / 0.3)' },
       });
       return;
     }
 
-    toast.success(sm('admin.legal.saved'), {
+    toast.success('Legal page saved', {
       style: { background: 'hsl(var(--card))', borderColor: 'hsl(var(--primary) / 0.3)' },
     });
 
@@ -194,7 +178,7 @@ export const LegalPagesEditor = () => {
   }
 
   if (editingPage) {
-    const currentTranslation = editingPage.translations[editLang];
+    const currentTranslation = editingPage.translations.en;
 
     return (
       <div className="space-y-4">
@@ -208,10 +192,10 @@ export const LegalPagesEditor = () => {
               className="gap-1.5"
             >
               {previewMode ? <Edit className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              {previewMode ? sm('admin.legal.toggle_edit') : sm('admin.legal.toggle_preview')}
+              {previewMode ? 'Edit' : 'Preview'}
             </Button>
             <Button variant="ghost" size="sm" onClick={handleCancel}>
-              {t.common.cancel}
+              Cancel
             </Button>
             <Button
               size="sm"
@@ -224,32 +208,9 @@ export const LegalPagesEditor = () => {
               ) : (
                 <Save className="h-4 w-4" />
               )}
-              {t.common.save}
+              Save
             </Button>
           </div>
-        </div>
-
-        <div className="space-y-2 max-w-xs">
-          <Label>{t.auth.language}</Label>
-          <Select
-            value={editLang}
-            onValueChange={(value) => {
-              if (isSupportedLanguage(value)) {
-                setEditLang(value);
-              }
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {LANGUAGE_OPTIONS.map((option) => (
-                <SelectItem key={option.code} value={option.code}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
 
         {previewMode ? (
@@ -289,11 +250,9 @@ export const LegalPagesEditor = () => {
         ) : (
           <>
             <div className="space-y-2">
-              <Label htmlFor={`title-${editLang}`}>
-                {sm('admin.legal.field_title')} ({getLanguageLabel(editLang)})
-              </Label>
+              <Label htmlFor="title-en">Title (English)</Label>
               <Input
-                id={`title-${editLang}`}
+                id="title-en"
                 value={currentTranslation.title}
                 onChange={(event) => {
                   const title = event.target.value;
@@ -303,8 +262,8 @@ export const LegalPagesEditor = () => {
                       ...prev,
                       translations: {
                         ...prev.translations,
-                        [editLang]: {
-                          ...prev.translations[editLang],
+                        en: {
+                          ...prev.translations.en,
                           title,
                           exists: true,
                         },
@@ -317,9 +276,7 @@ export const LegalPagesEditor = () => {
             </div>
 
             <div className="space-y-2">
-              <Label>
-                {sm('admin.legal.field_content')} ({getLanguageLabel(editLang)})
-              </Label>
+              <Label>Content (English)</Label>
               <MarkdownEditor
                 value={currentTranslation.content}
                 onChange={(content) => {
@@ -329,8 +286,8 @@ export const LegalPagesEditor = () => {
                       ...prev,
                       translations: {
                         ...prev.translations,
-                        [editLang]: {
-                          ...prev.translations[editLang],
+                        en: {
+                          ...prev.translations.en,
                           content,
                           exists: true,
                         },
@@ -338,7 +295,7 @@ export const LegalPagesEditor = () => {
                     };
                   });
                 }}
-                placeholder={sm('admin.legal.markdown_placeholder')}
+                placeholder="Markdown content..."
                 minHeight="300px"
               />
             </div>
@@ -348,24 +305,20 @@ export const LegalPagesEditor = () => {
     );
   }
 
-  const missingDeCount = pages.filter((page) => !hasGermanTranslation(page.legal_page_translations || [])).length;
-
   return (
     <div className="space-y-4">
       <div className="space-y-1 mb-4">
-        <p className="text-sm text-muted-foreground">{sm('admin.legal.list_help')}</p>
-        <p className="text-xs text-muted-foreground">
-          DE missing: {missingDeCount}/{pages.length}
+        <p className="text-sm text-muted-foreground">
+          Manage the public legal pages. Only English content is shown and edited.
         </p>
       </div>
 
       {pages.map((page) => {
         const label = getSlugLabel(page.slug);
-        const updatedAt = formatDateLocalized(page.updated_at, language, {
+        const updatedAt = formatDateLocalized(page.updated_at, 'en', {
           dateStyle: 'medium',
         });
-        const localized = selectContentTranslation(page.legal_page_translations ?? [], language);
-        const missingDe = !hasGermanTranslation(page.legal_page_translations || []);
+        const english = getEnglishTranslation(page.legal_page_translations ?? []);
 
         return (
           <GlowCard key={page.id} surface="section" className="p-4">
@@ -377,21 +330,19 @@ export const LegalPagesEditor = () => {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 min-w-0">
                     <h4 className="font-medium text-foreground truncate">{label}</h4>
-                    {missingDe ? (
-                      <Badge variant="secondary" className="text-[10px] uppercase tracking-wide">
-                        DE missing
-                      </Badge>
-                    ) : null}
+                    <Badge variant="secondary" className="text-[10px] uppercase tracking-wide">
+                      EN only
+                    </Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground truncate">{localized.title}</p>
+                  <p className="text-xs text-muted-foreground truncate">{english.title}</p>
                   <p className="text-xs text-muted-foreground">
-                    {t.legal.lastUpdated}: {updatedAt}
+                    Last updated: {updatedAt}
                   </p>
                 </div>
               </div>
               <Button variant="outline" size="sm" onClick={() => handleEdit(page)} className="gap-1.5">
                 <Edit className="h-4 w-4" />
-                {sm('admin.legal.edit_action')}
+                Edit
               </Button>
             </div>
           </GlowCard>

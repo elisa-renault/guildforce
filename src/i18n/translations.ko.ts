@@ -435,7 +435,7 @@ export const translationsKo: Translations = createLocaleTranslations(translation
       history: '기록',
       historyEmpty: '아직 시즌 기록이 없습니다.',
       historyEvent: {
-        snapshot: '시즌 스냅샷 생성',
+        snapshot: '시즌 로스터에 멤버 추가됨',
         assignmentChanged: '배정 변경',
         assignmentsSeeded: '희망에서 배정 초기화',
         materialized: '시즌 시트 생성',
@@ -558,6 +558,7 @@ export const translationsKo: Translations = createLocaleTranslations(translation
       choice1: '선택 1',
       choice2: '선택 2',
       choice3: '선택 3',
+      columnSelector: '열',
       sortLabel: '정렬',
       sortAscending: '{{column}} 오름차순',
       sortDescending: '{{column}} 내림차순',

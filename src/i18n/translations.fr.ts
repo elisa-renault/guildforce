@@ -433,7 +433,7 @@ export const translationsFr: Translations = {
         history: 'Historique',
         historyEmpty: 'Aucun historique de saison pour le moment.',
         historyEvent: {
-          snapshot: 'Snapshot de saison créé',
+          snapshot: 'Membre ajouté au roster pour la saison',
           assignmentChanged: 'Affectation modifiée',
           assignmentsSeeded: 'Affectation initialisée depuis les vœux',
           materialized: 'Feuille de saison matérialisée',
@@ -557,6 +557,7 @@ export const translationsFr: Translations = {
         choice1: 'Choix 1',
         choice2: 'Choix 2',
         choice3: 'Choix 3',
+        columnSelector: 'Colonnes',
         sortLabel: 'Tri',
         sortAscending: '{{column}} croissant',
         sortDescending: '{{column}} décroissant',

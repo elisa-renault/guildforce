@@ -23,6 +23,9 @@ vi.mock("../pages/GuildAtlasEditor", () => ({
 vi.mock("../pages/LegalPage", () => ({
   default: () => <div>Legal Page</div>,
 }));
+vi.mock("../pages/Changelog", () => ({
+  default: () => <div>Changelog Page</div>,
+}));
 vi.mock("../pages/NotFound", () => ({
   default: () => <div>Not Found Page</div>,
 }));
@@ -53,6 +56,8 @@ describe("appRoutes", () => {
     await renderRoute("/guild/eu/tarren-mill/midnight/atlas/new", "Guild Atlas Editor Page");
     await renderRoute("/guild/eu/tarren-mill/midnight/atlas/doc-1/edit", "Guild Atlas Editor Page");
     await renderRoute("/legal", "Legal Page");
+    await renderRoute("/changelog", "Changelog Page");
+    await renderRoute("/changelog/0.1.12", "Changelog Page");
     await renderRoute("/unknown", "Not Found Page");
   });
 });

@@ -17,6 +17,14 @@ export const BATTLENET_CLASS_MAP: Record<number, string> = {
   13: 'evoker',
 };
 
+export const WOW_CLASS_TO_BATTLENET_ID: Record<string, number> = Object.entries(BATTLENET_CLASS_MAP).reduce(
+  (acc, [classId, wowClassId]) => {
+    acc[wowClassId] = Number(classId);
+    return acc;
+  },
+  {} as Record<string, number>,
+);
+
 export const getClassNameFromBattleNet = (classId: number): string => {
   return BATTLENET_CLASS_MAP[classId] || 'unknown';
 };

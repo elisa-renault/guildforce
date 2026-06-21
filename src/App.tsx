@@ -25,7 +25,7 @@ const AppLayout = () => {
   const location = useLocation();
   const routeMeta = getRouteMeta(location.pathname);
   const routeLayout = routeMeta?.layout ?? "public";
-  const showFooter = routeLayout === "public";
+  const showFooter = routeLayout === "public" || routeMeta?.showFooter === true;
 
   return (
     <>

@@ -751,6 +751,7 @@ export const RosterTable = ({
                 && onEditAssignment
                 && member.seasonMemberId
               );
+              const playerSubtitle = member.currentAssignment?.character_name_snapshot || member.mainCharacterName;
 
               const handleRowClick = () => {
                 // Navigate to member wishes page (read-only view) for all members
@@ -792,9 +793,9 @@ export const RosterTable = ({
                             </TooltipProvider>
                           )}
                         </div>
-                        {member.mainCharacterName && (
+                        {playerSubtitle && (
                           <div className="text-[11px] text-muted-foreground truncate">
-                            <span className="text-foreground/80">{member.mainCharacterName}</span>
+                            <span className="text-foreground/80">{playerSubtitle}</span>
                           </div>
                         )}
                       </div>
@@ -955,11 +956,10 @@ export const RosterTable = ({
                                 size="sm"
                                 variant="outline"
                                 onClick={(e) => e.stopPropagation()}
-                                className="h-8 w-8 px-0 text-muted-foreground hover:text-foreground"
+                                className="!h-8 !max-h-8 !min-h-8 !w-8 !min-w-8 !max-w-8 !p-0 flex-none"
                                 aria-label={t.common.actions}
                                 icon={<MoreVertical className="h-4 w-4" strokeWidth={1.5} />}
-                              >
-                              </CosmicButton>
+                              />
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="bg-card border-border">
                               {rowActions.map((action) => (

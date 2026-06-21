@@ -46,9 +46,9 @@ export const WishValidationBadge = ({
     },
     rejected: {
       icon: XCircle,
-      color: 'text-status-error',
-      bgColor: 'bg-status-error/15',
-      borderColor: 'border-status-error/40',
+      color: 'text-muted-foreground',
+      bgColor: 'bg-muted/30',
+      borderColor: 'border-border/60',
       label: t.wishes.validation.rejected,
     },
   };

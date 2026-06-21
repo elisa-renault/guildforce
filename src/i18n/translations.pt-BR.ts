@@ -335,6 +335,7 @@ export const translationsPtBr: Translations = createLocaleTranslations(translati
       choice1: 'Escolha 1',
       choice2: 'Escolha 2',
       choice3: 'Escolha 3',
+      columnSelector: 'Colunas',
       sortLabel: 'Ordenação',
       sortAscending: '{{column}} crescente',
       sortDescending: '{{column}} decrescente',
@@ -553,7 +554,7 @@ export const translationsPtBr: Translations = createLocaleTranslations(translati
       history: 'Histórico',
       historyEmpty: 'Ainda não há histórico da temporada.',
       historyEvent: {
-        snapshot: 'Snapshot da temporada criado',
+        snapshot: 'Membro adicionado ao roster para a temporada',
         assignmentChanged: 'Atribuição alterada',
         assignmentsSeeded: 'Atribuição inicializada pelos desejos',
         materialized: 'Ficha da temporada materializada',

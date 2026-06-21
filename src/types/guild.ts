@@ -34,6 +34,9 @@ export interface CurrentRosterAssignment {
   manager_comment: string | null;
   valid_from: string;
   approved_by: string | null;
+  character_id?: string | null;
+  character_name_snapshot?: string | null;
+  character_realm_snapshot?: string | null;
 }
 
 export interface RosterSeasonOutcome {
