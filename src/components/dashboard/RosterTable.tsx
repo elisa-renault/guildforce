@@ -121,18 +121,18 @@ export const RosterTable = ({
   onSortSummaryChange,
   visibleColumns = defaultVisibleColumns,
 }: RosterTableProps) => {
-  const wishColumnClassName = 'w-[220px] min-w-[220px]';
+  const wishColumnClassName = 'w-[210px] min-w-[210px]';
   const isColumnVisible = (column: RosterTableColumnId) => visibleColumns.includes(column);
   const visibleDataColumnCount = visibleColumns.length;
   const leadingColSpan = 1 + Number(isColumnVisible('status')) + Number(isColumnVisible('rosterDecision')) + Number(isColumnVisible('currentAssignment')) + Number(isColumnVisible('wishesCount'));
-  const tableMinWidth = 170
+  const tableMinWidth = 160
     + (isColumnVisible('status') ? 118 : 0)
     + (isColumnVisible('rosterDecision') ? 160 : 0)
-    + (isColumnVisible('currentAssignment') ? 170 : 0)
-    + (isColumnVisible('wishesCount') ? 64 : 0)
-    + (isColumnVisible('wish1') ? 220 : 0)
-    + (isColumnVisible('wish2') ? 220 : 0)
-    + (isColumnVisible('wish3') ? 220 : 0)
+    + (isColumnVisible('currentAssignment') ? 160 : 0)
+    + (isColumnVisible('wishesCount') ? 82 : 0)
+    + (isColumnVisible('wish1') ? 210 : 0)
+    + (isColumnVisible('wish2') ? 210 : 0)
+    + (isColumnVisible('wish3') ? 210 : 0)
     + 48;
   const { t, language } = useLanguage();
   const s = (key: SemanticKey, fallback?: string) =>
@@ -356,7 +356,7 @@ export const RosterTable = ({
         onClick={() => handleSort(column)}
       >
         <div className="flex items-center gap-1.5">
-          <span className="truncate">{children}</span>
+          <span className="whitespace-nowrap">{children}</span>
           <HeaderHelp tooltip={tooltip} />
           <SortIcon column={column} />
         </div>
@@ -666,7 +666,7 @@ export const RosterTable = ({
         <Table className="table-fixed" style={{ minWidth: `${tableMinWidth}px` }}>
           <TableHeader>
             <TableRow className="border-border/30 hover:bg-transparent">
-              <SortableHeader column="player" className="w-[170px]">{rosterTableLabels.player}</SortableHeader>
+              <SortableHeader column="player" className="w-[160px]">{rosterTableLabels.player}</SortableHeader>
               {isColumnVisible('status') && (
                 <SortableHeader column="status" className="w-[118px]" tooltip={rosterTableLabels.statusTooltip}>
                   {rosterTableLabels.status}
@@ -678,12 +678,12 @@ export const RosterTable = ({
                 </SortableHeader>
               )}
               {isColumnVisible('currentAssignment') && (
-                <SortableHeader column="currentAssignment" className="w-[170px]" tooltip={rosterTableLabels.assignmentTooltip}>
+                <SortableHeader column="currentAssignment" className="w-[160px]" tooltip={rosterTableLabels.assignmentTooltip}>
                   {rosterTableLabels.assignment}
                 </SortableHeader>
               )}
               {isColumnVisible('wishesCount') && (
-                <SortableHeader column="wishesCount" className="w-[64px]" tooltip={rosterTableLabels.totalTooltip}>
+                <SortableHeader column="wishesCount" className="w-[82px]" tooltip={rosterTableLabels.totalTooltip}>
                   <span className="hidden md:inline">{rosterTableLabels.total}</span><span className="md:hidden">#</span>
                 </SortableHeader>
               )}
@@ -975,14 +975,15 @@ export const RosterTable = ({
                         {rowActions.length > 1 && (
                           <DropdownMenu modal={false}>
                             <DropdownMenuTrigger asChild>
-                              <button
-                                type="button"
+                              <CosmicButton
+                                size="sm"
+                                variant="outline"
                                 onClick={(e) => e.stopPropagation()}
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-card text-muted-foreground transition-colors hover:border-primary/30 hover:bg-muted/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                                className="h-8 w-8 px-0 text-muted-foreground hover:text-foreground"
                                 aria-label={t.common.actions}
+                                icon={<MoreVertical className="h-4 w-4" strokeWidth={1.5} />}
                               >
-                                <MoreVertical className="h-4 w-4" strokeWidth={1.5} />
-                              </button>
+                              </CosmicButton>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="bg-card border-border">
                               {rowActions.map((action) => (
