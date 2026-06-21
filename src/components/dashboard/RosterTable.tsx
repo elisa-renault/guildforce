@@ -125,7 +125,7 @@ export const RosterTable = ({
   const isColumnVisible = (column: RosterTableColumnId) => visibleColumns.includes(column);
   const visibleDataColumnCount = visibleColumns.length;
   const leadingColSpan = 1 + Number(isColumnVisible('status')) + Number(isColumnVisible('rosterDecision')) + Number(isColumnVisible('currentAssignment')) + Number(isColumnVisible('wishesCount'));
-  const tableMinWidth = 190
+  const tableMinWidth = 170
     + (isColumnVisible('status') ? 118 : 0)
     + (isColumnVisible('rosterDecision') ? 160 : 0)
     + (isColumnVisible('currentAssignment') ? 170 : 0)
@@ -666,7 +666,7 @@ export const RosterTable = ({
         <Table className="table-fixed" style={{ minWidth: `${tableMinWidth}px` }}>
           <TableHeader>
             <TableRow className="border-border/30 hover:bg-transparent">
-              <SortableHeader column="player" className="w-[190px]">{rosterTableLabels.player}</SortableHeader>
+              <SortableHeader column="player" className="w-[170px]">{rosterTableLabels.player}</SortableHeader>
               {isColumnVisible('status') && (
                 <SortableHeader column="status" className="w-[118px]" tooltip={rosterTableLabels.statusTooltip}>
                   {rosterTableLabels.status}
@@ -975,14 +975,14 @@ export const RosterTable = ({
                         {rowActions.length > 1 && (
                           <DropdownMenu modal={false}>
                             <DropdownMenuTrigger asChild>
-                              <CosmicButton
-                                size="sm"
-                                variant="outline"
+                              <button
+                                type="button"
                                 onClick={(e) => e.stopPropagation()}
-                                icon={<MoreVertical className="h-4 w-4" strokeWidth={1.5} />}
-                                className="h-8 w-8 p-0"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-card text-muted-foreground transition-colors hover:border-primary/30 hover:bg-muted/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
                                 aria-label={t.common.actions}
-                              />
+                              >
+                                <MoreVertical className="h-4 w-4" strokeWidth={1.5} />
+                              </button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="bg-card border-border">
                               {rowActions.map((action) => (
