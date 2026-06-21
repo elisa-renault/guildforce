@@ -382,7 +382,7 @@ export const translationsIt: Translations = createLocaleTranslations(translation
     commitment: {
       title: 'Impegno raid Mitico',
       confirmed: 'Confermato',
-      confirmedDesc: 'Sarò disponibile regolarmente per i raid Mitici',
+      confirmedDesc: 'Sarò disponibile regolarmente per i raid',
       undecided: 'Indeciso',
       undecidedDesc: 'La mia disponibilità o scelta di classe potrebbe cambiare',
       withdrawn: 'Ritirato',

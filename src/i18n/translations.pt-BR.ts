@@ -500,7 +500,7 @@ export const translationsPtBr: Translations = createLocaleTranslations(translati
     commitment: {
       title: 'Compromisso com raide Mítico',
       confirmed: 'Confirmado',
-      confirmedDesc: 'Terei disponibilidade regular para raides míticos',
+      confirmedDesc: 'Terei disponibilidade regular para raides',
       undecided: 'Indeciso',
       undecidedDesc: 'Minha disponibilidade ou escolha de classe pode mudar',
       withdrawn: 'Retirado',

@@ -382,7 +382,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "commitment": {
       "title": "Externes Mitglied hinzuf\u00fcgen",
       "confirmed": "Best\u00e4tigt",
-      "confirmedDesc": "Ich werde regelm\u00e4\u00dfig f\u00fcr mythische Raids verf\u00fcgbar sein",
+      "confirmedDesc": "Ich werde regelm\u00e4\u00dfig f\u00fcr Raids verf\u00fcgbar sein",
       "undecided": "Unentschlossen",
       "undecidedDesc": "Meine Verf\u00fcgbarkeit oder Klassenwahl kann sich \u00e4ndern",
       "withdrawn": "Zur\u00fcckgezogen",

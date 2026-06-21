@@ -380,7 +380,7 @@ export const translationsEn: Translations = {
       commitment: {
         title: 'Mythic raid commitment',
         confirmed: 'Confirmed',
-        confirmedDesc: 'I will be regularly available for mythic raids',
+        confirmedDesc: 'I will be regularly available for raids',
         undecided: 'Undecided',
         undecidedDesc: 'My availability or class choice may change',
         withdrawn: 'Withdrawn',

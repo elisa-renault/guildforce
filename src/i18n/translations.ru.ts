@@ -365,7 +365,7 @@ export const translationsRu: Translations = createLocaleTranslations(translation
     commitment: {
       title: 'Готовность к мифик-рейду',
       confirmed: 'Подтверждено',
-      confirmedDesc: 'Планируется регулярное участие в мифик-рейдах',
+      confirmedDesc: 'Планируется регулярное участие в рейдах',
       undecided: 'Не определено',
       undecidedDesc: 'Доступность или выбор класса может измениться',
       withdrawn: 'Отказ',

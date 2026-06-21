@@ -382,7 +382,7 @@ export const translationsKo: Translations = createLocaleTranslations(translation
     commitment: {
       title: '신화 공격대 참여',
       confirmed: '확정',
-      confirmedDesc: '신화 공격대에 정기적으로 참여할 수 있습니다',
+      confirmedDesc: '공격대에 정기적으로 참여할 수 있습니다',
       undecided: '미정',
       undecidedDesc: '가능 시간이나 직업 선택이 바뀔 수 있습니다',
       withdrawn: '불참',

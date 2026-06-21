@@ -382,7 +382,7 @@ export const translationsZhTw: Translations = createLocaleTranslations(translati
     commitment: {
       title: '傳奇團隊副本投入度',
       confirmed: '已確認',
-      confirmedDesc: '我會固定出席傳奇團隊副本',
+      confirmedDesc: '我會固定出席團隊副本',
       undecided: '尚未決定',
       undecidedDesc: '我的出席或職業選擇可能還會變動',
       withdrawn: '退出',

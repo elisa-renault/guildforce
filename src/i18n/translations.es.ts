@@ -382,7 +382,7 @@ export const translationsEs: Translations = createLocaleTranslations(translation
     commitment: {
       title: 'Compromiso de banda mítica',
       confirmed: 'Confirmado',
-      confirmedDesc: 'Estaré disponible con regularidad para bandas míticas',
+      confirmedDesc: 'Estaré disponible con regularidad para bandas',
       undecided: 'Dudoso',
       undecidedDesc: 'Mi disponibilidad o elección de clase puede cambiar',
       withdrawn: 'Retirado',
