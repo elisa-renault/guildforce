@@ -169,7 +169,7 @@ export const GlobalNav = () => {
           {user ? (
             <>
               <CommandPaletteTrigger variant="icon" className="lg:hidden" />
-              <DropdownMenu>
+              <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
