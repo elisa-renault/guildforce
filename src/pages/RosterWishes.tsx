@@ -1001,6 +1001,12 @@ const RosterWishes = () => {
       member_left_roster: t.wishes.memberDetail.historyEvent.memberLeftRoster,
       member_left_guild: t.wishes.memberDetail.historyEvent.memberLeftGuild,
       roster_season_sync_delta_applied: t.wishes.memberDetail.historyEvent.syncDeltaApplied,
+      roster_selection_changed: t.wishes.memberDetail.historyEvent.selectionChanged,
+      wishes_changed: t.wishes.memberDetail.historyEvent.wishesChanged,
+      wish_created: t.wishes.memberDetail.historyEvent.wishCreated,
+      wish_updated: t.wishes.memberDetail.historyEvent.wishUpdated,
+      wish_deleted: t.wishes.memberDetail.historyEvent.wishDeleted,
+      wish_validation: t.wishes.memberDetail.historyEvent.wishValidation,
     };
     return labels[eventType] || t.wishes.memberDetail.historyEvent.fallback;
   };
