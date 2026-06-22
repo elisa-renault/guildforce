@@ -427,6 +427,7 @@ export const translationsRu: Translations = createLocaleTranslations(translation
         wishUpdated: 'Пожелание изменено',
         wishDeleted: 'Пожелание удалено',
         wishValidation: 'Проверка пожелания изменена',
+        actor: 'Кем',
         fallback: 'Событие сезона',
       },
     },

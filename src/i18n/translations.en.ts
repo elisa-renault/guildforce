@@ -442,6 +442,7 @@ export const translationsEn: Translations = {
           wishUpdated: 'Wish updated',
           wishDeleted: 'Wish deleted',
           wishValidation: 'Wish validation changed',
+          actor: 'By',
           fallback: 'Season event',
         },
       },

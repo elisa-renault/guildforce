@@ -444,6 +444,7 @@ export const translationsZhTw: Translations = createLocaleTranslations(translati
         wishUpdated: '心願已更新',
         wishDeleted: '心願已刪除',
         wishValidation: '心願審核已變更',
+        actor: '操作者',
         fallback: '賽季事件',
       },
     },

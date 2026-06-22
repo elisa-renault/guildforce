@@ -444,6 +444,7 @@ export const translationsIt: Translations = createLocaleTranslations(translation
         wishUpdated: 'Desiderio modificato',
         wishDeleted: 'Desiderio eliminato',
         wishValidation: 'Validazione desiderio modificata',
+        actor: 'Da',
         fallback: 'Evento di stagione',
       },
     },

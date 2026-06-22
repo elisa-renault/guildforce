@@ -442,6 +442,7 @@ export const translationsFr: Translations = {
           wishUpdated: 'Vœu modifié',
           wishDeleted: 'Vœu supprimé',
           wishValidation: 'Validation de vœu modifiée',
+          actor: 'Par',
           fallback: 'Événement de saison',
         },
       },

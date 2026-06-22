@@ -516,6 +516,7 @@ export interface Translations {
         wishUpdated: string;
         wishDeleted: string;
         wishValidation: string;
+        actor: string;
         fallback: string;
       };
     };

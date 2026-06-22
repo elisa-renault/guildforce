@@ -562,6 +562,7 @@ export const translationsPtBr: Translations = createLocaleTranslations(translati
         wishUpdated: 'Desejo atualizado',
         wishDeleted: 'Desejo removido',
         wishValidation: 'Validação do desejo alterada',
+        actor: 'Por',
         fallback: 'Evento da temporada',
       },
     },

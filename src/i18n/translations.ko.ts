@@ -444,6 +444,7 @@ export const translationsKo: Translations = createLocaleTranslations(translation
         wishUpdated: '희망 수정됨',
         wishDeleted: '희망 삭제됨',
         wishValidation: '희망 검토 변경',
+        actor: '수행자',
         fallback: '시즌 이벤트',
       },
     },

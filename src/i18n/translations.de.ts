@@ -444,6 +444,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
         "wishUpdated": "Wunsch geändert",
         "wishDeleted": "Wunsch entfernt",
         "wishValidation": "Wunschvalidierung geändert",
+        "actor": "Von",
         "fallback": "Saisonereignis"
       }
     }

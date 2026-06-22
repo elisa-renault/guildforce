@@ -121,6 +121,7 @@ interface RosterSeasonHistoryRow {
   event_at: string;
   event_type: string;
   actor_id: string | null;
+  actor_username?: string | null;
   payload: Record<string, unknown> | null;
 }
 
@@ -959,7 +960,16 @@ const RosterWishes = () => {
         p_roster_season_member_id: member.seasonMemberId,
       });
       if (error) throw error;
-      setHistoryRows((data || []) as RosterSeasonHistoryRow[]);
+      const rows = (data || []) as RosterSeasonHistoryRow[];
+      const actorIds = [...new Set(rows.map((row) => row.actor_id).filter((id): id is string => !!id))];
+      const { data: actorProfiles } = actorIds.length > 0
+        ? await supabase.from('profiles').select('id, username').in('id', actorIds)
+        : { data: [] };
+      const actorById = new Map((actorProfiles || []).map((profile) => [profile.id, profile.username]));
+      setHistoryRows(rows.map((row) => ({
+        ...row,
+        actor_username: row.actor_id ? actorById.get(row.actor_id) || null : null,
+      })));
     } catch (error: unknown) {
       toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
     } finally {
@@ -1011,9 +1021,30 @@ const RosterWishes = () => {
     return labels[eventType] || t.wishes.memberDetail.historyEvent.fallback;
   };
 
-  const formatHistoryPayload = (payload: Record<string, unknown> | null) => {
+  const getSelectionStatusHistoryLabel = (status: unknown) => {
+    if (status === 'selected') return t.wishes.rosterDecision.selected;
+    if (status === 'bench') return t.wishes.rosterDecision.bench;
+    if (status === 'not_selected') return t.wishes.rosterDecision.notSelected;
+    if (status === 'undecided' || status === null) return t.wishes.rosterDecision.undecided;
+    return typeof status === 'string' ? status : null;
+  };
+
+  const formatHistoryPayload = (row: RosterSeasonHistoryRow) => {
+    const { payload } = row;
     if (!payload) return null;
     const parts: string[] = [];
+    if (row.actor_username) {
+      parts.push(formatLabelValue(t.wishes.memberDetail.historyEvent.actor, row.actor_username, language));
+    }
+    if (row.event_type === 'roster_selection_changed') {
+      const oldStatus = getSelectionStatusHistoryLabel(payload.old_selection_status);
+      const newStatus = getSelectionStatusHistoryLabel(payload.new_selection_status ?? payload.selection_status);
+      if (oldStatus && newStatus && oldStatus !== newStatus) {
+        parts.push(formatLabelValue(t.wishes.rosterDecision.summaryTitle, `${oldStatus} -> ${newStatus}`, language));
+      } else if (newStatus) {
+        parts.push(formatLabelValue(t.wishes.rosterDecision.summaryTitle, newStatus, language));
+      }
+    }
     const classId = typeof payload.class_id === 'string' ? payload.class_id : null;
     const specId = typeof payload.spec_id === 'string' ? payload.spec_id : null;
     const classLabel = classId ? getLocalizedClassName(classId, language) : null;
@@ -2423,7 +2454,7 @@ const RosterWishes = () => {
             ) : (
               <div className="space-y-3">
                 {historyRows.map((row, index) => {
-                  const detail = formatHistoryPayload(row.payload);
+                  const detail = formatHistoryPayload(row);
                   return (
                     <div key={`${row.event_type}-${row.event_at}-${index}`} className="relative border-l border-border/60 pl-4">
                       <span className="absolute -left-[5px] top-1 h-2.5 w-2.5 rounded-full bg-primary" />
