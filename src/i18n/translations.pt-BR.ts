@@ -395,6 +395,7 @@ export const translationsPtBr: Translations = createLocaleTranslations(translati
     majorBuffsDebuffs: 'Bônus e penalidades principais',
     majorBuffs: 'Bônus principais',
     majorDebuffs: 'Penalidades principais',
+    utilityDefensiveCoverage: 'Cobertura utilitária / defensiva',
     allValidations: 'Todas as validações',
     missingClasses: 'Classes ausentes',
     allClassesRepresented: 'Todas as classes representadas',

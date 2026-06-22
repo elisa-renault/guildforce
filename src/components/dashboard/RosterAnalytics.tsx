@@ -31,6 +31,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import {
+  buildCompositionCoverage,
+  type CompositionAbilityAnalyticsRow,
+  type CompositionAbilityMappingAnalyticsRow,
+  type CompositionCoverageStat,
+} from '@/lib/compositionAnalytics';
+import {
   buildMajorBuffsDebuffs,
   type RaidEffectAnalyticsRow,
   type RaidEffectStat,
@@ -131,6 +137,8 @@ interface TokenStat {
 
 type RaidEffectRow = RaidEffectAnalyticsRow;
 type WowSpellRow = WowSpellAnalyticsRow;
+type CompositionAbilityRow = CompositionAbilityAnalyticsRow;
+type CompositionAbilityMappingRow = CompositionAbilityMappingAnalyticsRow;
 
 type CommitmentFilter = 'all' | 'confirmed' | 'potential' | 'withdrawn';
 type RosterDecisionFilter = 'all' | 'undecided' | 'selected' | 'bench' | 'not_selected';
@@ -154,6 +162,8 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   const [validationFilter, setValidationFilter] = useState<ValidationFilter>('all');
   const [validationFilterTouched, setValidationFilterTouched] = useState(false);
   const [raidEffects, setRaidEffects] = useState<RaidEffectRow[]>([]);
+  const [compositionAbilities, setCompositionAbilities] = useState<CompositionAbilityRow[]>([]);
+  const [compositionMappings, setCompositionMappings] = useState<CompositionAbilityMappingRow[]>([]);
   const [wowSpells, setWowSpells] = useState<WowSpellRow[]>([]);
   const tokenNames: Record<TokenGroupId, string> = {
     dreadful: `${t.dashboard.tokenDreadful} (${t.dashboard.tokenCloth})`,
@@ -165,7 +175,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   useEffect(() => {
     let isActive = true;
 
-    const fetchRaidEffects = async () => {
+    const fetchCompositionMetadata = async () => {
       const { data: effectsData, error: effectsError } = await supabase
         .from('raid_effects')
         .select('class_id, spec_id, category, spell_id, sort_order')
@@ -178,13 +188,49 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
         console.error('Failed to fetch raid_effects:', effectsError);
         if (isActive) {
           setRaidEffects([]);
+          setCompositionAbilities([]);
+          setCompositionMappings([]);
           setWowSpells([]);
         }
         return;
       }
 
       const effects = (effectsData || []) as RaidEffectRow[];
-      const spellIds = Array.from(new Set(effects.map(effect => effect.spell_id)));
+      let abilities: CompositionAbilityRow[] = [];
+      let mappings: CompositionAbilityMappingRow[] = [];
+
+      const { data: abilityData, error: abilityError } = await supabase
+        .from('composition_abilities')
+        .select('id, ability_key, coverage_key, ability_kind, spell_id, cooldown_profile, cooldown_seconds, active, sort_order')
+        .eq('active', true)
+        .in('ability_kind', ['raid_utility', 'raid_defensive', 'external'])
+        .order('sort_order', { ascending: true, nullsFirst: false })
+        .order('ability_key', { ascending: true });
+
+      if (abilityError) {
+        console.error('Failed to fetch composition_abilities:', abilityError);
+      } else {
+        abilities = (abilityData || []) as CompositionAbilityRow[];
+      }
+
+      const abilityIds = abilities.map(ability => ability.id);
+      if (abilityIds.length > 0) {
+        const { data: mappingData, error: mappingError } = await supabase
+          .from('composition_ability_mappings')
+          .select('ability_id, class_id, spec_id, role, applies_to_main, applies_to_offspec_alt')
+          .in('ability_id', abilityIds);
+
+        if (mappingError) {
+          console.error('Failed to fetch composition_ability_mappings:', mappingError);
+        } else {
+          mappings = (mappingData || []) as CompositionAbilityMappingRow[];
+        }
+      }
+
+      const spellIds = Array.from(new Set([
+        ...effects.map(effect => effect.spell_id),
+        ...abilities.map(ability => ability.spell_id).filter((spellId): spellId is number => Number.isInteger(spellId)),
+      ]));
       let spells: WowSpellRow[] = [];
 
       if (spellIds.length > 0) {
@@ -202,11 +248,13 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
 
       if (isActive) {
         setRaidEffects(effects);
+        setCompositionAbilities(abilities);
+        setCompositionMappings(mappings);
         setWowSpells(spells);
       }
     };
 
-    fetchRaidEffects();
+    fetchCompositionMetadata();
 
     return () => {
       isActive = false;
@@ -412,8 +460,29 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   }, [filteredMembers, raidEffects, wowSpells, language, validationFilter, maxWishIndex, roleFilter, rangeFilter]);
 
   const showBuffsDebuffs = majorBuffsDebuffs.buffs.length > 0 || majorBuffsDebuffs.debuffs.length > 0;
+  const compositionCoverage = useMemo(() => {
+    return buildCompositionCoverage(
+      filteredMembers,
+      compositionAbilities,
+      compositionMappings,
+      wowSpells,
+      language,
+      wishMatchesFilters,
+    );
+  }, [
+    filteredMembers,
+    compositionAbilities,
+    compositionMappings,
+    wowSpells,
+    language,
+    validationFilter,
+    maxWishIndex,
+    roleFilter,
+    rangeFilter,
+  ]);
+  const showCompositionCoverage = compositionCoverage.length > 0;
 
-  const renderRaidEffectList = (title: string, stats: RaidEffectStat[]) => {
+  const renderCoverageList = (title: string, stats: (RaidEffectStat | CompositionCoverageStat)[]) => {
     const covered = stats.filter(stat => stat.count > 0).length;
     const allCovered = stats.length > 0 && covered === stats.length;
     const coverageTone = allCovered
@@ -438,8 +507,9 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
           <div className="space-y-1">
             {stats.map(stat => {
               const isCovered = stat.count > 0;
+              const statKey = 'coverageKey' in stat ? stat.coverageKey : stat.spellId;
               return (
-                <UITooltip key={stat.spellId} delayDuration={100}>
+                <UITooltip key={statKey} delayDuration={100}>
                   <TooltipTrigger asChild>
                     <div
                       className={`group flex min-h-8 items-center gap-2 rounded-md border px-2 py-1.5 text-xs transition-colors ${
@@ -1021,9 +1091,15 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
             <GlowCard surface="section" className="p-3 lg:col-span-3">
               <h4 className="text-sm font-medium mb-2">{t.dashboard.majorBuffsDebuffs}</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {renderRaidEffectList(t.dashboard.majorBuffs, majorBuffsDebuffs.buffs)}
-                {renderRaidEffectList(t.dashboard.majorDebuffs, majorBuffsDebuffs.debuffs)}
+                {renderCoverageList(t.dashboard.majorBuffs, majorBuffsDebuffs.buffs)}
+                {renderCoverageList(t.dashboard.majorDebuffs, majorBuffsDebuffs.debuffs)}
               </div>
+            </GlowCard>
+          )}
+
+          {showCompositionCoverage && (
+            <GlowCard surface="section" className="p-3 lg:col-span-3">
+              {renderCoverageList(t.dashboard.utilityDefensiveCoverage, compositionCoverage)}
             </GlowCard>
           )}
         </div>

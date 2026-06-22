@@ -418,6 +418,101 @@ export type Database = {
           },
         ]
       }
+      composition_abilities: {
+        Row: {
+          ability_key: string
+          ability_kind: string
+          active: boolean
+          cooldown_profile: string | null
+          cooldown_seconds: number | null
+          coverage_key: string
+          created_at: string
+          id: string
+          sort_order: number | null
+          source: string
+          source_label_fr: string | null
+          source_updated_at: string | null
+          source_url: string | null
+          spell_id: number | null
+          updated_at: string
+        }
+        Insert: {
+          ability_key: string
+          ability_kind: string
+          active?: boolean
+          cooldown_profile?: string | null
+          cooldown_seconds?: number | null
+          coverage_key: string
+          created_at?: string
+          id?: string
+          sort_order?: number | null
+          source?: string
+          source_label_fr?: string | null
+          source_updated_at?: string | null
+          source_url?: string | null
+          spell_id?: number | null
+          updated_at?: string
+        }
+        Update: {
+          ability_key?: string
+          ability_kind?: string
+          active?: boolean
+          cooldown_profile?: string | null
+          cooldown_seconds?: number | null
+          coverage_key?: string
+          created_at?: string
+          id?: string
+          sort_order?: number | null
+          source?: string
+          source_label_fr?: string | null
+          source_updated_at?: string | null
+          source_url?: string | null
+          spell_id?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      composition_ability_mappings: {
+        Row: {
+          ability_id: string
+          applies_to_main: boolean
+          applies_to_offspec_alt: boolean
+          class_id: string
+          id: string
+          notes: string | null
+          role: string | null
+          spec_id: string | null
+        }
+        Insert: {
+          ability_id: string
+          applies_to_main?: boolean
+          applies_to_offspec_alt?: boolean
+          class_id: string
+          id?: string
+          notes?: string | null
+          role?: string | null
+          spec_id?: string | null
+        }
+        Update: {
+          ability_id?: string
+          applies_to_main?: boolean
+          applies_to_offspec_alt?: boolean
+          class_id?: string
+          id?: string
+          notes?: string | null
+          role?: string | null
+          spec_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "composition_ability_mappings_ability_id_fkey"
+            columns: ["ability_id"]
+            isOneToOne: false
+            referencedRelation: "composition_abilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       external_member_wishes: {
         Row: {
           choice_index: number

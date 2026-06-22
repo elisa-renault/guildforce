@@ -674,6 +674,7 @@ export interface Translations {
     majorBuffsDebuffs: string;
     majorBuffs: string;
     majorDebuffs: string;
+    utilityDefensiveCoverage: string;
     allValidations: string;
     missingClasses: string;
     allClassesRepresented: string;

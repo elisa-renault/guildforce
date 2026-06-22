@@ -217,7 +217,23 @@ Deno.serve(async (req) => {
         );
       }
 
-      spellIds = Array.from(new Set((effectRows || []).map((row: { spell_id: number }) => row.spell_id)));
+      const { data: abilityRows, error: abilitiesError } = await supabase
+        .from('composition_abilities')
+        .select('spell_id');
+
+      if (abilitiesError) {
+        return new Response(
+          JSON.stringify({ error: 'Failed to fetch composition_abilities spell_ids' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      spellIds = Array.from(new Set([
+        ...(effectRows || []).map((row: { spell_id: number }) => row.spell_id),
+        ...(abilityRows || [])
+          .map((row: { spell_id: number | null }) => row.spell_id)
+          .filter((id: number | null): id is number => Number.isInteger(id)),
+      ]));
     }
 
     if (spellIds.length === 0) {

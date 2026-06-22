@@ -601,6 +601,7 @@ export const translationsZhTw: Translations = createLocaleTranslations(translati
     majorBuffsDebuffs: '主要增益／減益',
     majorBuffs: '主要增益',
     majorDebuffs: '主要減益',
+    utilityDefensiveCoverage: '功能／防禦覆蓋',
     allValidations: '所有審核狀態',
     missingClasses: '缺少職業',
     allClassesRepresented: '所有職業皆已涵蓋',

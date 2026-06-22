@@ -555,6 +555,7 @@ export const translationsRu: Translations = createLocaleTranslations(translation
     majorBuffsDebuffs: 'Ключевые бафы/дебафы',
     majorBuffs: 'Ключевые бафы',
     majorDebuffs: 'Ключевые дебафы',
+    utilityDefensiveCoverage: 'Покрытие утилити / защитных способностей',
     allValidations: 'Любой статус проверки',
     missingClasses: 'Отсутствующие классы',
     allClassesRepresented: 'Все классы представлены',

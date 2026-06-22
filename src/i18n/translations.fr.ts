@@ -601,6 +601,7 @@ export const translationsFr: Translations = {
       majorBuffsDebuffs: 'Buffs/Debuffs majeurs',
       majorBuffs: 'Buffs majeurs',
       majorDebuffs: 'Debuffs majeurs',
+      utilityDefensiveCoverage: 'Couverture utilitaire / défensive',
       allValidations: 'Toutes validations',
       missingClasses: 'Classes manquantes',
       allClassesRepresented: 'Toutes les classes sont représentées',
