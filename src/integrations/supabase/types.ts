@@ -2699,7 +2699,7 @@ export type Database = {
         }[]
       }
       get_roster_season_history: {
-        // Signature unchanged; the RPC body orders history rows by the event timestamp.
+        // Signature unchanged; the RPC wraps UNION output before ordering by event timestamp.
         Args: {
           p_roster_id: string
           p_season_id: string
