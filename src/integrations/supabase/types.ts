@@ -2665,6 +2665,7 @@ export type Database = {
           username: string
         }[]
       }
+      // Contract unchanged; implementation upserts against roster-scoped unique indexes.
       materialize_roster_season_members: {
         Args: { p_roster_id: string; p_season_id: string }
         Returns: number
