@@ -1,0 +1,15 @@
+ALTER TABLE public.wow_spells
+ADD COLUMN IF NOT EXISTS name_de text,
+ADD COLUMN IF NOT EXISTS description_de text,
+ADD COLUMN IF NOT EXISTS name_es text,
+ADD COLUMN IF NOT EXISTS description_es text,
+ADD COLUMN IF NOT EXISTS name_pt_br text,
+ADD COLUMN IF NOT EXISTS description_pt_br text,
+ADD COLUMN IF NOT EXISTS name_it text,
+ADD COLUMN IF NOT EXISTS description_it text,
+ADD COLUMN IF NOT EXISTS name_ru text,
+ADD COLUMN IF NOT EXISTS description_ru text,
+ADD COLUMN IF NOT EXISTS name_zh_tw text,
+ADD COLUMN IF NOT EXISTS description_zh_tw text,
+ADD COLUMN IF NOT EXISTS name_ko text,
+ADD COLUMN IF NOT EXISTS description_ko text;

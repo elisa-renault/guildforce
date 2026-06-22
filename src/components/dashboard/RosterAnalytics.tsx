@@ -29,8 +29,13 @@ import {
 } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { interpolateMessage } from '@/i18n/format';
-import { getBilingualContentLanguage } from '@/i18n/config';
 import { resolveSemanticMessage } from '@/i18n/semantic';
+import {
+  buildMajorBuffsDebuffs,
+  type RaidEffectAnalyticsRow,
+  type RaidEffectStat,
+  type WowSpellAnalyticsRow,
+} from '@/lib/raidEffectAnalytics';
 import {
   rangeColorValue,
   roleColorValue,
@@ -124,32 +129,8 @@ interface TokenStat {
   classes: { id: string; name: string; color: string }[];
 }
 
-interface RaidEffectStat {
-  spellId: number;
-  name: string;
-  description: string;
-  count: number;
-}
-
-interface RaidEffectRow {
-  class_id: string;
-  spec_id: string | null;
-  category: string;
-  spell_id: number;
-}
-
-interface WowSpellRow {
-  spell_id: number;
-  name_en: string | null;
-  description_en: string | null;
-  name_fr: string | null;
-  description_fr: string | null;
-}
-
-type RaidEffectWithText = RaidEffectRow & {
-  name: string;
-  description: string;
-};
+type RaidEffectRow = RaidEffectAnalyticsRow;
+type WowSpellRow = WowSpellAnalyticsRow;
 
 type CommitmentFilter = 'all' | 'confirmed' | 'potential' | 'withdrawn';
 type RosterDecisionFilter = 'all' | 'undecided' | 'selected' | 'bench' | 'not_selected';
@@ -178,7 +159,6 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   const [validationFilterTouched, setValidationFilterTouched] = useState(false);
   const [raidEffects, setRaidEffects] = useState<RaidEffectRow[]>([]);
   const [wowSpells, setWowSpells] = useState<WowSpellRow[]>([]);
-  const showBuffsDebuffs = false;
   const tokenNames: Record<TokenGroupId, string> = {
     dreadful: `${t.dashboard.tokenDreadful} (${t.dashboard.tokenCloth})`,
     mystic: `${t.dashboard.tokenMystic} (${t.dashboard.tokenLeather})`,
@@ -189,18 +169,14 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   useEffect(() => {
     let isActive = true;
 
-    if (!showBuffsDebuffs) {
-      setRaidEffects([]);
-      setWowSpells([]);
-      return () => {
-        isActive = false;
-      };
-    }
-
     const fetchRaidEffects = async () => {
       const { data: effectsData, error: effectsError } = await supabase
         .from('raid_effects')
-        .select('class_id, spec_id, category, spell_id');
+        .select('class_id, spec_id, category, spell_id, sort_order')
+        .eq('active', true)
+        .in('category', ['major_buff', 'major_debuff'])
+        .order('sort_order', { ascending: true, nullsFirst: false })
+        .order('spell_id', { ascending: true });
 
       if (effectsError) {
         console.error('Failed to fetch raid_effects:', effectsError);
@@ -218,7 +194,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
       if (spellIds.length > 0) {
         const { data: spellData, error: spellError } = await supabase
           .from('wow_spells')
-          .select('spell_id, name_en, description_en, name_fr, description_fr')
+          .select('spell_id, name_en, description_en, name_fr, description_fr, name_de, description_de, name_es, description_es, name_pt_br, description_pt_br, name_it, description_it, name_ru, description_ru, name_zh_tw, description_zh_tw, name_ko, description_ko')
           .in('spell_id', spellIds);
 
         if (spellError) {
@@ -239,7 +215,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     return () => {
       isActive = false;
     };
-  }, [showBuffsDebuffs]);
+  }, []);
 
   const maxWishIndex = wishScopeFilter === 'first_approved' ? 13 : Number(wishScopeFilter);
 
@@ -353,50 +329,6 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
 
     return filtered;
   }, [sourceMembers, commitmentFilter, rosterDecisionFilter, outcomeFilter]);
-
-  const spellMap = useMemo(() => {
-    const contentLanguage = getBilingualContentLanguage(language);
-    const map = new Map<number, { name: string; description: string }>();
-    wowSpells.forEach(spell => {
-      const nameByLanguage = {
-        en: spell.name_en,
-        fr: spell.name_fr,
-      };
-      const descriptionByLanguage = {
-        en: spell.description_en,
-        fr: spell.description_fr,
-      };
-      const name = nameByLanguage[contentLanguage];
-      const description = descriptionByLanguage[contentLanguage];
-      const fallbackName = spell.name_en || spell.name_fr || `Spell ${spell.spell_id}`;
-      map.set(spell.spell_id, {
-        name: name || fallbackName,
-        description: description || '',
-      });
-    });
-    return map;
-  }, [wowSpells, language]);
-
-  const raidEffectsWithText = useMemo<RaidEffectWithText[]>(() => {
-    return raidEffects.map(effect => {
-      const spell = spellMap.get(effect.spell_id);
-      return {
-        ...effect,
-        name: spell?.name || `Spell ${effect.spell_id}`,
-        description: spell?.description || '',
-      };
-    });
-  }, [raidEffects, spellMap]);
-
-  const raidEffectsByClass = useMemo(() => {
-    const map = new Map<string, RaidEffectWithText[]>();
-    raidEffectsWithText.forEach(effect => {
-      const existing = map.get(effect.class_id) || [];
-      existing.push(effect);
-      map.set(effect.class_id, existing);
-    });
-    return map;
-  }, [raidEffectsWithText]);
 
   // Check if spec matches role and range filters
   const specMatchesFilters = (specId: string): boolean => {
@@ -512,58 +444,84 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   const maxTokenTotal = Math.max(...tokenStats.map(stat => stat.total), 1);
 
   const majorBuffsDebuffs = useMemo(() => {
-    const buffs = new Map<number, RaidEffectStat>();
-    const debuffs = new Map<number, RaidEffectStat>();
+    return buildMajorBuffsDebuffs(
+      filteredMembers,
+      raidEffects,
+      wowSpells,
+      language,
+      wishMatchesFilters,
+    );
+  }, [filteredMembers, raidEffects, wowSpells, language, validationFilter, maxWishIndex, roleFilter, rangeFilter]);
 
-    raidEffectsWithText.forEach(effect => {
-      if (effect.category === 'major_buff' && !buffs.has(effect.spell_id)) {
-        buffs.set(effect.spell_id, {
-          spellId: effect.spell_id,
-          name: effect.name,
-          description: effect.description,
-          count: 0,
-        });
-      }
-      if (effect.category === 'major_debuff' && !debuffs.has(effect.spell_id)) {
-        debuffs.set(effect.spell_id, {
-          spellId: effect.spell_id,
-          name: effect.name,
-          description: effect.description,
-          count: 0,
-        });
-      }
-    });
+  const showBuffsDebuffs = majorBuffsDebuffs.buffs.length > 0 || majorBuffsDebuffs.debuffs.length > 0;
 
-    filteredMembers.forEach(member => {
-      member.wishes.forEach(wish => {
-        if (!wishMatchesFilters(member, wish)) return;
-        const entries = raidEffectsByClass.get(wish.class_id);
-        if (!entries) return;
+  const renderRaidEffectList = (title: string, stats: RaidEffectStat[]) => {
+    const covered = stats.filter(stat => stat.count > 0).length;
+    const allCovered = stats.length > 0 && covered === stats.length;
+    const coverageTone = allCovered
+      ? 'border-status-success/30 bg-status-success/10 text-status-success'
+      : covered > 0
+        ? 'border-status-warning/30 bg-status-warning/10 text-status-warning'
+        : 'border-status-error/25 bg-status-error/10 text-status-error';
 
-        entries.forEach(entry => {
-          if (entry.spec_id && !wish.spec_ids?.includes(entry.spec_id)) return;
-          if (entry.category === 'major_buff') {
-            const existing = buffs.get(entry.spell_id);
-            if (existing) existing.count += 1;
-          }
-          if (entry.category === 'major_debuff') {
-            const existing = debuffs.get(entry.spell_id);
-            if (existing) existing.count += 1;
-          }
-        });
-      });
-    });
-
-    const sortByCount = (a: RaidEffectStat, b: RaidEffectStat) => {
-      if (b.count !== a.count) return b.count - a.count;
-      return a.name.localeCompare(b.name);
-    };
-
-    return {
-      buffs: Array.from(buffs.values()).sort(sortByCount),
-      debuffs: Array.from(debuffs.values()).sort(sortByCount),
-    };
-  }, [filteredMembers, raidEffectsByClass, raidEffectsWithText, validationFilter, maxWishIndex, roleFilter, rangeFilter]);
+    return (
+      <div className="min-w-0 space-y-2">
+        <div className="flex min-h-6 items-center gap-2">
+          <h5 className="min-w-0 flex-1 truncate text-xs font-semibold text-muted-foreground">
+            {title}
+          </h5>
+          {stats.length > 0 && (
+            <span className={`shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold tabular-nums ${coverageTone}`}>
+              {covered}/{stats.length}
+            </span>
+          )}
+        </div>
+        {stats.length > 0 ? (
+          <div className="space-y-1">
+            {stats.map(stat => {
+              const isCovered = stat.count > 0;
+              return (
+                <UITooltip key={stat.spellId} delayDuration={100}>
+                  <TooltipTrigger asChild>
+                    <div
+                      className={`group flex min-h-8 items-center gap-2 rounded-md border px-2 py-1.5 text-xs transition-colors ${
+                        isCovered
+                          ? 'border-status-success/20 bg-status-success/5 hover:bg-status-success/10'
+                          : 'border-border/50 bg-muted/10 hover:border-status-error/30 hover:bg-status-error/5'
+                      }`}
+                    >
+                      {isCovered ? (
+                        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-status-success" />
+                      ) : (
+                        <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-status-error/80" />
+                      )}
+                      <span
+                        className={`flex h-5 min-w-7 shrink-0 items-center justify-center rounded border px-1.5 text-[11px] font-semibold tabular-nums ${
+                          isCovered
+                            ? 'border-status-success/30 bg-status-success/10 text-status-success'
+                            : 'border-status-error/25 bg-status-error/10 text-status-error'
+                        }`}
+                      >
+                        {stat.count}
+                      </span>
+                      <span className={`min-w-0 flex-1 truncate font-medium ${isCovered ? 'text-foreground' : 'text-muted-foreground'}`}>
+                        {stat.name}
+                      </span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent sideOffset={6} className="max-w-[260px]">
+                    <p className="text-xs">{stat.description}</p>
+                  </TooltipContent>
+                </UITooltip>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">{t.dashboard.noData}</p>
+        )}
+      </div>
+    );
+  };
 
   // Calculate spec distribution (all specs) based on filter
   const specStats = useMemo(() => {
@@ -1133,66 +1091,8 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
             <GlowCard surface="section" className="p-3 lg:col-span-3">
               <h4 className="text-sm font-medium mb-2">{t.dashboard.majorBuffsDebuffs}</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <h5 className="text-xs font-semibold text-muted-foreground mb-1">
-                    {t.dashboard.majorBuffs}
-                  </h5>
-                  {majorBuffsDebuffs.buffs.length > 0 ? (
-                    <div className="space-y-1">
-                      {majorBuffsDebuffs.buffs.map(buff => (
-                        <UITooltip key={buff.spellId} delayDuration={100}>
-                          <TooltipTrigger asChild>
-                            <div className="flex items-center gap-2 text-xs cursor-default">
-                              <span
-                                className={`w-5 text-right tabular-nums ${buff.count === 0 ? 'text-status-error' : 'text-muted-foreground'}`}
-                              >
-                                {buff.count}
-                              </span>
-                              <span className={`font-medium ${buff.count === 0 ? 'text-status-error' : ''}`}>
-                                {buff.name}
-                              </span>
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent sideOffset={6} className="max-w-[220px]">
-                            <p className="text-xs">{buff.description}</p>
-                          </TooltipContent>
-                        </UITooltip>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">{t.dashboard.noData}</p>
-                  )}
-                </div>
-                <div>
-                  <h5 className="text-xs font-semibold text-muted-foreground mb-1">
-                    {t.dashboard.majorDebuffs}
-                  </h5>
-                  {majorBuffsDebuffs.debuffs.length > 0 ? (
-                    <div className="space-y-1">
-                      {majorBuffsDebuffs.debuffs.map(debuff => (
-                        <UITooltip key={debuff.spellId} delayDuration={100}>
-                          <TooltipTrigger asChild>
-                            <div className="flex items-center gap-2 text-xs cursor-default">
-                              <span
-                                className={`w-5 text-right tabular-nums ${debuff.count === 0 ? 'text-status-error' : 'text-muted-foreground'}`}
-                              >
-                                {debuff.count}
-                              </span>
-                              <span className={`font-medium ${debuff.count === 0 ? 'text-status-error' : ''}`}>
-                                {debuff.name}
-                              </span>
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent sideOffset={6} className="max-w-[220px]">
-                            <p className="text-xs">{debuff.description}</p>
-                          </TooltipContent>
-                        </UITooltip>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">{t.dashboard.noData}</p>
-                  )}
-                </div>
+                {renderRaidEffectList(t.dashboard.majorBuffs, majorBuffsDebuffs.buffs)}
+                {renderRaidEffectList(t.dashboard.majorDebuffs, majorBuffsDebuffs.debuffs)}
               </div>
             </GlowCard>
           )}

@@ -140,8 +140,8 @@ const DOCUMENTATION: DocSection[] = [
       {
         titleEn: 'Spell/effect data sync',
         titleFr: 'Synchronisation des sorts/effets',
-        contentEn: 'Raid utility data uses `raid_effects` + `wow_spells`. The `sync-wow-spells` edge function fetches localized spell metadata (EN/FR) and updates cache entries used by roster analytics and composition tooling. Scheduled calls must provide `x-cron-secret` from `CRON_SECRET` or use service-role authorization.',
-        contentFr: 'Les données d\'utilité raid utilisent `raid_effects` + `wow_spells`. L\'edge function `sync-wow-spells` récupère les métadonnées localisées des sorts (EN/FR) et met à jour le cache utilisé par les analyses de roster et les outils de composition. Les appels planifiés doivent fournir `x-cron-secret` depuis `CRON_SECRET` ou utiliser une autorisation service-role.',
+        contentEn: 'Roster composition metadata is cached in `raid_effects`; active major buff/debuff rows are consumed by roster analytics. Canonical spell text stays in `wow_spells`, refreshed from Battle.net by the `sync-wow-spells` edge function for every supported app locale. Scheduled calls must provide `x-cron-secret` from `CRON_SECRET` or use service-role authorization.',
+        contentFr: 'Les métadonnées de composition de roster sont mises en cache dans `raid_effects` ; les lignes actives de buffs/debuffs majeurs sont consommées par les analyses de roster. Le texte canonique des sorts reste dans `wow_spells`, rafraîchi depuis Battle.net par l\'edge function `sync-wow-spells` pour chaque locale supportée par l’app. Les appels planifiés doivent fournir `x-cron-secret` depuis `CRON_SECRET` ou utiliser une autorisation service-role.',
         tags: ['battlenet', 'spells', 'raid'],
       },
     ],

@@ -1973,28 +1973,52 @@ export type Database = {
       }
       raid_effects: {
         Row: {
+          active: boolean
           category: string
           class_id: string
           created_at: string
+          effect_key: string | null
           id: number
+          sort_order: number | null
+          source: string
+          source_label_fr: string | null
+          source_updated_at: string | null
+          source_url: string | null
           spec_id: string | null
           spell_id: number
+          updated_at: string
         }
         Insert: {
+          active?: boolean
           category: string
           class_id: string
           created_at?: string
+          effect_key?: string | null
           id?: number
+          sort_order?: number | null
+          source?: string
+          source_label_fr?: string | null
+          source_updated_at?: string | null
+          source_url?: string | null
           spec_id?: string | null
           spell_id: number
+          updated_at?: string
         }
         Update: {
+          active?: boolean
           category?: string
           class_id?: string
           created_at?: string
+          effect_key?: string | null
           id?: number
+          sort_order?: number | null
+          source?: string
+          source_label_fr?: string | null
+          source_updated_at?: string | null
+          source_url?: string | null
           spec_id?: string | null
           spell_id?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -2505,26 +2529,68 @@ export type Database = {
       }
       wow_spells: {
         Row: {
+          description_de: string | null
           description_en: string | null
+          description_es: string | null
           description_fr: string | null
+          description_it: string | null
+          description_ko: string | null
+          description_pt_br: string | null
+          description_ru: string | null
+          description_zh_tw: string | null
+          name_de: string | null
           name_en: string | null
+          name_es: string | null
           name_fr: string | null
+          name_it: string | null
+          name_ko: string | null
+          name_pt_br: string | null
+          name_ru: string | null
+          name_zh_tw: string | null
           spell_id: number
           updated_at: string
         }
         Insert: {
+          description_de?: string | null
           description_en?: string | null
+          description_es?: string | null
           description_fr?: string | null
+          description_it?: string | null
+          description_ko?: string | null
+          description_pt_br?: string | null
+          description_ru?: string | null
+          description_zh_tw?: string | null
+          name_de?: string | null
           name_en?: string | null
+          name_es?: string | null
           name_fr?: string | null
+          name_it?: string | null
+          name_ko?: string | null
+          name_pt_br?: string | null
+          name_ru?: string | null
+          name_zh_tw?: string | null
           spell_id: number
           updated_at?: string
         }
         Update: {
+          description_de?: string | null
           description_en?: string | null
+          description_es?: string | null
           description_fr?: string | null
+          description_it?: string | null
+          description_ko?: string | null
+          description_pt_br?: string | null
+          description_ru?: string | null
+          description_zh_tw?: string | null
+          name_de?: string | null
           name_en?: string | null
+          name_es?: string | null
           name_fr?: string | null
+          name_it?: string | null
+          name_ko?: string | null
+          name_pt_br?: string | null
+          name_ru?: string | null
+          name_zh_tw?: string | null
           spell_id?: number
           updated_at?: string
         }

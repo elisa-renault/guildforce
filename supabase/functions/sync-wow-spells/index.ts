@@ -12,19 +12,41 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 const BATTLENET_OAUTH_URL = 'https://oauth.battle.net';
 
-type BattleNetRegion = 'eu' | 'us';
+type BattleNetRegion = 'eu' | 'us' | 'kr' | 'tw';
 
 const BATTLENET_API_URLS: Record<BattleNetRegion, string> = {
   eu: 'https://eu.api.blizzard.com',
   us: 'https://us.api.blizzard.com',
+  kr: 'https://kr.api.blizzard.com',
+  tw: 'https://tw.api.blizzard.com',
 };
+
+type LocaleTextKey =
+  | 'name_en'
+  | 'description_en'
+  | 'name_fr'
+  | 'description_fr'
+  | 'name_de'
+  | 'description_de'
+  | 'name_es'
+  | 'description_es'
+  | 'name_pt_br'
+  | 'description_pt_br'
+  | 'name_it'
+  | 'description_it'
+  | 'name_ru'
+  | 'description_ru'
+  | 'name_zh_tw'
+  | 'description_zh_tw'
+  | 'name_ko'
+  | 'description_ko';
 
 type LocaleConfig = {
   locale: string;
   region: BattleNetRegion;
   namespace: string;
-  nameKey: 'name_en' | 'name_fr';
-  descriptionKey: 'description_en' | 'description_fr';
+  nameKey: LocaleTextKey;
+  descriptionKey: LocaleTextKey;
 };
 
 const localeConfigs: LocaleConfig[] = [
@@ -41,6 +63,55 @@ const localeConfigs: LocaleConfig[] = [
     namespace: 'static-eu',
     nameKey: 'name_fr',
     descriptionKey: 'description_fr',
+  },
+  {
+    locale: 'de_DE',
+    region: 'eu',
+    namespace: 'static-eu',
+    nameKey: 'name_de',
+    descriptionKey: 'description_de',
+  },
+  {
+    locale: 'es_ES',
+    region: 'eu',
+    namespace: 'static-eu',
+    nameKey: 'name_es',
+    descriptionKey: 'description_es',
+  },
+  {
+    locale: 'pt_BR',
+    region: 'us',
+    namespace: 'static-us',
+    nameKey: 'name_pt_br',
+    descriptionKey: 'description_pt_br',
+  },
+  {
+    locale: 'it_IT',
+    region: 'eu',
+    namespace: 'static-eu',
+    nameKey: 'name_it',
+    descriptionKey: 'description_it',
+  },
+  {
+    locale: 'ru_RU',
+    region: 'eu',
+    namespace: 'static-eu',
+    nameKey: 'name_ru',
+    descriptionKey: 'description_ru',
+  },
+  {
+    locale: 'zh_TW',
+    region: 'tw',
+    namespace: 'static-tw',
+    nameKey: 'name_zh_tw',
+    descriptionKey: 'description_zh_tw',
+  },
+  {
+    locale: 'ko_KR',
+    region: 'kr',
+    namespace: 'static-kr',
+    nameKey: 'name_ko',
+    descriptionKey: 'description_ko',
   },
 ];
 
