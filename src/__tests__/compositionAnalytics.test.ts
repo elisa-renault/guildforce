@@ -116,6 +116,39 @@ describe('composition analytics', () => {
     expect(result[0].count).toBe(1);
   });
 
+  it('combines bloodlust-equivalent abilities from different classes under one coverage key', () => {
+    const abilities = [
+      createAbility({ id: 'a1', ability_key: 'bloodlust', coverage_key: 'bloodlust', spell_id: 2825, sort_order: 1 }),
+      createAbility({ id: 'a2', ability_key: 'time_warp', coverage_key: 'bloodlust', spell_id: 80353, sort_order: 2 }),
+      createAbility({ id: 'a3', ability_key: 'primal_rage', coverage_key: 'bloodlust', spell_id: 264667, sort_order: 3 }),
+      createAbility({ id: 'a4', ability_key: 'fury_of_the_aspects', coverage_key: 'bloodlust', spell_id: 390386, sort_order: 4 }),
+    ];
+    const mappings = [
+      createMapping({ ability_id: 'a1', class_id: 'shaman' }),
+      createMapping({ ability_id: 'a2', class_id: 'mage' }),
+      createMapping({ ability_id: 'a3', class_id: 'hunter' }),
+      createMapping({ ability_id: 'a4', class_id: 'evoker' }),
+    ];
+    const members: CompositionMemberInput<TestWish>[] = [
+      { wishes: [{ class_id: 'mage', spec_ids: ['mage-arcane'] }] },
+      { wishes: [{ class_id: 'hunter', spec_ids: ['hunter-beast-mastery'] }] },
+      { wishes: [{ class_id: 'evoker', spec_ids: ['evoker-preservation'] }] },
+    ];
+    const spells = [
+      createSpell({ spell_id: 2825, name_en: 'Bloodlust', name_fr: 'Furie sanguinaire' }),
+      createSpell({ spell_id: 80353, name_en: 'Time Warp', name_fr: 'Distorsion temporelle' }),
+    ];
+
+    const result = buildCompositionCoverage(members, abilities, mappings, spells, 'fr', alwaysMatch);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      coverageKey: 'bloodlust',
+      name: 'Furie sanguinaire',
+      count: 3,
+    });
+  });
+
   it('omits inactive catalog rows and empty catalog data', () => {
     const inactive = [createAbility({ id: 'a1', ability_key: 'bloodlust', active: false })];
     const mappings = [createMapping({ ability_id: 'a1', class_id: 'shaman' })];
