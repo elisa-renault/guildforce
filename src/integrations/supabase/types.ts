@@ -2665,6 +2665,11 @@ export type Database = {
           username: string
         }[]
       }
+      // Compatibility shim after roster member assignments were retired.
+      seed_roster_assignments_from_first_approved_wish: {
+        Args: { p_roster_id: string; p_season_id: string }
+        Returns: number
+      }
       // Contract unchanged; implementation upserts against roster-scoped unique indexes.
       materialize_roster_season_members: {
         Args: { p_roster_id: string; p_season_id: string }
