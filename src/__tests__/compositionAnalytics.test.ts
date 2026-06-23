@@ -195,6 +195,42 @@ describe('composition analytics', () => {
     });
   });
 
+  it('keeps distinct single-spell rows and their spell descriptions when coverage keys differ', () => {
+    const abilities = [
+      createAbility({ id: 'a1', ability_key: 'death_grip', coverage_key: 'death_grip', spell_id: 49576, sort_order: 1 }),
+      createAbility({ id: 'a2', ability_key: 'anti_magic_zone', coverage_key: 'anti_magic_zone', spell_id: 51052, sort_order: 2 }),
+    ];
+    const mappings = [
+      createMapping({ ability_id: 'a1', class_id: 'death-knight' }),
+      createMapping({ ability_id: 'a2', class_id: 'death-knight' }),
+    ];
+    const members: CompositionMemberInput<TestWish>[] = [
+      { wishes: [{ class_id: 'death-knight' }] },
+    ];
+    const spells = [
+      createSpell({
+        spell_id: 49576,
+        name_en: 'Death Grip',
+        description_en: 'Harnesses the unholy energy that surrounds and binds all matter.',
+      }),
+      createSpell({
+        spell_id: 51052,
+        name_en: 'Anti-Magic Zone',
+        description_en: 'Places an Anti-Magic Zone for 8 sec.',
+      }),
+    ];
+
+    const result = buildCompositionCoverage(members, abilities, mappings, spells, 'en', alwaysMatch);
+
+    expect(result).toHaveLength(2);
+    expect(result.map(stat => stat.name)).toEqual(['Death Grip', 'Anti-Magic Zone']);
+    expect(result.map(stat => stat.description)).toEqual([
+      'Harnesses the unholy energy that surrounds and binds all matter.',
+      'Places an Anti-Magic Zone for 8 sec.',
+    ]);
+    expect(result.map(stat => stat.spellNames)).toEqual([['Death Grip'], ['Anti-Magic Zone']]);
+  });
+
   it('omits inactive catalog rows and empty catalog data', () => {
     const inactive = [createAbility({ id: 'a1', ability_key: 'bloodlust', active: false })];
     const mappings = [createMapping({ ability_id: 'a1', class_id: 'shaman' })];
