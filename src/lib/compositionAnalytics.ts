@@ -3,6 +3,7 @@ import type { Language } from '@/i18n/config';
 import {
   mergeEquivalentCoverageSpellEntries,
   type CoverageSpellEntry,
+  type RaidEffectStat,
   resolveWowSpellText,
   type WowSpellAnalyticsRow,
 } from '@/lib/raidEffectAnalytics';
@@ -56,11 +57,123 @@ export interface CompositionCoverageStat {
   sortOrder: number;
 }
 
+export type CompositionCoverageDisplayStat = RaidEffectStat | CompositionCoverageStat;
+
+export interface CompositionCoverageSections {
+  majorBuffs: CompositionCoverageDisplayStat[];
+  majorDebuffs: CompositionCoverageDisplayStat[];
+  raidEnhancements: CompositionCoverageDisplayStat[];
+  enemyWeakening: CompositionCoverageDisplayStat[];
+}
+
 const defaultCoverageKinds = new Set<string>(['raid_utility', 'raid_defensive', 'external']);
+const raidEnhancementCoverageKeys = [
+  'external_defensives',
+  'raid_defensives',
+  'power_infusion',
+  'mass_dispel',
+  'burst_move_speed',
+  'demonic_gateway',
+  'ally_freedom_and_mobility',
+  'threat_redirection',
+  'innervate',
+  'immunity',
+  'cheat_death',
+] as const;
+const enemyWeakeningCoverageKeys = [
+  'aoe_stuns',
+  'aoe_roots',
+  'aoe_slows',
+  'knockbacks',
+  'knockups',
+  'death_grip',
+  'enemy_grips_and_grouping',
+  'interrupts',
+  'silences_and_anti_cast',
+  'mortal_strike',
+  'purge',
+  'soothe',
+  'execute_damage',
+  'extra_damage_to_shields',
+  'warlock_curses',
+] as const;
+const warlockCurseAbilityKeys = new Set([
+  'curse_of_tongues_warlock_utility',
+  'curse_of_weakness_warlock_utility',
+  'curse_of_weakness_attack_speed',
+  'curse_of_tongues_cast_speed',
+]);
+const externalDefensiveAbilityKeys = new Set([
+  'ironbark_external_defensive',
+  'life_cocoon_external_defensive',
+  'time_dilation_external_defensive',
+  'pain_suppression_external_defensive',
+  'guardian_spirit_external_defensive',
+  'blessing_of_sacrifice_external_defensive',
+  'blessing_of_protection',
+  'blessing_of_spellwarding',
+  'intervene_external_defensive',
+]);
+const raidDefensiveAbilityKeys = new Set([
+  'anti_magic_zone',
+  'rallying_cry',
+  'darkness',
+  'zephyr_raid_defensive',
+  'aegis_of_light_raid_defensive',
+]);
+const knockbackAbilityKeys = new Set([
+  'typhoon_knock',
+  'thunderstorm_knock',
+  'ring_of_peace_knock',
+  'wing_buffet_knock',
+]);
+const knockupAbilityKeys = new Set([
+  'tail_swipe_knock',
+  'thundershock_knockup',
+]);
+const aoeStunAbilityKeys = new Set([
+  'chaos_nova_aoe_stun',
+  'void_nova_aoe_stun',
+  'leg_sweep_aoe_stun',
+  'capacitor_totem_aoe_stun',
+  'shadowfury_aoe_stun',
+  'binding_shot_aoe_stun',
+  'shockwave_aoe_stun',
+]);
+const aoeRootAbilityKeys = new Set([
+  'mass_entanglement_aoe_root',
+  'entangling_vortex_aoe_root',
+  'landslide_aoe_root',
+  'frost_nova_aoe_root',
+  'void_tendrils_aoe_root',
+  'earthgrab_totem_aoe_root',
+]);
+const aoeSlowAbilityKeys = new Set([
+  'sigil_of_chains_aoe_slow',
+  'wave_of_debilitation_aoe_slow',
+  'typhoon_aoe_slow',
+  'ursols_vortex_aoe_slow',
+  'tail_swipe_aoe_slow',
+  'wing_buffet_aoe_slow',
+  'tar_trap_aoe_slow',
+  'earthbind_totem_aoe_slow',
+  'earthgrab_totem_aoe_slow',
+  'thunderstorm_aoe_slow',
+  'piercing_howl_aoe_slow',
+  'boneshaker_aoe_slow',
+]);
+const groupMobilityAbilityKeys = new Set([
+  'stampeding_roar',
+  'wind_rush_totem',
+  'zephyr',
+]);
+const deprecatedCompositionAbilityKeys = new Set([
+  'storm_bolts_aoe_stun',
+]);
 
 export interface BuildCompositionCoverageOptions {
   coverageKinds?: Iterable<string>;
-  coverageLabels?: Partial<Record<string, string>>;
+  coverageLabels?: Partial<Record<string, string | { singular: string; plural: string }>>;
 }
 
 const getProviderKey = (classId: string, specId: string | null): string => `${classId}:${specId ?? ''}`;
@@ -84,6 +197,99 @@ const resolveAbilityText = (
   return resolveWowSpellText(spellsById.get(ability.spell_id), ability.spell_id, language);
 };
 
+const normalizeCoverageKey = (ability: CompositionAbilityAnalyticsRow): string => {
+  if (groupMobilityAbilityKeys.has(ability.ability_key)) return 'burst_move_speed';
+  if (warlockCurseAbilityKeys.has(ability.ability_key)) return 'warlock_curses';
+  if (externalDefensiveAbilityKeys.has(ability.ability_key)) return 'external_defensives';
+  if (raidDefensiveAbilityKeys.has(ability.ability_key)) return 'raid_defensives';
+  if (knockbackAbilityKeys.has(ability.ability_key)) return 'knockbacks';
+  if (knockupAbilityKeys.has(ability.ability_key)) return 'knockups';
+  if (aoeStunAbilityKeys.has(ability.ability_key)) return 'aoe_stuns';
+  if (aoeRootAbilityKeys.has(ability.ability_key)) return 'aoe_roots';
+  if (aoeSlowAbilityKeys.has(ability.ability_key)) return 'aoe_slows';
+  return ability.coverage_key;
+};
+
+const resolveCoverageLabel = (
+  label: string | { singular: string; plural: string } | undefined,
+  count: number,
+): string | undefined => {
+  if (!label) return undefined;
+  if (typeof label === 'string') return label;
+  return count > 1 ? label.plural : label.singular;
+};
+
+const getCoverageKey = (stat: CompositionCoverageDisplayStat): string | null => (
+  'coverageKey' in stat && stat.coverageKey ? stat.coverageKey : null
+);
+
+const getSpellIds = (stat: CompositionCoverageDisplayStat): number[] => {
+  const spellIds = new Set<number>();
+  if ('spellId' in stat && Number.isInteger(stat.spellId) && stat.spellId > 0) {
+    spellIds.add(stat.spellId);
+  }
+  stat.spellEntries.forEach((entry) => {
+    if (Number.isInteger(entry.spellId) && entry.spellId > 0) {
+      spellIds.add(entry.spellId);
+    }
+  });
+  return Array.from(spellIds);
+};
+
+const sortByCoverageKeyOrder = <Stat extends CompositionCoverageDisplayStat>(
+  stats: Stat[],
+  orderedKeys: readonly string[],
+): Stat[] => {
+  const order = new Map(orderedKeys.map((key, index) => [key, index]));
+
+  return [...stats].sort((a, b) => {
+    const aOrder = order.get(getCoverageKey(a) ?? '') ?? Number.MAX_SAFE_INTEGER;
+    const bOrder = order.get(getCoverageKey(b) ?? '') ?? Number.MAX_SAFE_INTEGER;
+    if (aOrder !== bOrder) return aOrder - bOrder;
+    if (b.count !== a.count) return b.count - a.count;
+    if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
+    return a.name.localeCompare(b.name);
+  });
+};
+
+export const buildCompositionCoverageSections = (
+  majorBuffsDebuffs: { buffs: RaidEffectStat[]; debuffs: RaidEffectStat[] },
+  compositionCoverage: CompositionCoverageStat[],
+): CompositionCoverageSections => {
+  const majorSpellIds = new Set([
+    ...majorBuffsDebuffs.buffs.flatMap(getSpellIds),
+    ...majorBuffsDebuffs.debuffs.flatMap(getSpellIds),
+  ]);
+  const visibleCompositionCoverage = compositionCoverage.filter((stat) => {
+    if (stat.coverageKey === 'combat_res') return true;
+    return !getSpellIds(stat).some(spellId => majorSpellIds.has(spellId));
+  });
+  const compositionByCoverageKey = new Map(
+    visibleCompositionCoverage.map(stat => [stat.coverageKey, stat]),
+  );
+  const pickCompositionStats = (coverageKeys: readonly string[]) =>
+    coverageKeys
+      .map(coverageKey => compositionByCoverageKey.get(coverageKey))
+      .filter((stat): stat is CompositionCoverageStat => Boolean(stat));
+
+  const combatRes = compositionByCoverageKey.get('combat_res');
+
+  return {
+    majorBuffs: combatRes
+      ? [...majorBuffsDebuffs.buffs, combatRes]
+      : majorBuffsDebuffs.buffs,
+    majorDebuffs: majorBuffsDebuffs.debuffs,
+    raidEnhancements: sortByCoverageKeyOrder(
+      pickCompositionStats(raidEnhancementCoverageKeys),
+      raidEnhancementCoverageKeys,
+    ),
+    enemyWeakening: sortByCoverageKeyOrder(
+      pickCompositionStats(enemyWeakeningCoverageKeys),
+      enemyWeakeningCoverageKeys,
+    ),
+  };
+};
+
 export const buildCompositionCoverage = <
   Wish extends CompositionWishInput,
   Member extends CompositionMemberInput<Wish>,
@@ -100,9 +306,13 @@ export const buildCompositionCoverage = <
   const coverageLabels = options.coverageLabels ?? {};
   const kindSet = new Set(coverageKinds);
   const spellsById = new Map(spells.map(spell => [spell.spell_id, spell]));
-  const activeAbilities = abilities.filter(
-    ability => ability.active && kindSet.has(ability.ability_kind),
-  );
+  const activeAbilities = abilities
+    .filter(ability => (
+      ability.active
+      && kindSet.has(ability.ability_kind)
+      && !deprecatedCompositionAbilityKeys.has(ability.ability_key)
+    ))
+    .map(ability => ({ ...ability, coverage_key: normalizeCoverageKey(ability) }));
   if (activeAbilities.length === 0) return [];
 
   const abilitiesById = new Map(activeAbilities.map(ability => [ability.id, ability]));
@@ -140,7 +350,7 @@ export const buildCompositionCoverage = <
         coverageKey: ability.coverage_key,
         abilityKind: ability.ability_kind,
         spellId: ability.spell_id,
-        name: coverageLabels[ability.coverage_key] ?? text.name,
+        name: resolveCoverageLabel(coverageLabels[ability.coverage_key], 0) ?? text.name,
         description: text.description,
         spellNames: [],
         spellEntries: [],
@@ -153,7 +363,7 @@ export const buildCompositionCoverage = <
     if (sortOrder < existing.sortOrder) {
       existing.abilityKind = ability.ability_kind;
       existing.spellId = ability.spell_id;
-      existing.name = coverageLabels[ability.coverage_key] ?? text.name;
+      existing.name = resolveCoverageLabel(coverageLabels[ability.coverage_key], 0) ?? text.name;
       existing.description = text.description;
       existing.sortOrder = sortOrder;
     }
@@ -219,6 +429,8 @@ export const buildCompositionCoverage = <
   });
 
   stats.forEach((stat) => {
+    stat.name = resolveCoverageLabel(coverageLabels[stat.coverageKey], stat.count) ?? stat.name;
+
     const spellEntries = (spellEntriesByCoverage.get(stat.coverageKey) ?? [])
       .sort((a, b) => {
         if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;

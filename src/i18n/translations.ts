@@ -11,6 +11,11 @@ import type { translationsRu } from './translations.ru';
 import type { translationsZhTw } from './translations.zh-TW';
 export type { Language } from './config';
 
+export interface PluralLabel {
+  singular: string;
+  plural: string;
+}
+
 export interface Translations {
   // Common
   common: {
@@ -674,14 +679,31 @@ export interface Translations {
     majorBuffsDebuffs: string;
     majorBuffs: string;
     majorDebuffs: string;
+    raidEnhancements: string;
+    enemyWeakening: string;
     utilityDefensiveCoverage: string;
     compositionCoverageLabels: {
-      combatResurrection: string;
-      immunities: string;
-      burstMoveSpeed: string;
-      knockUpBack: string;
-      extraDamageToShields: string;
-      cheatDeath: string;
+      combatResurrection: PluralLabel;
+      immunities: PluralLabel;
+      burstMoveSpeed: PluralLabel;
+      knockbacks: PluralLabel;
+      knockups: PluralLabel;
+      extraDamageToShields: PluralLabel;
+      executeDamage: PluralLabel;
+      disenrage: PluralLabel;
+      warlockCurses: PluralLabel;
+      healingReduction: PluralLabel;
+      cheatDeath: PluralLabel;
+      externalDefensives: PluralLabel;
+      raidDefensives: PluralLabel;
+      aoeStuns: PluralLabel;
+      aoeRoots: PluralLabel;
+      aoeSlows: PluralLabel;
+      enemyGripsAndGrouping: PluralLabel;
+      threatRedirection: PluralLabel;
+      silencesAndAntiCast: PluralLabel;
+      allyFreedomAndMobility: PluralLabel;
+      interrupts: PluralLabel;
     };
     allValidations: string;
     missingClasses: string;

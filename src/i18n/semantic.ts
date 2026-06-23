@@ -391,7 +391,7 @@ const EN_SEMANTIC_MESSAGES = {
   'settings.guild_battlenet.note': 'If Blizzard returns "Not Found", the guild may have been renamed or disbanded. Use "Guild renamed" to reconcile without losing data.',
   'dashboard.roster_filters.wishes_title': 'Wishes',
   'dashboard.roster_filters.wishes_suffix': 'wishes',
-  'dashboard.roster_filters.roles_title': 'Roles',
+  'dashboard.roster_filters.roles_title': 'Rôles',
   'dashboard.roster_filters.classes_title': 'Classes',
   'dashboard.roster_filters.active_label': 'Active:',
   'dashboard.roster_filters.clear_all': 'Clear all',

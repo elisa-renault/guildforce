@@ -38,7 +38,7 @@ const roleConfig: Record<Role, { icon: typeof Shield; color: string }> = {
 const validationConfig: Record<ValidationStatus, { icon: typeof Clock; color: string; bgColor: string }> = {
   pending: { icon: Clock, color: 'text-status-warning', bgColor: 'bg-status-warning/10' },
   approved: { icon: CheckCircle2, color: 'text-status-success', bgColor: 'bg-status-success/10' },
-  rejected: { icon: XCircle, color: 'text-status-error', bgColor: 'bg-status-error/10' },
+  rejected: { icon: XCircle, color: 'text-muted-foreground', bgColor: 'bg-muted/25' },
 };
 
 const commitmentConfig: Record<CommitmentFilter, { icon: typeof UserCheck; color: string; labelKey: 'confirmed' | 'undecided' | 'withdrawn' }> = {
@@ -455,7 +455,8 @@ export const RosterFilters = ({ filters, onFiltersChange, sortSummary, actions }
                                   onClick={() => toggleValidation(status)}
                                 >
                                   <Icon className="h-4 w-4" />
-                                  {t.wishes.validation[status]}
+                                  <span className="min-w-0 flex-1 truncate text-left">{t.wishes.validation[status]}</span>
+                                  {isSelected && <Check className="h-3.5 w-3.5 shrink-0" />}
                                 </Button>
                               );
                             })}
@@ -848,11 +849,9 @@ export const RosterFilters = ({ filters, onFiltersChange, sortSummary, actions }
                           isSelected ? "bg-primary/20" : "hover:bg-primary/10"
                         )}
                       >
-                        <div className={cn("w-4 h-4 flex items-center justify-center", isSelected && "text-primary")}>
-                          {isSelected && <Check className="h-3.5 w-3.5" />}
-                        </div>
                         <Icon className={cn("h-4 w-4", config.color)} />
-                        <span className={config.color}>{t.wishes.validation[status]}</span>
+                        <span className={cn("flex-1", config.color)}>{t.wishes.validation[status]}</span>
+                        {isSelected && <Check className="h-3.5 w-3.5 shrink-0 text-primary" />}
                       </button>
                     );
                   })}

@@ -1,4 +1,19 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { Shield, Heart, Sword, Swords, Crosshair, AlertTriangle, Users, Filter, CheckCircle2, Clock, XCircle, UserCheck, UserMinus, UserX, Armchair, Hash, Check, ChevronDown, Target } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+
+import { GlowCard } from '@/components/GlowCard';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { FilterBar, activeFilterControlClassName, filterControlClassName } from '@/components/ui/filter-controls';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Separator } from '@/components/ui/separator';
+import {
+  Tooltip as UITooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
   wowClasses,
@@ -9,41 +24,18 @@ import {
   Role,
   RangeType,
 } from '@/data/wowClasses';
-import { MemberWish } from '@/types/guild';
-import { GlowCard } from '@/components/GlowCard';
-import { Badge } from '@/components/ui/badge';
-import { Shield, Heart, Sword, Swords, Crosshair, AlertTriangle, Users, Filter, CheckCircle2 } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Tooltip as UITooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { supabase } from '@/integrations/supabase/client';
 import { interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
+import { supabase } from '@/integrations/supabase/client';
 import {
   buildCompositionCoverage,
+  buildCompositionCoverageSections,
   type CompositionAbilityAnalyticsRow,
   type CompositionAbilityMappingAnalyticsRow,
   type CompositionCoverageStat,
 } from '@/lib/compositionAnalytics';
 import {
-  buildMajorBuffsDebuffs,
-  type CoverageSpellEntry,
-  type RaidEffectAnalyticsRow,
-  type RaidEffectStat,
-  type WowSpellAnalyticsRow,
-} from '@/lib/raidEffectAnalytics';
-import {
+  commitmentTextClass,
   rangeColorValue,
   roleColorValue,
   tierTokenColorValue,
@@ -51,6 +43,15 @@ import {
   type TierTokenGroupId,
   wowClassColorValue,
 } from '@/lib/design-tokens';
+import {
+  buildMajorBuffsDebuffs,
+  type CoverageSpellEntry,
+  type RaidEffectAnalyticsRow,
+  type RaidEffectStat,
+  type WowSpellAnalyticsRow,
+} from '@/lib/raidEffectAnalytics';
+import { cn } from '@/lib/utils';
+import { MemberWish } from '@/types/guild';
 
 const resolveClassColor = (classToken: string): string =>
   wowClassColorValue(classToken.replace(/^class-/, ''));
@@ -147,6 +148,14 @@ type RoleFilter = 'all' | 'tank' | 'healer' | 'dps';
 type RangeFilter = 'all' | 'melee' | 'ranged';
 type ValidationFilter = 'all' | 'pending' | 'approved' | 'rejected';
 type WishScopeFilter = 'first_approved' | '1' | '2' | '3' | '4' | '5' | '6' | '13';
+type AnalyticsFilterIcon = typeof Filter;
+type AnalyticsFilterOption<Value extends string> = {
+  value: Value;
+  label: string;
+  icon: AnalyticsFilterIcon;
+  colorClass: string;
+  labelColorClass?: string;
+};
 
 export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   const { t, language } = useLanguage();
@@ -162,6 +171,9 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   const [rangeFilter, setRangeFilter] = useState<RangeFilter>('all');
   const [validationFilter, setValidationFilter] = useState<ValidationFilter>('all');
   const [validationFilterTouched, setValidationFilterTouched] = useState(false);
+  const [playersOpen, setPlayersOpen] = useState(false);
+  const [wishesOpen, setWishesOpen] = useState(false);
+  const [specsOpen, setSpecsOpen] = useState(false);
   const [raidEffects, setRaidEffects] = useState<RaidEffectRow[]>([]);
   const [compositionAbilities, setCompositionAbilities] = useState<CompositionAbilityRow[]>([]);
   const [compositionMappings, setCompositionMappings] = useState<CompositionAbilityMappingRow[]>([]);
@@ -204,7 +216,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
         .from('composition_abilities')
         .select('id, ability_key, coverage_key, ability_kind, spell_id, cooldown_profile, cooldown_seconds, active, sort_order')
         .eq('active', true)
-        .in('ability_kind', ['raid_utility', 'raid_defensive', 'external'])
+        .in('ability_kind', ['raid_utility', 'raid_defensive', 'external', 'raid_buff', 'raid_debuff'])
         .order('sort_order', { ascending: true, nullsFirst: false })
         .order('ability_key', { ascending: true });
 
@@ -460,21 +472,50 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     );
   }, [filteredMembers, raidEffects, wowSpells, language, validationFilter, maxWishIndex, roleFilter, rangeFilter]);
 
-  const showBuffsDebuffs = majorBuffsDebuffs.buffs.length > 0 || majorBuffsDebuffs.debuffs.length > 0;
   const compositionCoverageLabels = useMemo(() => ({
     combat_res: t.dashboard.compositionCoverageLabels.combatResurrection,
     immunity: t.dashboard.compositionCoverageLabels.immunities,
     burst_move_speed: t.dashboard.compositionCoverageLabels.burstMoveSpeed,
-    knock_up_back: t.dashboard.compositionCoverageLabels.knockUpBack,
+    knockbacks: t.dashboard.compositionCoverageLabels.knockbacks,
+    knockups: t.dashboard.compositionCoverageLabels.knockups,
     extra_damage_to_shields: t.dashboard.compositionCoverageLabels.extraDamageToShields,
+    execute_damage: t.dashboard.compositionCoverageLabels.executeDamage,
+    soothe: t.dashboard.compositionCoverageLabels.disenrage,
+    warlock_curses: t.dashboard.compositionCoverageLabels.warlockCurses,
+    mortal_strike: t.dashboard.compositionCoverageLabels.healingReduction,
     cheat_death: t.dashboard.compositionCoverageLabels.cheatDeath,
+    external_defensives: t.dashboard.compositionCoverageLabels.externalDefensives,
+    raid_defensives: t.dashboard.compositionCoverageLabels.raidDefensives,
+    aoe_stuns: t.dashboard.compositionCoverageLabels.aoeStuns,
+    aoe_roots: t.dashboard.compositionCoverageLabels.aoeRoots,
+    aoe_slows: t.dashboard.compositionCoverageLabels.aoeSlows,
+    enemy_grips_and_grouping: t.dashboard.compositionCoverageLabels.enemyGripsAndGrouping,
+    threat_redirection: t.dashboard.compositionCoverageLabels.threatRedirection,
+    silences_and_anti_cast: t.dashboard.compositionCoverageLabels.silencesAndAntiCast,
+    ally_freedom_and_mobility: t.dashboard.compositionCoverageLabels.allyFreedomAndMobility,
+    interrupts: t.dashboard.compositionCoverageLabels.interrupts,
   }), [
+    t.dashboard.compositionCoverageLabels.aoeRoots,
+    t.dashboard.compositionCoverageLabels.aoeSlows,
+    t.dashboard.compositionCoverageLabels.aoeStuns,
     t.dashboard.compositionCoverageLabels.burstMoveSpeed,
     t.dashboard.compositionCoverageLabels.combatResurrection,
     t.dashboard.compositionCoverageLabels.cheatDeath,
+    t.dashboard.compositionCoverageLabels.disenrage,
+    t.dashboard.compositionCoverageLabels.executeDamage,
+    t.dashboard.compositionCoverageLabels.externalDefensives,
     t.dashboard.compositionCoverageLabels.extraDamageToShields,
+    t.dashboard.compositionCoverageLabels.healingReduction,
     t.dashboard.compositionCoverageLabels.immunities,
-    t.dashboard.compositionCoverageLabels.knockUpBack,
+    t.dashboard.compositionCoverageLabels.knockbacks,
+    t.dashboard.compositionCoverageLabels.knockups,
+    t.dashboard.compositionCoverageLabels.raidDefensives,
+    t.dashboard.compositionCoverageLabels.warlockCurses,
+    t.dashboard.compositionCoverageLabels.allyFreedomAndMobility,
+    t.dashboard.compositionCoverageLabels.enemyGripsAndGrouping,
+    t.dashboard.compositionCoverageLabels.interrupts,
+    t.dashboard.compositionCoverageLabels.silencesAndAntiCast,
+    t.dashboard.compositionCoverageLabels.threatRedirection,
   ]);
   const compositionCoverage = useMemo(() => {
     return buildCompositionCoverage(
@@ -484,7 +525,10 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
       wowSpells,
       language,
       wishMatchesFilters,
-      { coverageLabels: compositionCoverageLabels },
+      {
+        coverageKinds: ['raid_utility', 'raid_defensive', 'external', 'raid_buff', 'raid_debuff'],
+        coverageLabels: compositionCoverageLabels,
+      },
     );
   }, [
     filteredMembers,
@@ -498,19 +542,23 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     roleFilter,
     rangeFilter,
   ]);
-  const showCompositionCoverage = compositionCoverage.length > 0;
+  const compositionCoverageSections = useMemo(() => (
+    buildCompositionCoverageSections(majorBuffsDebuffs, compositionCoverage)
+  ), [majorBuffsDebuffs, compositionCoverage]);
+  const showCompositionCoverage = Object.values(compositionCoverageSections)
+    .some(section => section.length > 0);
 
   const renderClassProviderPill = (provider: CoverageSpellEntry['providers'][number]) => {
     const className = getLocalizedClassName(provider.classId, language);
     const specName = provider.specId ? getLocalizedSpecName(provider.specId, language) : null;
-    const providerLabel = specName ?? className;
+    const providerLabel = specName ? `${className} - ${specName}` : className;
     const classColor = wowClassColorValue(provider.classId);
 
     return (
       <span
         key={`${provider.classId}-${provider.specId ?? 'all'}`}
-        title={specName ? `${className} - ${specName}` : className}
-        className={`inline-flex shrink-0 items-center rounded-full border px-1.5 py-0 text-[10px] font-semibold leading-4 whitespace-nowrap ${
+        title={providerLabel}
+        className={`inline-flex max-w-full shrink-0 items-center truncate rounded-full border px-1.5 py-0 text-[10px] font-semibold leading-4 ${
           provider.covered ? '' : 'border-border/70 bg-muted/30 text-muted-foreground opacity-80'
         }`}
         style={provider.covered
@@ -531,11 +579,11 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
       {spellEntries.map(entry => (
         <li
           key={`${entry.spellId}-${entry.name}`}
-          className={`flex min-w-0 items-start justify-between gap-3 ${entry.covered ? '' : 'text-muted-foreground/85'}`}
+          className={`grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 ${entry.covered ? '' : 'text-muted-foreground/85'}`}
         >
           <span className="min-w-0 break-words font-medium leading-5">{entry.name}</span>
           {entry.providers.length > 0 && (
-            <span className="flex shrink-0 flex-wrap justify-end gap-1">
+            <span className="flex min-w-0 flex-wrap justify-end gap-1">
               {entry.providers.map(renderClassProviderPill)}
             </span>
           )}
@@ -555,11 +603,11 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
 
     if (spellEntries.length === 1 && spellEntries[0].providers.length > 0) {
       return (
-        <div className="space-y-2 text-xs">
+        <div className="space-y-2 pt-1 text-xs">
           <div className="flex flex-wrap justify-start gap-1">
             {spellEntries[0].providers.map(renderClassProviderPill)}
           </div>
-          <p>{stat.description || stat.name}</p>
+          <p className="break-words leading-5">{stat.description || stat.name}</p>
         </div>
       );
     }
@@ -568,27 +616,30 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
       return (
         <ul className="space-y-1 text-xs">
           {spellNames.map(spellName => (
-            <li key={spellName}>{spellName}</li>
+            <li key={spellName} className="break-words">{spellName}</li>
           ))}
         </ul>
       );
     }
 
-    return <p className="text-xs">{stat.description || stat.name}</p>;
+    return <p className="break-words text-xs leading-5">{stat.description || stat.name}</p>;
   };
 
   const renderCoverageList = (
     title: string,
     stats: (RaidEffectStat | CompositionCoverageStat)[],
-    options: { columns?: 'single' | 'responsive' } = {},
+    options: { columns?: 'single' | 'responsive'; required?: boolean } = {},
   ) => {
+    const isRequired = options.required === true;
     const covered = stats.filter(stat => stat.count > 0).length;
     const allCovered = stats.length > 0 && covered === stats.length;
-    const coverageTone = allCovered
-      ? 'border-status-success/30 bg-status-success/10 text-status-success'
-      : covered > 0
-        ? 'border-status-warning/30 bg-status-warning/10 text-status-warning'
-        : 'border-status-error/25 bg-status-error/10 text-status-error';
+    const coverageTone = isRequired
+      ? allCovered
+        ? 'border-status-success/30 bg-status-success/10 text-status-success'
+        : covered > 0
+          ? 'border-status-warning/30 bg-status-warning/10 text-status-warning'
+          : 'border-status-error/25 bg-status-error/10 text-status-error'
+      : 'border-border/60 bg-muted/10 text-muted-foreground';
     const listLayoutClass = options.columns === 'responsive'
       ? 'grid grid-cols-1 gap-1 xl:grid-cols-2'
       : 'space-y-1';
@@ -612,36 +663,41 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
               const statKey = 'coverageKey' in stat ? stat.coverageKey : stat.spellId;
               const spellNames = 'spellNames' in stat ? stat.spellNames : [];
               const spellEntries = 'spellEntries' in stat ? stat.spellEntries : [];
+              const rowTone = isRequired
+                ? isCovered
+                  ? 'border-status-success/20 bg-status-success/5 hover:bg-status-success/10'
+                  : 'border-border/50 bg-muted/10 hover:border-status-error/30 hover:bg-status-error/5'
+                : 'border-border/50 bg-muted/5 hover:border-border hover:bg-muted/10';
+              const countTone = isRequired
+                ? isCovered
+                  ? 'border-status-success/30 bg-status-success/10 text-status-success'
+                  : 'border-status-error/25 bg-status-error/10 text-status-error'
+                : 'border-border/60 bg-muted/20 text-muted-foreground';
+              const labelTone = isRequired && !isCovered ? 'text-muted-foreground' : 'text-foreground';
               return (
-                <UITooltip key={statKey} delayDuration={100}>
+                <UITooltip key={statKey} delayDuration={40}>
                   <TooltipTrigger asChild>
                     <div
-                      className={`group flex min-h-8 items-center gap-2 rounded-md border px-2 py-1.5 text-xs transition-colors ${
-                        isCovered
-                          ? 'border-status-success/20 bg-status-success/5 hover:bg-status-success/10'
-                          : 'border-border/50 bg-muted/10 hover:border-status-error/30 hover:bg-status-error/5'
-                      }`}
+                      className={`group flex min-h-8 cursor-help items-center gap-2 rounded-md border px-2 py-1.5 text-xs transition-colors ${rowTone}`}
                     >
-                      {isCovered ? (
-                        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-status-success" />
-                      ) : (
-                        <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-status-error/80" />
+                      {isRequired && (
+                        isCovered ? (
+                          <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-status-success" />
+                        ) : (
+                          <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-status-error/80" />
+                        )
                       )}
                       <span
-                        className={`flex h-5 min-w-7 shrink-0 items-center justify-center rounded border px-1.5 text-[11px] font-semibold tabular-nums ${
-                          isCovered
-                            ? 'border-status-success/30 bg-status-success/10 text-status-success'
-                            : 'border-status-error/25 bg-status-error/10 text-status-error'
-                        }`}
+                        className={`flex h-5 min-w-7 shrink-0 items-center justify-center rounded border px-1.5 text-[11px] font-semibold tabular-nums ${countTone}`}
                       >
                         {stat.count}
                       </span>
-                      <span className={`min-w-0 flex-1 truncate font-medium ${isCovered ? 'text-foreground' : 'text-muted-foreground'}`}>
+                      <span className={`min-w-0 flex-1 truncate font-medium ${labelTone}`}>
                         {stat.name}
                       </span>
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent sideOffset={6} className="max-w-[260px]">
+                  <TooltipContent sideOffset={6} className="w-[min(84vw,320px)] max-w-[320px]">
                     {renderCoverageTooltipContent(stat, spellNames, spellEntries)}
                   </TooltipContent>
                 </UITooltip>
@@ -786,6 +842,120 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     return interpolateMessage(s('dashboard.roster_analytics.wish_range'), { n });
   };
 
+  const renderFilterOption = <Value extends string>(option: AnalyticsFilterOption<Value>) => {
+    const Icon = option.icon;
+    const labelClassName = option.labelColorClass ?? option.colorClass;
+
+    return (
+      <span className="inline-flex min-w-0 items-center gap-2 whitespace-nowrap leading-none">
+        <Icon className={cn('h-4 w-4 shrink-0', option.colorClass)} />
+        <span className={cn('min-w-0 truncate leading-none', labelClassName)}>{option.label}</span>
+      </span>
+    );
+  };
+
+  const firstApprovedWishScopeOption: AnalyticsFilterOption<WishScopeFilter> = {
+    value: 'first_approved',
+    label: getWishRangeLabel('first_approved'),
+    icon: CheckCircle2,
+    colorClass: 'text-status-success',
+  };
+
+  const wishRangeOptions: AnalyticsFilterOption<WishScopeFilter>[] = [
+    {
+      value: '1',
+      label: getWishRangeLabel('1'),
+      icon: Hash,
+      colorClass: 'text-primary',
+      labelColorClass: 'text-foreground',
+    },
+    ...([2, 3, 4, 5, 6] as const).map((n) => ({
+      value: String(n) as WishScopeFilter,
+      label: getWishRangeLabel(String(n) as WishScopeFilter),
+      icon: Hash,
+      colorClass: 'text-primary',
+      labelColorClass: 'text-foreground',
+    })),
+  ];
+
+  const validationOptions: AnalyticsFilterOption<ValidationFilter>[] = [
+    { value: 'pending', label: t.wishes.validation.pending, icon: Clock, colorClass: 'text-status-warning' },
+    { value: 'approved', label: t.wishes.validation.approved, icon: CheckCircle2, colorClass: 'text-status-success' },
+    { value: 'rejected', label: t.wishes.validation.rejected, icon: XCircle, colorClass: 'text-muted-foreground' },
+  ];
+
+  const commitmentOptions: AnalyticsFilterOption<CommitmentFilter>[] = [
+    { value: 'confirmed', label: t.wishes.commitment.confirmed, icon: UserCheck, colorClass: commitmentTextClass('confirmed') },
+    { value: 'potential', label: t.wishes.commitment.undecided, icon: UserMinus, colorClass: commitmentTextClass('undecided') },
+    { value: 'withdrawn', label: t.wishes.commitment.withdrawn, icon: UserX, colorClass: commitmentTextClass('withdrawn') },
+  ];
+
+  const rosterDecisionOptions: AnalyticsFilterOption<RosterDecisionFilter>[] = [
+    { value: 'selected', label: t.wishes.rosterDecision.selected, icon: CheckCircle2, colorClass: 'text-status-success' },
+    { value: 'bench', label: t.wishes.rosterDecision.bench, icon: Armchair, colorClass: 'text-status-warning' },
+    { value: 'not_selected', label: t.wishes.rosterDecision.notSelected, icon: XCircle, colorClass: 'text-status-error' },
+    { value: 'undecided', label: t.wishes.rosterDecision.undecided, icon: Clock, colorClass: 'text-muted-foreground' },
+  ];
+
+  const roleOptions: AnalyticsFilterOption<RoleFilter>[] = [
+    { value: 'tank', label: t.dashboard.tank, icon: Shield, colorClass: 'text-tank' },
+    { value: 'healer', label: t.dashboard.healer, icon: Heart, colorClass: 'text-healer' },
+    { value: 'dps', label: t.dashboard.dps, icon: Sword, colorClass: 'text-dps' },
+  ];
+
+  const rangeOptions: AnalyticsFilterOption<RangeFilter>[] = [
+    { value: 'melee', label: t.dashboard.melee, icon: Swords, colorClass: 'text-warning' },
+    { value: 'ranged', label: t.dashboard.ranged, icon: Crosshair, colorClass: 'text-info' },
+  ];
+
+  const playersFilterCount =
+    (commitmentFilter !== 'all' ? 1 : 0) +
+    (rosterDecisionFilter !== 'all' ? 1 : 0);
+  const wishesFilterCount =
+    (wishScopeFilter !== '13' ? 1 : 0) +
+    (validationFilter !== 'all' ? 1 : 0);
+  const specsFilterCount =
+    (roleFilter !== 'all' ? 1 : 0) +
+    (rangeFilter !== 'all' ? 1 : 0);
+  const hasPlayersFilters = playersFilterCount > 0;
+  const hasWishesFilters = wishesFilterCount > 0;
+  const hasSpecsFilters = specsFilterCount > 0;
+
+  const renderFilterChoice = <Value extends string>({
+    value,
+    options,
+    clearValue,
+    onValueChange,
+  }: {
+    value: Value;
+    options: AnalyticsFilterOption<Value>[];
+    clearValue?: Value;
+    onValueChange: (value: Value) => void;
+  }) => (
+    <div className="flex flex-col gap-1">
+      {options.map(option => {
+        const isSelected = option.value === value;
+
+        return (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => onValueChange(isSelected && clearValue !== undefined ? clearValue : option.value)}
+            className={cn(
+              'flex items-center gap-2 rounded px-2 py-1.5 text-left text-sm transition-colors',
+              isSelected ? 'bg-primary/20' : 'hover:bg-primary/10',
+            )}
+          >
+            <span className="min-w-0 flex-1">
+              {renderFilterOption(option)}
+            </span>
+            {isSelected && <Check className="h-3.5 w-3.5 shrink-0 text-primary" />}
+          </button>
+        );
+      })}
+    </div>
+  );
+
   // Calculate totals for KPI bar
   const totalTanks = rolesByPriority.find(r => r.role === 'tank');
   const totalHealers = rolesByPriority.find(r => r.role === 'healer');
@@ -810,155 +980,192 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   return (
     <TooltipProvider>
       <div className="space-y-3">
-        {/* Compact Filter Bar + KPIs */}
-        <div className="flex flex-wrap items-center gap-2 p-2.5 bg-card/50 rounded-lg border border-border/50">
-          <Filter className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+        <FilterBar className="mb-5 mt-4 gap-3 px-2 sm:px-0">
+          <Popover open={playersOpen} onOpenChange={setPlayersOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className={cn(
+                  filterControlClassName,
+                  'gap-2',
+                  hasPlayersFilters ? activeFilterControlClassName : 'text-muted-foreground',
+                )}
+              >
+                <Users className="h-4 w-4" />
+                <span>{t.guild.members}</span>
+                {hasPlayersFilters && (
+                  <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-xs">
+                    {playersFilterCount}
+                  </Badge>
+                )}
+                <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto min-w-40 bg-card p-3" align="start">
+              <div className="space-y-3">
+                <div>
+                  <h4 className="mb-2 text-sm font-medium">{t.dashboard.commitment}</h4>
+                  {renderFilterChoice({
+                    value: commitmentFilter,
+                    options: commitmentOptions,
+                    clearValue: 'all',
+                    onValueChange: setCommitmentFilter,
+                  })}
+                </div>
+                <Separator />
+                <div>
+                  <h4 className="mb-2 text-sm font-medium">{t.wishes.rosterDecision.title}</h4>
+                  {renderFilterChoice({
+                    value: rosterDecisionFilter,
+                    options: rosterDecisionOptions,
+                    clearValue: 'all',
+                    onValueChange: (v) => {
+                      setRosterDecisionFilterTouched(true);
+                      setRosterDecisionFilter(v);
+                    },
+                  })}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
 
-          <Select
-            value={wishScopeFilter}
-            onValueChange={(v) => {
-              setWishScopeFilterTouched(true);
-              setWishScopeFilter(v as WishScopeFilter);
-            }}
-          >
-            <SelectTrigger className="h-7 w-auto min-w-[100px] text-xs">
-              <SelectValue>{getWishRangeLabel(wishScopeFilter)}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="first_approved" className="text-xs">{getWishRangeLabel('first_approved')}</SelectItem>
-              <SelectItem value="1" className="text-xs">{getWishRangeLabel('1')}</SelectItem>
-              {[2, 3, 4, 5, 6].map(n => (
-                <SelectItem key={n} value={String(n)} className="text-xs">
-                  {getWishRangeLabel(String(n) as WishScopeFilter)}
-                </SelectItem>
-              ))}
-              <SelectItem value="13" className="text-xs">{getWishRangeLabel('13')}</SelectItem>
-            </SelectContent>
-          </Select>
+          <Popover open={wishesOpen} onOpenChange={setWishesOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className={cn(
+                  filterControlClassName,
+                  'gap-2',
+                  hasWishesFilters ? activeFilterControlClassName : 'text-muted-foreground',
+                )}
+              >
+                <Hash className="h-4 w-4" />
+                <span>{s('dashboard.roster_filters.wishes_title')}</span>
+                {hasWishesFilters && (
+                  <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-xs">
+                    {wishesFilterCount}
+                  </Badge>
+                )}
+                <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-72 max-w-[calc(100vw-1rem)] bg-card p-3" align="start">
+              <div className="space-y-3">
+                <div>
+                  {renderFilterChoice({
+                    value: wishScopeFilter,
+                    options: [firstApprovedWishScopeOption],
+                    clearValue: '13',
+                    onValueChange: (v) => {
+                      setWishScopeFilterTouched(true);
+                      setWishScopeFilter(v);
+                    },
+                  })}
+                </div>
+                <Separator />
+                <div>
+                  <h4 className="mb-2 text-sm font-medium">{t.dashboard.wishRangeFilter}</h4>
+                  {renderFilterChoice({
+                    value: wishScopeFilter,
+                    options: wishRangeOptions,
+                    clearValue: '13',
+                    onValueChange: (v) => {
+                      setWishScopeFilterTouched(true);
+                      setWishScopeFilter(v);
+                    },
+                  })}
+                </div>
+                <Separator />
+                <div>
+                  <h4 className="mb-2 text-sm font-medium">{t.dashboard.validation}</h4>
+                  {renderFilterChoice({
+                    value: validationFilter,
+                    options: validationOptions,
+                    clearValue: 'all',
+                    onValueChange: (v) => {
+                      setValidationFilterTouched(true);
+                      setValidationFilter(v);
+                    },
+                  })}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
 
-          <Select
-            value={validationFilter}
-            onValueChange={(v) => {
-              setValidationFilterTouched(true);
-              setValidationFilter(v as ValidationFilter);
-            }}
-          >
-            <SelectTrigger className="h-7 w-auto min-w-[110px] text-xs">
-              <SelectValue>
-                {validationFilter === 'all' ? t.dashboard.allValidations :
-                 validationFilter === 'approved' ? t.wishes.validation.approved :
-                 validationFilter === 'rejected' ? t.wishes.validation.rejected :
-                 t.wishes.validation.pending}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all" className="text-xs">{t.dashboard.allValidations}</SelectItem>
-              <SelectItem value="pending" className="text-xs">{t.wishes.validation.pending}</SelectItem>
-              <SelectItem value="approved" className="text-xs">{t.wishes.validation.approved}</SelectItem>
-              <SelectItem value="rejected" className="text-xs">{t.wishes.validation.rejected}</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={commitmentFilter} onValueChange={(v) => setCommitmentFilter(v as CommitmentFilter)}>
-            <SelectTrigger className="h-7 w-auto min-w-[90px] text-xs">
-              <SelectValue>
-                {commitmentFilter === 'all' ? t.dashboard.allCommitments : 
-                 commitmentFilter === 'confirmed' ? t.wishes.commitment.confirmed :
-                 commitmentFilter === 'potential' ? t.wishes.commitment.undecided :
-                 t.wishes.commitment.withdrawn}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all" className="text-xs">{t.dashboard.allCommitments}</SelectItem>
-              <SelectItem value="confirmed" className="text-xs">{t.wishes.commitment.confirmed}</SelectItem>
-              <SelectItem value="potential" className="text-xs">{t.wishes.commitment.undecided}</SelectItem>
-              <SelectItem value="withdrawn" className="text-xs">{t.wishes.commitment.withdrawn}</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select
-            value={rosterDecisionFilter}
-            onValueChange={(v) => {
-              setRosterDecisionFilterTouched(true);
-              setRosterDecisionFilter(v as RosterDecisionFilter);
-            }}
-          >
-            <SelectTrigger className="h-7 w-auto min-w-[110px] text-xs">
-              <SelectValue>
-                {rosterDecisionFilter === 'all' ? `${t.common.all} ${t.wishes.rosterDecision.title}` :
-                 rosterDecisionFilter === 'selected' ? t.wishes.rosterDecision.selected :
-                 rosterDecisionFilter === 'bench' ? t.wishes.rosterDecision.bench :
-                 rosterDecisionFilter === 'not_selected' ? t.wishes.rosterDecision.notSelected :
-                 t.wishes.rosterDecision.undecided}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all" className="text-xs">{t.common.all}</SelectItem>
-              <SelectItem value="selected" className="text-xs">{t.wishes.rosterDecision.selected}</SelectItem>
-              <SelectItem value="bench" className="text-xs">{t.wishes.rosterDecision.bench}</SelectItem>
-              <SelectItem value="not_selected" className="text-xs">{t.wishes.rosterDecision.notSelected}</SelectItem>
-              <SelectItem value="undecided" className="text-xs">{t.wishes.rosterDecision.undecided}</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={roleFilter} onValueChange={(v) => setRoleFilter(v as RoleFilter)}>
-            <SelectTrigger className="h-7 w-auto min-w-[80px] text-xs">
-              <SelectValue>
-                {roleFilter === 'all' ? t.dashboard.allRoles :
-                 roleFilter === 'tank' ? t.dashboard.tank :
-                 roleFilter === 'healer' ? t.dashboard.healer :
-                 t.dashboard.dps}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all" className="text-xs">{t.dashboard.allRoles}</SelectItem>
-              <SelectItem value="tank" className="text-xs">{t.dashboard.tank}</SelectItem>
-              <SelectItem value="healer" className="text-xs">{t.dashboard.healer}</SelectItem>
-              <SelectItem value="dps" className="text-xs">{t.dashboard.dps}</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={rangeFilter} onValueChange={(v) => setRangeFilter(v as RangeFilter)}>
-            <SelectTrigger className="h-7 w-auto min-w-[80px] text-xs">
-              <SelectValue>
-                {rangeFilter === 'all' ? t.dashboard.allRanges :
-                 rangeFilter === 'melee' ? t.dashboard.melee :
-                 t.dashboard.ranged}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all" className="text-xs">{t.dashboard.allRanges}</SelectItem>
-              <SelectItem value="melee" className="text-xs">{t.dashboard.melee}</SelectItem>
-              <SelectItem value="ranged" className="text-xs">{t.dashboard.ranged}</SelectItem>
-            </SelectContent>
-          </Select>
+          <Popover open={specsOpen} onOpenChange={setSpecsOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className={cn(
+                  filterControlClassName,
+                  'gap-2',
+                  hasSpecsFilters ? activeFilterControlClassName : 'text-muted-foreground',
+                )}
+              >
+                <Target className="h-4 w-4" />
+                <span>{t.wishes.specs}</span>
+                {hasSpecsFilters && (
+                  <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-xs">
+                    {specsFilterCount}
+                  </Badge>
+                )}
+                <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-72 max-w-[calc(100vw-1rem)] bg-card p-3" align="start">
+              <div className="space-y-3">
+                <div>
+                  <h4 className="mb-2 text-sm font-medium">{s('dashboard.roster_filters.roles_title')}</h4>
+                  {renderFilterChoice({
+                    value: roleFilter,
+                    options: roleOptions,
+                    clearValue: 'all',
+                    onValueChange: setRoleFilter,
+                  })}
+                </div>
+                <Separator />
+                <div>
+                  <h4 className="mb-2 text-sm font-medium">{t.dashboard.range}</h4>
+                  {renderFilterChoice({
+                    value: rangeFilter,
+                    options: rangeOptions,
+                    clearValue: 'all',
+                    onValueChange: setRangeFilter,
+                  })}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
 
           {/* Inline KPIs */}
-          <div className="flex items-center gap-3 ml-auto">
+          <div className="ml-auto flex h-8 items-center gap-3">
             <div className="flex items-center gap-1.5">
-              <Users className="h-3.5 w-3.5 text-primary" />
-              <span className="text-xs font-medium">{filteredMemberCount}</span>
+              <Users className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">{filteredMemberCount}</span>
             </div>
             <div className="flex items-center gap-1">
-              <CheckCircle2 className="h-3.5 w-3.5 text-status-success" />
-              <span className="text-xs font-medium">{representedClasses.length}/13</span>
+              <CheckCircle2 className="h-4 w-4 text-status-success" />
+              <span className="text-sm font-medium">{representedClasses.length}/13</span>
             </div>
-            <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-border/50">
+            <div className="hidden items-center gap-2 border-l border-border/50 pl-2 sm:flex">
               <div className="flex items-center gap-0.5" style={{ color: roleColorMap.tank }}>
-                <Shield className="h-3 w-3" />
-                <span className="text-xs font-medium">{(totalTanks?.wish1 || 0) + (totalTanks?.other || 0)}</span>
+                <Shield className="h-3.5 w-3.5" />
+                <span className="text-sm font-medium">{(totalTanks?.wish1 || 0) + (totalTanks?.other || 0)}</span>
               </div>
               <div className="flex items-center gap-0.5" style={{ color: roleColorMap.healer }}>
-                <Heart className="h-3 w-3" />
-                <span className="text-xs font-medium">{(totalHealers?.wish1 || 0) + (totalHealers?.other || 0)}</span>
+                <Heart className="h-3.5 w-3.5" />
+                <span className="text-sm font-medium">{(totalHealers?.wish1 || 0) + (totalHealers?.other || 0)}</span>
               </div>
               <div className="flex items-center gap-0.5" style={{ color: roleColorMap.dps }}>
-                <Sword className="h-3 w-3" />
-                <span className="text-xs font-medium">{(totalDps?.wish1 || 0) + (totalDps?.other || 0)}</span>
+                <Sword className="h-3.5 w-3.5" />
+                <span className="text-sm font-medium">{(totalDps?.wish1 || 0) + (totalDps?.other || 0)}</span>
               </div>
             </div>
           </div>
-        </div>
+        </FilterBar>
 
         {/* Summary Grid */}
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-12">
@@ -1133,7 +1340,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
 
         {/* Composition Grid */}
         <div className="grid grid-cols-1 gap-3 xl:grid-cols-12">
-          <GlowCard surface="section" className={`p-3 ${showBuffsDebuffs ? 'xl:col-span-4' : 'xl:col-span-12'}`}>
+          <GlowCard surface="section" className="p-3 xl:col-span-12">
             <h4 className="text-sm font-medium mb-2">{t.dashboard.tokenDistribution}</h4>
             <p className="text-[11px] text-muted-foreground mb-2">
               {t.dashboard.tokenDistributionInfo}{' '}
@@ -1190,20 +1397,16 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
             )}
           </GlowCard>
 
-          {showBuffsDebuffs && (
-            <GlowCard surface="section" className="p-3 xl:col-span-8">
-              <h4 className="text-sm font-medium mb-2">{t.dashboard.majorBuffsDebuffs}</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {renderCoverageList(t.dashboard.majorBuffs, majorBuffsDebuffs.buffs)}
-                {renderCoverageList(t.dashboard.majorDebuffs, majorBuffsDebuffs.debuffs)}
-              </div>
-            </GlowCard>
-          )}
         </div>
 
         {showCompositionCoverage && (
           <GlowCard surface="section" className="p-3">
-            {renderCoverageList(t.dashboard.utilityDefensiveCoverage, compositionCoverage, { columns: 'responsive' })}
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-4">
+              {renderCoverageList(t.dashboard.majorBuffs, compositionCoverageSections.majorBuffs, { required: true })}
+              {renderCoverageList(t.dashboard.majorDebuffs, compositionCoverageSections.majorDebuffs)}
+              {renderCoverageList(t.dashboard.raidEnhancements, compositionCoverageSections.raidEnhancements)}
+              {renderCoverageList(t.dashboard.enemyWeakening, compositionCoverageSections.enemyWeakening)}
+            </div>
           </GlowCard>
         )}
 
@@ -1240,5 +1443,3 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     </TooltipProvider>
   );
 };
-
-

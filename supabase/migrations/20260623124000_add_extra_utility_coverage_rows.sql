@@ -29,6 +29,8 @@ WITH seed_abilities (
 
     ('power_infusion', 'power_infusion', 'external', 10060, 'manual', true, 320),
     ('shattering_throw_extra_shield_damage', 'extra_damage_to_shields', 'raid_utility', 64382, 'manual', true, 330),
+    ('wrecking_throw_extra_shield_damage', 'extra_damage_to_shields', 'raid_utility', 384110, 'manual', true, 331),
+    ('unravel_extra_shield_damage', 'extra_damage_to_shields', 'raid_utility', 368432, 'manual', true, 332),
     ('cheat_death', 'cheat_death', 'raid_defensive', 31230, 'manual', true, 340),
     ('cauterize_cheat_death', 'cheat_death', 'raid_defensive', 86949, 'manual', true, 341),
     ('purgatory_cheat_death', 'cheat_death', 'raid_defensive', 114556, 'manual', true, 342),
@@ -90,6 +92,8 @@ WITH seed_mappings (
 
     ('power_infusion', 'priest', NULL),
     ('shattering_throw_extra_shield_damage', 'warrior', NULL),
+    ('wrecking_throw_extra_shield_damage', 'warrior', NULL),
+    ('unravel_extra_shield_damage', 'evoker', NULL),
     ('cheat_death', 'rogue', NULL),
     ('cauterize_cheat_death', 'mage', 'mage-fire'),
     ('purgatory_cheat_death', 'death-knight', 'dk-blood'),
