@@ -579,11 +579,11 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
       {spellEntries.map(entry => (
         <li
           key={`${entry.spellId}-${entry.name}`}
-          className={`grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 ${entry.covered ? '' : 'text-muted-foreground/85'}`}
+          className={`grid min-w-0 grid-cols-[minmax(7.5rem,1fr)_minmax(0,auto)] items-center gap-3 ${entry.covered ? '' : 'text-muted-foreground/85'}`}
         >
-          <span className="min-w-0 break-words font-medium leading-5">{entry.name}</span>
+          <span className="min-w-0 truncate font-medium leading-5">{entry.name}</span>
           {entry.providers.length > 0 && (
-            <span className="flex min-w-0 flex-wrap justify-end gap-1">
+            <span className="flex max-w-[15rem] flex-wrap justify-end gap-1">
               {entry.providers.map(renderClassProviderPill)}
             </span>
           )}
@@ -697,7 +697,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                       </span>
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent sideOffset={6} className="w-[min(84vw,320px)] max-w-[320px]">
+                  <TooltipContent sideOffset={6} className="w-[min(92vw,420px)] max-w-[420px]">
                     {renderCoverageTooltipContent(stat, spellNames, spellEntries)}
                   </TooltipContent>
                 </UITooltip>
