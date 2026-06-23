@@ -460,6 +460,13 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   }, [filteredMembers, raidEffects, wowSpells, language, validationFilter, maxWishIndex, roleFilter, rangeFilter]);
 
   const showBuffsDebuffs = majorBuffsDebuffs.buffs.length > 0 || majorBuffsDebuffs.debuffs.length > 0;
+  const compositionCoverageLabels = useMemo(() => ({
+    combat_res: t.dashboard.compositionCoverageLabels.combatResurrection,
+    immunity: t.dashboard.compositionCoverageLabels.immunities,
+  }), [
+    t.dashboard.compositionCoverageLabels.combatResurrection,
+    t.dashboard.compositionCoverageLabels.immunities,
+  ]);
   const compositionCoverage = useMemo(() => {
     return buildCompositionCoverage(
       filteredMembers,
@@ -468,6 +475,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
       wowSpells,
       language,
       wishMatchesFilters,
+      { coverageLabels: compositionCoverageLabels },
     );
   }, [
     filteredMembers,
@@ -475,6 +483,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     compositionMappings,
     wowSpells,
     language,
+    compositionCoverageLabels,
     validationFilter,
     maxWishIndex,
     roleFilter,
@@ -508,6 +517,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
             {stats.map(stat => {
               const isCovered = stat.count > 0;
               const statKey = 'coverageKey' in stat ? stat.coverageKey : stat.spellId;
+              const spellNames = 'spellNames' in stat ? stat.spellNames : [];
               return (
                 <UITooltip key={statKey} delayDuration={100}>
                   <TooltipTrigger asChild>
@@ -538,7 +548,15 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                     </div>
                   </TooltipTrigger>
                   <TooltipContent sideOffset={6} className="max-w-[260px]">
-                    <p className="text-xs">{stat.description}</p>
+                    {spellNames.length > 1 ? (
+                      <ul className="space-y-1 text-xs">
+                        {spellNames.map(spellName => (
+                          <li key={spellName}>{spellName}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-xs">{stat.description || stat.name}</p>
+                    )}
                   </TooltipContent>
                 </UITooltip>
               );

@@ -602,6 +602,10 @@ export const translationsEn: Translations = {
       majorBuffs: 'Major Buffs',
       majorDebuffs: 'Major Debuffs',
       utilityDefensiveCoverage: 'Utility / Defensive Coverage',
+      compositionCoverageLabels: {
+        combatResurrection: 'Combat resurrection',
+        immunities: 'Immunities',
+      },
       allValidations: 'All validations',
       missingClasses: 'Missing Classes',
       allClassesRepresented: 'All classes are represented',

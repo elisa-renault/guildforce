@@ -675,6 +675,10 @@ export interface Translations {
     majorBuffs: string;
     majorDebuffs: string;
     utilityDefensiveCoverage: string;
+    compositionCoverageLabels: {
+      combatResurrection: string;
+      immunities: string;
+    };
     allValidations: string;
     missingClasses: string;
     allClassesRepresented: string;

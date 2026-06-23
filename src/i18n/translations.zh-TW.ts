@@ -602,6 +602,10 @@ export const translationsZhTw: Translations = createLocaleTranslations(translati
     majorBuffs: '主要增益',
     majorDebuffs: '主要減益',
     utilityDefensiveCoverage: '功能／防禦覆蓋',
+    compositionCoverageLabels: {
+      combatResurrection: '戰鬥復活',
+      immunities: '免疫',
+    },
     allValidations: '所有審核狀態',
     missingClasses: '缺少職業',
     allClassesRepresented: '所有職業皆已涵蓋',

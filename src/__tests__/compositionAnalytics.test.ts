@@ -146,6 +146,52 @@ describe('composition analytics', () => {
       coverageKey: 'bloodlust',
       name: 'Furie sanguinaire',
       count: 3,
+      spellNames: ['Furie sanguinaire', 'Distorsion temporelle', 'Spell 264667', 'Spell 390386'],
+    });
+  });
+
+  it('uses coverage label overrides and grouped spell names for multi-spell rows', () => {
+    const abilities = [
+      createAbility({ id: 'a1', ability_key: 'rebirth', coverage_key: 'combat_res', spell_id: 20484, sort_order: 1 }),
+      createAbility({ id: 'a2', ability_key: 'raise_ally', coverage_key: 'combat_res', spell_id: 61999, sort_order: 2 }),
+    ];
+    const mappings = [
+      createMapping({ ability_id: 'a1', class_id: 'druid' }),
+      createMapping({ ability_id: 'a2', class_id: 'death-knight' }),
+    ];
+    const members: CompositionMemberInput<TestWish>[] = [
+      { wishes: [{ class_id: 'druid' }, { class_id: 'death-knight' }] },
+    ];
+    const spells = [
+      createSpell({
+        spell_id: 20484,
+        name_en: 'Rebirth',
+        description_en: 'Returns the spirit to the body.',
+      }),
+      createSpell({
+        spell_id: 61999,
+        name_en: 'Raise Ally',
+        description_en: 'Raises a fallen ally.',
+      }),
+    ];
+
+    const result = buildCompositionCoverage(
+      members,
+      abilities,
+      mappings,
+      spells,
+      'en',
+      alwaysMatch,
+      { coverageLabels: { combat_res: 'Combat resurrection' } },
+    );
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      coverageKey: 'combat_res',
+      name: 'Combat resurrection',
+      description: 'Rebirth, Raise Ally',
+      spellNames: ['Rebirth', 'Raise Ally'],
+      count: 1,
     });
   });
 

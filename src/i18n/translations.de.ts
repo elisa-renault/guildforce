@@ -562,6 +562,10 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "majorBuffs": "Gro\u00dfe Buffs",
     "majorDebuffs": "Gro\u00dfe Schw\u00e4chungen",
     "utilityDefensiveCoverage": "Utility-/Defensivabdeckung",
+    "compositionCoverageLabels": {
+      "combatResurrection": "Kampfwiederbelebung",
+      "immunities": "Immunit\u00e4ten"
+    },
     "allValidations": "Alle Validierungen",
     "missingClasses": "Fehlende Klassen",
     "allClassesRepresented": "Alle Klassen sind vertreten",

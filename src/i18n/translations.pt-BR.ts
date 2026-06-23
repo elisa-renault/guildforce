@@ -396,6 +396,10 @@ export const translationsPtBr: Translations = createLocaleTranslations(translati
     majorBuffs: 'Bônus principais',
     majorDebuffs: 'Penalidades principais',
     utilityDefensiveCoverage: 'Cobertura utilitária / defensiva',
+    compositionCoverageLabels: {
+      combatResurrection: 'Ressurreição em combate',
+      immunities: 'Imunidades',
+    },
     allValidations: 'Todas as validações',
     missingClasses: 'Classes ausentes',
     allClassesRepresented: 'Todas as classes representadas',

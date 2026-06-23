@@ -602,6 +602,10 @@ export const translationsKo: Translations = createLocaleTranslations(translation
     majorBuffs: '주요 강화 효과',
     majorDebuffs: '주요 약화 효과',
     utilityDefensiveCoverage: '유틸기 / 방어기 보유 현황',
+    compositionCoverageLabels: {
+      combatResurrection: '전투 부활',
+      immunities: '면역기',
+    },
     allValidations: '모든 검토',
     missingClasses: '없는 직업',
     allClassesRepresented: '모든 직업이 포함되어 있습니다',

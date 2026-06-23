@@ -556,6 +556,10 @@ export const translationsRu: Translations = createLocaleTranslations(translation
     majorBuffs: 'Ключевые бафы',
     majorDebuffs: 'Ключевые дебафы',
     utilityDefensiveCoverage: 'Покрытие утилити / защитных способностей',
+    compositionCoverageLabels: {
+      combatResurrection: 'Воскрешение в бою',
+      immunities: 'Иммунитеты',
+    },
     allValidations: 'Любой статус проверки',
     missingClasses: 'Отсутствующие классы',
     allClassesRepresented: 'Все классы представлены',

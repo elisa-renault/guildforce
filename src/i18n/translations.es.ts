@@ -602,6 +602,10 @@ export const translationsEs: Translations = createLocaleTranslations(translation
     majorBuffs: 'Buffs importantes',
     majorDebuffs: 'Debuffs importantes',
     utilityDefensiveCoverage: 'Cobertura de utilidad / defensiva',
+    compositionCoverageLabels: {
+      combatResurrection: 'Resurrección en combate',
+      immunities: 'Inmunidades',
+    },
     allValidations: 'Todas las validaciones',
     missingClasses: 'Clases ausentes',
     allClassesRepresented: 'Todas las clases están representadas',

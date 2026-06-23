@@ -48,11 +48,17 @@ export interface CompositionCoverageStat {
   spellId: number | null;
   name: string;
   description: string;
+  spellNames: string[];
   count: number;
   sortOrder: number;
 }
 
 const defaultCoverageKinds = new Set<string>(['raid_utility', 'raid_defensive', 'external']);
+
+export interface BuildCompositionCoverageOptions {
+  coverageKinds?: Iterable<string>;
+  coverageLabels?: Partial<Record<string, string>>;
+}
 
 const keyToLabel = (key: string): string =>
   key
@@ -83,8 +89,10 @@ export const buildCompositionCoverage = <
   spells: WowSpellAnalyticsRow[],
   language: Language,
   wishMatchesFilters: (member: Member, wish: Wish) => boolean,
-  coverageKinds: Iterable<string> = defaultCoverageKinds,
+  options: BuildCompositionCoverageOptions = {},
 ): CompositionCoverageStat[] => {
+  const coverageKinds = options.coverageKinds ?? defaultCoverageKinds;
+  const coverageLabels = options.coverageLabels ?? {};
   const kindSet = new Set(coverageKinds);
   const spellsById = new Map(spells.map(spell => [spell.spell_id, spell]));
   const activeAbilities = abilities.filter(
@@ -94,20 +102,25 @@ export const buildCompositionCoverage = <
 
   const abilitiesById = new Map(activeAbilities.map(ability => [ability.id, ability]));
   const stats = new Map<string, CompositionCoverageStat>();
+  const spellNamesByCoverage = new Map<string, { name: string; sortOrder: number }[]>();
   const mappingsByClass = new Map<string, { ability: CompositionAbilityAnalyticsRow; mapping: CompositionAbilityMappingAnalyticsRow }[]>();
 
   activeAbilities.forEach((ability) => {
     const text = resolveAbilityText(ability, spellsById, language);
     const sortOrder = ability.sort_order ?? Number.MAX_SAFE_INTEGER;
     const existing = stats.get(ability.coverage_key);
+    const spellNames = spellNamesByCoverage.get(ability.coverage_key) ?? [];
+    spellNames.push({ name: text.name, sortOrder });
+    spellNamesByCoverage.set(ability.coverage_key, spellNames);
 
     if (!existing) {
       stats.set(ability.coverage_key, {
         coverageKey: ability.coverage_key,
         abilityKind: ability.ability_kind,
         spellId: ability.spell_id,
-        name: text.name,
+        name: coverageLabels[ability.coverage_key] ?? text.name,
         description: text.description,
+        spellNames: [],
         count: 0,
         sortOrder,
       });
@@ -117,9 +130,27 @@ export const buildCompositionCoverage = <
     if (sortOrder < existing.sortOrder) {
       existing.abilityKind = ability.ability_kind;
       existing.spellId = ability.spell_id;
-      existing.name = text.name;
+      existing.name = coverageLabels[ability.coverage_key] ?? text.name;
       existing.description = text.description;
       existing.sortOrder = sortOrder;
+    }
+  });
+
+  stats.forEach((stat) => {
+    const names = spellNamesByCoverage.get(stat.coverageKey) ?? [];
+    const uniqueNames = names
+      .sort((a, b) => {
+        if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
+        return a.name.localeCompare(b.name);
+      })
+      .reduce<string[]>((result, entry) => {
+        if (!result.includes(entry.name)) result.push(entry.name);
+        return result;
+      }, []);
+
+    stat.spellNames = uniqueNames;
+    if (uniqueNames.length > 1) {
+      stat.description = uniqueNames.join(', ');
     }
   });
 
