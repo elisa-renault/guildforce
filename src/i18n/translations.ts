@@ -714,6 +714,40 @@ export interface Translations {
     wishRangeN: string;
     allWishes: string;
     firstApprovedWish: string;
+    activeAnalysisScope: string;
+    activeFilterMembers: string;
+    activeFilterCommitment: string;
+    activeFilterDecision: string;
+    activeFilterWishes: string;
+    activeFilterValidation: string;
+    activeFilterRole: string;
+    activeFilterRange: string;
+    absentClassesTitle: string;
+    compositionSummary: string;
+    rangeBalance: string;
+    roleBalance: string;
+    classesRepresented: string;
+    requestedSpecializations: string;
+    lootConcentrationRisk: string;
+    tokenRiskLevels: {
+      none: string;
+      low: string;
+      moderate: string;
+      high: string;
+    };
+    tokenRiskSummary: string;
+    tokenRiskNone: string;
+    raidCoverageTitle: string;
+    raidCoverageDescription: string;
+    coverageSourceState: string;
+    coverageSourceStatePlural: string;
+    coverageSourceCount: string;
+    coverageSourceCountPlural: string;
+    coverageStates: {
+      missing: string;
+      covered: string;
+      secured: string;
+    };
   };
   // Profile
   profile: {

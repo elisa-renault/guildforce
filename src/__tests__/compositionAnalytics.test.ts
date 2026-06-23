@@ -803,13 +803,14 @@ describe('composition analytics', () => {
     const execute = createCoverageStat({ coverageKey: 'execute_damage', spellId: 53351, name: 'Execute damage', count: 2 });
     const allyFreedom = createCoverageStat({ coverageKey: 'ally_freedom_and_mobility', spellId: 1044, name: 'Ally freedom / mobility', count: 4 });
     const threat = createCoverageStat({ coverageKey: 'threat_redirection', spellId: 34477, name: 'Threat redirection', count: 2 });
+    const deathGrip = createCoverageStat({ coverageKey: 'death_grip', spellId: 49576, name: 'Death Grip', count: 1 });
     const grips = createCoverageStat({ coverageKey: 'enemy_grips_and_grouping', spellId: 108199, name: 'Enemy grips / grouping', count: 1 });
     const silence = createCoverageStat({ coverageKey: 'silences_and_anti_cast', spellId: 78675, name: 'Silences / anti-cast', count: 5 });
     const interrupt = createCoverageStat({ coverageKey: 'interrupts', spellId: 47528, name: 'Interrupts', count: 5 });
 
     const sections = buildCompositionCoverageSections(
       { buffs: [], debuffs: [] },
-      [purge, powerInfusion, execute, allyFreedom, threat, grips, silence, interrupt],
+      [purge, powerInfusion, execute, allyFreedom, threat, deathGrip, grips, silence, interrupt],
     );
 
     expect(sections.raidEnhancements).toEqual([allyFreedom, threat, powerInfusion]);

@@ -86,7 +86,6 @@ const enemyWeakeningCoverageKeys = [
   'aoe_slows',
   'knockbacks',
   'knockups',
-  'death_grip',
   'enemy_grips_and_grouping',
   'interrupts',
   'silences_and_anti_cast',

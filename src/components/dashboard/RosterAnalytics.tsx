@@ -50,6 +50,11 @@ import {
   type RaidEffectStat,
   type WowSpellAnalyticsRow,
 } from '@/lib/raidEffectAnalytics';
+import {
+  getCoverageStateKey,
+  getTokenRiskSummary,
+  sortCoverageMissingFirst,
+} from '@/lib/rosterAnalyticsQuickWins';
 import { cn } from '@/lib/utils';
 import { MemberWish } from '@/types/guild';
 
@@ -658,11 +663,20 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
         </div>
         {stats.length > 0 ? (
           <div className={listLayoutClass}>
-            {stats.map(stat => {
+            {sortCoverageMissingFirst(stats).map(stat => {
               const isCovered = stat.count > 0;
               const statKey = 'coverageKey' in stat ? stat.coverageKey : stat.spellId;
               const spellNames = 'spellNames' in stat ? stat.spellNames : [];
               const spellEntries = 'spellEntries' in stat ? stat.spellEntries : [];
+              const stateKey = getCoverageStateKey(stat.count);
+              const stateLabel = t.dashboard.coverageStates[stateKey];
+              const coverageSourceStateLabel = stat.count > 1
+                ? t.dashboard.coverageSourceStatePlural
+                : t.dashboard.coverageSourceState;
+              const coverageSourceCountLabel = stat.count > 1
+                ? t.dashboard.coverageSourceCountPlural
+                : t.dashboard.coverageSourceCount;
+              const coverageSourceLabel = isRequired ? coverageSourceStateLabel : coverageSourceCountLabel;
               const rowTone = isRequired
                 ? isCovered
                   ? 'border-status-success/20 bg-status-success/5 hover:bg-status-success/10'
@@ -688,9 +702,12 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                         )
                       )}
                       <span
-                        className={`flex h-5 min-w-7 shrink-0 items-center justify-center rounded border px-1.5 text-[11px] font-semibold tabular-nums ${countTone}`}
+                        className={`flex h-5 min-w-[6rem] shrink-0 items-center justify-center rounded border px-1.5 text-[11px] font-semibold tabular-nums ${countTone}`}
                       >
-                        {stat.count}
+                        {interpolateMessage(coverageSourceLabel, {
+                          count: stat.count,
+                          state: stateLabel,
+                        })}
                       </span>
                       <span className={`min-w-0 flex-1 truncate font-medium ${labelTone}`}>
                         {stat.name}
@@ -802,6 +819,8 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   const representedClasses = useMemo(() => {
     return classStats.filter(s => s.total > 0);
   }, [classStats]);
+
+  const tokenRiskSummary = useMemo(() => getTokenRiskSummary(tokenStats), [tokenStats]);
 
   const getRoleIcon = (role: Role, size: string = "h-3.5 w-3.5") => {
     switch (role) {
@@ -956,6 +975,63 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     </div>
   );
 
+  const getCommitmentFilterLabel = (value: CommitmentFilter) => {
+    if (value === 'all') return t.dashboard.allCommitments;
+    return commitmentOptions.find(option => option.value === value)?.label || value;
+  };
+
+  const getRosterDecisionFilterLabel = (value: RosterDecisionFilter) => {
+    if (value === 'all') return t.common.all;
+    return rosterDecisionOptions.find(option => option.value === value)?.label || value;
+  };
+
+  const getValidationFilterLabel = (value: ValidationFilter) => {
+    if (value === 'all') return t.dashboard.allValidations;
+    return validationOptions.find(option => option.value === value)?.label || value;
+  };
+
+  const getRoleFilterLabel = (value: RoleFilter) => {
+    if (value === 'all') return t.dashboard.allRoles;
+    return roleOptions.find(option => option.value === value)?.label || value;
+  };
+
+  const getRangeFilterLabel = (value: RangeFilter) => {
+    if (value === 'all') return t.dashboard.allRanges;
+    return rangeOptions.find(option => option.value === value)?.label || value;
+  };
+
+  const resetAnalyticsFilters = () => {
+    setCommitmentFilter('confirmed');
+    setRosterDecisionFilter(defaultAnalyticsFilters.rosterDecision);
+    setRosterDecisionFilterTouched(false);
+    setWishScopeFilter(defaultAnalyticsFilters.wishScope);
+    setWishScopeFilterTouched(false);
+    setValidationFilter(defaultAnalyticsFilters.validation);
+    setValidationFilterTouched(false);
+    setRoleFilter('all');
+    setRangeFilter('all');
+  };
+
+  const activeFilterSummary = [
+    interpolateMessage(t.dashboard.activeFilterMembers, { count: filteredMemberCount }),
+    interpolateMessage(t.dashboard.activeFilterCommitment, { value: getCommitmentFilterLabel(commitmentFilter) }),
+    interpolateMessage(t.dashboard.activeFilterDecision, { value: getRosterDecisionFilterLabel(rosterDecisionFilter) }),
+    interpolateMessage(t.dashboard.activeFilterWishes, { value: getWishRangeLabel(wishScopeFilter) }),
+    interpolateMessage(t.dashboard.activeFilterValidation, { value: getValidationFilterLabel(validationFilter) }),
+    interpolateMessage(t.dashboard.activeFilterRole, { value: getRoleFilterLabel(roleFilter) }),
+    interpolateMessage(t.dashboard.activeFilterRange, { value: getRangeFilterLabel(rangeFilter) }),
+  ].join(' · ');
+
+  const tokenRiskDescription = tokenRiskSummary.token && tokenRiskSummary.level !== 'none'
+    ? interpolateMessage(t.dashboard.tokenRiskSummary, {
+        level: t.dashboard.tokenRiskLevels[tokenRiskSummary.level],
+        token: tokenRiskSummary.token.name,
+        count: tokenRiskSummary.token.total,
+        total: tokenRiskSummary.total,
+        percent: Math.round(tokenRiskSummary.percent * 100),
+      })
+    : t.dashboard.tokenRiskNone;
+
   // Calculate totals for KPI bar
   const totalTanks = rolesByPriority.find(r => r.role === 'tank');
   const totalHealers = rolesByPriority.find(r => r.role === 'healer');
@@ -977,11 +1053,50 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     { name: t.dashboard.ranged, value: rangeStats.ranged, color: rangeColorMap.ranged, key: 'ranged' },
   ].filter(d => d.value > 0);
 
+  const compositionKpis = [
+    {
+      key: 'tank',
+      label: getRoleName('tank'),
+      value: (totalTanks?.wish1 || 0) + (totalTanks?.other || 0),
+      color: roleColorMap.tank,
+      icon: getRoleIcon('tank', 'h-3 w-3 shrink-0'),
+    },
+    {
+      key: 'healer',
+      label: getRoleName('healer'),
+      value: (totalHealers?.wish1 || 0) + (totalHealers?.other || 0),
+      color: roleColorMap.healer,
+      icon: getRoleIcon('healer', 'h-3 w-3 shrink-0'),
+    },
+    {
+      key: 'dps',
+      label: getRoleName('dps'),
+      value: (totalDps?.wish1 || 0) + (totalDps?.other || 0),
+      color: roleColorMap.dps,
+      icon: getRoleIcon('dps', 'h-3 w-3 shrink-0'),
+    },
+    {
+      key: 'melee',
+      label: t.dashboard.melee,
+      value: rangeStats.melee,
+      color: rangeColorMap.melee,
+      icon: <Swords className="h-3 w-3 shrink-0" />,
+    },
+    {
+      key: 'ranged',
+      label: t.dashboard.ranged,
+      value: rangeStats.ranged,
+      color: rangeColorMap.ranged,
+      icon: <Crosshair className="h-3 w-3 shrink-0" />,
+    },
+  ];
+
   return (
     <TooltipProvider>
-      <div className="space-y-3">
-        <FilterBar className="mb-5 mt-4 gap-3 px-2 sm:px-0">
-          <Popover open={playersOpen} onOpenChange={setPlayersOpen}>
+      <div className="space-y-4">
+        <div className="sticky top-[var(--app-header-height,0px)] z-20 -mx-2 border-y border-border/50 bg-background/85 px-2 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/70 sm:mx-0 sm:rounded-lg sm:border">
+          <FilterBar className="gap-3">
+            <Popover open={playersOpen} onOpenChange={setPlayersOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
@@ -1164,99 +1279,176 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                 <span className="text-sm font-medium">{(totalDps?.wish1 || 0) + (totalDps?.other || 0)}</span>
               </div>
             </div>
+            </div>
+          </FilterBar>
+
+          <div className="mt-2 flex flex-col gap-2 border-t border-border/40 pt-2 text-sm text-muted-foreground lg:flex-row lg:items-center">
+            <div className="flex min-w-0 flex-1 items-start gap-2">
+              <Filter className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <p className="min-w-0 leading-5">
+                <span className="font-medium text-foreground">{t.dashboard.activeAnalysisScope}</span>{' '}
+                {activeFilterSummary}
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={resetAnalyticsFilters}
+              className="self-start lg:self-center"
+            >
+              {t.common.reset}
+            </Button>
           </div>
-        </FilterBar>
+        </div>
 
-        {/* Summary Grid */}
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-12">
-          <GlowCard surface="section" className="p-3 xl:col-span-2">
-            <h4 className="text-sm font-medium mb-2">{t.dashboard.range}</h4>
-            {totalRange > 0 ? (
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-24 h-24">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={rangePieData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={22}
-                        outerRadius={44}
-                        dataKey="value"
-                        stroke="none"
-                      >
-                        {rangePieData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="flex flex-col gap-0.5">
-                  {rangePieData.map(stat => (
-                    <div key={stat.key} className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: stat.color }} />
-                      {stat.key === 'melee' ? (
-                        <Swords className="h-3 w-3" style={{ color: stat.color }} />
-                      ) : (
-                        <Crosshair className="h-3 w-3" style={{ color: stat.color }} />
-                      )}
-                      <span className="text-xs">{stat.name}</span>
-                      <span className="text-xs text-muted-foreground ml-auto tabular-nums">
-                        {stat.value} ({Math.round((stat.value / totalRange) * 100)}%)
-                      </span>
-                    </div>
+        <section className="grid gap-3 xl:grid-cols-3">
+          {missingClasses.length > 0 ? (
+            <div className="flex items-start gap-3 rounded-lg border border-status-warning/35 bg-status-warning/10 p-3 xl:col-span-3">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-status-warning" />
+              <div className="min-w-0 flex-1">
+                <span className="text-sm font-medium text-status-warning">{t.dashboard.absentClassesTitle}</span>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {missingClasses.map(stat => (
+                    <Badge
+                      key={stat.id}
+                      variant="outline"
+                      className="px-2 py-0.5 text-xs"
+                      style={{
+                        color: resolveClassColor(stat.color),
+                        borderColor: resolveClassColor(stat.color),
+                      }}
+                    >
+                      {stat.name}
+                    </Badge>
                   ))}
                 </div>
               </div>
-            ) : (
-              <p className="text-xs text-muted-foreground text-center">{t.dashboard.noData}</p>
-            )}
-          </GlowCard>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 rounded-lg border border-status-success/30 bg-status-success/10 p-3 xl:col-span-3">
+              <CheckCircle2 className="h-4 w-4 text-status-success" />
+              <span className="text-sm text-status-success">{t.dashboard.allClassesRepresented}</span>
+            </div>
+          )}
+        </section>
 
-          <GlowCard surface="section" className="p-3 xl:col-span-2">
-            <h4 className="text-sm font-medium mb-2">{t.dashboard.rolesByPriority}</h4>
-            {totalRoles > 0 ? (
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-24 h-24">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={rolePieData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={22}
-                        outerRadius={44}
-                        dataKey="value"
-                        stroke="none"
-                      >
-                        {rolePieData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-12">
+          <GlowCard surface="section" className="p-3 xl:col-span-3">
+            <h4 className="mb-3 text-sm font-medium">{t.dashboard.compositionSummary}</h4>
+            <div className="mb-4 grid grid-cols-2 gap-1.5 min-[440px]:grid-cols-5">
+              {compositionKpis.map(kpi => (
+                <div
+                  key={kpi.key}
+                  className="min-w-0 rounded-md border bg-muted/10 px-2 py-1.5"
+                  style={{
+                    borderColor: `color-mix(in srgb, ${kpi.color} 35%, transparent)`,
+                    backgroundColor: `color-mix(in srgb, ${kpi.color} 8%, transparent)`,
+                  }}
+                >
+                  <div className="flex min-w-0 items-center gap-1" style={{ color: kpi.color }}>
+                    {kpi.icon}
+                    <span className="min-w-0 truncate text-[10px] font-semibold leading-none">
+                      {kpi.label}
+                    </span>
+                  </div>
+                  <div className="mt-1 text-base font-bold leading-none tabular-nums text-foreground">
+                    {kpi.value}
+                  </div>
                 </div>
-                <div className="flex flex-col gap-0.5">
-                  {rolePieData.map(stat => (
-                    <div key={stat.role} className="flex items-center gap-1.5">
-                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: stat.color }} />
-                      <span style={{ color: stat.color }}>{getRoleIcon(stat.role, "h-3 w-3")}</span>
-                      <span className="text-xs">{stat.name}</span>
-                      <span className="text-xs text-muted-foreground ml-auto tabular-nums">
-                        {stat.value} ({Math.round((stat.value / totalRoles) * 100)}%)
-                      </span>
+              ))}
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
+              <div className="min-w-0">
+                <h5 className="mb-2 text-xs font-semibold text-muted-foreground">{t.dashboard.roleBalance}</h5>
+                {totalRoles > 0 ? (
+                  <div className="flex items-center gap-3">
+                    <div className="h-24 w-24 shrink-0">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={rolePieData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={22}
+                            outerRadius={44}
+                            dataKey="value"
+                            stroke="none"
+                          >
+                            {rolePieData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
                     </div>
-                  ))}
-                </div>
+                    <div className="flex min-w-0 flex-1 flex-col gap-1">
+                      {rolePieData.map(stat => (
+                        <div key={stat.role} className="flex min-w-0 items-center gap-1.5">
+                          <div className="h-2 w-2 rounded-full" style={{ backgroundColor: stat.color }} />
+                          <span style={{ color: stat.color }}>{getRoleIcon(stat.role, "h-3 w-3")}</span>
+                          <span className="min-w-0 truncate text-xs">{stat.name}</span>
+                          <span className="ml-auto shrink-0 text-xs tabular-nums text-muted-foreground">
+                            {stat.value} ({Math.round((stat.value / totalRoles) * 100)}%)
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-center text-xs text-muted-foreground">{t.dashboard.noData}</p>
+                )}
               </div>
-            ) : (
-              <p className="text-xs text-muted-foreground text-center">{t.dashboard.noData}</p>
-            )}
+
+              <div className="min-w-0">
+                <h5 className="mb-2 text-xs font-semibold text-muted-foreground">{t.dashboard.rangeBalance}</h5>
+                {totalRange > 0 ? (
+                  <div className="flex items-center gap-3">
+                    <div className="h-24 w-24 shrink-0">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={rangePieData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={22}
+                            outerRadius={44}
+                            dataKey="value"
+                            stroke="none"
+                          >
+                            {rangePieData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="flex min-w-0 flex-1 flex-col gap-1">
+                      {rangePieData.map(stat => (
+                        <div key={stat.key} className="flex min-w-0 items-center gap-1.5">
+                          <div className="h-2 w-2 rounded-full" style={{ backgroundColor: stat.color }} />
+                          {stat.key === 'melee' ? (
+                            <Swords className="h-3 w-3" style={{ color: stat.color }} />
+                          ) : (
+                            <Crosshair className="h-3 w-3" style={{ color: stat.color }} />
+                          )}
+                          <span className="min-w-0 truncate text-xs">{stat.name}</span>
+                          <span className="ml-auto shrink-0 text-xs tabular-nums text-muted-foreground">
+                            {stat.value} ({Math.round((stat.value / totalRange) * 100)}%)
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-center text-xs text-muted-foreground">{t.dashboard.noData}</p>
+                )}
+              </div>
+            </div>
           </GlowCard>
 
-          <GlowCard surface="section" className="p-3 xl:col-span-4">
-            <h4 className="text-sm font-medium mb-2">{t.dashboard.classDistribution}</h4>
+          <GlowCard surface="section" className="p-3 xl:col-span-5">
+            <h4 className="text-sm font-medium mb-2">{t.dashboard.classesRepresented}</h4>
             <div className="max-h-[220px] overflow-y-auto pr-1 space-y-1">
               {representedClasses.map((stat) => (
                 <UITooltip key={stat.id} delayDuration={100}>
@@ -1309,8 +1501,8 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
             </div>
           </GlowCard>
 
-          <GlowCard surface="section" className="p-3 xl:col-span-4">
-            <h4 className="text-sm font-medium mb-2">{t.dashboard.topSpecs}</h4>
+          <GlowCard surface="section" className="p-3 md:col-span-2 xl:col-span-4">
+            <h4 className="text-sm font-medium mb-2">{t.dashboard.requestedSpecializations}</h4>
             {specStats.length > 0 ? (
               <div className="max-h-[220px] overflow-y-auto pr-1 space-y-1">
                 {specStats.map((stat, index) => (
@@ -1336,12 +1528,14 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
             )}
           </GlowCard>
 
-        </div>
-
-        {/* Composition Grid */}
-        <div className="grid grid-cols-1 gap-3 xl:grid-cols-12">
-          <GlowCard surface="section" className="p-3 xl:col-span-12">
-            <h4 className="text-sm font-medium mb-2">{t.dashboard.tokenDistribution}</h4>
+          <GlowCard surface="section" className="p-3 md:col-span-1 xl:col-span-5">
+            <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <h4 className="text-sm font-medium">{t.dashboard.lootConcentrationRisk}</h4>
+              <Badge variant="outline" className="w-fit border-border/60 bg-muted/20 text-xs text-muted-foreground">
+                {t.dashboard.tokenRiskLevels[tokenRiskSummary.level]}
+              </Badge>
+            </div>
+            <p className="mb-2 text-xs text-muted-foreground">{tokenRiskDescription}</p>
             <p className="text-[11px] text-muted-foreground mb-2">
               {t.dashboard.tokenDistributionInfo}{' '}
               <a
@@ -1397,48 +1591,34 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
             )}
           </GlowCard>
 
-        </div>
+          {showCompositionCoverage && (
+            <GlowCard surface="section" className="p-3 md:col-span-1 xl:col-span-7">
+              <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground">{t.dashboard.majorBuffsDebuffs}</h4>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                {renderCoverageList(t.dashboard.majorBuffs, compositionCoverageSections.majorBuffs, { required: true })}
+                {renderCoverageList(t.dashboard.majorDebuffs, compositionCoverageSections.majorDebuffs, { required: true })}
+              </div>
+            </GlowCard>
+          )}
 
-        {showCompositionCoverage && (
-          <GlowCard surface="section" className="p-3">
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-4">
-              {renderCoverageList(t.dashboard.majorBuffs, compositionCoverageSections.majorBuffs, { required: true })}
-              {renderCoverageList(t.dashboard.majorDebuffs, compositionCoverageSections.majorDebuffs)}
+          {showCompositionCoverage && (
+            <GlowCard surface="section" className="p-3 md:col-span-2 xl:col-span-12">
+            <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h4 className="text-sm font-semibold text-foreground">{t.dashboard.raidCoverageTitle}</h4>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
               {renderCoverageList(t.dashboard.raidEnhancements, compositionCoverageSections.raidEnhancements)}
               {renderCoverageList(t.dashboard.enemyWeakening, compositionCoverageSections.enemyWeakening)}
             </div>
           </GlowCard>
-        )}
-
-        {/* Missing/All Classes Alert - Compact */}
-        {missingClasses.length > 0 ? (
-          <div className="flex items-start gap-2 p-2.5 bg-status-warning/10 border border-status-warning/30 rounded-lg">
-            <AlertTriangle className="h-4 w-4 text-status-warning flex-shrink-0 mt-0.5" />
-            <div className="flex-1 min-w-0">
-              <span className="text-xs font-medium text-status-warning">{t.dashboard.missingClasses}:</span>
-              <div className="flex flex-wrap gap-1 mt-1">
-                {missingClasses.map(stat => (
-                  <Badge
-                    key={stat.id}
-                    variant="outline"
-                    className="text-[10px] px-1.5 py-0"
-                    style={{ 
-                      color: resolveClassColor(stat.color),
-                      borderColor: resolveClassColor(stat.color),
-                    }}
-                  >
-                    {stat.name}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2 p-2 bg-status-success/10 border border-status-success/30 rounded-lg">
-            <CheckCircle2 className="h-4 w-4 text-status-success" />
-            <span className="text-xs text-status-success">{t.dashboard.allClassesRepresented}</span>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </TooltipProvider>
   );
