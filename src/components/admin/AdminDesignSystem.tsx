@@ -384,9 +384,9 @@ export const AdminDesignSystem = () => {
                 <p className="text-sm">Body copy for context and guidance.</p>
                 <p className="text-xs text-muted-foreground">Caption / helper text / metadata</p>
                 <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <Badge className="bg-tank/20 text-tank">Tank</Badge>
+                  <Badge className="border-tank/30 bg-tank/20 text-foreground">Tank</Badge>
                   <Badge className="bg-healer/20 text-healer">Healer</Badge>
-                  <Badge className="bg-dps/20 text-dps">DPS</Badge>
+                  <Badge className="border-dps/30 bg-dps/20 text-foreground">DPS</Badge>
                   <Badge variant="outline">Alliance</Badge>
                   <Badge variant="outline">Horde</Badge>
                 </div>
@@ -562,7 +562,7 @@ export const AdminDesignSystem = () => {
                   <p className="text-xs text-muted-foreground mb-2">Compose the app chrome as four groups: brand, global navigation, command search, and user zone.</p>
                   <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded bg-muted/30 p-2 text-xs">
                     <Badge variant="outline" className="border-border/40 bg-background/35 text-muted-foreground">Brand</Badge>
-                    <Badge variant="outline" className="border-primary/25 bg-primary/10 text-primary">Guild switcher</Badge>
+                    <Badge variant="outline" className="border-primary/25 bg-primary/10 text-foreground">Guild switcher</Badge>
                     <Badge variant="outline">Admin</Badge>
                     <Badge variant="outline" className="border-border/35 bg-background/30 text-muted-foreground">Search</Badge>
                     <Badge variant="outline" className="border-border/35 bg-card/20">User zone</Badge>
@@ -1340,7 +1340,7 @@ export const AdminDesignSystem = () => {
                   <CardContent className="space-y-3">
                     <div className="flex flex-wrap gap-2">
                       <Badge className="bg-healer/20 text-healer">2 healers needed</Badge>
-                      <Badge className="bg-tank/20 text-tank">1 tank needed</Badge>
+                      <Badge className="border-tank/30 bg-tank/20 text-foreground">1 tank needed</Badge>
                     </div>
                     <CommitmentToggle status={attendance} onChange={setAttendance} compact />
                   </CardContent>

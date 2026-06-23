@@ -176,7 +176,7 @@ const LegalPage = () => {
                         href={href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-primary hover:underline"
+                        className="font-medium text-foreground underline underline-offset-2 decoration-foreground/50 hover:decoration-foreground"
                       >
                         {children}
                       </a>
@@ -201,8 +201,8 @@ const LegalPage = () => {
                         <a
                           key={heading.id}
                           href={`#${heading.id}`}
-                          className={`block rounded px-2 py-1.5 text-sm transition-colors hover:bg-muted/30 hover:text-primary ${
-                            index === 0 ? 'font-semibold text-primary' : 'text-muted-foreground'
+                          className={`block rounded px-2 py-1.5 text-sm transition-colors hover:bg-muted/30 hover:text-foreground ${
+                            index === 0 ? 'font-semibold text-foreground' : 'text-muted-foreground'
                           }`}
                         >
                           {heading.text}
