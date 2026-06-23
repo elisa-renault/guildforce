@@ -678,6 +678,9 @@ export interface Translations {
     compositionCoverageLabels: {
       combatResurrection: string;
       immunities: string;
+      knockUpBack: string;
+      extraDamageToShields: string;
+      cheatDeath: string;
     };
     allValidations: string;
     missingClasses: string;

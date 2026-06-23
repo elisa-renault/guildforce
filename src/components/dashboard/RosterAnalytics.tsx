@@ -463,9 +463,15 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   const compositionCoverageLabels = useMemo(() => ({
     combat_res: t.dashboard.compositionCoverageLabels.combatResurrection,
     immunity: t.dashboard.compositionCoverageLabels.immunities,
+    knock_up_back: t.dashboard.compositionCoverageLabels.knockUpBack,
+    extra_damage_to_shields: t.dashboard.compositionCoverageLabels.extraDamageToShields,
+    cheat_death: t.dashboard.compositionCoverageLabels.cheatDeath,
   }), [
     t.dashboard.compositionCoverageLabels.combatResurrection,
+    t.dashboard.compositionCoverageLabels.cheatDeath,
+    t.dashboard.compositionCoverageLabels.extraDamageToShields,
     t.dashboard.compositionCoverageLabels.immunities,
+    t.dashboard.compositionCoverageLabels.knockUpBack,
   ]);
   const compositionCoverage = useMemo(() => {
     return buildCompositionCoverage(

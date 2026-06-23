@@ -605,6 +605,9 @@ export const translationsEn: Translations = {
       compositionCoverageLabels: {
         combatResurrection: 'Combat resurrection',
         immunities: 'Immunities',
+        knockUpBack: 'Knock up/back',
+        extraDamageToShields: 'Extra damage to shields',
+        cheatDeath: 'Cheat death',
       },
       allValidations: 'All validations',
       missingClasses: 'Missing Classes',

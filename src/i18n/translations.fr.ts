@@ -605,6 +605,9 @@ export const translationsFr: Translations = {
       compositionCoverageLabels: {
         combatResurrection: 'Résurrection de combat',
         immunities: 'Immunités',
+        knockUpBack: 'Projections / repoussements',
+        extraDamageToShields: 'Dégâts bonus aux boucliers',
+        cheatDeath: 'Trompe-la-mort',
       },
       allValidations: 'Toutes validations',
       missingClasses: 'Classes manquantes',

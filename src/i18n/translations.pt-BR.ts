@@ -399,6 +399,9 @@ export const translationsPtBr: Translations = createLocaleTranslations(translati
     compositionCoverageLabels: {
       combatResurrection: 'Ressurreição em combate',
       immunities: 'Imunidades',
+      knockUpBack: 'Arremesso / repulsão',
+      extraDamageToShields: 'Dano extra a escudos',
+      cheatDeath: 'Burlar a morte',
     },
     allValidations: 'Todas as validações',
     missingClasses: 'Classes ausentes',

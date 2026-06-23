@@ -605,6 +605,9 @@ export const translationsEs: Translations = createLocaleTranslations(translation
     compositionCoverageLabels: {
       combatResurrection: 'Resurrección en combate',
       immunities: 'Inmunidades',
+      knockUpBack: 'Derribo / retroceso',
+      extraDamageToShields: 'Daño extra a escudos',
+      cheatDeath: 'Burlar la muerte',
     },
     allValidations: 'Todas las validaciones',
     missingClasses: 'Clases ausentes',
