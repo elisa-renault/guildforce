@@ -119,15 +119,17 @@ describe('composition analytics', () => {
   it('combines bloodlust-equivalent abilities from different classes under one coverage key', () => {
     const abilities = [
       createAbility({ id: 'a1', ability_key: 'bloodlust', coverage_key: 'bloodlust', spell_id: 2825, sort_order: 1 }),
-      createAbility({ id: 'a2', ability_key: 'time_warp', coverage_key: 'bloodlust', spell_id: 80353, sort_order: 2 }),
-      createAbility({ id: 'a3', ability_key: 'primal_rage', coverage_key: 'bloodlust', spell_id: 264667, sort_order: 3 }),
-      createAbility({ id: 'a4', ability_key: 'fury_of_the_aspects', coverage_key: 'bloodlust', spell_id: 390386, sort_order: 4 }),
+      createAbility({ id: 'a2', ability_key: 'heroism', coverage_key: 'bloodlust', spell_id: 32182, sort_order: 2 }),
+      createAbility({ id: 'a3', ability_key: 'time_warp', coverage_key: 'bloodlust', spell_id: 80353, sort_order: 3 }),
+      createAbility({ id: 'a4', ability_key: 'primal_rage', coverage_key: 'bloodlust', spell_id: 264667, sort_order: 4 }),
+      createAbility({ id: 'a5', ability_key: 'fury_of_the_aspects', coverage_key: 'bloodlust', spell_id: 390386, sort_order: 5 }),
     ];
     const mappings = [
       createMapping({ ability_id: 'a1', class_id: 'shaman' }),
-      createMapping({ ability_id: 'a2', class_id: 'mage' }),
-      createMapping({ ability_id: 'a3', class_id: 'hunter' }),
-      createMapping({ ability_id: 'a4', class_id: 'evoker' }),
+      createMapping({ ability_id: 'a2', class_id: 'shaman' }),
+      createMapping({ ability_id: 'a3', class_id: 'mage' }),
+      createMapping({ ability_id: 'a4', class_id: 'hunter' }),
+      createMapping({ ability_id: 'a5', class_id: 'evoker' }),
     ];
     const members: CompositionMemberInput<TestWish>[] = [
       { wishes: [{ class_id: 'mage', spec_ids: ['mage-arcane'] }] },
@@ -136,6 +138,7 @@ describe('composition analytics', () => {
     ];
     const spells = [
       createSpell({ spell_id: 2825, name_en: 'Bloodlust', name_fr: 'Furie sanguinaire' }),
+      createSpell({ spell_id: 32182, name_en: 'Heroism', name_fr: 'Héroïsme' }),
       createSpell({ spell_id: 80353, name_en: 'Time Warp', name_fr: 'Distorsion temporelle' }),
     ];
 
@@ -146,8 +149,30 @@ describe('composition analytics', () => {
       coverageKey: 'bloodlust',
       name: 'Furie sanguinaire',
       count: 3,
-      spellNames: ['Furie sanguinaire', 'Distorsion temporelle', 'Spell 264667', 'Spell 390386'],
+      spellNames: ['Furie sanguinaire', 'Héroïsme', 'Distorsion temporelle', 'Spell 264667', 'Spell 390386'],
     });
+    expect(result[0].spellEntries).toEqual([
+      expect.objectContaining({
+        name: 'Furie sanguinaire / Héroïsme',
+        covered: false,
+        providers: [expect.objectContaining({ classId: 'shaman', covered: false })],
+      }),
+      expect.objectContaining({
+        name: 'Distorsion temporelle',
+        covered: true,
+        providers: [expect.objectContaining({ classId: 'mage', covered: true })],
+      }),
+      expect.objectContaining({
+        name: 'Spell 264667',
+        covered: true,
+        providers: [expect.objectContaining({ classId: 'hunter', covered: true })],
+      }),
+      expect.objectContaining({
+        name: 'Spell 390386',
+        covered: true,
+        providers: [expect.objectContaining({ classId: 'evoker', covered: true })],
+      }),
+    ]);
   });
 
   it('uses coverage label overrides and grouped spell names for multi-spell rows', () => {
@@ -160,7 +185,7 @@ describe('composition analytics', () => {
       createMapping({ ability_id: 'a2', class_id: 'death-knight' }),
     ];
     const members: CompositionMemberInput<TestWish>[] = [
-      { wishes: [{ class_id: 'druid' }, { class_id: 'death-knight' }] },
+      { wishes: [{ class_id: 'druid' }] },
     ];
     const spells = [
       createSpell({
@@ -193,6 +218,18 @@ describe('composition analytics', () => {
       spellNames: ['Rebirth', 'Raise Ally'],
       count: 1,
     });
+    expect(result[0].spellEntries).toEqual([
+      expect.objectContaining({
+        name: 'Rebirth',
+        covered: true,
+        providers: [expect.objectContaining({ classId: 'druid', covered: true })],
+      }),
+      expect.objectContaining({
+        name: 'Raise Ally',
+        covered: false,
+        providers: [expect.objectContaining({ classId: 'death-knight', covered: false })],
+      }),
+    ]);
   });
 
   it('keeps distinct single-spell rows and their spell descriptions when coverage keys differ', () => {

@@ -605,6 +605,7 @@ export const translationsEn: Translations = {
       compositionCoverageLabels: {
         combatResurrection: 'Combat resurrection',
         immunities: 'Immunities',
+        burstMoveSpeed: 'Mobility Burst',
         knockUpBack: 'Knock up/back',
         extraDamageToShields: 'Extra damage to shields',
         cheatDeath: 'Cheat death',

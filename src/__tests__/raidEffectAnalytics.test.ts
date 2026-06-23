@@ -122,6 +122,14 @@ describe('raid effect analytics', () => {
         sort_order: 90,
       },
       {
+        class_id: 'shaman',
+        spec_id: null,
+        category: 'major_buff',
+        spell_id: 32182,
+        effect_key: 'heroism',
+        sort_order: 91,
+      },
+      {
         class_id: 'mage',
         spec_id: null,
         category: 'major_buff',
@@ -148,6 +156,7 @@ describe('raid effect analytics', () => {
     ];
     const bloodlustSpells = [
       createSpell({ spell_id: 2825, name_en: 'Bloodlust', name_fr: 'Furie sanguinaire' }),
+      createSpell({ spell_id: 32182, name_en: 'Heroism', name_fr: 'Héroïsme' }),
       createSpell({ spell_id: 80353, name_en: 'Time Warp', name_fr: 'Distorsion temporelle' }),
       createSpell({ spell_id: 264667, name_en: 'Primal Rage', name_fr: 'Rage primordiale' }),
       createSpell({ spell_id: 390386, name_en: 'Fury of the Aspects', name_fr: 'Fureur des aspects' }),
@@ -168,11 +177,34 @@ describe('raid effect analytics', () => {
       count: 3,
       spellNames: [
         'Furie sanguinaire',
+        'Héroïsme',
         'Distorsion temporelle',
         'Rage primordiale',
         'Fureur des aspects',
       ],
     });
+    expect(result.buffs[0].spellEntries).toEqual([
+      expect.objectContaining({
+        name: 'Furie sanguinaire / Héroïsme',
+        covered: false,
+        providers: [expect.objectContaining({ classId: 'shaman', covered: false })],
+      }),
+      expect.objectContaining({
+        name: 'Distorsion temporelle',
+        covered: true,
+        providers: [expect.objectContaining({ classId: 'mage', covered: true })],
+      }),
+      expect.objectContaining({
+        name: 'Rage primordiale',
+        covered: true,
+        providers: [expect.objectContaining({ classId: 'hunter', covered: true })],
+      }),
+      expect.objectContaining({
+        name: 'Fureur des aspects',
+        covered: true,
+        providers: [expect.objectContaining({ classId: 'evoker', covered: true })],
+      }),
+    ]);
   });
 
   it('prefers localized spell text, then English, then a spell id fallback', () => {

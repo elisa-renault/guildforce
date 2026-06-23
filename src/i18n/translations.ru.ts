@@ -559,6 +559,7 @@ export const translationsRu: Translations = createLocaleTranslations(translation
     compositionCoverageLabels: {
       combatResurrection: 'Воскрешение в бою',
       immunities: 'Иммунитеты',
+      burstMoveSpeed: 'Рывок мобильности',
       knockUpBack: 'Подбрасывание / отбрасывание',
       extraDamageToShields: 'Доп. урон по щитам',
       cheatDeath: 'Обман смерти',

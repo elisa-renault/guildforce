@@ -605,6 +605,7 @@ export const translationsKo: Translations = createLocaleTranslations(translation
     compositionCoverageLabels: {
       combatResurrection: '전투 부활',
       immunities: '면역기',
+      burstMoveSpeed: '기동성 폭발',
       knockUpBack: '띄우기 / 밀쳐내기',
       extraDamageToShields: '보호막 추가 피해',
       cheatDeath: '죽음 회피',

@@ -605,6 +605,7 @@ export const translationsZhTw: Translations = createLocaleTranslations(translati
     compositionCoverageLabels: {
       combatResurrection: '戰鬥復活',
       immunities: '免疫',
+      burstMoveSpeed: '機動性爆發',
       knockUpBack: '擊飛／擊退',
       extraDamageToShields: '對護盾額外傷害',
       cheatDeath: '保命免死',

@@ -40,12 +40,27 @@ export interface RaidEffectMemberInput<Wish extends RaidEffectWishInput = RaidEf
   wishes: Wish[];
 }
 
+export interface CoverageSpellProvider {
+  classId: string;
+  specId: string | null;
+  covered: boolean;
+}
+
+export interface CoverageSpellEntry {
+  spellId: number;
+  name: string;
+  providers: CoverageSpellProvider[];
+  covered: boolean;
+  sortOrder: number;
+}
+
 export interface RaidEffectStat {
   spellId: number;
   coverageKey?: string;
   name: string;
   description: string;
   spellNames: string[];
+  spellEntries: CoverageSpellEntry[];
   count: number;
   sortOrder: number;
 }
@@ -58,11 +73,74 @@ type RaidEffectWithText = RaidEffectAnalyticsRow & {
 type SpellTextField = keyof Omit<WowSpellAnalyticsRow, 'spell_id'>;
 
 const bloodlustEquivalentSpellIds = new Set([2825, 32182, 80353, 264667, 390386]);
+const shamanBloodlustVariantSpellIds = new Set([2825, 32182]);
 
 const getRaidEffectCoverageKey = (effect: RaidEffectAnalyticsRow): string =>
   bloodlustEquivalentSpellIds.has(effect.spell_id)
     ? 'bloodlust'
     : effect.effect_key || String(effect.spell_id);
+
+const getProviderKey = (classId: string, specId: string | null): string => `${classId}:${specId ?? ''}`;
+
+const getEffectProviderKey = (effect: RaidEffectAnalyticsRow): string =>
+  `${getRaidEffectCoverageKey(effect)}:${effect.spell_id}:${getProviderKey(effect.class_id, effect.spec_id)}`;
+
+const getProviderSignature = (providers: CoverageSpellProvider[]): string =>
+  providers
+    .map(provider => getProviderKey(provider.classId, provider.specId))
+    .sort()
+    .join('|');
+
+const getMergeableSpellEntryKey = (entry: CoverageSpellEntry): string | null => {
+  if (!shamanBloodlustVariantSpellIds.has(entry.spellId)) return null;
+  if (!entry.providers.length || entry.providers.some(provider => provider.classId !== 'shaman')) return null;
+  return `shaman-bloodlust:${getProviderSignature(entry.providers)}`;
+};
+
+export const mergeEquivalentCoverageSpellEntries = (
+  entries: CoverageSpellEntry[],
+): CoverageSpellEntry[] => {
+  const merged = new Map<string, CoverageSpellEntry>();
+  const passthrough: CoverageSpellEntry[] = [];
+
+  entries.forEach((entry) => {
+    const mergeKey = getMergeableSpellEntryKey(entry);
+    if (!mergeKey) {
+      passthrough.push(entry);
+      return;
+    }
+
+    const existing = merged.get(mergeKey);
+    if (!existing) {
+      merged.set(mergeKey, {
+        ...entry,
+        providers: [...entry.providers],
+      });
+      return;
+    }
+
+    const providerMap = new Map<string, CoverageSpellProvider>();
+    [...existing.providers, ...entry.providers].forEach((provider) => {
+      const providerKey = getProviderKey(provider.classId, provider.specId);
+      const current = providerMap.get(providerKey);
+      providerMap.set(providerKey, current ? { ...current, covered: current.covered || provider.covered } : provider);
+    });
+
+    merged.set(mergeKey, {
+      ...existing,
+      spellId: Math.min(existing.spellId, entry.spellId),
+      name: `${existing.name} / ${entry.name}`,
+      providers: Array.from(providerMap.values()),
+      covered: existing.covered || entry.covered,
+      sortOrder: Math.min(existing.sortOrder, entry.sortOrder),
+    });
+  });
+
+  return [...passthrough, ...merged.values()].sort((a, b) => {
+    if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
+    return a.name.localeCompare(b.name);
+  });
+};
 
 const spellTextFieldsByLanguage: Record<Language, { name: SpellTextField; description: SpellTextField }> = {
   en: { name: 'name_en', description: 'description_en' },
@@ -158,6 +236,13 @@ export const buildMajorBuffsDebuffs = <
   const buffs = new Map<string, RaidEffectStat>();
   const debuffs = new Map<string, RaidEffectStat>();
   const spellNamesByCoverage = new Map<string, { name: string; sortOrder: number }[]>();
+  const spellEntriesByCoverage = new Map<string, {
+    spellId: number;
+    name: string;
+    sortOrder: number;
+    providers: Map<string, { classId: string; specId: string | null }>;
+  }[]>();
+  const coveredEffectProviders = new Set<string>();
 
   effectsWithText.forEach((effect) => {
     const existing = effectsByClass.get(effect.class_id) || [];
@@ -177,6 +262,23 @@ export const buildMajorBuffsDebuffs = <
     const spellNames = spellNamesByCoverage.get(coverageKey) ?? [];
     spellNames.push({ name: effect.name, sortOrder });
     spellNamesByCoverage.set(coverageKey, spellNames);
+    const spellEntries = spellEntriesByCoverage.get(coverageKey) ?? [];
+    let spellEntry = spellEntries.find(entry => entry.spellId === effect.spell_id);
+    if (!spellEntry) {
+      spellEntry = {
+        spellId: effect.spell_id,
+        name: effect.name,
+        sortOrder,
+        providers: new Map(),
+      };
+      spellEntries.push(spellEntry);
+      spellEntriesByCoverage.set(coverageKey, spellEntries);
+    }
+    spellEntry.sortOrder = Math.min(spellEntry.sortOrder, sortOrder);
+    spellEntry.providers.set(getProviderKey(effect.class_id, effect.spec_id), {
+      classId: effect.class_id,
+      specId: effect.spec_id,
+    });
 
     const current = target.get(coverageKey);
     if (!current) {
@@ -186,6 +288,7 @@ export const buildMajorBuffsDebuffs = <
         name: effect.name,
         description: effect.description,
         spellNames: [],
+        spellEntries: [],
         count: 0,
         sortOrder,
       });
@@ -195,7 +298,7 @@ export const buildMajorBuffsDebuffs = <
     current.sortOrder = Math.min(current.sortOrder, sortOrder);
   });
 
-  const attachGroupedSpellNames = (stats: Map<string, RaidEffectStat>) => {
+  const attachGroupedSpellData = (stats: Map<string, RaidEffectStat>) => {
     stats.forEach((stat, coverageKey) => {
       const uniqueNames = (spellNamesByCoverage.get(coverageKey) ?? [])
         .sort((a, b) => {
@@ -211,11 +314,30 @@ export const buildMajorBuffsDebuffs = <
       if (uniqueNames.length > 1) {
         stat.description = uniqueNames.join(', ');
       }
+      const spellEntries = (spellEntriesByCoverage.get(coverageKey) ?? [])
+        .sort((a, b) => {
+          if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
+          return a.name.localeCompare(b.name);
+        })
+        .map((entry) => {
+          const providers = Array.from(entry.providers.values()).map(provider => ({
+            ...provider,
+            covered: coveredEffectProviders.has(
+              `${coverageKey}:${entry.spellId}:${getProviderKey(provider.classId, provider.specId)}`,
+            ),
+          }));
+
+          return {
+            spellId: entry.spellId,
+            name: entry.name,
+            sortOrder: entry.sortOrder,
+            providers,
+            covered: providers.some(provider => provider.covered),
+          };
+        });
+      stat.spellEntries = mergeEquivalentCoverageSpellEntries(spellEntries);
     });
   };
-
-  attachGroupedSpellNames(buffs);
-  attachGroupedSpellNames(debuffs);
 
   members.forEach((member) => {
     const coveredBuffsForMember = new Set<string>();
@@ -233,9 +355,11 @@ export const buildMajorBuffsDebuffs = <
         const coverageKey = getRaidEffectCoverageKey(entry);
         if (entry.category === 'major_buff') {
           coveredBuffsForMember.add(coverageKey);
+          coveredEffectProviders.add(getEffectProviderKey(entry));
         }
         if (entry.category === 'major_debuff') {
           coveredDebuffsForMember.add(coverageKey);
+          coveredEffectProviders.add(getEffectProviderKey(entry));
         }
       });
     });
@@ -249,6 +373,9 @@ export const buildMajorBuffsDebuffs = <
       if (existing) existing.count += 1;
     });
   });
+
+  attachGroupedSpellData(buffs);
+  attachGroupedSpellData(debuffs);
 
   const sortByCoverage = (a: RaidEffectStat, b: RaidEffectStat) => {
     if (b.count !== a.count) return b.count - a.count;

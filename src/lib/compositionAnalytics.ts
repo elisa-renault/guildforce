@@ -1,6 +1,8 @@
 import type { Language } from '@/i18n/config';
 
 import {
+  mergeEquivalentCoverageSpellEntries,
+  type CoverageSpellEntry,
   resolveWowSpellText,
   type WowSpellAnalyticsRow,
 } from '@/lib/raidEffectAnalytics';
@@ -49,6 +51,7 @@ export interface CompositionCoverageStat {
   name: string;
   description: string;
   spellNames: string[];
+  spellEntries: CoverageSpellEntry[];
   count: number;
   sortOrder: number;
 }
@@ -59,6 +62,8 @@ export interface BuildCompositionCoverageOptions {
   coverageKinds?: Iterable<string>;
   coverageLabels?: Partial<Record<string, string>>;
 }
+
+const getProviderKey = (classId: string, specId: string | null): string => `${classId}:${specId ?? ''}`;
 
 const keyToLabel = (key: string): string =>
   key
@@ -103,7 +108,15 @@ export const buildCompositionCoverage = <
   const abilitiesById = new Map(activeAbilities.map(ability => [ability.id, ability]));
   const stats = new Map<string, CompositionCoverageStat>();
   const spellNamesByCoverage = new Map<string, { name: string; sortOrder: number }[]>();
+  const spellEntriesByCoverage = new Map<string, {
+    abilityId: string;
+    spellId: number | null;
+    name: string;
+    sortOrder: number;
+    providers: Map<string, { classId: string; specId: string | null }>;
+  }[]>();
   const mappingsByClass = new Map<string, { ability: CompositionAbilityAnalyticsRow; mapping: CompositionAbilityMappingAnalyticsRow }[]>();
+  const coveredAbilityProviders = new Set<string>();
 
   activeAbilities.forEach((ability) => {
     const text = resolveAbilityText(ability, spellsById, language);
@@ -112,6 +125,15 @@ export const buildCompositionCoverage = <
     const spellNames = spellNamesByCoverage.get(ability.coverage_key) ?? [];
     spellNames.push({ name: text.name, sortOrder });
     spellNamesByCoverage.set(ability.coverage_key, spellNames);
+    const spellEntries = spellEntriesByCoverage.get(ability.coverage_key) ?? [];
+    spellEntries.push({
+      abilityId: ability.id,
+      spellId: ability.spell_id,
+      name: text.name,
+      sortOrder,
+      providers: new Map(),
+    });
+    spellEntriesByCoverage.set(ability.coverage_key, spellEntries);
 
     if (!existing) {
       stats.set(ability.coverage_key, {
@@ -121,6 +143,7 @@ export const buildCompositionCoverage = <
         name: coverageLabels[ability.coverage_key] ?? text.name,
         description: text.description,
         spellNames: [],
+        spellEntries: [],
         count: 0,
         sortOrder,
       });
@@ -158,6 +181,13 @@ export const buildCompositionCoverage = <
     const ability = abilitiesById.get(mapping.ability_id);
     if (!ability) return;
 
+    const spellEntries = spellEntriesByCoverage.get(ability.coverage_key);
+    const spellEntry = spellEntries?.find(entry => entry.abilityId === ability.id);
+    spellEntry?.providers.set(getProviderKey(mapping.class_id, mapping.spec_id), {
+      classId: mapping.class_id,
+      specId: mapping.spec_id,
+    });
+
     const existing = mappingsByClass.get(mapping.class_id) || [];
     existing.push({ ability, mapping });
     mappingsByClass.set(mapping.class_id, existing);
@@ -176,6 +206,9 @@ export const buildCompositionCoverage = <
       entries.forEach(({ ability, mapping }) => {
         if (mapping.spec_id && !wish.spec_ids?.includes(mapping.spec_id)) return;
         coveredForMember.add(ability.coverage_key);
+        coveredAbilityProviders.add(
+          `${ability.id}:${getProviderKey(mapping.class_id, mapping.spec_id)}`,
+        );
       });
     });
 
@@ -183,6 +216,31 @@ export const buildCompositionCoverage = <
       const stat = stats.get(coverageKey);
       if (stat) stat.count += 1;
     });
+  });
+
+  stats.forEach((stat) => {
+    const spellEntries = (spellEntriesByCoverage.get(stat.coverageKey) ?? [])
+      .sort((a, b) => {
+        if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
+        return a.name.localeCompare(b.name);
+      })
+      .map((entry) => {
+        const providers = Array.from(entry.providers.values()).map(provider => ({
+          ...provider,
+          covered: coveredAbilityProviders.has(
+            `${entry.abilityId}:${getProviderKey(provider.classId, provider.specId)}`,
+          ),
+        }));
+
+        return {
+          spellId: entry.spellId ?? 0,
+          name: entry.name,
+          sortOrder: entry.sortOrder,
+          providers,
+          covered: providers.some(provider => provider.covered),
+        };
+      });
+    stat.spellEntries = mergeEquivalentCoverageSpellEntries(spellEntries);
   });
 
   return Array.from(stats.values()).sort((a, b) => {

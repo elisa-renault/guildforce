@@ -38,6 +38,7 @@ import {
 } from '@/lib/compositionAnalytics';
 import {
   buildMajorBuffsDebuffs,
+  type CoverageSpellEntry,
   type RaidEffectAnalyticsRow,
   type RaidEffectStat,
   type WowSpellAnalyticsRow,
@@ -463,10 +464,12 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   const compositionCoverageLabels = useMemo(() => ({
     combat_res: t.dashboard.compositionCoverageLabels.combatResurrection,
     immunity: t.dashboard.compositionCoverageLabels.immunities,
+    burst_move_speed: t.dashboard.compositionCoverageLabels.burstMoveSpeed,
     knock_up_back: t.dashboard.compositionCoverageLabels.knockUpBack,
     extra_damage_to_shields: t.dashboard.compositionCoverageLabels.extraDamageToShields,
     cheat_death: t.dashboard.compositionCoverageLabels.cheatDeath,
   }), [
+    t.dashboard.compositionCoverageLabels.burstMoveSpeed,
     t.dashboard.compositionCoverageLabels.combatResurrection,
     t.dashboard.compositionCoverageLabels.cheatDeath,
     t.dashboard.compositionCoverageLabels.extraDamageToShields,
@@ -497,7 +500,88 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   ]);
   const showCompositionCoverage = compositionCoverage.length > 0;
 
-  const renderCoverageList = (title: string, stats: (RaidEffectStat | CompositionCoverageStat)[]) => {
+  const renderClassProviderPill = (provider: CoverageSpellEntry['providers'][number]) => {
+    const className = getLocalizedClassName(provider.classId, language);
+    const specName = provider.specId ? getLocalizedSpecName(provider.specId, language) : null;
+    const providerLabel = specName ?? className;
+    const classColor = wowClassColorValue(provider.classId);
+
+    return (
+      <span
+        key={`${provider.classId}-${provider.specId ?? 'all'}`}
+        title={specName ? `${className} - ${specName}` : className}
+        className={`inline-flex shrink-0 items-center rounded-full border px-1.5 py-0 text-[10px] font-semibold leading-4 whitespace-nowrap ${
+          provider.covered ? '' : 'border-border/70 bg-muted/30 text-muted-foreground opacity-80'
+        }`}
+        style={provider.covered
+          ? {
+              borderColor: classColor,
+              backgroundColor: `color-mix(in srgb, ${classColor} 12%, transparent)`,
+              color: classColor,
+            }
+          : undefined}
+      >
+        {providerLabel}
+      </span>
+    );
+  };
+
+  const renderCoverageSpellList = (spellEntries: CoverageSpellEntry[]) => (
+    <ul className="space-y-1.5 text-xs">
+      {spellEntries.map(entry => (
+        <li
+          key={`${entry.spellId}-${entry.name}`}
+          className={`flex min-w-0 items-start justify-between gap-3 ${entry.covered ? '' : 'text-muted-foreground/85'}`}
+        >
+          <span className="min-w-0 break-words font-medium leading-5">{entry.name}</span>
+          {entry.providers.length > 0 && (
+            <span className="flex shrink-0 flex-wrap justify-end gap-1">
+              {entry.providers.map(renderClassProviderPill)}
+            </span>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+
+  const renderCoverageTooltipContent = (
+    stat: RaidEffectStat | CompositionCoverageStat,
+    spellNames: string[],
+    spellEntries: CoverageSpellEntry[],
+  ) => {
+    if (spellEntries.length > 1) {
+      return renderCoverageSpellList(spellEntries);
+    }
+
+    if (spellEntries.length === 1 && spellEntries[0].providers.length > 0) {
+      return (
+        <div className="space-y-2 text-xs">
+          <div className="flex flex-wrap justify-start gap-1">
+            {spellEntries[0].providers.map(renderClassProviderPill)}
+          </div>
+          <p>{stat.description || stat.name}</p>
+        </div>
+      );
+    }
+
+    if (spellNames.length > 1) {
+      return (
+        <ul className="space-y-1 text-xs">
+          {spellNames.map(spellName => (
+            <li key={spellName}>{spellName}</li>
+          ))}
+        </ul>
+      );
+    }
+
+    return <p className="text-xs">{stat.description || stat.name}</p>;
+  };
+
+  const renderCoverageList = (
+    title: string,
+    stats: (RaidEffectStat | CompositionCoverageStat)[],
+    options: { columns?: 'single' | 'responsive' } = {},
+  ) => {
     const covered = stats.filter(stat => stat.count > 0).length;
     const allCovered = stats.length > 0 && covered === stats.length;
     const coverageTone = allCovered
@@ -505,6 +589,9 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
       : covered > 0
         ? 'border-status-warning/30 bg-status-warning/10 text-status-warning'
         : 'border-status-error/25 bg-status-error/10 text-status-error';
+    const listLayoutClass = options.columns === 'responsive'
+      ? 'grid grid-cols-1 gap-1 xl:grid-cols-2'
+      : 'space-y-1';
 
     return (
       <div className="min-w-0 space-y-2">
@@ -519,11 +606,12 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
           )}
         </div>
         {stats.length > 0 ? (
-          <div className="space-y-1">
+          <div className={listLayoutClass}>
             {stats.map(stat => {
               const isCovered = stat.count > 0;
               const statKey = 'coverageKey' in stat ? stat.coverageKey : stat.spellId;
               const spellNames = 'spellNames' in stat ? stat.spellNames : [];
+              const spellEntries = 'spellEntries' in stat ? stat.spellEntries : [];
               return (
                 <UITooltip key={statKey} delayDuration={100}>
                   <TooltipTrigger asChild>
@@ -554,15 +642,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                     </div>
                   </TooltipTrigger>
                   <TooltipContent sideOffset={6} className="max-w-[260px]">
-                    {spellNames.length > 1 ? (
-                      <ul className="space-y-1 text-xs">
-                        {spellNames.map(spellName => (
-                          <li key={spellName}>{spellName}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-xs">{stat.description || stat.name}</p>
-                    )}
+                    {renderCoverageTooltipContent(stat, spellNames, spellEntries)}
                   </TooltipContent>
                 </UITooltip>
               );
@@ -880,10 +960,9 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
           </div>
         </div>
 
-        {/* Main Grid: 6 columns - pie charts smaller, bar charts larger */}
-        <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-6">
-          {/* Range Pie - 1 column */}
-          <GlowCard surface="section" className="p-3">
+        {/* Summary Grid */}
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-12">
+          <GlowCard surface="section" className="p-3 xl:col-span-2">
             <h4 className="text-sm font-medium mb-2">{t.dashboard.range}</h4>
             {totalRange > 0 ? (
               <div className="flex flex-col items-center gap-2">
@@ -928,8 +1007,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
             )}
           </GlowCard>
 
-          {/* Roles Pie - 1 column */}
-          <GlowCard surface="section" className="p-3">
+          <GlowCard surface="section" className="p-3 xl:col-span-2">
             <h4 className="text-sm font-medium mb-2">{t.dashboard.rolesByPriority}</h4>
             {totalRoles > 0 ? (
               <div className="flex flex-col items-center gap-2">
@@ -970,10 +1048,9 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
             )}
           </GlowCard>
 
-          {/* Class Distribution - 2 columns */}
-          <GlowCard surface="section" className="p-3 lg:col-span-2">
+          <GlowCard surface="section" className="p-3 xl:col-span-4">
             <h4 className="text-sm font-medium mb-2">{t.dashboard.classDistribution}</h4>
-            <div className="max-h-[200px] overflow-y-auto pr-1 space-y-1">
+            <div className="max-h-[220px] overflow-y-auto pr-1 space-y-1">
               {representedClasses.map((stat) => (
                 <UITooltip key={stat.id} delayDuration={100}>
                   <TooltipTrigger asChild>
@@ -1025,11 +1102,10 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
             </div>
           </GlowCard>
 
-          {/* Spec Popularity - 2 columns */}
-          <GlowCard surface="section" className="p-3 lg:col-span-2">
+          <GlowCard surface="section" className="p-3 xl:col-span-4">
             <h4 className="text-sm font-medium mb-2">{t.dashboard.topSpecs}</h4>
             {specStats.length > 0 ? (
-              <div className="max-h-[200px] overflow-y-auto pr-1 space-y-1">
+              <div className="max-h-[220px] overflow-y-auto pr-1 space-y-1">
                 {specStats.map((stat, index) => (
                   <div key={stat.id} className="flex items-center gap-1.5 group">
                     <div className="w-4 flex justify-center">
@@ -1053,8 +1129,11 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
             )}
           </GlowCard>
 
-          {/* Token Distribution - 2 columns */}
-          <GlowCard surface="section" className="p-3 lg:col-span-2">
+        </div>
+
+        {/* Composition Grid */}
+        <div className="grid grid-cols-1 gap-3 xl:grid-cols-12">
+          <GlowCard surface="section" className={`p-3 ${showBuffsDebuffs ? 'xl:col-span-4' : 'xl:col-span-12'}`}>
             <h4 className="text-sm font-medium mb-2">{t.dashboard.tokenDistribution}</h4>
             <p className="text-[11px] text-muted-foreground mb-2">
               {t.dashboard.tokenDistributionInfo}{' '}
@@ -1112,7 +1191,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
           </GlowCard>
 
           {showBuffsDebuffs && (
-            <GlowCard surface="section" className="p-3 lg:col-span-3">
+            <GlowCard surface="section" className="p-3 xl:col-span-8">
               <h4 className="text-sm font-medium mb-2">{t.dashboard.majorBuffsDebuffs}</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {renderCoverageList(t.dashboard.majorBuffs, majorBuffsDebuffs.buffs)}
@@ -1120,13 +1199,13 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
               </div>
             </GlowCard>
           )}
-
-          {showCompositionCoverage && (
-            <GlowCard surface="section" className="p-3 lg:col-span-3">
-              {renderCoverageList(t.dashboard.utilityDefensiveCoverage, compositionCoverage)}
-            </GlowCard>
-          )}
         </div>
+
+        {showCompositionCoverage && (
+          <GlowCard surface="section" className="p-3">
+            {renderCoverageList(t.dashboard.utilityDefensiveCoverage, compositionCoverage, { columns: 'responsive' })}
+          </GlowCard>
+        )}
 
         {/* Missing/All Classes Alert - Compact */}
         {missingClasses.length > 0 ? (
