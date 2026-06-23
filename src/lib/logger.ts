@@ -42,8 +42,9 @@ export const log = {
   warn: (...args: unknown[]) => {
     if (isDev) {
       originalConsoleWarn('[WARN]', ...args);
+    } else {
+      console.warn('[WARN]', ...args);
     }
-    // In prod, logCapture already patches console.warn
   },
 
   /**
@@ -52,8 +53,9 @@ export const log = {
   error: (...args: unknown[]) => {
     if (isDev) {
       originalConsoleError('[ERROR]', ...args);
+    } else {
+      console.error('[ERROR]', ...args);
     }
-    // In prod, logCapture already patches console.error
   },
 };
 

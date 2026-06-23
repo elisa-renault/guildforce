@@ -40,6 +40,7 @@ import { getRosterSelectionErrorMessage } from '@/lib/rosterSelectionErrors';
 import { toneCalloutClass, toneTextClass } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { resolveCurrentWowSeasonName } from '@/lib/wowSeasonName';
+import log from '@/lib/logger';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -229,6 +230,32 @@ const RosterWishes = () => {
       return [candidate.message, candidate.details, candidate.hint].filter(Boolean).map(String).join(' ') || t.errors.generic;
     }
     return t.errors.generic;
+  };
+  const getErrorDiagnostic = (error: unknown) => {
+    const candidate = typeof error === 'object' && error
+      ? error as { code?: unknown; message?: unknown; details?: unknown; hint?: unknown; name?: unknown }
+      : null;
+    return {
+      name: error instanceof Error ? error.name : typeof candidate?.name === 'string' ? candidate.name : undefined,
+      code: typeof candidate?.code === 'string' ? candidate.code : undefined,
+      message: getErrorMessage(error),
+      details: typeof candidate?.details === 'string' ? candidate.details : undefined,
+      hint: typeof candidate?.hint === 'string' ? candidate.hint : undefined,
+    };
+  };
+  const logRosterSeasonError = (
+    event: string,
+    error: unknown,
+    context: Record<string, unknown> = {},
+  ) => {
+    log.error(`[RosterWishes] ${event}`, {
+      ...context,
+      guildId,
+      selectedRosterId,
+      selectedSeasonId,
+      seasonSupportMode,
+      error: getErrorDiagnostic(error),
+    });
   };
 
   // Roster state
@@ -505,7 +532,11 @@ const RosterWishes = () => {
           p_season_id: selectedSeasonId!,
         });
         if (materializeError && !isSeasonSchemaUnavailable(materializeError)) {
-          console.error('Failed to materialize roster season members:', materializeError);
+          logRosterSeasonError('materialize_roster_season_members_failed', materializeError, {
+            rpc: 'materialize_roster_season_members',
+            canManageWishes,
+            isAdminReadOnly,
+          });
         }
       }
 
@@ -589,12 +620,17 @@ const RosterWishes = () => {
         }
       });
 
-      const { data: selectionRows } = await supabase.rpc(
+      const { data: selectionRows, error: selectionError } = await supabase.rpc(
         'get_roster_member_selection',
         seasonFilteringEnabled
           ? { p_roster_id: selectedRosterId, p_season_id: selectedSeasonId! }
           : { p_roster_id: selectedRosterId }
       );
+      if (selectionError && !isSeasonSchemaUnavailable(selectionError)) {
+        logRosterSeasonError('get_roster_member_selection_failed', selectionError, {
+          rpc: 'get_roster_member_selection',
+        });
+      }
 
       const selectionList = (selectionRows || []) as RosterMemberSelectionRow[];
       const selectionsByUserId = new Map(
@@ -615,7 +651,9 @@ const RosterWishes = () => {
           })
         : { data: null, error: null };
       if (seasonTableError && !isSeasonSchemaUnavailable(seasonTableError)) {
-        console.error('Failed to load roster season table:', seasonTableError);
+        logRosterSeasonError('get_roster_season_table_failed', seasonTableError, {
+          rpc: 'get_roster_season_table',
+        });
       }
       const seasonTableList = (seasonTableRows || []) as RosterSeasonTableRow[];
       const seasonTableByUserId = new Map(
@@ -809,6 +847,11 @@ const RosterWishes = () => {
       toast({ title: input.activateImmediately ? t.seasons.activated : t.seasons.created });
       await fetchWishes();
     } catch (error: unknown) {
+      logRosterSeasonError('prepare_roster_wish_season_failed', error, {
+        rpc: 'prepare_roster_wish_season',
+        activateImmediately: input.activateImmediately,
+        sourceSeasonId: input.sourceSeasonId,
+      });
       toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
     } finally {
       setSeasonBusy(false);
@@ -825,6 +868,10 @@ const RosterWishes = () => {
       if (nextSeasonId) selectSeasonInUrl(nextSeasonId);
       toast({ title: t.seasons.archivedToast });
     } catch (error: unknown) {
+      logRosterSeasonError('archive_roster_wish_season_failed', error, {
+        rpc: 'archive_roster_wish_season',
+        seasonId,
+      });
       toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
     } finally {
       setSeasonBusy(false);
@@ -840,6 +887,10 @@ const RosterWishes = () => {
       if (data?.id) selectSeasonInUrl(data.id);
       toast({ title: t.seasons.activated });
     } catch (error: unknown) {
+      logRosterSeasonError('activate_roster_wish_season_failed', error, {
+        rpc: 'activate_roster_wish_season',
+        seasonId,
+      });
       toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
     } finally {
       setSeasonBusy(false);
@@ -857,6 +908,11 @@ const RosterWishes = () => {
       await fetchSeasons(guildId, selectedRosterId);
       toast({ title: t.seasons.renamed });
     } catch (error: unknown) {
+      logRosterSeasonError('rename_roster_wish_season_failed', error, {
+        table: 'roster_wish_seasons',
+        operation: 'update',
+        seasonId,
+      });
       toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
     } finally {
       setSeasonBusy(false);
@@ -971,6 +1027,13 @@ const RosterWishes = () => {
         actor_username: row.actor_id ? actorById.get(row.actor_id) || null : null,
       })));
     } catch (error: unknown) {
+      logRosterSeasonError('get_roster_season_history_failed', error, {
+        rpc: 'get_roster_season_history',
+        seasonMemberId: member.seasonMemberId,
+        memberId: member.isExternal ? null : member.id,
+        rosterCacheId: member.isExternal ? member.rosterCacheId : null,
+        isExternal: member.isExternal,
+      });
       toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
     } finally {
       setHistoryLoading(false);
@@ -997,6 +1060,9 @@ const RosterWishes = () => {
       });
       await fetchWishes();
     } catch (error: unknown) {
+      logRosterSeasonError('apply_roster_season_sync_delta_failed', error, {
+        rpc: 'apply_roster_season_sync_delta',
+      });
       toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
     } finally {
       setSyncingSeason(false);
@@ -1268,6 +1334,13 @@ const RosterWishes = () => {
         title: s('roster_wishes.member_removed'),
       });
     } catch (error: unknown) {
+      logRosterSeasonError('remove_roster_member_wish_row_failed', error, {
+        rpc: member.isExternal && member.externalWishId ? 'delete_external_member_wish' : 'remove_roster_wish_row',
+        memberId: member.isExternal ? null : memberId,
+        rosterCacheId: member.isExternal ? member.rosterCacheId ?? null : null,
+        externalWishId: member.isExternal ? member.externalWishId ?? null : null,
+        isExternal: member.isExternal,
+      });
       toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
     } finally {
       setDeletingMemberId(null);
@@ -1321,6 +1394,14 @@ const RosterWishes = () => {
       });
       if (error) throw error;
     } catch (error: unknown) {
+      logRosterSeasonError('set_roster_member_selection_failed', error, {
+        rpc: 'set_roster_member_selection',
+        memberId: currentMember.isExternal ? null : memberId,
+        rosterCacheId: currentMember.isExternal ? currentMember.rosterCacheId ?? null : null,
+        isExternal: currentMember.isExternal,
+        previousSelectionStatus,
+        nextSelectionStatus: nextStatus,
+      });
       setMembers((prev) =>
         prev.map((m) =>
           m.id === memberId
