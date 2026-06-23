@@ -799,21 +799,37 @@ describe('composition analytics', () => {
 
   it('sorts utility coverage into raid enhancement and enemy weakening sections', () => {
     const powerInfusion = createCoverageStat({ coverageKey: 'power_infusion', spellId: 10060, name: 'Power Infusion', count: 1 });
-    const purge = createCoverageStat({ coverageKey: 'purge', spellId: 370, name: 'Purge', count: 1 });
-    const execute = createCoverageStat({ coverageKey: 'execute_damage', spellId: 53351, name: 'Execute damage', count: 1 });
-    const allyFreedom = createCoverageStat({ coverageKey: 'ally_freedom_and_mobility', spellId: 1044, name: 'Ally freedom / mobility', count: 1 });
-    const threat = createCoverageStat({ coverageKey: 'threat_redirection', spellId: 34477, name: 'Threat redirection', count: 1 });
+    const purge = createCoverageStat({ coverageKey: 'purge', spellId: 370, name: 'Purge', count: 6 });
+    const execute = createCoverageStat({ coverageKey: 'execute_damage', spellId: 53351, name: 'Execute damage', count: 2 });
+    const allyFreedom = createCoverageStat({ coverageKey: 'ally_freedom_and_mobility', spellId: 1044, name: 'Ally freedom / mobility', count: 4 });
+    const threat = createCoverageStat({ coverageKey: 'threat_redirection', spellId: 34477, name: 'Threat redirection', count: 2 });
     const grips = createCoverageStat({ coverageKey: 'enemy_grips_and_grouping', spellId: 108199, name: 'Enemy grips / grouping', count: 1 });
-    const silence = createCoverageStat({ coverageKey: 'silences_and_anti_cast', spellId: 78675, name: 'Silences / anti-cast', count: 1 });
-    const interrupt = createCoverageStat({ coverageKey: 'interrupts', spellId: 47528, name: 'Interrupts', count: 1 });
+    const silence = createCoverageStat({ coverageKey: 'silences_and_anti_cast', spellId: 78675, name: 'Silences / anti-cast', count: 5 });
+    const interrupt = createCoverageStat({ coverageKey: 'interrupts', spellId: 47528, name: 'Interrupts', count: 5 });
 
     const sections = buildCompositionCoverageSections(
       { buffs: [], debuffs: [] },
       [purge, powerInfusion, execute, allyFreedom, threat, grips, silence, interrupt],
     );
 
-    expect(sections.raidEnhancements).toEqual([powerInfusion, allyFreedom, threat]);
-    expect(sections.enemyWeakening).toEqual([grips, interrupt, silence, purge, execute]);
+    expect(sections.raidEnhancements).toEqual([allyFreedom, threat, powerInfusion]);
+    expect(sections.enemyWeakening).toEqual([purge, interrupt, silence, execute, grips]);
+  });
+
+  it('sorts major buffs and debuffs by count descending', () => {
+    const bloodlust = createRaidStat({ spellId: 2825, coverageKey: 'bloodlust', name: 'Bloodlust', count: 7 });
+    const arcaneIntellect = createRaidStat({ spellId: 1459, coverageKey: 'arcane_intellect', name: 'Arcane Intellect', count: 2 });
+    const chaosBrand = createRaidStat({ spellId: 255260, coverageKey: 'chaos_brand', name: 'Chaos Brand', count: 1 });
+    const mysticTouch = createRaidStat({ spellId: 113746, coverageKey: 'mystic_touch', name: 'Mystic Touch', count: 3 });
+    const combatRes = createCoverageStat({ coverageKey: 'combat_res', spellId: 20484, name: 'Combat resurrection', count: 9 });
+
+    const sections = buildCompositionCoverageSections(
+      { buffs: [bloodlust, arcaneIntellect], debuffs: [chaosBrand, mysticTouch] },
+      [combatRes],
+    );
+
+    expect(sections.majorBuffs).toEqual([combatRes, bloodlust, arcaneIntellect]);
+    expect(sections.majorDebuffs).toEqual([mysticTouch, chaosBrand]);
   });
 
   it('deduplicates composition rows already represented by major raid effects', () => {

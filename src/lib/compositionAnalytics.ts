@@ -236,17 +236,17 @@ const getSpellIds = (stat: CompositionCoverageDisplayStat): number[] => {
   return Array.from(spellIds);
 };
 
-const sortByCoverageKeyOrder = <Stat extends CompositionCoverageDisplayStat>(
+const sortByCountDesc = <Stat extends CompositionCoverageDisplayStat>(
   stats: Stat[],
-  orderedKeys: readonly string[],
+  orderedKeys: readonly string[] = [],
 ): Stat[] => {
   const order = new Map(orderedKeys.map((key, index) => [key, index]));
 
   return [...stats].sort((a, b) => {
+    if (b.count !== a.count) return b.count - a.count;
     const aOrder = order.get(getCoverageKey(a) ?? '') ?? Number.MAX_SAFE_INTEGER;
     const bOrder = order.get(getCoverageKey(b) ?? '') ?? Number.MAX_SAFE_INTEGER;
     if (aOrder !== bOrder) return aOrder - bOrder;
-    if (b.count !== a.count) return b.count - a.count;
     if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
     return a.name.localeCompare(b.name);
   });
@@ -275,15 +275,17 @@ export const buildCompositionCoverageSections = (
   const combatRes = compositionByCoverageKey.get('combat_res');
 
   return {
-    majorBuffs: combatRes
-      ? [...majorBuffsDebuffs.buffs, combatRes]
-      : majorBuffsDebuffs.buffs,
-    majorDebuffs: majorBuffsDebuffs.debuffs,
-    raidEnhancements: sortByCoverageKeyOrder(
+    majorBuffs: sortByCountDesc(
+      combatRes
+        ? [...majorBuffsDebuffs.buffs, combatRes]
+        : majorBuffsDebuffs.buffs,
+    ),
+    majorDebuffs: sortByCountDesc(majorBuffsDebuffs.debuffs),
+    raidEnhancements: sortByCountDesc(
       pickCompositionStats(raidEnhancementCoverageKeys),
       raidEnhancementCoverageKeys,
     ),
-    enemyWeakening: sortByCoverageKeyOrder(
+    enemyWeakening: sortByCountDesc(
       pickCompositionStats(enemyWeakeningCoverageKeys),
       enemyWeakeningCoverageKeys,
     ),
