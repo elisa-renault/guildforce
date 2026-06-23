@@ -2222,6 +2222,7 @@ export type Database = {
           },
         ]
       }
+      // Cache-claim trigger merges stale external rows when a roster cache entry links to a user.
       roster_season_members: {
         Row: {
           character_name_snapshot: string | null
