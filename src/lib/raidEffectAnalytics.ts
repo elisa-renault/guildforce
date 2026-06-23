@@ -5,6 +5,7 @@ export interface RaidEffectAnalyticsRow {
   spec_id: string | null;
   category: string;
   spell_id: number;
+  effect_key?: string | null;
   sort_order?: number | null;
 }
 
@@ -41,8 +42,10 @@ export interface RaidEffectMemberInput<Wish extends RaidEffectWishInput = RaidEf
 
 export interface RaidEffectStat {
   spellId: number;
+  coverageKey?: string;
   name: string;
   description: string;
+  spellNames: string[];
   count: number;
   sortOrder: number;
 }
@@ -53,6 +56,13 @@ type RaidEffectWithText = RaidEffectAnalyticsRow & {
 };
 
 type SpellTextField = keyof Omit<WowSpellAnalyticsRow, 'spell_id'>;
+
+const bloodlustEquivalentSpellIds = new Set([2825, 32182, 80353, 264667, 390386]);
+
+const getRaidEffectCoverageKey = (effect: RaidEffectAnalyticsRow): string =>
+  bloodlustEquivalentSpellIds.has(effect.spell_id)
+    ? 'bloodlust'
+    : effect.effect_key || String(effect.spell_id);
 
 const spellTextFieldsByLanguage: Record<Language, { name: SpellTextField; description: SpellTextField }> = {
   en: { name: 'name_en', description: 'description_en' },
@@ -145,8 +155,9 @@ export const buildMajorBuffsDebuffs = <
 ): { buffs: RaidEffectStat[]; debuffs: RaidEffectStat[] } => {
   const effectsWithText = attachRaidEffectText(effects, spells, language);
   const effectsByClass = new Map<string, RaidEffectWithText[]>();
-  const buffs = new Map<number, RaidEffectStat>();
-  const debuffs = new Map<number, RaidEffectStat>();
+  const buffs = new Map<string, RaidEffectStat>();
+  const debuffs = new Map<string, RaidEffectStat>();
+  const spellNamesByCoverage = new Map<string, { name: string; sortOrder: number }[]>();
 
   effectsWithText.forEach((effect) => {
     const existing = effectsByClass.get(effect.class_id) || [];
@@ -161,13 +172,20 @@ export const buildMajorBuffsDebuffs = <
 
     if (!target) return;
 
+    const coverageKey = getRaidEffectCoverageKey(effect);
     const sortOrder = effect.sort_order ?? Number.MAX_SAFE_INTEGER;
-    const current = target.get(effect.spell_id);
+    const spellNames = spellNamesByCoverage.get(coverageKey) ?? [];
+    spellNames.push({ name: effect.name, sortOrder });
+    spellNamesByCoverage.set(coverageKey, spellNames);
+
+    const current = target.get(coverageKey);
     if (!current) {
-      target.set(effect.spell_id, {
+      target.set(coverageKey, {
         spellId: effect.spell_id,
+        coverageKey,
         name: effect.name,
         description: effect.description,
+        spellNames: [],
         count: 0,
         sortOrder,
       });
@@ -177,7 +195,32 @@ export const buildMajorBuffsDebuffs = <
     current.sortOrder = Math.min(current.sortOrder, sortOrder);
   });
 
+  const attachGroupedSpellNames = (stats: Map<string, RaidEffectStat>) => {
+    stats.forEach((stat, coverageKey) => {
+      const uniqueNames = (spellNamesByCoverage.get(coverageKey) ?? [])
+        .sort((a, b) => {
+          if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
+          return a.name.localeCompare(b.name);
+        })
+        .reduce<string[]>((result, entry) => {
+          if (!result.includes(entry.name)) result.push(entry.name);
+          return result;
+        }, []);
+
+      stat.spellNames = uniqueNames;
+      if (uniqueNames.length > 1) {
+        stat.description = uniqueNames.join(', ');
+      }
+    });
+  };
+
+  attachGroupedSpellNames(buffs);
+  attachGroupedSpellNames(debuffs);
+
   members.forEach((member) => {
+    const coveredBuffsForMember = new Set<string>();
+    const coveredDebuffsForMember = new Set<string>();
+
     member.wishes.forEach((wish) => {
       if (!wishMatchesFilters(member, wish)) return;
       if (!wish.class_id) return;
@@ -187,15 +230,23 @@ export const buildMajorBuffsDebuffs = <
 
       entries.forEach((entry) => {
         if (entry.spec_id && !wish.spec_ids?.includes(entry.spec_id)) return;
+        const coverageKey = getRaidEffectCoverageKey(entry);
         if (entry.category === 'major_buff') {
-          const existing = buffs.get(entry.spell_id);
-          if (existing) existing.count += 1;
+          coveredBuffsForMember.add(coverageKey);
         }
         if (entry.category === 'major_debuff') {
-          const existing = debuffs.get(entry.spell_id);
-          if (existing) existing.count += 1;
+          coveredDebuffsForMember.add(coverageKey);
         }
       });
+    });
+
+    coveredBuffsForMember.forEach((coverageKey) => {
+      const existing = buffs.get(coverageKey);
+      if (existing) existing.count += 1;
+    });
+    coveredDebuffsForMember.forEach((coverageKey) => {
+      const existing = debuffs.get(coverageKey);
+      if (existing) existing.count += 1;
     });
   });
 

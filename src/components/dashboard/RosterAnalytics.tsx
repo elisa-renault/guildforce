@@ -178,7 +178,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     const fetchCompositionMetadata = async () => {
       const { data: effectsData, error: effectsError } = await supabase
         .from('raid_effects')
-        .select('class_id, spec_id, category, spell_id, sort_order')
+        .select('class_id, spec_id, category, spell_id, effect_key, sort_order')
         .eq('active', true)
         .in('category', ['major_buff', 'major_debuff'])
         .order('sort_order', { ascending: true, nullsFirst: false })

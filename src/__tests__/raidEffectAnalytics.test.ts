@@ -111,6 +111,70 @@ describe('raid effect analytics', () => {
     expect(result.buffs.find((buff) => buff.spellId === 395152)?.count).toBe(1);
   });
 
+  it('groups bloodlust-equivalent major buffs under one coverage row', () => {
+    const bloodlustEffects: RaidEffectAnalyticsRow[] = [
+      {
+        class_id: 'shaman',
+        spec_id: null,
+        category: 'major_buff',
+        spell_id: 2825,
+        effect_key: 'bloodlust',
+        sort_order: 90,
+      },
+      {
+        class_id: 'mage',
+        spec_id: null,
+        category: 'major_buff',
+        spell_id: 80353,
+        effect_key: 'time_warp',
+        sort_order: 92,
+      },
+      {
+        class_id: 'hunter',
+        spec_id: null,
+        category: 'major_buff',
+        spell_id: 264667,
+        effect_key: 'primal_rage',
+        sort_order: 93,
+      },
+      {
+        class_id: 'evoker',
+        spec_id: null,
+        category: 'major_buff',
+        spell_id: 390386,
+        effect_key: 'fury_of_the_aspects',
+        sort_order: 94,
+      },
+    ];
+    const bloodlustSpells = [
+      createSpell({ spell_id: 2825, name_en: 'Bloodlust', name_fr: 'Furie sanguinaire' }),
+      createSpell({ spell_id: 80353, name_en: 'Time Warp', name_fr: 'Distorsion temporelle' }),
+      createSpell({ spell_id: 264667, name_en: 'Primal Rage', name_fr: 'Rage primordiale' }),
+      createSpell({ spell_id: 390386, name_en: 'Fury of the Aspects', name_fr: 'Fureur des aspects' }),
+    ];
+    const members: RaidEffectMemberInput<TestWish>[] = [
+      { wishes: [{ class_id: 'mage', spec_ids: ['mage-arcane'] }] },
+      { wishes: [{ class_id: 'hunter', spec_ids: ['hunter-beast-mastery'] }] },
+      { wishes: [{ class_id: 'evoker', spec_ids: ['evoker-preservation'] }] },
+    ];
+
+    const result = buildMajorBuffsDebuffs(members, bloodlustEffects, bloodlustSpells, 'fr', alwaysMatch);
+
+    expect(result.buffs).toHaveLength(1);
+    expect(result.buffs[0]).toMatchObject({
+      coverageKey: 'bloodlust',
+      spellId: 2825,
+      name: 'Furie sanguinaire',
+      count: 3,
+      spellNames: [
+        'Furie sanguinaire',
+        'Distorsion temporelle',
+        'Rage primordiale',
+        'Fureur des aspects',
+      ],
+    });
+  });
+
   it('prefers localized spell text, then English, then a spell id fallback', () => {
     expect(resolveWowSpellText(spells[0], 1459, 'fr').name).toBe('Intelligence des Arcanes');
     expect(resolveWowSpellText(spells[1], 8647, 'fr').name).toBe('Mystic Touch');
