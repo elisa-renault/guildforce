@@ -177,7 +177,7 @@ export const MarkdownEditor = ({
       editorProps: {
         attributes: {
           class: cn(
-            'prose prose-invert max-w-none prose-headings:tracking-normal prose-a:text-primary',
+            'prose prose-sm prose-invert max-w-none prose-headings:tracking-normal prose-a:text-primary',
             'min-h-full p-4 text-sm outline-none focus:outline-none',
           ),
         },
@@ -733,7 +733,7 @@ export const MarkdownEditor = ({
       {activeMode === 'preview' ? (
         <div className="overflow-auto p-4" style={{ minHeight }}>
           {value ? (
-            <MarkdownContent content={value} className="prose-sm" />
+            <MarkdownContent content={value} />
           ) : (
             <p className="italic text-muted-foreground">
               {s('markdown.preview.empty')}
