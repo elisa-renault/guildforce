@@ -64,12 +64,31 @@ const createDocumentSlug = (title: string) => {
 };
 
 const getMutationErrorMessage = (error: unknown, fallback: string) => {
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
+  // Supabase errors often contain fields like status, statusText, message, details
+  try {
+    if (error instanceof Error && error.message) return error.message;
 
-  if (typeof error === 'object' && error && 'message' in error) {
-    return String((error as { message?: unknown }).message || fallback);
+    if (typeof error === 'object' && error && error !== null) {
+      const e = error as Record<string, unknown>;
+      const status = e.status ?? e.statusCode ?? null;
+      const statusText = e.statusText ?? null;
+      const message = e.message ?? e.error ?? e.details ?? null;
+      if (status || statusText || message) {
+        const parts = [] as string[];
+        if (status) parts.push(String(status));
+        if (statusText) parts.push(String(statusText));
+        if (message) parts.push(String(message));
+        return parts.join(': ');
+      }
+      // Fallback to JSON string if available
+      try {
+        return JSON.stringify(e);
+      } catch {
+        // ignore
+      }
+    }
+  } catch {
+    // ignore
   }
 
   return fallback;
