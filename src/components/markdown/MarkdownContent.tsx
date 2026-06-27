@@ -23,7 +23,11 @@ const markdownContentComponents: Components = {
   p: ({ children }) => <p className="mb-2 text-foreground/90">{children}</p>,
   ul: ({ children }) => <ul className="mb-2 list-inside list-disc space-y-1">{children}</ul>,
   ol: ({ children }) => <ol className="mb-2 list-inside list-decimal space-y-1">{children}</ol>,
-  li: ({ children }) => <li className="text-foreground/90">{children}</li>,
+  li: ({ children }) => (
+    <li className="text-foreground/90 [&>p:first-child]:inline [&>p:first-child]:mb-0">
+      {children}
+    </li>
+  ),
   blockquote: ({ children }) => (
     <blockquote className="my-2 border-l-4 border-primary/50 pl-4 italic text-muted-foreground">
       {children}

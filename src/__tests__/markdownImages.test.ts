@@ -22,11 +22,30 @@ describe('advanced markdown images', () => {
     ).toBe('![Raid diagram](https://cdn.example.com/raid.png){width=50 align=center}');
   });
 
-  it('normalizes unsupported image controls to responsive defaults', () => {
+  it('normalizes unsupported image alignment and clamps arbitrary responsive widths', () => {
     expect(parseMarkdownImageAttributeText('width=42 align=wide')).toEqual({
-      width: 100,
+      width: 42,
       align: 'center',
     });
+    expect(parseMarkdownImageAttributeText('width=4 align=left')).toEqual({
+      width: 10,
+      align: 'left',
+    });
+    expect(parseMarkdownImageAttributeText('width=140 align=right')).toEqual({
+      width: 100,
+      align: 'right',
+    });
+  });
+
+  it('serializes arbitrary resized percentage widths', () => {
+    expect(
+      createAdvancedMarkdownImage({
+        src: 'https://cdn.example.com/raid.png',
+        alt: 'Raid diagram',
+        width: 63,
+        align: 'left',
+      }),
+    ).toBe('![Raid diagram](https://cdn.example.com/raid.png){width=63 align=left}');
   });
 
   it('converts attribute syntax into react-markdown image title metadata', () => {
@@ -51,5 +70,28 @@ describe('advanced markdown images', () => {
     const image = screen.getByAltText('Raid diagram');
     expect(image).toHaveStyle({ width: '50%' });
     expect(image).toHaveClass('max-w-full', 'ml-auto');
+  });
+
+  it('renders images without metadata as full-width centered images', () => {
+    render(
+      createElement(MarkdownContent, {
+        content: '![Raid diagram](https://cdn.example.com/raid.png)',
+      }),
+    );
+
+    const image = screen.getAllByAltText('Raid diagram').at(-1) as HTMLElement;
+    expect(image).toHaveStyle({ width: '100%' });
+    expect(image).toHaveClass('max-w-full', 'mx-auto');
+  });
+
+  it('keeps list item text on the same line as its marker', () => {
+    render(
+      createElement(MarkdownContent, {
+        content: '- 1\n- 2',
+      }),
+    );
+
+    const firstItem = screen.getByText('1').closest('li');
+    expect(firstItem).toHaveClass('[&>p:first-child]:inline', '[&>p:first-child]:mb-0');
   });
 });
