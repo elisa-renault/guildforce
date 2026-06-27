@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildFeaturePackMarkdown,
   createWeeklyPatchNotes,
   createFeaturePack,
   filterRuns,
@@ -12,6 +13,7 @@ import {
   parsePublishedFeaturePackTitles,
   parsePublishedDateKeys,
   parsePublishedWeekKeys,
+  parseArgs,
 } from './publish-from-tasks.mjs';
 
 const runContent = (overrides = {}) => `# Task Run - ${overrides.title || 'Fix poll results'}
@@ -64,6 +66,12 @@ describe('weekly changelog publishing helpers', () => {
       { path: 'published.md', closedDate: '2026-02-07' },
       { path: 'new.md', closedDate: '2026-02-08' },
       { path: 'late.md', closedDate: '2026-02-20' },
+      {
+        path: 'draft-release-note.md',
+        title: 'Draft release note',
+        summary: 'Drafted the next English-only changelog entry.',
+        closedDate: '2026-02-08',
+      },
     ];
 
     expect(filterRuns(runs, {
@@ -180,6 +188,103 @@ describe('weekly changelog publishing helpers', () => {
     expect(pack.sections[0].heading).toBe('Polls');
   });
 
+  it('prioritizes wish analytics and spell coverage over weak localization or privacy matches', () => {
+    const pack = createFeaturePack([
+      {
+        path: 'archive/2026/06/composition-catalog.md',
+        title: 'Add seeded composition catalog analytics',
+        closedDate: '2026-06-23',
+        summary: 'Added the seeded composition catalog schema, helper, tests, RosterAnalytics utility/defensive coverage card, spell sync integration, generated types, docs, and locale labels.',
+        followUps: '',
+      },
+      {
+        path: 'archive/2026/06/buff-debuff.md',
+        title: 'Enable roster buff debuff analytics',
+        closedDate: '2026-06-23',
+        summary: 'Added raid effect metadata migration, extracted/tested buff/debuff aggregation, activated active DB-backed roster analytics card, and updated admin docs/types.',
+        followUps: '',
+      },
+      {
+        path: 'archive/2026/06/aoe-cc.md',
+        title: 'Add callable AOE CC coverage',
+        closedDate: '2026-06-23',
+        summary: 'Split knockback/knockup normalization, added AoE stun/root/slow labels and translations, and verified the remote composition rows.',
+        followUps: '',
+      },
+      {
+        path: 'archive/2026/06/tooltips.md',
+        title: 'Polish roster buff debuff analytics UI',
+        closedDate: '2026-06-23',
+        summary: 'The buff/debuff analytics card now shows compact rows with status icon, count badge, localized spell name, and covered/total ratios per group.',
+        followUps: '',
+      },
+      {
+        path: 'archive/2026/06/smoke.md',
+        title: 'Smoke roster buff debuff analytics refreshed auth',
+        closedDate: '2026-06-23',
+        summary: 'Authenticated roster analytics smoke found localized spell names visible, no Spell {id} fallback, 0 console errors, and 0 failed responses.',
+        followUps: '',
+      },
+      {
+        path: 'archive/2026/06/filters.md',
+        title: 'Remove roster analytics comp outcome filters',
+        closedDate: '2026-06-23',
+        summary: 'Removed redundant outcome filters from the analytics toolbar and kept selected filter options toggleable.',
+        followUps: '',
+      },
+      {
+        path: 'archive/2026/06/source-counts.md',
+        title: 'Show utility coverage source counts only',
+        closedDate: '2026-06-23',
+        summary: 'Required major buff/debuff rows retain missing, covered, and secured states while optional utility rows show localized source counts.',
+        followUps: '',
+      },
+      {
+        path: 'archive/2026/06/archived-wish-seasons.md',
+        title: 'Allow editing archived wish seasons',
+        closedDate: '2026-06-22',
+        summary: 'Wish managers can update archived roster wish seasons, linked wishes, external wishes, row removals, roster decisions, and reactivate the season when needed.',
+        followUps: '',
+      },
+      {
+        path: 'archive/2026/06/wish-activity-history.md',
+        title: 'Add season id to wish activity logs',
+        closedDate: '2026-06-22',
+        summary: 'Wish and roster decision logging now carries season_id, actor, target, and exact member wish history context.',
+        followUps: '',
+      },
+      {
+        path: 'archive/2026/06/deduplicate.md',
+        title: 'Refine utility coverage labels and duplicates',
+        closedDate: '2026-06-23',
+        summary: 'Utility/defensive coverage now hides entries represented by major buffs/debuffs and prevents duplicate coverage reporting.',
+        followUps: '',
+      },
+      {
+        path: 'archive/2026/06/draft-release-note.md',
+        title: 'Draft release note',
+        closedDate: '2026-06-27',
+        summary: 'Drafted the next English-only changelog entry. The generated draft initially over-weighted localization.',
+        followUps: '',
+      },
+    ]);
+    const markdown = buildFeaturePackMarkdown(pack);
+
+    expect(pack.title).toBe('Wish Analytics and Spell Coverage Pack');
+    expect(pack.sections.map((section) => section.heading)).toEqual([
+      'Wish Analytics',
+      'Spell Coverage',
+      'Roster Wish Workflow',
+      'Review Workflow',
+      'Verification',
+    ]);
+    expect(markdown).toContain('spell-backed coverage checks');
+    expect(markdown).toContain('correct archived wish seasons');
+    expect(markdown).toContain('localized spell names render in the Analytics tab');
+    expect(markdown).not.toContain('Korean and Traditional Chinese');
+    expect(markdown).not.toContain('Analytics are consent-gated');
+  });
+
   it('extracts published feature-pack titles', () => {
     const titles = parsePublishedFeaturePackTitles([
       {
@@ -209,5 +314,12 @@ describe('weekly changelog publishing helpers', () => {
     ], { baseVersion: '9.9.9', firstVersion: '1.2.3' });
 
     expect(notes.map((note) => note.version)).toEqual(['1.2.3', '1.2.4']);
+  });
+
+  it('supports printing generated draft content during changelog review', () => {
+    expect(parseArgs(['--dry-run', '--print-content'])).toMatchObject({
+      dryRun: true,
+      printContent: true,
+    });
   });
 });

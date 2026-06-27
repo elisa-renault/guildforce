@@ -9,6 +9,8 @@ const ARCHIVE_DIR = path.join(REPO_ROOT, 'tasks', 'archive');
 const MARKER_PREFIX = 'guildforce-changelog-runs';
 const MAX_BULLETS_PER_SECTION = 4;
 const MAX_TOTAL_BULLETS = 10;
+const MIN_SECONDARY_FEATURE_PACK_SCORE = 3;
+const SECONDARY_FEATURE_PACK_SCORE_RATIO = 0.35;
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const VERSION_RE = /^\d+\.\d+\.\d+$/;
 
@@ -21,6 +23,7 @@ export function parseArgs(argv) {
     repairGenerated: false,
     repairFeaturePacks: false,
     deleteNonEnglishTranslations: false,
+    printContent: false,
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -43,6 +46,11 @@ export function parseArgs(argv) {
 
     if (arg === '--delete-non-english-translations') {
       options.deleteNonEnglishTranslations = true;
+      continue;
+    }
+
+    if (arg === '--print-content') {
+      options.printContent = true;
       continue;
     }
 
@@ -166,6 +174,7 @@ export function filterRuns(runs, { since = null, to = null, publishedRunPaths = 
     .filter((run) => !since || run.closedDate > since)
     .filter((run) => !to || run.closedDate <= to)
     .filter((run) => !publishedRunPaths.has(run.path))
+    .filter(isChangelogSourceRun)
     .sort((a, b) => a.closedDate.localeCompare(b.closedDate) || a.title.localeCompare(b.title));
 }
 
@@ -274,22 +283,22 @@ export function buildWeeklyMarkdown(group, language = 'en') {
 }
 
 export function createFeaturePack(runs) {
+  const editorialRuns = runs.filter(isEditorialSignalRun);
+  const sourceRuns = editorialRuns.length > 0 ? editorialRuns : runs;
   const scores = FEATURE_PACK_DEFINITIONS
     .map((definition) => ({
       ...definition,
-      score: runs.reduce((total, run) => total + scoreFeaturePackRun(run, definition), 0),
+      score: sourceRuns.reduce((total, run) => total + scoreFeaturePackRun(run, definition), 0),
     }))
     .sort((a, b) => b.score - a.score);
   const primary = scores[0]?.score > 0 ? scores[0] : FEATURE_PACK_DEFINITIONS.at(-1);
   const secondary = scores
-    .filter((definition) => definition.key !== primary.key && definition.score > 0)
+    .filter((definition) => definition.key !== primary.key && isMeaningfulSecondaryFeaturePack(definition, primary))
     .slice(0, 3);
-  const sections = [primary, ...secondary]
-    .map((definition) => ({
-      heading: definition.heading,
-      bullets: selectPackBullets(runs, definition),
-    }))
-    .filter((section) => section.bullets.length > 0);
+  const sections = [
+    ...buildFeaturePackSections(sourceRuns, primary),
+    ...secondary.flatMap((definition) => buildFeaturePackSections(sourceRuns, definition)),
+  ];
 
   if (sections.length === 0) {
     sections.push({
@@ -304,6 +313,31 @@ export function createFeaturePack(runs) {
     intro: primary.intro,
     sections,
   };
+}
+
+function buildFeaturePackSections(runs, definition) {
+  const sectionDefinitions = definition.sections || [
+    {
+      heading: definition.heading,
+      bullets: definition.bullets,
+    },
+  ];
+
+  return sectionDefinitions
+    .map((section) => ({
+      heading: section.heading,
+      bullets: selectPackBullets(runs, section),
+    }))
+    .filter((section) => section.bullets.length > 0);
+}
+
+function isMeaningfulSecondaryFeaturePack(definition, primary) {
+  if (primary.suppressSecondary) {
+    return false;
+  }
+
+  return definition.score >= MIN_SECONDARY_FEATURE_PACK_SCORE
+    && definition.score >= primary.score * SECONDARY_FEATURE_PACK_SCORE_RATIO;
 }
 
 export function buildFeaturePackMarkdown(pack) {
@@ -400,6 +434,24 @@ function isPublicWorthyRun(run) {
   return !/\b(commit|push|deploy|audit|task|workflow|codex|repo|github|lint|ci|verify|verification|archive|backup|python|nettoyage|cleanup|organize|organise|migration history)\b/.test(haystack);
 }
 
+function isChangelogSourceRun(run) {
+  const title = (run.title || '').toLowerCase();
+  const haystack = `${run.title || ''} ${run.summary || ''}`.toLowerCase();
+  const isPatchNoteProcess = /\b(changelog|patch note|patchnote|release note)\b/.test(haystack)
+    && /\b(draft|revise|publish|publishing|repair|generated|generate|automate|curate|convert|force|delete|drafting workflow)\b/.test(haystack);
+
+  if (isPatchNoteProcess) {
+    return false;
+  }
+
+  return !/\b(draft|revise)\b/.test(title) || !/\brelease note\b/.test(title);
+}
+
+function isEditorialSignalRun(run) {
+  const haystack = `${run.title || ''} ${run.summary || ''}`.toLowerCase();
+  return !/\b(changelog|patch note|patchnote|release note|draft release|commit|push|deploy|codex|repo|github|archive|backup|python|organize|organise|task index)\b/.test(haystack);
+}
+
 function scoreRun(run) {
   const haystack = `${run.title} ${run.summary}`.toLowerCase();
   let score = 0;
@@ -427,6 +479,97 @@ const FEATURE_PACK_DEFINITIONS = [
       'Several response recovery and protection fixes prevent accidental data loss.',
       ['ai', 'summary', 'keyword'],
       'AI summaries and generated labels are cleaner and less noisy.',
+    ],
+  },
+  {
+    key: 'wishAnalytics',
+    title: 'Wish Analytics and Spell Coverage Pack',
+    intro: 'A focused update for roster wish analytics, spell coverage checks, and composition review.',
+    suppressSecondary: true,
+    keywords: [
+      'rosteranalytics',
+      'roster analytics',
+      'wishlist analytics',
+      'wish analytics',
+      'coverage',
+      'spell',
+      'spells',
+      'composition',
+      'buff',
+      'debuff',
+      'raid_effects',
+      'wow_spells',
+      'utility',
+      'defensive',
+      'external',
+      'interrupt',
+      'crowd control',
+      'aoe',
+      'knockback',
+      'knockup',
+      'soothe',
+      'purge',
+      'mortal strike',
+      'sync-wow-spells',
+    ],
+    sections: [
+      {
+        heading: 'Wish Analytics',
+        bullets: [
+          ['rosteranalytics', 'roster analytics', 'wishlist analytics', 'wish analytics', 'coverage'],
+          'The roster Analytics tab now exposes spell-backed coverage checks for major buffs, major debuffs, defensive tools, externals, crowd control, interrupts, mobility, purge and soothe effects, anti-healing, shield damage, cheat death, and other raid utilities.',
+          ['wish range', 'wish ranges', 'first-approved', 'first approved', 'selected wish'],
+          'Coverage is computed from the roster wish data managers already review, including selected wish ranges and the first-approved-per-player view.',
+          ['composition kpi', 'role breakdown', 'melee', 'ranged', 'tank', 'heal', 'dps'],
+          'Composition KPIs and role breakdowns are easier to scan, with clearer tank, healer, DPS, melee, and ranged counts.',
+        ],
+      },
+      {
+        heading: 'Spell Coverage',
+        bullets: [
+          ['composition catalog', 'seeded composition catalog', 'spell mappings', 'composition_abilities'],
+          'A normalized composition catalog now powers utility and defensive coverage rows from seeded spell mappings.',
+          ['major buff', 'major buffs', 'major debuff', 'major debuffs', 'raid_effects', 'wow_spells', 'buff/debuff'],
+          'Major buffs and debuffs are backed by active database rows and localized spell metadata instead of static labels.',
+          ['tooltip', 'tooltips', 'provider', 'class pill', 'class chips', 'localized spell'],
+          'Spell tooltips now show grouped provider lists, class chips, localized spell names, and compact rows without the old wrapping issues.',
+          ['aoe', 'crowd control', 'knockback', 'knockup', 'aoe stun', 'aoe root', 'aoe slow'],
+          'Callable AoE crowd control coverage now separates knockbacks, knockups, AoE stuns, AoE roots, and AoE slows.',
+        ],
+      },
+      {
+        heading: 'Roster Wish Workflow',
+        bullets: [
+          ['archived wish season', 'archived roster wish season', 'reactivate', 'unarchive'],
+          'Wish managers can correct archived wish seasons without reopening member self-service, including linked wishes, external wishes, row removals, roster decisions, and reactivation.',
+          ['season_id', 'member wish history', 'activity log', 'actor', 'target', 'roster decision logging'],
+          'Wish and roster decision history now carries exact season context with clearer actor and target wording for member audit trails.',
+          ['assignment ui', 'retire roster wish assignment', 'assignment dependencies', 'assignments were retired'],
+          'The retired assignment flow was removed from roster tables, mobile cards, member detail, analytics, and read paths so planning stays centered on approved wishes and roster decisions.',
+          ['compact', 'dense', 'layout shift', 'badge', 'badges', 'member detail'],
+          'Roster wish tables and member detail screens are denser and more stable, with aligned badges, compact rows, and fewer layout shifts.',
+        ],
+      },
+      {
+        heading: 'Review Workflow',
+        bullets: [
+          ['filter', 'filters', 'wish scope', 'outcome filters', 'toggle'],
+          'Analytics filters were simplified and polished: wish scope is clearer, selected filters can be toggled directly, and redundant outcome filters were removed.',
+          ['missing', 'covered', 'secured', 'source counts', 'required'],
+          'Required coverage rows now distinguish missing, covered, and secured states, while optional utility rows focus on available source counts.',
+          ['duplicate', 'deduplicate', 'represented by major buffs', 'double-report'],
+          'Duplicate or misleading coverage rows were cleaned up so major buffs, major debuffs, and utility checks do not double-report the same capability.',
+        ],
+      },
+      {
+        heading: 'Verification',
+        bullets: [
+          ['sync-wow-spells', 'synced', 'spell metadata', 'official battle.net'],
+          'Spell metadata was refreshed through sync-wow-spells, including major buff/debuff rows and callable AoE crowd control spells.',
+          ['smoke', 'authenticated', 'console errors', 'failed responses', 'spell {id}'],
+          'Authenticated roster analytics smoke checks confirmed localized spell names render in the Analytics tab with no Spell {id} fallbacks, console errors, or failed responses.',
+        ],
+      },
     ],
   },
   {
@@ -485,7 +628,7 @@ const FEATURE_PACK_DEFINITIONS = [
     title: 'Localization and Mobile Polish Pack',
     heading: 'Localization',
     intro: 'A broad localization and interface polish release covering new languages, locale-aware inputs, and mobile screens.',
-    keywords: ['i18n', 'locale', 'translation', 'language', 'korean', 'italian', 'spanish', 'pt-br', 'zh-tw', 'mobile', 'calendar'],
+    keywords: ['i18n', 'locale', 'translation', 'language', 'korean', 'italian', 'spanish', 'pt-br', 'zh-tw', 'calendar'],
     bullets: [
       ['korean', 'ko', 'zh-tw', 'traditional chinese'],
       'Korean and Traditional Chinese support were expanded with dedicated fonts and localized product copy.',
@@ -502,7 +645,7 @@ const FEATURE_PACK_DEFINITIONS = [
     title: 'Analytics, Privacy, and Public Release Hardening',
     heading: 'Privacy and Release Readiness',
     intro: 'A maintenance-oriented release focused on analytics hygiene, privacy controls, repository readiness, and deployment reliability.',
-    keywords: ['analytics', 'posthog', 'privacy', 'public repo', 'deploy', 'release', 'security', 'sanitiz'],
+    keywords: ['posthog', 'privacy', 'consent', 'public repo', 'deploy', 'release', 'security', 'sanitiz'],
     bullets: [
       ['posthog', 'analytics', 'consent'],
       'Analytics are consent-gated and use safer event payloads.',
@@ -1280,7 +1423,11 @@ async function runCli() {
     return;
   }
 
-  printPlan(patchNotes, { dryRun: options.dryRun, since });
+  printPlan(patchNotes, {
+    dryRun: options.dryRun,
+    since,
+    printContent: options.printContent || options.dryRun,
+  });
 
   if (options.dryRun) {
     return;
@@ -1290,11 +1437,16 @@ async function runCli() {
   console.log(`Published ${patchNotes.length} changelog entr${patchNotes.length === 1 ? 'y' : 'ies'}.`);
 }
 
-function printPlan(notes, { dryRun, since }) {
+function printPlan(notes, { dryRun, since, printContent = false }) {
   console.log(`${dryRun ? 'Dry run:' : 'Publishing'} ${notes.length} changelog entr${notes.length === 1 ? 'y' : 'ies'} after ${since}.`);
 
   for (const note of notes) {
     console.log(`\n${note.version} | ${note.translations[0].title} | ${note.published_at.slice(0, 10)} | ${note.runPaths.length} runs`);
+    if (printContent) {
+      console.log('\n--- Draft content ---');
+      console.log(note.translations[0].content.trimEnd());
+      console.log('\n--- Source runs ---');
+    }
     for (const runPath of note.runPaths) {
       console.log(`- ${runPath}`);
     }
