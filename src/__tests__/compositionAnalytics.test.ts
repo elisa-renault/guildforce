@@ -418,6 +418,96 @@ describe('composition analytics', () => {
     expect(JSON.stringify(result[0].spellEntries)).not.toContain('warrior-fury');
   });
 
+  it('groups extra damage to shields providers across warrior, evoker, and priest', () => {
+    const abilities = [
+      createAbility({
+        id: 'a1',
+        ability_key: 'wrecking_throw_extra_shield_damage',
+        coverage_key: 'extra_damage_to_shields',
+        spell_id: 384110,
+        sort_order: 1,
+      }),
+      createAbility({
+        id: 'a2',
+        ability_key: 'shattering_throw_extra_shield_damage',
+        coverage_key: 'extra_damage_to_shields',
+        spell_id: 64382,
+        sort_order: 2,
+      }),
+      createAbility({
+        id: 'a3',
+        ability_key: 'unravel_extra_shield_damage',
+        coverage_key: 'extra_damage_to_shields',
+        spell_id: 1264378,
+        sort_order: 3,
+      }),
+      createAbility({
+        id: 'a4',
+        ability_key: 'devour_matter_extra_shield_damage',
+        coverage_key: 'extra_damage_to_shields',
+        spell_id: 451840,
+        sort_order: 4,
+      }),
+    ];
+    const mappings = [
+      createMapping({ ability_id: 'a1', class_id: 'warrior' }),
+      createMapping({ ability_id: 'a2', class_id: 'warrior' }),
+      createMapping({ ability_id: 'a3', class_id: 'evoker' }),
+      createMapping({ ability_id: 'a4', class_id: 'priest', spec_id: 'priest-discipline' }),
+      createMapping({ ability_id: 'a4', class_id: 'priest', spec_id: 'priest-shadow' }),
+    ];
+    const members: CompositionMemberInput<TestWish>[] = [
+      { wishes: [{ class_id: 'warrior', spec_ids: ['warrior-arms'] }] },
+      { wishes: [{ class_id: 'evoker', spec_ids: ['evoker-devastation'] }] },
+      { wishes: [{ class_id: 'priest', spec_ids: ['priest-holy'] }] },
+      { wishes: [{ class_id: 'priest', spec_ids: ['priest-shadow'] }] },
+    ];
+    const spells = [
+      createSpell({ spell_id: 384110, name_en: 'Wrecking Throw' }),
+      createSpell({ spell_id: 64382, name_en: 'Shattering Throw' }),
+      createSpell({ spell_id: 1264378, name_en: 'Unravel' }),
+      createSpell({ spell_id: 451840, name_en: 'Devour Matter' }),
+    ];
+
+    const result = buildCompositionCoverage(members, abilities, mappings, spells, 'en', alwaysMatch, {
+      coverageLabels: {
+        extra_damage_to_shields: {
+          singular: 'Extra damage to shields',
+          plural: 'Extra damage to shields',
+        },
+      },
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      coverageKey: 'extra_damage_to_shields',
+      name: 'Extra damage to shields',
+      count: 3,
+      spellNames: ['Wrecking Throw', 'Shattering Throw', 'Unravel', 'Devour Matter'],
+    });
+    expect(result[0].spellEntries).toEqual([
+      expect.objectContaining({
+        spellId: 384110,
+        providers: [expect.objectContaining({ classId: 'warrior', specId: null, covered: true })],
+      }),
+      expect.objectContaining({
+        spellId: 64382,
+        providers: [expect.objectContaining({ classId: 'warrior', specId: null, covered: true })],
+      }),
+      expect.objectContaining({
+        spellId: 1264378,
+        providers: [expect.objectContaining({ classId: 'evoker', specId: null, covered: true })],
+      }),
+      expect.objectContaining({
+        spellId: 451840,
+        providers: [
+          expect.objectContaining({ classId: 'priest', specId: 'priest-discipline', covered: false }),
+          expect.objectContaining({ classId: 'priest', specId: 'priest-shadow', covered: true }),
+        ],
+      }),
+    ]);
+  });
+
   it('uses disenrage coverage labels for grouped soothe abilities', () => {
     const abilities = [
       createAbility({ id: 'a1', ability_key: 'soothe', coverage_key: 'soothe', spell_id: 2908, sort_order: 1 }),
@@ -646,7 +736,8 @@ describe('composition analytics', () => {
     const mappings = [
       createMapping({ ability_id: 'a1', class_id: 'druid' }),
       createMapping({ ability_id: 'a2', class_id: 'evoker' }),
-      createMapping({ ability_id: 'a3', class_id: 'demon-hunter' }),
+      createMapping({ ability_id: 'a3', class_id: 'demon-hunter', spec_id: 'dh-havoc' }),
+      createMapping({ ability_id: 'a3', class_id: 'demon-hunter', spec_id: 'dh-vengeance' }),
       createMapping({ ability_id: 'a4', class_id: 'druid' }),
       createMapping({ ability_id: 'a5', class_id: 'hunter' }),
       createMapping({ ability_id: 'a6', class_id: 'hunter' }),
@@ -655,7 +746,8 @@ describe('composition analytics', () => {
     const members: CompositionMemberInput<TestWish>[] = [
       { wishes: [{ class_id: 'druid' }] },
       { wishes: [{ class_id: 'evoker' }] },
-      { wishes: [{ class_id: 'demon-hunter' }] },
+      { wishes: [{ class_id: 'demon-hunter', spec_ids: ['dh-havoc'] }] },
+      { wishes: [{ class_id: 'demon-hunter', spec_ids: ['dh-devourer'] }] },
       { wishes: [{ class_id: 'hunter' }] },
       { wishes: [{ class_id: 'warrior' }] },
     ];
@@ -769,20 +861,35 @@ describe('composition analytics', () => {
     ]);
   });
 
-  it('builds roster composition sections with combat resurrection in major buffs', () => {
+  it('builds roster composition sections with raid essentials split from major buffs', () => {
     const majorBuff = createRaidStat({ spellId: 2825, coverageKey: 'bloodlust', name: 'Bloodlust', count: 2 });
+    const soulwell = createRaidStat({ spellId: 29893, coverageKey: 'soulwell', name: 'Create Soulwell', count: 1 });
+    const arcaneIntellect = createRaidStat({ spellId: 1459, coverageKey: 'arcane_intellect', name: 'Arcane Intellect', count: 1 });
     const majorDebuff = createRaidStat({ spellId: 8647, coverageKey: 'mystic_touch', name: 'Mystic Touch', count: 1 });
     const combatRes = createCoverageStat({ coverageKey: 'combat_res', spellId: 20484, name: 'Combat resurrection', count: 1 });
+    const powerInfusion = createCoverageStat({ coverageKey: 'power_infusion', spellId: 10060, name: 'Power Infusion', count: 1 });
+    const gateway = createCoverageStat({ coverageKey: 'demonic_gateway', spellId: 111771, name: 'Demonic Gateway', count: 1 });
+    const magicDispels = createCoverageStat({ coverageKey: 'ally_magic_dispels', spellId: 4987, name: 'Magic dispels', count: 1 });
     const raidDefensive = createCoverageStat({ coverageKey: 'raid_defensives', spellId: 97462, name: 'Raid defensives', count: 1 });
 
     const sections = buildCompositionCoverageSections(
-      { buffs: [majorBuff], debuffs: [majorDebuff] },
-      [combatRes, raidDefensive],
+      { buffs: [majorBuff, soulwell, arcaneIntellect], debuffs: [majorDebuff] },
+      [combatRes, powerInfusion, gateway, magicDispels, raidDefensive],
     );
 
-    expect(sections.majorBuffs.map(stat => stat.name)).toEqual(['Bloodlust', 'Combat resurrection']);
+    expect(sections.raidEssentials.map(stat => stat.name)).toEqual([
+      'Bloodlust',
+      'Combat resurrection',
+      'Create Soulwell',
+      'Demonic Gateway',
+      'Power Infusion',
+      'Magic dispels',
+    ]);
+    expect(sections.majorBuffs.map(stat => stat.name)).toEqual(['Arcane Intellect']);
     expect(sections.raidEnhancements.map(stat => stat.name)).toEqual(['Raid defensives']);
     expect(sections.raidEnhancements).not.toContain(combatRes);
+    expect(sections.raidEnhancements).not.toContain(powerInfusion);
+    expect(sections.raidEnhancements).not.toContain(gateway);
   });
 
   it('keeps major debuffs in their dedicated section', () => {
@@ -797,7 +904,7 @@ describe('composition analytics', () => {
     expect(sections.enemyWeakening).toEqual([]);
   });
 
-  it('sorts utility coverage into raid enhancement and enemy weakening sections', () => {
+  it('sorts utility coverage into raid enhancement, controls, and enemy weakening sections', () => {
     const powerInfusion = createCoverageStat({ coverageKey: 'power_infusion', spellId: 10060, name: 'Power Infusion', count: 1 });
     const purge = createCoverageStat({ coverageKey: 'purge', spellId: 370, name: 'Purge', count: 6 });
     const execute = createCoverageStat({ coverageKey: 'execute_damage', spellId: 53351, name: 'Execute damage', count: 2 });
@@ -805,16 +912,19 @@ describe('composition analytics', () => {
     const threat = createCoverageStat({ coverageKey: 'threat_redirection', spellId: 34477, name: 'Threat redirection', count: 2 });
     const deathGrip = createCoverageStat({ coverageKey: 'death_grip', spellId: 49576, name: 'Death Grip', count: 1 });
     const grips = createCoverageStat({ coverageKey: 'enemy_grips_and_grouping', spellId: 108199, name: 'Enemy grips / grouping', count: 1 });
+    const knockup = createCoverageStat({ coverageKey: 'knockups', spellId: 132469, name: 'Knockups', count: 3 });
     const silence = createCoverageStat({ coverageKey: 'silences_and_anti_cast', spellId: 78675, name: 'Silences / anti-cast', count: 5 });
     const interrupt = createCoverageStat({ coverageKey: 'interrupts', spellId: 47528, name: 'Interrupts', count: 5 });
 
     const sections = buildCompositionCoverageSections(
       { buffs: [], debuffs: [] },
-      [purge, powerInfusion, execute, allyFreedom, threat, deathGrip, grips, silence, interrupt],
+      [purge, powerInfusion, execute, allyFreedom, threat, deathGrip, grips, knockup, silence, interrupt],
     );
 
-    expect(sections.raidEnhancements).toEqual([allyFreedom, threat, powerInfusion]);
-    expect(sections.enemyWeakening).toEqual([purge, interrupt, silence, execute, grips]);
+    expect(sections.raidEssentials).toEqual([powerInfusion, interrupt]);
+    expect(sections.raidEnhancements).toEqual([allyFreedom, threat]);
+    expect(sections.controls).toEqual([knockup, grips]);
+    expect(sections.enemyWeakening).toEqual([purge, silence, execute]);
   });
 
   it('sorts major buffs and debuffs by count descending', () => {
@@ -829,7 +939,8 @@ describe('composition analytics', () => {
       [combatRes],
     );
 
-    expect(sections.majorBuffs).toEqual([combatRes, bloodlust, arcaneIntellect]);
+    expect(sections.raidEssentials).toEqual([bloodlust, combatRes]);
+    expect(sections.majorBuffs).toEqual([arcaneIntellect]);
     expect(sections.majorDebuffs).toEqual([mysticTouch, chaosBrand]);
   });
 
@@ -843,7 +954,8 @@ describe('composition analytics', () => {
       [compositionBloodlust, combatRes],
     );
 
-    expect(sections.majorBuffs).toEqual([majorBloodlust, combatRes]);
+    expect(sections.raidEssentials).toEqual([majorBloodlust, combatRes]);
+    expect(sections.majorBuffs).toEqual([]);
     expect(Object.values(sections).flat()).not.toContain(compositionBloodlust);
   });
 });

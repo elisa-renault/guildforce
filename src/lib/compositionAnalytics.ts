@@ -60,20 +60,35 @@ export interface CompositionCoverageStat {
 export type CompositionCoverageDisplayStat = RaidEffectStat | CompositionCoverageStat;
 
 export interface CompositionCoverageSections {
+  raidEssentials: CompositionCoverageDisplayStat[];
   majorBuffs: CompositionCoverageDisplayStat[];
   majorDebuffs: CompositionCoverageDisplayStat[];
   raidEnhancements: CompositionCoverageDisplayStat[];
+  controls: CompositionCoverageDisplayStat[];
   enemyWeakening: CompositionCoverageDisplayStat[];
 }
 
 const defaultCoverageKinds = new Set<string>(['raid_utility', 'raid_defensive', 'external']);
+const raidEssentialCoverageKeys = [
+  'bloodlust',
+  'combat_res',
+  'soulwell',
+  'demonic_gateway',
+  'power_infusion',
+  'interrupts',
+  'ally_magic_dispels',
+  'ally_curse_dispels',
+  'ally_poison_dispels',
+  'ally_disease_dispels',
+  'ally_bleed_dispels',
+  'ally_fear_charm_sleep_dispels',
+  'ally_roots_snares_dispels',
+] as const;
 const raidEnhancementCoverageKeys = [
   'external_defensives',
   'raid_defensives',
-  'power_infusion',
   'mass_dispel',
   'burst_move_speed',
-  'demonic_gateway',
   'ally_freedom_and_mobility',
   'threat_redirection',
   'innervate',
@@ -81,13 +96,6 @@ const raidEnhancementCoverageKeys = [
   'cheat_death',
 ] as const;
 const enemyWeakeningCoverageKeys = [
-  'aoe_stuns',
-  'aoe_roots',
-  'aoe_slows',
-  'knockbacks',
-  'knockups',
-  'enemy_grips_and_grouping',
-  'interrupts',
   'silences_and_anti_cast',
   'mortal_strike',
   'purge',
@@ -95,6 +103,14 @@ const enemyWeakeningCoverageKeys = [
   'execute_damage',
   'extra_damage_to_shields',
   'warlock_curses',
+] as const;
+const controlCoverageKeys = [
+  'enemy_grips_and_grouping',
+  'knockups',
+  'aoe_stuns',
+  'aoe_roots',
+  'aoe_slows',
+  'knockbacks',
 ] as const;
 const warlockCurseAbilityKeys = new Set([
   'curse_of_tongues_warlock_utility',
@@ -251,6 +267,22 @@ const sortByCountDesc = <Stat extends CompositionCoverageDisplayStat>(
   });
 };
 
+const sortByConfiguredOrder = <Stat extends CompositionCoverageDisplayStat>(
+  stats: Stat[],
+  orderedKeys: readonly string[],
+): Stat[] => {
+  const order = new Map(orderedKeys.map((key, index) => [key, index]));
+
+  return [...stats].sort((a, b) => {
+    const aOrder = order.get(getCoverageKey(a) ?? '') ?? Number.MAX_SAFE_INTEGER;
+    const bOrder = order.get(getCoverageKey(b) ?? '') ?? Number.MAX_SAFE_INTEGER;
+    if (aOrder !== bOrder) return aOrder - bOrder;
+    if (b.count !== a.count) return b.count - a.count;
+    if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
+    return a.name.localeCompare(b.name);
+  });
+};
+
 export const buildCompositionCoverageSections = (
   majorBuffsDebuffs: { buffs: RaidEffectStat[]; debuffs: RaidEffectStat[] },
   compositionCoverage: CompositionCoverageStat[],
@@ -271,18 +303,26 @@ export const buildCompositionCoverageSections = (
       .map(coverageKey => compositionByCoverageKey.get(coverageKey))
       .filter((stat): stat is CompositionCoverageStat => Boolean(stat));
 
-  const combatRes = compositionByCoverageKey.get('combat_res');
+  const essentialKeySet = new Set<string>(raidEssentialCoverageKeys);
+  const majorBuffs = majorBuffsDebuffs.buffs.filter(stat => !essentialKeySet.has(getCoverageKey(stat) ?? ''));
+  const majorBuffsByCoverageKey = new Map(
+    majorBuffsDebuffs.buffs.map(stat => [getCoverageKey(stat), stat]),
+  );
+  const raidEssentials = raidEssentialCoverageKeys
+    .map(coverageKey => majorBuffsByCoverageKey.get(coverageKey) ?? compositionByCoverageKey.get(coverageKey))
+    .filter((stat): stat is CompositionCoverageDisplayStat => Boolean(stat));
 
   return {
-    majorBuffs: sortByCountDesc(
-      combatRes
-        ? [...majorBuffsDebuffs.buffs, combatRes]
-        : majorBuffsDebuffs.buffs,
-    ),
+    raidEssentials: sortByConfiguredOrder(raidEssentials, raidEssentialCoverageKeys),
+    majorBuffs: sortByCountDesc(majorBuffs),
     majorDebuffs: sortByCountDesc(majorBuffsDebuffs.debuffs),
     raidEnhancements: sortByCountDesc(
       pickCompositionStats(raidEnhancementCoverageKeys),
       raidEnhancementCoverageKeys,
+    ),
+    controls: sortByCountDesc(
+      pickCompositionStats(controlCoverageKeys),
+      controlCoverageKeys,
     ),
     enemyWeakening: sortByCountDesc(
       pickCompositionStats(enemyWeakeningCoverageKeys),

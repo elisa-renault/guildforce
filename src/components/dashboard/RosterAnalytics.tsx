@@ -1,4 +1,4 @@
-import { Shield, Heart, Sword, Swords, Crosshair, AlertTriangle, Users, Filter, CheckCircle2, Clock, XCircle, UserCheck, UserMinus, UserX, Armchair, Hash, Check, ChevronDown, Target } from 'lucide-react';
+import { Shield, Heart, Sword, Swords, Crosshair, AlertTriangle, Users, Filter, CheckCircle2, Clock, XCircle, UserCheck, UserMinus, UserX, Armchair, Hash, Check, ChevronDown, Target, Star } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 
@@ -51,7 +51,6 @@ import {
   type WowSpellAnalyticsRow,
 } from '@/lib/raidEffectAnalytics';
 import {
-  getCoverageStateKey,
   getTokenRiskSummary,
   sortCoverageMissingFirst,
 } from '@/lib/rosterAnalyticsQuickWins';
@@ -70,7 +69,7 @@ const roleColorMap: Record<Role, string> = {
 
 // Range color mapping
 const rangeColorMap: Record<RangeType, string> = {
-  melee: rangeColorValue('melee'),
+  melee: 'hsl(var(--status-warning))',
   ranged: rangeColorValue('ranged'),
 };
 
@@ -104,8 +103,14 @@ const tokenGradientMap: Record<TokenGroupId, string> = {
   zenith: tierTokenGradientValue('zenith'),
 };
 
+const topRaidEssentialKeys = new Set(['bloodlust', 'combat_res']);
+const topRaidEssentialColor = 'hsl(var(--status-warning))';
+
 interface RosterAnalyticsProps {
   members: MemberWish[];
+  rosterMembers?: Array<{ id: string; name: string }>;
+  rosterMemberFilters?: string[] | null;
+  onRosterMemberFiltersChange?: (memberIds: string[] | null) => void;
 }
 
 interface ClassStat {
@@ -126,6 +131,7 @@ interface SpecStat {
   range: RangeType;
   count: number;
   maxCount: number;
+  players: string[];
 }
 
 interface RoleByPriority {
@@ -140,6 +146,7 @@ interface TokenStat {
   total: number;
   color: string;
   classes: { id: string; name: string; color: string }[];
+  players: string[];
 }
 
 type RaidEffectRow = RaidEffectAnalyticsRow;
@@ -153,6 +160,7 @@ type RoleFilter = 'all' | 'tank' | 'healer' | 'dps';
 type RangeFilter = 'all' | 'melee' | 'ranged';
 type ValidationFilter = 'all' | 'pending' | 'approved' | 'rejected';
 type WishScopeFilter = 'first_approved' | '1' | '2' | '3' | '4' | '5' | '6' | '13';
+type SpecScopeFilter = 'primary' | 'all';
 type AnalyticsFilterIcon = typeof Filter;
 type AnalyticsFilterOption<Value extends string> = {
   value: Value;
@@ -162,16 +170,23 @@ type AnalyticsFilterOption<Value extends string> = {
   labelColorClass?: string;
 };
 
-export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
+export const RosterAnalytics = ({
+  members,
+  rosterMembers = [],
+  rosterMemberFilters = null,
+  onRosterMemberFiltersChange,
+}: RosterAnalyticsProps) => {
   const { t, language } = useLanguage();
   const s = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
     resolveSemanticMessage({ key, language, translations: t });
   const [wishScopeFilter, setWishScopeFilter] = useState<WishScopeFilter>('first_approved');
   const [wishScopeFilterTouched, setWishScopeFilterTouched] = useState(false);
   const [hoveredClass, setHoveredClass] = useState<string | null>(null);
+  const [hoveredRangeKey, setHoveredRangeKey] = useState<RangeType | null>(null);
   const [commitmentFilter, setCommitmentFilter] = useState<CommitmentFilter>('confirmed');
   const [rosterDecisionFilter, setRosterDecisionFilter] = useState<RosterDecisionFilter>('selected');
   const [rosterDecisionFilterTouched, setRosterDecisionFilterTouched] = useState(false);
+  const [specScopeFilter, setSpecScopeFilter] = useState<SpecScopeFilter>('primary');
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
   const [rangeFilter, setRangeFilter] = useState<RangeFilter>('all');
   const [validationFilter, setValidationFilter] = useState<ValidationFilter>('all');
@@ -184,10 +199,10 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   const [compositionMappings, setCompositionMappings] = useState<CompositionAbilityMappingRow[]>([]);
   const [wowSpells, setWowSpells] = useState<WowSpellRow[]>([]);
   const tokenNames: Record<TokenGroupId, string> = {
-    dreadful: `${t.dashboard.tokenDreadful} (${t.dashboard.tokenCloth})`,
-    mystic: `${t.dashboard.tokenMystic} (${t.dashboard.tokenLeather})`,
-    venerated: `${t.dashboard.tokenVenerated} (${t.dashboard.tokenMail})`,
-    zenith: `${t.dashboard.tokenZenith} (${t.dashboard.tokenPlate})`,
+    dreadful: t.dashboard.tokenCloth,
+    mystic: t.dashboard.tokenLeather,
+    venerated: t.dashboard.tokenMail,
+    zenith: t.dashboard.tokenPlate,
   };
 
   useEffect(() => {
@@ -384,14 +399,15 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
       return roleFilter === 'all' && rangeFilter === 'all';
     }
     if (roleFilter === 'all' && rangeFilter === 'all') return true;
-    return wish.spec_ids.some(specId => specMatchesFilters(specId));
+    const specIds = specScopeFilter === 'primary' ? wish.spec_ids.slice(0, 1) : wish.spec_ids;
+    return specIds.some(specId => specMatchesFilters(specId));
   };
 
   const filteredMemberCount = useMemo(() => {
     return filteredMembers.filter(member =>
       member.wishes.some(wish => wishMatchesFilters(member, wish))
     ).length;
-  }, [filteredMembers, wishScopeFilter, maxWishIndex, roleFilter, rangeFilter, validationFilter]);
+  }, [filteredMembers, wishScopeFilter, maxWishIndex, specScopeFilter, roleFilter, rangeFilter, validationFilter]);
 
   const getFirstWishSpec = (wish: MemberWish['wishes'][number]) => {
     const specId = wish.spec_ids?.[0];
@@ -435,7 +451,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
         } as ClassStat;
       })
       .sort((a, b) => b.total - a.total);
-  }, [filteredMembers, language, maxWishIndex, roleFilter, rangeFilter, validationFilter]);
+  }, [filteredMembers, language, maxWishIndex, specScopeFilter, roleFilter, rangeFilter, validationFilter]);
 
   // Calculate max for bar scaling
   const maxClassTotal = useMemo(() => {
@@ -454,12 +470,16 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
         };
       });
       const total = group.classIds.reduce((sum, classId) => sum + (classMap.get(classId)?.total || 0), 0);
+      const players = Array.from(
+        new Set(group.classIds.flatMap(classId => classMap.get(classId)?.players ?? [])),
+      );
       return {
         id: group.id,
         name: tokenNames[group.id],
         total,
         color: tokenColorMap[group.id],
         classes,
+        players,
       } as TokenStat;
     });
   }, [classStats, language, tokenNames]);
@@ -475,7 +495,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
       language,
       wishMatchesFilters,
     );
-  }, [filteredMembers, raidEffects, wowSpells, language, validationFilter, maxWishIndex, roleFilter, rangeFilter]);
+  }, [filteredMembers, raidEffects, wowSpells, language, validationFilter, maxWishIndex, specScopeFilter, roleFilter, rangeFilter]);
 
   const compositionCoverageLabels = useMemo(() => ({
     combat_res: t.dashboard.compositionCoverageLabels.combatResurrection,
@@ -488,6 +508,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     soothe: t.dashboard.compositionCoverageLabels.disenrage,
     warlock_curses: t.dashboard.compositionCoverageLabels.warlockCurses,
     mortal_strike: t.dashboard.compositionCoverageLabels.healingReduction,
+    purge: t.dashboard.compositionCoverageLabels.magicPurges,
     cheat_death: t.dashboard.compositionCoverageLabels.cheatDeath,
     external_defensives: t.dashboard.compositionCoverageLabels.externalDefensives,
     raid_defensives: t.dashboard.compositionCoverageLabels.raidDefensives,
@@ -499,7 +520,22 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     silences_and_anti_cast: t.dashboard.compositionCoverageLabels.silencesAndAntiCast,
     ally_freedom_and_mobility: t.dashboard.compositionCoverageLabels.allyFreedomAndMobility,
     interrupts: t.dashboard.compositionCoverageLabels.interrupts,
+    ally_magic_dispels: t.dashboard.compositionCoverageLabels.allyMagicDispels,
+    ally_curse_dispels: t.dashboard.compositionCoverageLabels.allyCurseDispels,
+    ally_poison_dispels: t.dashboard.compositionCoverageLabels.allyPoisonDispels,
+    ally_disease_dispels: t.dashboard.compositionCoverageLabels.allyDiseaseDispels,
+    ally_bleed_dispels: t.dashboard.compositionCoverageLabels.allyBleedDispels,
+    ally_fear_charm_sleep_dispels: t.dashboard.compositionCoverageLabels.allyFearCharmSleepDispels,
+    ally_roots_snares_dispels: t.dashboard.compositionCoverageLabels.allyRootsSnaresDispels,
   }), [
+    t.dashboard.compositionCoverageLabels.allyBleedDispels,
+    t.dashboard.compositionCoverageLabels.allyCurseDispels,
+    t.dashboard.compositionCoverageLabels.allyDiseaseDispels,
+    t.dashboard.compositionCoverageLabels.allyFearCharmSleepDispels,
+    t.dashboard.compositionCoverageLabels.allyFreedomAndMobility,
+    t.dashboard.compositionCoverageLabels.allyMagicDispels,
+    t.dashboard.compositionCoverageLabels.allyPoisonDispels,
+    t.dashboard.compositionCoverageLabels.allyRootsSnaresDispels,
     t.dashboard.compositionCoverageLabels.aoeRoots,
     t.dashboard.compositionCoverageLabels.aoeSlows,
     t.dashboard.compositionCoverageLabels.aoeStuns,
@@ -514,9 +550,9 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     t.dashboard.compositionCoverageLabels.immunities,
     t.dashboard.compositionCoverageLabels.knockbacks,
     t.dashboard.compositionCoverageLabels.knockups,
+    t.dashboard.compositionCoverageLabels.magicPurges,
     t.dashboard.compositionCoverageLabels.raidDefensives,
     t.dashboard.compositionCoverageLabels.warlockCurses,
-    t.dashboard.compositionCoverageLabels.allyFreedomAndMobility,
     t.dashboard.compositionCoverageLabels.enemyGripsAndGrouping,
     t.dashboard.compositionCoverageLabels.interrupts,
     t.dashboard.compositionCoverageLabels.silencesAndAntiCast,
@@ -544,6 +580,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     compositionCoverageLabels,
     validationFilter,
     maxWishIndex,
+    specScopeFilter,
     roleFilter,
     rangeFilter,
   ]);
@@ -630,6 +667,23 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     return <p className="break-words text-xs leading-5">{stat.description || stat.name}</p>;
   };
 
+  const getSingleProviderClassColor = (stat: RaidEffectStat | CompositionCoverageStat) => {
+    const coveredClassIds = new Set<string>();
+    const providerClassIds = new Set<string>();
+    stat.spellEntries.forEach((entry) => {
+      entry.providers.forEach((provider) => {
+        providerClassIds.add(provider.classId);
+        if (provider.covered) coveredClassIds.add(provider.classId);
+      });
+    });
+
+    const classIds = coveredClassIds.size > 0 ? coveredClassIds : providerClassIds;
+    if (classIds.size !== 1) return null;
+    const classId = Array.from(classIds)[0];
+    const wowClass = getClassById(classId);
+    return wowClass ? resolveClassColor(wowClass.color) : null;
+  };
+
   const renderCoverageList = (
     title: string,
     stats: (RaidEffectStat | CompositionCoverageStat)[],
@@ -663,20 +717,21 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
         </div>
         {stats.length > 0 ? (
           <div className={listLayoutClass}>
-            {sortCoverageMissingFirst(stats).map(stat => {
+            {[...stats].sort((a, b) => {
+              const aKey = 'coverageKey' in a ? a.coverageKey : String(a.spellId);
+              const bKey = 'coverageKey' in b ? b.coverageKey : String(b.spellId);
+              const aTop = topRaidEssentialKeys.has(aKey);
+              const bTop = topRaidEssentialKeys.has(bKey);
+              if (aTop !== bTop) return aTop ? -1 : 1;
+              if (aTop && bTop) return aKey === 'bloodlust' ? -1 : 1;
+              return sortCoverageMissingFirst([a, b])[0] === a ? -1 : 1;
+            }).map(stat => {
               const isCovered = stat.count > 0;
               const statKey = 'coverageKey' in stat ? stat.coverageKey : stat.spellId;
+              const isTopRaidEssential = 'coverageKey' in stat && topRaidEssentialKeys.has(stat.coverageKey);
               const spellNames = 'spellNames' in stat ? stat.spellNames : [];
               const spellEntries = 'spellEntries' in stat ? stat.spellEntries : [];
-              const stateKey = getCoverageStateKey(stat.count);
-              const stateLabel = t.dashboard.coverageStates[stateKey];
-              const coverageSourceStateLabel = stat.count > 1
-                ? t.dashboard.coverageSourceStatePlural
-                : t.dashboard.coverageSourceState;
-              const coverageSourceCountLabel = stat.count > 1
-                ? t.dashboard.coverageSourceCountPlural
-                : t.dashboard.coverageSourceCount;
-              const coverageSourceLabel = isRequired ? coverageSourceStateLabel : coverageSourceCountLabel;
+              const singleProviderClassColor = getSingleProviderClassColor(stat);
               const rowTone = isRequired
                 ? isCovered
                   ? 'border-status-success/20 bg-status-success/5 hover:bg-status-success/10'
@@ -687,31 +742,66 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                   ? 'border-status-success/30 bg-status-success/10 text-status-success'
                   : 'border-status-error/25 bg-status-error/10 text-status-error'
                 : 'border-border/60 bg-muted/20 text-muted-foreground';
+              const statusColor = isTopRaidEssential ? topRaidEssentialColor : isCovered ? singleProviderClassColor : 'hsl(var(--status-error))';
+              const countStyle = statusColor
+                ? {
+                    borderColor: statusColor,
+                    color: statusColor,
+                    backgroundColor: `color-mix(in srgb, ${statusColor} 12%, transparent)`,
+                  }
+                : undefined;
+              const rowStyle = isTopRaidEssential
+                ? {
+                    borderColor: `color-mix(in srgb, ${topRaidEssentialColor} 65%, transparent)`,
+                    backgroundColor: `color-mix(in srgb, ${topRaidEssentialColor} 13%, transparent)`,
+                    boxShadow: `0 0 18px color-mix(in srgb, ${topRaidEssentialColor} 18%, transparent)`,
+                    color: topRaidEssentialColor,
+                  }
+                : singleProviderClassColor
+                ? {
+                    borderColor: `color-mix(in srgb, ${singleProviderClassColor} 45%, transparent)`,
+                    backgroundColor: `color-mix(in srgb, ${singleProviderClassColor} 9%, transparent)`,
+                    color: singleProviderClassColor,
+                  }
+                : undefined;
+              const labelStyle = isTopRaidEssential
+                ? { color: topRaidEssentialColor }
+                : singleProviderClassColor
+                  ? { color: singleProviderClassColor }
+                  : undefined;
               const labelTone = isRequired && !isCovered ? 'text-muted-foreground' : 'text-foreground';
               return (
                 <UITooltip key={statKey} delayDuration={40}>
                   <TooltipTrigger asChild>
                     <div
-                      className={`group flex min-h-8 cursor-help items-center gap-2 rounded-md border px-2 py-1.5 text-xs transition-colors ${rowTone}`}
+                      className={`group flex min-h-8 cursor-help items-center gap-2 rounded-md border px-2 py-1.5 text-xs transition-colors ${singleProviderClassColor || isTopRaidEssential ? 'hover:brightness-110' : rowTone}`}
+                      style={rowStyle}
                     >
                       {isRequired && (
                         isCovered ? (
-                          <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-status-success" />
+                          <CheckCircle2
+                            className={`h-3.5 w-3.5 shrink-0 ${singleProviderClassColor ? '' : 'text-status-success'}`}
+                            style={labelStyle}
+                          />
                         ) : (
-                          <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-status-error/80" />
+                          <AlertTriangle
+                            className="h-3.5 w-3.5 shrink-0"
+                            style={{ color: 'hsl(var(--status-error))' }}
+                          />
                         )
                       )}
                       <span
-                        className={`flex h-5 min-w-[6rem] shrink-0 items-center justify-center rounded border px-1.5 text-[11px] font-semibold tabular-nums ${countTone}`}
+                        className={`flex h-5 min-w-8 shrink-0 items-center justify-center rounded border px-2 text-[11px] font-semibold tabular-nums ${statusColor ? '' : countTone}`}
+                        style={countStyle}
                       >
-                        {interpolateMessage(coverageSourceLabel, {
-                          count: stat.count,
-                          state: stateLabel,
-                        })}
+                        {stat.count}
                       </span>
-                      <span className={`min-w-0 flex-1 truncate font-medium ${labelTone}`}>
+                      <span className={`min-w-0 flex-1 truncate font-medium ${singleProviderClassColor ? '' : labelTone}`} style={labelStyle}>
                         {stat.name}
                       </span>
+                      {isTopRaidEssential && (
+                        <Star className="ml-auto h-3.5 w-3.5 shrink-0 fill-current" style={{ color: topRaidEssentialColor }} />
+                      )}
                     </div>
                   </TooltipTrigger>
                   <TooltipContent sideOffset={6} className="w-[min(92vw,420px)] max-w-[420px]">
@@ -728,43 +818,61 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     );
   };
 
-  // Calculate spec distribution (all specs) based on filter
+  // Calculate spec distribution based on the selected specialization scope.
   const specStats = useMemo(() => {
-    const stats: Record<string, number> = {};
+    const stats: Record<string, { count: number; players: Set<string> }> = {};
 
     filteredMembers.forEach(m => {
       m.wishes.forEach(w => {
         if (w.spec_ids?.length && wishMatchesFilters(m, w)) {
-          w.spec_ids.forEach(specId => {
+          const specIds = specScopeFilter === 'primary' ? w.spec_ids.slice(0, 1) : w.spec_ids;
+          specIds.forEach(specId => {
             if (specMatchesFilters(specId)) {
-              stats[specId] = (stats[specId] || 0) + 1;
+              if (!stats[specId]) {
+                stats[specId] = { count: 0, players: new Set() };
+              }
+              stats[specId].count++;
+              stats[specId].players.add(m.username);
             }
           });
         }
       });
     });
 
-    const sorted = Object.entries(stats)
-      .map(([id, count]) => {
-        const spec = getSpecById(id);
-        const wowClass = wowClasses.find(c => c.specs.some(s => s.id === id));
+    const sorted = wowClasses
+      .flatMap((wowClass) =>
+        wowClass.specs
+          .filter((spec) => {
+            if (roleFilter !== 'all' && spec.role !== roleFilter) return false;
+            if (rangeFilter !== 'all' && spec.range !== rangeFilter) return false;
+            return true;
+          })
+          .map((spec) => ({ spec, wowClass })),
+      )
+      .map(({ spec, wowClass }) => {
+        const data = stats[spec.id];
+        const count = data?.count || 0;
         return {
-          id,
-          specName: spec ? getLocalizedSpecName(spec.id, language) : id,
-          className: wowClass ? getLocalizedClassName(wowClass.id, language) : '',
-          classColor: wowClass?.color || 'class-warrior',
-          role: spec?.role || 'dps',
-          range: spec?.range || 'melee',
+          id: spec.id,
+          specName: getLocalizedSpecName(spec.id, language),
+          className: getLocalizedClassName(wowClass.id, language),
+          classColor: wowClass.color,
+          role: spec.role,
+          range: spec.range,
           count,
           maxCount: 0,
+          players: Array.from(data?.players ?? []),
         } as SpecStat;
       })
-      .filter(s => s.count > 0)
-      .sort((a, b) => b.count - a.count);
+      .sort((a, b) =>
+        b.count - a.count
+        || a.className.localeCompare(b.className, language)
+        || a.specName.localeCompare(b.specName, language),
+      );
 
     const maxCount = sorted.length > 0 ? sorted[0].count : 1;
     return sorted.map(s => ({ ...s, maxCount }));
-  }, [filteredMembers, language, maxWishIndex, roleFilter, rangeFilter, validationFilter]);
+  }, [filteredMembers, language, maxWishIndex, specScopeFilter, roleFilter, rangeFilter, validationFilter]);
 
   // Calculate roles by priority based on filter
   const rolesByPriority = useMemo(() => {
@@ -792,23 +900,36 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
       { role: 'healer' as Role, ...stats.healer },
       { role: 'dps' as Role, ...stats.dps },
     ] as RoleByPriority[];
-  }, [filteredMembers, maxWishIndex, roleFilter, rangeFilter, validationFilter]);
+  }, [filteredMembers, maxWishIndex, specScopeFilter, roleFilter, rangeFilter, validationFilter]);
 
   // Calculate range distribution based on filter
   const rangeStats = useMemo(() => {
-    const stats = { melee: 0, ranged: 0 };
+    const stats = {
+      melee: { count: 0, players: new Set<string>() },
+      ranged: { count: 0, players: new Set<string>() },
+    };
 
     filteredMembers.forEach(m => {
       m.wishes.forEach(w => {
         if (!wishMatchesFilters(m, w)) return;
         const spec = getFirstWishSpec(w);
         if (!spec) return;
-        stats[spec.range]++;
+        stats[spec.range].count++;
+        stats[spec.range].players.add(m.username);
       });
     });
 
-    return stats;
-  }, [filteredMembers, maxWishIndex, roleFilter, rangeFilter, validationFilter]);
+    return {
+      melee: {
+        count: stats.melee.count,
+        players: Array.from(stats.melee.players),
+      },
+      ranged: {
+        count: stats.ranged.count,
+        players: Array.from(stats.ranged.players),
+      },
+    };
+  }, [filteredMembers, maxWishIndex, specScopeFilter, roleFilter, rangeFilter, validationFilter]);
 
   // Missing classes (no one has this class in any wish)
   const missingClasses = useMemo(() => {
@@ -842,14 +963,6 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
       case 'dps':
         return t.dashboard.dps;
     }
-  };
-
-  // Rank number with colors for top 3
-  const getRankDisplay = (index: number) => {
-    const rank = index + 1;
-    const colors = ['text-warning', 'text-slate-300', 'text-warning'];
-    const colorClass = index < 3 ? colors[index] : 'text-muted-foreground';
-    return <span className={`text-xs font-bold ${colorClass}`}>{rank}</span>;
   };
 
   // Generate wish range label for selector
@@ -927,16 +1040,42 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     { value: 'ranged', label: t.dashboard.ranged, icon: Crosshair, colorClass: 'text-info' },
   ];
 
+  const specScopeOptions: AnalyticsFilterOption<SpecScopeFilter>[] = [
+    { value: 'primary', label: t.dashboard.primarySpecializations, icon: Target, colorClass: 'text-primary' },
+    { value: 'all', label: t.dashboard.allExpressedSpecializations, icon: Target, colorClass: 'text-muted-foreground' },
+  ];
+
+  const allRosterMemberIds = useMemo(() => rosterMembers.map(member => member.id), [rosterMembers]);
+  const isRosterMemberSelected = (memberId: string) =>
+    rosterMemberFilters === null || rosterMemberFilters.includes(memberId);
+  const setRosterMemberFilters = (memberIds: string[] | null) => {
+    onRosterMemberFiltersChange?.(memberIds);
+  };
+  const toggleRosterMember = (memberId: string) => {
+    const current = rosterMemberFilters === null ? allRosterMemberIds : rosterMemberFilters;
+    setRosterMemberFilters(
+      current.includes(memberId)
+        ? current.filter(id => id !== memberId)
+        : [...current, memberId],
+    );
+  };
+  const selectAllRosterMembers = () => setRosterMemberFilters(null);
+  const deselectAllRosterMembers = () => setRosterMemberFilters([]);
+  const rosterMemberFilterCount = rosterMemberFilters === null ? 0 : rosterMemberFilters.length;
+  const hasRosterMemberFilter = rosterMemberFilters !== null;
+
   const playersFilterCount =
     (commitmentFilter !== 'all' ? 1 : 0) +
-    (rosterDecisionFilter !== 'all' ? 1 : 0);
+    (rosterDecisionFilter !== 'all' ? 1 : 0) +
+    (hasRosterMemberFilter ? rosterMemberFilterCount : 0);
   const wishesFilterCount =
     (wishScopeFilter !== '13' ? 1 : 0) +
     (validationFilter !== 'all' ? 1 : 0);
   const specsFilterCount =
+    (specScopeFilter !== 'primary' ? 1 : 0) +
     (roleFilter !== 'all' ? 1 : 0) +
     (rangeFilter !== 'all' ? 1 : 0);
-  const hasPlayersFilters = playersFilterCount > 0;
+  const hasPlayersFilters = playersFilterCount > 0 || hasRosterMemberFilter;
   const hasWishesFilters = wishesFilterCount > 0;
   const hasSpecsFilters = specsFilterCount > 0;
 
@@ -975,6 +1114,49 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     </div>
   );
 
+  const renderRosterMemberSelector = () => (
+    <div>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <h4 className="text-sm font-medium">{t.dashboard.rosterMembers}</h4>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+            onClick={selectAllRosterMembers}
+          >
+            {t.dashboard.selectAllMembers}
+          </button>
+          <button
+            type="button"
+            className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+            onClick={deselectAllRosterMembers}
+          >
+            {t.dashboard.deselectAllMembers}
+          </button>
+        </div>
+      </div>
+      <div className="max-h-48 space-y-1 overflow-y-auto pr-1">
+        {rosterMembers.map(member => {
+          const isSelected = isRosterMemberSelected(member.id);
+          return (
+            <button
+              key={member.id}
+              type="button"
+              onClick={() => toggleRosterMember(member.id)}
+              className={cn(
+                'flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm transition-colors',
+                isSelected ? 'bg-primary/20' : 'hover:bg-primary/10',
+              )}
+            >
+              <span className="min-w-0 flex-1 truncate">{member.name}</span>
+              {isSelected && <Check className="h-3.5 w-3.5 shrink-0 text-primary" />}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
   const getCommitmentFilterLabel = (value: CommitmentFilter) => {
     if (value === 'all') return t.dashboard.allCommitments;
     return commitmentOptions.find(option => option.value === value)?.label || value;
@@ -1000,6 +1182,9 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     return rangeOptions.find(option => option.value === value)?.label || value;
   };
 
+  const getSpecScopeFilterLabel = (value: SpecScopeFilter) =>
+    specScopeOptions.find(option => option.value === value)?.label || value;
+
   const resetAnalyticsFilters = () => {
     setCommitmentFilter('confirmed');
     setRosterDecisionFilter(defaultAnalyticsFilters.rosterDecision);
@@ -1008,19 +1193,21 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
     setWishScopeFilterTouched(false);
     setValidationFilter(defaultAnalyticsFilters.validation);
     setValidationFilterTouched(false);
+    setSpecScopeFilter('primary');
     setRoleFilter('all');
     setRangeFilter('all');
   };
 
-  const activeFilterSummary = [
+  const activeFilterItems = [
     interpolateMessage(t.dashboard.activeFilterMembers, { count: filteredMemberCount }),
     interpolateMessage(t.dashboard.activeFilterCommitment, { value: getCommitmentFilterLabel(commitmentFilter) }),
     interpolateMessage(t.dashboard.activeFilterDecision, { value: getRosterDecisionFilterLabel(rosterDecisionFilter) }),
     interpolateMessage(t.dashboard.activeFilterWishes, { value: getWishRangeLabel(wishScopeFilter) }),
     interpolateMessage(t.dashboard.activeFilterValidation, { value: getValidationFilterLabel(validationFilter) }),
+    interpolateMessage(t.dashboard.activeFilterSpecs, { value: getSpecScopeFilterLabel(specScopeFilter) }),
     interpolateMessage(t.dashboard.activeFilterRole, { value: getRoleFilterLabel(roleFilter) }),
     interpolateMessage(t.dashboard.activeFilterRange, { value: getRangeFilterLabel(rangeFilter) }),
-  ].join(' · ');
+  ];
 
   const tokenRiskDescription = tokenRiskSummary.token && tokenRiskSummary.level !== 'none'
     ? interpolateMessage(t.dashboard.tokenRiskSummary, {
@@ -1038,58 +1225,123 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
   const totalDps = rolesByPriority.find(r => r.role === 'dps');
 
   // Pie chart data
-  const rolePieData = rolesByPriority.map(stat => ({
-    name: getRoleName(stat.role),
-    value: stat.wish1 + stat.other,
-    role: stat.role,
-    color: roleColorMap[stat.role],
-  })).filter(d => d.value > 0);
-
-  const totalRoles = rolePieData.reduce((sum, d) => sum + d.value, 0);
-  const totalRange = rangeStats.melee + rangeStats.ranged;
+  const totalRange = rangeStats.melee.count + rangeStats.ranged.count;
 
   const rangePieData = [
-    { name: t.dashboard.melee, value: rangeStats.melee, color: rangeColorMap.melee, key: 'melee' },
-    { name: t.dashboard.ranged, value: rangeStats.ranged, color: rangeColorMap.ranged, key: 'ranged' },
+    {
+      name: t.dashboard.melee,
+      value: rangeStats.melee.count,
+      players: rangeStats.melee.players,
+      color: rangeColorMap.melee,
+      key: 'melee',
+    },
+    {
+      name: t.dashboard.ranged,
+      value: rangeStats.ranged.count,
+      players: rangeStats.ranged.players,
+      color: rangeColorMap.ranged,
+      key: 'ranged',
+    },
   ].filter(d => d.value > 0);
+  const hoveredRangeStat = hoveredRangeKey
+    ? rangePieData.find(stat => stat.key === hoveredRangeKey) || null
+    : null;
+
+  const pluralizeKpiLabel = (count: number, singular: string, plural: string) =>
+    count > 1 ? plural : singular;
+  const formatKpiLabel = (label: string) =>
+    label ? `${label.charAt(0).toLocaleUpperCase(language)}${label.slice(1)}` : label;
+
+  const tankCount = (totalTanks?.wish1 || 0) + (totalTanks?.other || 0);
+  const healerCount = (totalHealers?.wish1 || 0) + (totalHealers?.other || 0);
+  const dpsCount = (totalDps?.wish1 || 0) + (totalDps?.other || 0);
+  const meleeCount = rangeStats.melee.count;
+  const rangedCount = rangeStats.ranged.count;
 
   const compositionKpis = [
     {
+      key: 'members',
+      label: formatKpiLabel(pluralizeKpiLabel(filteredMemberCount, t.guild.member, t.guild.members)),
+      value: filteredMemberCount,
+      color: 'hsl(var(--foreground))',
+      icon: <Users className="h-3 w-3 shrink-0" />,
+    },
+    {
+      key: 'classes',
+      label: pluralizeKpiLabel(representedClasses.length, t.dashboard.classSingular, t.dashboard.classes),
+      value: `${representedClasses.length}/13`,
+      color: 'hsl(var(--status-success))',
+      icon: <CheckCircle2 className="h-3 w-3 shrink-0" />,
+    },
+    {
       key: 'tank',
-      label: getRoleName('tank'),
-      value: (totalTanks?.wish1 || 0) + (totalTanks?.other || 0),
+      label: pluralizeKpiLabel(tankCount, getRoleName('tank'), t.dashboard.tankPlural),
+      value: tankCount,
       color: roleColorMap.tank,
       icon: getRoleIcon('tank', 'h-3 w-3 shrink-0'),
     },
     {
       key: 'healer',
-      label: getRoleName('healer'),
-      value: (totalHealers?.wish1 || 0) + (totalHealers?.other || 0),
+      label: pluralizeKpiLabel(healerCount, getRoleName('healer'), t.dashboard.healerPlural),
+      value: healerCount,
       color: roleColorMap.healer,
       icon: getRoleIcon('healer', 'h-3 w-3 shrink-0'),
     },
     {
       key: 'dps',
       label: getRoleName('dps'),
-      value: (totalDps?.wish1 || 0) + (totalDps?.other || 0),
+      value: dpsCount,
       color: roleColorMap.dps,
       icon: getRoleIcon('dps', 'h-3 w-3 shrink-0'),
     },
     {
       key: 'melee',
-      label: t.dashboard.melee,
-      value: rangeStats.melee,
+      label: pluralizeKpiLabel(meleeCount, t.dashboard.melee, t.dashboard.meleePlural),
+      value: meleeCount,
       color: rangeColorMap.melee,
       icon: <Swords className="h-3 w-3 shrink-0" />,
     },
     {
       key: 'ranged',
-      label: t.dashboard.ranged,
-      value: rangeStats.ranged,
+      label: pluralizeKpiLabel(rangedCount, t.dashboard.ranged, t.dashboard.rangedPlural),
+      value: rangedCount,
       color: rangeColorMap.ranged,
       icon: <Crosshair className="h-3 w-3 shrink-0" />,
     },
   ];
+
+  const renderRosterTooltipContent = (
+    title: string,
+    color: string,
+    players: string[],
+    options?: { maxPlayers?: number | null },
+  ) => {
+    const maxPlayers = options?.maxPlayers ?? 6;
+    const visiblePlayers = maxPlayers === null ? players : players.slice(0, maxPlayers);
+    return (
+    <>
+      <p className="mb-2 text-sm font-semibold leading-none" style={{ color }}>
+        {title}
+      </p>
+      {players.length > 0 ? (
+        <div className="flex flex-wrap gap-1.5">
+          {visiblePlayers.map(player => (
+            <Badge key={player} variant="secondary" className="px-2 py-0.5 text-[10px] leading-4">
+              {player}
+            </Badge>
+          ))}
+          {maxPlayers !== null && players.length > maxPlayers && (
+            <Badge variant="outline" className="px-2 py-0.5 text-[10px] leading-4">
+              +{players.length - maxPlayers}
+            </Badge>
+          )}
+        </div>
+      ) : (
+        <p className="text-xs text-muted-foreground">{t.dashboard.noData}</p>
+      )}
+    </>
+    );
+  };
 
   return (
     <TooltipProvider>
@@ -1119,6 +1371,8 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
             </PopoverTrigger>
             <PopoverContent className="w-auto min-w-40 bg-card p-3" align="start">
               <div className="space-y-3">
+                {renderRosterMemberSelector()}
+                <Separator />
                 <div>
                   <h4 className="mb-2 text-sm font-medium">{t.dashboard.commitment}</h4>
                   {renderFilterChoice({
@@ -1233,6 +1487,15 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
             <PopoverContent className="w-72 max-w-[calc(100vw-1rem)] bg-card p-3" align="start">
               <div className="space-y-3">
                 <div>
+                  <h4 className="mb-2 text-sm font-medium">{t.dashboard.specializationScope}</h4>
+                  {renderFilterChoice({
+                    value: specScopeFilter,
+                    options: specScopeOptions,
+                    onValueChange: setSpecScopeFilter,
+                  })}
+                </div>
+                <Separator />
+                <div>
                   <h4 className="mb-2 text-sm font-medium">{s('dashboard.roster_filters.roles_title')}</h4>
                   {renderFilterChoice({
                     value: roleFilter,
@@ -1255,40 +1518,25 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
             </PopoverContent>
           </Popover>
 
-          {/* Inline KPIs */}
-          <div className="ml-auto flex h-8 items-center gap-3">
-            <div className="flex items-center gap-1.5">
-              <Users className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium">{filteredMemberCount}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <CheckCircle2 className="h-4 w-4 text-status-success" />
-              <span className="text-sm font-medium">{representedClasses.length}/13</span>
-            </div>
-            <div className="hidden items-center gap-2 border-l border-border/50 pl-2 sm:flex">
-              <div className="flex items-center gap-0.5" style={{ color: roleColorMap.tank }}>
-                <Shield className="h-3.5 w-3.5" />
-                <span className="text-sm font-medium">{(totalTanks?.wish1 || 0) + (totalTanks?.other || 0)}</span>
-              </div>
-              <div className="flex items-center gap-0.5" style={{ color: roleColorMap.healer }}>
-                <Heart className="h-3.5 w-3.5" />
-                <span className="text-sm font-medium">{(totalHealers?.wish1 || 0) + (totalHealers?.other || 0)}</span>
-              </div>
-              <div className="flex items-center gap-0.5" style={{ color: roleColorMap.dps }}>
-                <Sword className="h-3.5 w-3.5" />
-                <span className="text-sm font-medium">{(totalDps?.wish1 || 0) + (totalDps?.other || 0)}</span>
-              </div>
-            </div>
-            </div>
           </FilterBar>
 
-          <div className="mt-2 flex flex-col gap-2 border-t border-border/40 pt-2 text-sm text-muted-foreground lg:flex-row lg:items-center">
-            <div className="flex min-w-0 flex-1 items-start gap-2">
-              <Filter className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-              <p className="min-w-0 leading-5">
-                <span className="font-medium text-foreground">{t.dashboard.activeAnalysisScope}</span>{' '}
-                {activeFilterSummary}
-              </p>
+          <div className="mt-3 flex flex-col gap-3 border-t border-border/40 pt-3 text-sm text-muted-foreground lg:flex-row lg:items-start">
+            <div className="flex min-w-0 flex-1 flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 shrink-0 text-primary" />
+                <span className="font-medium text-foreground">{t.dashboard.activeAnalysisScope}</span>
+              </div>
+              <div className="flex min-w-0 flex-wrap gap-1.5">
+                {activeFilterItems.map((item) => (
+                  <Badge
+                    key={item}
+                    variant="outline"
+                    className="max-w-full border-border/60 bg-muted/15 px-2 py-0.5 text-xs font-medium text-muted-foreground"
+                  >
+                    <span className="min-w-0 truncate">{item}</span>
+                  </Badge>
+                ))}
+              </div>
             </div>
             <Button
               type="button"
@@ -1302,8 +1550,8 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
           </div>
         </div>
 
-        <section className="grid gap-3 xl:grid-cols-3">
-          {missingClasses.length > 0 ? (
+        {missingClasses.length > 0 && (
+          <section className="grid gap-3 xl:grid-cols-3">
             <div className="flex items-start gap-3 rounded-lg border border-status-warning/35 bg-status-warning/10 p-3 xl:col-span-3">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-status-warning" />
               <div className="min-w-0 flex-1">
@@ -1325,119 +1573,137 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                 </div>
               </div>
             </div>
-          ) : (
-            <div className="flex items-center gap-2 rounded-lg border border-status-success/30 bg-status-success/10 p-3 xl:col-span-3">
-              <CheckCircle2 className="h-4 w-4 text-status-success" />
-              <span className="text-sm text-status-success">{t.dashboard.allClassesRepresented}</span>
-            </div>
-          )}
-        </section>
+          </section>
+        )}
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-12">
-          <GlowCard surface="section" className="p-3 xl:col-span-3">
-            <h4 className="mb-3 text-sm font-medium">{t.dashboard.compositionSummary}</h4>
-            <div className="mb-4 grid grid-cols-2 gap-1.5 min-[440px]:grid-cols-5">
+          <section className="min-w-0 md:col-span-2 xl:col-span-12">
+            <div className="grid grid-cols-2 gap-2 min-[440px]:grid-cols-4 lg:grid-cols-7">
               {compositionKpis.map(kpi => (
                 <div
                   key={kpi.key}
-                  className="min-w-0 rounded-md border bg-muted/10 px-2 py-1.5"
+                  className="grid min-h-[64px] min-w-0 grid-cols-[44px_minmax(0,1fr)] overflow-hidden rounded-lg border shadow-sm shadow-background/30"
                   style={{
-                    borderColor: `color-mix(in srgb, ${kpi.color} 35%, transparent)`,
-                    backgroundColor: `color-mix(in srgb, ${kpi.color} 8%, transparent)`,
+                    borderColor: `color-mix(in srgb, ${kpi.color} 48%, transparent)`,
+                    backgroundImage: `linear-gradient(135deg, color-mix(in srgb, ${kpi.color} 15%, transparent), color-mix(in srgb, ${kpi.color} 6%, transparent))`,
                   }}
                 >
-                  <div className="flex min-w-0 items-center gap-1" style={{ color: kpi.color }}>
+                  <div
+                    className="flex items-center justify-center border-r [&_svg]:h-5 [&_svg]:w-5"
+                    style={{
+                      borderColor: `color-mix(in srgb, ${kpi.color} 28%, transparent)`,
+                      backgroundColor: `color-mix(in srgb, ${kpi.color} 13%, transparent)`,
+                      color: kpi.color,
+                    }}
+                  >
                     {kpi.icon}
-                    <span className="min-w-0 truncate text-[10px] font-semibold leading-none">
+                  </div>
+                  <div className="flex min-w-0 flex-col justify-center px-3 py-2">
+                    <span className="min-w-0 truncate text-xs font-semibold leading-tight">
                       {kpi.label}
                     </span>
-                  </div>
-                  <div className="mt-1 text-base font-bold leading-none tabular-nums text-foreground">
-                    {kpi.value}
+                    <div
+                      className="mt-1 text-3xl font-extrabold leading-none tracking-tight tabular-nums"
+                      style={{
+                        color: kpi.color,
+                        textShadow: `0 0 18px color-mix(in srgb, ${kpi.color} 22%, transparent)`,
+                      }}
+                    >
+                      {kpi.value}
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-              <div className="min-w-0">
-                <h5 className="mb-2 text-xs font-semibold text-muted-foreground">{t.dashboard.roleBalance}</h5>
-                {totalRoles > 0 ? (
-                  <div className="flex items-center gap-3">
-                    <div className="h-24 w-24 shrink-0">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={rolePieData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={22}
-                            outerRadius={44}
-                            dataKey="value"
-                            stroke="none"
-                          >
-                            {rolePieData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                    <div className="flex min-w-0 flex-1 flex-col gap-1">
-                      {rolePieData.map(stat => (
-                        <div key={stat.role} className="flex min-w-0 items-center gap-1.5">
-                          <div className="h-2 w-2 rounded-full" style={{ backgroundColor: stat.color }} />
-                          <span style={{ color: stat.color }}>{getRoleIcon(stat.role, "h-3 w-3")}</span>
-                          <span className="min-w-0 truncate text-xs">{stat.name}</span>
-                          <span className="ml-auto shrink-0 text-xs tabular-nums text-muted-foreground">
-                            {stat.value} ({Math.round((stat.value / totalRoles) * 100)}%)
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-center text-xs text-muted-foreground">{t.dashboard.noData}</p>
-                )}
-              </div>
+          </section>
 
-              <div className="min-w-0">
+          <GlowCard surface="section" className="p-3 md:col-span-1 xl:col-span-3">
+            <div className="flex h-full min-h-[260px] flex-col">
+              <div className="flex min-w-0 flex-1 flex-col">
                 <h5 className="mb-2 text-xs font-semibold text-muted-foreground">{t.dashboard.rangeBalance}</h5>
                 {totalRange > 0 ? (
-                  <div className="flex items-center gap-3">
-                    <div className="h-24 w-24 shrink-0">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={rangePieData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={22}
-                            outerRadius={44}
-                            dataKey="value"
-                            stroke="none"
+                  <div className="relative flex flex-1 items-center justify-center py-2">
+                    {rangePieData.map(stat => {
+                      const isMelee = stat.key === 'melee';
+                      const positionClass = isMelee
+                        ? 'left-[calc(50%+6rem)] top-[31%] items-start text-left'
+                        : 'right-[calc(50%+6rem)] top-[69%] items-end text-right';
+                      const lineClass = isMelee
+                        ? 'right-full mr-2 bg-gradient-to-l from-current to-transparent'
+                        : 'left-full ml-2 bg-gradient-to-r from-current to-transparent';
+
+                      return (
+                        <UITooltip key={stat.key} delayDuration={100}>
+                          <TooltipTrigger asChild>
+                            <div
+                              className={`absolute z-10 flex -translate-y-1/2 cursor-help flex-col gap-1 ${positionClass}`}
+                              style={{ color: stat.color }}
+                            >
+                              <div className={`absolute top-1/2 h-px w-4 -translate-y-1/2 opacity-70 ${lineClass}`} />
+                              <div className="flex items-center gap-1.5 text-xs font-semibold">
+                                {isMelee && <div className="h-2 w-2 rounded-full" style={{ backgroundColor: stat.color }} />}
+                                {isMelee ? (
+                                  <Swords className="h-3.5 w-3.5" />
+                                ) : (
+                                  <Crosshair className="h-3.5 w-3.5" />
+                                )}
+                                <span className="max-w-20 truncate">{stat.name}</span>
+                                {!isMelee && <div className="h-2 w-2 rounded-full" style={{ backgroundColor: stat.color }} />}
+                              </div>
+                              <span className="text-[11px] font-medium tabular-nums text-muted-foreground">
+                                {stat.value} ({Math.round((stat.value / totalRange) * 100)}%)
+                              </span>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent sideOffset={8} className="max-w-[320px] rounded-md border-border/80 px-3 py-2.5">
+                            {renderRosterTooltipContent(stat.name, stat.color, stat.players, { maxPlayers: null })}
+                          </TooltipContent>
+                        </UITooltip>
+                      );
+                    })}
+
+                    <div className="flex flex-1 items-center justify-center">
+                      <UITooltip open={!!hoveredRangeStat} delayDuration={40}>
+                        <TooltipTrigger asChild>
+                          <div
+                            className="h-48 w-48 shrink-0 cursor-help"
+                            onMouseLeave={() => setHoveredRangeKey(null)}
                           >
-                            {rangePieData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                    <div className="flex min-w-0 flex-1 flex-col gap-1">
-                      {rangePieData.map(stat => (
-                        <div key={stat.key} className="flex min-w-0 items-center gap-1.5">
-                          <div className="h-2 w-2 rounded-full" style={{ backgroundColor: stat.color }} />
-                          {stat.key === 'melee' ? (
-                            <Swords className="h-3 w-3" style={{ color: stat.color }} />
-                          ) : (
-                            <Crosshair className="h-3 w-3" style={{ color: stat.color }} />
-                          )}
-                          <span className="min-w-0 truncate text-xs">{stat.name}</span>
-                          <span className="ml-auto shrink-0 text-xs tabular-nums text-muted-foreground">
-                            {stat.value} ({Math.round((stat.value / totalRange) * 100)}%)
-                          </span>
-                        </div>
-                      ))}
+                            <ResponsiveContainer width="100%" height="100%">
+                              <PieChart>
+                                <Pie
+                                  data={rangePieData}
+                                  cx="50%"
+                                  cy="50%"
+                                  innerRadius={42}
+                                  outerRadius={82}
+                                  dataKey="value"
+                                  stroke="none"
+                                >
+                                  {rangePieData.map((entry, index) => (
+                                    <Cell
+                                      key={`cell-${index}`}
+                                      fill={entry.color}
+                                      className="outline-none transition-opacity hover:opacity-90"
+                                      onMouseEnter={() => setHoveredRangeKey(entry.key)}
+                                    />
+                                  ))}
+                                </Pie>
+                              </PieChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </TooltipTrigger>
+                        {hoveredRangeStat && (
+                          <TooltipContent sideOffset={10} className="max-w-[320px] rounded-md border-border/80 px-3 py-2.5">
+                            {renderRosterTooltipContent(
+                              hoveredRangeStat.name,
+                              hoveredRangeStat.color,
+                              hoveredRangeStat.players,
+                              { maxPlayers: null },
+                            )}
+                          </TooltipContent>
+                        )}
+                      </UITooltip>
                     </div>
                   </div>
                 ) : (
@@ -1447,10 +1713,10 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
             </div>
           </GlowCard>
 
-          <GlowCard surface="section" className="p-3 xl:col-span-5">
-            <h4 className="text-sm font-medium mb-2">{t.dashboard.classesRepresented}</h4>
-            <div className="max-h-[220px] overflow-y-auto pr-1 space-y-1">
-              {representedClasses.map((stat) => (
+          <GlowCard surface="section" className="p-3 md:col-span-1 xl:col-span-3">
+            <h4 className="text-sm font-medium mb-2">{t.dashboard.classes}</h4>
+            <div className="max-h-[260px] overflow-y-auto pr-1 space-y-1">
+              {classStats.map((stat) => (
                 <UITooltip key={stat.id} delayDuration={100}>
                   <TooltipTrigger asChild>
                     <div 
@@ -1470,7 +1736,7 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                           style={{ 
                             width: `${(stat.total / maxClassTotal) * 100}%`,
                             backgroundColor: resolveClassColor(stat.color),
-                            opacity: hoveredClass === stat.id ? 1 : 0.85,
+                            opacity: stat.total === 0 ? 0 : hoveredClass === stat.id ? 1 : 0.85,
                           }}
                         />
                       </div>
@@ -1479,48 +1745,38 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
                       </div>
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent sideOffset={8} className="max-w-[180px]">
-                    <p className="font-semibold text-xs mb-1" style={{ color: resolveClassColor(stat.color) }}>
-                      {stat.name}
-                    </p>
-                    <div className="flex flex-wrap gap-1">
-                      {stat.players.slice(0, 6).map(p => (
-                        <Badge key={p} variant="secondary" className="text-[10px] px-1.5 py-0">
-                          {p}
-                        </Badge>
-                      ))}
-                      {stat.players.length > 6 && (
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                          +{stat.players.length - 6}
-                        </Badge>
-                      )}
-                    </div>
+                  <TooltipContent sideOffset={8} className="max-w-[220px] rounded-md border-border/80 px-3 py-2.5">
+                    {renderRosterTooltipContent(stat.name, resolveClassColor(stat.color), stat.players)}
                   </TooltipContent>
                 </UITooltip>
               ))}
             </div>
           </GlowCard>
 
-          <GlowCard surface="section" className="p-3 md:col-span-2 xl:col-span-4">
-            <h4 className="text-sm font-medium mb-2">{t.dashboard.requestedSpecializations}</h4>
+          <GlowCard surface="section" className="p-3 md:col-span-1 xl:col-span-2">
+            <h4 className="text-sm font-medium mb-2">{t.wishes.specs}</h4>
             {specStats.length > 0 ? (
-              <div className="max-h-[220px] overflow-y-auto pr-1 space-y-1">
-                {specStats.map((stat, index) => (
-                  <div key={stat.id} className="flex items-center gap-1.5 group">
-                    <div className="w-4 flex justify-center">
-                      {getRankDisplay(index)}
-                    </div>
-                    <span style={{ color: resolveClassColor(stat.classColor) }}>
-                      {getRoleIcon(stat.role, "h-3 w-3")}
-                    </span>
-                    <span 
-                      className="flex-1 text-xs font-medium truncate"
-                      style={{ color: resolveClassColor(stat.classColor) }}
-                    >
-                      {stat.specName}
-                    </span>
-                    <span className="text-xs text-muted-foreground tabular-nums">{stat.count}</span>
-                  </div>
+              <div className="max-h-[260px] overflow-y-auto pr-1 space-y-1">
+                {specStats.map((stat) => (
+                  <UITooltip key={stat.id} delayDuration={100}>
+                    <TooltipTrigger asChild>
+                      <div className="flex cursor-pointer items-center gap-1.5 group">
+                        <span className="flex w-4 justify-center" style={{ color: resolveClassColor(stat.classColor) }}>
+                          {getRoleIcon(stat.role, "h-3 w-3")}
+                        </span>
+                        <span 
+                          className="flex-1 text-xs font-medium truncate"
+                          style={{ color: resolveClassColor(stat.classColor) }}
+                        >
+                          {stat.specName}
+                        </span>
+                        <span className="text-xs text-muted-foreground tabular-nums">{stat.count}</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent sideOffset={8} className="max-w-[220px] rounded-md border-border/80 px-3 py-2.5">
+                      {renderRosterTooltipContent(stat.specName, resolveClassColor(stat.classColor), stat.players)}
+                    </TooltipContent>
+                  </UITooltip>
                 ))}
               </div>
             ) : (
@@ -1528,62 +1784,58 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
             )}
           </GlowCard>
 
-          <GlowCard surface="section" className="p-3 md:col-span-1 xl:col-span-5">
+          <GlowCard surface="section" className="p-3 md:col-span-2 xl:col-span-4">
             <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-              <h4 className="text-sm font-medium">{t.dashboard.lootConcentrationRisk}</h4>
+              <h4 className="text-sm font-medium">{t.dashboard.armorTypes}</h4>
               <Badge variant="outline" className="w-fit border-border/60 bg-muted/20 text-xs text-muted-foreground">
                 {t.dashboard.tokenRiskLevels[tokenRiskSummary.level]}
               </Badge>
             </div>
             <p className="mb-2 text-xs text-muted-foreground">{tokenRiskDescription}</p>
-            <p className="text-[11px] text-muted-foreground mb-2">
-              {t.dashboard.tokenDistributionInfo}{' '}
-              <a
-                href="https://www.wowhead.com/news/new-tier-set-token-groups-datamined-in-midnight-379062"
-                target="_blank"
-                rel="noreferrer"
-                className="underline underline-offset-2 hover:text-foreground"
-              >
-                {t.dashboard.tokenDistributionSource}
-              </a>
-            </p>
             {totalTokenWishes > 0 ? (
               <div className="space-y-2">
                 {tokenStats.map(stat => (
-                  <div key={stat.id} className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold" style={{ color: tokenTextColorMap[stat.id] }}>
-                        {stat.name}
-                      </span>
-                      <span className="text-xs text-muted-foreground ml-auto tabular-nums">
-                        {stat.total} ({Math.round((stat.total / totalTokenWishes) * 100)}%)
-                      </span>
-                    </div>
-                    <div className="h-1.5 bg-muted/30 rounded-full overflow-hidden">
-                      <div
-                        className="h-1.5 rounded-full transition-all duration-300"
-                        style={{
-                          width: `${(stat.total / maxTokenTotal) * 100}%`,
-                          backgroundImage: tokenGradientMap[stat.id],
-                        }}
-                      />
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      {stat.classes.map(cls => (
-                        <Badge
-                          key={cls.id}
-                          variant="outline"
-                          className="text-[10px] px-1.5 py-0"
-                          style={{
-                            color: resolveClassColor(cls.color),
-                            borderColor: resolveClassColor(cls.color),
-                          }}
-                        >
-                          {cls.name}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
+                  <UITooltip key={stat.id} delayDuration={100}>
+                    <TooltipTrigger asChild>
+                      <div className="cursor-pointer space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold" style={{ color: tokenTextColorMap[stat.id] }}>
+                            {stat.name}
+                          </span>
+                          <span className="text-xs text-muted-foreground ml-auto tabular-nums">
+                            {stat.total} ({Math.round((stat.total / totalTokenWishes) * 100)}%)
+                          </span>
+                        </div>
+                        <div className="h-1.5 bg-muted/30 rounded-full overflow-hidden">
+                          <div
+                            className="h-1.5 rounded-full transition-all duration-300"
+                            style={{
+                              width: `${(stat.total / maxTokenTotal) * 100}%`,
+                              backgroundImage: tokenGradientMap[stat.id],
+                            }}
+                          />
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {stat.classes.map(cls => (
+                            <Badge
+                              key={cls.id}
+                              variant="outline"
+                              className="text-[10px] px-1.5 py-0"
+                              style={{
+                                color: resolveClassColor(cls.color),
+                                borderColor: resolveClassColor(cls.color),
+                              }}
+                            >
+                              {cls.name}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent sideOffset={8} className="max-w-[220px] rounded-md border-border/80 px-3 py-2.5">
+                      {renderRosterTooltipContent(stat.name, tokenTextColorMap[stat.id], stat.players)}
+                    </TooltipContent>
+                  </UITooltip>
                 ))}
               </div>
             ) : (
@@ -1592,31 +1844,39 @@ export const RosterAnalytics = ({ members }: RosterAnalyticsProps) => {
           </GlowCard>
 
           {showCompositionCoverage && (
-            <GlowCard surface="section" className="p-3 md:col-span-1 xl:col-span-7">
-              <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <h4 className="text-sm font-semibold text-foreground">{t.dashboard.majorBuffsDebuffs}</h4>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-                {renderCoverageList(t.dashboard.majorBuffs, compositionCoverageSections.majorBuffs, { required: true })}
-                {renderCoverageList(t.dashboard.majorDebuffs, compositionCoverageSections.majorDebuffs, { required: true })}
-              </div>
+            <GlowCard surface="section" className="p-3 md:col-span-1 xl:col-span-6 2xl:col-span-2">
+              {renderCoverageList(t.dashboard.majorBuffs, compositionCoverageSections.majorBuffs, { required: true })}
             </GlowCard>
           )}
 
           {showCompositionCoverage && (
-            <GlowCard surface="section" className="p-3 md:col-span-2 xl:col-span-12">
-            <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <h4 className="text-sm font-semibold text-foreground">{t.dashboard.raidCoverageTitle}</h4>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            <GlowCard surface="section" className="p-3 md:col-span-1 xl:col-span-6 2xl:col-span-2">
+              {renderCoverageList(t.dashboard.majorDebuffs, compositionCoverageSections.majorDebuffs, { required: true })}
+            </GlowCard>
+          )}
+
+          {showCompositionCoverage && (
+            <GlowCard surface="section" className="p-3 md:col-span-1 xl:col-span-6 2xl:col-span-2">
+              {renderCoverageList(t.dashboard.raidEssentials, compositionCoverageSections.raidEssentials, { required: true })}
+            </GlowCard>
+          )}
+
+          {showCompositionCoverage && (
+            <GlowCard surface="section" className="p-3 md:col-span-1 xl:col-span-6 2xl:col-span-2">
               {renderCoverageList(t.dashboard.raidEnhancements, compositionCoverageSections.raidEnhancements)}
+            </GlowCard>
+          )}
+
+          {showCompositionCoverage && (
+            <GlowCard surface="section" className="p-3 md:col-span-1 xl:col-span-6 2xl:col-span-2">
+              {renderCoverageList(t.dashboard.controls, compositionCoverageSections.controls)}
+            </GlowCard>
+          )}
+
+          {showCompositionCoverage && (
+            <GlowCard surface="section" className="p-3 md:col-span-1 xl:col-span-6 2xl:col-span-2">
               {renderCoverageList(t.dashboard.enemyWeakening, compositionCoverageSections.enemyWeakening)}
-            </div>
-          </GlowCard>
+            </GlowCard>
           )}
         </div>
       </div>

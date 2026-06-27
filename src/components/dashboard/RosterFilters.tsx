@@ -24,6 +24,7 @@ import { commitmentTextClass } from '@/lib/design-tokens';
 interface RosterFiltersProps {
   filters: RosterFiltersType;
   onFiltersChange: (filters: RosterFiltersType) => void;
+  rosterMembers?: Array<{ id: string; name: string }>;
   sortSummary?: string;
   actions?: ReactNode;
 }
@@ -63,6 +64,7 @@ const rangeConfig: Record<RangeFilter, { icon: typeof Swords; color: string }> =
 const defaultFilters: RosterFiltersType = {
   roleFilters: [],
   classFilters: [],
+  rosterMemberFilters: null,
   validationFilters: [],
   rosterDecisionFilters: [],
   searchQuery: '',
@@ -74,7 +76,7 @@ const defaultFilters: RosterFiltersType = {
   maxWishIndex: null,
 };
 
-export const RosterFilters = ({ filters, onFiltersChange, sortSummary, actions }: RosterFiltersProps) => {
+export const RosterFilters = ({ filters, onFiltersChange, rosterMembers = [], sortSummary, actions }: RosterFiltersProps) => {
   const { t, language } = useLanguage();
   const s = (key: SemanticKey, fallback?: string) =>
     resolveSemanticMessage({ key, language: t.lang, translations: t, fallback });
@@ -146,8 +148,26 @@ export const RosterFilters = ({ filters, onFiltersChange, sortSummary, actions }
     }
   };
 
+  const selectedRosterMemberIds = filters.rosterMemberFilters;
+  const allRosterMemberIds = useMemo(() => rosterMembers.map(member => member.id), [rosterMembers]);
+  const isRosterMemberSelected = (memberId: string) =>
+    selectedRosterMemberIds === null || selectedRosterMemberIds.includes(memberId);
+  const toggleRosterMember = (memberId: string) => {
+    const current = selectedRosterMemberIds === null ? allRosterMemberIds : selectedRosterMemberIds;
+    updateFilter(
+      'rosterMemberFilters',
+      current.includes(memberId)
+        ? current.filter(id => id !== memberId)
+        : [...current, memberId],
+    );
+  };
+  const selectAllRosterMembers = () => updateFilter('rosterMemberFilters', null);
+  const deselectAllRosterMembers = () => updateFilter('rosterMemberFilters', []);
+
   // Count active filters per group
-  const playersFilterCount = filters.commitmentFilters.length + filters.rosterDecisionFilters.length;
+  const rosterMemberFilterCount = filters.rosterMemberFilters === null ? 0 : filters.rosterMemberFilters.length;
+  const hasRosterMemberFilter = filters.rosterMemberFilters !== null;
+  const playersFilterCount = filters.commitmentFilters.length + filters.rosterDecisionFilters.length + (hasRosterMemberFilter ? rosterMemberFilterCount : 0);
   const wishesFilterCount = 
     (filters.maxWishIndex !== null ? 1 : 0) +
     (filters.minWishes !== null ? 1 : 0) +
@@ -158,10 +178,9 @@ export const RosterFilters = ({ filters, onFiltersChange, sortSummary, actions }
     filters.rangeFilters.length +
     filters.classFilters.length;
 
-  const hasPlayersFilters = playersFilterCount > 0;
+  const hasPlayersFilters = playersFilterCount > 0 || hasRosterMemberFilter;
   const hasWishesFilters = wishesFilterCount > 0;
   const hasSpecsFilters = specsFilterCount > 0;
-  const hasSearchQuery = filters.searchQuery.length > 0;
   const hasAnyFilters = hasPlayersFilters || hasWishesFilters || hasSpecsFilters;
 
   const getPillToneClass = (color?: string) => {
@@ -214,6 +233,27 @@ export const RosterFilters = ({ filters, onFiltersChange, sortSummary, actions }
         onRemove: () => toggleRosterDecision(decision),
       });
     });
+
+    // Roster member pills
+    if (filters.rosterMemberFilters !== null) {
+      if (filters.rosterMemberFilters.length === 0) {
+        pills.push({
+          key: 'roster-members-none',
+          label: t.dashboard.noRosterMembersSelected,
+          onRemove: selectAllRosterMembers,
+        });
+      } else {
+        filters.rosterMemberFilters.forEach((memberId) => {
+          const member = rosterMembers.find(candidate => candidate.id === memberId);
+          if (!member) return;
+          pills.push({
+            key: `roster-member-${memberId}`,
+            label: member.name,
+            onRemove: () => toggleRosterMember(memberId),
+          });
+        });
+      }
+    }
 
     // Wish range pill
     if (filters.maxWishIndex !== null) {
@@ -294,8 +334,52 @@ export const RosterFilters = ({ filters, onFiltersChange, sortSummary, actions }
     });
 
     return pills;
-  }, [filters, language, t]);
+  }, [filters, language, rosterMembers, t]);
   const activeFilterCount = activePills.length;
+  const renderRosterMemberSelector = () => (
+    <div>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <h4 className="text-sm font-medium">{t.dashboard.rosterMembers}</h4>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+            onClick={selectAllRosterMembers}
+          >
+            {t.dashboard.selectAllMembers}
+          </button>
+          <button
+            type="button"
+            className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+            onClick={deselectAllRosterMembers}
+          >
+            {t.dashboard.deselectAllMembers}
+          </button>
+        </div>
+      </div>
+      <ScrollArea className="max-h-48 pr-2">
+        <div className="space-y-1">
+          {rosterMembers.map((member) => {
+            const isSelected = isRosterMemberSelected(member.id);
+            return (
+              <button
+                key={member.id}
+                type="button"
+                onClick={() => toggleRosterMember(member.id)}
+                className={cn(
+                  'flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm transition-colors',
+                  isSelected ? 'bg-primary/20' : 'hover:bg-primary/10',
+                )}
+              >
+                <span className="min-w-0 flex-1 truncate">{member.name}</span>
+                {isSelected && <Check className="h-3.5 w-3.5 shrink-0 text-primary" />}
+              </button>
+            );
+          })}
+        </div>
+      </ScrollArea>
+    </div>
+  );
 
   if (isMobile) {
     return (
@@ -378,6 +462,8 @@ export const RosterFilters = ({ filters, onFiltersChange, sortSummary, actions }
                         </div>
                       </AccordionTrigger>
                       <AccordionContent className="space-y-4 pb-3">
+                        {renderRosterMemberSelector()}
+                        <Separator />
                         <div>
                           <h4 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">{t.dashboard.commitment}</h4>
                           <div className="grid grid-cols-1 gap-1.5">
@@ -693,6 +779,8 @@ export const RosterFilters = ({ filters, onFiltersChange, sortSummary, actions }
           </PopoverTrigger>
           <PopoverContent className="w-auto min-w-40 p-3 bg-card border-border z-50" align="start">
             <div className="space-y-3">
+              {renderRosterMemberSelector()}
+              <Separator />
               <div>
                 <h4 className="text-sm font-medium mb-2">{t.dashboard.commitment}</h4>
                 <div className="flex flex-col gap-1">
@@ -746,7 +834,7 @@ export const RosterFilters = ({ filters, onFiltersChange, sortSummary, actions }
               </div>
               {hasPlayersFilters && (
                 <button
-                  onClick={() => onFiltersChange({ ...filters, commitmentFilters: [], rosterDecisionFilters: [] })}
+                  onClick={() => onFiltersChange({ ...filters, rosterMemberFilters: null, commitmentFilters: [], rosterDecisionFilters: [] })}
                   className="flex items-center gap-2 px-2 py-1.5 rounded text-sm text-muted-foreground hover:text-foreground hover:bg-primary/10 w-full"
                 >
                   <X className="h-3.5 w-3.5" />
