@@ -104,6 +104,7 @@ export type RangeFilter = 'melee' | 'ranged';
 export interface RosterFilters {
   roleFilters: string[];
   classFilters: string[];
+  rosterMemberFilters: string[] | null; // null = all roster members, [] = none selected
   validationFilters: ValidationStatus[];
   rosterDecisionFilters: RosterSelectionStatus[];
   searchQuery: string;

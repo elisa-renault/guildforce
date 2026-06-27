@@ -1,5 +1,5 @@
 export type MarkdownImageAlign = 'left' | 'center' | 'right';
-export type MarkdownImageWidth = 25 | 50 | 75 | 100;
+export type MarkdownImageWidth = number;
 
 export interface MarkdownImageOptions {
   width: MarkdownImageWidth;
@@ -12,7 +12,8 @@ export interface MarkdownImageInput extends MarkdownImageOptions {
 }
 
 const IMAGE_TITLE_PREFIX = 'gf-image:';
-const ALLOWED_WIDTHS: MarkdownImageWidth[] = [25, 50, 75, 100];
+export const MARKDOWN_IMAGE_MIN_WIDTH = 10;
+export const MARKDOWN_IMAGE_MAX_WIDTH = 100;
 const ALLOWED_ALIGNS: MarkdownImageAlign[] = ['left', 'center', 'right'];
 const DEFAULT_OPTIONS: MarkdownImageOptions = {
   width: 100,
@@ -26,9 +27,14 @@ const escapeMarkdownImageAlt = (value: string) =>
 
 export const normalizeMarkdownImageWidth = (value: unknown): MarkdownImageWidth => {
   const numeric = typeof value === 'number' ? value : Number(value);
-  return ALLOWED_WIDTHS.includes(numeric as MarkdownImageWidth)
-    ? numeric as MarkdownImageWidth
-    : DEFAULT_OPTIONS.width;
+  if (!Number.isFinite(numeric)) {
+    return DEFAULT_OPTIONS.width;
+  }
+
+  return Math.min(
+    MARKDOWN_IMAGE_MAX_WIDTH,
+    Math.max(MARKDOWN_IMAGE_MIN_WIDTH, Math.round(numeric)),
+  );
 };
 
 export const normalizeMarkdownImageAlign = (value: unknown): MarkdownImageAlign => {
@@ -79,4 +85,3 @@ export const prepareMarkdownImageAttributes = (markdown: string) =>
     (_match, alt: string, src: string, attributes: string) =>
       `![${alt}](${src} "${encodeMarkdownImageTitle(parseMarkdownImageAttributeText(attributes))}")`,
   );
-

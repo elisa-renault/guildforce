@@ -1,15 +1,19 @@
-import React, { useState } from 'react';
 import { Bug, X, AlertTriangle, Send, Loader2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { toast } from 'sonner';
+
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
+  DialogPortal,
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -18,17 +22,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Badge } from '@/components/ui/badge';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
-import { toast } from 'sonner';
 import { getRecentLogs, getErrorCount, getBrowserInfo, sanitizeUrl } from '@/lib/logCapture';
 import { getSupabaseUrl } from '@/lib/supabaseConfig';
 
@@ -127,7 +129,7 @@ const BugReportButton = React.forwardRef<HTMLButtonElement, React.ComponentProps
         toast.success(t.bugReport.success);
         resetForm();
         setIsOpen(false);
-      } catch (error) {
+      } catch {
         toast.error(t.bugReport.error);
       } finally {
         setIsSubmitting(false);
@@ -175,7 +177,16 @@ const BugReportButton = React.forwardRef<HTMLButtonElement, React.ComponentProps
           </TooltipContent>
         </Tooltip>
 
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <Dialog open={isOpen} onOpenChange={setIsOpen} modal={false}>
+          {isOpen ? (
+            <DialogPortal>
+              <div
+                aria-hidden="true"
+                className="fixed inset-0 z-[49] bg-black/80 animate-in fade-in-0"
+                onClick={() => setIsOpen(false)}
+              />
+            </DialogPortal>
+          ) : null}
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">

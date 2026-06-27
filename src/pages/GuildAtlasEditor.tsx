@@ -15,11 +15,11 @@ import type { SemanticKey } from '@/i18n/semantic';
 import type { AtlasDocStatus, AtlasVisibilityType } from '@/lib/guildAtlas';
 
 import { CosmicBackground } from '@/components/CosmicBackground';
-import { MarkdownEditor } from '@/components/markdown/MarkdownEditor';
 import { GlowCard } from '@/components/GlowCard';
 import { GuildWorkspaceShell } from '@/components/guild';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { MarkdownEditor } from '@/components/markdown/MarkdownEditor';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -456,6 +456,7 @@ const GuildAtlasEditor = () => {
               placeholder={s('guild.atlas.editor.content_placeholder')}
               minHeight="520px"
               enableMentions={false}
+              visual
               imageTools={{
                 uploadImage: handleUploadImage,
                 maxSizeBytes: ATLAS_IMAGE_MAX_SIZE,

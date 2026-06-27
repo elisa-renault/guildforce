@@ -200,6 +200,7 @@ const RosterWishes = () => {
   const [filters, setFilters] = useState<RosterFiltersType>({
     roleFilters: [],
     classFilters: [],
+    rosterMemberFilters: null,
     validationFilters: [],
     rosterDecisionFilters: [],
     searchQuery: '',
@@ -1655,6 +1656,10 @@ const RosterWishes = () => {
 
   // Filter members
   const filteredMembers = members.filter(m => {
+    if (filters.rosterMemberFilters !== null && !filters.rosterMemberFilters.includes(m.id)) {
+      return false;
+    }
+
     if (filters.searchQuery && !m.username.toLowerCase().includes(filters.searchQuery.toLowerCase())) {
       return false;
     }
@@ -1768,8 +1773,15 @@ const RosterWishes = () => {
   });
 
   const selectedValidatedMembers = useMemo(
-    () => getSelectedValidatedMembers(members),
-    [members],
+    () => getSelectedValidatedMembers(filteredMembers),
+    [filteredMembers],
+  );
+  const rosterMemberFilterOptions = useMemo(
+    () =>
+      [...members]
+        .map((member) => ({ id: member.id, name: member.username }))
+        .sort((a, b) => a.name.localeCompare(b.name, language)),
+    [members, language],
   );
   const defaultVisibleRosterColumns = useMemo(() => DEFAULT_ROSTER_TABLE_COLUMNS, []);
 
@@ -2183,6 +2195,7 @@ const RosterWishes = () => {
             <RosterFilters
               filters={filters}
               onFiltersChange={setFilters}
+              rosterMembers={rosterMemberFilterOptions}
               sortSummary={rosterSortSummary}
               actions={rosterColumnSelector}
             />
@@ -2232,7 +2245,14 @@ const RosterWishes = () => {
           </TabsContent>
 
           <TabsContent value="analytics">
-            <RosterAnalytics members={members} />
+            <RosterAnalytics
+              members={filteredMembers}
+              rosterMembers={rosterMemberFilterOptions}
+              rosterMemberFilters={filters.rosterMemberFilters}
+              onRosterMemberFiltersChange={(rosterMemberFilters) =>
+                setFilters((currentFilters) => ({ ...currentFilters, rosterMemberFilters }))
+              }
+            />
           </TabsContent>
         </Tabs>
       </PageContainer>
