@@ -670,16 +670,13 @@ export interface Translations {
     tokenLeather: string;
     tokenMail: string;
     tokenPlate: string;
-    tokenDistributionInfo: string;
-    tokenDistributionSource: string;
-    tokenDreadful: string;
-    tokenMystic: string;
-    tokenVenerated: string;
-    tokenZenith: string;
+    armorTypes: string;
     majorBuffsDebuffs: string;
+    raidEssentials: string;
     majorBuffs: string;
     majorDebuffs: string;
     raidEnhancements: string;
+    controls: string;
     enemyWeakening: string;
     utilityDefensiveCoverage: string;
     compositionCoverageLabels: {
@@ -704,6 +701,14 @@ export interface Translations {
       silencesAndAntiCast: PluralLabel;
       allyFreedomAndMobility: PluralLabel;
       interrupts: PluralLabel;
+      magicPurges: PluralLabel;
+      allyMagicDispels: PluralLabel;
+      allyCurseDispels: PluralLabel;
+      allyPoisonDispels: PluralLabel;
+      allyDiseaseDispels: PluralLabel;
+      allyBleedDispels: PluralLabel;
+      allyFearCharmSleepDispels: PluralLabel;
+      allyRootsSnaresDispels: PluralLabel;
     };
     allValidations: string;
     missingClasses: string;
@@ -720,15 +725,19 @@ export interface Translations {
     activeFilterDecision: string;
     activeFilterWishes: string;
     activeFilterValidation: string;
+    activeFilterSpecs: string;
     activeFilterRole: string;
     activeFilterRange: string;
     absentClassesTitle: string;
+    specializationScope: string;
+    primarySpecializations: string;
+    allExpressedSpecializations: string;
     compositionSummary: string;
     rangeBalance: string;
     roleBalance: string;
+    classes: string;
     classesRepresented: string;
     requestedSpecializations: string;
-    lootConcentrationRisk: string;
     tokenRiskLevels: {
       none: string;
       low: string;
@@ -739,10 +748,6 @@ export interface Translations {
     tokenRiskNone: string;
     raidCoverageTitle: string;
     raidCoverageDescription: string;
-    coverageSourceState: string;
-    coverageSourceStatePlural: string;
-    coverageSourceCount: string;
-    coverageSourceCountPlural: string;
     coverageStates: {
       missing: string;
       covered: string;
