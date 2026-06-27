@@ -743,6 +743,87 @@
     @apply glass-button;
   }
 
+  /* Markdown visual editor - unified styling with preview and published content */
+  .gf-markdown-visual-editor {
+    @apply text-sm text-foreground/90;
+  }
+
+  .gf-markdown-visual-editor h1 {
+    @apply mt-4 mb-2 text-2xl font-bold text-foreground;
+  }
+
+  .gf-markdown-visual-editor h2 {
+    @apply mt-3 mb-2 text-xl font-bold text-foreground;
+  }
+
+  .gf-markdown-visual-editor h3 {
+    @apply mt-2 mb-1 text-lg font-semibold text-foreground;
+  }
+
+  .gf-markdown-visual-editor p {
+    @apply mb-2 text-foreground/90;
+  }
+
+  .gf-markdown-visual-editor ul {
+    @apply mb-2 list-inside list-disc space-y-1;
+  }
+
+  .gf-markdown-visual-editor ol {
+    @apply mb-2 list-inside list-decimal space-y-1;
+  }
+
+  .gf-markdown-visual-editor li {
+    @apply text-foreground/90;
+  }
+
+  .gf-markdown-visual-editor li > p:first-child {
+    @apply inline mb-0;
+  }
+
+  .gf-markdown-visual-editor blockquote {
+    @apply my-2 border-l-4 border-primary/50 pl-4 italic text-muted-foreground;
+  }
+
+  .gf-markdown-visual-editor code {
+    @apply rounded bg-muted px-1.5 py-0.5 font-mono text-sm text-primary;
+  }
+
+  .gf-markdown-visual-editor pre {
+    @apply my-2 overflow-x-auto rounded-lg bg-muted p-3;
+  }
+
+  .gf-markdown-visual-editor pre code {
+    @apply block overflow-x-auto rounded-lg bg-muted p-3 font-mono text-sm;
+  }
+
+  .gf-markdown-visual-editor a {
+    @apply text-primary hover:underline;
+  }
+
+  .gf-markdown-visual-editor a[href^="/profile/"] {
+    @apply inline-flex cursor-pointer items-center rounded bg-primary/20 px-1.5 py-0.5 text-sm font-medium text-primary transition-colors hover:bg-primary/30;
+  }
+
+  .gf-markdown-visual-editor hr {
+    @apply my-4 border-border;
+  }
+
+  .gf-markdown-visual-editor table {
+    @apply min-w-full border-collapse border border-border;
+  }
+
+  .gf-markdown-visual-editor table th {
+    @apply border border-border bg-muted/50 px-3 py-2 text-left font-semibold;
+  }
+
+  .gf-markdown-visual-editor table td {
+    @apply border border-border px-3 py-2;
+  }
+
+  .gf-markdown-visual-editor img {
+    @apply my-3 block h-auto max-w-full rounded-lg border border-border/35 bg-card/30 object-contain;
+  }
+
   .glow-card {
     @apply glass-card transition-all duration-300;
   }

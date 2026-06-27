@@ -177,8 +177,8 @@ export const MarkdownEditor = ({
       editorProps: {
         attributes: {
           class: cn(
-            'prose prose-sm prose-invert max-w-none prose-headings:tracking-normal prose-a:text-primary',
-            'min-h-full p-4 text-sm outline-none focus:outline-none',
+            'gf-markdown-visual-editor',
+            'min-h-full p-4 outline-none focus:outline-none',
           ),
         },
       },
