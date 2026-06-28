@@ -28,7 +28,6 @@ import {
   Upload,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from '@/components/ui/sonner';
 
 import { AtlasMarkdownImage } from './AtlasMarkdownImage';
 import { MentionAutocomplete } from './MentionAutocomplete';
@@ -45,11 +44,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { toast } from '@/components/ui/sonner';
 import { Textarea } from '@/components/ui/textarea';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import {
   createAdvancedMarkdownImage,
+  normalizeMarkdownImageAlign,
   normalizeMarkdownImageWidth,
   prepareMarkdownImageAttributes,
   type MarkdownImageAlign,
@@ -78,6 +79,16 @@ interface ToolbarButton {
 }
 
 type EditorMode = 'visual' | 'source' | 'preview';
+
+interface SelectedVisualImage {
+  pos: number;
+  src: string;
+  alt: string;
+  displayWidth: MarkdownImageWidth;
+  align: MarkdownImageAlign;
+}
+
+const VISUAL_IMAGE_SELECTED_EVENT = 'guildforce:markdown-image-selected';
 
 const imageWidthOptions: MarkdownImageWidth[] = [25, 50, 75, 100];
 const imageAlignOptions: MarkdownImageAlign[] = ['left', 'center', 'right'];
@@ -130,7 +141,7 @@ const createVisualExtensions = (placeholder?: string) => [
   AtlasMarkdownImage.configure({
     resize: {
       enabled: true,
-      directions: ['bottom-left', 'bottom-right', 'top-left', 'top-right', 'left', 'right'],
+      directions: ['bottom-left', 'bottom-right', 'top-left', 'top-right'],
       minWidth: 80,
       minHeight: 40,
       alwaysPreserveAspectRatio: true,
@@ -163,6 +174,7 @@ export const MarkdownEditor = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const editorContainerRef = useRef<HTMLDivElement>(null);
+  const selectedVisualImageRef = useRef<SelectedVisualImage | null>(null);
   const valueRef = useRef(value);
   const { language, t } = useLanguage();
   const s = (key: SemanticKey) => resolveSemanticMessage({ key, language, translations: t });
@@ -187,13 +199,27 @@ export const MarkdownEditor = ({
         valueRef.current = nextValue;
         onChange(nextValue);
       },
+      onSelectionUpdate: ({ editor }) => {
+        const { selection } = editor.state;
+        const selectedNode = selection.empty ? null : selection.$from.nodeAfter;
+
+        if (selectedNode?.type.name === 'image') {
+          const nextSelectedImage = {
+            pos: selection.from,
+            src: typeof selectedNode.attrs.src === 'string' ? selectedNode.attrs.src : '',
+            alt: typeof selectedNode.attrs.alt === 'string' ? selectedNode.attrs.alt : '',
+            displayWidth: normalizeMarkdownImageWidth(selectedNode.attrs.displayWidth),
+            align: normalizeMarkdownImageAlign(selectedNode.attrs.align),
+          };
+          selectedVisualImageRef.current = nextSelectedImage;
+          return;
+        }
+
+        selectedVisualImageRef.current = null;
+      },
     },
     [visualExtensions],
   );
-
-  useEffect(() => {
-    valueRef.current = value;
-  }, [value]);
 
   useEffect(() => {
     if (!visualEditor) return;
@@ -207,7 +233,35 @@ export const MarkdownEditor = ({
       contentType: 'markdown',
       emitUpdate: false,
     });
+    valueRef.current = value;
   }, [value, visual, visualEditor]);
+
+  useEffect(() => {
+    if (!visual) return;
+
+    const handleSelectedImage = (event: Event) => {
+      const detail = (event as CustomEvent).detail as {
+        pos?: unknown;
+        attrs?: Record<string, unknown>;
+      } | undefined;
+
+      if (typeof detail?.pos !== 'number' || !detail.attrs) return;
+
+      selectedVisualImageRef.current = {
+        pos: detail.pos,
+        src: typeof detail.attrs.src === 'string' ? detail.attrs.src : '',
+        alt: typeof detail.attrs.alt === 'string' ? detail.attrs.alt : '',
+        displayWidth: normalizeMarkdownImageWidth(detail.attrs.displayWidth),
+        align: normalizeMarkdownImageAlign(detail.attrs.align),
+      };
+    };
+
+    window.addEventListener(VISUAL_IMAGE_SELECTED_EVENT, handleSelectedImage);
+
+    return () => {
+      window.removeEventListener(VISUAL_IMAGE_SELECTED_EVENT, handleSelectedImage);
+    };
+  }, [visual]);
 
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionPosition, setMentionPosition] = useState({ top: 0, left: 0 });
@@ -261,6 +315,28 @@ export const MarkdownEditor = ({
     }
   };
 
+  const openImagePopover = () => {
+    if (visual && activeMode === 'visual' && visualEditor) {
+      const activeAttrs = visualEditor.isActive('image') ? visualEditor.getAttributes('image') : null;
+      const hasActiveImageAttrs = typeof activeAttrs?.src === 'string' && activeAttrs.src.length > 0;
+      const selectedAttrs = hasActiveImageAttrs ? {
+        src: typeof activeAttrs.src === 'string' ? activeAttrs.src : '',
+        alt: typeof activeAttrs.alt === 'string' ? activeAttrs.alt : '',
+        displayWidth: normalizeMarkdownImageWidth(activeAttrs.displayWidth),
+        align: normalizeMarkdownImageAlign(activeAttrs.align),
+      } : selectedVisualImageRef.current;
+
+      if (selectedAttrs) {
+        setImageUrl(selectedAttrs.src);
+        setImageAlt(selectedAttrs.alt);
+        setImageWidth(selectedAttrs.displayWidth);
+        setImageAlign(selectedAttrs.align);
+      }
+    }
+
+    setImagePopoverOpen(true);
+  };
+
   const insertImage = () => {
     const trimmedUrl = imageUrl.trim();
     if (!trimmedUrl) return;
@@ -269,19 +345,31 @@ export const MarkdownEditor = ({
     const width = normalizeMarkdownImageWidth(imageWidth);
 
     if (visual && activeMode === 'visual' && visualEditor) {
-      visualEditor
-        .chain()
-        .focus()
-        .setImage({
-          src: trimmedUrl,
-          alt,
-          width,
-        })
-        .updateAttributes('image', {
-          align: imageAlign,
-          width,
-        })
-        .run();
+      const selectedImage = selectedVisualImageRef.current;
+      const imageAttrs = {
+        src: trimmedUrl,
+        alt,
+        align: imageAlign,
+        displayWidth: width,
+        width: null,
+        height: null,
+      };
+
+      if (visualEditor.isActive('image')) {
+        visualEditor.chain().focus().updateAttributes('image', imageAttrs).run();
+      } else if (selectedImage) {
+        visualEditor.chain().focus().setNodeSelection(selectedImage.pos).updateAttributes('image', imageAttrs).run();
+      } else {
+        visualEditor
+          .chain()
+          .focus()
+          .setImage({
+            src: trimmedUrl,
+            alt,
+          })
+          .updateAttributes('image', imageAttrs)
+          .run();
+      }
     } else {
       insertSourceMarkdown(
         createAdvancedMarkdownImage({
@@ -471,7 +559,7 @@ export const MarkdownEditor = ({
         {
           id: 'image',
           icon: Image,
-          action: () => imageTools ? setImagePopoverOpen(true) : insertMarkdown('![alt](', ')'),
+          action: () => imageTools ? openImagePopover() : insertMarkdown('![alt](', ')'),
           title: s('markdown.toolbar.image'),
         },
         {
@@ -576,6 +664,8 @@ export const MarkdownEditor = ({
                         className="h-7 w-7 p-0 hover:bg-primary/20"
                         title={btn.title}
                         type="button"
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={btn.action}
                       >
                         <btn.icon className="h-4 w-4" />
                       </Button>

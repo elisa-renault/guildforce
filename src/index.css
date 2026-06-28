@@ -173,7 +173,7 @@
     overflow-x: hidden;
   }
 
-  body[data-scroll-locked] {
+  html body[data-scroll-locked] {
     --removed-body-scroll-bar-size: 0px !important;
     margin-right: 0 !important;
     padding-right: 0 !important;
@@ -744,83 +744,102 @@
   }
 
   /* Markdown visual editor - unified styling with preview and published content */
-  .gf-markdown-visual-editor {
-    @apply text-sm text-foreground/90;
+  .gf-markdown-visual-editor,
+  .gf-markdown-content {
+    @apply text-base leading-6 text-foreground/90;
   }
 
-  .gf-markdown-visual-editor h1 {
+  .gf-markdown-visual-editor h1,
+  .gf-markdown-content h1 {
     @apply mt-4 mb-2 text-2xl font-bold text-foreground;
   }
 
-  .gf-markdown-visual-editor h2 {
+  .gf-markdown-visual-editor h2,
+  .gf-markdown-content h2 {
     @apply mt-3 mb-2 text-xl font-bold text-foreground;
   }
 
-  .gf-markdown-visual-editor h3 {
+  .gf-markdown-visual-editor h3,
+  .gf-markdown-content h3 {
     @apply mt-2 mb-1 text-lg font-semibold text-foreground;
   }
 
-  .gf-markdown-visual-editor p {
+  .gf-markdown-visual-editor p,
+  .gf-markdown-content p {
     @apply mb-2 text-foreground/90;
   }
 
-  .gf-markdown-visual-editor ul {
+  .gf-markdown-visual-editor ul,
+  .gf-markdown-content ul {
     @apply mb-2 list-inside list-disc space-y-1;
   }
 
-  .gf-markdown-visual-editor ol {
+  .gf-markdown-visual-editor ol,
+  .gf-markdown-content ol {
     @apply mb-2 list-inside list-decimal space-y-1;
   }
 
-  .gf-markdown-visual-editor li {
+  .gf-markdown-visual-editor li,
+  .gf-markdown-content li {
     @apply text-foreground/90;
   }
 
-  .gf-markdown-visual-editor li > p:first-child {
+  .gf-markdown-visual-editor li > p:first-child,
+  .gf-markdown-content li > p:first-child {
     @apply inline mb-0;
   }
 
-  .gf-markdown-visual-editor blockquote {
+  .gf-markdown-visual-editor blockquote,
+  .gf-markdown-content blockquote {
     @apply my-2 border-l-4 border-primary/50 pl-4 italic text-muted-foreground;
   }
 
-  .gf-markdown-visual-editor code {
+  .gf-markdown-visual-editor code,
+  .gf-markdown-content code {
     @apply rounded bg-muted px-1.5 py-0.5 font-mono text-sm text-primary;
   }
 
-  .gf-markdown-visual-editor pre {
+  .gf-markdown-visual-editor pre,
+  .gf-markdown-content pre {
     @apply my-2 overflow-x-auto rounded-lg bg-muted p-3;
   }
 
-  .gf-markdown-visual-editor pre code {
+  .gf-markdown-visual-editor pre code,
+  .gf-markdown-content pre code {
     @apply block overflow-x-auto rounded-lg bg-muted p-3 font-mono text-sm;
   }
 
-  .gf-markdown-visual-editor a {
+  .gf-markdown-visual-editor a,
+  .gf-markdown-content a {
     @apply text-primary hover:underline;
   }
 
-  .gf-markdown-visual-editor a[href^="/profile/"] {
+  .gf-markdown-visual-editor a[href^="/profile/"],
+  .gf-markdown-content a[href^="/profile/"] {
     @apply inline-flex cursor-pointer items-center rounded bg-primary/20 px-1.5 py-0.5 text-sm font-medium text-primary transition-colors hover:bg-primary/30;
   }
 
-  .gf-markdown-visual-editor hr {
+  .gf-markdown-visual-editor hr,
+  .gf-markdown-content hr {
     @apply my-4 border-border;
   }
 
-  .gf-markdown-visual-editor table {
+  .gf-markdown-visual-editor table,
+  .gf-markdown-content table {
     @apply min-w-full border-collapse border border-border;
   }
 
-  .gf-markdown-visual-editor table th {
+  .gf-markdown-visual-editor table th,
+  .gf-markdown-content table th {
     @apply border border-border bg-muted/50 px-3 py-2 text-left font-semibold;
   }
 
-  .gf-markdown-visual-editor table td {
+  .gf-markdown-visual-editor table td,
+  .gf-markdown-content table td {
     @apply border border-border px-3 py-2;
   }
 
-  .gf-markdown-visual-editor img {
+  .gf-markdown-content img {
     @apply my-3 block h-auto max-w-full rounded-lg border border-border/35 bg-card/30 object-contain;
   }
 
@@ -930,6 +949,8 @@
 
   .gf-markdown-visual-editor .ProseMirror {
     min-height: inherit;
+    font: inherit;
+    line-height: inherit;
   }
 
   .gf-markdown-visual-editor .ProseMirror h1 {
@@ -962,18 +983,27 @@
   .gf-markdown-visual-editor .ProseMirror p {
     margin-bottom: 0.5rem;
     color: hsl(var(--foreground) / 0.9);
+    line-height: 1.5rem;
   }
 
   .gf-markdown-visual-editor .ProseMirror ul:not([data-type="taskList"]) {
     margin-bottom: 0.5rem;
     list-style-position: inside;
     list-style-type: disc;
+    padding-left: 0;
   }
 
   .gf-markdown-visual-editor .ProseMirror ol {
     margin-bottom: 0.5rem;
     list-style-position: inside;
     list-style-type: decimal;
+    padding-left: 0;
+  }
+
+  .gf-markdown-visual-editor .ProseMirror ul:not([data-type="taskList"]) li,
+  .gf-markdown-visual-editor .ProseMirror ol li {
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
   }
 
   .gf-markdown-visual-editor .ProseMirror li {
@@ -1070,51 +1100,158 @@
   }
 
   .gf-image-resize-container[data-align="left"] {
-    justify-content: flex-start;
+    align-items: flex-start;
   }
 
   .gf-image-resize-container[data-align="center"] {
-    justify-content: center;
+    align-items: center;
   }
 
   .gf-image-resize-container[data-align="right"] {
-    justify-content: flex-end;
+    align-items: flex-end;
   }
 
   .gf-image-resize-wrapper {
+    position: relative;
+    display: inline-block !important;
     max-width: 100%;
+    line-height: 0;
+    border-radius: 0.5rem;
+    outline: 1px solid transparent;
+    outline-offset: 0.125rem;
+    transition: outline-color 120ms ease, box-shadow 120ms ease;
+  }
+
+  .gf-image-resize-container[data-resize-state="true"] .gf-image-resize-wrapper,
+  .ProseMirror-selectednode .gf-image-resize-wrapper {
+    outline-color: hsl(var(--primary) / 0.55);
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.08);
   }
 
   .gf-image-resize-handle {
-    z-index: 1;
-    width: 0.75rem;
-    height: 0.75rem;
-    border: 1px solid hsl(var(--primary));
-    border-radius: 9999px;
-    background: hsl(var(--background));
+    z-index: 2;
+    width: 0.875rem;
+    height: 0.875rem;
+    border: 1px solid hsl(var(--primary) / 0.95);
+    border-radius: 0.1875rem;
+    background: hsl(var(--card));
+    box-shadow:
+      0 0 0 1px hsl(var(--background) / 0.95),
+      0 4px 12px hsl(var(--background) / 0.55);
     opacity: 0;
-    transition: opacity 120ms ease;
+    touch-action: none;
+    transition: background-color 120ms ease, opacity 120ms ease, transform 120ms ease;
   }
 
-  .gf-image-resize-container:hover .gf-image-resize-handle,
+  .gf-image-resize-handle::before {
+    content: "";
+    position: absolute;
+    inset: -0.375rem;
+  }
+
   .gf-image-resize-container[data-resize-state="true"] .gf-image-resize-handle,
-  .gf-markdown-visual-editor .ProseMirror-focused .gf-image-resize-handle {
+  .ProseMirror-selectednode .gf-image-resize-handle {
     opacity: 1;
   }
 
+  .ProseMirror-selectednode .gf-image-resize-handle:hover,
+  .gf-image-resize-container[data-resize-state="true"] .gf-image-resize-handle {
+    background: hsl(var(--primary));
+    transform: scale(1.08);
+  }
+
+  .gf-image-resize-handle[data-resize-handle="top-left"],
+  .gf-image-resize-handle[data-resize-handle="bottom-right"] {
+    cursor: nwse-resize;
+  }
+
+  .gf-image-resize-handle[data-resize-handle="top-right"],
+  .gf-image-resize-handle[data-resize-handle="bottom-left"] {
+    cursor: nesw-resize;
+  }
+
   .gf-image-resize-handle[data-resize-handle*="left"] {
-    left: -0.375rem !important;
+    left: -0.4375rem !important;
   }
 
   .gf-image-resize-handle[data-resize-handle*="right"] {
-    right: -0.375rem !important;
+    right: -0.4375rem !important;
   }
 
   .gf-image-resize-handle[data-resize-handle*="top"] {
-    top: -0.375rem !important;
+    top: -0.4375rem !important;
   }
 
   .gf-image-resize-handle[data-resize-handle*="bottom"] {
-    bottom: -0.375rem !important;
+    bottom: -0.4375rem !important;
+  }
+
+  .gf-image-align-controls {
+    position: absolute;
+    top: calc(100% + 0.375rem);
+    left: 50%;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 0.125rem;
+    border: 1px solid hsl(var(--border) / 0.7);
+    border-radius: 0.375rem;
+    background: hsl(var(--card) / 0.95);
+    padding: 0.125rem;
+    box-shadow: 0 8px 20px hsl(var(--background) / 0.45);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-50%) translateY(-0.25rem);
+    transition: opacity 120ms ease, transform 120ms ease;
+  }
+
+  .gf-image-resize-container[data-resize-state="true"] .gf-image-resize-wrapper .gf-image-align-controls,
+  .ProseMirror-selectednode .gf-image-resize-wrapper .gf-image-align-controls {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .gf-image-align-button {
+    position: relative;
+    display: inline-flex;
+    width: 1.625rem;
+    height: 1.375rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.25rem;
+    color: hsl(var(--muted-foreground));
+    transition: background-color 120ms ease, color 120ms ease;
+  }
+
+  .gf-image-align-button:hover {
+    background: hsl(var(--primary) / 0.18);
+    color: hsl(var(--foreground));
+  }
+
+  .gf-image-align-button[data-active="true"] {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    box-shadow: 0 0 0 1px hsl(var(--primary) / 0.95);
+  }
+
+  .gf-image-align-button[data-active="true"]:hover {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
+
+  .gf-image-align-icon {
+    width: 1.125rem;
+    height: 1rem;
+    overflow: visible;
+  }
+
+  .gf-image-align-guide {
+    fill: currentColor;
+    opacity: 0.38;
+  }
+
+  .gf-image-align-subject {
+    fill: currentColor;
   }
 }

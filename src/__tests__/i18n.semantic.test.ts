@@ -18,6 +18,19 @@ describe('semantic i18n', () => {
     expect(value).toBe('Modifier');
   });
 
+  it('returns semantic copy for Atlas permanent deletion actions', () => {
+    expect(resolveSemanticMessage({
+      key: 'guild.atlas.delete',
+      language: 'fr',
+      translations: asTranslations({}),
+    })).toBe('Supprimer définitivement');
+    expect(resolveSemanticMessage({
+      key: 'guild.atlas.delete_confirm_action',
+      language: 'en',
+      translations: asTranslations({}),
+    })).toBe('Delete permanently');
+  });
+
   it('prefers DE semantic copy over legacy compatibility when available', () => {
     const value = resolveSemanticMessage({
       key: 'admin.documentation.title',

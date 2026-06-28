@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { toast } from '@/components/ui/sonner';
 
 import type { Tables } from '@/integrations/supabase/types';
 import type { AtlasDocStatus, AtlasVisibilityType } from '@/lib/guildAtlas';
 
+import { toast } from '@/components/ui/sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { normalizeAtlasCollection, normalizeAtlasTags } from '@/lib/guildAtlas';
@@ -176,6 +176,44 @@ export function useGuildAtlas({ guildId, canManage }: UseGuildAtlasOptions) {
     void loadDocuments();
   }, [loadDocuments]);
 
+  const loadDocument = useCallback(
+    async (documentId: string): Promise<GuildAtlasDocument | null> => {
+      if (!guildId) return null;
+
+      const rostersById = await loadRosters();
+      const { data, error } = await supabase
+        .from('guild_atlas_documents')
+        .select('*')
+        .eq('guild_id', guildId)
+        .eq('id', documentId)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data) return null;
+
+      const row = data as GuildAtlasDocumentRow;
+      const profilesById = new Map<string, { username: string | null; avatar_url: string | null }>();
+
+      if (row.owner_user_id) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id, username, avatar_url')
+          .eq('id', row.owner_user_id)
+          .maybeSingle();
+
+        if (profile) {
+          profilesById.set(profile.id, {
+            username: profile.username,
+            avatar_url: profile.avatar_url,
+          });
+        }
+      }
+
+      return normalizeDocument(row, profilesById, rostersById);
+    },
+    [guildId, loadRosters],
+  );
+
   const withMutation = useCallback(async <T,>(fn: () => Promise<T>) => {
     setMutating(true);
     try {
@@ -277,6 +315,25 @@ export function useGuildAtlas({ guildId, canManage }: UseGuildAtlasOptions) {
     [updateDocumentState],
   );
 
+  const deleteDocument = useCallback(
+    async (document: GuildAtlasDocument) =>
+      withMutation(async () => {
+        if (!guildId || !userId || !canManage) {
+          throw new Error('Not authorized to delete Atlas documents');
+        }
+
+        const { error } = await supabase
+          .from('guild_atlas_documents')
+          .delete()
+          .eq('guild_id', guildId)
+          .eq('id', document.id);
+
+        if (error) throw error;
+        await loadDocuments();
+      }),
+    [canManage, guildId, loadDocuments, userId, withMutation],
+  );
+
   const uploadAtlasImage = useCallback(
     async (file: File) =>
       withMutation(async () => {
@@ -315,16 +372,20 @@ export function useGuildAtlas({ guildId, canManage }: UseGuildAtlasOptions) {
       loading,
       mutating,
       reload: loadDocuments,
+      loadDocument,
       saveDocument,
       publishDocument,
       unpublishDocument,
       archiveDocument,
       restoreDocument,
+      deleteDocument,
       uploadAtlasImage,
     }),
     [
       archiveDocument,
+      deleteDocument,
       documents,
+      loadDocument,
       loadDocuments,
       loading,
       mutating,

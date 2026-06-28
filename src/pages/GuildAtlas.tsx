@@ -11,6 +11,7 @@ import {
   Plus,
   Search,
   SlidersHorizontal,
+  Trash2,
   Undo2,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -27,6 +28,16 @@ import { EmptyState } from '@/components/layout/EmptyState';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { MarkdownContent } from '@/components/markdown/MarkdownContent';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -40,6 +51,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { FilterBar, FilterSearchField, activeFilterControlClassName, filterControlClassName } from '@/components/ui/filter-controls';
+import { toast } from '@/components/ui/sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useGuildAccessState } from '@/hooks/useGuildAccessState';
 import { useGuildAtlas } from '@/hooks/useGuildAtlas';
@@ -101,6 +113,7 @@ const GuildAtlas = () => {
     unpublishDocument,
     archiveDocument,
     restoreDocument,
+    deleteDocument,
   } = useGuildAtlas({
     guildId: guild?.id ?? null,
     canManage: canManageAtlas,
@@ -112,6 +125,7 @@ const GuildAtlas = () => {
     status: 'active',
     visibility: 'all',
   });
+  const [deleteTarget, setDeleteTarget] = useState<GuildAtlasDocument | null>(null);
 
   const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
   const atlasPath = `${basePath}/atlas`;
@@ -171,6 +185,23 @@ const GuildAtlas = () => {
     navigate(`${atlasPath}/${doc.id}/edit`);
   };
 
+  const handleDeleteDocument = async () => {
+    if (!deleteTarget) return;
+
+    try {
+      await deleteDocument(deleteTarget);
+      const next = new URLSearchParams(searchParams);
+      if (next.get('doc') === deleteTarget.id) {
+        next.delete('doc');
+      }
+      setSearchParams(next, { replace: true });
+      setDeleteTarget(null);
+      toast.success(s('guild.atlas.delete_success'));
+    } catch {
+      toast.error(s('guild.atlas.delete_error'));
+    }
+  };
+
   if (accessLoading || atlasLoading) {
     return (
       <div className="flex flex-1 items-center justify-center">
@@ -220,7 +251,7 @@ const GuildAtlas = () => {
                 />
 
                 {canManageAtlas ? (
-                  <DropdownMenu>
+                  <DropdownMenu modal={false}>
                     <DropdownMenuTrigger asChild>
                       <Button
                         variant="outline"
@@ -377,7 +408,7 @@ const GuildAtlas = () => {
                         <Edit3 className="mr-2 h-4 w-4" />
                         {s('guild.atlas.edit')}
                       </Button>
-                      <DropdownMenu>
+                      <DropdownMenu modal={false}>
                         <DropdownMenuTrigger asChild>
                           <Button
                             variant="outline"
@@ -412,6 +443,14 @@ const GuildAtlas = () => {
                               {s('guild.atlas.archive')}
                             </DropdownMenuItem>
                           )}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => setDeleteTarget(selectedDoc)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            {s('guild.atlas.delete')}
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -441,6 +480,30 @@ const GuildAtlas = () => {
             )}
           </GlowCard>
         </section>
+
+        <AlertDialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{s('guild.atlas.delete_confirm_title')}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {s('guild.atlas.delete_confirm_description')}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={mutating}>{t.common.cancel}</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={mutating}
+                onClick={(event) => {
+                  event.preventDefault();
+                  void handleDeleteDocument();
+                }}
+              >
+                {s('guild.atlas.delete_confirm_action')}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </PageContainer>
     </GuildWorkspaceShell>
   );

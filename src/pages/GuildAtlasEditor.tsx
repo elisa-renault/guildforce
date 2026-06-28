@@ -110,15 +110,22 @@ const GuildAtlasEditor = () => {
     archiveDocument,
     restoreDocument,
     uploadAtlasImage,
+    loadDocument,
   } = useGuildAtlas({
     guildId: guild?.id ?? null,
     canManage: canManageAtlas,
   });
 
-  const selectedDocument = useMemo(
+  const listedDocument = useMemo(
     () => documentId ? documents.find((doc) => doc.id === documentId) ?? null : null,
     [documentId, documents],
   );
+  const [loadedDocument, setLoadedDocument] = useState<GuildAtlasDocument | null>(null);
+  const [documentLookupLoading, setDocumentLookupLoading] = useState(false);
+  const [missingDocumentId, setMissingDocumentId] = useState<string | null>(null);
+  const selectedDocument = listedDocument
+    ?? (loadedDocument?.id === documentId ? loadedDocument : null);
+  const isDocumentLookupPending = Boolean(documentId && !selectedDocument && documentLookupLoading);
   const [form, setForm] = useState<GuildAtlasDocumentInput>(() => createBlankInput(null));
   const [tagText, setTagText] = useState('');
   const [initializedFor, setInitializedFor] = useState<string | null>(null);
@@ -147,14 +154,65 @@ const GuildAtlasEditor = () => {
   }, [accessLoading, atlasPath, canManageAtlas, guild, isGM, isMember, navigate, notFound, requiresAuth]);
 
   useEffect(() => {
-    if (accessLoading || atlasLoading || !canManageAtlas) return;
+    setLoadedDocument(null);
+    setMissingDocumentId(null);
+    setDocumentLookupLoading(false);
+  }, [documentId]);
+
+  useEffect(() => {
+    if (!documentId || !guild?.id || atlasLoading || !canManageAtlas) return;
+    if (listedDocument || loadedDocument?.id === documentId || missingDocumentId === documentId) return;
+
+    let cancelled = false;
+    setDocumentLookupLoading(true);
+
+    void loadDocument(documentId)
+      .then((document) => {
+        if (cancelled) return;
+
+        if (document) {
+          setLoadedDocument(document);
+          return;
+        }
+
+        setMissingDocumentId(documentId);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setMissingDocumentId(documentId);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setDocumentLookupLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    atlasLoading,
+    canManageAtlas,
+    documentId,
+    guild?.id,
+    listedDocument,
+    loadDocument,
+    loadedDocument?.id,
+    missingDocumentId,
+  ]);
+
+  useEffect(() => {
+    if (accessLoading || atlasLoading || isDocumentLookupPending || !canManageAtlas) return;
 
     const stateKey = documentId || 'new';
     if (initializedFor === stateKey) return;
 
     if (documentId) {
       if (!selectedDocument) {
-        navigate(atlasPath, { replace: true });
+        if (missingDocumentId === documentId) {
+          navigate(atlasPath, { replace: true });
+        }
         return;
       }
 
@@ -176,6 +234,8 @@ const GuildAtlasEditor = () => {
     canManageAtlas,
     documentId,
     initializedFor,
+    isDocumentLookupPending,
+    missingDocumentId,
     navigate,
     selectedDocument,
   ]);
@@ -225,7 +285,7 @@ const GuildAtlasEditor = () => {
     return uploadAtlasImage(file);
   };
 
-  if (accessLoading || atlasLoading) {
+  if (accessLoading || atlasLoading || isDocumentLookupPending) {
     return (
       <div className="flex flex-1 items-center justify-center">
         <CosmicBackground />
@@ -465,7 +525,8 @@ const GuildAtlasEditor = () => {
 
             <div className="flex flex-col-reverse gap-2 pt-4 sm:flex-row sm:items-center sm:justify-end">
               <Button variant="outline" onClick={() => navigate(atlasPath)}>
-                {t.common.cancel}
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                {s('guild.atlas.editor.back_to_library')}
               </Button>
               <Button
                 variant="outline"

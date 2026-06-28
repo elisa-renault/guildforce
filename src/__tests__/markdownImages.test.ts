@@ -68,7 +68,7 @@ describe('advanced markdown images', () => {
     );
 
     const image = screen.getByAltText('Raid diagram');
-    expect(image).toHaveStyle({ width: '50%' });
+    expect(image).toHaveStyle({ width: '50%', maxWidth: '100%' });
     expect(image).toHaveClass('max-w-full', 'ml-auto');
   });
 
@@ -80,7 +80,7 @@ describe('advanced markdown images', () => {
     );
 
     const image = screen.getAllByAltText('Raid diagram').at(-1) as HTMLElement;
-    expect(image).toHaveStyle({ width: '100%' });
+    expect(image).toHaveStyle({ width: '100%', maxWidth: '100%' });
     expect(image).toHaveClass('max-w-full', 'mx-auto');
   });
 
@@ -93,5 +93,16 @@ describe('advanced markdown images', () => {
 
     const firstItem = screen.getByText('1').closest('li');
     expect(firstItem).toHaveClass('[&>p:first-child]:inline', '[&>p:first-child]:mb-0');
+  });
+
+  it('renders GFM tables and task checkboxes in preview content', () => {
+    render(
+      createElement(MarkdownContent, {
+        content: '| Role | Player |\n| --- | --- |\n| Tank | Elisa |\n\n- [x] Ready',
+      }),
+    );
+
+    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(screen.getByRole('checkbox')).toBeChecked();
   });
 });

@@ -1,4 +1,5 @@
 import ReactMarkdown, { type Components } from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 import { parseMarkdownImageTitle, prepareMarkdownImageAttributes } from '@/lib/markdownImages';
 import { cn } from '@/lib/utils';
@@ -83,6 +84,20 @@ const markdownContentComponents: Components = {
       {children}
     </td>
   ),
+  input: ({ type, checked }) => {
+    if (type !== 'checkbox') {
+      return <input type={type} />;
+    }
+
+    return (
+      <input
+        type="checkbox"
+        checked={Boolean(checked)}
+        readOnly
+        className="mr-2 h-4 w-4 align-middle accent-primary"
+      />
+    );
+  },
   img: ({ src, alt, title }) => {
     const imageOptions = parseMarkdownImageTitle(title);
 
@@ -94,7 +109,7 @@ const markdownContentComponents: Components = {
           'my-3 block h-auto max-w-full rounded-lg border border-border/35 bg-card/30 object-contain',
           imageAlignClass[imageOptions.align],
         )}
-        style={{ width: `${imageOptions.width}%` }}
+        style={{ width: `${imageOptions.width}%`, maxWidth: '100%' }}
       />
     );
   },
@@ -115,8 +130,8 @@ export const MarkdownContent = ({
   }
 
   return (
-    <div className={cn('prose prose-invert max-w-none prose-headings:tracking-normal prose-a:text-primary prose-code:text-primary', className)}>
-      <ReactMarkdown components={markdownContentComponents}>
+    <div className={cn('gf-markdown-content max-w-none', className)}>
+      <ReactMarkdown components={markdownContentComponents} remarkPlugins={[remarkGfm]}>
         {preparedContent}
       </ReactMarkdown>
     </div>
