@@ -218,6 +218,9 @@ export const GuildWorkspaceShell = ({
   const showVault = vaultEnabled && (isGM || resolvedVaultAccess);
   const guildLocation = [guild.server, guild.region?.toUpperCase()].filter(Boolean).join(' • ');
   const sidebarWidth = sidebarCollapsed ? 64 : 248;
+  const expandNavigationLabel = t.guildNav.expandNavigation;
+  const collapseNavigationLabel = t.guildNav.collapseNavigation;
+  const collapseNavigationShortLabel = t.guildNav.collapseNavigationShort;
   const navItems: GuildWorkspaceNavItem[] = [
     { id: 'overview', label: t.dashboard.overview, icon: LayoutDashboard, path: basePath, show: true },
     { id: 'roster', label: t.guildNav.wishesTable, icon: Table, path: `${basePath}/roster`, show: true },
@@ -360,12 +363,12 @@ export const GuildWorkspaceShell = ({
             size="icon"
             className="h-9 w-9 rounded border border-border/35 bg-card/15 text-muted-foreground hover:bg-accent/15 hover:text-foreground"
             onClick={toggleSidebar}
-            aria-label="Déployer la navigation"
+            aria-label={expandNavigationLabel}
           >
             <PanelLeftOpen className="h-4 w-4" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent side="right">Déployer la navigation</TooltipContent>
+        <TooltipContent side="right">{expandNavigationLabel}</TooltipContent>
       </Tooltip>
     </div>
   );
@@ -377,10 +380,10 @@ export const GuildWorkspaceShell = ({
         variant="ghost"
         className="h-9 w-full justify-start gap-2 rounded px-2.5 text-sm text-muted-foreground hover:bg-accent/10 hover:text-foreground"
         onClick={toggleSidebar}
-        aria-label="Réduire la navigation"
+        aria-label={collapseNavigationLabel}
       >
         <PanelLeftClose className="h-4 w-4 shrink-0" />
-        <span>Réduire</span>
+        <span>{collapseNavigationShortLabel}</span>
       </Button>
     </div>
   );

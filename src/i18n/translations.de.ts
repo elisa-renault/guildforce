@@ -928,6 +928,9 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "quickAccess": "Schnellzugriff",
     "wishesTable": "Wunschliste",
     "members": "Mitglieder",
+    "expandNavigation": "Navigation erweitern",
+    "collapseNavigation": "Navigation reduzieren",
+    "collapseNavigationShort": "Reduzieren",
     "noWishApproved": "Keine W\u00fcnsche freigegeben",
     "noWishesYet": "Noch keine W\u00fcnsche"
   },

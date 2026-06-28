@@ -1200,6 +1200,9 @@ export interface Translations {
     atlas: string;
     quickAccess: string;
     wishesTable: string;
+    expandNavigation: string;
+    collapseNavigation: string;
+    collapseNavigationShort: string;
     noWishApproved: string;
     noWishesYet: string;
   };
