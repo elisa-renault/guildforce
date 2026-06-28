@@ -224,6 +224,7 @@ describe('semantic i18n', () => {
       'polls.sortable.option_prefix',
       'polls.sortable.min_value_label',
       'polls.sortable.max_value_label',
+      'guild.members.table_realm',
       'guild.members.guildforce_label',
       'guild.members.alts',
       'guild.members.main_alt',
