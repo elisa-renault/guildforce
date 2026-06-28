@@ -1,5 +1,5 @@
-import { Crown, Shield, CheckCircle2, XCircle, ChevronDown, ChevronLeft, ChevronRight, Check, X, Star, Eye, MoreVertical } from 'lucide-react';
-import React, { useEffect, useState, useMemo } from 'react';
+import { Crown, Shield, CheckCircle2, XCircle, ChevronDown, ChevronLeft, ChevronRight, Check, X, Star, Eye, MoreVertical, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
 import { GuildWorkspaceShell } from '@/components/guild';
@@ -81,6 +81,9 @@ const ITEMS_PER_PAGE = 20;
 
 const MembersTableSkeleton = () => <DataListSkeleton rows={10} />;
 
+type MemberSortColumn = 'character' | 'realm' | 'level' | 'class' | 'player' | 'rank' | 'guildforce';
+type SortDirection = 'asc' | 'desc';
+
 // eslint-disable-next-line complexity
 const GuildMembers = () => {
   const { regionSlug, serverSlug, guildSlug } = useParams();
@@ -99,6 +102,8 @@ const GuildMembers = () => {
   const [rankFilters, setRankFilters] = useState<number[]>([]);
   const [guildforceFilter, setGuildforceFilter] = useState<'all' | 'guildforce' | 'not-guildforce'>('all');
   const [mainFilter, setMainFilter] = useState<'all' | 'main-only' | 'alts-only'>('all');
+  const [sortColumn, setSortColumn] = useState<MemberSortColumn>('rank');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [currentPage, setCurrentPage] = useState(1);
   
   // Popover states
@@ -128,6 +133,8 @@ const GuildMembers = () => {
     mainsOnly: resolveSemanticMessage({ key: 'guild.members.mains_only', language, translations: t }),
     altsOnly: resolveSemanticMessage({ key: 'guild.members.alts_only', language, translations: t }),
     tableCharacter: resolveSemanticMessage({ key: 'guild.members.table_character', language, translations: t }),
+    tableRealm: resolveSemanticMessage({ key: 'guild.members.table_realm', language, translations: t }),
+    tableLevel: resolveSemanticMessage({ key: 'guild.members.table_level', language, translations: t }),
     tableClass: resolveSemanticMessage({ key: 'guild.members.table_class', language, translations: t }),
     tablePlayer: resolveSemanticMessage({ key: 'guild.members.table_player', language, translations: t }),
     tableRank: resolveSemanticMessage({ key: 'guild.members.table_rank', language, translations: t }),
@@ -167,13 +174,13 @@ const GuildMembers = () => {
     return wowClassColorValue(classKey);
   };
 
-  const getClassName = (battlenetClassId: number): string => {
+  const getClassName = useCallback((battlenetClassId: number): string => {
     const classKey = BATTLENET_CLASS_MAP[battlenetClassId];
     if (!classKey) return 'Unknown';
     const wowClass = wowClasses.find(c => c.id === classKey);
     if (!wowClass) return 'Unknown';
     return getLocalizedClassName(wowClass.id, language);
-  };
+  }, [language]);
 
   const toggleClass = (classId: string) => {
     setClassFilters(prev => 
@@ -447,12 +454,55 @@ const GuildMembers = () => {
     });
   }, [members, searchQuery, classFilters, rankFilters, guildforceFilter, mainFilter]);
 
+  const sortedMembers = useMemo(() => {
+    const compareText = (left: string | null | undefined, right: string | null | undefined) =>
+      String(left || '').localeCompare(String(right || ''), language, { sensitivity: 'base' });
+
+    const sorted = [...filteredMembers].sort((left, right) => {
+      let comparison = 0;
+
+      switch (sortColumn) {
+        case 'character':
+          comparison = compareText(left.character_name, right.character_name);
+          break;
+        case 'realm':
+          comparison = compareText(left.character_realm, right.character_realm);
+          break;
+        case 'level':
+          comparison = left.character_level - right.character_level;
+          break;
+        case 'class':
+          comparison = compareText(getClassName(left.character_class_id), getClassName(right.character_class_id));
+          break;
+        case 'player':
+          comparison = compareText(left.profile?.username, right.profile?.username);
+          break;
+        case 'rank':
+          comparison = left.rank_index - right.rank_index;
+          break;
+        case 'guildforce':
+          comparison = Number(Boolean(right.matched_user_id)) - Number(Boolean(left.matched_user_id));
+          break;
+      }
+
+      if (comparison === 0) {
+        comparison = left.rank_index - right.rank_index
+          || compareText(left.character_name, right.character_name)
+          || compareText(left.character_realm, right.character_realm);
+      }
+
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+
+    return sorted;
+  }, [filteredMembers, getClassName, language, sortColumn, sortDirection]);
+
   // Pagination
-  const totalPages = Math.ceil(filteredMembers.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(sortedMembers.length / ITEMS_PER_PAGE);
   const paginatedMembers = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredMembers.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredMembers, currentPage]);
+    return sortedMembers.slice(start, start + ITEMS_PER_PAGE);
+  }, [sortedMembers, currentPage]);
 
   // Reset page when filters change
   useEffect(() => {
@@ -471,6 +521,55 @@ const GuildMembers = () => {
 
   const mobileFilterButtonClassName = 'w-full min-w-0 justify-between gap-2 whitespace-nowrap px-2.5 text-xs md:w-auto md:flex-none md:text-sm';
   const showMemberActions = filteredMembers.some(canSetGuildMainFor);
+
+  const handleSort = (column: MemberSortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection((current) => current === 'asc' ? 'desc' : 'asc');
+      return;
+    }
+
+    setSortColumn(column);
+    setSortDirection(column === 'level' ? 'desc' : 'asc');
+  };
+
+  const SortableTableHead = ({
+    column,
+    children,
+    className,
+  }: {
+    column: MemberSortColumn;
+    children: React.ReactNode;
+    className?: string;
+  }) => {
+    const isActive = sortColumn === column;
+    const Icon = isActive ? (sortDirection === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
+
+    return (
+      <TableHead
+        aria-sort={isActive ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
+        className={cn(
+          'group/header cursor-pointer select-none px-1.5 py-1 text-xs transition-colors',
+          isActive
+            ? 'bg-primary/5 text-foreground'
+            : 'text-muted-foreground hover:bg-muted/30 hover:text-foreground',
+          className,
+        )}
+        onClick={() => handleSort(column)}
+      >
+        <div className="flex items-center gap-1">
+          <span className="whitespace-nowrap">{children}</span>
+          <Icon
+            className={cn(
+              'h-3.5 w-3.5 shrink-0 transition-opacity',
+              isActive
+                ? 'text-primary opacity-100'
+                : 'text-muted-foreground/50 opacity-0 group-hover/header:opacity-100',
+            )}
+          />
+        </div>
+      </TableHead>
+    );
+  };
 
   const renderMemberActions = (member: RosterMember) => {
     if (!canSetGuildMainFor(member)) {
@@ -910,21 +1009,25 @@ const GuildMembers = () => {
           <Table className="table-fixed">
             <colgroup>
               <col className="w-[50px]" />
-              <col className="w-[36%]" />
+              <col className="w-[24%]" />
+              <col className="w-[14%]" />
+              <col className="w-[82px]" />
+              <col className="w-[14%]" />
               <col className="w-[16%]" />
-              <col className="w-[18%]" />
-              <col className="w-[18%]" />
+              <col className="w-[16%]" />
               <col className="w-[96px]" />
               {showMemberActions && <col className="w-[52px]" />}
             </colgroup>
             <TableHeader>
               <TableRow className="border-border/50 hover:bg-transparent">
                 <TableHead className="w-[50px]">#</TableHead>
-                <TableHead className="min-w-0">{memberUi.tableCharacter}</TableHead>
-                <TableHead className="hidden md:table-cell">{memberUi.tableClass}</TableHead>
-                <TableHead>{memberUi.tablePlayer}</TableHead>
-                <TableHead>{memberUi.tableRank}</TableHead>
-                <TableHead className="text-center">{memberUi.guildforceLabel}</TableHead>
+                <SortableTableHead column="character" className="min-w-0">{memberUi.tableCharacter}</SortableTableHead>
+                <SortableTableHead column="realm" className="min-w-0">{memberUi.tableRealm}</SortableTableHead>
+                <SortableTableHead column="level" className="text-right">{memberUi.tableLevel}</SortableTableHead>
+                <SortableTableHead column="class" className="hidden md:table-cell">{memberUi.tableClass}</SortableTableHead>
+                <SortableTableHead column="player">{memberUi.tablePlayer}</SortableTableHead>
+                <SortableTableHead column="rank">{memberUi.tableRank}</SortableTableHead>
+                <SortableTableHead column="guildforce" className="text-center">{memberUi.guildforceLabel}</SortableTableHead>
                 {showMemberActions && (
                   <TableHead className="w-[52px]">
                     <span className="sr-only">{t.common.actions}</span>
@@ -935,7 +1038,7 @@ const GuildMembers = () => {
             <TableBody>
               {paginatedMembers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={showMemberActions ? 7 : 6} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={showMemberActions ? 9 : 8} className="text-center py-8 text-muted-foreground">
                     {memberUi.noMembers}
                   </TableCell>
                 </TableRow>
@@ -973,12 +1076,15 @@ const GuildMembers = () => {
                         {member.is_main_character && (
                           <Star className="h-3.5 w-3.5 shrink-0 text-warning fill-warning" />
                         )}
-                        {member.character_level > 0 && (
-                          <span className="shrink-0 text-xs text-muted-foreground">
-                            Lv.{member.character_level}
-                          </span>
-                        )}
                       </div>
+                    </TableCell>
+                    <TableCell className="min-w-0">
+                      <span className="block truncate text-sm text-muted-foreground">
+                        {member.character_realm || '—'}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right text-sm tabular-nums text-muted-foreground">
+                      {member.character_level > 0 ? member.character_level : '—'}
                     </TableCell>
                     <TableCell className="hidden min-w-0 md:table-cell">
                       <span 
