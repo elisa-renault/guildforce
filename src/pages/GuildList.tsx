@@ -28,6 +28,7 @@ import {
   cleanupOAuthParams,
   getRedirectUri,
   generateOAuthState,
+  getValidRegion,
 } from '@/lib/battlenetOAuth';
 import {
   applyGuildPreferencePatch,
@@ -109,12 +110,13 @@ const GuildList = () => {
 
     if (!code || !stateParam) return;
 
-    const { state: storedState, region: storedRegion } = getStoredOAuthParams();
+    const storedParams = getStoredOAuthParams();
     const parsedState = parseOAuthState(stateParam);
-    const stateMatches = validateOAuthState(parsedState, storedState);
+    const stateMatches = validateOAuthState(parsedState, storedParams.state, storedParams.pendingStates);
+    const callbackRegion = getValidRegion(parsedState.region || storedParams.region);
 
     if (stateMatches) {
-      handleOAuthCallback(code, storedRegion);
+      handleOAuthCallback(code, callbackRegion);
       cleanupOAuthParams();
     } else {
       toast.error(t.errors.generic);

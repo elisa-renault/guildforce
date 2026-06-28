@@ -90,13 +90,14 @@ export const BattleNetConnect: React.FC<BattleNetConnectProps> = ({ embedded = f
     const stateParam = urlParams.get('state');
 
     if (code && stateParam) {
-      const { state: storedState, region: storedRegion } = getStoredOAuthParams();
+      const storedParams = getStoredOAuthParams();
       const parsedState = parseOAuthState(stateParam);
-      const stateMatches = validateOAuthState(parsedState, storedState);
+      const stateMatches = validateOAuthState(parsedState, storedParams.state, storedParams.pendingStates);
+      const callbackRegion = getValidRegion(parsedState.region || storedParams.region);
 
       // Process callback if code exists (state validation is best-effort due to cross-domain issues)
       if (stateMatches) {
-        handleOAuthCallback(code, storedRegion);
+        handleOAuthCallback(code, callbackRegion);
         cleanupOAuthParams();
       }
     }

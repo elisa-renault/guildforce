@@ -80,6 +80,7 @@ const getAuthStorageDiagnosticMetadata = (storedParams: ReturnType<typeof getSto
   hasStoredFlowId: Boolean(storedParams.flowId),
   hostname: typeof window === 'undefined' ? null : window.location.hostname,
   localStorageAvailable: safeStorage.isAvailable('local'),
+  pendingStateCount: storedParams.pendingStates.length,
   sessionStorageAvailable: safeStorage.isAvailable('session'),
 });
 
@@ -186,7 +187,7 @@ const Auth = () => {
     const flowId = callbackFlowId || parsedState.flowId || storedParams.flowId || generateOAuthState();
 
     try {
-      const stateMatches = validateOAuthState(parsedState, storedParams.state);
+      const stateMatches = validateOAuthState(parsedState, storedParams.state, storedParams.pendingStates);
       if (!stateMatches) {
         await recordAuthDiagnostic({
           flowId,

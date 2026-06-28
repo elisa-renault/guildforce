@@ -48,6 +48,12 @@ describe('battlenetOAuth', () => {
       state: 'state-1',
       region: 'eu',
       flowId: 'flow-1',
+      pendingStates: [{
+        state: 'state-1',
+        region: 'eu',
+        flowId: 'flow-1',
+        createdAt: expect.any(Number),
+      }],
     });
   });
 
@@ -69,6 +75,17 @@ describe('battlenetOAuth', () => {
     expect(validateOAuthState({ state: 'expected' }, 'expected')).toBe(true);
     expect(validateOAuthState({ state: 'actual' }, 'expected')).toBe(false);
     expect(validateOAuthState({ state: 'actual' }, null)).toBe(true);
+  });
+
+  it('validates an older pending OAuth state after a newer login attempt overwrites the current state', () => {
+    storeOAuthParams('first-state', 'us', 'flow-1');
+    storeOAuthParams('second-state', 'eu', 'flow-2');
+
+    const stored = getStoredOAuthParams();
+
+    expect(stored.state).toBe('second-state');
+    expect(validateOAuthState({ state: 'first-state' }, stored.state, stored.pendingStates)).toBe(true);
+    expect(validateOAuthState({ state: 'unknown-state' }, stored.state, stored.pendingStates)).toBe(false);
   });
 
   it('localizes display labels without changing region codes', () => {

@@ -44,11 +44,21 @@ export interface OAuthState {
 }
 
 export const BATTLE_NET_PROCESSING_TTL_MS = 60_000;
+const OAUTH_PENDING_STATE_TTL_MS = 15 * 60_000;
+const OAUTH_PENDING_STATE_LIMIT = 5;
 
 const OAUTH_STATE_KEY = 'battlenet_state';
 const OAUTH_REGION_KEY = 'battlenet_region';
 const OAUTH_FLOW_ID_KEY = 'battlenet_flow_id';
+const OAUTH_PENDING_STATES_KEY = 'battlenet_pending_states';
 const PROCESSED_CODE_KEY = 'bnet_processed_code';
+
+type PendingOAuthState = {
+  state: string;
+  region: BattleNetRegion;
+  flowId?: string;
+  createdAt: number;
+};
 
 type ProcessedCodeState = {
   fingerprint: string;
@@ -70,13 +80,48 @@ export function parseOAuthState(stateParam: string): OAuthState {
   }
 }
 
+function readPendingOAuthStates(now = Date.now()): PendingOAuthState[] {
+  const raw = safeStorage.get('local', OAUTH_PENDING_STATES_KEY);
+  if (!raw) return [];
+
+  try {
+    const parsed = JSON.parse(raw) as Array<Partial<PendingOAuthState>>;
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed
+      .filter((entry): entry is PendingOAuthState =>
+        typeof entry.state === 'string' &&
+        typeof entry.createdAt === 'number' &&
+        now - entry.createdAt <= OAUTH_PENDING_STATE_TTL_MS &&
+        ALL_REGIONS.includes(entry.region as BattleNetRegion)
+      )
+      .slice(0, OAUTH_PENDING_STATE_LIMIT);
+  } catch {
+    safeStorage.remove('local', OAUTH_PENDING_STATES_KEY);
+    return [];
+  }
+}
+
+function writePendingOAuthStates(states: PendingOAuthState[]): void {
+  if (states.length === 0) {
+    safeStorage.remove('local', OAUTH_PENDING_STATES_KEY);
+    return;
+  }
+
+  safeStorage.set('local', OAUTH_PENDING_STATES_KEY, JSON.stringify(states));
+}
+
 /**
  * Validate OAuth state against stored state
  * Returns true if valid or if no stored state (fallback)
  */
-export function validateOAuthState(parsed: OAuthState, storedState: string | null): boolean {
-  if (!storedState) return true;
-  return parsed.state === storedState;
+export function validateOAuthState(
+  parsed: OAuthState,
+  storedState: string | null,
+  pendingStates: PendingOAuthState[] = readPendingOAuthStates()
+): boolean {
+  if (!storedState && pendingStates.length === 0) return true;
+  return parsed.state === storedState || pendingStates.some(entry => entry.state === parsed.state);
 }
 
 /**
@@ -86,16 +131,28 @@ export function storeOAuthParams(state: string, region: BattleNetRegion, flowId?
   safeStorage.set('local', OAUTH_STATE_KEY, state);
   safeStorage.set('local', OAUTH_REGION_KEY, region);
   if (flowId) safeStorage.set('local', OAUTH_FLOW_ID_KEY, flowId);
+
+  const pendingStates = readPendingOAuthStates();
+  writePendingOAuthStates([
+    { state, region, flowId, createdAt: Date.now() },
+    ...pendingStates.filter(entry => entry.state !== state),
+  ].slice(0, OAUTH_PENDING_STATE_LIMIT));
 }
 
 /**
  * Get stored OAuth params after returning from Battle.net
  */
-export function getStoredOAuthParams(): { state: string | null; region: BattleNetRegion; flowId: string | null } {
+export function getStoredOAuthParams(): {
+  state: string | null;
+  region: BattleNetRegion;
+  flowId: string | null;
+  pendingStates: PendingOAuthState[];
+} {
   const state = safeStorage.get('local', OAUTH_STATE_KEY);
   const region = (safeStorage.get('local', OAUTH_REGION_KEY) as BattleNetRegion) || 'eu';
   const flowId = safeStorage.get('local', OAUTH_FLOW_ID_KEY);
-  return { state, region, flowId };
+  const pendingStates = readPendingOAuthStates();
+  return { state, region, flowId, pendingStates };
 }
 
 /**
@@ -105,6 +162,7 @@ export function cleanupOAuthParams(): void {
   safeStorage.remove('local', OAUTH_STATE_KEY);
   safeStorage.remove('local', OAUTH_REGION_KEY);
   safeStorage.remove('local', OAUTH_FLOW_ID_KEY);
+  safeStorage.remove('local', OAUTH_PENDING_STATES_KEY);
   
   // Clean URL if needed
   const url = new URL(window.location.href);
