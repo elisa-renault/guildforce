@@ -2825,7 +2825,7 @@ const DE_SEMANTIC_MESSAGES: Record<keyof typeof EN_SEMANTIC_MESSAGES, string> = 
   "guild.members.mains_only": "Nur Mains",
   "guild.members.alts_only": "Nur Alts",
   "guild.members.table_character": "Charakter",
-  "guild.members.table_realm": "Server",
+  "guild.members.table_realm": "Spielwelt",
   "guild.members.table_level": "Stufe",
   "guild.members.table_class": "Klasse",
   "guild.members.table_player": "Spieler",
