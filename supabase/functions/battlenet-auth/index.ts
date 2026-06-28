@@ -236,6 +236,56 @@ async function recordAuthDiagnostic(supabase: AuthDiagnosticInsertClient, input:
   }
 }
 
+function waitUntilBackgroundTask(task: Promise<unknown>): void {
+  const runtime = (globalThis as {
+    EdgeRuntime?: { waitUntil?: (task: Promise<unknown>) => void };
+  }).EdgeRuntime;
+  if (runtime && typeof runtime.waitUntil === 'function') {
+    runtime.waitUntil(task);
+  }
+}
+
+function scheduleLoginCharacterSync(
+  supabase: AuthDiagnosticInsertClient,
+  accessToken: string,
+  userId: string,
+  region: BattleNetRegion,
+  flowId?: string | null
+): void {
+  const task = (async () => {
+    await recordAuthDiagnostic(supabase, {
+      flowId,
+      userId,
+      step: 'character_sync_background_start',
+      status: 'ok',
+      metadata: { region },
+    });
+
+    const result = await fetchAndStoreCharacters(supabase, accessToken, userId, region);
+
+    await recordAuthDiagnostic(supabase, {
+      flowId,
+      userId,
+      step: result.success ? 'character_sync_background_success' : 'character_sync_background_error',
+      status: result.success ? 'ok' : 'error',
+      errorMessage: result.error ?? null,
+      metadata: { region: result.detectedRegion ?? region },
+    });
+  })().catch(async (error) => {
+    log.error('Background character sync failed:', error);
+    await recordAuthDiagnostic(supabase, {
+      flowId,
+      userId,
+      step: 'character_sync_background_error',
+      status: 'error',
+      errorMessage: error instanceof Error ? error.message : String(error),
+      metadata: { region },
+    });
+  });
+
+  waitUntilBackgroundTask(task);
+}
+
 // ============================================================================
 // UTILITY FUNCTIONS
 // ============================================================================
@@ -1447,9 +1497,6 @@ Deno.serve(async (req) => {
         // Continue anyway - profile was saved
       }
 
-      // Fetch and store WoW characters
-      await fetchAndStoreCharacters(supabase, tokenData.access_token, userId, region);
-
       // Generate magic link for session using the correct email
       log.info(`Generating magic link for email: ${sanitizePII(userEmail, 'email')}`);
       const { data: magicLinkData, error: magicLinkError } = await supabase.auth.admin.generateLink({
@@ -1479,6 +1526,10 @@ Deno.serve(async (req) => {
         status: 'ok',
         metadata: { isNewUser, region },
       });
+
+      // Character and guild sync can be slow on large accounts. Do not block the
+      // OAuth callback response after the one-time Battle.net code is exchanged.
+      scheduleLoginCharacterSync(supabase, tokenData.access_token, userId, region, flowId);
 
       return new Response(JSON.stringify({
         verifyToken: magicLinkData.properties.hashed_token,
