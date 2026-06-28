@@ -8,6 +8,7 @@ describe('formatRealmDisplayName', () => {
     expect(formatRealmDisplayName(null, 'les-clairvoyants')).toBe('Les Clairvoyants');
     expect(formatRealmDisplayName(null, 'confrerie-du-thorium')).toBe('Confrérie du Thorium');
     expect(formatRealmDisplayName(null, 'kaelthas')).toBe("Kael'Thas");
+    expect(formatRealmDisplayName('Pozzo Delleternita', 'pozzo-delleternita')).toBe("Pozzo dell'Eternità");
   });
 
   it('falls back to title casing unknown realm names', () => {

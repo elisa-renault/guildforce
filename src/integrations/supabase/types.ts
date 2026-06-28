@@ -3264,7 +3264,7 @@ export type Database = {
           p_member_id: string
           p_roster_id: string
           p_season_id?: string | null
-          p_wishes?: Json
+          p_wishes?: Json | null
         }
         Returns: undefined
       }

@@ -740,6 +740,17 @@ const RosterWishes = () => {
           validated_by_username: wish.validated_by ? validatorById.get(wish.validated_by) || null : null,
         }));
       };
+      const mapLinkedWishes = (memberId: string) =>
+        wishesData?.filter(w => w.user_id === memberId).map(w => ({
+          choice_index: w.choice_index,
+          class_id: w.class_id,
+          spec_ids: resolveSpecOrder(w.spec_ids || [], w.spec_order),
+          comment: w.comment,
+          validation_status: (w.validation_status || 'pending') as ValidationStatus,
+          validated_by: w.validated_by,
+          validated_at: w.validated_at,
+          validated_by_username: w.validated_by ? validatorById.get(w.validated_by) || null : null,
+        })) || [];
       const shouldShowLinkedMember = (member: typeof safeMembers[number]) => {
         if (privateMemberSeason && member.user_id === user?.id) return true;
         const hasRosterSeasonData =
@@ -761,16 +772,8 @@ const RosterWishes = () => {
         const seasonRow = seasonTableByUserId.get(m.user_id);
         const memberWishes = seasonFilteringEnabled
           ? mapSeasonWishes(seasonRow)
-          : wishesData?.filter(w => w.user_id === m.user_id).map(w => ({
-              choice_index: w.choice_index,
-              class_id: w.class_id,
-              spec_ids: resolveSpecOrder(w.spec_ids || [], w.spec_order),
-              comment: w.comment,
-              validation_status: (w.validation_status || 'pending') as ValidationStatus,
-              validated_by: w.validated_by,
-              validated_at: w.validated_at,
-              validated_by_username: w.validated_by ? validatorById.get(w.validated_by) || null : null,
-            })) || [];
+          : mapLinkedWishes(m.user_id);
+        const visibleWishes = memberWishes.length > 0 ? memberWishes : mapLinkedWishes(m.user_id);
         return {
           id: m.user_id,
           seasonMemberId: seasonRow?.season_member_id || null,
@@ -790,7 +793,7 @@ const RosterWishes = () => {
           rankIndex: seasonRow?.rank_index ?? null,
           status: intentByUserId.get(m.user_id) || (seasonFilteringEnabled ? 'undecided' : m.status),
           wishes_locked: m.wishes_locked,
-          wishes: memberWishes.sort((a, b) => a.choice_index - b.choice_index),
+          wishes: visibleWishes.sort((a, b) => a.choice_index - b.choice_index),
           selectionStatus: selection?.selection_status || 'undecided',
           selectionReasonCode: selection?.reason_code || null,
           selectionComment: selection?.comment || null,

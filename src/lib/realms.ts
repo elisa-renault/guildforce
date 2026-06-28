@@ -7,6 +7,7 @@ const REALM_DISPLAY_NAMES: Record<string, string> = {
   'confrerie du thorium': 'Confrérie du Thorium',
   'les clairvoyants': 'Les Clairvoyants',
   'marecage de zangar': 'Marécage de Zangar',
+  'pozzo delleternita': "Pozzo dell'Eternità",
 };
 
 const normalizeRealmDisplayKey = (value?: string | null) =>
