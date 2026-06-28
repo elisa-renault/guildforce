@@ -22,7 +22,7 @@ import { interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import { resolveSpecOrder } from '@/lib/wishOrder';
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
-import { commitmentCalloutClass, commitmentTextClass, wowClassTextClass } from '@/lib/design-tokens';
+import { commitmentCalloutClass, commitmentTextClass, toneCalloutClass, toneTextClass, wowClassTextClass } from '@/lib/design-tokens';
 
 interface WishSummary {
   choice_index: number;
@@ -37,6 +37,16 @@ interface RosterData {
   is_default: boolean;
   activeSeasonId?: string | null;
 }
+
+const mapDbStatusToCommitment = (status?: string | null): CommitmentStatus => {
+  const statusMap: Record<string, CommitmentStatus> = {
+    confirmed: 'confirmed',
+    potential: 'undecided',
+    withdrawn: 'withdrawn',
+  };
+
+  return statusMap[status || ''] || 'undecided';
+};
 
 const Overview = () => {
   const navigate = useNavigate();
@@ -105,6 +115,7 @@ const Overview = () => {
 
       // Track admin read-only mode locally to avoid stale closure
       let adminReadOnly = false;
+      let defaultRosterForStats: RosterData | null = null;
 
       // If not a member but is global admin, allow read-only access
       if (memberError || !memberData) {
@@ -117,13 +128,7 @@ const Overview = () => {
           return;
         }
       } else {
-        // Map DB status to CommitmentStatus
-        const statusMap: Record<string, CommitmentStatus> = {
-          'confirmed': 'confirmed',
-          'potential': 'undecided',
-          'withdrawn': 'withdrawn',
-        };
-        setCommitmentStatus(statusMap[memberData.status] || 'undecided');
+        setCommitmentStatus(mapDbStatusToCommitment(memberData.status));
       }
 
       // Check if user is GM (or global admin for settings access)
@@ -165,10 +170,24 @@ const Overview = () => {
           ...rostersData,
           activeSeasonId: activeSeason?.id || null,
         });
+        defaultRosterForStats = {
+          ...rostersData,
+          activeSeasonId: activeSeason?.id || null,
+        };
 
         if (!activeSeason) {
           setMyWishes([]);
         } else {
+          const { data: intentData } = await supabase
+            .from('guild_season_member_intents')
+            .select('commitment_status')
+            .eq('guild_id', foundGuildId)
+            .eq('roster_id', rostersData.id)
+            .eq('season_id', activeSeason.id)
+            .eq('user_id', user.id)
+            .maybeSingle();
+          setCommitmentStatus(mapDbStatusToCommitment(intentData?.commitment_status));
+
           // Fetch my wishes for the active season of the default roster.
           const { data: wishesData } = await supabase
             .from('class_wishes')
@@ -198,6 +217,7 @@ const Overview = () => {
         }
       } else if (rostersData) {
         setDefaultRoster(rostersData);
+        defaultRosterForStats = rostersData;
       }
 
       // Get mini stats
@@ -208,7 +228,18 @@ const Overview = () => {
 
       if (membersData) {
         setTotalMembers(membersData.length);
-        setConfirmedMembers(membersData.filter(m => m.status === 'confirmed').length);
+        if (defaultRosterForStats?.activeSeasonId) {
+          const { count: seasonConfirmedCount } = await supabase
+            .from('guild_season_member_intents')
+            .select('user_id', { count: 'exact', head: true })
+            .eq('guild_id', foundGuildId)
+            .eq('roster_id', defaultRosterForStats.id)
+            .eq('season_id', defaultRosterForStats.activeSeasonId)
+            .eq('commitment_status', 'confirmed');
+          setConfirmedMembers(seasonConfirmedCount || 0);
+        } else {
+          setConfirmedMembers(membersData.filter(m => m.status === 'confirmed').length);
+        }
       }
 
       setLoading(false);
