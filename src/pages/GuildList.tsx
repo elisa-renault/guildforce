@@ -1,5 +1,5 @@
-import { Shield, Crown, Loader2, Link as LinkIcon, Users, MapPin, Settings } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { Shield, Crown, Loader2, Link as LinkIcon, Users, MapPin, Settings, Star } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useUserGuilds } from '@/hooks/useUserGuilds';
+import { type GuildNavigationPreference, useUserGuilds } from '@/hooks/useUserGuilds';
 import { supabase } from '@/integrations/supabase/client';
 import {
   type BattleNetRegion,
@@ -29,6 +29,12 @@ import {
   getRedirectUri,
   generateOAuthState,
 } from '@/lib/battlenetOAuth';
+import {
+  applyGuildPreferencePatch,
+  buildGuildPreferenceUpdatePayload,
+  type GuildPreferencePatch,
+  mergeLoadedGuildPreferences,
+} from '@/lib/guildNavigationPreferences';
 import { getGuildPath, getGuildSettingsPath } from '@/lib/guildSlug';
 import log from '@/lib/logger';
 import { cn } from '@/lib/utils';
@@ -38,10 +44,32 @@ const GuildList = () => {
   const { t, language } = useLanguage();
   const { user, profile, loading: authLoading, refreshProfile } = useAuth();
   const { guilds, loading, refresh: refreshGuilds } = useUserGuilds({ enabled: Boolean(user?.id) });
+  const [preferences, setPreferences] = useState<GuildNavigationPreference[]>([]);
+  const preferenceWriteVersionRef = useRef(0);
   const [isConnecting, setIsConnecting] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState<BattleNetRegion>('eu');
 
   const isConnected = !!profile?.battlenet_id;
+  const navigableGuildIds = useMemo(
+    () => guilds.map((guild) => guild.id).filter((id): id is string => Boolean(id)),
+    [guilds],
+  );
+  const navigableGuildIdsKey = useMemo(
+    () => navigableGuildIds.slice().sort().join(','),
+    [navigableGuildIds],
+  );
+  const favoriteGuildIds = useMemo(
+    () => new Set(preferences.filter((preference) => preference.is_favorite).map((preference) => preference.guild_id)),
+    [preferences],
+  );
+  const favoriteGuilds = useMemo(
+    () => guilds.filter((guild) => Boolean(guild.id && favoriteGuildIds.has(guild.id))),
+    [favoriteGuildIds, guilds],
+  );
+  const otherGuilds = useMemo(
+    () => guilds.filter((guild) => !guild.id || !favoriteGuildIds.has(guild.id)),
+    [favoriteGuildIds, guilds],
+  );
 
   const handleOAuthCallback = useCallback(async (code: string, region: BattleNetRegion = 'eu') => {
     setIsConnecting(true);
@@ -130,8 +158,149 @@ const GuildList = () => {
     }
   }, [authLoading, user, navigate]);
 
+  const upsertPreference = useCallback(async (
+    guildId: string,
+    patch: GuildPreferencePatch,
+  ) => {
+    if (!user?.id) return;
+
+    const updatePayload = buildGuildPreferenceUpdatePayload(patch);
+
+    if (Object.keys(updatePayload).length === 0) return;
+
+    const now = new Date().toISOString();
+    preferenceWriteVersionRef.current += 1;
+    setPreferences((current) => applyGuildPreferencePatch(current, user.id, guildId, patch, now));
+
+    const { data: updatedRows, error: updateError } = await supabase
+      .from('user_guild_navigation_preferences')
+      .update(updatePayload)
+      .eq('user_id', user.id)
+      .eq('guild_id', guildId)
+      .select('guild_id')
+      .limit(1);
+
+    if (updateError) {
+      log.warn('Unable to save guild list navigation preference:', updateError);
+      toast.error(t.errors.generic);
+      return;
+    }
+
+    if (updatedRows && updatedRows.length > 0) {
+      return;
+    }
+
+    const { error: insertError } = await supabase
+      .from('user_guild_navigation_preferences')
+      .insert({
+        user_id: user.id,
+        guild_id: guildId,
+        is_favorite: patch.is_favorite ?? false,
+        last_visited_at: patch.last_visited_at ?? null,
+      });
+
+    if (!insertError) {
+      return;
+    }
+
+    if (insertError.code === '23505') {
+      const { error: retryUpdateError } = await supabase
+        .from('user_guild_navigation_preferences')
+        .update(updatePayload)
+        .eq('user_id', user.id)
+        .eq('guild_id', guildId);
+
+      if (!retryUpdateError) {
+        return;
+      }
+
+      log.warn('Unable to save guild list navigation preference after retry:', retryUpdateError);
+      toast.error(t.errors.generic);
+      return;
+    }
+
+    log.warn('Unable to create guild list navigation preference:', insertError);
+    toast.error(t.errors.generic);
+  }, [t.errors.generic, user?.id]);
+
+  useEffect(() => {
+    if (!user?.id || navigableGuildIds.length === 0) {
+      setPreferences([]);
+      return;
+    }
+
+    let cancelled = false;
+    const loadWriteVersion = preferenceWriteVersionRef.current;
+
+    supabase
+      .from('user_guild_navigation_preferences')
+      .select('*')
+      .eq('user_id', user.id)
+      .in('guild_id', navigableGuildIds)
+      .then(({ data, error }) => {
+        if (cancelled) return;
+
+        if (error) {
+          log.warn('Unable to load guild list navigation preferences:', error);
+          setPreferences([]);
+          return;
+        }
+
+        if (preferenceWriteVersionRef.current === loadWriteVersion) {
+          setPreferences(data || []);
+          return;
+        }
+
+        setPreferences((current) => mergeLoadedGuildPreferences(data || [], current));
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [navigableGuildIds, navigableGuildIdsKey, user?.id]);
+
+  const renderGuildSection = (label: string, items: (typeof guilds), favorite = false) => {
+    if (items.length === 0) return null;
+
+    return (
+      <section className="space-y-1.5" aria-label={label}>
+        <div className="flex items-center gap-2 px-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          {favorite && <Star className="h-3.5 w-3.5 fill-warning text-warning" strokeWidth={1.6} />}
+          <span>{label}</span>
+        </div>
+        <div className="space-y-1.5">
+          {items.map(renderGuildRow)}
+        </div>
+      </section>
+    );
+  };
+
+  const renderFavoriteButton = (
+    guildId: string | null,
+    isDetectedOnly: boolean,
+    isFavorite: boolean,
+  ) => {
+    if (!guildId || isDetectedOnly) return null;
+
+    return (
+      <button
+        type="button"
+        onClick={() => void upsertPreference(guildId, { is_favorite: !isFavorite })}
+        className={cn(
+          'flex h-7 w-7 items-center justify-center rounded bg-muted/55 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+          isFavorite && 'text-warning hover:text-warning',
+        )}
+        title={isFavorite ? t.guildSwitcher.removeFavorite : t.guildSwitcher.addFavorite}
+        aria-label={isFavorite ? t.guildSwitcher.removeFavorite : t.guildSwitcher.addFavorite}
+      >
+        <Star className={cn('h-3.5 w-3.5', isFavorite && 'fill-current')} strokeWidth={1.5} />
+      </button>
+    );
+  };
+
   const renderGuildRow = (guild: (typeof guilds)[number]) => {
     const isGm = !guild.isDetectedOnly && (guild.role === 'gm' || guild.owner_id === user?.id);
+    const isFavorite = Boolean(guild.id && favoriteGuildIds.has(guild.id));
     const count = guild.isDetectedOnly ? guild.syncedCharacterCount : (guild.memberCount ?? 0);
     const countLabel = guild.isDetectedOnly
       ? String(count)
@@ -236,6 +405,7 @@ const GuildList = () => {
         )}
 
         <div className="flex shrink-0 items-center justify-end gap-2">
+          {renderFavoriteButton(guild.id, guild.isDetectedOnly, isFavorite)}
           {isGm && (
             <>
               <button
@@ -315,8 +485,17 @@ const GuildList = () => {
             </CosmicButton>
           </GlowCard>
         ) : guilds.length > 0 ? (
-          <div className="space-y-1.5">
-            {guilds.map(renderGuildRow)}
+          <div className="space-y-4">
+            {favoriteGuilds.length > 0 ? (
+              <>
+                {renderGuildSection(t.guildSwitcher.favorites, favoriteGuilds, true)}
+                {renderGuildSection(t.guildSwitcher.otherGuilds, otherGuilds)}
+              </>
+            ) : (
+              <div className="space-y-1.5">
+                {guilds.map(renderGuildRow)}
+              </div>
+            )}
           </div>
         ) : (
           <EmptyState icon={Shield} title={t.guild.noGuilds} className="p-10" />

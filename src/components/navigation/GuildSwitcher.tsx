@@ -1,4 +1,4 @@
-import { ChevronDown, Crown, Search, Shield, Star } from 'lucide-react';
+import { ChevronDown, LayoutList, Search, Shield, Star } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -345,7 +345,7 @@ export const GuildSwitcher = ({ className }: GuildSwitcherProps) => {
           }}
         >
           <span>{copy.allGuilds}</span>
-          <Crown className="h-4 w-4" strokeWidth={1.5} />
+          <LayoutList className="h-4 w-4" strokeWidth={1.5} />
         </button>
       </DropdownMenuContent>
     </DropdownMenu>

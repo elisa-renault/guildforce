@@ -12,6 +12,7 @@ export type PermissionType =
   | 'manage_polls' 
   | 'manage_rosters' 
   | 'view_activity_log'
+  | 'manage_members'
   | 'manage_vault'
   | 'view_vault_audit'
   | 'manage_atlas';
@@ -192,6 +193,7 @@ export function useGuildPermissions(guildId: string | null) {
           'manage_polls',
           'manage_rosters',
           'view_activity_log',
+          'manage_members',
           'manage_vault',
           'view_vault_audit',
           'manage_atlas',

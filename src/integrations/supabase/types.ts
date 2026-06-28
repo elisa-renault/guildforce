@@ -788,6 +788,12 @@ export type Database = {
       guild_members: {
         Row: {
           guild_id: string
+          guild_main_character_id: string | null
+          guild_main_character_name: string | null
+          guild_main_character_realm: string | null
+          guild_main_character_realm_slug: string | null
+          guild_main_character_updated_at: string | null
+          guild_main_character_updated_by: string | null
           id: string
           joined_at: string
           role: string
@@ -797,6 +803,12 @@ export type Database = {
         }
         Insert: {
           guild_id: string
+          guild_main_character_id?: string | null
+          guild_main_character_name?: string | null
+          guild_main_character_realm?: string | null
+          guild_main_character_realm_slug?: string | null
+          guild_main_character_updated_at?: string | null
+          guild_main_character_updated_by?: string | null
           id?: string
           joined_at?: string
           role?: string
@@ -806,6 +818,12 @@ export type Database = {
         }
         Update: {
           guild_id?: string
+          guild_main_character_id?: string | null
+          guild_main_character_name?: string | null
+          guild_main_character_realm?: string | null
+          guild_main_character_realm_slug?: string | null
+          guild_main_character_updated_at?: string | null
+          guild_main_character_updated_by?: string | null
           id?: string
           joined_at?: string
           role?: string
@@ -814,6 +832,20 @@ export type Database = {
           wishes_locked?: boolean
         }
         Relationships: [
+          {
+            foreignKeyName: "guild_members_guild_main_character_id_fkey"
+            columns: ["guild_main_character_id"]
+            isOneToOne: false
+            referencedRelation: "wow_characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_members_guild_main_character_updated_by_fkey"
+            columns: ["guild_main_character_updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "guild_members_guild_id_fkey"
             columns: ["guild_id"]
@@ -2830,6 +2862,32 @@ export type Database = {
           username: string
         }[]
       }
+      get_guild_member_main_candidates: {
+        Args: { p_guild_id: string; p_member_id: string }
+        Returns: {
+          character_id: string | null
+          roster_cache_id: string | null
+          character_name: string
+          character_realm: string | null
+          character_realm_slug: string
+          character_level: number | null
+          character_class_id: number | null
+          rank_index: number | null
+          is_effective_main: boolean
+        }[]
+      }
+      get_guild_member_main_characters: {
+        Args: { p_guild_id: string }
+        Returns: {
+          user_id: string
+          character_id: string | null
+          roster_cache_id: string | null
+          character_name: string
+          character_realm: string | null
+          character_realm_slug: string
+          source: string
+        }[]
+      }
       // Compatibility shim after roster member assignments were retired.
       seed_roster_assignments_from_first_approved_wish: {
         Args: { p_roster_id: string; p_season_id: string }
@@ -3146,6 +3204,15 @@ export type Database = {
       }
       set_main_character_by_key: {
         Args: { p_name: string; p_realm_slug: string }
+        Returns: undefined
+      }
+      set_guild_member_main_character: {
+        Args: {
+          p_character_name: string
+          p_guild_id: string
+          p_member_id: string
+          p_realm_slug: string
+        }
         Returns: undefined
       }
       track_product_event: {

@@ -6,6 +6,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { getClassById, getLocalizedClassName, getLocalizedSpecName, getSpecById } from '@/data/wowClasses';
 import { MemberWish, RosterSelectionStatus, WishChoice, ValidationStatus } from '@/types/guild';
 import { WishValidationBadge } from './WishValidationBadge';
+import { RosterDecisionToggle } from './RosterDecisionToggle';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import { commitmentBadgeClass } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -16,7 +17,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface MobileRosterCardProps {
   member: MemberWish;
@@ -328,21 +328,13 @@ export const MobileRosterCard = ({
       <div className="mt-2 flex items-center gap-2">
         {statusBadge}
         {canManageWishes && onSelectionStatusChange ? (
-          <Select
+          <RosterDecisionToggle
             value={member.selectionStatus || 'undecided'}
-            onValueChange={(value) => onSelectionStatusChange(member.id, value as RosterSelectionStatus)}
+            onChange={(value) => onSelectionStatusChange(member.id, value)}
             disabled={updatingSelectionMemberId === member.id}
-          >
-            <SelectTrigger className="h-7 min-w-0 flex-1 border-border/50 bg-background/60 px-2.5 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="undecided">{t.wishes.rosterDecision.undecided}</SelectItem>
-              <SelectItem value="selected">{t.wishes.rosterDecision.selected}</SelectItem>
-              <SelectItem value="bench">{t.wishes.rosterDecision.bench}</SelectItem>
-              <SelectItem value="not_selected">{t.wishes.rosterDecision.notSelected}</SelectItem>
-            </SelectContent>
-          </Select>
+            compact
+            className="min-w-0 flex-1"
+          />
         ) : (
           (() => {
             const decisionBadge = getRosterDecisionBadge(member.selectionStatus);

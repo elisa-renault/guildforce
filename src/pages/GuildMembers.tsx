@@ -1,13 +1,19 @@
-import { Crown, Shield, CheckCircle2, XCircle, ChevronDown, ChevronLeft, ChevronRight, Check, X, Star, Eye } from 'lucide-react';
+import { Crown, Shield, CheckCircle2, XCircle, ChevronDown, ChevronLeft, ChevronRight, Check, X, Star, Eye, MoreVertical } from 'lucide-react';
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
 import { GuildWorkspaceShell } from '@/components/guild';
+import { GuildMainSelector } from '@/components/guild/GuildMainSelector';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataListSkeleton } from '@/components/ui/data-list-skeleton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { FilterBar, FilterSearchField, activeFilterControlClassName, filterControlClassName } from '@/components/ui/filter-controls';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
@@ -31,6 +37,7 @@ import { toneCalloutClass, toneTextClass, wowClassColorValue } from '@/lib/desig
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
 import { toNormalizedRealmSlug } from '@/lib/guildDiscovery';
 import { formatRankLabel } from '@/lib/rankLabel';
+import { formatRealmDisplayName } from '@/lib/realms';
 import { cn } from '@/lib/utils';
 
 interface RosterMember {
@@ -102,6 +109,7 @@ const GuildMembers = () => {
   const { rankLabels } = useGuildRankLabels({ guildId: guild?.id });
 
   const { hasPermission: hasActivityPermission } = useHasGuildPermission(guild?.id || null, 'view_activity_log');
+  const { hasPermission: hasManageMembersPermission } = useHasGuildPermission(guild?.id || null, 'manage_members');
 
   const memberUi = {
     adminReadOnly: resolveSemanticMessage({ key: 'guild.members.admin_read_only', language, translations: t }),
@@ -257,27 +265,16 @@ const GuildMembers = () => {
             });
           }
 
-          // Get main character status for matched characters
-          const matchedCharIds = rosterCache
-            .filter(m => m.matched_character_id)
-            .map(m => m.matched_character_id as string);
-
-          const mainCharIds = new Set<string>();
-          if (matchedCharIds.length > 0) {
-            const { data: mainChars } = await supabase
-              .from('wow_characters')
-              .select('id')
-              .in('id', matchedCharIds)
-              .eq('is_main', true);
-            
-            mainChars?.forEach(c => mainCharIds.add(c.id));
-          }
+          const { data: effectiveMains } = await supabase.rpc('get_guild_member_main_characters', {
+            p_guild_id: guildData.id,
+          });
+          const effectiveMainByUserId = new Map((effectiveMains || []).map((row) => [row.user_id, row]));
 
           // Build member list from cache
           const memberList: RosterMember[] = rosterCache.map(m => ({
             id: m.id,
             character_name: m.character_name,
-            character_realm: m.character_realm,
+            character_realm: formatRealmDisplayName(m.character_realm, m.character_realm_slug),
             character_realm_slug: m.character_realm_slug,
             character_class_id: m.character_class_id,
             character_level: m.character_level,
@@ -286,7 +283,12 @@ const GuildMembers = () => {
             is_guild_master: m.is_guild_master,
             matched_user_id: m.matched_user_id,
             matched_character_id: m.matched_character_id,
-            is_main_character: m.matched_character_id ? mainCharIds.has(m.matched_character_id) : false,
+            is_main_character: (() => {
+              const effectiveMain = m.matched_user_id ? effectiveMainByUserId.get(m.matched_user_id) : null;
+              return !!effectiveMain
+                && m.character_name.toLowerCase() === effectiveMain.character_name.toLowerCase()
+                && m.character_realm_slug.toLowerCase() === effectiveMain.character_realm_slug.toLowerCase();
+            })(),
             profile: m.matched_user_id ? profilesMap[m.matched_user_id] || null : null,
           }));
 
@@ -334,13 +336,19 @@ const GuildMembers = () => {
             });
           }
 
+          const { data: effectiveMains } = await supabase.rpc('get_guild_member_main_characters', {
+            p_guild_id: guildData.id,
+          });
+          const effectiveMainByUserId = new Map((effectiveMains || []).map((row) => [row.user_id, row]));
+
           // Build member list
           const memberList: RosterMember[] = (wowMembers || []).map(m => {
             const char = m.wow_characters as WowCharacterLite | null;
+            const effectiveMain = effectiveMainByUserId.get(m.user_id);
             return {
               id: m.id,
               character_name: char?.name || 'Unknown',
-              character_realm: char?.realm || '',
+              character_realm: formatRealmDisplayName(char?.realm, char?.realm_slug),
               character_realm_slug: char?.realm_slug || '',
               character_class_id: char?.class_id || 0,
               character_level: char?.level || 0,
@@ -349,6 +357,9 @@ const GuildMembers = () => {
               is_guild_master: m.is_guild_master,
               matched_user_id: m.user_id,
               matched_character_id: m.character_id,
+              is_main_character: !!effectiveMain
+                && (char?.name || '').toLowerCase() === effectiveMain.character_name.toLowerCase()
+                && (char?.realm_slug || '').toLowerCase() === effectiveMain.character_realm_slug.toLowerCase(),
               profile: profilesMap[m.user_id] || null,
             };
           });
@@ -364,6 +375,31 @@ const GuildMembers = () => {
 
     loadData();
   }, [regionSlug, serverSlug, guildSlug, user, navigate, adminLoading, isGlobalAdmin]);
+
+  const canSetGuildMainFor = (member: RosterMember) => (
+    !!member.matched_user_id
+    && !!guild
+    && (member.matched_user_id === user?.id || isGM || hasManageMembersPermission)
+  );
+
+  const refreshMembers = () => {
+    if (!guild) return;
+    void (async () => {
+      const { data: effectiveMains } = await supabase.rpc('get_guild_member_main_characters', {
+        p_guild_id: guild.id,
+      });
+      const effectiveMainByUserId = new Map((effectiveMains || []).map((row) => [row.user_id, row]));
+      setMembers((prev) => prev.map((member) => {
+        const effectiveMain = member.matched_user_id ? effectiveMainByUserId.get(member.matched_user_id) : null;
+        return {
+          ...member,
+          is_main_character: !!effectiveMain
+            && member.character_name.toLowerCase() === effectiveMain.character_name.toLowerCase()
+            && member.character_realm_slug.toLowerCase() === effectiveMain.character_realm_slug.toLowerCase(),
+        };
+      }));
+    })();
+  };
 
   // Filter members
   const filteredMembers = useMemo(() => {
@@ -434,6 +470,43 @@ const GuildMembers = () => {
   if (!guild) return null;
 
   const mobileFilterButtonClassName = 'w-full min-w-0 justify-between gap-2 whitespace-nowrap px-2.5 text-xs md:w-auto md:flex-none md:text-sm';
+  const showMemberActions = filteredMembers.some(canSetGuildMainFor);
+
+  const renderMemberActions = (member: RosterMember) => {
+    if (!canSetGuildMainFor(member)) {
+      return <span className="block h-8 w-8" aria-hidden="true" />;
+    }
+
+    return (
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="h-8 w-8 border-border/50 bg-card/60 text-muted-foreground hover:bg-primary/10 hover:text-primary"
+            aria-label={t.common.actions}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <MoreVertical className="h-4 w-4" strokeWidth={1.5} />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="end"
+          className="w-48 border-border bg-card p-1"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <GuildMainSelector
+            guildId={guild.id}
+            memberId={member.matched_user_id}
+            canEdit
+            triggerMode="menu-item"
+            onChanged={refreshMembers}
+          />
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
 
   return (
     <GuildWorkspaceShell
@@ -751,18 +824,23 @@ const GuildMembers = () => {
             </div>
           ) : (
             paginatedMembers.map((member, index) => (
-              <button
+              <div
                 key={member.id}
-                type="button"
-                disabled={!member.profile}
                 className={cn(
                   'w-full rounded border border-border/40 bg-card/25 p-3 text-left transition-colors',
-                  member.profile ? 'hover:border-primary/35 hover:bg-primary/5' : 'cursor-default disabled:opacity-100',
+                  member.profile ? 'hover:border-primary/35 hover:bg-primary/5' : 'cursor-default',
                 )}
+                role={member.profile ? 'button' : undefined}
+                tabIndex={member.profile ? 0 : undefined}
                 onClick={() => {
                   if (member.profile) {
                     navigate(`/u/${member.profile.username}`);
                   }
+                }}
+                onKeyDown={(event) => {
+                  if (!member.profile || (event.key !== 'Enter' && event.key !== ' ')) return;
+                  event.preventDefault();
+                  navigate(`/u/${member.profile.username}`);
                 }}
               >
                 <div className="flex min-w-0 items-start gap-2.5">
@@ -813,34 +891,51 @@ const GuildMembers = () => {
                     ) : (
                       <span className="text-xs text-muted-foreground">{memberUi.notRegistered}</span>
                     )}
-                    {member.matched_user_id ? (
-                      <CheckCircle2 className="h-4 w-4 text-healer" />
-                    ) : (
-                      <XCircle className="h-4 w-4 text-muted-foreground/50" />
-                    )}
+                    <span className="flex h-8 w-8 items-center justify-center">
+                      {member.matched_user_id ? (
+                        <CheckCircle2 className="h-4 w-4 text-healer" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-muted-foreground/50" />
+                      )}
+                    </span>
+                    {showMemberActions && renderMemberActions(member)}
                   </div>
                 </div>
-              </button>
+              </div>
             ))
           )}
         </div>
 
         <div className="hidden overflow-hidden rounded-lg border border-border/50 bg-card/30 backdrop-blur-sm md:block">
-          <Table>
+          <Table className="table-fixed">
+            <colgroup>
+              <col className="w-[50px]" />
+              <col className="w-[36%]" />
+              <col className="w-[16%]" />
+              <col className="w-[18%]" />
+              <col className="w-[18%]" />
+              <col className="w-[96px]" />
+              {showMemberActions && <col className="w-[52px]" />}
+            </colgroup>
             <TableHeader>
               <TableRow className="border-border/50 hover:bg-transparent">
                 <TableHead className="w-[50px]">#</TableHead>
-                <TableHead>{memberUi.tableCharacter}</TableHead>
+                <TableHead className="min-w-0">{memberUi.tableCharacter}</TableHead>
                 <TableHead className="hidden md:table-cell">{memberUi.tableClass}</TableHead>
                 <TableHead>{memberUi.tablePlayer}</TableHead>
                 <TableHead>{memberUi.tableRank}</TableHead>
                 <TableHead className="text-center">{memberUi.guildforceLabel}</TableHead>
+                {showMemberActions && (
+                  <TableHead className="w-[52px]">
+                    <span className="sr-only">{t.common.actions}</span>
+                  </TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginatedMembers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={showMemberActions ? 7 : 6} className="text-center py-8 text-muted-foreground">
                     {memberUi.noMembers}
                   </TableCell>
                 </TableRow>
@@ -861,72 +956,84 @@ const GuildMembers = () => {
                     <TableCell className="text-muted-foreground text-sm">
                       {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
+                    <TableCell className="min-w-0">
+                      <div className="flex min-w-0 items-center gap-2">
                         {member.is_guild_master && (
-                          <Crown className="h-4 w-4 text-warning" />
+                          <Crown className="h-4 w-4 shrink-0 text-warning" />
                         )}
                         {!member.is_guild_master && member.rank_index <= (guild?.officer_rank_threshold ?? 2) && (
-                          <Shield className="h-4 w-4 text-primary" />
+                          <Shield className="h-4 w-4 shrink-0 text-primary" />
                         )}
                         <span 
-                          className="font-medium"
+                          className="min-w-0 truncate font-medium"
                           style={{ color: getClassColor(member.character_class_id) }}
                         >
                           {member.character_name}
                         </span>
                         {member.is_main_character && (
-                          <Star className="h-3.5 w-3.5 text-warning fill-warning" />
+                          <Star className="h-3.5 w-3.5 shrink-0 text-warning fill-warning" />
                         )}
                         {member.character_level > 0 && (
-                          <span className="text-xs text-muted-foreground">
+                          <span className="shrink-0 text-xs text-muted-foreground">
                             Lv.{member.character_level}
                           </span>
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">
+                    <TableCell className="hidden min-w-0 md:table-cell">
                       <span 
-                        className="text-sm"
+                        className="block truncate text-sm"
                         style={{ color: getClassColor(member.character_class_id) }}
                       >
                         {getClassName(member.character_class_id)}
                       </span>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="min-w-0">
                       {member.profile ? (
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-6 w-6">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <Avatar className="h-6 w-6 shrink-0">
                             <AvatarImage src={member.profile.avatar_url || undefined} />
                             <AvatarFallback className="text-xs">
                               {member.profile.username.charAt(0).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="text-sm">{member.profile.username}</span>
+                          <span className="min-w-0 truncate text-sm">{member.profile.username}</span>
                         </div>
                       ) : (
                         <span className="text-muted-foreground text-sm">—</span>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="min-w-0">
                       <Badge
                         variant="outline"
                         className={cn(
-                          "text-xs",
+                          "max-w-full text-xs",
                           member.is_guild_master && "bg-warning/20 text-warning border-warning/30",
                           !member.is_guild_master && member.rank_index <= (guild?.officer_rank_threshold ?? 2) && "bg-primary/20 text-primary border-primary/30"
                         )}
                       >
-                        {getRankLabel(member.rank_name, member.rank_index)}
+                        <span className="truncate">{getRankLabel(member.rank_name, member.rank_index)}</span>
                       </Badge>
                     </TableCell>
                     <TableCell className="text-center">
-                      {member.matched_user_id ? (
-                        <CheckCircle2 className="h-4 w-4 text-healer mx-auto" />
-                      ) : (
-                        <XCircle className="h-4 w-4 text-muted-foreground/50 mx-auto" />
-                      )}
+                      <span className="mx-auto flex h-8 w-8 items-center justify-center">
+                        {member.matched_user_id ? (
+                          <CheckCircle2 className="h-4 w-4 text-healer" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-muted-foreground/50" />
+                        )}
+                      </span>
                     </TableCell>
+                    {showMemberActions && (
+                      <TableCell
+                        className="text-right"
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        <div className="flex justify-end">
+                          {renderMemberActions(member)}
+                        </div>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))
               )}

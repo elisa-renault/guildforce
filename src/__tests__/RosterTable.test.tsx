@@ -56,12 +56,16 @@ const renderRosterTable = (props = {}) =>
       editingUserId={null}
       editWishes={[]}
       editStatus="undecided"
+      editSelectionStatus="undecided"
       saving={false}
       maxWishes={13}
       onStartEditing={vi.fn()}
       onUpdateEditWish={vi.fn()}
       onEditStatusChange={vi.fn()}
+      onEditSelectionStatusChange={vi.fn()}
+      onEditGuildMainChange={vi.fn()}
       onSaveEditing={vi.fn()}
+      onCancelEditing={vi.fn()}
       onAddWish={vi.fn()}
       onRemoveWish={vi.fn()}
       onClearWish={vi.fn()}
@@ -70,10 +74,10 @@ const renderRosterTable = (props = {}) =>
   );
 
 describe('RosterTable', () => {
-  it('shows loading copy instead of the empty state while roster wishes are loading', () => {
-    renderRosterTable({ loading: true, members: [] });
+  it('shows loading skeletons instead of the empty state while roster wishes are loading', () => {
+    const { container } = renderRosterTable({ loading: true, members: [] });
 
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
     expect(screen.queryByText('No data to display')).not.toBeInTheDocument();
   });
 
@@ -99,6 +103,28 @@ describe('RosterTable', () => {
       onSelectionStatusChange: vi.fn(),
     });
 
-    expect(screen.getByRole('combobox')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Selected' })).toBeInTheDocument();
+  });
+
+  it('renders inline edit controls without crashing', () => {
+    renderRosterTable({
+      loading: false,
+      members: [member],
+      currentUserId: 'user-1',
+      editingUserId: 'user-1',
+      editWishes: [
+        { classId: 'warrior', specIds: ['warrior-arms'], comment: '' },
+        { classId: '', specIds: [], comment: '' },
+        { classId: '', specIds: [], comment: '' },
+      ],
+      editStatus: 'confirmed',
+      editSelectionStatus: 'selected',
+      canManageWishes: true,
+      onSelectionStatusChange: vi.fn(),
+    });
+
+    expect(screen.getByRole('button', { name: 'Selected' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
   });
 });

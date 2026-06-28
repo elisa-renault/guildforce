@@ -149,6 +149,7 @@ export interface Translations {
     empty: string;
     favorites: string;
     guilds: string;
+    otherGuilds: string;
     recent: string;
     search: string;
     loading: string;

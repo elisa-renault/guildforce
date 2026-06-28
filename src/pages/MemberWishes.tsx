@@ -23,6 +23,7 @@ import {
 } from '@/data/wowClasses';
 import { WishValidationBadge } from '@/components/dashboard/WishValidationBadge';
 import { MemberWishEditor } from '@/components/dashboard/MemberWishEditor';
+import { RosterDecisionToggle } from '@/components/dashboard/RosterDecisionToggle';
 import { CommitmentStatus } from '@/components/CommitmentToggle';
 import { RosterSeasonOutcome, RosterSelectionStatus, ValidationStatus, WishData } from '@/types/guild';
 import { cn } from '@/lib/utils';
@@ -31,7 +32,6 @@ import { useBattletagVisibility } from '@/hooks/useBattletagVisibility';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { resolveSpecOrder } from '@/lib/wishOrder';
 import { commitmentBadgeClass, toneBadgeClass, toneCalloutClass, toneTextClass } from '@/lib/design-tokens';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SeasonSelector, SeasonStateCallout } from '@/components/seasons/SeasonSelector';
 import { isSeasonSchemaUnavailable, type SeasonSupportMode } from '@/lib/seasonSupport';
 import type { GuildSeason } from '@/types/seasons';
@@ -945,21 +945,13 @@ const MemberWishes = () => {
             <div className="min-w-0 space-y-2">
               <div className="text-xs uppercase tracking-wide text-muted-foreground">{t.wishes.rosterDecision.summaryTitle}</div>
               {canManageWishes && searchParams.get('rosterId') ? (
-                <Select
+                <RosterDecisionToggle
                   value={member?.rosterDecision || 'undecided'}
-                  onValueChange={(value) => handleRosterDecisionChange(value as RosterSelectionStatus)}
+                  onChange={handleRosterDecisionChange}
                   disabled={updatingRosterDecision}
-                >
-                  <SelectTrigger className="!h-7 !min-h-7 w-full px-2.5 !py-0 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="undecided">{t.wishes.rosterDecision.undecided}</SelectItem>
-                    <SelectItem value="selected">{t.wishes.rosterDecision.selected}</SelectItem>
-                    <SelectItem value="bench">{t.wishes.rosterDecision.bench}</SelectItem>
-                    <SelectItem value="not_selected">{t.wishes.rosterDecision.notSelected}</SelectItem>
-                  </SelectContent>
-                </Select>
+                  compact
+                  className="w-full"
+                />
               ) : (
                 (() => {
                   const decisionBadge = getRosterDecisionBadge(member?.rosterDecision);

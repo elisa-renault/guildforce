@@ -19,12 +19,13 @@ import { CosmicButton } from '@/components/CosmicButton';
 import { ContextualToolbar } from '@/components/layout/ContextualToolbar';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { GuildWorkspaceShell } from '@/components/guild';
+import type { GuildMainCandidate } from '@/components/guild/GuildMainSelector';
 import { RosterFilters, RosterTable, RosterAnalytics, RosterSelectedTable, type RosterTableColumnId } from '@/components/dashboard';
 import { WishValidationBadge } from '@/components/dashboard/WishValidationBadge';
 import { RosterSelector, RosterEditDialog } from '@/components/roster';
 import { SeasonSelector, SeasonStateCallout, type PrepareSeasonInput } from '@/components/seasons/SeasonSelector';
 import { WishFormEditor } from '@/components/wishes/WishFormEditor';
-import { MemberWish, WishData, RosterFilters as RosterFiltersType, ValidationStatus } from '@/types/guild';
+import { MemberWish, WishData, RosterFilters as RosterFiltersType, RosterSelectionStatus, ValidationStatus } from '@/types/guild';
 import type { GuildSeason } from '@/types/seasons';
 import { Archive, Loader2, Pencil, Play, Plus, Sparkles, Settings, TableIcon, BarChart3, Download, Eye, Lock, Unlock, Clock, UserPlus, MoreVertical, RefreshCw, Columns3 } from 'lucide-react';
 import { exportWishesToCSV } from '@/lib/exportWishes';
@@ -43,6 +44,7 @@ import { getRosterSelectionErrorMessage } from '@/lib/rosterSelectionErrors';
 import { toneCalloutClass, toneTextClass } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { resolveCurrentWowSeasonName } from '@/lib/wowSeasonName';
+import { formatRealmDisplayName } from '@/lib/realms';
 import log from '@/lib/logger';
 import { GlowCard } from '@/components/GlowCard';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -132,42 +134,6 @@ interface RosterSeasonHistoryRow {
   payload: Record<string, unknown> | null;
 }
 
-const FR_REALM_DISPLAY_MAP: Record<string, string> = {
-  archimonde: 'Archimonde',
-  hyjal: 'Hyjal',
-  'les-clairvoyants': 'Les Clairvoyants',
-  'les clairvoyants': 'Les Clairvoyants',
-  'marecage-de-zangar': 'Marécage de Zangar',
-  'marecage de zangar': 'Marécage de Zangar',
-};
-
-const normalizeRealmKey = (value?: string | null) => {
-  if (!value) return '';
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/_/g, ' ')
-    .replace(/-/g, ' ')
-    .replace(/\s+/g, ' ');
-};
-
-const formatRealmDisplayName = (rawName?: string | null, rawSlug?: string | null) => {
-  const slugKey = normalizeRealmKey(rawSlug);
-  const nameKey = normalizeRealmKey(rawName);
-  const key = slugKey || nameKey;
-  if (!key) return '';
-
-  if (FR_REALM_DISPLAY_MAP[key]) return FR_REALM_DISPLAY_MAP[key];
-
-  const dashedKey = key.replace(/\s+/g, '-');
-  if (FR_REALM_DISPLAY_MAP[dashedKey]) return FR_REALM_DISPLAY_MAP[dashedKey];
-
-  return key
-    .split(' ')
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ');
-};
-
 const RosterWishes = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -200,6 +166,7 @@ const RosterWishes = () => {
   const [seasonActionBusy, setSeasonActionBusy] = useState<null | 'archive' | 'activate' | 'rename'>(null);
   const [members, setMembers] = useState<MemberWish[]>([]);
   const [canManageWishes, setCanManageWishes] = useState(false);
+  const [canManageMembers, setCanManageMembers] = useState(false);
   const [isGM, setIsGM] = useState(false);
   const [hasSettingsPermission, setHasSettingsPermission] = useState(false);
   const [isAdminReadOnly, setIsAdminReadOnly] = useState(false);
@@ -224,6 +191,8 @@ const RosterWishes = () => {
     { classId: '', specIds: [], comment: '' },
   ]);
   const [editStatus, setEditStatus] = useState<CommitmentStatus>('undecided');
+  const [editSelectionStatus, setEditSelectionStatus] = useState<RosterSelectionStatus>('undecided');
+  const [editGuildMain, setEditGuildMain] = useState<Pick<GuildMainCandidate, 'character_name' | 'character_realm_slug'> | null>(null);
   const [saving, setSaving] = useState(false);
   const [deletingMemberId, setDeletingMemberId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'table' | 'selected' | 'analytics'>('table');
@@ -286,6 +255,7 @@ const RosterWishes = () => {
   const [historyRows, setHistoryRows] = useState<RosterSeasonHistoryRow[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [syncingSeason, setSyncingSeason] = useState(false);
+  const [guildMainRefreshNonce, setGuildMainRefreshNonce] = useState(0);
 
   const isMobile = useIsMobile();
   const rosterSeasonsEnabled = useKillSwitchFeatureEnabled(KILL_SWITCH_FEATURE_FLAGS.rosterSeasons);
@@ -467,6 +437,7 @@ const RosterWishes = () => {
         setIsAdminReadOnly(true);
         setIsGM(false);
         setCanManageWishes(false);
+        setCanManageMembers(false);
         setHasSettingsPermission(true);
       } else {
         navigate('/guilds');
@@ -483,6 +454,13 @@ const RosterWishes = () => {
         p_user_id: user.id,
       });
       setCanManageWishes(!!userIsGM || !!wishPerm);
+
+      const { data: membersPerm } = await supabase.rpc('has_guild_permission', {
+        p_guild_id: foundGuildId,
+        p_permission: 'manage_members',
+        p_user_id: user.id,
+      });
+      setCanManageMembers(!!userIsGM || !!membersPerm);
 
       // Check settings permissions
       const { data: settingsPerm } = await supabase.rpc('has_guild_permission', {
@@ -605,6 +583,11 @@ const RosterWishes = () => {
             .select('id, username, main_character_name')
             .in('id', userIds)
         : { data: [] };
+
+      const { data: effectiveMains } = await supabase.rpc('get_guild_member_main_characters', {
+        p_guild_id: guildId,
+      });
+      const effectiveMainByUserId = new Map((effectiveMains || []).map((row) => [row.user_id, row]));
 
       const { data: intentData } = userIds.length > 0 && seasonFilteringEnabled
         ? await supabase
@@ -792,7 +775,18 @@ const RosterWishes = () => {
           id: m.user_id,
           seasonMemberId: seasonRow?.season_member_id || null,
           username: profile?.username || 'Unknown',
-          mainCharacterName: getMainCharacterName(profile?.main_character_name),
+          mainCharacterName: (() => {
+            const effectiveMain = effectiveMainByUserId.get(m.user_id);
+            if (effectiveMain) {
+              return [
+                effectiveMain.character_name,
+                formatRealmDisplayName(effectiveMain.character_realm, effectiveMain.character_realm_slug),
+              ]
+                .filter(Boolean)
+                .join(' - ');
+            }
+            return getMainCharacterName(profile?.main_character_name);
+          })(),
           rankIndex: seasonRow?.rank_index ?? null,
           status: intentByUserId.get(m.user_id) || (seasonFilteringEnabled ? 'undecided' : m.status),
           wishes_locked: m.wishes_locked,
@@ -884,7 +878,7 @@ const RosterWishes = () => {
     } else if (guildId && !selectedRosterId) {
       setWishesLoading(false);
     }
-  }, [guildId, selectedRosterId, selectedSeasonId, seasonSupportMode]);
+  }, [guildId, selectedRosterId, selectedSeasonId, seasonSupportMode, guildMainRefreshNonce]);
 
   useEffect(() => {
     if (!guildId || !selectedRosterId || seasonSupportMode === 'legacy') return;
@@ -1316,6 +1310,8 @@ const RosterWishes = () => {
       'withdrawn': 'withdrawn',
     };
     setEditStatus(statusMap[member.status] || 'undecided');
+    setEditSelectionStatus(member.selectionStatus || 'undecided');
+    setEditGuildMain(null);
     setEditingUserId(member.id);
   }, [
     canEditArchivedSeasonAsManager,
@@ -1329,6 +1325,12 @@ const RosterWishes = () => {
     toast,
     user?.id,
   ]);
+
+  const cancelEditing = () => {
+    setEditingUserId(null);
+    setEditGuildMain(null);
+    clearPersonalEditIntent();
+  };
 
   useEffect(() => {
     if (searchParams.get('edit') !== 'my-wishes') return;
@@ -1690,15 +1692,20 @@ const RosterWishes = () => {
       const hasWishChanges = !wishSnapshotsEqual(currentWishSnapshot, nextWishSnapshot);
       const currentCommitmentStatus = currentMember.status === 'potential' ? 'undecided' : currentMember.status;
       const hasStatusChanges = currentCommitmentStatus !== editStatus;
+      const currentSelectionStatus = currentMember.selectionStatus || 'undecided';
+      const hasSelectionChanges = canEditAsManager && currentSelectionStatus !== editSelectionStatus;
+      const hasGuildMainChanges = !isEditingExternal && !!editGuildMain;
 
-      if (!hasWishChanges && !hasStatusChanges) {
+      if (!hasWishChanges && !hasStatusChanges && !hasSelectionChanges && !hasGuildMainChanges) {
         setEditingUserId(null);
+        setEditGuildMain(null);
         clearPersonalEditIntent();
         toast({ title: t.wishes.noChangesToSave });
         return;
       }
 
-      if (isEditingExternal) {
+      if (hasWishChanges || hasStatusChanges) {
+        if (isEditingExternal) {
         if (!canEditAsManager || !currentMember.rosterCacheId) {
           throw new Error(s('roster_wishes.external_edit_unauthorized'));
         }
@@ -1721,7 +1728,7 @@ const RosterWishes = () => {
         }
         const { error } = await supabase.rpc('upsert_external_member_wish', payload);
         if (error) throw error;
-      } else {
+        } else {
         const wishesPayload = editWishes
           .filter((w) => !!w.classId)
           .map((w) => ({
@@ -1758,6 +1765,31 @@ const RosterWishes = () => {
             rosterId: selectedRosterId,
           });
         }
+        }
+      }
+
+      if (hasSelectionChanges) {
+        const { error } = await supabase.rpc('set_roster_member_selection', {
+          p_roster_id: selectedRosterId,
+          p_selection_status: editSelectionStatus,
+          p_user_id: isEditingExternal ? null : editingUserId,
+          p_roster_cache_id: isEditingExternal ? currentMember.rosterCacheId ?? null : null,
+          p_season_id: seasonSupportMode === 'enabled' ? selectedSeasonId : null,
+          p_reason_code: currentMember.selectionReasonCode ?? null,
+          p_comment: currentMember.selectionComment ?? null,
+        });
+        if (error) throw error;
+      }
+
+      if (hasGuildMainChanges && editGuildMain) {
+        const { error } = await supabase.rpc('set_guild_member_main_character', {
+          p_guild_id: guildId,
+          p_member_id: editingUserId,
+          p_character_name: editGuildMain.character_name,
+          p_realm_slug: editGuildMain.character_realm_slug,
+        });
+        if (error) throw error;
+        setGuildMainRefreshNonce((value) => value + 1);
       }
 
       toast({
@@ -1766,6 +1798,7 @@ const RosterWishes = () => {
           : interpolateMessage(t.wishes.wishesSavedForMember, { member: currentMember.username }),
       });
       setEditingUserId(null);
+      setEditGuildMain(null);
       clearPersonalEditIntent();
       await fetchWishes();
     } catch (error: unknown) {
@@ -2356,10 +2389,7 @@ const RosterWishes = () => {
               onMoveWish={moveEditWish}
               onReorderWishes={reorderEditWishes}
               onSave={saveEditing}
-              onCancel={() => {
-                setEditingUserId(null);
-                clearPersonalEditIntent();
-              }}
+              onCancel={cancelEditing}
             />
           </div>
         ) : isPrivateMemberSeason ? (
@@ -2398,7 +2428,7 @@ const RosterWishes = () => {
                   onMoveWish={moveEditWish}
                   onReorderWishes={reorderEditWishes}
                   onSave={saveEditing}
-                  onCancel={() => setEditingUserId(null)}
+                  onCancel={cancelEditing}
                 />
               </div>
             ) : currentMember ? (
@@ -2517,21 +2547,32 @@ const RosterWishes = () => {
               <RosterTable
                 members={filteredMembers}
                 loading={wishesLoading}
+                guildId={guildId}
                 currentUserId={user?.id}
                 selectedRosterId={selectedRosterId}
                 selectedSeasonId={selectedSeasonId}
                 editingUserId={editingUserId}
                 editWishes={editWishes}
                 editStatus={editStatus}
+                editSelectionStatus={editSelectionStatus}
+                editGuildMainKey={editGuildMain ? `${editGuildMain.character_name}-${editGuildMain.character_realm_slug}` : null}
                 saving={saving}
                 maxWishes={MAX_WISHES}
                 canManageWishes={canManageWishes && canMutateSelectedSeason}
+                canManageMembers={canManageMembers}
+                onGuildMainChanged={() => setGuildMainRefreshNonce((value) => value + 1)}
                 isRosterLocked={rosterLockState.isLocked}
                 isEditingLocked={isEditingLocked || !canMutateSelectedSeason}
                 onStartEditing={startEditing}
                 onUpdateEditWish={updateEditWish}
                 onEditStatusChange={setEditStatus}
+                onEditSelectionStatusChange={setEditSelectionStatus}
+                onEditGuildMainChange={(candidate) => setEditGuildMain({
+                  character_name: candidate.character_name,
+                  character_realm_slug: candidate.character_realm_slug,
+                })}
                 onSaveEditing={saveEditing}
+                onCancelEditing={cancelEditing}
                 onAddWish={addWish}
                 onRemoveWish={removeWish}
                 onClearWish={clearWish}

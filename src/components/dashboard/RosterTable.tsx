@@ -1,12 +1,13 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
+import { GuildMainSelector, type GuildMainCandidate } from '@/components/guild/GuildMainSelector';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { GlowCard } from '@/components/GlowCard';
 import { CosmicButton } from '@/components/CosmicButton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { DataListSkeleton } from '@/components/ui/data-list-skeleton';
-import { HelpCircle, XCircle, Pencil, Save, Shield, Heart, Sword, Swords, Crosshair, MessageSquare, Plus, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Lock, Unlock, MoreVertical, Loader2, UserPlus, History, UserCheck, UserMinus, UserX, CheckCircle2, Armchair, Clock } from 'lucide-react';
+import { HelpCircle, XCircle, X, Pencil, Save, Shield, Heart, Sword, Swords, Crosshair, MessageSquare, Plus, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Lock, Unlock, MoreVertical, Loader2, UserPlus, History, UserCheck, UserMinus, UserX, CheckCircle2, Armchair, Clock } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getClassById, getLocalizedClassName, getLocalizedSpecName, getSpecById } from '@/data/wowClasses';
 import { MemberWish, RosterSelectionStatus, WishData, WishChoice, ValidationStatus } from '@/types/guild';
@@ -14,6 +15,7 @@ import { InlineWishEditor } from './InlineWishEditor';
 import { WishValidationBadge } from './WishValidationBadge';
 import { CommitmentToggle, CommitmentStatus } from '@/components/CommitmentToggle';
 import { MobileRosterCard } from './MobileRosterCard';
+import { RosterDecisionToggle } from './RosterDecisionToggle';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { commitmentBadgeClass } from '@/lib/design-tokens';
@@ -23,7 +25,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type SortColumn = 'player' | 'status' | 'rosterDecision' | 'wish1' | 'wish2' | 'wish3' | 'wishesCount';
 type SortDirection = 'asc' | 'desc';
@@ -41,15 +42,20 @@ const defaultVisibleColumns: RosterTableColumnId[] = [
 interface RosterTableProps {
   members: MemberWish[];
   loading?: boolean;
+  guildId?: string | null;
   currentUserId: string | undefined;
   selectedRosterId?: string | null;
   selectedSeasonId?: string | null;
   editingUserId: string | null;
   editWishes: WishData[];
   editStatus: CommitmentStatus;
+  editSelectionStatus: RosterSelectionStatus;
+  editGuildMainKey?: string | null;
   saving: boolean;
   maxWishes: number;
   canManageWishes?: boolean;
+  canManageMembers?: boolean;
+  onGuildMainChanged?: () => void;
   isRosterLocked?: boolean;
   isEditingLocked?: boolean;
   onStartEditing: (member: MemberWish) => void;
@@ -59,7 +65,10 @@ interface RosterTableProps {
     value: WishData[keyof WishData]
   ) => void;
   onEditStatusChange: (status: CommitmentStatus) => void;
+  onEditSelectionStatusChange: (status: RosterSelectionStatus) => void;
+  onEditGuildMainChange: (candidate: GuildMainCandidate) => void;
   onSaveEditing: () => void;
+  onCancelEditing: () => void;
   onAddWish: () => void;
   onRemoveWish: (index: number) => void;
   onClearWish: (index: number) => void;
@@ -85,21 +94,29 @@ const roleConfig: Record<string, { icon: typeof Shield; color: string }> = {
 export const RosterTable = ({
   members,
   loading = false,
+  guildId = null,
   currentUserId,
   selectedRosterId,
   selectedSeasonId,
   editingUserId,
   editWishes,
   editStatus,
+  editSelectionStatus,
+  editGuildMainKey = null,
   saving,
   maxWishes,
   canManageWishes = false,
+  canManageMembers = false,
+  onGuildMainChanged,
   isRosterLocked = false,
   isEditingLocked = false,
   onStartEditing,
   onUpdateEditWish,
   onEditStatusChange,
+  onEditSelectionStatusChange,
+  onEditGuildMainChange,
   onSaveEditing,
+  onCancelEditing,
   onAddWish,
   onRemoveWish,
   onClearWish,
@@ -115,6 +132,8 @@ export const RosterTable = ({
   visibleColumns = defaultVisibleColumns,
 }: RosterTableProps) => {
   const wishColumnClassName = 'w-[210px] min-w-[210px]';
+  const actionColumnClassName = 'w-[92px] min-w-[92px]';
+  const actionColumnWidth = 92;
   const cellPaddingClassName = 'px-1 py-1';
   const isColumnVisible = (column: RosterTableColumnId) => visibleColumns.includes(column);
   const visibleDataColumnCount = visibleColumns.length;
@@ -126,7 +145,7 @@ export const RosterTable = ({
     + (isColumnVisible('wish1') ? 210 : 0)
     + (isColumnVisible('wish2') ? 210 : 0)
     + (isColumnVisible('wish3') ? 210 : 0)
-    + 48;
+    + actionColumnWidth;
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const { regionSlug, serverSlug, guildSlug } = useParams();
@@ -714,7 +733,7 @@ export const RosterTable = ({
               {isColumnVisible('wish3') && (
                 <SortableHeader column="wish3" className={wishColumnClassName}><span className="hidden md:inline">{rosterTableLabels.choice3}</span><span className="md:hidden">#3</span></SortableHeader>
               )}
-              <TableHead className="w-[48px] px-1 py-1 text-xs text-muted-foreground"></TableHead>
+              <TableHead className={cn(actionColumnClassName, 'px-1 py-1 text-xs text-muted-foreground')}></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -729,7 +748,7 @@ export const RosterTable = ({
                   ? t.wishes.lockedMemberDesc
                   : '';
 
-              const rowActions = [
+              const rowActions = isEditing ? [] : [
                 ...(canManageWishes && onViewHistory && member.seasonMemberId ? [{
                   key: 'history',
                   label: t.wishes.memberDetail.history,
@@ -756,20 +775,17 @@ export const RosterTable = ({
                 }] : []),
                 ...((isOwnRow || canManageWishes) && !isEditingLocked ? [{
                   key: 'edit',
-                  label: isEditing ? t.common.save : t.common.edit,
-                  icon: isEditing ? Save : Pencil,
+                  label: t.common.edit,
+                  icon: Pencil,
                   onClick: () => {
-                    if (isEditing) {
-                      onSaveEditing();
-                    } else {
-                      onStartEditing(member);
-                    }
+                    onStartEditing(member);
                   },
-                  loading: isEditing && saving,
+                  loading: false,
                   disabled: false,
                 }] : []),
               ];
               const playerSubtitle = member.mainCharacterName;
+              const canEditGuildMain = !member.isExternal && (isOwnRow || canManageMembers);
 
               const handleRowClick = () => {
                 // Navigate to member wishes page (read-only view) for all members
@@ -796,6 +812,17 @@ export const RosterTable = ({
                       <div className="flex min-w-0 flex-col gap-0.5">
                         <div className="flex items-center gap-1.5">
                           <span className="min-w-0 truncate">{member.username}</span>
+                          {isEditing && canEditGuildMain && (
+                            <GuildMainSelector
+                              guildId={guildId}
+                              memberId={member.id}
+                              canEdit={canEditGuildMain}
+                              compact
+                              deferredSelectionKey={editGuildMainKey}
+                              onDeferredSelect={onEditGuildMainChange}
+                              onChanged={onGuildMainChanged}
+                            />
+                          )}
                           {member.isExternal && (
                             <TooltipProvider delayDuration={200}>
                               <Tooltip>
@@ -812,8 +839,8 @@ export const RosterTable = ({
                           )}
                         </div>
                         {playerSubtitle && (
-                          <div className="text-[11px] text-muted-foreground truncate">
-                            <span className="text-foreground/80">{playerSubtitle}</span>
+                          <div className="flex min-w-0 items-center gap-1 text-[11px] text-muted-foreground">
+                            <span className="truncate text-foreground/80">{playerSubtitle}</span>
                           </div>
                         )}
                       </div>
@@ -853,27 +880,25 @@ export const RosterTable = ({
                     )}
                     {isColumnVisible('rosterDecision') && (
                     <TableCell className={cellPaddingClassName}>
-                      {canManageWishes && onSelectionStatusChange ? (
+                      {isEditing && canManageWishes ? (
                         <div onClick={(e) => e.stopPropagation()}>
-                          <Select
+                          <RosterDecisionToggle
+                            value={editSelectionStatus}
+                            onChange={onEditSelectionStatusChange}
+                            disabled={isEditingLocked}
+                            compact
+                            className="w-full"
+                          />
+                        </div>
+                      ) : canManageWishes && onSelectionStatusChange ? (
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <RosterDecisionToggle
                             value={member.selectionStatus || 'undecided'}
-                            onValueChange={(value) => onSelectionStatusChange(member.id, value as RosterSelectionStatus)}
+                            onChange={(value) => onSelectionStatusChange(member.id, value)}
                             disabled={updatingSelectionMemberId === member.id}
-                          >
-                            <SelectTrigger
-                              className="h-8 w-full min-w-0 px-3 text-xs md:text-sm"
-                              onClick={(e) => e.stopPropagation()}
-                              onPointerDown={(e) => e.stopPropagation()}
-                            >
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                            <SelectItem value="undecided">{t.wishes.rosterDecision.undecided}</SelectItem>
-                            <SelectItem value="selected">{t.wishes.rosterDecision.selected}</SelectItem>
-                            <SelectItem value="bench">{t.wishes.rosterDecision.bench}</SelectItem>
-                            <SelectItem value="not_selected">{t.wishes.rosterDecision.notSelected}</SelectItem>
-                            </SelectContent>
-                          </Select>
+                            compact
+                            className="w-full"
+                          />
                         </div>
                       ) : (
                         (() => {
@@ -912,7 +937,7 @@ export const RosterTable = ({
                       {isEditing ? renderEditWishCell(2, editWishes.length > 1) : renderWishCell(member.id, member.wishes, 3, !!member.isExternal)}
                     </TableCell>
                     )}
-                    <TableCell className="px-1 py-1">
+                    <TableCell className={cn(actionColumnClassName, 'px-1 py-1')}>
                       <div className="flex items-center justify-end gap-1">
                         {effectiveLocked && (
                           <TooltipProvider delayDuration={200}>
@@ -928,7 +953,50 @@ export const RosterTable = ({
                             </Tooltip>
                           </TooltipProvider>
                         )}
-                        {rowActions.length <= 1 && rowActions.map((action) => (
+                        {isEditing && (
+                          <>
+                            <TooltipProvider delayDuration={200}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <CosmicButton
+                                    size="sm"
+                                    variant="default"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onSaveEditing();
+                                    }}
+                                    loading={saving}
+                                    disabled={saving}
+                                    aria-label={t.common.save}
+                                    icon={saving ? undefined : <Save className="h-4 w-4" strokeWidth={1.5} />}
+                                    className="!h-9 !max-h-9 !min-h-9 !w-9 !min-w-9 !max-w-9 !p-0"
+                                  />
+                                </TooltipTrigger>
+                                <TooltipContent side="left">{t.common.save}</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                            <TooltipProvider delayDuration={200}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <CosmicButton
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onCancelEditing();
+                                    }}
+                                    disabled={saving}
+                                    aria-label={t.common.cancel}
+                                    icon={<X className="h-4 w-4" strokeWidth={1.5} />}
+                                    className="!h-9 !max-h-9 !min-h-9 !w-9 !min-w-9 !max-w-9 !p-0"
+                                  />
+                                </TooltipTrigger>
+                                <TooltipContent side="left">{t.common.cancel}</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </>
+                        )}
+                        {!isEditing && rowActions.length <= 1 && rowActions.map((action) => (
                           <TooltipProvider key={action.key} delayDuration={200}>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -955,7 +1023,7 @@ export const RosterTable = ({
                             </Tooltip>
                           </TooltipProvider>
                         ))}
-                        {rowActions.length > 1 && (
+                        {!isEditing && rowActions.length > 1 && (
                           <DropdownMenu modal={false}>
                             <DropdownMenuTrigger asChild>
                               <CosmicButton
