@@ -151,4 +151,20 @@ describe('product event analytics', () => {
       p_occurred_at: null,
     });
   });
+
+  it('tracks activated first action only once from the client', async () => {
+    const rpc = vi.fn().mockResolvedValue({ error: null });
+    const supabase = { rpc } as unknown as SupabaseClient<Database>;
+
+    await trackProductEvent(supabase, 'activated_first_action', {
+      source: 'wishes_page',
+      featureArea: 'wishes',
+    });
+    await trackProductEvent(supabase, 'activated_first_action', {
+      source: 'poll_view',
+      featureArea: 'polls',
+    });
+
+    expect(rpc).toHaveBeenCalledTimes(1);
+  });
 });

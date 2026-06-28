@@ -6,6 +6,7 @@ import { appRoutes, getRouteMeta } from "./routes";
 
 import { PostHogAuthSync } from "@/components/analytics/PostHogAuthSync";
 import { PostHogConsentSync } from "@/components/analytics/PostHogConsentSync";
+import { PostHogErrorBoundary } from "@/components/analytics/PostHogErrorBoundary";
 import { Footer } from "@/components/Footer";
 import { GlobalNav } from "@/components/GlobalNav";
 import { StickyBottomBar } from "@/components/StickyBottomBar";
@@ -55,18 +56,20 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
       <AuthProvider>
-        <PostHogConsentSync />
-        <PostHogAuthSync />
-        <TooltipProvider>
-          <div className="dark flex min-h-dvh min-h-screen flex-col">
-            <Sonner />
-            <BrowserRouter>
-              <CommandPaletteProvider>
-                <AppLayout />
-              </CommandPaletteProvider>
-            </BrowserRouter>
-          </div>
-        </TooltipProvider>
+        <PostHogErrorBoundary>
+          <PostHogConsentSync />
+          <PostHogAuthSync />
+          <TooltipProvider>
+            <div className="dark flex min-h-dvh min-h-screen flex-col">
+              <Sonner />
+              <BrowserRouter>
+                <CommandPaletteProvider>
+                  <AppLayout />
+                </CommandPaletteProvider>
+              </BrowserRouter>
+            </div>
+          </TooltipProvider>
+        </PostHogErrorBoundary>
       </AuthProvider>
     </LanguageProvider>
   </QueryClientProvider>

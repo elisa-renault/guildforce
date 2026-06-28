@@ -20,6 +20,8 @@ import type { GuildSeason } from '@/types/seasons';
 import { Loader2, Save, GripVertical, Plus, Trash2, ChevronUp, ChevronDown, Lock, Clock } from 'lucide-react';
 
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
+import { KILL_SWITCH_FEATURE_FLAGS, useKillSwitchFeatureEnabled } from '@/lib/featureFlags';
+import { capturePostHogProductEvent, trackProductEvent } from '@/lib/productEvents';
 import { resolveSpecOrder } from '@/lib/wishOrder';
 import { formatDateTimeLocalized, formatLabelValue, interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
@@ -201,6 +203,7 @@ const Wishes = () => {
   const { toast } = useToast();
   const requestedRosterId = new URLSearchParams(location.search).get('rosterId');
   const requestedSeasonId = new URLSearchParams(location.search).get('seasonId');
+  const rosterSeasonsEnabled = useKillSwitchFeatureEnabled(KILL_SWITCH_FEATURE_FLAGS.rosterSeasons);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [guildId, setGuildId] = useState<string | null>(null);
@@ -238,6 +241,14 @@ const Wishes = () => {
     t.wishes.secondChoice,
     t.wishes.thirdChoice,
   ];
+
+  useEffect(() => {
+    if (!rosterSeasonsEnabled) {
+      setSeasonSupportMode('legacy');
+      setSeasons([]);
+      setSelectedSeasonId(null);
+    }
+  }, [rosterSeasonsEnabled]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -326,32 +337,38 @@ const Wishes = () => {
           initialRosterId = initialRoster.id;
           setSelectedRosterId(initialRoster.id);
 
-          const { data: seasonsData, error: seasonsError } = await supabase
-            .from('roster_wish_seasons')
-            .select('*')
-            .eq('guild_id', foundGuildId)
-            .eq('roster_id', initialRoster.id)
-            .order('state', { ascending: true })
-            .order('created_at', { ascending: false });
-          if (seasonsError && isSeasonSchemaUnavailable(seasonsError)) {
+          if (!rosterSeasonsEnabled) {
             setSeasonSupportMode('legacy');
             setSeasons([]);
             setSelectedSeasonId(null);
           } else {
-            const nextSeasons = (seasonsData || []) as GuildSeason[];
-            if (nextSeasons.length === 0) {
+            const { data: seasonsData, error: seasonsError } = await supabase
+              .from('roster_wish_seasons')
+              .select('*')
+              .eq('guild_id', foundGuildId)
+              .eq('roster_id', initialRoster.id)
+              .order('state', { ascending: true })
+              .order('created_at', { ascending: false });
+            if (seasonsError && isSeasonSchemaUnavailable(seasonsError)) {
               setSeasonSupportMode('legacy');
               setSeasons([]);
               setSelectedSeasonId(null);
             } else {
-              setSeasonSupportMode('enabled');
-              setSeasons(nextSeasons);
-              initialSeason =
-                nextSeasons.find((season) => season.id === requestedSeasonId) ||
-                nextSeasons.find((season) => season.state === 'active') ||
-                nextSeasons[0];
-              if (initialSeason) {
-                setSelectedSeasonId(initialSeason.id);
+              const nextSeasons = (seasonsData || []) as GuildSeason[];
+              if (nextSeasons.length === 0) {
+                setSeasonSupportMode('legacy');
+                setSeasons([]);
+                setSelectedSeasonId(null);
+              } else {
+                setSeasonSupportMode('enabled');
+                setSeasons(nextSeasons);
+                initialSeason =
+                  nextSeasons.find((season) => season.id === requestedSeasonId) ||
+                  nextSeasons.find((season) => season.state === 'active') ||
+                  nextSeasons[0];
+                if (initialSeason) {
+                  setSelectedSeasonId(initialSeason.id);
+                }
               }
             }
           }
@@ -390,7 +407,7 @@ const Wishes = () => {
     };
 
     fetchData();
-  }, [user, authLoading, regionSlug, serverSlug, guildSlug, navigate, requestedRosterId, requestedSeasonId]);
+  }, [user, authLoading, regionSlug, serverSlug, guildSlug, navigate, requestedRosterId, requestedSeasonId, rosterSeasonsEnabled]);
 
   // Fetch wishes when roster changes
   useEffect(() => {
@@ -606,6 +623,19 @@ const Wishes = () => {
       }
       const { error } = await supabase.rpc('upsert_member_roster_wishes', payload);
       if (error) throw error;
+
+      capturePostHogProductEvent('wish_created', {
+        source: 'member_wishes_page',
+        feature_area: 'wishes',
+        guild_id: guildId,
+        roster_id: selectedRosterId,
+      });
+      void trackProductEvent(supabase, 'activated_first_action', {
+        source: 'member_wishes_page',
+        featureArea: 'wishes',
+        guildId,
+        rosterId: selectedRosterId,
+      });
 
       const [{ data: intentData }, { data: memberData }, { data: wishesData }] = await Promise.all([
         seasonSupportMode === 'enabled' && selectedSeasonId

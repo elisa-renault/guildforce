@@ -45,6 +45,7 @@ interface TrackProductEventOptions {
 }
 
 const POSTHOG_ONCE_EVENT_NAMES = new Set<ProductEventName>(['first_login', 'app_session_started']);
+const SUPABASE_ONCE_EVENT_NAMES = new Set<SupabaseProductEventName>(['activated_first_action']);
 
 const stableHash = (value: string, seed: number): string => {
   let hash = seed;
@@ -97,6 +98,25 @@ const markOnceEventCaptured = (
   sessionId?: string | null,
 ) => {
   const key = getOnceEventStorageKey(eventName, distinctId, sessionId);
+  if (!key) return;
+
+  safeStorage.set('local', key, 'true');
+};
+
+const getSupabaseOnceEventStorageKey = (eventName: SupabaseProductEventName): string | null => {
+  if (!SUPABASE_ONCE_EVENT_NAMES.has(eventName)) return null;
+  return `guildforce_product_once_${eventName}`;
+};
+
+const hasTrackedSupabaseOnceEvent = (eventName: SupabaseProductEventName): boolean => {
+  const key = getSupabaseOnceEventStorageKey(eventName);
+  if (!key) return false;
+
+  return safeStorage.get('local', key) === 'true';
+};
+
+const markSupabaseOnceEventTracked = (eventName: SupabaseProductEventName) => {
+  const key = getSupabaseOnceEventStorageKey(eventName);
   if (!key) return;
 
   safeStorage.set('local', key, 'true');
@@ -172,6 +192,8 @@ export const trackProductEvent = async (
   eventName: SupabaseProductEventName,
   options: TrackProductEventOptions = {},
 ) => {
+  if (hasTrackedSupabaseOnceEvent(eventName)) return;
+
   const properties = toProductEventProperties(options);
 
   const { error } = await supabase.rpc('track_product_event', {
@@ -187,4 +209,7 @@ export const trackProductEvent = async (
   }
 
   capturePostHogProductEvent(eventName, properties);
+  if (!error) {
+    markSupabaseOnceEventTracked(eventName);
+  }
 };

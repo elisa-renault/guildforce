@@ -37,6 +37,7 @@ describe('posthog client', () => {
       expect.objectContaining({
         api_host: 'https://eu.i.posthog.com',
         autocapture: false,
+        capture_exceptions: true,
         defaults: '2026-01-30',
         capture_pageview: 'history_change',
         capture_pageleave: 'if_capture_pageview',

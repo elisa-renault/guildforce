@@ -28,6 +28,8 @@ import { Archive, Loader2, Pencil, Play, Plus, Sparkles, Settings, TableIcon, Ba
 import { exportWishesToCSV } from '@/lib/exportWishes';
 import { getGuildWishesPath } from '@/lib/guildSlug';
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
+import { KILL_SWITCH_FEATURE_FLAGS, useKillSwitchFeatureEnabled } from '@/lib/featureFlags';
+import { capturePostHogProductEvent, trackProductEvent } from '@/lib/productEvents';
 import { CommitmentStatus } from '@/components/CommitmentToggle';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatDateTimeLocalized, formatLabelValue, interpolateMessage } from '@/i18n/format';
@@ -282,6 +284,7 @@ const RosterWishes = () => {
   const [syncingSeason, setSyncingSeason] = useState(false);
 
   const isMobile = useIsMobile();
+  const rosterSeasonsEnabled = useKillSwitchFeatureEnabled(KILL_SWITCH_FEATURE_FLAGS.rosterSeasons);
 
   const toLocalInputValue = (value?: string | null) => {
     if (!value) return '';
@@ -309,6 +312,14 @@ const RosterWishes = () => {
     setSearchParams(next, { replace: true });
   };
 
+  useEffect(() => {
+    if (!rosterSeasonsEnabled) {
+      setSeasonSupportMode('legacy');
+      setSeasons([]);
+      setSelectedSeasonId(null);
+    }
+  }, [rosterSeasonsEnabled]);
+
   const resolveInitialSeason = (items: GuildSeason[]) => {
     const requestedSeasonId = searchParams.get('seasonId');
     return (
@@ -321,6 +332,13 @@ const RosterWishes = () => {
 
   const fetchSeasons = async (foundGuildId = guildId, rosterId = selectedRosterId) => {
     if (!foundGuildId || !rosterId) return [];
+    if (!rosterSeasonsEnabled) {
+      setSeasonSupportMode('legacy');
+      setSeasons([]);
+      setSelectedSeasonId(null);
+      return [];
+    }
+
     const loadRosterSeasons = () => supabase
       .from('roster_wish_seasons')
       .select('*')
@@ -790,7 +808,7 @@ const RosterWishes = () => {
     // Wait for admin check to complete
     if (adminLoading) return;
     fetchData();
-  }, [user, authLoading, regionSlug, serverSlug, guildSlug, navigate, adminLoading, isGlobalAdmin]);
+  }, [user, authLoading, regionSlug, serverSlug, guildSlug, navigate, adminLoading, isGlobalAdmin, rosterSeasonsEnabled]);
 
   useEffect(() => {
     if (guildId && selectedRosterId && (seasonSupportMode === 'legacy' || selectedSeasonId)) {
@@ -803,7 +821,7 @@ const RosterWishes = () => {
   useEffect(() => {
     if (!guildId || !selectedRosterId || seasonSupportMode === 'legacy') return;
     fetchSeasons(guildId, selectedRosterId);
-  }, [guildId, selectedRosterId, canManageWishes, isAdminReadOnly]);
+  }, [guildId, selectedRosterId, canManageWishes, isAdminReadOnly, rosterSeasonsEnabled, seasonSupportMode]);
 
   useEffect(() => {
     if (!lockDialogOpen) return;
@@ -1579,6 +1597,21 @@ const RosterWishes = () => {
         }
         const { error } = await supabase.rpc('upsert_member_roster_wishes', payload);
         if (error) throw error;
+
+        capturePostHogProductEvent('wish_created', {
+          source: 'roster_wishes_manager',
+          feature_area: 'wishes',
+          guild_id: guildId,
+          roster_id: selectedRosterId,
+        });
+        if (currentMember.id === user.id) {
+          void trackProductEvent(supabase, 'activated_first_action', {
+            source: 'roster_wishes_manager',
+            featureArea: 'wishes',
+            guildId,
+            rosterId: selectedRosterId,
+          });
+        }
       }
 
       toast({

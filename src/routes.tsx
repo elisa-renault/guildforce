@@ -4,6 +4,9 @@ import { matchPath } from "react-router-dom";
 import Index from "./pages/Index";
 import type { Translations } from "@/i18n/translations";
 
+import { FeatureFlagRoute } from "@/components/feature-flags/FeatureFlagRoute";
+import { KILL_SWITCH_FEATURE_FLAGS } from "@/lib/featureFlags";
+
 export type RouteLabelKey = keyof Translations["routeMeta"];
 
 export type RouteBreadcrumb = Array<{
@@ -47,6 +50,9 @@ const AdminDesignSystemPage = lazy(() => import("./pages/AdminDesignSystemPage")
 const LegalPage = lazy(() => import("./pages/LegalPage"));
 const Changelog = lazy(() => import("./pages/Changelog"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+
+const guildOverviewFallback = (params: Readonly<Record<string, string | undefined>>) =>
+  `/guild/${params.regionSlug}/${params.serverSlug}/${params.guildSlug}`;
 
 export const appRoutes: AppRoute[] = [
   {
@@ -167,7 +173,11 @@ export const appRoutes: AppRoute[] = [
   },
   {
     path: "/guild/:regionSlug/:serverSlug/:guildSlug/vault",
-    element: <GuildVault />,
+    element: (
+      <FeatureFlagRoute flagKey={KILL_SWITCH_FEATURE_FLAGS.vault} fallbackPath={guildOverviewFallback}>
+        <GuildVault />
+      </FeatureFlagRoute>
+    ),
     title: "guildVault",
     layout: "guild-workspace",
     requiresAuth: true,
@@ -223,21 +233,33 @@ export const appRoutes: AppRoute[] = [
   },
   {
     path: "/guild/:regionSlug/:serverSlug/:guildSlug/atlas",
-    element: <GuildAtlas />,
+    element: (
+      <FeatureFlagRoute flagKey={KILL_SWITCH_FEATURE_FLAGS.atlas} fallbackPath={guildOverviewFallback}>
+        <GuildAtlas />
+      </FeatureFlagRoute>
+    ),
     title: "guildAtlas",
     layout: "guild-workspace",
     requiresAuth: true,
   },
   {
     path: "/guild/:regionSlug/:serverSlug/:guildSlug/atlas/new",
-    element: <GuildAtlasEditor />,
+    element: (
+      <FeatureFlagRoute flagKey={KILL_SWITCH_FEATURE_FLAGS.atlas} fallbackPath={guildOverviewFallback}>
+        <GuildAtlasEditor />
+      </FeatureFlagRoute>
+    ),
     title: "guildAtlasNew",
     layout: "guild-workspace",
     requiresAuth: true,
   },
   {
     path: "/guild/:regionSlug/:serverSlug/:guildSlug/atlas/:documentId/edit",
-    element: <GuildAtlasEditor />,
+    element: (
+      <FeatureFlagRoute flagKey={KILL_SWITCH_FEATURE_FLAGS.atlas} fallbackPath={guildOverviewFallback}>
+        <GuildAtlasEditor />
+      </FeatureFlagRoute>
+    ),
     title: "guildAtlasEdit",
     layout: "guild-workspace",
     requiresAuth: true,

@@ -26,6 +26,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
+import { KILL_SWITCH_FEATURE_FLAGS, useKillSwitchFeatureEnabled } from '@/lib/featureFlags';
 import { navItemClass } from '@/lib/nav-styles';
 import { cn } from '@/lib/utils';
 
@@ -95,6 +96,8 @@ export const GuildWorkspaceShell = ({
   });
   const [resolvedSettingsPermission, setResolvedSettingsPermission] = useState(Boolean(hasSettingsPermission));
   const [resolvedVaultAccess, setResolvedVaultAccess] = useState(Boolean(hasVaultAccess));
+  const atlasEnabled = useKillSwitchFeatureEnabled(KILL_SWITCH_FEATURE_FLAGS.atlas);
+  const vaultEnabled = useKillSwitchFeatureEnabled(KILL_SWITCH_FEATURE_FLAGS.vault);
   const userId = user?.id;
   const normalizedActiveTab = normalizeTab(activeTab);
 
@@ -207,7 +210,7 @@ export const GuildWorkspaceShell = ({
   }, [guildId, hasVaultAccess, isGM, userId]);
 
   const showSettings = isGM || resolvedSettingsPermission;
-  const showVault = isGM || resolvedVaultAccess;
+  const showVault = vaultEnabled && (isGM || resolvedVaultAccess);
   const guildLocation = [guild.server, guild.region?.toUpperCase()].filter(Boolean).join(' • ');
   const sidebarWidth = sidebarCollapsed ? 64 : 248;
   const navItems: GuildWorkspaceNavItem[] = [
@@ -215,7 +218,7 @@ export const GuildWorkspaceShell = ({
     { id: 'roster', label: t.guildNav.wishesTable, icon: Table, path: `${basePath}/roster`, show: true },
     { id: 'polls', label: t.guildNav.polls, icon: BarChart3, path: `${basePath}/polls`, show: true },
     { id: 'members', label: t.guild.members, icon: Users, path: `${basePath}/members`, show: true },
-    { id: 'atlas', label: t.guildNav.atlas, icon: Compass, path: `${basePath}/atlas`, show: true },
+    { id: 'atlas', label: t.guildNav.atlas, icon: Compass, path: `${basePath}/atlas`, show: atlasEnabled },
     { id: 'vault', label: t.guildNav.vault, icon: LockKeyhole, path: `${basePath}/vault`, show: showVault },
     { id: 'settings', label: t.guildNav.settings, icon: Settings, path: `${basePath}/settings`, show: showSettings },
   ];

@@ -13,6 +13,7 @@ import { Loader2, Shield, Heart, Swords, Crosshair, CheckCircle2, XCircle, Penci
 import { CosmicButton } from '@/components/CosmicButton';
 import { getGuildPath } from '@/lib/guildSlug';
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
+import { KILL_SWITCH_FEATURE_FLAGS, useKillSwitchFeatureEnabled } from '@/lib/featureFlags';
 import {
   getClassById,
   getLocalizedClassName,
@@ -168,6 +169,7 @@ const MemberWishes = () => {
   const [editStatus, setEditStatus] = useState<CommitmentStatus>('undecided');
   const [savingWishes, setSavingWishes] = useState(false);
   const [refreshNonce, setRefreshNonce] = useState(0);
+  const rosterSeasonsEnabled = useKillSwitchFeatureEnabled(KILL_SWITCH_FEATURE_FLAGS.rosterSeasons);
   const getErrorMessage = (error: unknown) => {
     if (error instanceof Error) return error.message;
     if (typeof error === 'object' && error) {
@@ -183,6 +185,14 @@ const MemberWishes = () => {
     memberId,
     { skipSelfCheck: true }
   );
+
+  useEffect(() => {
+    if (!rosterSeasonsEnabled) {
+      setSeasonSupportMode('legacy');
+      setSeasons([]);
+      setSelectedSeasonId(null);
+    }
+  }, [rosterSeasonsEnabled]);
 
   // Handle back navigation - use history or fallback to roster page
   const handleBack = useCallback(() => {
@@ -219,7 +229,7 @@ const MemberWishes = () => {
       const requestedSeasonId = searchParams.get('seasonId');
       const rosterId = searchParams.get('rosterId');
       let initialSeason: GuildSeason | null = null;
-      if (rosterId) {
+      if (rosterId && rosterSeasonsEnabled) {
         const { data: seasonsData, error: seasonsError } = await supabase
           .from('roster_wish_seasons')
           .select('*')
@@ -248,6 +258,10 @@ const MemberWishes = () => {
             setSelectedSeasonId(initialSeason?.id || null);
           }
         }
+      } else if (rosterId && !rosterSeasonsEnabled) {
+        setSeasonSupportMode('legacy');
+        setSeasons([]);
+        setSelectedSeasonId(null);
       }
 
       // Check if current user is GM
@@ -455,7 +469,7 @@ const MemberWishes = () => {
     };
 
     fetchData();
-  }, [user, authLoading, regionSlug, serverSlug, guildSlug, memberId, navigate, searchParams, refreshNonce]);
+  }, [user, authLoading, regionSlug, serverSlug, guildSlug, memberId, navigate, searchParams, refreshNonce, rosterSeasonsEnabled]);
 
   // Handle validation
   const handleValidation = async (choiceIndex: number, status: ValidationStatus) => {

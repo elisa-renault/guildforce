@@ -20,6 +20,7 @@ import { useGuildAccessState, type GuildAccessStateGuild } from '@/hooks/useGuil
 import { useGuildRankLabels } from '@/hooks/useGuildRankLabels';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { supabase } from '@/integrations/supabase/client';
+import { KILL_SWITCH_FEATURE_FLAGS, useKillSwitchFeatureEnabled } from '@/lib/featureFlags';
 import { toNormalizedRealmSlug } from '@/lib/guildDiscovery';
 import { getVisibleGuildSettingsSections } from '@/lib/guildSettingsSections';
 import { getGuildPath } from '@/lib/guildSlug';
@@ -88,11 +89,12 @@ const GuildSettings = () => {
   const [ranks, setRanks] = useState<GuildRank[]>([]);
   const [activeSection, setActiveSection] = useState<SettingsSection>('profile');
   const { rankLabels, reload: reloadRankLabels } = useGuildRankLabels({ guildId: displayGuild?.id });
+  const vaultEnabled = useKillSwitchFeatureEnabled(KILL_SWITCH_FEATURE_FLAGS.vault);
 
   const basePath = `/guild/${regionSlug}/${serverSlug}/${guildSlug}`;
   const hasSettingsAccess =
     isGM || hasManageWishes || hasManageRosters || hasViewActivityLog || hasManageVault || hasViewVaultAudit;
-  const hasVaultPageAccess = isGM || hasVaultAccess;
+  const hasVaultPageAccess = vaultEnabled && (isGM || hasVaultAccess);
   const visibleSections = getVisibleGuildSettingsSections({
     gm: isGM,
     wishes: hasManageWishes,

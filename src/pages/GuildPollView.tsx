@@ -19,8 +19,10 @@ import { usePollTextAiSummaries } from '@/hooks/usePollTextAiSummaries';
 import { formatDateLocalized } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { supabase } from '@/integrations/supabase/client';
+import { KILL_SWITCH_FEATURE_FLAGS, useKillSwitchFeatureEnabled } from '@/lib/featureFlags';
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
 import { isReadOnlyResponsesView, shouldShowPollResultsPane } from '@/lib/pollViewMode';
+import { capturePostHogProductEvent, trackProductEvent } from '@/lib/productEvents';
 
 const GuildPollView = () => {
   const navigate = useNavigate();
@@ -43,6 +45,7 @@ const GuildPollView = () => {
   const { poll: pollResults, loading: resultsLoading, refetch: refetchResults } = usePollResults(pollId);
   const { submitAllResponses, checkCanViewResults, checkCanRespond, saving } = usePollMutations();
   const { hasPermission: hasManagePolls } = useHasGuildPermission(guildId, 'manage_polls');
+  const pollAiEnabled = useKillSwitchFeatureEnabled(KILL_SWITCH_FEATURE_FLAGS.pollAi);
   const sm = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
     resolveSemanticMessage({ key, language, translations: t });
   const getErrorMessage = (error: unknown) =>
@@ -82,7 +85,6 @@ const GuildPollView = () => {
     userCanRespond,
     userCanViewResults,
   });
-  const usesFullResultsLayout = showResultsPane && userCanViewResults;
   const showOuterHeader = !(showResultsPane && userCanViewResults);
   const canToggleResults = (isGM || hasManagePolls || (userCanViewResults && hasResponded)) && !isClosed;
   const canOpenFullResults = reviewingClosedResponses && userCanViewResults;
@@ -92,7 +94,7 @@ const GuildPollView = () => {
     error: aiSummariesError,
   } = usePollTextAiSummaries({
     poll: pollResults || poll,
-    enabled: showResultsPane && userCanViewResults,
+    enabled: pollAiEnabled && showResultsPane && userCanViewResults,
   });
 
   useEffect(() => {
@@ -158,7 +160,22 @@ const GuildPollView = () => {
 
   const handleSubmit = async (responses: { questionId: string; value: ResponseValue }[]) => {
     try {
-      await submitAllResponses(responses);
+      const submitted = await submitAllResponses(responses);
+      if (!submitted) return;
+
+      capturePostHogProductEvent('poll_voted', {
+        source: 'guild_poll_view',
+        feature_area: 'polls',
+        guild_id: guildId,
+        poll_id: pollId,
+      });
+      void trackProductEvent(supabase, 'activated_first_action', {
+        source: 'guild_poll_view',
+        featureArea: 'polls',
+        guildId,
+        pollId,
+      });
+
       toast({ title: sm('polls.mutations.submit_all_success') });
       setHasResponded(true);
       setShowResults(true);
