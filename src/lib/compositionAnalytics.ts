@@ -81,7 +81,8 @@ const raidEssentialCoverageKeys = [
   'ally_poison_dispels',
   'ally_disease_dispels',
   'ally_bleed_dispels',
-  'ally_fear_charm_sleep_dispels',
+  'ally_fear_dispels',
+  'ally_charm_sleep_dispels',
   'ally_roots_snares_dispels',
 ] as const;
 const raidEnhancementCoverageKeys = [
@@ -189,6 +190,7 @@ const deprecatedCompositionAbilityKeys = new Set([
 export interface BuildCompositionCoverageOptions {
   coverageKinds?: Iterable<string>;
   coverageLabels?: Partial<Record<string, string | { singular: string; plural: string }>>;
+  getWishSpecIds?: (wish: CompositionWishInput) => string[];
 }
 
 const getProviderKey = (classId: string, specId: string | null): string => `${classId}:${specId ?? ''}`;
@@ -455,7 +457,8 @@ export const buildCompositionCoverage = <
       if (!entries) return;
 
       entries.forEach(({ ability, mapping }) => {
-        if (mapping.spec_id && !wish.spec_ids?.includes(mapping.spec_id)) return;
+        const wishSpecIds = options.getWishSpecIds?.(wish) ?? wish.spec_ids ?? [];
+        if (mapping.spec_id && !wishSpecIds.includes(mapping.spec_id)) return;
         coveredForMember.add(ability.coverage_key);
         coveredAbilityProviders.add(
           `${ability.id}:${getProviderKey(mapping.class_id, mapping.spec_id)}`,

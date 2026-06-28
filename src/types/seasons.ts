@@ -6,6 +6,7 @@ export interface GuildSeason {
   id: string;
   guild_id: string;
   roster_id?: string | null;
+  hide_member_wishes: boolean;
   name: string;
   state: GuildSeasonState;
   starts_at: string | null;

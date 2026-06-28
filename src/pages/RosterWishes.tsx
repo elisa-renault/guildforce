@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -20,17 +20,18 @@ import { ContextualToolbar } from '@/components/layout/ContextualToolbar';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { GuildWorkspaceShell } from '@/components/guild';
 import { RosterFilters, RosterTable, RosterAnalytics, RosterSelectedTable, type RosterTableColumnId } from '@/components/dashboard';
+import { WishValidationBadge } from '@/components/dashboard/WishValidationBadge';
 import { RosterSelector, RosterEditDialog } from '@/components/roster';
 import { SeasonSelector, SeasonStateCallout, type PrepareSeasonInput } from '@/components/seasons/SeasonSelector';
+import { WishFormEditor } from '@/components/WishFormEditor';
 import { MemberWish, WishData, RosterFilters as RosterFiltersType, ValidationStatus } from '@/types/guild';
 import type { GuildSeason } from '@/types/seasons';
 import { Archive, Loader2, Pencil, Play, Plus, Sparkles, Settings, TableIcon, BarChart3, Download, Eye, Lock, Unlock, Clock, UserPlus, MoreVertical, RefreshCw, Columns3 } from 'lucide-react';
 import { exportWishesToCSV } from '@/lib/exportWishes';
-import { getGuildWishesPath } from '@/lib/guildSlug';
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
 import { KILL_SWITCH_FEATURE_FLAGS, useKillSwitchFeatureEnabled } from '@/lib/featureFlags';
 import { capturePostHogProductEvent, trackProductEvent } from '@/lib/productEvents';
-import { CommitmentStatus } from '@/components/CommitmentToggle';
+import { CommitmentToggle, CommitmentStatus } from '@/components/CommitmentToggle';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatDateTimeLocalized, formatLabelValue, interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
@@ -43,6 +44,7 @@ import { toneCalloutClass, toneTextClass } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { resolveCurrentWowSeasonName } from '@/lib/wowSeasonName';
 import log from '@/lib/logger';
+import { GlowCard } from '@/components/GlowCard';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -50,6 +52,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
@@ -117,6 +120,7 @@ interface RosterSeasonTableRow {
   roster_cache_id: string | null;
   rank_index: number | null;
   season_status: string;
+  wishes: unknown;
   outcome: MemberWish['seasonOutcome'] | null;
 }
 
@@ -183,7 +187,7 @@ const RosterWishes = () => {
   const [seasonSupportMode, setSeasonSupportMode] = useState<SeasonSupportMode>('enabled');
   const [seasonBusy, setSeasonBusy] = useState(false);
   const [seasonDialogOpen, setSeasonDialogOpen] = useState(false);
-  const [seasonRenameDialogOpen, setSeasonRenameDialogOpen] = useState(false);
+  const [seasonSettingsOpen, setSeasonSettingsOpen] = useState(false);
   const [seasonName, setSeasonName] = useState('');
   const [seasonRenameName, setSeasonRenameName] = useState('');
   const [seasonStartsAt, setSeasonStartsAt] = useState('');
@@ -308,7 +312,23 @@ const RosterWishes = () => {
   const selectSeasonInUrl = (seasonId: string) => {
     setSelectedSeasonId(seasonId);
     const next = new URLSearchParams(searchParams);
+    if (selectedRosterId) next.set('rosterId', selectedRosterId);
     next.set('seasonId', seasonId);
+    setSearchParams(next, { replace: true });
+  };
+
+  const selectRosterInUrl = (rosterId: string) => {
+    setSelectedRosterId(rosterId);
+    const next = new URLSearchParams(searchParams);
+    next.set('rosterId', rosterId);
+    next.delete('seasonId');
+    next.delete('edit');
+    setSearchParams(next, { replace: true });
+  };
+
+  const clearPersonalEditIntent = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete('edit');
     setSearchParams(next, { replace: true });
   };
 
@@ -511,10 +531,17 @@ const RosterWishes = () => {
       );
       setRosters(rostersWithAccess);
 
-      // Select default roster or first accessible
-      const defaultRoster = rostersWithAccess.find(r => r.is_default) || rostersWithAccess[0];
+      // Select requested roster from URL, default roster, or first accessible.
+      const requestedRosterId = searchParams.get('rosterId');
+      const requestedRoster = requestedRosterId
+        ? rostersWithAccess.find((roster) => roster.id === requestedRosterId)
+        : null;
+      const defaultRoster = requestedRoster || rostersWithAccess.find(r => r.is_default) || rostersWithAccess[0];
       if (defaultRoster && !selectedRosterId) {
         setSelectedRosterId(defaultRoster.id);
+        const next = new URLSearchParams(searchParams);
+        next.set('rosterId', defaultRoster.id);
+        setSearchParams(next, { replace: true });
       }
       if (defaultRoster) {
         await fetchSeasons(foundGuildId, selectedRosterId || defaultRoster.id);
@@ -545,6 +572,9 @@ const RosterWishes = () => {
         setExternalCandidates([]);
         return;
       }
+      const privateMemberSeason = seasonFilteringEnabled
+        && !!seasons.find((season) => season.id === selectedSeasonId)?.hide_member_wishes
+        && !canManageWishes;
       if (seasonFilteringEnabled && canManageWishes && !isAdminReadOnly) {
         const { error: materializeError } = await supabase.rpc('materialize_roster_season_members', {
           p_roster_id: selectedRosterId,
@@ -564,7 +594,9 @@ const RosterWishes = () => {
         .select('user_id, status, wishes_locked, role')
         .eq('guild_id', guildId);
 
-      const safeMembers = membersData || [];
+      const safeMembers = privateMemberSeason
+        ? (membersData || []).filter((member) => member.user_id === user?.id)
+        : membersData || [];
       const userIds = safeMembers.map(m => m.user_id);
 
       const { data: profiles } = userIds.length > 0
@@ -686,6 +718,10 @@ const RosterWishes = () => {
         ...new Set([
           ...(wishesData?.filter(w => w.validated_by).map(w => w.validated_by) || []),
           ...(externalWishesData?.filter(w => w.validated_by).map(w => w.validated_by) || []),
+          ...seasonTableList.flatMap((row) => {
+            const rowWishes = Array.isArray(row.wishes) ? row.wishes as Array<{ validated_by?: string | null }> : [];
+            return rowWishes.map((wish) => wish.validated_by).filter(Boolean) as string[];
+          }),
         ]),
       ];
       const { data: validatorProfiles } = validatorIds.length > 0
@@ -697,7 +733,32 @@ const RosterWishes = () => {
       const wishUserIds = new Set((wishesData || []).map((wish) => wish.user_id));
       const intentUserIds = new Set((intentData || []).map((intent) => intent.user_id));
       const selectionUserIds = new Set(selectionsByUserId.keys());
+      const mapSeasonWishes = (seasonRow?: RosterSeasonTableRow) => {
+        const rowWishes = Array.isArray(seasonRow?.wishes)
+          ? seasonRow.wishes as Array<{
+              choice_index?: number;
+              class_id?: string;
+              spec_ids?: string[];
+              spec_order?: string[];
+              comment?: string | null;
+              validation_status?: ValidationStatus;
+              validated_by?: string | null;
+              validated_at?: string | null;
+            }>
+          : [];
+        return rowWishes.map((wish, index) => ({
+          choice_index: wish.choice_index || index + 1,
+          class_id: wish.class_id || '',
+          spec_ids: resolveSpecOrder(wish.spec_ids || [], wish.spec_order),
+          comment: wish.comment || null,
+          validation_status: (wish.validation_status || 'pending') as ValidationStatus,
+          validated_by: wish.validated_by || null,
+          validated_at: wish.validated_at || null,
+          validated_by_username: wish.validated_by ? validatorById.get(wish.validated_by) || null : null,
+        }));
+      };
       const shouldShowLinkedMember = (member: typeof safeMembers[number]) => {
+        if (privateMemberSeason && member.user_id === user?.id) return true;
         const hasRosterSeasonData =
           wishUserIds.has(member.user_id)
           || intentUserIds.has(member.user_id)
@@ -713,18 +774,20 @@ const RosterWishes = () => {
       const mergedMembers: MemberWish[] = safeMembers.filter(shouldShowLinkedMember).flatMap(m => {
         const profile = profilesById.get(m.user_id);
         if (!profile) return [];
-        const memberWishes = wishesData?.filter(w => w.user_id === m.user_id).map(w => ({
-          choice_index: w.choice_index,
-          class_id: w.class_id,
-          spec_ids: resolveSpecOrder(w.spec_ids || [], w.spec_order),
-          comment: w.comment,
-          validation_status: (w.validation_status || 'pending') as ValidationStatus,
-          validated_by: w.validated_by,
-          validated_at: w.validated_at,
-          validated_by_username: w.validated_by ? validatorById.get(w.validated_by) || null : null,
-        })) || [];
         const selection = selectionsByUserId.get(m.user_id);
         const seasonRow = seasonTableByUserId.get(m.user_id);
+        const memberWishes = seasonFilteringEnabled
+          ? mapSeasonWishes(seasonRow)
+          : wishesData?.filter(w => w.user_id === m.user_id).map(w => ({
+              choice_index: w.choice_index,
+              class_id: w.class_id,
+              spec_ids: resolveSpecOrder(w.spec_ids || [], w.spec_order),
+              comment: w.comment,
+              validation_status: (w.validation_status || 'pending') as ValidationStatus,
+              validated_by: w.validated_by,
+              validated_at: w.validated_at,
+              validated_by_username: w.validated_by ? validatorById.get(w.validated_by) || null : null,
+            })) || [];
         return {
           id: m.user_id,
           seasonMemberId: seasonRow?.season_member_id || null,
@@ -745,13 +808,25 @@ const RosterWishes = () => {
       });
 
       const externalByCache = new Map((externalWishesData || []).map((w) => [w.roster_cache_id, w as ExternalWishRow]));
-      const externalMembers: MemberWish[] = (rosterCacheData || [])
+      const externalMembers: MemberWish[] = privateMemberSeason ? [] : (rosterCacheData || [])
         .filter((row) => !row.matched_user_id)
         .flatMap((row) => {
           const ext = externalByCache.get(row.id);
           if (!ext) return [];
           const selection = selectionsByRosterCacheId.get(row.id);
           const seasonRow = seasonTableByRosterCacheId.get(row.id);
+          const externalWishes = seasonFilteringEnabled
+            ? mapSeasonWishes(seasonRow)
+            : [{
+                choice_index: 1,
+                class_id: ext.class_id,
+                spec_ids: resolveSpecOrder(ext.spec_ids || [], ext.spec_order),
+                comment: ext.comment,
+                validation_status: (ext.validation_status || 'pending') as ValidationStatus,
+                validated_by: ext.validated_by,
+                validated_at: ext.validated_at,
+                validated_by_username: ext.validated_by ? validatorById.get(ext.validated_by) || null : null,
+              }];
           return [{
             id: `external:${ext.id}`,
             seasonMemberId: seasonRow?.season_member_id || null,
@@ -763,16 +838,7 @@ const RosterWishes = () => {
             isExternal: true,
             externalWishId: ext.id,
             rosterCacheId: row.id,
-            wishes: [{
-              choice_index: 1,
-              class_id: ext.class_id,
-              spec_ids: resolveSpecOrder(ext.spec_ids || [], ext.spec_order),
-              comment: ext.comment,
-              validation_status: (ext.validation_status || 'pending') as ValidationStatus,
-              validated_by: ext.validated_by,
-              validated_at: ext.validated_at,
-              validated_by_username: ext.validated_by ? validatorById.get(ext.validated_by) || null : null,
-            }],
+            wishes: externalWishes,
             selectionStatus: selection?.selection_status || 'undecided',
             selectionReasonCode: selection?.reason_code || null,
             selectionComment: selection?.comment || null,
@@ -785,14 +851,16 @@ const RosterWishes = () => {
 
       setMembers([...mergedMembers, ...externalMembers]);
 
-      const candidates: ExternalRosterCandidate[] = (rosterCacheData || [])
-        .filter((row) => !row.matched_user_id && isRankInRosterScope(row.rank_index))
-        .map((row) => ({
-          id: row.id,
-          character_name: row.character_name,
-          character_realm: formatRealmDisplayName(row.character_realm, row.character_realm_slug),
-          character_realm_slug: row.character_realm_slug || '',
-        }));
+      const candidates: ExternalRosterCandidate[] = privateMemberSeason
+        ? []
+        : (rosterCacheData || [])
+            .filter((row) => !row.matched_user_id && isRankInRosterScope(row.rank_index))
+            .map((row) => ({
+              id: row.id,
+              character_name: row.character_name,
+              character_realm: formatRealmDisplayName(row.character_realm, row.character_realm_slug),
+              character_realm_slug: row.character_realm_slug || '',
+            }));
       setExternalCandidates(candidates);
     } finally {
       setWishesLoading(false);
@@ -846,6 +914,14 @@ const RosterWishes = () => {
   const canEditArchivedSeasonAsManager = canManageWishes && !isAdminReadOnly && selectedSeason?.state === 'archived';
   const canMutateSelectedSeason = (isSelectedSeasonActive || canEditArchivedSeasonAsManager) && !isAdminReadOnly;
   const canManageSeasonActions = canManageWishes && !isAdminReadOnly && seasonSupportMode === 'enabled' && seasons.length > 0;
+  const isPrivateMemberSeason = !!selectedSeason?.hide_member_wishes && !canManageWishes;
+  const canViewRosterInsights = !isPrivateMemberSeason;
+
+  useEffect(() => {
+    if (!canViewRosterInsights && activeTab !== 'table') {
+      setActiveTab('table');
+    }
+  }, [activeTab, canViewRosterInsights]);
 
   const handlePrepareSeason = async (input: PrepareSeasonInput) => {
     if (!guildId || !selectedRosterId) return;
@@ -938,6 +1014,30 @@ const RosterWishes = () => {
     }
   };
 
+  const handleToggleSeasonPrivacy = async (checked: boolean) => {
+    if (!selectedSeason) return;
+    setSeasonBusy(true);
+    try {
+      const { error } = await supabase
+        .from('roster_wish_seasons')
+        .update({ hide_member_wishes: checked })
+        .eq('id', selectedSeason.id);
+      if (error) throw error;
+      await fetchSeasons(guildId, selectedRosterId);
+      toast({ title: t.seasons.privacyUpdated });
+      await fetchWishes();
+    } catch (error: unknown) {
+      logRosterSeasonError('update_roster_wish_season_privacy_failed', error, {
+        table: 'roster_wish_seasons',
+        operation: 'update',
+        seasonId: selectedSeason.id,
+      });
+      toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
+    } finally {
+      setSeasonBusy(false);
+    }
+  };
+
   const resetSeasonDialogForm = () => {
     setSeasonName('');
     setSeasonStartsAt('');
@@ -953,10 +1053,11 @@ const RosterWishes = () => {
     setSeasonDialogOpen(true);
   };
 
-  const openSeasonRenameDialog = () => {
-    if (!selectedSeason) return;
-    setSeasonRenameName(selectedSeason.name);
-    setSeasonRenameDialogOpen(true);
+  const openSeasonSettings = () => {
+    if (selectedSeason) {
+      setSeasonRenameName(selectedSeason.name);
+    }
+    setSeasonSettingsOpen(true);
   };
 
   const submitSeasonDialog = async () => {
@@ -1016,7 +1117,6 @@ const RosterWishes = () => {
     setSeasonActionBusy('rename');
     try {
       await handleRenameSeason(selectedSeason.id, seasonRenameName.trim());
-      setSeasonRenameDialogOpen(false);
     } finally {
       setSeasonActionBusy(null);
     }
@@ -1157,7 +1257,7 @@ const RosterWishes = () => {
     return parts.length > 0 ? parts.join(' · ') : null;
   };
 
-  const startEditing = (member: MemberWish) => {
+  const startEditing = useCallback((member: MemberWish) => {
     if (!isSelectedSeasonActive && !canEditArchivedSeasonAsManager) {
       toast({ title: t.seasons.archived, description: selectedSeason?.state === 'draft' ? t.seasons.draftHint : t.seasons.archivedHint, variant: 'destructive' });
       return;
@@ -1217,7 +1317,38 @@ const RosterWishes = () => {
     };
     setEditStatus(statusMap[member.status] || 'undecided');
     setEditingUserId(member.id);
-  };
+  }, [
+    canEditArchivedSeasonAsManager,
+    canManageWishes,
+    isAdminReadOnly,
+    isSelectedSeasonActive,
+    rosters,
+    selectedRosterId,
+    selectedSeason?.state,
+    t,
+    toast,
+    user?.id,
+  ]);
+
+  useEffect(() => {
+    if (searchParams.get('edit') !== 'my-wishes') return;
+    if (loading || wishesLoading || editingUserId || !user || !canMutateSelectedSeason || isAdminReadOnly) return;
+
+    const ownMember = members.find((member) => member.id === user.id);
+    if (!ownMember) return;
+
+    startEditing(ownMember);
+  }, [
+    canMutateSelectedSeason,
+    editingUserId,
+    isAdminReadOnly,
+    loading,
+    members,
+    searchParams,
+    startEditing,
+    user,
+    wishesLoading,
+  ]);
 
   const updateRosterLockState = (rosterId: string, updates: Partial<RosterData>) => {
     setRosters(prev => prev.map(r => (r.id === rosterId ? { ...r, ...updates } : r)));
@@ -1461,6 +1592,20 @@ const RosterWishes = () => {
     setEditWishes(updated);
   };
 
+  const moveEditWish = (index: number, direction: 'up' | 'down') => {
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    reorderEditWishes(index, newIndex);
+  };
+
+  const reorderEditWishes = (oldIndex: number, newIndex: number) => {
+    if (oldIndex < 0 || newIndex < 0 || oldIndex >= editWishes.length || newIndex >= editWishes.length) return;
+    setEditWishes((current) => {
+      const next = [...current];
+      const [moved] = next.splice(oldIndex, 1);
+      next.splice(newIndex, 0, moved);
+      return next;
+    });
+  };
 
   const updateEditWish = (
     index: number,
@@ -1548,6 +1693,7 @@ const RosterWishes = () => {
 
       if (!hasWishChanges && !hasStatusChanges) {
         setEditingUserId(null);
+        clearPersonalEditIntent();
         toast({ title: t.wishes.noChangesToSave });
         return;
       }
@@ -1620,6 +1766,7 @@ const RosterWishes = () => {
           : interpolateMessage(t.wishes.wishesSavedForMember, { member: currentMember.username }),
       });
       setEditingUserId(null);
+      clearPersonalEditIntent();
       await fetchWishes();
     } catch (error: unknown) {
       toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
@@ -1825,12 +1972,13 @@ const RosterWishes = () => {
   }, [defaultVisibleRosterColumns, rosterColumnsCustomized]);
 
   // Calculate stats
+  const hasPersonalEditIntent = searchParams.get('edit') === 'my-wishes';
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <CosmicBackground />
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex-1 flex items-center justify-center py-16">
+        {!hasPersonalEditIntent && <CosmicBackground />}
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
       </div>
     );
   }
@@ -1842,6 +1990,14 @@ const RosterWishes = () => {
     memberLocked: false,
   });
   const currentMember = members.find(m => m.id === user?.id);
+  const showPersonalWishEditor = hasPersonalEditIntent
+    && !!currentMember
+    && editingUserId === currentMember.id;
+  const isPersonalEditHandoffPending = hasPersonalEditIntent
+    && canMutateSelectedSeason
+    && !isAdminReadOnly
+    && (!currentMember || editingUserId !== currentMember.id);
+  const privateMemberWishes = currentMember?.wishes.filter((wish) => !!wish.class_id).sort((a, b) => a.choice_index - b.choice_index) || [];
   const editingMember = members.find(m => m.id === editingUserId);
   const currentMemberLockState = resolveWishLockState({
     rosterLocked: currentRoster?.wishes_locked,
@@ -1862,6 +2018,14 @@ const RosterWishes = () => {
     : rosterScheduledLabel
       ? interpolateMessage(t.wishes.lockScheduledDesc, { date: rosterScheduledLabel })
       : null;
+  const beginPersonalWishEdit = () => {
+    const next = new URLSearchParams(searchParams);
+    if (selectedRosterId) next.set('rosterId', selectedRosterId);
+    if (selectedSeasonId) next.set('seasonId', selectedSeasonId);
+    next.set('edit', 'my-wishes');
+    setSearchParams(next, { replace: true });
+    if (currentMember) startEditing(currentMember);
+  };
   const rosterColumnOptions: { id: RosterTableColumnId; label: string }[] = [
     { id: 'status', label: t.dashboard.rosterTable.status },
     { id: 'rosterDecision', label: t.dashboard.rosterTable.decision },
@@ -1913,22 +2077,25 @@ const RosterWishes = () => {
       </DropdownMenuContent>
     </DropdownMenu>
   );
+  const canExportWishes = canManageWishes && !isAdminReadOnly;
   const rosterToolbarActions = [
-    {
-      key: 'export',
-      label: t.dashboard.exportCSV,
-      icon: Download,
-      disabled: wishesLoading || filteredMembers.length === 0,
-      onClick: () => {
-        exportWishesToCSV(filteredMembers, {
-          language,
-          t,
-          rosterName: currentRoster?.name || 'roster',
-          guildName: guild?.name || 'guild',
-        });
-        toast({ title: t.dashboard.exportSuccess });
-      },
-    },
+    ...(canExportWishes
+      ? [{
+          key: 'export',
+          label: t.dashboard.exportCSV,
+          icon: Download,
+          disabled: wishesLoading || filteredMembers.length === 0,
+          onClick: () => {
+            exportWishesToCSV(filteredMembers, {
+              language,
+              t,
+              rosterName: currentRoster?.name || 'roster',
+              guildName: guild?.name || 'guild',
+            });
+            toast({ title: t.dashboard.exportSuccess });
+          },
+        }]
+      : []),
     ...(canManageWishes && !isAdminReadOnly && selectedRosterId && canMutateSelectedSeason
       ? [{
           key: 'add-external',
@@ -1984,50 +2151,10 @@ const RosterWishes = () => {
         <DropdownMenuContent align="end" className="w-64 border-border bg-card">
           {canManageSeasonActions && (
             <>
-              <DropdownMenuItem onClick={openSeasonDialog} className="cursor-pointer">
-                <Plus className="mr-2 h-4 w-4" />
-                {t.seasons.prepareNew}
+              <DropdownMenuItem onClick={openSeasonSettings} className="cursor-pointer">
+                <Settings className="mr-2 h-4 w-4" />
+                {t.seasons.settingsTitle}
               </DropdownMenuItem>
-              {selectedSeason && (
-                <DropdownMenuItem
-                  onClick={openSeasonRenameDialog}
-                  disabled={seasonActionBusy === 'rename'}
-                  className="cursor-pointer"
-                >
-                  <Pencil className="mr-2 h-4 w-4" />
-                  {t.seasons.renameSeason}
-                </DropdownMenuItem>
-              )}
-              {selectedSeason?.state === 'draft' && (
-                <DropdownMenuItem
-                  onClick={activateSelectedSeason}
-                  disabled={seasonActionBusy === 'activate'}
-                  className="cursor-pointer"
-                >
-                  <Play className="mr-2 h-4 w-4" />
-                  {t.seasons.activateDraft}
-                </DropdownMenuItem>
-              )}
-              {selectedSeason?.state === 'archived' && (
-                <DropdownMenuItem
-                  onClick={unarchiveSelectedSeason}
-                  disabled={seasonActionBusy === 'activate'}
-                  className="cursor-pointer"
-                >
-                  <Play className="mr-2 h-4 w-4" />
-                  {t.seasons.unarchiveSeason}
-                </DropdownMenuItem>
-              )}
-              {selectedSeason?.state !== 'archived' && (
-                <DropdownMenuItem
-                  onClick={archiveSelectedSeason}
-                  disabled={seasonActionBusy === 'archive'}
-                  className="cursor-pointer"
-                >
-                  <Archive className="mr-2 h-4 w-4" />
-                  {t.seasons.archiveSeason}
-                </DropdownMenuItem>
-              )}
               {rosterToolbarActions.length > 0 && <DropdownMenuSeparator />}
             </>
           )}
@@ -2060,7 +2187,7 @@ const RosterWishes = () => {
                 <RosterSelector
                   rosters={rosters}
                   selectedRosterId={selectedRosterId}
-                  onSelect={setSelectedRosterId}
+                  onSelect={selectRosterInUrl}
                   showAccessIndicator={true}
                 />
                 <SeasonSelector
@@ -2096,17 +2223,10 @@ const RosterWishes = () => {
                   </Tooltip>
                 </TooltipProvider>
               )}
-              {!isAdminReadOnly && (
+              {!isAdminReadOnly && !isPrivateMemberSeason && (
                 <CosmicButton
                   size="sm"
-                  onClick={() => {
-                    if (!guild) return;
-                    const params = new URLSearchParams();
-                    if (selectedRosterId) params.set('rosterId', selectedRosterId);
-                    if (selectedSeasonId) params.set('seasonId', selectedSeasonId);
-                    const query = params.toString();
-                    navigate(`${getGuildWishesPath(guild.region, guild.server, guild.name)}${query ? `?${query}` : ''}`);
-                  }}
+                  onClick={beginPersonalWishEdit}
                   disabled={!canMutateSelectedSeason}
                   icon={<Sparkles className="h-3.5 w-3.5" strokeWidth={1.5} />}
                   className="h-8 flex-1 justify-center px-3 text-xs"
@@ -2140,17 +2260,10 @@ const RosterWishes = () => {
                   </Tooltip>
                 </TooltipProvider>
               )}
-              {!isAdminReadOnly && (
+              {!isAdminReadOnly && !isPrivateMemberSeason && (
                 <CosmicButton
                   size="sm"
-                  onClick={() => {
-                    if (!guild) return;
-                    const params = new URLSearchParams();
-                    if (selectedRosterId) params.set('rosterId', selectedRosterId);
-                    if (selectedSeasonId) params.set('seasonId', selectedSeasonId);
-                    const query = params.toString();
-                    navigate(`${getGuildWishesPath(guild.region, guild.server, guild.name)}${query ? `?${query}` : ''}`);
-                  }}
+                  onClick={beginPersonalWishEdit}
                   disabled={!canMutateSelectedSeason}
                   icon={<Sparkles className="h-3.5 w-3.5 md:h-4 md:w-4" strokeWidth={1.5} />}
                   className="h-7 w-7 md:h-8 md:w-auto p-0 md:px-3"
@@ -2208,87 +2321,377 @@ const RosterWishes = () => {
           selectedSeason && <SeasonStateCallout season={selectedSeason} />
         )}
 
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'table' | 'selected' | 'analytics')} className="w-full">
-          <TabsList className="mb-3 grid h-auto w-full max-w-full grid-cols-3 overflow-hidden p-1 lg:inline-flex lg:w-auto lg:justify-start">
-            <TabsTrigger value="table" className="min-w-0 gap-1.5 px-2 text-xs sm:gap-2 sm:px-3 sm:text-sm">
-              <TableIcon className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
-              <span className="truncate">{t.dashboard.table}</span>
-            </TabsTrigger>
-            <TabsTrigger value="selected" className="min-w-0 gap-1.5 px-2 text-xs sm:gap-2 sm:px-3 sm:text-sm">
-              <Sparkles className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
-              <span className="truncate">{t.dashboard.selectedValidatedView}</span>
-            </TabsTrigger>
-            <TabsTrigger value="analytics" className="min-w-0 gap-1.5 px-2 text-xs sm:gap-2 sm:px-3 sm:text-sm">
-              <BarChart3 className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
-              <span className="truncate">{t.dashboard.analytics}</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="table" className="space-y-2 p-1 md:p-2">
-            <RosterFilters
-              filters={filters}
-              onFiltersChange={setFilters}
-              rosterMembers={rosterMemberFilterOptions}
-              sortSummary={rosterSortSummary}
-              actions={rosterColumnSelector}
-            />
-
-            <RosterTable
-              members={filteredMembers}
-              loading={wishesLoading}
-              currentUserId={user?.id}
-              selectedRosterId={selectedRosterId}
-              selectedSeasonId={selectedSeasonId}
-              editingUserId={editingUserId}
-              editWishes={editWishes}
-              editStatus={editStatus}
+        {isPersonalEditHandoffPending ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
+        ) : showPersonalWishEditor && currentMember ? (
+          <div className="space-y-4">
+            {isPrivateMemberSeason && (
+              <div className={cn('rounded-lg border px-4 py-3', toneCalloutClass('info'))}>
+                <div className="flex items-start gap-3">
+                  <Lock className={cn('mt-0.5 h-4 w-4 shrink-0', toneTextClass('info'))} />
+                  <div className="space-y-1">
+                    <h2 className="text-sm font-semibold text-foreground">{t.wishes.privateRosterTitle}</h2>
+                    <p className="text-sm text-muted-foreground">{t.wishes.privateRosterMessage}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div className="flex flex-col gap-1">
+              <h3 className="text-lg font-semibold text-foreground">{t.wishes.title}</h3>
+              <p className="text-sm text-muted-foreground">{currentMember.username}</p>
+            </div>
+            <WishFormEditor
+              wishes={editWishes}
+              status={editStatus}
               saving={saving}
+              disabled={isEditingLocked || !canMutateSelectedSeason}
               maxWishes={MAX_WISHES}
-              canManageWishes={canManageWishes && canMutateSelectedSeason}
-              isRosterLocked={rosterLockState.isLocked}
-              isEditingLocked={isEditingLocked || !canMutateSelectedSeason}
-              onStartEditing={startEditing}
-              onUpdateEditWish={updateEditWish}
-              onEditStatusChange={setEditStatus}
-              onSaveEditing={saveEditing}
+              onWishChange={updateEditWish}
+              onStatusChange={setEditStatus}
               onAddWish={addWish}
               onRemoveWish={removeWish}
               onClearWish={clearWish}
-              onValidateWish={validateWish}
-              onToggleMemberLock={canManageWishes && canMutateSelectedSeason ? handleToggleMemberLock : undefined}
-              lockingMemberId={lockingMemberId}
-              onRemoveMember={canManageWishes && canMutateSelectedSeason ? handleRemoveMember : undefined}
-              deletingMemberId={deletingMemberId}
-              onSelectionStatusChange={canManageWishes && canMutateSelectedSeason ? handleSelectionStatusChange : undefined}
-              updatingSelectionMemberId={updatingSelectionMemberId}
-              onViewHistory={canManageWishes && !isAdminReadOnly ? openHistoryDrawer : undefined}
-              onSortSummaryChange={setRosterSortSummary}
-              visibleColumns={visibleRosterColumns}
+              onMoveWish={moveEditWish}
+              onReorderWishes={reorderEditWishes}
+              onSave={saveEditing}
+              onCancel={() => {
+                setEditingUserId(null);
+                clearPersonalEditIntent();
+              }}
             />
-          </TabsContent>
+          </div>
+        ) : isPrivateMemberSeason ? (
+          <div className="space-y-4">
+            <div className={cn('rounded-lg border px-4 py-3', toneCalloutClass('info'))}>
+              <div className="flex items-start gap-3">
+                <Lock className={cn('mt-0.5 h-4 w-4 shrink-0', toneTextClass('info'))} />
+                <div className="space-y-1">
+                  <h2 className="text-sm font-semibold text-foreground">{t.wishes.privateRosterTitle}</h2>
+                  <p className="text-sm text-muted-foreground">{t.wishes.privateRosterMessage}</p>
+                </div>
+              </div>
+            </div>
 
-          <TabsContent value="selected">
-            <RosterSelectedTable
-              members={selectedValidatedMembers}
-              currentUserId={user?.id}
-              selectedRosterId={selectedRosterId}
-              selectedSeasonId={selectedSeasonId}
-              onViewFullTable={() => setActiveTab('table')}
-            />
-          </TabsContent>
+            {wishesLoading ? (
+              <div className="flex items-center justify-center rounded-lg border border-border/50 bg-card/40 py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : currentMember && editingUserId === currentMember.id ? (
+              <div className="space-y-4">
+                <div className="flex flex-col gap-1">
+                  <h3 className="text-lg font-semibold text-foreground">{t.wishes.title}</h3>
+                  <p className="text-sm text-muted-foreground">{currentMember.username}</p>
+                </div>
+                <WishFormEditor
+                  wishes={editWishes}
+                  status={editStatus}
+                  saving={saving}
+                  disabled={isEditingLocked || !canMutateSelectedSeason}
+                  maxWishes={MAX_WISHES}
+                  onWishChange={updateEditWish}
+                  onStatusChange={setEditStatus}
+                  onAddWish={addWish}
+                  onRemoveWish={removeWish}
+                  onClearWish={clearWish}
+                  onMoveWish={moveEditWish}
+                  onReorderWishes={reorderEditWishes}
+                  onSave={saveEditing}
+                  onCancel={() => setEditingUserId(null)}
+                />
+              </div>
+            ) : currentMember ? (
+              <div className="space-y-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex flex-col gap-1">
+                    <h3 className="text-lg font-semibold text-foreground">{t.wishes.title}</h3>
+                    <p className="text-sm text-muted-foreground">{currentMember.username}</p>
+                  </div>
+                  {canMutateSelectedSeason && !isEditingLocked && editingUserId !== currentMember.id && (
+                    <CosmicButton
+                      size="sm"
+                      onClick={() => startEditing(currentMember)}
+                      icon={<Pencil className="h-3.5 w-3.5" strokeWidth={1.5} />}
+                      className="w-full sm:w-auto"
+                    >
+                      {t.wishes.editMyWishes}
+                    </CosmicButton>
+                  )}
+                </div>
 
-          <TabsContent value="analytics">
-            <RosterAnalytics
-              members={filteredMembers}
-              rosterMembers={rosterMemberFilterOptions}
-              rosterMemberFilters={filters.rosterMemberFilters}
-              onRosterMemberFiltersChange={(rosterMemberFilters) =>
-                setFilters((currentFilters) => ({ ...currentFilters, rosterMemberFilters }))
-              }
-            />
-          </TabsContent>
-        </Tabs>
+                <GlowCard surface="section" className="p-3" hoverable={false}>
+                  <CommitmentToggle
+                    status={currentMember.status === 'confirmed' ? 'confirmed' : currentMember.status === 'withdrawn' ? 'withdrawn' : 'undecided'}
+                    onChange={() => undefined}
+                    disabled
+                  />
+                </GlowCard>
+
+                {privateMemberWishes.length === 0 ? (
+                  <GlowCard surface="section" className="p-3" hoverable={false}>
+                    <div className="rounded-md border border-dashed border-border/60 bg-background/30 px-4 py-8 text-center text-sm text-muted-foreground">
+                    {t.wishes.privateRosterEmpty}
+                    </div>
+                  </GlowCard>
+                ) : (
+                  <div className="space-y-2">
+                    {privateMemberWishes.map((wish) => {
+                      const classData = getClassById(wish.class_id);
+                      const classLabel = classData ? getLocalizedClassName(classData.id, language) : wish.class_id;
+                      const specs = wish.spec_ids
+                        .map((specId) => getSpecById(specId))
+                        .filter(Boolean)
+                        .map((spec) => getLocalizedSpecName(spec!.id, language));
+
+                      return (
+                        <GlowCard key={wish.choice_index} surface="section" className="p-3" hoverable={false}>
+                          <div className="flex items-center gap-2">
+                            <div className="hidden w-5 shrink-0 lg:block" />
+                            <div className="hidden h-7 w-7 shrink-0 lg:block" />
+                            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-gradient-to-br from-primary/20 to-secondary/20">
+                              <span className="text-sm font-bold text-primary">{wish.choice_index}</span>
+                            </div>
+
+                            <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 lg:grid-cols-[minmax(12rem,18rem)_minmax(14rem,1fr)_minmax(16rem,1.35fr)]">
+                              <div className="min-w-0 rounded-md border border-dashed border-border/60 bg-background/30 px-3 py-2">
+                                <div className="truncate text-sm font-medium text-foreground">{classLabel}</div>
+                              </div>
+                              <div className="min-w-0 rounded-md border border-dashed border-border/60 bg-background/30 px-3 py-2">
+                                <div className={cn('truncate text-sm', specs.length > 0 ? 'text-muted-foreground' : 'text-muted-foreground/60')}>
+                                  {specs.length > 0 ? specs.join(', ') : '-'}
+                                </div>
+                              </div>
+                              <div className="min-w-0 rounded-md border border-border/60 bg-background/30 px-3 py-2">
+                                <div className={cn('truncate text-sm', wish.comment ? 'text-muted-foreground' : 'text-muted-foreground/60')}>
+                                  {wish.comment || '-'}
+                                </div>
+                              </div>
+                            </div>
+
+                            <WishValidationBadge
+                              status={wish.validation_status || 'pending'}
+                              validatedBy={wish.validated_by_username}
+                              validatedAt={wish.validated_at}
+                              compact
+                            />
+                          </div>
+                        </GlowCard>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="rounded-lg border border-border/50 bg-card/40 px-4 py-8 text-center text-sm text-muted-foreground">
+                {t.wishes.privateRosterEmpty}
+              </div>
+            )}
+          </div>
+        ) : (
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'table' | 'selected' | 'analytics')} className="w-full">
+            <TabsList className="mb-3 grid h-auto w-full max-w-full grid-cols-3 overflow-hidden p-1 lg:inline-flex lg:w-auto lg:justify-start">
+              <TabsTrigger value="table" className="min-w-0 gap-1.5 px-2 text-xs sm:gap-2 sm:px-3 sm:text-sm">
+                <TableIcon className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
+                <span className="truncate">{t.dashboard.table}</span>
+              </TabsTrigger>
+              <TabsTrigger value="selected" className="min-w-0 gap-1.5 px-2 text-xs sm:gap-2 sm:px-3 sm:text-sm">
+                <Sparkles className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
+                <span className="truncate">{t.dashboard.selectedValidatedView}</span>
+              </TabsTrigger>
+              <TabsTrigger value="analytics" className="min-w-0 gap-1.5 px-2 text-xs sm:gap-2 sm:px-3 sm:text-sm">
+                <BarChart3 className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
+                <span className="truncate">{t.dashboard.analytics}</span>
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="table" className="space-y-2 p-1 md:p-2">
+              <RosterFilters
+                filters={filters}
+                onFiltersChange={setFilters}
+                rosterMembers={rosterMemberFilterOptions}
+                sortSummary={rosterSortSummary}
+                actions={rosterColumnSelector}
+              />
+
+              <RosterTable
+                members={filteredMembers}
+                loading={wishesLoading}
+                currentUserId={user?.id}
+                selectedRosterId={selectedRosterId}
+                selectedSeasonId={selectedSeasonId}
+                editingUserId={editingUserId}
+                editWishes={editWishes}
+                editStatus={editStatus}
+                saving={saving}
+                maxWishes={MAX_WISHES}
+                canManageWishes={canManageWishes && canMutateSelectedSeason}
+                isRosterLocked={rosterLockState.isLocked}
+                isEditingLocked={isEditingLocked || !canMutateSelectedSeason}
+                onStartEditing={startEditing}
+                onUpdateEditWish={updateEditWish}
+                onEditStatusChange={setEditStatus}
+                onSaveEditing={saveEditing}
+                onAddWish={addWish}
+                onRemoveWish={removeWish}
+                onClearWish={clearWish}
+                onValidateWish={validateWish}
+                onToggleMemberLock={canManageWishes && canMutateSelectedSeason ? handleToggleMemberLock : undefined}
+                lockingMemberId={lockingMemberId}
+                onRemoveMember={canManageWishes && canMutateSelectedSeason ? handleRemoveMember : undefined}
+                deletingMemberId={deletingMemberId}
+                onSelectionStatusChange={canManageWishes && canMutateSelectedSeason ? handleSelectionStatusChange : undefined}
+                updatingSelectionMemberId={updatingSelectionMemberId}
+                onViewHistory={canManageWishes && !isAdminReadOnly ? openHistoryDrawer : undefined}
+                onSortSummaryChange={setRosterSortSummary}
+                visibleColumns={visibleRosterColumns}
+              />
+            </TabsContent>
+
+            <TabsContent value="selected">
+              <RosterSelectedTable
+                members={selectedValidatedMembers}
+                currentUserId={user?.id}
+                selectedRosterId={selectedRosterId}
+                selectedSeasonId={selectedSeasonId}
+                onViewFullTable={() => setActiveTab('table')}
+              />
+            </TabsContent>
+
+            <TabsContent value="analytics">
+              <RosterAnalytics
+                members={filteredMembers}
+                rosterMembers={rosterMemberFilterOptions}
+                rosterMemberFilters={filters.rosterMemberFilters}
+                onRosterMemberFiltersChange={(rosterMemberFilters) =>
+                  setFilters((currentFilters) => ({ ...currentFilters, rosterMemberFilters }))
+                }
+              />
+            </TabsContent>
+          </Tabs>
+        )}
       </PageContainer>
+
+      {canManageSeasonActions && (
+        <Sheet
+          open={seasonSettingsOpen}
+          onOpenChange={(open) => {
+            if (open && selectedSeason) {
+              setSeasonRenameName(selectedSeason.name);
+            }
+            setSeasonSettingsOpen(open);
+          }}
+        >
+          <SheetContent side="right" className="w-full overflow-y-auto border-border bg-background/95 sm:max-w-xl">
+            <SheetHeader>
+              <SheetTitle>{t.seasons.settingsTitle}</SheetTitle>
+              {selectedSeason && (
+                <div className="text-sm text-muted-foreground">
+                  {selectedSeason.name}
+                  <span className="mx-2 text-border">·</span>
+                  {selectedSeason.state === 'active'
+                    ? t.seasons.active
+                    : selectedSeason.state === 'draft'
+                      ? t.seasons.draft
+                      : t.seasons.archived}
+                </div>
+              )}
+            </SheetHeader>
+
+            {selectedSeason && (
+              <div className="mt-6 space-y-6">
+                <section className="space-y-3 rounded-lg border border-border/60 bg-card/40 p-4">
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-semibold text-foreground">{t.seasons.renameSeason}</h3>
+                    <p className="text-xs text-muted-foreground">{t.seasons.renameNameLabel}</p>
+                  </div>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <Input
+                      id="season-settings-name"
+                      value={seasonRenameName}
+                      onChange={(event) => setSeasonRenameName(event.target.value)}
+                      placeholder={t.seasons.namePlaceholder}
+                      className="border-border bg-background"
+                    />
+                    <CosmicButton
+                      onClick={renameSelectedSeason}
+                      loading={seasonActionBusy === 'rename'}
+                      disabled={!seasonRenameName.trim() || seasonRenameName.trim() === selectedSeason.name}
+                      className="sm:w-auto"
+                    >
+                      {t.seasons.renameConfirm}
+                    </CosmicButton>
+                  </div>
+                </section>
+
+                <section className="space-y-3 rounded-lg border border-border/60 bg-card/40 p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-1">
+                      <h3 className="text-sm font-semibold text-foreground">{t.seasons.hideMemberWishes}</h3>
+                      <p className="text-sm leading-relaxed text-muted-foreground">{t.seasons.hideMemberWishesHint}</p>
+                    </div>
+                    <Switch
+                      checked={!!selectedSeason.hide_member_wishes}
+                      onCheckedChange={handleToggleSeasonPrivacy}
+                      disabled={seasonBusy}
+                      aria-label={t.seasons.hideMemberWishes}
+                    />
+                  </div>
+                </section>
+
+                <section className="space-y-3 rounded-lg border border-border/60 bg-card/40 p-4">
+                  <h3 className="text-sm font-semibold text-foreground">{t.seasons.lifecycleTitle}</h3>
+                  <div className="flex flex-col gap-2">
+                    <CosmicButton
+                      variant="outline"
+                      onClick={() => {
+                        setSeasonSettingsOpen(false);
+                        openSeasonDialog();
+                      }}
+                      className="justify-start"
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      {t.seasons.prepareNew}
+                    </CosmicButton>
+                    {selectedSeason.state === 'draft' && (
+                      <CosmicButton
+                        variant="outline"
+                        onClick={activateSelectedSeason}
+                        loading={seasonActionBusy === 'activate'}
+                        className="justify-start"
+                      >
+                        <Play className="mr-2 h-4 w-4" />
+                        {t.seasons.activateDraft}
+                      </CosmicButton>
+                    )}
+                    {selectedSeason.state === 'archived' ? (
+                      <CosmicButton
+                        variant="outline"
+                        onClick={unarchiveSelectedSeason}
+                        loading={seasonActionBusy === 'activate'}
+                        className="justify-start"
+                      >
+                        <Play className="mr-2 h-4 w-4" />
+                        {t.seasons.unarchiveSeason}
+                      </CosmicButton>
+                    ) : (
+                      <CosmicButton
+                        variant="outline"
+                        onClick={archiveSelectedSeason}
+                        loading={seasonActionBusy === 'archive'}
+                        className="justify-start"
+                      >
+                        <Archive className="mr-2 h-4 w-4" />
+                        {t.seasons.archiveSeason}
+                      </CosmicButton>
+                    )}
+                  </div>
+                </section>
+              </div>
+            )}
+          </SheetContent>
+        </Sheet>
+      )}
 
       {canManageSeasonActions && (
         <Dialog open={seasonDialogOpen} onOpenChange={setSeasonDialogOpen}>
@@ -2374,36 +2777,6 @@ const RosterWishes = () => {
                 </CosmicButton>
                 <CosmicButton onClick={submitSeasonDialog} loading={seasonDialogSaving} disabled={!seasonName.trim()}>
                   {seasonActivateImmediately ? t.seasons.startSeason : t.seasons.createDraft}
-                </CosmicButton>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {canManageSeasonActions && selectedSeason && (
-        <Dialog open={seasonRenameDialogOpen} onOpenChange={setSeasonRenameDialogOpen}>
-          <DialogContent className="max-w-md border-border bg-card">
-            <DialogHeader>
-              <DialogTitle>{t.seasons.renameDialogTitle}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="season-rename-name">{t.seasons.renameNameLabel}</Label>
-                <Input
-                  id="season-rename-name"
-                  value={seasonRenameName}
-                  onChange={(event) => setSeasonRenameName(event.target.value)}
-                  placeholder={t.seasons.namePlaceholder}
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2">
-                <CosmicButton variant="outline" onClick={() => setSeasonRenameDialogOpen(false)}>
-                  {t.common.cancel}
-                </CosmicButton>
-                <CosmicButton onClick={renameSelectedSeason} loading={seasonActionBusy === 'rename'} disabled={!seasonRenameName.trim()}>
-                  {t.seasons.renameConfirm}
                 </CosmicButton>
               </div>
             </div>

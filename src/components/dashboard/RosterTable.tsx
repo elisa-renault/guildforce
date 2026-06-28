@@ -652,7 +652,8 @@ export const RosterTable = ({
             const qp = selectedRosterId ? `?rosterId=${encodeURIComponent(selectedRosterId)}` : '';
             const seasonParam = selectedSeasonId ? `${qp ? '&' : '?'}seasonId=${encodeURIComponent(selectedSeasonId)}` : '';
             if (isOwnRow && !canManageWishes) {
-              navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/wishes${qp}${seasonParam}`);
+              const editParam = `${qp || seasonParam ? '&' : '?'}edit=my-wishes`;
+              navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/roster${qp}${seasonParam}${editParam}`);
               return;
             }
             navigate(`/guild/${regionSlug}/${serverSlug}/${guildSlug}/member/${member.id}${qp}${seasonParam}`);

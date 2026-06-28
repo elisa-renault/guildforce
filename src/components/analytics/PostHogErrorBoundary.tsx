@@ -23,6 +23,11 @@ class PostHogErrorBoundaryBase extends Component<PostHogErrorBoundaryProps, Post
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    if (import.meta.env.DEV) {
+      console.error('[ErrorBoundary]', error);
+      console.error('[ErrorBoundary component stack]', errorInfo.componentStack);
+    }
+
     capturePostHogException(error, {
       source: 'react_error_boundary',
       feature_area: 'app',

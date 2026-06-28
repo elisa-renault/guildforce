@@ -365,6 +365,9 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "confirmed": "Best\u00e4tigt f\u00fcr die n\u00e4chste Season",
     "potential": "Potenzial / Ungewiss",
     "noWishes": "Noch keine W\u00fcnsche eingereicht",
+    "privateRosterTitle": "Private W\u00fcnsche",
+    "privateRosterMessage": "Die W\u00fcnsche dieser Saison sind zwischen Mitgliedern ausgeblendet. Du kannst nur deine eigenen W\u00fcnsche sehen.",
+    "privateRosterEmpty": "Du hast f\u00fcr diese Saison noch keine W\u00fcnsche eingereicht.",
     "saveWishes": "Meine W\u00fcnsche speichern",
     "wishesSaved": "Ihre W\u00fcnsche wurden gespeichert!",
     "wishesSavedForMember": "Die W\u00fcnsche von {{member}} wurden gespeichert.",
@@ -380,7 +383,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "removeWish": "Entfernen",
     "noRosterSelected": "Kein Aufstellung ausgew\u00e4hlt. Bitte w\u00e4hlen Sie zun\u00e4chst einen Aufstellung aus.",
     "commitment": {
-      "title": "Externes Mitglied hinzuf\u00fcgen",
+      "title": "Zusage",
       "confirmed": "Best\u00e4tigt",
       "confirmedDesc": "Ich werde regelm\u00e4\u00dfig f\u00fcr Raids verf\u00fcgbar sein",
       "undecided": "Unentschlossen",
@@ -450,8 +453,13 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     }
   },
   "seasons": {
+    "settingsTitle": "Saison-Einstellungen",
+    "lifecycleTitle": "Saison-Lebenszyklus",
     "unarchiveSeason": "Saison wiederherstellen",
-    "confirmUnarchive": "Diese Saison wiederherstellen und erneut aktivieren? Die derzeit aktive Saison wird archiviert, falls es eine gibt."
+    "confirmUnarchive": "Diese Saison wiederherstellen und erneut aktivieren? Die derzeit aktive Saison wird archiviert, falls es eine gibt.",
+    "hideMemberWishes": "Wünsche zwischen Mitgliedern ausblenden",
+    "hideMemberWishesHint": "Mitglieder sehen nur ihre eigenen Wünsche. GMs und berechtigte Benutzer können weiterhin alle Wünsche einsehen.",
+    "privacyUpdated": "Wunsch-Privatsphäre aktualisiert"
   },
   "dashboard": {
     "title": "Aufstellung-Dashboard",
@@ -594,6 +602,8 @@ export const translationsDe: Translations = createLocaleTranslations(translation
       "allyDiseaseDispels": { "singular": "Krankheits-Bannung", "plural": "Krankheits-Bannungen" },
       "allyBleedDispels": { "singular": "Blutungs-Bannung", "plural": "Blutungs-Bannungen" },
       "allyFearCharmSleepDispels": { "singular": "Furcht-/Bezauberung-/Schlaf-Bannung", "plural": "Furcht-/Bezauberung-/Schlaf-Bannungen" },
+      "allyFearDispels": { "singular": "Furcht-Bannung", "plural": "Furcht-Bannungen" },
+      "allyCharmSleepDispels": { "singular": "Bezauberung-/Schlaf-Bannung", "plural": "Bezauberung-/Schlaf-Bannungen" },
       "allyRootsSnaresDispels": { "singular": "Wurzel-/Verlangsamungs-Bannung", "plural": "Wurzel-/Verlangsamungs-Bannungen" }
       },
     "allValidations": "Alle Validierungen",

@@ -1,23 +1,21 @@
-import React, { useState, useEffect, forwardRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getClassById, getLocalizedClassName } from '@/data/wowClasses';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { WishCardEditor } from '@/components/WishCardEditor';
-import { CommitmentToggle, CommitmentStatus } from '@/components/CommitmentToggle';
+import { CommitmentStatus } from '@/components/CommitmentToggle';
 import { CosmicBackground } from '@/components/CosmicBackground';
-import { GlowCard } from '@/components/GlowCard';
-import { CosmicButton } from '@/components/CosmicButton';
 import { ContextualToolbar } from '@/components/layout/ContextualToolbar';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { GuildWorkspaceShell } from '@/components/guild';
 import { RosterSelector } from '@/components/roster';
 import { SeasonSelector, SeasonStateCallout } from '@/components/seasons/SeasonSelector';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { WishFormEditor } from '@/components/WishFormEditor';
 import type { GuildSeason } from '@/types/seasons';
-import { Loader2, Save, GripVertical, Plus, Trash2, ChevronUp, ChevronDown, Lock, Clock } from 'lucide-react';
+import { Loader2, Lock, Clock, Save } from 'lucide-react';
 
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
 import { KILL_SWITCH_FEATURE_FLAGS, useKillSwitchFeatureEnabled } from '@/lib/featureFlags';
@@ -29,23 +27,6 @@ import { isSeasonFilteringEnabled, isSeasonSchemaUnavailable, type SeasonSupport
 import { resolveWishLockState } from '@/lib/wishLock';
 import { cn } from '@/lib/utils';
 import { toneCalloutClass, toneTextClass } from '@/lib/design-tokens';
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 
 interface WishData {
   id: string;
@@ -62,135 +43,6 @@ interface RosterData {
   wishes_locked?: boolean | null;
   wishes_lock_at?: string | null;
 }
-
-interface SortableWishCardProps {
-  wish: WishData;
-  index: number;
-  totalWishes: number;
-  onChange: (
-    field: keyof Omit<WishData, 'id'>,
-    value: Omit<WishData, 'id'>[keyof Omit<WishData, 'id'>]
-  ) => void;
-  onRemove: () => void;
-  onClear: () => void;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
-  canRemove: boolean;
-  choiceLabels: string[];
-  usedClassIds: string[];
-  disabled?: boolean;
-}
-
-const SortableWishCard = forwardRef<HTMLDivElement, SortableWishCardProps>(
-  ({ wish, index, totalWishes, onChange, onRemove, onClear, onMoveUp, onMoveDown, canRemove, choiceLabels, usedClassIds, disabled = false }, outerRef) => {
-  const { t } = useLanguage();
-  const s = (key: SemanticKey, fallback?: string) =>
-    resolveSemanticMessage({ key, language: t.lang, translations: t, fallback });
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: wish.id, disabled: disabled });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  const canMoveUp = index > 0;
-  const canMoveDown = index < totalWishes - 1;
-  const isDisabled = disabled;
-
-  return (
-    <div ref={setNodeRef} style={style}>
-      <GlowCard 
-        surface="section"
-        className={cn("p-3", isDisabled && "opacity-60")}
-        hoverable={false}
-      >
-        <div className="flex items-center gap-2">
-          {/* Reorder controls */}
-          <div className="hidden lg:flex flex-col gap-0.5">
-            <button
-              onClick={onMoveUp}
-              disabled={!canMoveUp || isDisabled}
-              className="w-5 h-5 rounded bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-              title={s('wishes.move_up')}
-            >
-              <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
-            </button>
-            <button
-              onClick={onMoveDown}
-              disabled={!canMoveDown || isDisabled}
-              className="w-5 h-5 rounded bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-              title={s('wishes.move_down')}
-            >
-              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-            </button>
-          </div>
-          <button
-            {...attributes}
-            {...listeners}
-            disabled={isDisabled}
-            className={cn(
-              "hidden lg:flex w-7 h-7 rounded-lg bg-muted/50 items-center justify-center flex-shrink-0",
-              isDisabled ? "cursor-not-allowed opacity-40" : "cursor-grab active:cursor-grabbing hover:bg-muted transition-colors"
-            )}
-            title={s('wishes.drag_reorder')}
-          >
-            <GripVertical className="h-4 w-4 text-muted-foreground" />
-          </button>
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center border border-primary/20 flex-shrink-0">
-            <span className="text-sm font-bold text-primary">{index + 1}</span>
-          </div>
-
-          {/* Wish editor inline */}
-          <WishCardEditor
-            wish={wish}
-            onChange={onChange}
-            usedClassIds={usedClassIds}
-            disabled={isDisabled}
-          />
-
-          {/* Delete button */}
-          {canRemove ? (
-            <button
-              onClick={onRemove}
-              disabled={isDisabled}
-              className={cn(
-                "w-7 h-7 rounded-lg bg-destructive/10 flex items-center justify-center transition-colors flex-shrink-0",
-                isDisabled ? "opacity-40 cursor-not-allowed" : "hover:bg-destructive/20"
-              )}
-              title={t.common.delete}
-            >
-              <Trash2 className="h-4 w-4 text-destructive" />
-            </button>
-          ) : wish.classId ? (
-            <button
-              onClick={onClear}
-              disabled={isDisabled}
-              className={cn(
-                "w-7 h-7 rounded-lg bg-muted/50 flex items-center justify-center transition-colors flex-shrink-0",
-                isDisabled ? "opacity-40 cursor-not-allowed" : "hover:bg-muted"
-              )}
-              title={t.common.delete}
-            >
-              <Trash2 className="h-4 w-4 text-muted-foreground" />
-            </button>
-          ) : (
-            <div className="w-7 h-7 flex-shrink-0" />
-          )}
-        </div>
-      </GlowCard>
-    </div>
-  );
-});
-
-SortableWishCard.displayName = 'SortableWishCard';
 
 const Wishes = () => {
   const navigate = useNavigate();
@@ -228,19 +80,6 @@ const Wishes = () => {
   const [hasActivityPermission, setHasActivityPermission] = useState(false);
   const getErrorMessage = (error: unknown) =>
     error instanceof Error ? error.message : t.errors.generic;
-
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  const choiceLabels = [
-    t.wishes.preferredChoice,
-    t.wishes.secondChoice,
-    t.wishes.thirdChoice,
-  ];
 
   useEffect(() => {
     if (!rosterSeasonsEnabled) {
@@ -503,6 +342,24 @@ const Wishes = () => {
     };
   }, [guildId, selectedRosterId, seasonSupportMode]);
 
+  const currentRoster = rosters.find(r => r.id === selectedRosterId);
+  const selectedSeason = seasons.find((season) => season.id === selectedSeasonId) || null;
+  const isSelectedSeasonActive = seasonSupportMode === 'legacy' || selectedSeason?.state === 'active';
+  const lockState = resolveWishLockState({
+    rosterLocked: currentRoster?.wishes_locked,
+    rosterLockAt: currentRoster?.wishes_lock_at,
+    memberLocked: memberWishesLocked,
+  });
+  const isEditingDisabled = lockState.isLocked || !isSelectedSeasonActive;
+  const lockMessage =
+    lockState.reason === 'member'
+      ? t.wishes.lockedMemberDesc
+      : t.wishes.lockedRosterDesc;
+  const scheduledLabel =
+    lockState.isScheduled && lockState.scheduledAt
+      ? formatDateTimeLocalized(lockState.scheduledAt, language, { dateStyle: 'medium', timeStyle: 'short' })
+      : null;
+
   const updateWish = (
     index: number,
     field: keyof Omit<WishData, 'id'>,
@@ -541,20 +398,18 @@ const Wishes = () => {
     if (isEditingDisabled) return;
     const newIndex = direction === 'up' ? index - 1 : index + 1;
     if (newIndex < 0 || newIndex >= wishes.length) return;
-    setWishes(arrayMove(wishes, index, newIndex));
+    reorderWishes(index, newIndex);
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const reorderWishes = (oldIndex: number, newIndex: number) => {
     if (isEditingDisabled) return;
-    const { active, over } = event;
-    
-    if (over && active.id !== over.id) {
-      setWishes((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
-      });
-    }
+    if (oldIndex < 0 || newIndex < 0 || oldIndex >= wishes.length || newIndex >= wishes.length) return;
+    setWishes((current) => {
+      const next = [...current];
+      const [moved] = next.splice(oldIndex, 1);
+      next.splice(newIndex, 0, moved);
+      return next;
+    });
   };
 
   const saveWishes = async () => {
@@ -711,24 +566,6 @@ const Wishes = () => {
     );
   }
 
-  const currentRoster = rosters.find(r => r.id === selectedRosterId);
-  const selectedSeason = seasons.find((season) => season.id === selectedSeasonId) || null;
-  const isSelectedSeasonActive = seasonSupportMode === 'legacy' || selectedSeason?.state === 'active';
-  const lockState = resolveWishLockState({
-    rosterLocked: currentRoster?.wishes_locked,
-    rosterLockAt: currentRoster?.wishes_lock_at,
-    memberLocked: memberWishesLocked,
-  });
-  const isEditingDisabled = lockState.isLocked || !isSelectedSeasonActive;
-  const lockMessage =
-    lockState.reason === 'member'
-      ? t.wishes.lockedMemberDesc
-      : t.wishes.lockedRosterDesc;
-  const scheduledLabel =
-    lockState.isScheduled && lockState.scheduledAt
-      ? formatDateTimeLocalized(lockState.scheduledAt, language, { dateStyle: 'medium', timeStyle: 'short' })
-      : null;
-
   // Only show accessible rosters
   const accessibleRosters = rosters.filter(r => r.hasAccess);
   const selectSeason = (seasonId: string) => {
@@ -831,79 +668,21 @@ const Wishes = () => {
           selectedSeason && <SeasonStateCallout season={selectedSeason} />
         )}
 
-        {/* Commitment toggle */}
-        <GlowCard surface="section" className="mb-4 p-3">
-          <CommitmentToggle status={confirmed} onChange={setConfirmed} disabled={isEditingDisabled} />
-        </GlowCard>
-
-        {/* Wish cards with drag and drop */}
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={wishes.map(w => w.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <div className="space-y-2">
-              {wishes.map((wish, index) => {
-                // Get all used class IDs except the current wish's class
-                const usedClassIds = wishes
-                  .filter((_, i) => i !== index)
-                  .map(w => w.classId)
-                  .filter(Boolean);
-                
-                return (
-                  <SortableWishCard
-                    key={wish.id}
-                    wish={wish}
-                    index={index}
-                    totalWishes={wishes.length}
-                    onChange={(field, value) => updateWish(index, field, value)}
-                    onRemove={() => removeWish(index)}
-                    onClear={() => clearWish(index)}
-                    onMoveUp={() => moveWish(index, 'up')}
-                    onMoveDown={() => moveWish(index, 'down')}
-                    canRemove={wishes.length > 1}
-                    choiceLabels={choiceLabels}
-                    usedClassIds={usedClassIds}
-                    disabled={isEditingDisabled}
-                  />
-                );
-              })}
-            </div>
-          </SortableContext>
-        </DndContext>
-
-        {/* Add wish button */}
-        {wishes.length < 13 && (
-          <div className="mt-4 text-center">
-            <button
-              onClick={addWish}
-              disabled={isEditingDisabled}
-              className={cn(
-                "inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-dashed border-primary/50 text-sm text-primary transition-colors",
-                isEditingDisabled ? "opacity-50 cursor-not-allowed" : "hover:bg-primary/10"
-              )}
-            >
-              <Plus className="h-4 w-4" />
-              {t.wishes.addWish}
-            </button>
-          </div>
-        )}
-
-        <div className="mt-6 text-center">
-          <CosmicButton 
-            size="md" 
-            onClick={saveWishes} 
-            loading={saving}
-            disabled={isEditingDisabled}
-            icon={<Save className="h-4 w-4" strokeWidth={1.5} />}
-          >
-            {t.wishes.saveWishes}
-          </CosmicButton>
-        </div>
+        <WishFormEditor
+          wishes={wishes}
+          status={confirmed}
+          saving={saving}
+          disabled={isEditingDisabled}
+          maxWishes={13}
+          onWishChange={updateWish}
+          onStatusChange={setConfirmed}
+          onAddWish={addWish}
+          onRemoveWish={removeWish}
+          onClearWish={clearWish}
+          onMoveWish={moveWish}
+          onReorderWishes={reorderWishes}
+          onSave={saveWishes}
+        />
       </PageContainer>
     </GuildWorkspaceShell>
   );

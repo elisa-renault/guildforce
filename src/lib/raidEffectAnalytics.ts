@@ -65,6 +65,10 @@ export interface RaidEffectStat {
   sortOrder: number;
 }
 
+export interface BuildMajorBuffsDebuffsOptions {
+  getWishSpecIds?: (wish: RaidEffectWishInput) => string[];
+}
+
 type RaidEffectWithText = RaidEffectAnalyticsRow & {
   name: string;
   description: string;
@@ -230,6 +234,7 @@ export const buildMajorBuffsDebuffs = <
   spells: WowSpellAnalyticsRow[],
   language: Language,
   wishMatchesFilters: (member: Member, wish: Wish) => boolean,
+  options: BuildMajorBuffsDebuffsOptions = {},
 ): { buffs: RaidEffectStat[]; debuffs: RaidEffectStat[] } => {
   const effectsWithText = attachRaidEffectText(effects, spells, language);
   const effectsByClass = new Map<string, RaidEffectWithText[]>();
@@ -351,7 +356,8 @@ export const buildMajorBuffsDebuffs = <
       if (!entries) return;
 
       entries.forEach((entry) => {
-        if (entry.spec_id && !wish.spec_ids?.includes(entry.spec_id)) return;
+        const wishSpecIds = options.getWishSpecIds?.(wish) ?? wish.spec_ids ?? [];
+        if (entry.spec_id && !wishSpecIds.includes(entry.spec_id)) return;
         const coverageKey = getRaidEffectCoverageKey(entry);
         if (entry.category === 'major_buff') {
           coveredBuffsForMember.add(coverageKey);

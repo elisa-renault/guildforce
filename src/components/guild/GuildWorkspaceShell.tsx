@@ -11,7 +11,7 @@ import {
   Table,
   Users,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { startTransition, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import type { LucideIcon } from 'lucide-react';
@@ -27,6 +27,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { KILL_SWITCH_FEATURE_FLAGS, useKillSwitchFeatureEnabled } from '@/lib/featureFlags';
+import { preloadGuildWorkspaceRoutes } from '@/lib/guildRoutePreload';
 import { navItemClass } from '@/lib/nav-styles';
 import { cn } from '@/lib/utils';
 
@@ -100,6 +101,10 @@ export const GuildWorkspaceShell = ({
   const vaultEnabled = useKillSwitchFeatureEnabled(KILL_SWITCH_FEATURE_FLAGS.vault);
   const userId = user?.id;
   const normalizedActiveTab = normalizeTab(activeTab);
+
+  useEffect(() => {
+    preloadGuildWorkspaceRoutes();
+  }, []);
 
   useEffect(() => {
     if (typeof hasSettingsPermission === 'boolean' && hasSettingsPermission) {
@@ -225,7 +230,9 @@ export const GuildWorkspaceShell = ({
   const visibleNavItems = navItems.filter((item) => item.show);
 
   const handleNavigate = (path: string) => {
-    navigate(path);
+    startTransition(() => {
+      navigate(path);
+    });
     setMobileOpen(false);
   };
 

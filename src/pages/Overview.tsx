@@ -15,7 +15,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { LayoutDashboard, Loader2, Sparkles, Users, CheckCircle2, Shield, Heart, Swords, ChevronDown, Eye } from 'lucide-react';
-import { getGuildWishesPath } from '@/lib/guildSlug';
+import { getGuildRosterPath } from '@/lib/guildSlug';
 import { CommitmentStatus } from '@/components/CommitmentToggle';
 import { cn } from '@/lib/utils';
 import { interpolateMessage } from '@/i18n/format';
@@ -35,6 +35,7 @@ interface RosterData {
   id: string;
   name: string;
   is_default: boolean;
+  activeSeasonId?: string | null;
 }
 
 const Overview = () => {
@@ -150,8 +151,6 @@ const Overview = () => {
 
       // Only fetch user's wishes if they are a member (not admin read-only)
       if (rostersData && !adminReadOnly) {
-        setDefaultRoster(rostersData);
-
         const { data: activeSeason } = await supabase
           .from('roster_wish_seasons')
           .select('id')
@@ -162,6 +161,10 @@ const Overview = () => {
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle();
+        setDefaultRoster({
+          ...rostersData,
+          activeSeasonId: activeSeason?.id || null,
+        });
 
         if (!activeSeason) {
           setMyWishes([]);
@@ -420,7 +423,15 @@ const Overview = () => {
               {/* Edit Wishes Button */}
               <div className="mt-3">
                 <CosmicButton
-                  onClick={() => guild && navigate(getGuildWishesPath(guild.region, guild.server, guild.name))}
+                  onClick={() => {
+                    if (!guild) return;
+                    const params = new URLSearchParams();
+                    if (defaultRoster?.id) params.set('rosterId', defaultRoster.id);
+                    if (defaultRoster?.activeSeasonId) params.set('seasonId', defaultRoster.activeSeasonId);
+                    params.set('edit', 'my-wishes');
+                    const query = params.toString();
+                    navigate(`${getGuildRosterPath(guild.region, guild.server, guild.name)}${query ? `?${query}` : ''}`);
+                  }}
                   icon={<Sparkles className="h-4 w-4" strokeWidth={1.5} />}
                   className="w-full"
                 >

@@ -96,6 +96,17 @@ When schema changes are introduced, update all three surfaces:
 2. Generated types in `src/integrations/supabase/types.ts`
 3. Admin docs in `src/components/admin/AdminDocumentation.tsx` (DB + Security sections)
 
+### Applying Supabase migrations
+
+- Confirm pending/local-vs-remote state before applying:
+  - `supabase migration list`
+- Apply committed local migrations to the linked remote project with:
+  - `supabase db push --include-all`
+- Verify the target migration is present on both sides afterward:
+  - `supabase migration list`
+- If a migration recreates an existing RPC with changed `RETURNS TABLE` / OUT parameters, PostgreSQL will reject `CREATE OR REPLACE FUNCTION` with `cannot change return type of existing function`. In that case, the migration must explicitly `DROP FUNCTION IF EXISTS public.function_name(arg_types...)` immediately before the new `CREATE OR REPLACE FUNCTION`, then rerun `supabase db push --include-all`.
+- Do not print or copy Supabase access tokens, service-role keys, database passwords, or full DB URLs into task notes or final answers. Refer only to env var names and command outcomes.
+
 Current table grouping:
 - Core identity/guild sync tables
   - `profiles`, `battlenet_tokens`, `wow_characters`, `wow_guild_memberships`, `guilds`, `guild_members`, `guild_roster_cache`

@@ -111,6 +111,23 @@ describe('raid effect analytics', () => {
     expect(result.buffs.find((buff) => buff.spellId === 395152)?.count).toBe(1);
   });
 
+  it('uses the effective wish specialization list for spec-specific effects', () => {
+    const members: RaidEffectMemberInput<TestWish>[] = [
+      { wishes: [{ class_id: 'evoker', spec_ids: ['evoker-devastation', 'evoker-augmentation'] }] },
+    ];
+
+    const result = buildMajorBuffsDebuffs(members, effects, spells, 'en', alwaysMatch, {
+      getWishSpecIds: wish => wish.spec_ids?.slice(0, 1) ?? [],
+    });
+
+    const ebonMight = result.buffs.find((buff) => buff.spellId === 395152);
+    expect(ebonMight?.count).toBe(0);
+    expect(ebonMight?.spellEntries[0]).toMatchObject({
+      covered: false,
+      providers: [expect.objectContaining({ classId: 'evoker', specId: 'evoker-augmentation', covered: false })],
+    });
+  });
+
   it('groups bloodlust-equivalent major buffs under one coverage row', () => {
     const bloodlustEffects: RaidEffectAnalyticsRow[] = [
       {

@@ -5,7 +5,18 @@ import Index from "./pages/Index";
 import type { Translations } from "@/i18n/translations";
 
 import { FeatureFlagRoute } from "@/components/feature-flags/FeatureFlagRoute";
+import { GuildWishesRedirect } from "@/components/routing/GuildWishesRedirect";
 import { KILL_SWITCH_FEATURE_FLAGS } from "@/lib/featureFlags";
+import {
+  loadGuildAtlasPage,
+  loadGuildMembersPage,
+  loadGuildPollsPage,
+  loadGuildSettingsPage,
+  loadGuildVaultPage,
+  loadMemberWishesPage,
+  loadOverviewPage,
+  loadRosterWishesPage,
+} from "@/lib/guildRoutePreload";
 
 export type RouteLabelKey = keyof Translations["routeMeta"];
 
@@ -30,18 +41,17 @@ type AppRoute = {
 
 const Auth = lazy(() => import("./pages/Auth"));
 const GuildList = lazy(() => import("./pages/GuildList"));
-const Wishes = lazy(() => import("./pages/Wishes"));
-const MemberWishes = lazy(() => import("./pages/MemberWishes"));
-const Overview = lazy(() => import("./pages/Overview"));
-const RosterWishes = lazy(() => import("./pages/RosterWishes"));
-const GuildVault = lazy(() => import("./pages/GuildVault"));
-const GuildSettings = lazy(() => import("./pages/GuildSettings"));
-const GuildPolls = lazy(() => import("./pages/GuildPolls"));
+const MemberWishes = lazy(loadMemberWishesPage);
+const Overview = lazy(loadOverviewPage);
+const RosterWishes = lazy(loadRosterWishesPage);
+const GuildVault = lazy(loadGuildVaultPage);
+const GuildSettings = lazy(loadGuildSettingsPage);
+const GuildPolls = lazy(loadGuildPollsPage);
 const GuildPollNew = lazy(() => import("./pages/GuildPollNew"));
 const GuildPollView = lazy(() => import("./pages/GuildPollView"));
 const GuildPollResults = lazy(() => import("./pages/GuildPollResults"));
-const GuildMembers = lazy(() => import("./pages/GuildMembers"));
-const GuildAtlas = lazy(() => import("./pages/GuildAtlas"));
+const GuildMembers = lazy(loadGuildMembersPage);
+const GuildAtlas = lazy(loadGuildAtlasPage);
 const GuildAtlasEditor = lazy(() => import("./pages/GuildAtlasEditor"));
 const Profile = lazy(() => import("./pages/Profile"));
 const PublicProfile = lazy(() => import("./pages/PublicProfile"));
@@ -159,7 +169,7 @@ export const appRoutes: AppRoute[] = [
   },
   {
     path: "/guild/:regionSlug/:serverSlug/:guildSlug/wishes",
-    element: <Wishes />,
+    element: <GuildWishesRedirect />,
     title: "guildWishes",
     layout: "guild-workspace",
     requiresAuth: true,

@@ -133,6 +133,27 @@ describe('composition analytics', () => {
     expect(result[0].count).toBe(1);
   });
 
+  it('uses the effective wish specialization list for spec-specific coverage', () => {
+    const abilities = [
+      createAbility({ id: 'a1', ability_key: 'cauterize_cheat_death', coverage_key: 'cheat_death', ability_kind: 'raid_defensive', spell_id: 86949 }),
+    ];
+    const mappings = [createMapping({ ability_id: 'a1', class_id: 'mage', spec_id: 'mage-fire' })];
+    const members: CompositionMemberInput<TestWish>[] = [
+      { wishes: [{ class_id: 'mage', spec_ids: ['mage-frost', 'mage-fire'] }] },
+    ];
+
+    const result = buildCompositionCoverage(members, abilities, mappings, [], 'en', alwaysMatch, {
+      getWishSpecIds: wish => wish.spec_ids?.slice(0, 1) ?? [],
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].count).toBe(0);
+    expect(result[0].spellEntries[0]).toMatchObject({
+      covered: false,
+      providers: [expect.objectContaining({ classId: 'mage', specId: 'mage-fire', covered: false })],
+    });
+  });
+
   it('counts each coverage key at most once per member across multiple mappings', () => {
     const abilities = [
       createAbility({ id: 'a1', ability_key: 'heroism', coverage_key: 'bloodlust', spell_id: 32182 }),
@@ -870,11 +891,13 @@ describe('composition analytics', () => {
     const powerInfusion = createCoverageStat({ coverageKey: 'power_infusion', spellId: 10060, name: 'Power Infusion', count: 1 });
     const gateway = createCoverageStat({ coverageKey: 'demonic_gateway', spellId: 111771, name: 'Demonic Gateway', count: 1 });
     const magicDispels = createCoverageStat({ coverageKey: 'ally_magic_dispels', spellId: 4987, name: 'Magic dispels', count: 1 });
+    const fearDispels = createCoverageStat({ coverageKey: 'ally_fear_dispels', spellId: 8143, name: 'Fear dispels', count: 2 });
+    const charmSleepDispels = createCoverageStat({ coverageKey: 'ally_charm_sleep_dispels', spellId: 8143, name: 'Charm/Sleep dispels', count: 1 });
     const raidDefensive = createCoverageStat({ coverageKey: 'raid_defensives', spellId: 97462, name: 'Raid defensives', count: 1 });
 
     const sections = buildCompositionCoverageSections(
       { buffs: [majorBuff, soulwell, arcaneIntellect], debuffs: [majorDebuff] },
-      [combatRes, powerInfusion, gateway, magicDispels, raidDefensive],
+      [combatRes, powerInfusion, gateway, magicDispels, fearDispels, charmSleepDispels, raidDefensive],
     );
 
     expect(sections.raidEssentials.map(stat => stat.name)).toEqual([
@@ -884,6 +907,8 @@ describe('composition analytics', () => {
       'Demonic Gateway',
       'Power Infusion',
       'Magic dispels',
+      'Fear dispels',
+      'Charm/Sleep dispels',
     ]);
     expect(sections.majorBuffs.map(stat => stat.name)).toEqual(['Arcane Intellect']);
     expect(sections.raidEnhancements.map(stat => stat.name)).toEqual(['Raid defensives']);

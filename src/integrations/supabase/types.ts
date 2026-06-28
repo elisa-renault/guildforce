@@ -2165,6 +2165,7 @@ export type Database = {
           ends_at: string | null
           guild_id: string
           guild_season_id: string | null
+          hide_member_wishes: boolean
           id: string
           name: string
           roster_id: string
@@ -2181,6 +2182,7 @@ export type Database = {
           ends_at?: string | null
           guild_id: string
           guild_season_id?: string | null
+          hide_member_wishes?: boolean
           id?: string
           name: string
           roster_id: string
@@ -2197,6 +2199,7 @@ export type Database = {
           ends_at?: string | null
           guild_id?: string
           guild_season_id?: string | null
+          hide_member_wishes?: boolean
           id?: string
           name?: string
           roster_id?: string
@@ -2857,6 +2860,7 @@ export type Database = {
           selection_decided_by: string | null
           selection_decided_at: string | null
           selection_updated_at: string | null
+          current_assignment: Json | null
           outcome: Json
         }[]
       }

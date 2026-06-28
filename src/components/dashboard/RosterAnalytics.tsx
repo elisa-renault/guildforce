@@ -494,6 +494,9 @@ export const RosterAnalytics = ({
       wowSpells,
       language,
       wishMatchesFilters,
+      {
+        getWishSpecIds: wish => (specScopeFilter === 'primary' ? wish.spec_ids?.slice(0, 1) ?? [] : wish.spec_ids ?? []),
+      },
     );
   }, [filteredMembers, raidEffects, wowSpells, language, validationFilter, maxWishIndex, specScopeFilter, roleFilter, rangeFilter]);
 
@@ -525,13 +528,15 @@ export const RosterAnalytics = ({
     ally_poison_dispels: t.dashboard.compositionCoverageLabels.allyPoisonDispels,
     ally_disease_dispels: t.dashboard.compositionCoverageLabels.allyDiseaseDispels,
     ally_bleed_dispels: t.dashboard.compositionCoverageLabels.allyBleedDispels,
-    ally_fear_charm_sleep_dispels: t.dashboard.compositionCoverageLabels.allyFearCharmSleepDispels,
+    ally_fear_dispels: t.dashboard.compositionCoverageLabels.allyFearDispels,
+    ally_charm_sleep_dispels: t.dashboard.compositionCoverageLabels.allyCharmSleepDispels,
     ally_roots_snares_dispels: t.dashboard.compositionCoverageLabels.allyRootsSnaresDispels,
   }), [
     t.dashboard.compositionCoverageLabels.allyBleedDispels,
+    t.dashboard.compositionCoverageLabels.allyCharmSleepDispels,
     t.dashboard.compositionCoverageLabels.allyCurseDispels,
     t.dashboard.compositionCoverageLabels.allyDiseaseDispels,
-    t.dashboard.compositionCoverageLabels.allyFearCharmSleepDispels,
+    t.dashboard.compositionCoverageLabels.allyFearDispels,
     t.dashboard.compositionCoverageLabels.allyFreedomAndMobility,
     t.dashboard.compositionCoverageLabels.allyMagicDispels,
     t.dashboard.compositionCoverageLabels.allyPoisonDispels,
@@ -569,6 +574,7 @@ export const RosterAnalytics = ({
       {
         coverageKinds: ['raid_utility', 'raid_defensive', 'external', 'raid_buff', 'raid_debuff'],
         coverageLabels: compositionCoverageLabels,
+        getWishSpecIds: wish => (specScopeFilter === 'primary' ? wish.spec_ids?.slice(0, 1) ?? [] : wish.spec_ids ?? []),
       },
     );
   }, [

@@ -443,6 +443,9 @@ export interface Translations {
     confirmed: string;
     potential: string;
     noWishes: string;
+    privateRosterTitle: string;
+    privateRosterMessage: string;
+    privateRosterEmpty: string;
     saveWishes: string;
     wishesSaved: string;
     wishesSavedForMember: string;
@@ -538,10 +541,16 @@ export interface Translations {
     viewingArchived: string;
     viewingDraft: string;
     activeOpen: string;
+    settingsTitle: string;
+    lifecycleTitle: string;
     prepareNew: string;
     renameSeason: string;
     archiveSeason: string;
+    unarchiveSeason: string;
     activateDraft: string;
+    hideMemberWishes: string;
+    hideMemberWishesHint: string;
+    privacyUpdated: string;
     dialogTitle: string;
     renameDialogTitle: string;
     name: string;
@@ -564,6 +573,7 @@ export interface Translations {
     renamed: string;
     archivedToast: string;
     confirmArchive: string;
+    confirmUnarchive: string;
     noSeason: string;
     legacyMode: string;
     legacyModeHint: string;
@@ -708,6 +718,8 @@ export interface Translations {
       allyDiseaseDispels: PluralLabel;
       allyBleedDispels: PluralLabel;
       allyFearCharmSleepDispels: PluralLabel;
+      allyFearDispels: PluralLabel;
+      allyCharmSleepDispels: PluralLabel;
       allyRootsSnaresDispels: PluralLabel;
     };
     allValidations: string;
