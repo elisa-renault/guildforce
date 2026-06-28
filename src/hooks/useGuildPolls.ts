@@ -3,7 +3,7 @@ import log from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/sonner';
 import type {
   GuildPoll,
   GuildPollQuestion,
@@ -13,7 +13,9 @@ import type {
   PollResultsAccessConfig,
   PollResultsAccessRule,
   PollResultsVisibilityLevel,
+  QuestionCondition,
   ResponseValue,
+  ScaleConfig,
 } from '@/types/poll';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { canListPoll } from '@/lib/pollAccess';
@@ -183,8 +185,8 @@ export const usePoll = (pollId: string | undefined) => {
       const questionsWithResponses = questions?.map(q => ({
         ...q,
         options: q.options as string[],
-        scale_config: q.scale_config as any,
-        condition: q.condition as any,
+        scale_config: q.scale_config as ScaleConfig | null,
+        condition: q.condition as QuestionCondition | null,
         allow_other: q.allow_other ?? false,
         my_response: myResponses?.find(r => r.question_id === q.id) as GuildPollResponse | undefined,
       })) as GuildPollQuestion[];
@@ -290,8 +292,8 @@ export const usePollResults = (pollId: string | undefined) => {
       const questionsWithResponses = visibleQuestions.map(q => ({
         ...q,
         options: q.options as string[],
-        scale_config: q.scale_config as any,
-        condition: q.condition as any,
+        scale_config: q.scale_config as ScaleConfig | null,
+        condition: q.condition as QuestionCondition | null,
         allow_other: q.allow_other ?? false,
         responses: allResponses.filter(r => r.question_id === q.id) as GuildPollResponse[],
         effective_visibility: visibilityByQuestion.get(q.id) || 'none',
@@ -412,7 +414,7 @@ export const usePollMutations = () => {
             is_required: q.is_required,
             display_order: globalOrder + qIndex,
             options: q.options,
-            scale_config: q.scale_config as any || null,
+            scale_config: q.scale_config || null,
             allow_other: q.allow_other ?? false,
             condition: null, // Insert without condition first
           }));
@@ -437,7 +439,7 @@ export const usePollMutations = () => {
           is_required: q.is_required,
           display_order: globalOrder + index,
           options: q.options,
-          scale_config: q.scale_config as any || null,
+          scale_config: q.scale_config || null,
           allow_other: q.allow_other ?? false,
           condition: null, // Insert without condition first
         }));
@@ -494,7 +496,7 @@ export const usePollMutations = () => {
           if (sourceUuid) {
             // Find this question's UUID
             const thisDisplayOrder =
-              tempIdToDisplayOrder[(q as any).tempId] ?? tempIdToDisplayOrder[(q as any).editorId];
+              tempIdToDisplayOrder[q.tempId] ?? tempIdToDisplayOrder[q.editorId];
             const thisUuid = displayOrderToUuid[thisDisplayOrder];
 
             if (thisUuid) {
@@ -717,7 +719,7 @@ export const usePollMutations = () => {
             is_required: q.is_required,
             display_order: globalOrder + qIndex,
             options: q.options,
-            scale_config: q.scale_config as any || null,
+            scale_config: q.scale_config || null,
             allow_other: q.allow_other ?? false,
             condition: null, // Insert without condition first
           }));
@@ -741,7 +743,7 @@ export const usePollMutations = () => {
           is_required: q.is_required,
           display_order: globalOrder + index,
           options: q.options,
-          scale_config: q.scale_config as any || null,
+          scale_config: q.scale_config || null,
           allow_other: q.allow_other ?? false,
           condition: null, // Insert without condition first
         }));
@@ -798,7 +800,7 @@ export const usePollMutations = () => {
           if (sourceUuid) {
             // Find this question's UUID
             const thisDisplayOrder =
-              tempIdToDisplayOrder[(q as any).tempId] ?? tempIdToDisplayOrder[(q as any).editorId];
+              tempIdToDisplayOrder[q.tempId] ?? tempIdToDisplayOrder[q.editorId];
             const thisUuid = displayOrderToUuid[thisDisplayOrder];
 
             if (thisUuid) {

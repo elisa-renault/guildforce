@@ -1,7 +1,7 @@
 import { Shield, Crown, Loader2, Link as LinkIcon, Users, MapPin, Settings, Star } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/sonner';
 
 import { BattleNetIcon } from '@/components/BattleNetIcon';
 import { CosmicBackground } from '@/components/CosmicBackground';

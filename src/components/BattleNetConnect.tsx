@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { CheckCircle, Loader2, RotateCcw, Unlink } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/sonner';
 import { getClassNameFromBattleNet } from '@/data/battlenetClasses';
 import { BattleNetIcon } from './BattleNetIcon';
 import { isBattleNetResyncAlreadyRunning, readFunctionErrorPayload } from '@/lib/battlenetSync';

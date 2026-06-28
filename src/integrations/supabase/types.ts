@@ -358,6 +358,72 @@ export type Database = {
           },
         ]
       }
+      client_error_reports: {
+        Row: {
+          created_at: string
+          id: string
+          locale: string | null
+          metadata: Json
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          route_path: string | null
+          route_url: string | null
+          status: string
+          toast_description: string | null
+          toast_title: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          locale?: string | null
+          metadata?: Json
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          route_path?: string | null
+          route_url?: string | null
+          status?: string
+          toast_description?: string | null
+          toast_title: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          locale?: string | null
+          metadata?: Json
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          route_path?: string | null
+          route_url?: string | null
+          status?: string
+          toast_description?: string | null
+          toast_title?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_error_reports_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_error_reports_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       command_palette_recent_items: {
         Row: {
           created_at: string
@@ -3137,6 +3203,18 @@ export type Database = {
         }
         Returns: string | null
       }
+      log_client_error_report: {
+        Args: {
+          p_locale?: string | null
+          p_metadata?: Json
+          p_route_path?: string | null
+          p_route_url?: string | null
+          p_toast_description?: string | null
+          p_toast_title: string
+          p_user_agent?: string | null
+        }
+        Returns: string
+      }
       schedule_roster_wishes_lock: {
         Args: { p_lock_at: string | null; p_roster_id: string }
         Returns: undefined
@@ -3293,6 +3371,17 @@ export type Database = {
         | "conflict"
         | "other"
       roster_selection_status: "undecided" | "selected" | "bench" | "not_selected"
+      roster_season_event_type:
+        | "member_joined"
+        | "member_departed"
+        | "member_removed"
+        | "member_status_changed"
+        | "roster_selection_changed"
+        | "assignment_created"
+        | "assignment_updated"
+        | "assignment_removed"
+        | "season_sync_delta_applied"
+        | "wishes_updated"
       roster_season_member_source:
         | "target_rule"
         | "manual_external"

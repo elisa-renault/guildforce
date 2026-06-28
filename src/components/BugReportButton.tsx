@@ -1,6 +1,6 @@
 import { Bug, X, AlertTriangle, Send, Loader2 } from 'lucide-react';
 import React, { useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/sonner';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

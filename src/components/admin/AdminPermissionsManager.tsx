@@ -7,7 +7,7 @@ import { FilterSearchField } from '@/components/ui/filter-controls';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/sonner';
 import { Shield, ShieldCheck, User, X, Plus } from 'lucide-react';
 import {
   AlertDialog,

@@ -55,7 +55,7 @@ import {
   ArrowDown,
   PenLine
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/sonner';
 import { interpolateMessage } from '@/i18n/format';
 import { toSlug } from '@/lib/guildSlug';
 import { cn } from '@/lib/utils';

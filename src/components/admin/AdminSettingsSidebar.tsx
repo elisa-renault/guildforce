@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Shield, FileText, Bug, Trash2, Settings, BookOpen, ScrollText, Download } from 'lucide-react';
+import { LayoutDashboard, Users, Shield, FileText, Bug, Trash2, Settings, BookOpen, ScrollText, Download, AlertTriangle } from 'lucide-react';
 import { useLayoutEffect, useState, RefObject } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -9,7 +9,7 @@ import { resolveSemanticMessage } from '@/i18n/semantic';
 import { navItemClass } from '@/lib/nav-styles';
 import { cn } from '@/lib/utils';
 
-export type AdminSection = 'dashboard' | 'users' | 'permissions' | 'guilds' | 'legal' | 'patchnotes' | 'bugs' | 'deletions' | 'docs' | 'backup';
+export type AdminSection = 'dashboard' | 'users' | 'permissions' | 'guilds' | 'legal' | 'patchnotes' | 'bugs' | 'client-errors' | 'deletions' | 'docs' | 'backup';
 
 interface SectionConfig {
   id: AdminSection;
@@ -30,6 +30,7 @@ const SECTIONS: SectionConfig[] = [
   { id: 'legal', labelKey: 'admin.sidebar.section.legal', icon: FileText, category: 'content', requiresAdmin: true },
   { id: 'patchnotes', labelKey: 'admin.sidebar.section.patchnotes', icon: ScrollText, category: 'content', requiresAdmin: true },
   { id: 'bugs', labelKey: 'admin.sidebar.section.bugs', icon: Bug, category: 'support', allowsModerator: true },
+  { id: 'client-errors', labelKey: 'admin.sidebar.section.client_errors', icon: AlertTriangle, category: 'support', allowsModerator: true },
   { id: 'deletions', labelKey: 'admin.sidebar.section.deletions', icon: Trash2, category: 'support', requiresAdmin: true },
 ];
 

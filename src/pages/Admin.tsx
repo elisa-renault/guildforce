@@ -12,6 +12,7 @@ import { UserManager } from '@/components/admin/UserManager';
 import { LegalPagesEditor } from '@/components/admin/LegalPagesEditor';
 import { PatchNotesEditor } from '@/components/admin/PatchNotesEditor';
 import { BugReportsManager } from '@/components/admin/BugReportsManager';
+import { ClientErrorReportsManager } from '@/components/admin/ClientErrorReportsManager';
 import { DeletionRequestsManager } from '@/components/admin/DeletionRequestsManager';
 import { AdminSettingsSidebar, AdminSection } from '@/components/admin/AdminSettingsSidebar';
 import { AdminDashboardSection } from '@/components/admin/AdminDashboardSection';
@@ -335,6 +336,9 @@ export default function Admin() {
       
       case 'bugs':
         return <BugReportsManager />;
+
+      case 'client-errors':
+        return <ClientErrorReportsManager />;
       
       case 'deletions':
         if (!isAdmin) return null;

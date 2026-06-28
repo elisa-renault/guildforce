@@ -1,7 +1,7 @@
 import { Crown, LogOut, Undo2, User } from 'lucide-react';
 import { useLayoutEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/sonner';
 
 import { CosmicButton } from '@/components/CosmicButton';
 import { PageContainer } from '@/components/layout/PageContainer';

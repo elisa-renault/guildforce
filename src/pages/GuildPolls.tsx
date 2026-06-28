@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart3, ClipboardList, Plus, Loader2 } from 'lucide-react';
 import { useGuildPolls, usePollMutations } from '@/hooks/useGuildPolls';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/sonner';
 import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';

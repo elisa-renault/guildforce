@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/sonner';
 
 import { GlowCard } from '@/components/GlowCard';
 import { MarkdownEditor } from '@/components/markdown/MarkdownEditor';

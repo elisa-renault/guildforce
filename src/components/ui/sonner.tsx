@@ -1,5 +1,33 @@
 import { useTheme } from "next-themes";
-import { Toaster as Sonner, toast } from "sonner";
+import { Toaster as Sonner, toast as sonnerToast } from "sonner";
+
+import { reportClientToastError } from "@/lib/clientErrorReports";
+
+const toText = (value: unknown): string | undefined => {
+  if (typeof value === "string") return value;
+  if (typeof value === "number") return String(value);
+  return undefined;
+};
+
+const toast = Object.assign(
+  ((...args: Parameters<typeof sonnerToast>) => sonnerToast(...args)) as typeof sonnerToast,
+  sonnerToast
+);
+
+toast.error = ((message: Parameters<typeof sonnerToast.error>[0], data?: Parameters<typeof sonnerToast.error>[1]) => {
+  const title = toText(message) ?? toText(data?.description) ?? "Client error";
+  const description = toText(data?.description);
+  void reportClientToastError({
+    title,
+    description,
+    metadata: {
+      toastVariant: "error",
+      source: "sonner.error",
+    },
+  });
+
+  return sonnerToast.error(message, data);
+}) as typeof sonnerToast.error;
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 

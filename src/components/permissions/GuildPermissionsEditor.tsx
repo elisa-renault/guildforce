@@ -5,7 +5,7 @@ import { PermissionRow } from './PermissionRow';
 import { IndividualAccessEditor } from './IndividualAccessEditor';
 import { CosmicButton } from '@/components/CosmicButton';
 import { Loader2, Save, Shield, RotateCcw } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';

@@ -14,7 +14,7 @@ import {
   X,
 } from 'lucide-react';
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/sonner';
 
 import { GuildSecretAccessEditor } from '@/components/settings/GuildSecretAccessEditor';
 import { Badge } from '@/components/ui/badge';

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { toast as sonnerToast } from "sonner";
+import { toast as sonnerToast } from "@/components/ui/sonner";
 
 type ToastVariant = "default" | "destructive";
 

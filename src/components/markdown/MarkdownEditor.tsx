@@ -28,7 +28,7 @@ import {
   Upload,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/sonner';
 
 import { AtlasMarkdownImage } from './AtlasMarkdownImage';
 import { MentionAutocomplete } from './MentionAutocomplete';

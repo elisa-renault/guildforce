@@ -141,7 +141,7 @@ const RosterWishes = () => {
   const { t, language } = useLanguage();
   const s = (key: SemanticKey, fallback?: string) =>
     resolveSemanticMessage({ key, language: t.lang, translations: t, fallback });
-  const { user, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const { isAdmin: isGlobalAdmin, loading: adminLoading } = useIsAdmin();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
@@ -387,19 +387,23 @@ const RosterWishes = () => {
     return nextSeasons;
   };
 
-  const getMainCharacterName = (value?: string | null) => {
+  const getProfileMainCharacterDisplay = (value?: string | null) => {
     if (!value) return null;
     const trimmed = value.trim();
     const separators = [' - ', ' — ', ' – '];
     for (const sep of separators) {
       if (trimmed.includes(sep)) {
-        const [name] = trimmed.split(sep);
-        return name?.trim() || trimmed;
+        const [name, ...realmParts] = trimmed.split(sep);
+        const characterName = name?.trim();
+        const realmName = formatRealmDisplayName(realmParts.join(sep));
+        return [characterName, realmName].filter(Boolean).join(' - ') || trimmed;
       }
     }
     if (trimmed.includes('-')) {
-      const [name] = trimmed.split('-');
-      return name?.trim() || trimmed;
+      const [name, ...realmParts] = trimmed.split('-');
+      const characterName = name?.trim();
+      const realmName = formatRealmDisplayName(realmParts.join('-'));
+      return [characterName, realmName].filter(Boolean).join(' - ') || trimmed;
     }
     return trimmed;
   };
@@ -788,7 +792,7 @@ const RosterWishes = () => {
                 .filter(Boolean)
                 .join(' - ');
             }
-            return getMainCharacterName(profile?.main_character_name);
+            return getProfileMainCharacterDisplay(profile?.main_character_name);
           })(),
           rankIndex: seasonRow?.rank_index ?? null,
           status: intentByUserId.get(m.user_id) || (seasonFilteringEnabled ? 'undecided' : m.status),
@@ -1772,6 +1776,7 @@ const RosterWishes = () => {
       }
 
       if (hasSelectionChanges) {
+        const now = new Date().toISOString();
         const { error } = await supabase.rpc('set_roster_member_selection', {
           p_roster_id: selectedRosterId,
           p_selection_status: editSelectionStatus,
@@ -1782,6 +1787,19 @@ const RosterWishes = () => {
           p_comment: currentMember.selectionComment ?? null,
         });
         if (error) throw error;
+        setMembers((prev) =>
+          prev.map((m) =>
+            m.id === currentMember.id
+              ? {
+                  ...m,
+                  selectionStatus: editSelectionStatus,
+                  selectionDecidedBy: user.id,
+                  selectionDecidedAt: now,
+                  selectionUpdatedAt: now,
+                }
+              : m
+          )
+        );
       }
 
       if (hasGuildMainChanges && editGuildMain) {
@@ -1803,7 +1821,9 @@ const RosterWishes = () => {
       setEditingUserId(null);
       setEditGuildMain(null);
       clearPersonalEditIntent();
-      await fetchWishes();
+      if (hasWishChanges || hasStatusChanges || hasGuildMainChanges) {
+        await fetchWishes();
+      }
     } catch (error: unknown) {
       toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
     } finally {
@@ -1814,6 +1834,9 @@ const RosterWishes = () => {
   // Validate a wish (GM or users with manage_wishes permission)
   const validateWish = async (userId: string, choiceIndex: number, status: ValidationStatus) => {
     if (!user || !guildId || !selectedRosterId || !canManageWishes || !canMutateSelectedSeason) return;
+    const currentMember = members.find((member) => member.id === userId);
+    const previousWish = currentMember?.wishes.find((wish) => wish.choice_index === choiceIndex);
+    const validatedAt = status === 'pending' ? null : new Date().toISOString();
 
     // Optimistic UI update so the badge changes instantly
     setMembers((prev) =>
@@ -1827,7 +1850,8 @@ const RosterWishes = () => {
                   ...w,
                   validation_status: status,
                   validated_by: status === 'pending' ? null : user.id,
-                  validated_at: status === 'pending' ? null : new Date().toISOString(),
+                  validated_at: validatedAt,
+                  validated_by_username: status === 'pending' ? null : profile?.username || null,
                 }
               : w
           ),
@@ -1841,7 +1865,7 @@ const RosterWishes = () => {
         .update({
           validation_status: status,
           validated_by: status === 'pending' ? null : user.id,
-          validated_at: status === 'pending' ? null : new Date().toISOString(),
+          validated_at: validatedAt,
         })
         .eq('guild_id', guildId)
         .eq('roster_id', selectedRosterId)
@@ -1862,10 +1886,29 @@ const RosterWishes = () => {
               ? t.wishes.validation.rejected
               : t.wishes.validation.pending,
       });
-
-      // Refresh wishes to sync validated_by_username, timestamps, etc.
-      await fetchWishes();
     } catch (error: unknown) {
+      if (previousWish) {
+        setMembers((prev) =>
+          prev.map((m) =>
+            m.id === userId
+              ? {
+                  ...m,
+                  wishes: m.wishes.map((w) =>
+                    w.choice_index === choiceIndex
+                      ? {
+                          ...w,
+                          validation_status: previousWish.validation_status,
+                          validated_by: previousWish.validated_by,
+                          validated_at: previousWish.validated_at,
+                          validated_by_username: previousWish.validated_by_username,
+                        }
+                      : w
+                  ),
+                }
+              : m
+          )
+        );
+      }
       toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
     }
   };

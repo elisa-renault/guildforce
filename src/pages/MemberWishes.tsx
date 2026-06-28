@@ -27,7 +27,7 @@ import { RosterDecisionToggle } from '@/components/dashboard/RosterDecisionToggl
 import { CommitmentStatus } from '@/components/CommitmentToggle';
 import { RosterSeasonOutcome, RosterSelectionStatus, ValidationStatus, WishData } from '@/types/guild';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/sonner';
 import { useBattletagVisibility } from '@/hooks/useBattletagVisibility';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { resolveSpecOrder } from '@/lib/wishOrder';

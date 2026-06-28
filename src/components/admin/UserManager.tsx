@@ -39,7 +39,7 @@ import {
   ShieldCheck,
   Loader2
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/sonner';
 import { formatDateTimeLocalized, formatPluralMessage, interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import { canImpersonateUser, type ImpersonationTargetSummary } from '@/lib/adminImpersonation';
