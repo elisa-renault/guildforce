@@ -13,7 +13,7 @@ import { GuildWorkspaceShell } from '@/components/guild';
 import { RosterSelector } from '@/components/roster';
 import { SeasonSelector, SeasonStateCallout } from '@/components/seasons/SeasonSelector';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { WishFormEditor } from '@/components/WishFormEditor';
+import { WishFormEditor } from '@/components/wishes/WishFormEditor';
 import type { GuildSeason } from '@/types/seasons';
 import { Loader2, Lock, Clock, Save } from 'lucide-react';
 

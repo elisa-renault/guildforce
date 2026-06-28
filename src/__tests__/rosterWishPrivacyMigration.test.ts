@@ -10,7 +10,7 @@ const privateRowsMigration = readFileSync(
   'utf8',
 );
 const rosterWishesPage = readFileSync('src/pages/RosterWishes.tsx', 'utf8');
-const wishFormEditor = readFileSync('src/components/WishFormEditor.tsx', 'utf8');
+const wishFormEditor = readFileSync('src/components/wishes/WishFormEditor.tsx', 'utf8');
 
 describe('roster wish privacy migration', () => {
   it('adds a season-scoped privacy flag', () => {
@@ -62,7 +62,7 @@ describe('roster wish privacy migration', () => {
   });
 
   it('uses the full wish form editor for private member editing', () => {
-    expect(rosterWishesPage).toContain("import { WishFormEditor } from '@/components/WishFormEditor'");
+    expect(rosterWishesPage).toContain("import { WishFormEditor } from '@/components/wishes/WishFormEditor'");
     expect(rosterWishesPage).not.toContain("import { MemberWishEditor } from '@/components/dashboard/MemberWishEditor'");
     expect(rosterWishesPage).toContain('<WishFormEditor');
     expect(wishFormEditor).toContain('<CommitmentToggle status={status}');

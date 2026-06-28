@@ -23,7 +23,7 @@ import { RosterFilters, RosterTable, RosterAnalytics, RosterSelectedTable, type 
 import { WishValidationBadge } from '@/components/dashboard/WishValidationBadge';
 import { RosterSelector, RosterEditDialog } from '@/components/roster';
 import { SeasonSelector, SeasonStateCallout, type PrepareSeasonInput } from '@/components/seasons/SeasonSelector';
-import { WishFormEditor } from '@/components/WishFormEditor';
+import { WishFormEditor } from '@/components/wishes/WishFormEditor';
 import { MemberWish, WishData, RosterFilters as RosterFiltersType, ValidationStatus } from '@/types/guild';
 import type { GuildSeason } from '@/types/seasons';
 import { Archive, Loader2, Pencil, Play, Plus, Sparkles, Settings, TableIcon, BarChart3, Download, Eye, Lock, Unlock, Clock, UserPlus, MoreVertical, RefreshCw, Columns3 } from 'lucide-react';
