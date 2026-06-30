@@ -44,6 +44,7 @@ export interface Translations {
     you: string;
     settings: string;
     tipMe: string;
+    joinDiscord: string;
     all: string;
     refresh: string;
     confirm: string;

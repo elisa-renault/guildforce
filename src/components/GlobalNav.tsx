@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from '@/components/ui/sonner';
 
 import { CosmicButton } from '@/components/CosmicButton';
+import { DiscordIcon } from '@/components/DiscordIcon';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { GuildSwitcher } from '@/components/navigation/GuildSwitcher';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,8 @@ import { interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { navItemClass } from '@/lib/nav-styles';
 import { getRouteMeta } from '@/routes';
+
+const DISCORD_INVITE_URL = 'https://discord.gg/b3AZKC8qHd';
 
 export const GlobalNav = () => {
   const navigate = useNavigate();
@@ -166,6 +169,19 @@ export const GlobalNav = () => {
           {user ? (
             <>
               <CommandPaletteTrigger variant="icon" className="lg:hidden" />
+              <a
+                href={DISCORD_INVITE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={navItemClass({
+                  hover: 'accent',
+                  className: 'h-8 bg-transparent px-2.5',
+                })}
+                aria-label={t.common.joinDiscord}
+              >
+                <DiscordIcon className="h-4 w-4 shrink-0" />
+                <span className="hidden md:inline">{t.common.joinDiscord}</span>
+              </a>
               <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
                   <button

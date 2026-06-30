@@ -29,6 +29,7 @@ export const translationsEs: Translations = createLocaleTranslations(translation
     you: 'Tú',
     settings: 'Ajustes',
     tipMe: 'Invítame a algo',
+    joinDiscord: 'Unirse a Discord',
     all: 'Todo',
     refresh: 'Actualizar',
     confirm: 'Confirmar',
