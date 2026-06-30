@@ -3344,6 +3344,7 @@ export type Database = {
         }
         Returns: string
       }
+      // Self-service saves may use a matched guild_roster_cache row while guild_members sync catches up.
       upsert_member_roster_wishes: {
         Args: {
           p_commitment_status: string

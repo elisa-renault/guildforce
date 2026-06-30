@@ -284,6 +284,13 @@ const DOCUMENTATION: DocSection[] = [
         tags: ['wishes', 'security', 'rosters', 'commitment'],
       },
       {
+        titleEn: 'Cache-backed self-service edits',
+        titleFr: 'Auto-édition via cache roster',
+        contentEn: 'When Battle.net sync has matched a user through `guild_roster_cache` but `guild_members` is still late, `upsert_member_roster_wishes()` allows that same user to save personal wishes if `has_roster_access()` grants the roster. The RPC builds the season snapshot from `profiles` plus the best matched cache row and does not create `guild_members`; membership ownership stays in the Battle.net sync flow.',
+        contentFr: 'Quand la synchronisation Battle.net a rattaché un utilisateur via `guild_roster_cache` mais que `guild_members` est encore en retard, `upsert_member_roster_wishes()` autorise ce même utilisateur à enregistrer ses propres vœux si `has_roster_access()` donne accès au roster. La RPC construit la snapshot de saison depuis `profiles` et la meilleure ligne de cache rattachée, sans créer `guild_members` ; la synchronisation Battle.net reste propriétaire des appartenances.',
+        tags: ['wishes', 'rosters', 'security', 'battlenet'],
+      },
+      {
         titleEn: 'Wish automation rules',
         titleFr: 'Règles automatiques des vœux',
         contentEn: 'Wish automation is now actor-aware. Self-edits only reset validation on the slots that actually changed, preserve commitment unless the member explicitly edits it, and reset roster decision to `undecided` only when wishes changed or when a confirmed member downgrades commitment from `confirmed` while currently `selected`/`bench`. GM or `manage_wishes` edits never auto-reset validation or roster decision; only the fields explicitly edited by the manager change. External manual entries also keep their validation/commitment/decision state when they are later linked to a Guildforce user, and external data wins on same-roster conflict during claim transfer.',

@@ -75,6 +75,7 @@ interface RosterData {
   name: string;
   is_default: boolean;
   hasAccess: boolean;
+  accessSource?: string | null;
   wishes_locked?: boolean | null;
   wishes_lock_at?: string | null;
 }
@@ -121,9 +122,18 @@ interface RosterSeasonTableRow {
   season_member_id: string;
   user_id: string | null;
   roster_cache_id: string | null;
+  display_name?: string | null;
+  character_name?: string | null;
+  realm?: string | null;
   rank_index: number | null;
   season_status: string;
   wishes: unknown;
+  selection_status?: MemberWish['selectionStatus'];
+  selection_reason_code?: MemberWish['selectionReasonCode'] | null;
+  selection_comment?: string | null;
+  selection_decided_by?: string | null;
+  selection_decided_at?: string | null;
+  selection_updated_at?: string | null;
   outcome: MemberWish['seasonOutcome'] | null;
 }
 
@@ -242,6 +252,7 @@ const RosterWishes = () => {
       selectedRosterId,
       selectedSeasonId,
       hasAccess: activeRoster?.hasAccess ?? null,
+      accessSource: activeRoster?.accessSource ?? null,
       currentMemberFound: members.some((member) => member.id === user?.id),
       profileIsSyncing: !!profile?.is_syncing,
       canManageWishes,
@@ -520,19 +531,28 @@ const RosterWishes = () => {
               name: roster.name,
               is_default: roster.is_default,
               hasAccess: true,
+              accessSource: 'admin_read_only',
               wishes_locked: roster.wishes_locked,
               wishes_lock_at: roster.wishes_lock_at,
             };
           }
-          const { data: hasAccess } = await supabase.rpc('has_roster_access', {
+          const { data: accessDebug, error: accessDebugError } = await supabase.rpc('get_roster_access_debug', {
             p_roster_id: roster.id,
             p_user_id: user.id,
           });
+          const debugRow = !accessDebugError && Array.isArray(accessDebug) ? accessDebug[0] : null;
+          const { data: hasAccess } = debugRow
+            ? { data: debugRow.has_access }
+            : await supabase.rpc('has_roster_access', {
+                p_roster_id: roster.id,
+                p_user_id: user.id,
+              });
           return {
             id: roster.id,
             name: roster.name,
             is_default: roster.is_default,
             hasAccess: hasAccess || false,
+            accessSource: debugRow?.source || null,
             wishes_locked: roster.wishes_locked,
             wishes_lock_at: roster.wishes_lock_at,
           };
@@ -616,6 +636,7 @@ const RosterWishes = () => {
       }
 
       const seasonFilteringEnabled = isSeasonFilteringEnabled(seasonSupportMode, selectedSeasonId);
+      const hasPersonalEditIntent = searchParams.get('edit') === 'my-wishes';
       if (seasonSupportMode === 'enabled' && !selectedSeasonId) {
         setMembers([]);
         setExternalCandidates([]);
@@ -646,7 +667,16 @@ const RosterWishes = () => {
       const safeMembers = privateMemberSeason
         ? (membersData || []).filter((member) => member.user_id === user?.id)
         : membersData || [];
-      const userIds = safeMembers.map(m => m.user_id);
+      const needsCurrentUserFallback = hasPersonalEditIntent
+        && !!user
+        && !!selectedRoster?.hasAccess
+        && !safeMembers.some((member) => member.user_id === user.id);
+      const userIds = [
+        ...new Set([
+          ...safeMembers.map(m => m.user_id),
+          ...(needsCurrentUserFallback && user ? [user.id] : []),
+        ]),
+      ];
 
       const { data: profiles } = userIds.length > 0
         ? await supabase
@@ -836,7 +866,7 @@ const RosterWishes = () => {
 
       // Keep only members that still have an active profile.
       // This avoids showing stale lines for accounts that were removed.
-      const mergedMembers: MemberWish[] = safeMembers.filter(shouldShowLinkedMember).flatMap(m => {
+      let mergedMembers: MemberWish[] = safeMembers.filter(shouldShowLinkedMember).flatMap(m => {
         const profile = profilesById.get(m.user_id);
         if (!profile) return [];
         const selection = selectionsByUserId.get(m.user_id);
@@ -874,6 +904,65 @@ const RosterWishes = () => {
           seasonOutcome: seasonRow?.outcome || null,
         };
       });
+
+      if (needsCurrentUserFallback && user && !mergedMembers.some((member) => member.id === user.id)) {
+        const seasonRow = seasonTableByUserId.get(user.id);
+        const selection = selectionsByUserId.get(user.id);
+        const fallbackProfile = profilesById.get(user.id) || (profile?.id === user.id ? profile : null);
+        const fallbackCache = (rosterCacheData || [])
+          .filter((row) => row.matched_user_id === user.id)
+          .sort((a, b) => {
+            const leftRank = a.rank_index ?? Number.MAX_SAFE_INTEGER;
+            const rightRank = b.rank_index ?? Number.MAX_SAFE_INTEGER;
+            if (leftRank !== rightRank) return leftRank - rightRank;
+            return a.character_name.localeCompare(b.character_name, language);
+          })[0];
+
+        if (seasonRow || fallbackProfile || fallbackCache) {
+          const memberWishes = seasonFilteringEnabled
+            ? mapSeasonWishes(seasonRow)
+            : mapLinkedWishes(user.id);
+          const visibleWishes = memberWishes.length > 0 ? memberWishes : mapLinkedWishes(user.id);
+          const cacheMainCharacter = fallbackCache
+            ? [
+                fallbackCache.character_name,
+                formatRealmDisplayName(fallbackCache.character_realm, fallbackCache.character_realm_slug),
+              ]
+                .filter(Boolean)
+                .join(' - ')
+            : null;
+          const seasonMainCharacter = seasonRow?.character_name
+            ? [
+                seasonRow.character_name,
+                seasonRow.realm,
+              ]
+                .filter(Boolean)
+                .join(' - ')
+            : null;
+          mergedMembers = [
+            ...mergedMembers,
+            {
+              id: user.id,
+              seasonMemberId: seasonRow?.season_member_id || null,
+              username: seasonRow?.display_name || fallbackProfile?.username || profile?.username || user.email || 'Unknown',
+              mainCharacterName: seasonMainCharacter
+                || cacheMainCharacter
+                || getProfileMainCharacterDisplay(fallbackProfile?.main_character_name || profile?.main_character_name),
+              rankIndex: seasonRow?.rank_index ?? fallbackCache?.rank_index ?? null,
+              status: intentByUserId.get(user.id) || (seasonFilteringEnabled ? 'undecided' : 'potential'),
+              wishes_locked: false,
+              wishes: visibleWishes.sort((a, b) => a.choice_index - b.choice_index),
+              selectionStatus: seasonRow?.selection_status || selection?.selection_status || 'undecided',
+              selectionReasonCode: seasonRow?.selection_reason_code || selection?.reason_code || null,
+              selectionComment: seasonRow?.selection_comment || selection?.comment || null,
+              selectionDecidedBy: seasonRow?.selection_decided_by || selection?.decided_by || null,
+              selectionDecidedAt: seasonRow?.selection_decided_at || selection?.decided_at || null,
+              selectionUpdatedAt: seasonRow?.selection_updated_at || selection?.updated_at || null,
+              seasonOutcome: seasonRow?.outcome || null,
+            },
+          ];
+        }
+      }
 
       const externalByCache = new Map((externalWishesData || []).map((w) => [w.roster_cache_id, w as ExternalWishRow]));
       const externalMembers: MemberWish[] = privateMemberSeason ? [] : (rosterCacheData || [])
