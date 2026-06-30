@@ -9,6 +9,10 @@ const privateRowsMigration = readFileSync(
   'supabase/migrations/20260628133000_restrict_private_roster_season_table_rows.sql',
   'utf8',
 );
+const assignmentRetirementFixMigration = readFileSync(
+  'supabase/migrations/20260630231500_fix_roster_season_table_without_assignments.sql',
+  'utf8',
+);
 const rosterWishesPage = readFileSync('src/pages/RosterWishes.tsx', 'utf8');
 const wishFormEditor = readFileSync('src/components/wishes/WishFormEditor.tsx', 'utf8');
 
@@ -37,6 +41,13 @@ describe('roster wish privacy migration', () => {
     expect(privateRowsMigration).toContain('OR rsm.user_id = v_actor');
     expect(privateRowsMigration).toContain('NOT v_hide_member_wishes');
     expect(privateRowsMigration).toContain('OR v_can_view_all_wishes');
+  });
+
+  it('keeps the roster season table RPC independent from retired assignments', () => {
+    expect(assignmentRetirementFixMigration).toContain('CREATE OR REPLACE FUNCTION public.get_roster_season_table');
+    expect(assignmentRetirementFixMigration).toContain('current_assignment JSONB');
+    expect(assignmentRetirementFixMigration).toContain('NULL::jsonb AS current_assignment');
+    expect(assignmentRetirementFixMigration).not.toContain('public.roster_member_assignments');
   });
 
   it('inherits privacy from the source season when preparing a copied season', () => {

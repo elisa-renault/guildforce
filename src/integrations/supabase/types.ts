@@ -2965,6 +2965,7 @@ export type Database = {
         Returns: number
       }
       get_roster_season_table: {
+        // current_assignment is retained for API compatibility; roster assignments are retired.
         Args: { p_roster_id: string; p_season_id: string }
         Returns: {
           season_member_id: string

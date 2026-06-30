@@ -210,6 +210,8 @@ const RosterWishes = () => {
   const [rosterSortSummary, setRosterSortSummary] = useState('');
   const [visibleRosterColumns, setVisibleRosterColumns] = useState<RosterTableColumnId[]>(DEFAULT_ROSTER_TABLE_COLUMNS);
   const [rosterColumnsCustomized, setRosterColumnsCustomized] = useState(false);
+  const [personalEditCancelPending, setPersonalEditCancelPending] = useState(false);
+  const hasPersonalEditIntent = searchParams.get('edit') === 'my-wishes';
   const getErrorMessage = (error: unknown) => {
     if (error instanceof Error) return error.message;
     if (typeof error === 'object' && error) {
@@ -1501,10 +1503,22 @@ const RosterWishes = () => {
   ]);
 
   const cancelEditing = () => {
+    if (hasPersonalEditIntent) {
+      setPersonalEditCancelPending(true);
+      clearPersonalEditIntent();
+      return;
+    }
+
     setEditingUserId(null);
     setEditGuildMain(null);
-    clearPersonalEditIntent();
   };
+
+  useEffect(() => {
+    if (!personalEditCancelPending || hasPersonalEditIntent) return;
+    setEditingUserId(null);
+    setEditGuildMain(null);
+    setPersonalEditCancelPending(false);
+  }, [hasPersonalEditIntent, personalEditCancelPending]);
 
   useEffect(() => {
     if (searchParams.get('edit') !== 'my-wishes') return;
@@ -2218,7 +2232,6 @@ const RosterWishes = () => {
   }, [defaultVisibleRosterColumns, rosterColumnsCustomized]);
 
   // Calculate stats
-  const hasPersonalEditIntent = searchParams.get('edit') === 'my-wishes';
   const currentRoster = rosters.find(r => r.id === selectedRosterId);
   const currentMember = members.find(m => m.id === user?.id);
   const personalEditMissingMember = hasPersonalEditIntent
@@ -2247,13 +2260,14 @@ const RosterWishes = () => {
     rosterLockAt: currentRoster?.wishes_lock_at,
     memberLocked: false,
   });
-  const showPersonalWishEditor = hasPersonalEditIntent
+  const showPersonalWishEditor = (hasPersonalEditIntent || personalEditCancelPending)
     && !!currentMember
     && editingUserId === currentMember.id;
   const isPersonalEditHandoffPending = hasPersonalEditIntent
     && canMutateSelectedSeason
     && !isAdminReadOnly
-    && wishesLoading
+    && (!currentRoster || currentRoster.hasAccess)
+    && (wishesLoading || !!currentMember)
     && (!currentMember || editingUserId !== currentMember.id);
   const privateMemberWishes = currentMember?.wishes.filter((wish) => !!wish.class_id).sort((a, b) => a.choice_index - b.choice_index) || [];
   const editingMember = members.find(m => m.id === editingUserId);

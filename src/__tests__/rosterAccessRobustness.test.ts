@@ -71,4 +71,19 @@ describe('roster access robustness', () => {
     expect(rosterWishesPage).toContain('id: user.id');
     expect(rosterWishesPage).toContain('seasonMemberId: seasonRow?.season_member_id || null');
   });
+
+  it('keeps personal edit handoff pending until the editor owns the view', () => {
+    expect(rosterWishesPage).toContain('const isPersonalEditHandoffPending = hasPersonalEditIntent');
+    expect(rosterWishesPage).toContain('&& (!currentRoster || currentRoster.hasAccess)');
+    expect(rosterWishesPage).toContain('&& (wishesLoading || !!currentMember)');
+    expect(rosterWishesPage).toContain('&& (!currentMember || editingUserId !== currentMember.id)');
+  });
+
+  it('keeps the personal editor mounted while cancel clears the URL intent', () => {
+    expect(rosterWishesPage).toContain('const [personalEditCancelPending, setPersonalEditCancelPending] = useState(false)');
+    expect(rosterWishesPage).toContain('if (hasPersonalEditIntent) {');
+    expect(rosterWishesPage).toContain('setPersonalEditCancelPending(true);');
+    expect(rosterWishesPage).toContain('if (!personalEditCancelPending || hasPersonalEditIntent) return;');
+    expect(rosterWishesPage).toContain('const showPersonalWishEditor = (hasPersonalEditIntent || personalEditCancelPending)');
+  });
 });
