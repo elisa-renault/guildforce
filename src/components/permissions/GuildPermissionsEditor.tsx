@@ -1,18 +1,30 @@
-import { useState, useEffect } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { useGuildPermissions, PermissionType, PermissionRule } from '@/hooks/useGuildPermissions';
-import { PermissionRow } from './PermissionRow';
+import { Loader2, RotateCcw, Save, Shield } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
 import { IndividualAccessEditor } from './IndividualAccessEditor';
+import { PermissionRow } from './PermissionRow';
+
 import { CosmicButton } from '@/components/CosmicButton';
-import { Loader2, Save, Shield, RotateCcw } from 'lucide-react';
-import { toast } from '@/components/ui/sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
+import { toast } from '@/components/ui/sonner';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useGuildPermissions, type PermissionRule, type PermissionType } from '@/hooks/useGuildPermissions';
 
 interface GuildPermissionsEditorProps {
   guildId: string;
+}
+
+interface GuildPermissionsSurfaceProps {
+  permissions: PermissionRule[];
+  members: { user_id: string; username: string }[];
+  ranks: { rank_index: number; rank_name: string }[];
+  officerRankThreshold: number;
+  loading?: boolean;
+  saving?: boolean;
+  onSave: (permissions: PermissionRule[]) => Promise<void> | void;
 }
 
 // Permission labels and descriptions are now in translations.ts under t.permissions
@@ -28,18 +40,16 @@ const PERMISSION_TYPES: { type: PermissionType; isSensitive?: boolean }[] = [
   { type: 'manage_atlas' },
 ];
 
-export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps) => {
+export const GuildPermissionsSurface = ({
+  permissions,
+  members,
+  ranks,
+  officerRankThreshold,
+  loading = false,
+  saving = false,
+  onSave,
+}: GuildPermissionsSurfaceProps) => {
   const { t } = useLanguage();
-  const {
-    permissions,
-    members,
-    ranks,
-    officerRankThreshold,
-    loading,
-    saving,
-    savePermissions,
-  } = useGuildPermissions(guildId);
-
   const [localPermissions, setLocalPermissions] = useState<PermissionRule[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -65,7 +75,7 @@ export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps)
   };
 
   const handleSave = async () => {
-    await savePermissions(localPermissions);
+    await onSave(localPermissions);
     setHasChanges(false);
   };
 
@@ -218,5 +228,29 @@ export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps)
         }}
       />
     </div>
+  );
+};
+
+export const GuildPermissionsEditor = ({ guildId }: GuildPermissionsEditorProps) => {
+  const {
+    permissions,
+    members,
+    ranks,
+    officerRankThreshold,
+    loading,
+    saving,
+    savePermissions,
+  } = useGuildPermissions(guildId);
+
+  return (
+    <GuildPermissionsSurface
+      permissions={permissions}
+      members={members}
+      ranks={ranks}
+      officerRankThreshold={officerRankThreshold}
+      loading={loading}
+      saving={saving}
+      onSave={savePermissions}
+    />
   );
 };

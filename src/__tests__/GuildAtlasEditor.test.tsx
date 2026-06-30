@@ -96,6 +96,12 @@ vi.mock('@/components/GlowCard', () => ({
 
 vi.mock('@/components/guild', () => ({
   GuildWorkspaceShell: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  AtlasEditorSurface: ({ initialData }: { initialData: { title: string; content: string } }) => (
+    <div>
+      <input aria-label="Title" readOnly value={initialData.title} />
+      <textarea aria-label="Content" readOnly value={initialData.content} />
+    </div>
+  ),
 }));
 
 vi.mock('@/components/layout/PageContainer', () => ({

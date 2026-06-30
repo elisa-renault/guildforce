@@ -1,14 +1,16 @@
-import { useState, useEffect } from 'react';
+import { Crown, Pencil, Plus, Trash2, Users } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
+import { RosterAccessEditor } from './RosterAccessEditor';
+
+import { CosmicButton } from '@/components/CosmicButton';
+import { GlowCard } from '@/components/GlowCard';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { GlowCard } from '@/components/GlowCard';
-import { CosmicButton } from '@/components/CosmicButton';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, Users, Crown } from 'lucide-react';
-import { RosterAccessEditor } from './RosterAccessEditor';
 import { resolveCurrentWowSeasonName } from '@/lib/wowSeasonName';
 
 interface AccessRule {
@@ -46,7 +48,36 @@ interface RosterManagerProps {
   initialRosterId?: string | null;
 }
 
-export const RosterManager = ({ guildId, rosters, members, ranks, onRosterChange, initialRosterId }: RosterManagerProps) => {
+interface RosterManagerSurfaceProps {
+  rosters: Roster[];
+  members: GuildMember[];
+  ranks: GuildRank[];
+  initialRosterId?: string | null;
+  onCreateRoster: (input: {
+    name: string;
+    description: string | null;
+    accessRules: Omit<AccessRule, 'id'>[];
+  }) => Promise<void> | void;
+  onUpdateRoster: (
+    rosterId: string,
+    input: {
+      name: string;
+      description: string | null;
+      accessRules: Omit<AccessRule, 'id'>[];
+    },
+  ) => Promise<void> | void;
+  onDeleteRoster: (rosterId: string) => Promise<void> | void;
+}
+
+export const RosterManagerSurface = ({
+  rosters,
+  members,
+  ranks,
+  initialRosterId,
+  onCreateRoster,
+  onUpdateRoster,
+  onDeleteRoster,
+}: RosterManagerSurfaceProps) => {
   const { t } = useLanguage();
   const { toast } = useToast();
   const [isCreating, setIsCreating] = useState(false);
@@ -61,19 +92,6 @@ export const RosterManager = ({ guildId, rosters, members, ranks, onRosterChange
   const maxRankIndex = ranks.length > 0 ? Math.max(...ranks.map(r => r.rank_index)) : 9;
   const getErrorMessage = (error: unknown) =>
     error instanceof Error ? error.message : t.errors.generic;
-  const isMissingSchemaError = (error: unknown) => {
-    const candidate = error as { code?: string; message?: string } | null;
-    const message = candidate?.message || '';
-    return (
-      candidate?.code === 'PGRST202'
-      || candidate?.code === 'PGRST205'
-      || candidate?.code === '42P01'
-      || message.includes('Could not find the function')
-      || message.includes('Could not find the table')
-      || message.includes('schema cache')
-      || message.includes('does not exist')
-    );
-  };
   const getRankName = (index: number) => {
     const rank = ranks.find((entry) => entry.rank_index === index);
     if (rank?.rank_name) return rank.rank_name;
@@ -115,123 +133,28 @@ export const RosterManager = ({ guildId, rosters, members, ranks, onRosterChange
     setEditingRoster(null);
   };
 
-  const createRosterWithSeasonFallback = async (seasonName: string) => {
-    const accessRules = formAccessRules.map(r => ({
-      access_type: r.access_type,
-      user_id: r.access_type === 'user' ? r.user_id : null,
-      min_rank_index: r.access_type === 'rank' ? r.min_rank_index : null,
-      max_rank_index: r.access_type === 'rank' ? r.max_rank_index : null,
-    }));
-
-    const { error: rpcError } = await supabase.rpc('create_roster_with_wish_season', {
-      p_guild_id: guildId,
-      p_name: formName.trim(),
-      p_description: formDescription.trim() || null,
-      p_access_rules: formAccessRules,
-      p_season_name: seasonName,
-    });
-
-    if (!rpcError) return;
-    if (!isMissingSchemaError(rpcError)) throw rpcError;
-
-    const { data: roster, error: rosterError } = await supabase
-      .from('rosters')
-      .insert({
-        guild_id: guildId,
-        name: formName.trim(),
-        description: formDescription.trim() || null,
-      })
-      .select('id')
-      .single();
-
-    if (rosterError) throw rosterError;
-
-    if (accessRules.length > 0) {
-      const { error: rulesError } = await supabase
-        .from('roster_access_rules')
-        .insert(accessRules.map((rule) => ({
-          roster_id: roster.id,
-          ...rule,
-        })));
-
-      if (rulesError) throw rulesError;
-    }
-
-    const { data: authData } = await supabase.auth.getUser();
-    const { data: season, error: seasonError } = await supabase
-      .from('roster_wish_seasons')
-      .insert({
-        guild_id: guildId,
-        roster_id: roster.id,
-        name: seasonName,
-        state: 'draft',
-        created_by: authData.user?.id || null,
-      })
-      .select('id')
-      .maybeSingle();
-
-    if (seasonError) {
-      if (isMissingSchemaError(seasonError)) return;
-      throw seasonError;
-    }
-
-    if (season?.id) {
-      const { error: materializeError } = await supabase.rpc('materialize_roster_season_members', {
-        p_roster_id: roster.id,
-        p_season_id: season.id,
-      });
-
-      if (materializeError && !isMissingSchemaError(materializeError)) {
-        throw materializeError;
-      }
-    }
-  };
-
   const handleSave = async () => {
     if (!formName.trim()) return;
     setSaving(true);
 
     try {
       if (editingRoster) {
-        // Update roster
-        const { error: updateError } = await supabase
-          .from('rosters')
-          .update({ name: formName.trim(), description: formDescription.trim() || null })
-          .eq('id', editingRoster.id);
-
-        if (updateError) throw updateError;
-
-        // Delete old access rules
-        await supabase
-          .from('roster_access_rules')
-          .delete()
-          .eq('roster_id', editingRoster.id);
-
-        // Insert new access rules
-        if (formAccessRules.length > 0) {
-          const { error: rulesError } = await supabase
-            .from('roster_access_rules')
-            .insert(formAccessRules.map(r => ({
-              roster_id: editingRoster.id,
-              access_type: r.access_type,
-              user_id: r.access_type === 'user' ? r.user_id : null,
-              min_rank_index: r.access_type === 'rank' ? r.min_rank_index : null,
-              max_rank_index: r.access_type === 'rank' ? r.max_rank_index : null,
-            })));
-
-          if (rulesError) throw rulesError;
-        }
-
+        await onUpdateRoster(editingRoster.id, {
+          name: formName.trim(),
+          description: formDescription.trim() || null,
+          accessRules: formAccessRules,
+        });
         toast({ title: t.rosters.rosterUpdated });
       } else {
-        const seasonName = await resolveCurrentWowSeasonName();
-        await createRosterWithSeasonFallback(seasonName);
-
+        await onCreateRoster({
+          name: formName.trim(),
+          description: formDescription.trim() || null,
+          accessRules: formAccessRules,
+        });
         toast({ title: t.rosters.rosterCreated });
       }
 
       closeDialog();
-      onRosterChange();
     } catch (error: unknown) {
       toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
     } finally {
@@ -243,15 +166,8 @@ export const RosterManager = ({ guildId, rosters, members, ranks, onRosterChange
     setDeleting(rosterId);
 
     try {
-      const { error } = await supabase
-        .from('rosters')
-        .delete()
-        .eq('id', rosterId);
-
-      if (error) throw error;
-
+      await onDeleteRoster(rosterId);
       toast({ title: t.rosters.rosterDeleted });
-      onRosterChange();
     } catch (error: unknown) {
       toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
     } finally {
@@ -393,5 +309,163 @@ export const RosterManager = ({ guildId, rosters, members, ranks, onRosterChange
         </DialogContent>
       </Dialog>
     </>
+  );
+};
+
+export const RosterManager = ({ guildId, rosters, members, ranks, onRosterChange, initialRosterId }: RosterManagerProps) => {
+  const isMissingSchemaError = (error: unknown) => {
+    const candidate = error as { code?: string; message?: string } | null;
+    const message = candidate?.message || '';
+    return (
+      candidate?.code === 'PGRST202'
+      || candidate?.code === 'PGRST205'
+      || candidate?.code === '42P01'
+      || message.includes('Could not find the function')
+      || message.includes('Could not find the table')
+      || message.includes('schema cache')
+      || message.includes('does not exist')
+    );
+  };
+
+  const createRosterWithSeasonFallback = async (input: {
+    name: string;
+    description: string | null;
+    accessRules: Omit<AccessRule, 'id'>[];
+  }) => {
+    const seasonName = await resolveCurrentWowSeasonName();
+    const accessRules = input.accessRules.map(r => ({
+      access_type: r.access_type,
+      user_id: r.access_type === 'user' ? r.user_id : null,
+      min_rank_index: r.access_type === 'rank' ? r.min_rank_index : null,
+      max_rank_index: r.access_type === 'rank' ? r.max_rank_index : null,
+    }));
+
+    const { error: rpcError } = await supabase.rpc('create_roster_with_wish_season', {
+      p_guild_id: guildId,
+      p_name: input.name,
+      p_description: input.description,
+      p_access_rules: input.accessRules,
+      p_season_name: seasonName,
+    });
+
+    if (!rpcError) return;
+    if (!isMissingSchemaError(rpcError)) throw rpcError;
+
+    const { data: roster, error: rosterError } = await supabase
+      .from('rosters')
+      .insert({
+        guild_id: guildId,
+        name: input.name,
+        description: input.description,
+      })
+      .select('id')
+      .single();
+
+    if (rosterError) throw rosterError;
+
+    if (accessRules.length > 0) {
+      const { error: rulesError } = await supabase
+        .from('roster_access_rules')
+        .insert(accessRules.map((rule) => ({
+          roster_id: roster.id,
+          ...rule,
+        })));
+
+      if (rulesError) throw rulesError;
+    }
+
+    const { data: authData } = await supabase.auth.getUser();
+    const { data: season, error: seasonError } = await supabase
+      .from('roster_wish_seasons')
+      .insert({
+        guild_id: guildId,
+        roster_id: roster.id,
+        name: seasonName,
+        state: 'draft',
+        created_by: authData.user?.id || null,
+      })
+      .select('id')
+      .maybeSingle();
+
+    if (seasonError) {
+      if (isMissingSchemaError(seasonError)) return;
+      throw seasonError;
+    }
+
+    if (season?.id) {
+      const { error: materializeError } = await supabase.rpc('materialize_roster_season_members', {
+        p_roster_id: roster.id,
+        p_season_id: season.id,
+      });
+
+      if (materializeError && !isMissingSchemaError(materializeError)) {
+        throw materializeError;
+      }
+    }
+  };
+
+  const updateRoster = async (
+    rosterId: string,
+    input: {
+      name: string;
+      description: string | null;
+      accessRules: Omit<AccessRule, 'id'>[];
+    },
+  ) => {
+    const { error: updateError } = await supabase
+      .from('rosters')
+      .update({ name: input.name, description: input.description })
+      .eq('id', rosterId);
+
+    if (updateError) throw updateError;
+
+    await supabase
+      .from('roster_access_rules')
+      .delete()
+      .eq('roster_id', rosterId);
+
+    if (input.accessRules.length > 0) {
+      const { error: rulesError } = await supabase
+        .from('roster_access_rules')
+        .insert(input.accessRules.map(r => ({
+          roster_id: rosterId,
+          access_type: r.access_type,
+          user_id: r.access_type === 'user' ? r.user_id : null,
+          min_rank_index: r.access_type === 'rank' ? r.min_rank_index : null,
+          max_rank_index: r.access_type === 'rank' ? r.max_rank_index : null,
+        })));
+
+      if (rulesError) throw rulesError;
+    }
+  };
+
+  const deleteRoster = async (rosterId: string) => {
+    const { error } = await supabase
+      .from('rosters')
+      .delete()
+      .eq('id', rosterId);
+
+    if (error) throw error;
+  };
+
+  return (
+    <RosterManagerSurface
+      rosters={rosters}
+      members={members}
+      ranks={ranks}
+      initialRosterId={initialRosterId}
+      onCreateRoster={async (input) => {
+        await createRosterWithSeasonFallback(input);
+        onRosterChange();
+      }}
+      onUpdateRoster={async (rosterId, input) => {
+        await updateRoster(rosterId, input);
+        onRosterChange();
+      }}
+      onDeleteRoster={async (rosterId) => {
+        await deleteRoster(rosterId);
+        onRosterChange();
+      }}
+    />
   );
 };

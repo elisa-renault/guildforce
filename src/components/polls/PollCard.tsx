@@ -1,13 +1,15 @@
-import React, { useState, forwardRef } from 'react';
+import { BarChart3, Clock, Copy, Edit, Eye, Lock, Play, Settings, Trash2, User, Users } from 'lucide-react';
+import React, { forwardRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useLanguage } from '@/contexts/LanguageContext';
+
+import { EditActivePollDialog } from './EditActivePollDialog';
+import type { GuildPoll } from '@/types/poll';
+
 import { GlowCard } from '@/components/GlowCard';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { BarChart3, Clock, Edit, Eye, Users, Lock, Trash2, Play, User, Settings, Copy } from 'lucide-react';
-import type { GuildPoll } from '@/types/poll';
-import { EditActivePollDialog } from './EditActivePollDialog';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { formatDistanceFromNowLocalized } from '@/i18n/format';
 import { toneBadgeClass } from '@/lib/design-tokens';
 import { getPollPrimaryAction } from '@/lib/pollAccess';
@@ -16,6 +18,7 @@ interface PollCardProps {
   poll: GuildPoll;
   isGM: boolean;
   guildSlug: string;
+  routeBase?: string;
   onPublish?: (pollId: string) => void;
   onClose?: (pollId: string) => void;
   onDelete?: (pollId: string) => void;
@@ -26,6 +29,7 @@ export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
   poll,
   isGM,
   guildSlug,
+  routeBase,
   onPublish,
   onClose,
   onDelete,
@@ -34,15 +38,16 @@ export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
   const navigate = useNavigate();
   const { language, t } = useLanguage();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const basePath = routeBase ?? `/guild/${guildSlug}`;
 
   const handleEditMetadata = () => {
     setEditDialogOpen(false);
-    navigate(`/guild/${guildSlug}/polls/${poll.id}/edit?mode=metadata`);
+    navigate(`${basePath}/polls/${poll.id}/edit?mode=metadata`);
   };
 
   const handleEditFull = () => {
     setEditDialogOpen(false);
-    navigate(`/guild/${guildSlug}/polls/${poll.id}/edit?mode=full`);
+    navigate(`${basePath}/polls/${poll.id}/edit?mode=full`);
   };
 
   const statusColors = {
@@ -58,15 +63,15 @@ export const PollCard = forwardRef<HTMLDivElement, PollCardProps>(({
   };
 
   const handleViewResults = () => {
-    navigate(`/guild/${guildSlug}/poll/${poll.id}/results`);
+    navigate(`${basePath}/poll/${poll.id}/results`);
   };
 
   const handleRespond = () => {
-    navigate(`/guild/${guildSlug}/poll/${poll.id}`);
+    navigate(`${basePath}/poll/${poll.id}`);
   };
 
   const handleEdit = () => {
-    navigate(`/guild/${guildSlug}/polls/${poll.id}/edit`);
+    navigate(`${basePath}/polls/${poll.id}/edit`);
   };
 
   const primaryAction = getPollPrimaryAction(poll, isGM);

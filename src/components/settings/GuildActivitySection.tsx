@@ -1,5 +1,7 @@
 import { History, Loader2 } from 'lucide-react';
 
+import type { ReactNode } from 'react';
+
 import { ActivityLog } from '@/components/dashboard/ActivityLog';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -20,24 +22,35 @@ interface GuildActivitySectionProps {
   showVaultAudit?: boolean;
 }
 
-export const GuildActivitySection = ({
-  guildId,
+interface GuildActivitySurfaceProps {
+  activityLog: ReactNode;
+  showVaultAudit?: boolean;
+  auditEvents?: Array<{
+    id: string;
+    created_at: string;
+    actor_username: string | null;
+    action_type: string;
+    secret_label: string;
+    action_context: Record<string, unknown> | null;
+  }>;
+  auditLoading?: boolean;
+}
+
+export const GuildActivitySurface = ({
+  activityLog,
   showVaultAudit = false,
-}: GuildActivitySectionProps) => {
+  auditEvents = [],
+  auditLoading = false,
+}: GuildActivitySurfaceProps) => {
   const { t } = useLanguage();
   const activity = t.activityLog;
-  const { auditEvents, auditLoading } = useGuildVault({
-    guildId,
-    includeAudit: showVaultAudit,
-    mode: 'audit-only',
-  });
 
   return (
     <div className="space-y-4">
       <h2 className="font-sans text-base font-medium">{t.common.activityLog}</h2>
 
       <div className="min-h-[500px]">
-        <ActivityLog guildId={guildId} />
+        {activityLog}
       </div>
 
       {showVaultAudit && (
@@ -94,5 +107,25 @@ export const GuildActivitySection = ({
         </div>
       )}
     </div>
+  );
+};
+
+export const GuildActivitySection = ({
+  guildId,
+  showVaultAudit = false,
+}: GuildActivitySectionProps) => {
+  const { auditEvents, auditLoading } = useGuildVault({
+    guildId,
+    includeAudit: showVaultAudit,
+    mode: 'audit-only',
+  });
+
+  return (
+    <GuildActivitySurface
+      activityLog={<ActivityLog guildId={guildId} />}
+      showVaultAudit={showVaultAudit}
+      auditEvents={auditEvents}
+      auditLoading={auditLoading}
+    />
   );
 };

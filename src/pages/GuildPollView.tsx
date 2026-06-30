@@ -1,4 +1,4 @@
-import { Loader2, BarChart3, ArrowLeft, Lock, Edit } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
@@ -6,17 +6,13 @@ import type { ResponseValue } from '@/types/poll';
 
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GuildWorkspaceShell } from '@/components/guild';
-import { PageContainer } from '@/components/layout/PageContainer';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { PollResponse, PollResults } from '@/components/polls';
-import { Button } from '@/components/ui/button';
+import { PollViewSurface } from '@/components/polls';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
 import { usePoll, usePollResults, usePollMutations } from '@/hooks/useGuildPolls';
 import { usePollTextAiSummaries } from '@/hooks/usePollTextAiSummaries';
-import { formatDateLocalized } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
 import { supabase } from '@/integrations/supabase/client';
 import { KILL_SWITCH_FEATURE_FLAGS, useKillSwitchFeatureEnabled } from '@/lib/featureFlags';
@@ -85,7 +81,6 @@ const GuildPollView = () => {
     userCanRespond,
     userCanViewResults,
   });
-  const showOuterHeader = !(showResultsPane && userCanViewResults);
   const canToggleResults = (isGM || hasManagePolls || (userCanViewResults && hasResponded)) && !isClosed;
   const canOpenFullResults = reviewingClosedResponses && userCanViewResults;
   const {
@@ -218,170 +213,30 @@ const GuildPollView = () => {
         status: isClosed ? t.polls.closed : undefined,
       }}
     >
-      <PageContainer
-        className="relative z-10 mx-auto max-w-5xl py-4 md:py-5"
-        width="workspace"
-      >
-        {showOuterHeader && (
-          <PageHeader
-            className="mb-4"
-            title={poll.title}
-            description={poll.description}
-            bordered={false}
-            actions={(
-              <>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleBack}
-                  className="h-10 w-10 shrink-0 rounded-lg bg-muted/50 hover:bg-muted"
-                  aria-label={t.common.back}
-                >
-                  <ArrowLeft className="h-4 w-4 text-muted-foreground" />
-                </Button>
-                {canToggleResults && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowResults(!showResults)}
-                  >
-                    <BarChart3 className="mr-2 h-4 w-4" />
-                    {showResults ? t.polls.hideResults : t.polls.viewResults}
-                  </Button>
-                )}
-                {!canToggleResults && canOpenFullResults && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigate(resultsPath)}
-                  >
-                    <BarChart3 className="mr-2 h-4 w-4" />
-                    {t.common.results}
-                  </Button>
-                )}
-              </>
-            )}
-            meta={(
-              <>
-                {poll.roster?.name && (
-                  <span className="rounded bg-muted/45 px-2 py-1 text-xs font-medium text-foreground">
-                    {poll.roster.name}
-                  </span>
-                )}
-                {poll.ends_at && (
-                  <span className={isClosed ? 'text-xs text-destructive' : 'text-xs text-muted-foreground'}>
-                    {isClosed
-                      ? t.polls.closed
-                      : `${t.polls.endsOn}: ${formatDateLocalized(poll.ends_at, language, { dateStyle: 'medium' })}`}
-                  </span>
-                )}
-              </>
-            )}
-          />
-        )}
-
-        {!showOuterHeader && (
-          <div className="mb-6 flex items-center justify-between gap-3">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={handleBack}
-              className="h-10 w-10 shrink-0 rounded-lg bg-muted/50 hover:bg-muted"
-              aria-label={t.common.back}
-            >
-              <ArrowLeft className="h-5 w-5 text-muted-foreground" />
-            </Button>
-
-            {canToggleResults && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowResults(!showResults)}
-              >
-                <BarChart3 className="mr-2 h-4 w-4" />
-                {showResults ? t.polls.hideResults : t.polls.viewResults}
-              </Button>
-            )}
-
-            {!canToggleResults && canOpenFullResults && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate(resultsPath)}
-              >
-                <BarChart3 className="mr-2 h-4 w-4" />
-                {t.common.results}
-              </Button>
-            )}
-          </div>
-        )}
-
-        {showResultsPane && userCanViewResults ? (
-          <div className="space-y-6">
-            {hasResponded && !isClosed && userCanRespond && (
-              <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 flex items-center justify-between">
-                <p className="text-primary">{t.polls.alreadyResponded}</p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsEditing(true)}
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  {t.common.edit}
-                </Button>
-              </div>
-            )}
-            <PollResults
-              poll={pollResults || poll}
-              variant="full"
-              canUseCohortFilters={isGM || hasManagePolls}
-              aiSummaries={aiSummaries}
-              aiSummariesLoading={aiSummariesLoading}
-              aiSummariesError={aiSummariesError}
-            />
-          </div>
-        ) : !userCanRespond && !isEditing ? (
-          <div className="space-y-6">
-            <div className="bg-muted/30 border border-muted rounded-lg p-8 text-center">
-              <Lock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">
-                {userCanViewResults ? t.polls.resultsRestricted : t.polls.notFound}
-              </p>
-            </div>
-          </div>
-        ) : hasResponded && !userCanViewResults && !isEditing ? (
-          <div className="space-y-6">
-            <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 flex items-center justify-between">
-              <p className="text-primary">{t.polls.alreadyResponded}</p>
-              {!isClosed && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsEditing(true)}
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  {t.common.edit}
-                </Button>
-              )}
-            </div>
-            <div className="bg-muted/30 border border-muted rounded-lg p-8 text-center">
-              <Lock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">{t.polls.resultsRestricted}</p>
-            </div>
-          </div>
-        ) : (
-          <PollResponse
-            questions={poll.questions || []}
-            isAnonymous={poll.is_anonymous}
-            onSubmit={handleSubmit}
-            saving={saving}
-            alreadyResponded={hasResponded}
-            readOnly={reviewingClosedResponses}
-          />
-        )}
-      </PageContainer>
+      <PollViewSurface
+        poll={poll}
+        pollResults={pollResults}
+        hasResponded={hasResponded}
+        isClosed={isClosed}
+        userCanRespond={userCanRespond}
+        userCanViewResults={userCanViewResults}
+        showResultsPane={showResultsPane}
+        showResults={showResults}
+        setShowResults={setShowResults}
+        isEditing={isEditing}
+        setIsEditing={setIsEditing}
+        reviewingClosedResponses={reviewingClosedResponses}
+        canToggleResults={canToggleResults}
+        canOpenFullResults={canOpenFullResults}
+        onBack={handleBack}
+        onOpenFullResults={() => navigate(resultsPath)}
+        onSubmit={handleSubmit}
+        saving={saving}
+        canUseCohortFilters={isGM || hasManagePolls}
+        aiSummaries={aiSummaries}
+        aiSummariesLoading={aiSummariesLoading}
+        aiSummariesError={aiSummariesError}
+      />
     </GuildWorkspaceShell>
   );
 };

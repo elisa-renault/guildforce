@@ -1,11 +1,15 @@
 export { PollCard } from './PollCard';
 export { PollEditor } from './PollEditor';
+export { PollEditorSurface } from './PollEditorSurface';
+export { PollResultsSurface } from './PollResultsSurface';
+export { PollViewSurface } from './PollViewSurface';
 export { PollRespondentEditor, type RespondentAccessRule } from './PollRespondentEditor';
 export { PollQuestionEditor } from './PollQuestionEditor';
 export { PollSectionEditor } from './PollSectionEditor';
 export { PollResponse } from './PollResponse';
 export { PollResults } from './PollResults';
 export { ActivePollWidget } from './ActivePollWidget';
+export { ActivePollWidgetSurface } from './ActivePollWidgetSurface';
 export { RankingInput } from './RankingInput';
 export { EditActivePollDialog } from './EditActivePollDialog';
 export { SortableQuestion } from './SortableQuestion';

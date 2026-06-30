@@ -4,15 +4,13 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GlowCard } from '@/components/GlowCard';
-import { GuildWorkspaceShell } from '@/components/guild';
-import { PageContainer } from '@/components/layout/PageContainer';
 import { GuildPermissionsEditor, MyPermissionsCard } from '@/components/permissions';
 import { RosterManager } from '@/components/roster';
 import {
   GuildActivitySection,
   GuildBattleNetSection,
   GuildProfileSection,
-  GuildSettingsSidebar,
+  GuildSettingsSurface,
   type SettingsSection,
 } from '@/components/settings';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -22,7 +20,7 @@ import { resolveSemanticMessage } from '@/i18n/semantic';
 import { supabase } from '@/integrations/supabase/client';
 import { KILL_SWITCH_FEATURE_FLAGS, useKillSwitchFeatureEnabled } from '@/lib/featureFlags';
 import { toNormalizedRealmSlug } from '@/lib/guildDiscovery';
-import { getVisibleGuildSettingsSections } from '@/lib/guildSettingsSections';
+import { getVisibleGuildSettingsSections, guildSettingsSectionLabelKeys } from '@/lib/guildSettingsSections';
 import { getGuildPath } from '@/lib/guildSlug';
 import { formatRankLabel } from '@/lib/rankLabel';
 
@@ -382,46 +380,25 @@ const GuildSettings = () => {
     }
   };
 
-  const settingsSectionLabelKeys: Record<SettingsSection, Parameters<typeof resolveSemanticMessage>[0]['key']> = {
-    profile: 'settings.sidebar.section.profile',
-    permissions: 'settings.sidebar.section.permissions',
-    mypermissions: 'settings.sidebar.section.mypermissions',
-    rosters: 'settings.sidebar.section.rosters',
-    activity: 'settings.sidebar.section.activity',
-    battlenet: 'settings.sidebar.section.battlenet',
-  };
-
   return (
-    <GuildWorkspaceShell
+    <GuildSettingsSurface
       guild={displayGuild}
       guildId={displayGuild.id}
       basePath={basePath}
       isGM={isGM}
       hasSettingsPermission={hasSettingsAccess}
       hasVaultAccess={hasVaultAccess}
-      activeTab="settings"
-      context={{
-        status: resolveSemanticMessage({
-          key: settingsSectionLabelKeys[activeSection],
-          language: t.lang,
-          translations: t,
-        }),
-      }}
+      activeSection={activeSection}
+      visibleSections={visibleSections}
+      onSectionChange={handleSectionChange}
+      contextLabel={resolveSemanticMessage({
+        key: guildSettingsSectionLabelKeys[activeSection],
+        language: t.lang,
+        translations: t,
+      })}
     >
-      <div className="relative z-10 min-w-0 md:grid md:h-[calc(100dvh-7rem-var(--global-nav-extra-offset,0px))] md:min-h-0 md:grid-cols-[16rem_minmax(0,1fr)] md:overflow-hidden lg:h-[calc(100dvh-3.5rem-var(--global-nav-extra-offset,0px))]">
-        <GuildSettingsSidebar
-          activeSection={activeSection}
-          onSectionChange={handleSectionChange}
-          visibleSections={visibleSections}
-        />
-
-        <main className="min-w-0 md:min-h-0 md:overflow-y-auto">
-          <PageContainer width="workspace" className="py-4 md:py-5">
-            {renderSectionContent()}
-          </PageContainer>
-        </main>
-      </div>
-    </GuildWorkspaceShell>
+      {renderSectionContent()}
+    </GuildSettingsSurface>
   );
 };
 

@@ -1,38 +1,27 @@
+import { Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+
+import type { PollFormData, SectionFormData, QuestionFormData } from '@/types/poll';
+
 import { CosmicBackground } from '@/components/CosmicBackground';
 import { GuildWorkspaceShell } from '@/components/guild';
-import { Breadcrumbs } from '@/components/Breadcrumbs';
-import { PageContainer } from '@/components/layout/PageContainer';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { PollEditor, type ResultsAccessConfig, type RespondentAccessRule } from '@/components/polls';
-import { usePollMutations } from '@/hooks/useGuildPolls';
-import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
-import { useGuildRankLabels } from '@/hooks/useGuildRankLabels';
-import type { PollFormData, SectionFormData, QuestionFormData } from '@/types/poll';
-import { AlertTriangle, ClipboardList, Loader2 } from 'lucide-react';
+import { PollEditorSurface, type ResultsAccessConfig, type RespondentAccessRule } from '@/components/polls';
+import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
+import { useHasGuildPermission } from '@/hooks/useGuildPermissions';
+import { usePollMutations } from '@/hooks/useGuildPolls';
+import { useGuildRankLabels } from '@/hooks/useGuildRankLabels';
 import { resolveSemanticMessage } from '@/i18n/semantic';
-import { formatRankLabel } from '@/lib/rankLabel';
+import { supabase } from '@/integrations/supabase/client';
 import { findGuildByRouteSlugs } from '@/lib/findGuildByRouteSlugs';
 import {
   hasPollStructureChanges,
   shouldResetResponsesForFullPollEdit,
   shouldRewriteQuestionsForPollEdit,
 } from '@/lib/pollStructureChanges';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { formatRankLabel } from '@/lib/rankLabel';
 
 interface GuildMember {
   user_id: string;
@@ -530,71 +519,25 @@ const GuildPollNew = () => {
       activeTab="polls"
       context={{ status: existingPoll ? t.common.edit : t.common.new }}
     >
-      <PageContainer className="max-w-4xl space-y-5 py-5 md:py-6" width="workspace">
-        <Breadcrumbs items={breadcrumbs} />
-        <PageHeader
-          className="max-w-4xl"
-          icon={ClipboardList}
-          title={existingPoll ? t.polls.edit : t.polls.new}
-          description={guild ? guild.name : undefined}
-          bordered={false}
-        />
-
-        {isActivePoll && (
-          <div className={`mb-6 p-4 rounded-lg border ${isMetadataOnly 
-            ? 'bg-info/10 border-info/30' 
-            : 'bg-warning/10 border-warning/30'}`}
-          >
-          <div className="flex items-center gap-2">
-              <AlertTriangle className={`h-5 w-5 ${isMetadataOnly ? 'text-info' : 'text-warning'}`} />
-              <span className={`font-medium ${isMetadataOnly ? 'text-info' : 'text-warning'}`}>
-                {isMetadataOnly ? t.polls.settingsOnlyMode : t.polls.fullEditMode}
-              </span>
-            </div>
-            <p className="text-sm text-muted-foreground mt-1 ml-7">
-              {isMetadataOnly ? t.polls.settingsOnlyDesc : t.polls.fullEditDesc}
-            </p>
-          </div>
-        )}
-
-        <PollEditor
-          rosters={rosters}
-          members={members}
-          ranks={ranks}
-          initialData={existingPoll ? toPollFormData(existingPoll) : undefined}
-          initialAccessConfig={initialAccessConfig}
-          initialRespondentRules={initialRespondentRules}
-          onSave={handleSave}
-          onPublish={isActivePoll ? undefined : handlePublish}
-          saving={saving}
-          metadataOnly={isMetadataOnly}
-        />
-      </PageContainer>
-
-      <AlertDialog open={confirmResetDialog} onOpenChange={setConfirmResetDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-              {t.polls.confirmReset}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t.polls.resetDescription}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>
-              {t.common.cancel}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmFullEdit}
-              className="bg-destructive hover:bg-destructive/90"
-            >
-              {t.polls.resetAndSave}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <PollEditorSurface
+        breadcrumbs={breadcrumbs}
+        guildName={guild.name}
+        isEditing={Boolean(existingPoll)}
+        isActivePoll={isActivePoll}
+        isMetadataOnly={isMetadataOnly}
+        rosters={rosters}
+        members={members}
+        ranks={ranks}
+        initialData={existingPoll ? toPollFormData(existingPoll) : undefined}
+        initialAccessConfig={initialAccessConfig}
+        initialRespondentRules={initialRespondentRules}
+        onSave={handleSave}
+        onPublish={isActivePoll ? undefined : handlePublish}
+        saving={saving}
+        confirmResetDialog={confirmResetDialog}
+        onConfirmResetDialogChange={setConfirmResetDialog}
+        onConfirmFullEdit={handleConfirmFullEdit}
+      />
     </GuildWorkspaceShell>
   );
 };

@@ -1,15 +1,17 @@
-import { useRef, useState, useEffect, useCallback } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { GlowCard } from '@/components/GlowCard';
+import { Upload, Trash2, Shield, Crown } from 'lucide-react';
+import { useRef, useState, useEffect, useCallback, type RefObject } from 'react';
+
+import type { GuildRankLabelMap } from '@/lib/rankLabel';
+
 import { CosmicButton } from '@/components/CosmicButton';
+import { GlowCard } from '@/components/GlowCard';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Label } from '@/components/ui/label';
-import { Upload, Trash2, Shield, Crown } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useToast } from '@/hooks/use-toast';
 import { interpolateMessage } from '@/i18n/format';
 import { resolveSemanticMessage } from '@/i18n/semantic';
-import type { GuildRankLabelMap } from '@/lib/rankLabel';
+import { supabase } from '@/integrations/supabase/client';
 import { formatRankLabel } from '@/lib/rankLabel';
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
@@ -38,6 +40,26 @@ interface GuildProfileSectionProps {
   onRankLabelsUpdate: (labels: GuildRankLabelMap) => void;
   onOfficerRankChange: (rank: number) => void;
   onGuildUpdate: (guild: GuildData) => void;
+}
+
+interface GuildProfileSurfaceProps {
+  guild: GuildData;
+  ranks: GuildRank[];
+  isGM: boolean;
+  localOfficerRank: number;
+  rankLabelDrafts: Record<number, string>;
+  uploading: boolean;
+  removing: boolean;
+  savingOfficerRank: boolean;
+  savingRankLabels: boolean;
+  fileInputRef: RefObject<HTMLInputElement>;
+  onFileSelect: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onRemoveAvatar: () => void;
+  onOfficerRankChange: (rank: number) => void;
+  onOfficerRankCommit: (rank: number) => void;
+  onRankLabelChange: (rankIndex: number, nextValue: string) => void;
+  onRankLabelReset: (rankIndex: number) => void;
+  onSaveRankLabels: () => void;
 }
 
 // Custom slider component matching permissions style
@@ -238,6 +260,237 @@ const OfficerRankSlider = ({ maxValue, maxRank, ranks, onChange, onCommit, disab
   );
 };
 
+export const GuildProfileSurface = ({
+  guild,
+  ranks,
+  isGM,
+  localOfficerRank,
+  rankLabelDrafts,
+  uploading,
+  removing,
+  savingOfficerRank,
+  savingRankLabels,
+  fileInputRef,
+  onFileSelect,
+  onRemoveAvatar,
+  onOfficerRankChange,
+  onOfficerRankCommit,
+  onRankLabelChange,
+  onRankLabelReset,
+  onSaveRankLabels,
+}: GuildProfileSurfaceProps) => {
+  const { t } = useLanguage();
+  const rankLabel = resolveSemanticMessage({ key: 'guild.members.rank_label', language: t.lang, translations: t });
+  const getRankName = useCallback((rankIndex: number, rankName?: string | null) => {
+    return formatRankLabel({
+      rankName,
+      rankIndex,
+      rankLabel,
+      guildMasterLabel: t.guild.rank0,
+      customLabel: rankLabelDrafts[rankIndex],
+    });
+  }, [rankLabel, rankLabelDrafts, t.guild.rank0]);
+
+  return (
+    <div className="space-y-4 overflow-x-hidden">
+      <GlowCard surface="section" className="p-4">
+        <div className="grid gap-4 md:grid-cols-[220px_minmax(0,1fr)] lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)]">
+          <section className="flex flex-col items-center justify-center gap-3 text-center md:border-r md:border-border/35 md:pr-4">
+            <Avatar className="h-20 w-20 border border-border/60 md:h-24 md:w-24">
+              {guild.avatar_url ? (
+                <AvatarImage src={guild.avatar_url} alt={guild.name} />
+              ) : (
+                <AvatarFallback className={`${
+                  guild.faction === 'horde'
+                    ? 'bg-horde/20 text-horde'
+                    : 'bg-alliance/20 text-alliance'
+                }`}>
+                  <Shield className="h-8 w-8 md:h-10 md:w-10" strokeWidth={1.5} />
+                </AvatarFallback>
+              )}
+            </Avatar>
+            <div className="flex flex-wrap justify-center gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/gif"
+                onChange={onFileSelect}
+                className="hidden"
+              />
+              <CosmicButton
+                size="sm"
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                loading={uploading}
+                icon={<Upload className="h-4 w-4" />}
+              >
+                {t.guildSettings.uploadAvatar}
+              </CosmicButton>
+              {guild.avatar_url && (
+                <CosmicButton
+                  size="sm"
+                  variant="outline"
+                  onClick={onRemoveAvatar}
+                  disabled={removing}
+                  loading={removing}
+                  icon={<Trash2 className="h-4 w-4" />}
+                  className="text-destructive hover:text-destructive"
+                >
+                  {t.guildSettings.removeAvatar}
+                </CosmicButton>
+              )}
+            </div>
+            <p className="max-w-xs text-xs text-muted-foreground">{t.guildSettings.avatarHint}</p>
+          </section>
+
+          <section className="min-w-0">
+            <h2 className="mb-3 font-sans text-base font-medium">{t.guildSettings.guildInfo}</h2>
+
+            <div className="grid gap-y-0.5 lg:grid-cols-2 lg:gap-x-8">
+              <div className="flex justify-between gap-3 border-b border-border/35 py-2">
+                <span className="text-sm text-muted-foreground">{t.guild.name}</span>
+                <span className="text-right font-medium break-words">{guild.name}</span>
+              </div>
+              <div className="flex justify-between gap-3 border-b border-border/35 py-2">
+                <span className="text-sm text-muted-foreground">{t.battlenet.region}</span>
+                <span className="text-right font-medium uppercase">{guild.region}</span>
+              </div>
+              <div className="flex justify-between gap-3 border-b border-border/35 py-2">
+                <span className="text-sm text-muted-foreground">{t.guild.faction}</span>
+                <span className={`text-right font-medium ${
+                  guild.faction === 'horde' ? 'text-horde' : 'text-alliance'
+                }`}>
+                  {guild.faction === 'horde' ? t.guild.horde : t.guild.alliance}
+                </span>
+              </div>
+              <div className="flex justify-between gap-3 border-b border-border/35 py-2">
+                <span className="text-sm text-muted-foreground">{t.guild.server}</span>
+                <span className="text-right font-medium break-words">{guild.server}</span>
+              </div>
+            </div>
+          </section>
+        </div>
+      </GlowCard>
+
+      <GlowCard surface="section" className="p-4">
+        <section className="min-w-0">
+          <div className="flex items-center gap-2 mb-1.5 md:mb-2">
+            <Crown className="h-4 w-4 text-warning" />
+            <Label className="text-xs md:text-sm font-medium">
+              {t.permissions.officers}
+            </Label>
+            <span className="text-xs md:text-sm font-medium text-muted-foreground ml-auto">
+              0 → {localOfficerRank}
+            </span>
+          </div>
+          <p className="text-[10px] md:text-xs text-muted-foreground mb-2 md:mb-3">
+            {interpolateMessage(t.permissions.ranksRange, { max: localOfficerRank })}
+          </p>
+
+          <OfficerRankSlider
+            maxValue={localOfficerRank}
+            maxRank={9}
+            ranks={ranks}
+            onChange={onOfficerRankChange}
+            onCommit={onOfficerRankCommit}
+            disabled={savingOfficerRank}
+          />
+
+          {ranks.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {ranks.filter(r => r.rank_index <= localOfficerRank).map(rank => (
+                <span
+                  key={rank.rank_index}
+                  className="px-2 py-0.5 rounded-full text-xs bg-primary/20 text-primary border border-primary/30"
+                >
+                  {getRankName(rank.rank_index, rank.rank_name)}
+                </span>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {isGM && ranks.length > 0 && (
+          <div className="mt-5 border-t border-border/35 pt-5">
+            <div className="mb-3">
+              <h3 className="text-sm font-medium">{t.guildSettings.rankLabels.title}</h3>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {t.guildSettings.rankLabels.description}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <div className="hidden grid-cols-[96px_minmax(0,1fr)_minmax(0,1fr)_88px] gap-3 px-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground md:grid">
+                <span>{t.guildSettings.rankLabels.currentRank}</span>
+                <span>{t.guildSettings.rankLabels.blizzardName}</span>
+                <span>{t.guildSettings.rankLabels.customLabel}</span>
+                <span />
+              </div>
+
+              {ranks.map((rank) => {
+                const fallbackLabel = formatRankLabel({
+                  rankName: rank.rank_name,
+                  rankIndex: rank.rank_index,
+                  rankLabel,
+                  guildMasterLabel: t.guild.rank0,
+                });
+                const draftValue = rankLabelDrafts[rank.rank_index] ?? '';
+                const hasCustomValue = draftValue.trim().length > 0;
+
+                return (
+                  <div
+                    key={rank.rank_index}
+                    className="grid gap-2 rounded-lg border border-border/40 bg-background/20 p-3 md:grid-cols-[96px_minmax(0,1fr)_minmax(0,1fr)_88px] md:items-center md:p-2"
+                  >
+                    <div className="text-sm font-medium">
+                      {interpolateMessage(rankLabel, { index: rank.rank_index })}
+                    </div>
+                    <div className="text-sm text-muted-foreground">{fallbackLabel}</div>
+                    <input
+                      type="text"
+                      value={draftValue}
+                      onChange={(event) => onRankLabelChange(rank.rank_index, event.target.value)}
+                      placeholder={t.guildSettings.rankLabels.placeholder}
+                      maxLength={60}
+                      className="h-9 rounded-md border border-border/40 bg-background/40 px-3 text-sm outline-none transition-colors focus:border-primary"
+                    />
+                    <CosmicButton
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onRankLabelReset(rank.rank_index)}
+                      disabled={!hasCustomValue}
+                    >
+                      {t.guildSettings.rankLabels.reset}
+                    </CosmicButton>
+                  </div>
+                );
+              })}
+            </div>
+
+            <p className="mt-3 text-xs text-muted-foreground">
+              {t.guildSettings.rankLabels.emptyFallbackHint}
+            </p>
+
+            <div className="mt-3 flex justify-end">
+              <CosmicButton
+                type="button"
+                size="sm"
+                onClick={onSaveRankLabels}
+                disabled={savingRankLabels}
+                loading={savingRankLabels}
+              >
+                {savingRankLabels ? t.guildSettings.rankLabels.saving : t.guildSettings.rankLabels.save}
+              </CosmicButton>
+            </div>
+          </div>
+        )}
+      </GlowCard>
+    </div>
+  );
+};
+
 export const GuildProfileSection = ({
   guild,
   ranks,
@@ -260,21 +513,10 @@ export const GuildProfileSection = ({
   const [savingRankLabels, setSavingRankLabels] = useState(false);
   const [localOfficerRank, setLocalOfficerRank] = useState(officerRank);
   const [rankLabelDrafts, setRankLabelDrafts] = useState<Record<number, string>>({});
-  const rankLabel = resolveSemanticMessage({ key: 'guild.members.rank_label', language: t.lang, translations: t });
 
   useEffect(() => {
     setRankLabelDrafts(rankLabels);
   }, [rankLabels]);
-
-  const getRankName = useCallback((rankIndex: number, rankName?: string | null) => {
-    return formatRankLabel({
-      rankName,
-      rankIndex,
-      rankLabel,
-      guildMasterLabel: t.guild.rank0,
-      customLabel: rankLabels[rankIndex],
-    });
-  }, [rankLabel, rankLabels, t.guild.rank0]);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -501,202 +743,25 @@ export const GuildProfileSection = ({
   };
 
   return (
-    <div className="space-y-4 overflow-x-hidden">
-      <GlowCard surface="section" className="p-4">
-        <div className="grid gap-4 md:grid-cols-[220px_minmax(0,1fr)] lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)]">
-          <section className="flex flex-col items-center justify-center gap-3 text-center md:border-r md:border-border/35 md:pr-4">
-            <Avatar className="h-20 w-20 border border-border/60 md:h-24 md:w-24">
-              {guild.avatar_url ? (
-                <AvatarImage src={guild.avatar_url} alt={guild.name} />
-              ) : (
-                <AvatarFallback className={`${
-                  guild.faction === 'horde'
-                    ? 'bg-horde/20 text-horde'
-                    : 'bg-alliance/20 text-alliance'
-                }`}>
-                  <Shield className="h-8 w-8 md:h-10 md:w-10" strokeWidth={1.5} />
-                </AvatarFallback>
-              )}
-            </Avatar>
-            <div className="flex flex-wrap justify-center gap-2">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/gif"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-              <CosmicButton
-                size="sm"
-                variant="outline"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                loading={uploading}
-                icon={<Upload className="h-4 w-4" />}
-              >
-                {t.guildSettings.uploadAvatar}
-              </CosmicButton>
-              {guild.avatar_url && (
-                <CosmicButton
-                  size="sm"
-                  variant="outline"
-                  onClick={handleRemoveAvatar}
-                  disabled={removing}
-                  loading={removing}
-                  icon={<Trash2 className="h-4 w-4" />}
-                  className="text-destructive hover:text-destructive"
-                >
-                  {t.guildSettings.removeAvatar}
-                </CosmicButton>
-              )}
-            </div>
-            <p className="max-w-xs text-xs text-muted-foreground">{t.guildSettings.avatarHint}</p>
-          </section>
-
-          <section className="min-w-0">
-            <h2 className="mb-3 font-sans text-base font-medium">{t.guildSettings.guildInfo}</h2>
-
-            <div className="grid gap-y-0.5 lg:grid-cols-2 lg:gap-x-8">
-              <div className="flex justify-between gap-3 border-b border-border/35 py-2">
-                <span className="text-sm text-muted-foreground">{t.guild.name}</span>
-                <span className="text-right font-medium break-words">{guild.name}</span>
-              </div>
-              <div className="flex justify-between gap-3 border-b border-border/35 py-2">
-                <span className="text-sm text-muted-foreground">{t.battlenet.region}</span>
-                <span className="text-right font-medium uppercase">{guild.region}</span>
-              </div>
-              <div className="flex justify-between gap-3 border-b border-border/35 py-2">
-                <span className="text-sm text-muted-foreground">{t.guild.faction}</span>
-                <span className={`text-right font-medium ${
-                  guild.faction === 'horde' ? 'text-horde' : 'text-alliance'
-                }`}>
-                  {guild.faction === 'horde' ? t.guild.horde : t.guild.alliance}
-                </span>
-              </div>
-              <div className="flex justify-between gap-3 border-b border-border/35 py-2">
-                <span className="text-sm text-muted-foreground">{t.guild.server}</span>
-                <span className="text-right font-medium break-words">{guild.server}</span>
-              </div>
-            </div>
-          </section>
-        </div>
-      </GlowCard>
-
-      <GlowCard surface="section" className="p-4">
-        <section className="min-w-0">
-            <div className="flex items-center gap-2 mb-1.5 md:mb-2">
-              <Crown className="h-4 w-4 text-warning" />
-              <Label className="text-xs md:text-sm font-medium">
-                {t.permissions.officers}
-              </Label>
-              <span className="text-xs md:text-sm font-medium text-muted-foreground ml-auto">
-                0 → {localOfficerRank}
-              </span>
-            </div>
-            <p className="text-[10px] md:text-xs text-muted-foreground mb-2 md:mb-3">
-              {interpolateMessage(t.permissions.ranksRange, { max: localOfficerRank })}
-            </p>
-            
-            <OfficerRankSlider
-              maxValue={localOfficerRank}
-              maxRank={9}
-              ranks={ranks}
-              onChange={setLocalOfficerRank}
-              onCommit={handleOfficerRankCommit}
-              disabled={savingOfficerRank}
-            />
-            
-            {ranks.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {ranks.filter(r => r.rank_index <= localOfficerRank).map(rank => (
-                  <span 
-                    key={rank.rank_index}
-                    className="px-2 py-0.5 rounded-full text-xs bg-primary/20 text-primary border border-primary/30"
-                  >
-                    {getRankName(rank.rank_index, rank.rank_name)}
-                  </span>
-                ))}
-              </div>
-            )}
-          </section>
-
-          {isGM && ranks.length > 0 && (
-            <div className="mt-5 border-t border-border/35 pt-5">
-              <div className="mb-3">
-                <h3 className="text-sm font-medium">{t.guildSettings.rankLabels.title}</h3>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {t.guildSettings.rankLabels.description}
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <div className="hidden grid-cols-[96px_minmax(0,1fr)_minmax(0,1fr)_88px] gap-3 px-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground md:grid">
-                  <span>{t.guildSettings.rankLabels.currentRank}</span>
-                  <span>{t.guildSettings.rankLabels.blizzardName}</span>
-                  <span>{t.guildSettings.rankLabels.customLabel}</span>
-                  <span />
-                </div>
-
-                {ranks.map((rank) => {
-                  const fallbackLabel = formatRankLabel({
-                    rankName: rank.rank_name,
-                    rankIndex: rank.rank_index,
-                    rankLabel,
-                    guildMasterLabel: t.guild.rank0,
-                  });
-                  const draftValue = rankLabelDrafts[rank.rank_index] ?? '';
-                  const hasCustomValue = draftValue.trim().length > 0;
-
-                  return (
-                    <div
-                      key={rank.rank_index}
-                      className="grid gap-2 rounded-lg border border-border/40 bg-background/20 p-3 md:grid-cols-[96px_minmax(0,1fr)_minmax(0,1fr)_88px] md:items-center md:p-2"
-                    >
-                      <div className="text-sm font-medium">
-                        {interpolateMessage(rankLabel, { index: rank.rank_index })}
-                      </div>
-                      <div className="text-sm text-muted-foreground">{fallbackLabel}</div>
-                      <input
-                        type="text"
-                        value={draftValue}
-                        onChange={(event) => handleRankLabelChange(rank.rank_index, event.target.value)}
-                        placeholder={t.guildSettings.rankLabels.placeholder}
-                        maxLength={60}
-                        className="h-9 rounded-md border border-border/40 bg-background/40 px-3 text-sm outline-none transition-colors focus:border-primary"
-                      />
-                      <CosmicButton
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleRankLabelReset(rank.rank_index)}
-                        disabled={!hasCustomValue}
-                      >
-                        {t.guildSettings.rankLabels.reset}
-                      </CosmicButton>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <p className="mt-3 text-xs text-muted-foreground">
-                {t.guildSettings.rankLabels.emptyFallbackHint}
-              </p>
-
-              <div className="mt-3 flex justify-end">
-                <CosmicButton
-                  type="button"
-                  size="sm"
-                  onClick={handleSaveRankLabels}
-                  disabled={savingRankLabels}
-                  loading={savingRankLabels}
-                >
-                  {savingRankLabels ? t.guildSettings.rankLabels.saving : t.guildSettings.rankLabels.save}
-                </CosmicButton>
-              </div>
-            </div>
-          )}
-      </GlowCard>
-    </div>
+    <GuildProfileSurface
+      guild={guild}
+      ranks={ranks}
+      isGM={isGM}
+      localOfficerRank={localOfficerRank}
+      rankLabelDrafts={rankLabelDrafts}
+      uploading={uploading}
+      removing={removing}
+      savingOfficerRank={savingOfficerRank}
+      savingRankLabels={savingRankLabels}
+      fileInputRef={fileInputRef}
+      onFileSelect={handleFileSelect}
+      onRemoveAvatar={handleRemoveAvatar}
+      onOfficerRankChange={setLocalOfficerRank}
+      onOfficerRankCommit={handleOfficerRankCommit}
+      onRankLabelChange={handleRankLabelChange}
+      onRankLabelReset={handleRankLabelReset}
+      onSaveRankLabels={handleSaveRankLabels}
+    />
   );
 };
 
