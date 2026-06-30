@@ -55,6 +55,18 @@ describe("appRoutes", () => {
     await renderRoute("/", "Index Page");
     await renderRoute("/auth", "Auth Page");
     await renderRoute("/demo", "Demo Page");
+    await renderRoute("/demo/roster", "Demo Page");
+    await renderRoute("/demo/polls", "Demo Page");
+    await renderRoute("/demo/polls/new", "Demo Page");
+    await renderRoute("/demo/polls/demo-poll-trial-feedback-prep/edit", "Demo Page");
+    await renderRoute("/demo/polls/demo-poll-trial-feedback-prep/edit?mode=metadata", "Demo Page");
+    await renderRoute("/demo/poll/demo-poll-loot-bench-review?view=responses", "Demo Page");
+    await renderRoute("/demo/members", "Demo Page");
+    await renderRoute("/demo/atlas", "Demo Page");
+    await renderRoute("/demo/atlas/new", "Demo Page");
+    await renderRoute("/demo/atlas/doc-1/edit", "Demo Page");
+    await renderRoute("/demo/vault", "Demo Page");
+    await renderRoute("/demo/settings", "Demo Page");
     await renderRoute("/guilds", "Guild List Page");
     await renderRoute("/guild/eu/tarren-mill/midnight/atlas", "Guild Atlas Page");
     await renderRoute("/guild/eu/tarren-mill/midnight/atlas/new", "Guild Atlas Editor Page");

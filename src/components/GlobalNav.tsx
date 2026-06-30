@@ -1,7 +1,7 @@
-import { Crown, LogOut, Undo2, User } from 'lucide-react';
+import { ChevronDown, Crown, LogOut, Undo2, User } from 'lucide-react';
 import { useLayoutEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { toast } from '@/components/ui/sonner';
+
 
 import { CosmicButton } from '@/components/CosmicButton';
 import { DiscordIcon } from '@/components/DiscordIcon';
@@ -16,8 +16,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { toast } from '@/components/ui/sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { demoGuildSession, isDemoPath } from '@/demo/demoSession';
 import { CommandPaletteTrigger } from '@/features/command-palette';
 import { useIsAdmin } from '@/hooks/useAdmin';
 import { interpolateMessage } from '@/i18n/format';
@@ -51,6 +53,8 @@ export const GlobalNav = () => {
     account: 'Account',
     adminTools: 'Admin tools',
   };
+  const isDemoRoute = isDemoPath(location.pathname);
+  const showAuthenticatedChrome = Boolean(user) || isDemoRoute;
 
   useLayoutEffect(() => {
     if (routeMeta?.hideGlobalNav) {
@@ -96,10 +100,17 @@ export const GlobalNav = () => {
   };
 
   const handleSignOut = () => {
+    if (isDemoRoute && !user) {
+      navigate('/auth');
+      return;
+    }
+
     void signOut();
   };
 
-  const userLabel = profile?.username || profile?.battletag || t.profile.title;
+  const userLabel = isDemoRoute && !user
+    ? demoGuildSession.user.username
+    : profile?.username || profile?.battletag || t.profile.title;
 
   return (
     <header ref={headerRef} data-global-nav className="fixed top-0 left-0 right-0 z-50 glass-header" role="banner">
@@ -150,11 +161,25 @@ export const GlobalNav = () => {
           </span>
         </div>
 
-        {user ? (
+        {showAuthenticatedChrome ? (
           <>
           <div className="flex min-w-0 flex-1 items-center gap-3 md:gap-4 lg:gap-6">
             <div className="flex min-w-0 items-center gap-2 md:gap-3">
-              <GuildSwitcher className="max-w-[196px] sm:max-w-[280px] lg:max-w-[340px]" />
+              {isDemoRoute && !user ? (
+                <button
+                  type="button"
+                  onClick={() => navigate('/demo')}
+                  className={navItemClass({
+                    hover: 'accent',
+                    className: 'h-9 max-w-[196px] justify-between bg-background/35 px-3 sm:max-w-[280px] lg:max-w-[340px]',
+                  })}
+                >
+                  <span className="min-w-0 truncate text-sm font-medium">{demoGuildSession.guild.name}</span>
+                  <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={1.5} />
+                </button>
+              ) : (
+                <GuildSwitcher className="max-w-[196px] sm:max-w-[280px] lg:max-w-[340px]" />
+              )}
             </div>
           </div>
           <div className="pointer-events-none absolute left-1/2 top-1/2 hidden w-[min(400px,32vw)] -translate-x-1/2 -translate-y-1/2 lg:flex">
@@ -166,7 +191,7 @@ export const GlobalNav = () => {
         )}
 
         <div className="ml-auto flex shrink-0 items-center gap-1.5" role="group" aria-label={sm('globalnav.auth.aria_label')}>
-          {user ? (
+          {showAuthenticatedChrome ? (
             <>
               <CommandPaletteTrigger variant="icon" className="lg:hidden" />
               <a
@@ -199,8 +224,10 @@ export const GlobalNav = () => {
                 <DropdownMenuContent align="end" className="w-56 border-border/50 bg-background/95 backdrop-blur-xl">
                   <DropdownMenuLabel className="min-w-0">
                     <span className="block truncate text-sm">{userLabel}</span>
-                    {profile?.battletag ? (
-                      <span className="block truncate text-xs font-normal text-muted-foreground">{profile.battletag}</span>
+                    {(isDemoRoute && !user ? demoGuildSession.user.battletag : profile?.battletag) ? (
+                      <span className="block truncate text-xs font-normal text-muted-foreground">
+                        {isDemoRoute && !user ? demoGuildSession.user.battletag : profile?.battletag}
+                      </span>
                     ) : null}
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />

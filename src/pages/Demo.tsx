@@ -9,6 +9,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ClipboardList,
   Clock,
   Columns3,
   Crosshair,
@@ -20,6 +21,7 @@ import {
   MessageSquare,
   MoreVertical,
   Pencil,
+  Plus,
   RefreshCw,
   Settings,
   Shield,
@@ -36,9 +38,16 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type Dispatch, type ReactNode, type SetStateAction } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import type { GuildAtlasDocumentInput } from '@/hooks/useGuildAtlas';
+import type { PermissionRule, PermissionType } from '@/hooks/useGuildPermissions';
+import type {
+  GuildSecretAccessRule,
+  GuildSecretKind,
+  GuildSecretPayload,
+} from '@/lib/guildVault';
 import type {
   MemberWish,
   RosterFilters as RosterFiltersType,
@@ -46,7 +55,7 @@ import type {
   ValidationStatus,
   WishData,
 } from '@/types/guild';
-import type { GuildPoll, ResponseValue } from '@/types/poll';
+import type { GuildPoll, PollFormData, ResponseValue } from '@/types/poll';
 import type { GuildSeason } from '@/types/seasons';
 
 import { CosmicButton } from '@/components/CosmicButton';
@@ -60,13 +69,37 @@ import {
 } from '@/components/dashboard';
 import { RosterDecisionToggle } from '@/components/dashboard/RosterDecisionToggle';
 import { GlowCard } from '@/components/GlowCard';
-import { GuildWorkspaceShell, type GuildWorkspaceTab } from '@/components/guild';
+import {
+  AtlasEditorSurface,
+  AtlasLibrarySurface,
+  GuildOverviewSurface,
+  GuildWorkspaceShell,
+  type GuildWorkspaceTab,
+} from '@/components/guild';
 import { ContextualToolbar } from '@/components/layout/ContextualToolbar';
+import { EmptyState } from '@/components/layout/EmptyState';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { PollResponse, PollResults } from '@/components/polls';
-import { RosterSelector } from '@/components/roster';
+import { GuildPermissionsSurface } from '@/components/permissions';
+import {
+  ActivePollWidgetSurface,
+  PollCard,
+  PollEditorSurface,
+  PollResultsSurface,
+  PollViewSurface,
+  type RespondentAccessRule,
+  type ResultsAccessConfig,
+} from '@/components/polls';
+import { RosterManagerSurface, RosterSelector } from '@/components/roster';
 import { SeasonSelector, SeasonStateCallout } from '@/components/seasons/SeasonSelector';
+import {
+  GuildActivitySurface,
+  GuildBattleNetSurface,
+  GuildProfileSurface,
+  GuildSettingsSurface,
+  GuildVaultSurface,
+  type SettingsSection,
+} from '@/components/settings';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -108,11 +141,18 @@ import {
   type Specialization,
 } from '@/data/wowClasses';
 import { demoMemberRankLabels, demoRosterMembers, type DemoRosterMember } from '@/demo/demoMembers';
+import { buildDemoPolls, type DemoGuildPoll } from '@/demo/demoPolls';
 import {
-  applyDemoPollSubmissions,
-  buildDemoPolls,
-  type DemoPollSubmission,
-} from '@/demo/demoPolls';
+  buildDemoPollFromForm,
+  closeDemoPoll,
+  deleteDemoPoll,
+  demoPollToFormData,
+  duplicateDemoPoll,
+  publishDemoPoll,
+  resetDemoPollResponses,
+  submitDemoPollResponses,
+  upsertDemoPoll,
+} from '@/demo/demoPollWorkflow';
 import {
   demoAnalyticsMetadata,
   demoGuild,
@@ -121,11 +161,42 @@ import {
   demoRosters,
   demoSeasons,
 } from '@/demo/demoRoster';
+import {
+  resolveDemoAtlasDocumentId,
+  resolveDemoMemberId,
+  resolveDemoPollId,
+  resolveDemoView,
+  demoViewUsesOwnPageContainer,
+  type DemoView,
+} from '@/demo/demoRoutes';
+import { demoUser } from '@/demo/demoSession';
+import {
+  createDemoVaultSecret,
+  demoAtlasDocuments,
+  demoOverviewCommitmentStatus,
+  demoOverviewMemberId,
+  demoVaultMembers,
+  demoVaultRanks,
+  demoVaultSecrets,
+  type DemoAtlasDocument,
+  type DemoVaultSecret,
+} from '@/demo/demoWorkspace';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useToast } from '@/hooks/use-toast';
 import { formatDateTimeLocalized, formatLabelValue, interpolateMessage } from '@/i18n/format';
-import { resolveSemanticMessage } from '@/i18n/semantic';
+import { resolveSemanticMessage, type SemanticKey } from '@/i18n/semantic';
 import { commitmentBadgeClass, toneTextClass, wowClassColorValue } from '@/lib/design-tokens';
+import {
+  normalizeAtlasCollection,
+  type AtlasDocStatus,
+} from '@/lib/guildAtlas';
+import { getVisibleGuildSettingsSections, guildSettingsSectionLabelKeys } from '@/lib/guildSettingsSections';
+import {
+  flattenCompactGuildSecretAccessRules,
+  groupCompactGuildSecretAccessRules,
+} from '@/lib/guildVault';
+import { shouldResetResponsesForFullPollEdit } from '@/lib/pollStructureChanges';
+import { isReadOnlyResponsesView, shouldShowPollResultsPane } from '@/lib/pollViewMode';
 import { capturePostHogProductEvent } from '@/lib/productEvents';
 import { formatRankLabel } from '@/lib/rankLabel';
 import { formatRealmDisplayName } from '@/lib/realms';
@@ -133,7 +204,6 @@ import { getSelectedValidatedMembers } from '@/lib/selectedValidatedMembers';
 import { cn } from '@/lib/utils';
 import { resolveWishLockState } from '@/lib/wishLock';
 
-type DemoView = 'roster' | 'analytics' | 'polls' | 'poll-detail' | 'poll-results' | 'members' | 'settings' | 'member';
 type RosterTab = 'table' | 'selected' | 'analytics';
 type MemberSortColumn = 'character' | 'realm' | 'level' | 'class' | 'player' | 'rank' | 'guildforce';
 type SortDirection = 'asc' | 'desc';
@@ -165,41 +235,14 @@ const createDefaultFilters = (): RosterFiltersType => ({
   maxWishIndex: null,
 });
 
-const replaceCount = (template: string, count: number) =>
-  template.replace('{{count}}', String(count)).replace('{{days}}', String(count));
-
-const replaceTemplateValues = (template: string, values: Record<string, string | number>) =>
-  Object.entries(values).reduce(
-    (current, [key, value]) => current.replace(new RegExp(`{{${key}}}`, 'g'), String(value)),
-    template,
-  );
-
-const resolveDemoView = (pathname: string): DemoView => {
-  if (/\/demo\/member\/[^/]+$/.test(pathname)) return 'member';
-  if (/\/demo\/poll\/[^/]+\/results$/.test(pathname)) return 'poll-results';
-  if (/\/demo\/poll\/[^/]+$/.test(pathname)) return 'poll-detail';
-  if (pathname.endsWith('/polls')) return 'polls';
-  if (pathname.endsWith('/members')) return 'members';
-  if (pathname.endsWith('/settings')) return 'settings';
-  if (pathname.endsWith('/analytics')) return 'analytics';
-  return 'roster';
-};
-
 const toWorkspaceTab = (view: DemoView): GuildWorkspaceTab => {
-  if (view === 'polls' || view === 'poll-detail' || view === 'poll-results') return 'polls';
+  if (view === 'polls' || view === 'poll-detail' || view === 'poll-results' || view === 'poll-new' || view === 'poll-edit') return 'polls';
   if (view === 'members') return 'members';
   if (view === 'settings') return 'settings';
+  if (view === 'atlas' || view === 'atlas-new' || view === 'atlas-edit') return 'atlas';
+  if (view === 'vault') return 'vault';
+  if (view === 'overview') return 'overview';
   return 'roster';
-};
-
-const resolveDemoMemberId = (pathname: string) => {
-  const match = pathname.match(/\/demo\/member\/([^/]+)$/);
-  return match ? decodeURIComponent(match[1]) : null;
-};
-
-const resolveDemoPollId = (pathname: string) => {
-  const match = pathname.match(/\/demo\/poll\/([^/]+)(?:\/results)?$/);
-  return match ? decodeURIComponent(match[1]) : null;
 };
 
 const getLockDateIso = () => {
@@ -341,17 +384,20 @@ const Demo = () => {
   const [selectedRosterId, setSelectedRosterId] = useState<string | null>(demoRoster.id);
   const [selectedSeasonId, setSelectedSeasonId] = useState<string | null>(demoRoster.seasonId);
   const [activeRosterTab, setActiveRosterTab] = useState<RosterTab>('table');
-  const [demoPollSubmissions, setDemoPollSubmissions] = useState<DemoPollSubmission>({});
+  const [atlasDocuments, setAtlasDocuments] = useState<DemoAtlasDocument[]>(demoAtlasDocuments);
+  const [atlasMutating, setAtlasMutating] = useState(false);
+  const [vaultSecrets, setVaultSecrets] = useState<DemoVaultSecret[]>(demoVaultSecrets);
+  const [vaultMutating, setVaultMutating] = useState(false);
   const view = resolveDemoView(location.pathname);
   const memberDetailId = resolveDemoMemberId(location.pathname);
   const pollDetailId = resolveDemoPollId(location.pathname);
+  const atlasEditDocumentId = resolveDemoAtlasDocumentId(location.pathname);
   const lockAtIso = useMemo(() => getLockDateIso(), []);
-  const baseDemoPolls = useMemo(() => buildDemoPolls(t), [t]);
-  const demoPolls = useMemo(
-    () => applyDemoPollSubmissions(baseDemoPolls, demoPollSubmissions),
-    [baseDemoPolls, demoPollSubmissions],
-  );
+  const [demoPolls, setDemoPolls] = useState<DemoGuildPoll[]>(() => buildDemoPolls(t));
   const detailPoll = pollDetailId ? demoPolls.find((poll) => poll.id === pollDetailId) || null : null;
+  const atlasEditDocument = atlasEditDocumentId
+    ? atlasDocuments.find((document) => document.id === atlasEditDocumentId) || null
+    : null;
 
   const rosters = useMemo(
     () =>
@@ -381,6 +427,24 @@ const Demo = () => {
     : rosterScheduledLabel
       ? interpolateMessage(t.wishes.lockScheduledDesc, { date: rosterScheduledLabel })
       : null;
+  const isDemoGM = true;
+  const hasDemoSettingsPermission = true;
+  const hasDemoVaultAccess = true;
+  const demoSettingsSections = useMemo(
+    () =>
+      getVisibleGuildSettingsSections({
+        gm: true,
+        wishes: true,
+        rosters: true,
+        activity: true,
+      }),
+    [],
+  );
+  const settingsSectionParam = useMemo(
+    () => new URLSearchParams(location.search).get('section') as SettingsSection | null,
+    [location.search],
+  );
+  const [activeSettingsSection, setActiveSettingsSection] = useState<SettingsSection>('profile');
 
   useEffect(() => {
     capturePostHogProductEvent('demo_started', {
@@ -396,8 +460,34 @@ const Demo = () => {
   }, [view]);
 
   useEffect(() => {
-    setDemoPollSubmissions({});
-  }, [language]);
+    setDemoPolls(buildDemoPolls(t));
+  }, [language, t]);
+
+  useEffect(() => {
+    if (view === 'atlas-edit' && atlasEditDocumentId && !atlasEditDocument) {
+      navigate('/demo/atlas', { replace: true });
+    }
+  }, [atlasEditDocument, atlasEditDocumentId, navigate, view]);
+
+  useEffect(() => {
+    if (view !== 'settings') return;
+
+    if (settingsSectionParam === 'vault') {
+      navigate('/demo/vault', { replace: true });
+      return;
+    }
+
+    const nextSection =
+      settingsSectionParam && settingsSectionParam !== 'vault' && demoSettingsSections.includes(settingsSectionParam)
+        ? settingsSectionParam
+        : demoSettingsSections[0] || 'profile';
+
+    setActiveSettingsSection((current) => (current === nextSection ? current : nextSection));
+
+    if (settingsSectionParam !== nextSection) {
+      navigate(`/demo/settings?section=${nextSection}`, { replace: true });
+    }
+  }, [demoSettingsSections, navigate, settingsSectionParam, view]);
 
   useEffect(() => {
     if (view === 'roster' || view === 'analytics' || view === 'member') {
@@ -428,14 +518,21 @@ const Demo = () => {
     });
   };
 
+  const handleDemoSettingsSectionChange = (section: SettingsSection) => {
+    if (section === 'vault') {
+      navigate('/demo/vault');
+      return;
+    }
+
+    setActiveSettingsSection(section);
+    navigate(`/demo/settings?section=${section}`);
+  };
+
   const handleSubmitDemoPollResponses = async (
     pollId: string,
     responses: { questionId: string; value: ResponseValue }[],
   ) => {
-    setDemoPollSubmissions((current) => ({
-      ...current,
-      [pollId]: responses,
-    }));
+    setDemoPolls((current) => submitDemoPollResponses(current, pollId, responses));
     capturePostHogProductEvent('demo_poll_response_saved', {
       source: 'public_demo_workspace',
       feature_area: 'polls',
@@ -446,6 +543,26 @@ const Demo = () => {
       description: t.demo.pollsUi.responseSavedDescription,
     });
     navigate(`/demo/poll/${encodeURIComponent(pollId)}/results`);
+  };
+
+  const handlePublishDemoPoll = (pollId: string) => {
+    setDemoPolls((current) => publishDemoPoll(current, pollId));
+  };
+
+  const handleCloseDemoPoll = (pollId: string) => {
+    setDemoPolls((current) => closeDemoPoll(current, pollId));
+  };
+
+  const handleDeleteDemoPoll = (pollId: string) => {
+    setDemoPolls((current) => deleteDemoPoll(current, pollId));
+  };
+
+  const handleDuplicateDemoPoll = (pollId: string) => {
+    setDemoPolls((current) => duplicateDemoPoll(current, pollId));
+  };
+
+  const handleSaveDemoPoll = (poll: DemoGuildPoll) => {
+    setDemoPolls((current) => upsertDemoPoll(current, poll));
   };
 
   const handleValidateWish = (memberId: string, choiceIndex: number, status: ValidationStatus) => {
@@ -499,6 +616,198 @@ const Demo = () => {
   const handleBackToRoster = () => {
     navigate(`/demo/roster${getRosterQuery()}`);
   };
+
+  const runAtlasMutation = async (action: () => void | Promise<void>) => {
+    setAtlasMutating(true);
+    try {
+      await Promise.resolve(action());
+    } finally {
+      setAtlasMutating(false);
+    }
+  };
+
+  const handleSaveAtlasDocument = async (
+    document: DemoAtlasDocument,
+    options: { navigateToDocument?: boolean } = {},
+  ) => {
+    await runAtlasMutation(() => {
+      setAtlasDocuments((current) => {
+        const exists = current.some((item) => item.id === document.id);
+        const nextDocument = {
+          ...document,
+          updated_at: new Date().toISOString(),
+        };
+
+        return exists
+          ? current.map((item) => (item.id === document.id ? nextDocument : item))
+          : [nextDocument, ...current];
+      });
+      toast({
+        title: t.demo.actionToastTitle,
+        description: t.demo.actionToastDescription,
+      });
+      if (options.navigateToDocument !== false) {
+        navigate(`/demo/atlas?doc=${encodeURIComponent(document.id)}`);
+      }
+    });
+  };
+
+  const handleUpdateAtlasStatus = async (documentId: string, status: AtlasDocStatus) => {
+    await runAtlasMutation(() => {
+      setAtlasDocuments((current) =>
+        current.map((document) =>
+          document.id === documentId
+            ? { ...document, status, updated_at: new Date().toISOString() }
+            : document,
+        ),
+      );
+    });
+  };
+
+  const handleDeleteAtlasDocument = async (documentId: string) => {
+    await runAtlasMutation(() => {
+      setAtlasDocuments((current) => current.filter((document) => document.id !== documentId));
+    });
+  };
+
+  const runVaultMutation = async (action: () => void | Promise<void>) => {
+    setVaultMutating(true);
+    try {
+      await Promise.resolve(action());
+    } finally {
+      setVaultMutating(false);
+    }
+  };
+
+  const buildVaultPreviewMask = (payload: GuildSecretPayload) => {
+    if ('password' in payload) return `${payload.username || 'user'} / ********`;
+    if ('token' in payload) return 'tok_••••••••••••';
+    if ('codes' in payload) return `${payload.codes.length} recovery codes`;
+    return 'Private note';
+  };
+
+  const buildVaultDescription = (secretKind: GuildSecretKind) => {
+    if (secretKind === 'credential') return 'Session-only demo credential.';
+    if (secretKind === 'token') return 'Session-only demo token.';
+    if (secretKind === 'recovery_code') return 'Session-only demo recovery codes.';
+    return 'Session-only demo note.';
+  };
+
+  const handleCreateVaultSecret = async (payload: Record<string, unknown>) => {
+    await runVaultMutation(() => {
+      const secretPayload = payload.payload as GuildSecretPayload;
+      const secretKind = payload.secret_kind as GuildSecretKind;
+      const accessRules = Array.isArray(payload.access_rules)
+        ? groupCompactGuildSecretAccessRules(payload.access_rules as GuildSecretAccessRule[])
+        : createDemoVaultSecret(vaultSecrets.length + 1).access_rules;
+
+      const nextSecret: DemoVaultSecret = {
+        id: `demo-vault-created-${Date.now().toString(36)}`,
+        label: String(payload.label || 'Demo secret'),
+        service_name: String(payload.service_name || payload.label || 'Demo'),
+        secret_kind: secretKind,
+        illustration_url: typeof payload.illustration_url === 'string' ? payload.illustration_url : null,
+        service_url: typeof payload.service_url === 'string' ? payload.service_url : null,
+        login_identifier_hint: null,
+        description: buildVaultDescription(secretKind),
+        preview_mask: buildVaultPreviewMask(secretPayload),
+        requires_reason: Boolean(payload.requires_reason),
+        updated_at: new Date().toISOString(),
+        can_reveal: true,
+        can_manage: true,
+        can_audit: true,
+        payload: secretPayload,
+        access_rules: accessRules,
+      };
+
+      setVaultSecrets((current) => [nextSecret, ...current]);
+    });
+  };
+
+  const handleUpdateVaultSecret = async (payload: Record<string, unknown>) => {
+    await runVaultMutation(() => {
+      const secretId = String(payload.secret_id || '');
+      const metadata = (payload.metadata || {}) as Partial<DemoVaultSecret>;
+      const accessRules = Array.isArray(payload.access_rules)
+        ? groupCompactGuildSecretAccessRules(payload.access_rules as GuildSecretAccessRule[])
+        : null;
+
+      setVaultSecrets((current) =>
+        current.map((secret) =>
+          secret.id === secretId
+            ? {
+                ...secret,
+                label: metadata.label || secret.label,
+                service_name: metadata.service_name || metadata.label || secret.service_name,
+                illustration_url: metadata.illustration_url ?? secret.illustration_url,
+                service_url: metadata.service_url ?? secret.service_url,
+                login_identifier_hint: metadata.login_identifier_hint ?? secret.login_identifier_hint,
+                description: metadata.description ?? secret.description,
+                requires_reason: metadata.requires_reason ?? secret.requires_reason,
+                access_rules: accessRules || secret.access_rules,
+                updated_at: new Date().toISOString(),
+              }
+            : secret,
+        ),
+      );
+    });
+  };
+
+  const handleRotateVaultSecret = async ({ secret_id, payload }: { secret_id: string; payload: GuildSecretPayload }) => {
+    await runVaultMutation(() => {
+      setVaultSecrets((current) =>
+        current.map((secret) =>
+          secret.id === secret_id
+            ? {
+                ...secret,
+                payload,
+                preview_mask: buildVaultPreviewMask(payload),
+                updated_at: new Date().toISOString(),
+              }
+            : secret,
+        ),
+      );
+    });
+  };
+
+  const handleArchiveVaultSecret = async ({ secret_id }: { secret_id: string }) => {
+    await runVaultMutation(() => {
+      setVaultSecrets((current) => current.filter((secret) => secret.id !== secret_id));
+    });
+  };
+
+  const handleRevealVaultSecret = async (secretId: string) => {
+    const secret = vaultSecrets.find((item) => item.id === secretId);
+    if (!secret) throw new Error('Demo vault secret not found');
+
+    return {
+      payload: secret.payload,
+      expires_client_at: new Date(Date.now() + 60_000).toISOString(),
+    };
+  };
+
+  const handleLoadVaultAccessRules = async (secretId: string) => {
+    const secret = vaultSecrets.find((item) => item.id === secretId);
+    return secret ? flattenCompactGuildSecretAccessRules(secret.access_rules) : [];
+  };
+
+  const handleSaveVaultAccessRules = async (secretId: string, rules: GuildSecretAccessRule[]) => {
+    await runVaultMutation(() => {
+      const grouped = groupCompactGuildSecretAccessRules(rules);
+      setVaultSecrets((current) =>
+        current.map((secret) =>
+          secret.id === secretId ? { ...secret, access_rules: grouped, updated_at: new Date().toISOString() } : secret,
+        ),
+      );
+    });
+  };
+
+  const handleUploadVaultIllustration = async (file: File) => ({
+    filePath: null,
+    publicUrl: typeof URL !== 'undefined' && 'createObjectURL' in URL
+      ? URL.createObjectURL(file)
+      : `https://guildforce.local/demo/vault-images/${encodeURIComponent(file.name || 'image.png')}`,
+  });
 
   const handleRosterSelect = (rosterId: string) => {
     setSelectedRosterId(rosterId);
@@ -676,60 +985,367 @@ const Demo = () => {
     </>
   );
 
+  const demoContent = (
+    <>
+      {view === 'overview' && (
+        <DemoOverview
+          members={members}
+          polls={demoPolls}
+        />
+      )}
+
+      {(view === 'roster' || view === 'analytics') && (
+        <DemoRosterWorkspace
+          members={members}
+          filters={filters}
+          setFilters={setFilters}
+          selectedRosterId={selectedRosterId}
+          selectedSeasonId={selectedSeasonId}
+          selectedSeason={selectedSeason}
+          activeTab={activeRosterTab}
+          setActiveTab={setActiveRosterTab}
+          onFakeAction={showDemoActionToast}
+          onValidateWish={handleValidateWish}
+          onSelectionChange={handleSelectionChange}
+          onToggleMemberLock={handleToggleMemberLock}
+          onOpenMemberWishes={handleOpenMemberWishes}
+        />
+      )}
+
+      {view === 'member' && (
+        <DemoMemberWishes
+          member={detailMember}
+          selectedSeason={selectedSeason}
+          onBack={handleBackToRoster}
+          onValidateWish={handleValidateWish}
+          onSelectionChange={handleSelectionChange}
+        />
+      )}
+
+      {view === 'polls' && (
+        <DemoPolls
+          polls={demoPolls}
+          onPublish={handlePublishDemoPoll}
+          onClose={handleCloseDemoPoll}
+          onDelete={handleDeleteDemoPoll}
+          onDuplicate={handleDuplicateDemoPoll}
+        />
+      )}
+      {(view === 'poll-new' || view === 'poll-edit') && (
+        <DemoPollEditor
+          poll={view === 'poll-edit' && pollDetailId ? demoPolls.find((poll) => poll.id === pollDetailId) || null : null}
+          isEditingExisting={view === 'poll-edit'}
+          onSave={handleSaveDemoPoll}
+        />
+      )}
+      {view === 'poll-detail' && (
+        <DemoPollDetail
+          poll={detailPoll}
+          onSubmit={handleSubmitDemoPollResponses}
+        />
+      )}
+      {view === 'poll-results' && <DemoPollResults poll={detailPoll} />}
+      {view === 'members' && <DemoMembers onFakeAction={showDemoActionToast} />}
+      {view === 'atlas' && (
+        <DemoAtlas
+          documents={atlasDocuments}
+          mutating={atlasMutating}
+          onUpdateStatus={handleUpdateAtlasStatus}
+          onDelete={handleDeleteAtlasDocument}
+        />
+      )}
+      {(view === 'atlas-new' || view === 'atlas-edit') && (
+        view === 'atlas-edit' && !atlasEditDocument ? null : (
+          <DemoAtlasEditor
+            document={view === 'atlas-edit' ? atlasEditDocument : null}
+            mutating={atlasMutating}
+            onSave={handleSaveAtlasDocument}
+          />
+        )
+      )}
+      {view === 'vault' && (
+        <DemoVault
+          secrets={vaultSecrets}
+          mutating={vaultMutating}
+          createSecret={handleCreateVaultSecret}
+          updateSecret={handleUpdateVaultSecret}
+          rotateSecret={handleRotateVaultSecret}
+          onArchive={handleArchiveVaultSecret}
+          revealSecret={handleRevealVaultSecret}
+          loadSecretAccessRules={handleLoadVaultAccessRules}
+          saveSecretAccessRules={handleSaveVaultAccessRules}
+          uploadIllustration={handleUploadVaultIllustration}
+        />
+      )}
+      {view === 'settings' && (
+        <DemoSettings
+          activeSection={activeSettingsSection}
+          visibleSections={demoSettingsSections}
+          onSectionChange={handleDemoSettingsSectionChange}
+          onFakeAction={showDemoActionToast}
+        />
+      )}
+    </>
+  );
+
+  if (view === 'settings') {
+    return demoContent;
+  }
+
   return (
     <GuildWorkspaceShell
       guild={{ name: demoGuild.name, server: demoGuild.server, region: demoGuild.region }}
       guildId={null}
       basePath="/demo"
-      isGM
-      hasSettingsPermission
-      hasVaultAccess={false}
+      isGM={isDemoGM}
+      hasSettingsPermission={hasDemoSettingsPermission}
+      hasVaultAccess={hasDemoVaultAccess}
       activeTab={toWorkspaceTab(view)}
       toolbar={workspaceToolbar}
-      visibleTabs={['roster', 'members']}
     >
-      <PageContainer as="main" width="workspace" className="relative z-10 py-3 md:py-4">
-        {(view === 'roster' || view === 'analytics') && (
-          <DemoRosterWorkspace
-            members={members}
-            filters={filters}
-            setFilters={setFilters}
-            selectedRosterId={selectedRosterId}
-            selectedSeasonId={selectedSeasonId}
-            selectedSeason={selectedSeason}
-            activeTab={activeRosterTab}
-            setActiveTab={setActiveRosterTab}
-            onFakeAction={showDemoActionToast}
-            onValidateWish={handleValidateWish}
-            onSelectionChange={handleSelectionChange}
-            onToggleMemberLock={handleToggleMemberLock}
-            onOpenMemberWishes={handleOpenMemberWishes}
-          />
-        )}
-
-        {view === 'member' && (
-          <DemoMemberWishes
-            member={detailMember}
-            selectedSeason={selectedSeason}
-            onBack={handleBackToRoster}
-            onValidateWish={handleValidateWish}
-            onSelectionChange={handleSelectionChange}
-          />
-        )}
-
-        {view === 'polls' && <DemoPolls polls={demoPolls} onFakeAction={showDemoActionToast} />}
-        {view === 'poll-detail' && (
-          <DemoPollDetail
-            poll={detailPoll}
-            onFakeAction={showDemoActionToast}
-            onSubmit={handleSubmitDemoPollResponses}
-          />
-        )}
-        {view === 'poll-results' && <DemoPollResults poll={detailPoll} />}
-        {view === 'members' && <DemoMembers onFakeAction={showDemoActionToast} />}
-        {view === 'settings' && <DemoSettings lockDays={5} />}
-      </PageContainer>
+      {demoViewUsesOwnPageContainer(view) ? (
+        demoContent
+      ) : (
+        <PageContainer as="main" width="workspace" className="relative z-10 py-3 md:py-4">
+          {demoContent}
+        </PageContainer>
+      )}
     </GuildWorkspaceShell>
+  );
+};
+
+const DemoOverview = ({
+  members,
+  polls,
+}: {
+  members: MemberWish[];
+  polls: GuildPoll[];
+}) => {
+  const navigate = useNavigate();
+  const overviewMember = members.find((member) => member.id === demoOverviewMemberId) || members[0];
+  const activePoll = polls.find((poll) => poll.status === 'active') || null;
+  const closedPoll = polls.find((poll) => poll.status === 'closed') || null;
+  const confirmedMembers = members.filter((member) => member.status === 'confirmed').length;
+  const hasRespondedToClosedPoll = Boolean(closedPoll?.questions?.some((question) => question.my_response));
+
+  return (
+    <GuildOverviewSurface
+      guild={demoGuild}
+      greetingName={demoUser.username}
+      commitmentStatus={demoOverviewCommitmentStatus}
+      myWishes={(overviewMember?.wishes || []).map((wish) => ({
+        choice_index: wish.choice_index,
+        class_id: wish.class_id,
+        spec_ids: wish.spec_ids,
+        validation_status: wish.validation_status || 'pending',
+      }))}
+      totalMembers={members.length}
+      confirmedMembers={confirmedMembers}
+      pollWidget={(
+        <ActivePollWidgetSurface
+          activePoll={activePoll}
+          closedPoll={closedPoll}
+          basePath="/demo"
+          isGM
+          hasRespondedToClosedPoll={hasRespondedToClosedPoll}
+          canViewClosedPollResults
+          hasManagePollsPermission
+        />
+      )}
+      onEditWishes={() => {
+        const params = new URLSearchParams();
+        params.set('rosterId', demoRoster.id);
+        params.set('seasonId', demoRoster.seasonId);
+        params.set('edit', 'my-wishes');
+        navigate(`/demo/roster?${params.toString()}`);
+      }}
+      onOpenRoster={() => navigate('/demo/roster')}
+      onOpenMembers={() => navigate('/demo/members')}
+    />
+  );
+};
+
+const DemoAtlas = ({
+  documents,
+  mutating,
+  onUpdateStatus,
+  onDelete,
+}: {
+  documents: DemoAtlasDocument[];
+  mutating: boolean;
+  onUpdateStatus: (documentId: string, status: AtlasDocStatus) => Promise<void>;
+  onDelete: (documentId: string) => Promise<void>;
+}) => {
+  const navigate = useNavigate();
+
+  return (
+    <AtlasLibrarySurface
+      documents={documents}
+      canManageAtlas
+      mutating={mutating}
+      onCreate={() => navigate('/demo/atlas/new')}
+      onEdit={(document) => navigate(`/demo/atlas/${encodeURIComponent(document.id)}/edit`)}
+      onPublish={(document) => onUpdateStatus(document.id, 'published')}
+      onUnpublish={(document) => onUpdateStatus(document.id, 'draft')}
+      onArchive={(document) => onUpdateStatus(document.id, 'archived')}
+      onRestore={(document) => onUpdateStatus(document.id, 'draft')}
+      onDelete={(document) => onDelete(document.id)}
+    />
+  );
+};
+
+const createBlankAtlasDocument = (): GuildAtlasDocumentInput => ({
+  title: '',
+  summary: null,
+  content: '',
+  collection: null,
+  tags: [],
+  status: 'draft',
+  visibility_type: 'members',
+  min_rank_index: null,
+  roster_id: null,
+  owner_user_id: demoUser.id,
+});
+
+const demoAtlasInputFromDocument = (document: DemoAtlasDocument | null): GuildAtlasDocumentInput => {
+  if (!document) return createBlankAtlasDocument();
+
+  return {
+    title: document.title,
+    summary: document.summary,
+    content: document.content,
+    collection: document.collection,
+    tags: document.tags,
+    status: document.status,
+    visibility_type: document.visibility_type,
+    min_rank_index: document.min_rank_index,
+    roster_id: document.roster_id,
+    owner_user_id: document.owner_user_id,
+  };
+};
+
+const buildDemoAtlasDocumentFromInput = (
+  input: GuildAtlasDocumentInput,
+  existingDocument: DemoAtlasDocument | null,
+): DemoAtlasDocument => {
+  const roster = input.roster_id
+    ? demoRosters.find((item) => item.id === input.roster_id) ?? null
+    : null;
+
+  return {
+    ...(existingDocument ?? {
+      id: `demo-atlas-${Date.now().toString(36)}`,
+      owner_user_id: demoUser.id,
+      owner_username: demoUser.username,
+      updated_at: new Date().toISOString(),
+    }),
+    title: input.title.trim() || 'Demo Atlas document',
+    summary: input.summary?.trim() || null,
+    content: input.content,
+    collection: normalizeAtlasCollection(input.collection),
+    tags: input.tags,
+    status: input.status,
+    visibility_type: input.visibility_type,
+    min_rank_index: input.visibility_type === 'rank' ? input.min_rank_index : null,
+    roster_id: input.visibility_type === 'roster' ? input.roster_id : null,
+    roster_name: input.visibility_type === 'roster' ? roster?.name ?? null : null,
+    owner_user_id: input.owner_user_id || existingDocument?.owner_user_id || demoUser.id,
+    owner_username: existingDocument?.owner_username || demoUser.username,
+    updated_at: new Date().toISOString(),
+  };
+};
+
+const createDemoAtlasUploadUrl = (file: File) =>
+  Promise.resolve(`https://guildforce.local/demo/atlas-images/${encodeURIComponent(file.name || 'image.png')}`);
+
+const DemoAtlasEditor = ({
+  document,
+  mutating,
+  onSave,
+}: {
+  document: DemoAtlasDocument | null;
+  mutating: boolean;
+  onSave: (document: DemoAtlasDocument, options?: { navigateToDocument?: boolean }) => Promise<void>;
+}) => {
+  const navigate = useNavigate();
+  const initialData = useMemo(() => demoAtlasInputFromDocument(document), [document]);
+
+  const handleSave = async (input: GuildAtlasDocumentInput, redirectAfterSave: boolean) => {
+    const savedDocument = buildDemoAtlasDocumentFromInput(input, document);
+    await onSave(savedDocument, { navigateToDocument: redirectAfterSave });
+
+    if (!document && !redirectAfterSave) {
+      navigate(`/demo/atlas/${encodeURIComponent(savedDocument.id)}/edit`, { replace: true });
+    }
+  };
+
+  return (
+    <AtlasEditorSurface
+      resetKey={document?.id || 'new'}
+      isEditing={Boolean(document)}
+      initialData={initialData}
+      selectedStatus={document?.status ?? initialData.status}
+      selectedDocumentStatus={document?.status ?? null}
+      rosters={demoRosters.map((roster) => ({ id: roster.id, name: roster.name }))}
+      mutating={mutating}
+      onBack={() => navigate('/demo/atlas')}
+      onSave={handleSave}
+      onPublish={async (input) => {
+        const savedDocument = buildDemoAtlasDocumentFromInput({ ...input, status: 'published' }, document);
+        await onSave(savedDocument);
+      }}
+      onUnpublish={document ? () => onSave({ ...document, status: 'draft' }) : undefined}
+      onArchive={document ? () => onSave({ ...document, status: 'archived' }, { navigateToDocument: false }) : undefined}
+      onRestore={document ? () => onSave({ ...document, status: 'draft' }, { navigateToDocument: false }) : undefined}
+      uploadImage={createDemoAtlasUploadUrl}
+    />
+  );
+};
+
+const DemoVault = ({
+  secrets,
+  mutating,
+  createSecret,
+  updateSecret,
+  rotateSecret,
+  onArchive,
+  revealSecret,
+  loadSecretAccessRules,
+  saveSecretAccessRules,
+  uploadIllustration,
+}: {
+  secrets: DemoVaultSecret[];
+  mutating: boolean;
+  createSecret: (payload: Record<string, unknown>) => Promise<unknown>;
+  updateSecret: (payload: Record<string, unknown>) => Promise<unknown>;
+  rotateSecret: (payload: { secret_id: string; payload: GuildSecretPayload }) => Promise<unknown>;
+  onArchive: (payload: { secret_id: string }) => Promise<unknown>;
+  revealSecret: (secretId: string, reason?: string) => Promise<{ payload: GuildSecretPayload; expires_client_at: string }>;
+  loadSecretAccessRules: (secretId: string) => Promise<GuildSecretAccessRule[]>;
+  saveSecretAccessRules: (secretId: string, rules: GuildSecretAccessRule[]) => Promise<unknown>;
+  uploadIllustration: (file: File) => Promise<{ filePath: string | null; publicUrl: string }>;
+}) => {
+  return (
+    <PageContainer as="main" className="relative z-10 py-4 md:py-5" width="workspace">
+      <GuildVaultSurface
+        guildId="demo-guild"
+        canManageVault
+        officerRankThreshold={2}
+        secrets={secrets}
+        loading={false}
+        mutating={mutating}
+        members={demoVaultMembers}
+        ranks={demoVaultRanks}
+        createSecret={createSecret}
+        updateSecret={updateSecret}
+        rotateSecret={rotateSecret}
+        archiveSecret={onArchive}
+        revealSecret={revealSecret}
+        loadSecretAccessRules={loadSecretAccessRules}
+        saveSecretAccessRules={saveSecretAccessRules}
+        uploadIllustration={uploadIllustration}
+      />
+    </PageContainer>
   );
 };
 
@@ -1146,150 +1762,241 @@ const DemoMemberWishes = ({
   );
 };
 
-const demoPollStatusClass: Record<GuildPoll['status'], string> = {
-  active: 'border-healer/35 bg-healer/15 text-healer',
-  draft: 'border-warning/35 bg-warning/15 text-warning',
-  closed: 'border-destructive/35 bg-destructive/10 text-destructive',
-};
-
-const getDemoPollQuestionCount = (poll: GuildPoll) => poll.questions?.length ?? 0;
-const getDemoPollSectionCount = (poll: GuildPoll) => poll.sections?.length ?? 0;
 const hasDemoPollResponse = (poll: GuildPoll) => Boolean(poll.questions?.some((question) => question.my_response));
-const getDemoPollAudience = (poll: GuildPoll) => (poll as GuildPoll & { demo_audience?: string }).demo_audience ?? '';
-const getDemoPollResultSummary = (poll: GuildPoll) =>
-  (poll as GuildPoll & { demo_result_summary?: string }).demo_result_summary ?? '';
 
-const DemoPolls = ({ polls, onFakeAction }: { polls: GuildPoll[]; onFakeAction: () => void }) => {
+const DemoPolls = ({
+  polls,
+  onPublish,
+  onClose,
+  onDelete,
+  onDuplicate,
+}: {
+  polls: GuildPoll[];
+  onPublish: (pollId: string) => void;
+  onClose: (pollId: string) => void;
+  onDelete: (pollId: string) => void;
+  onDuplicate: (pollId: string) => void;
+}) => {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const sm = (key: SemanticKey) => resolveSemanticMessage({ key, language, translations: t });
   const activePolls = polls.filter((poll) => poll.status === 'active');
   const draftPolls = polls.filter((poll) => poll.status === 'draft');
   const closedPolls = polls.filter((poll) => poll.status === 'closed');
   const [activeTab, setActiveTab] = useState<'active' | 'draft' | 'closed'>(
-    activePolls.length > 0 ? 'active' : 'closed',
+    activePolls.length > 0 ? 'active' : draftPolls.length > 0 ? 'draft' : 'closed',
   );
 
-  const renderPollCard = (poll: GuildPoll) => {
-    const audience = getDemoPollAudience(poll);
-    const resultSummary = getDemoPollResultSummary(poll);
-    const canRespond = poll.status === 'active';
-    const canViewResults = poll.status === 'closed' || hasDemoPollResponse(poll);
+  const renderEmptyState = (status: GuildPoll['status']) => (
+    <EmptyState
+      icon={ClipboardList}
+      title={sm(status === 'draft' ? 'guild.polls.empty.draft' : status === 'closed' ? 'guild.polls.empty.closed' : 'guild.polls.empty.active')}
+      className="min-h-[180px]"
+    />
+  );
 
-    return (
-      <GlowCard key={poll.id} surface="section" hoverable={false} className="space-y-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0 space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline" className={demoPollStatusClass[poll.status]}>
-                {t.polls.status[poll.status]}
-              </Badge>
-              <Badge variant="outline" className="border-border/60 bg-card/45 text-muted-foreground">
-                {t.demo.pollsUi.demoOnlyBadge}
-              </Badge>
-              {poll.is_anonymous && (
-                <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary">
-                  <Lock className="mr-1 h-3 w-3" />
-                  {t.polls.anonymous}
-                </Badge>
-              )}
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-base font-medium leading-6 text-foreground">{poll.title}</h3>
-              {poll.description && <p className="max-w-3xl text-sm leading-6 text-muted-foreground">{poll.description}</p>}
-            </div>
-          </div>
-          <div className="flex shrink-0 flex-wrap gap-2 lg:justify-end">
-            {canRespond && (
-              <Button size="sm" onClick={() => navigate(`/demo/poll/${encodeURIComponent(poll.id)}`)}>
-                <Pencil className="h-4 w-4 sm:mr-1.5" />
-                <span className="hidden sm:inline">{t.demo.pollsUi.openPoll}</span>
-              </Button>
-            )}
-            {poll.status === 'draft' && (
-              <>
-                <Button size="sm" variant="outline" onClick={() => navigate(`/demo/poll/${encodeURIComponent(poll.id)}`)}>
-                  <MessageSquare className="h-4 w-4 sm:mr-1.5" />
-                  <span className="hidden sm:inline">{t.demo.pollsUi.previewDraft}</span>
-                </Button>
-                <Button size="sm" variant="outline" onClick={onFakeAction}>
-                  <Check className="h-4 w-4 sm:mr-1.5" />
-                  <span className="hidden sm:inline">{t.common.publish}</span>
-                </Button>
-              </>
-            )}
-            {canViewResults && (
-              <Button size="sm" variant={canRespond ? 'outline' : 'default'} onClick={() => navigate(`/demo/poll/${encodeURIComponent(poll.id)}/results`)}>
-                <BarChart3 className="h-4 w-4 sm:mr-1.5" />
-                <span className="hidden sm:inline">{t.demo.pollsUi.viewResults}</span>
-              </Button>
-            )}
-          </div>
-        </div>
-
-        <div className="grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded border border-border/45 bg-background/25 p-3">
-            <div className="text-xs uppercase tracking-wide text-muted-foreground">{t.demo.pollsUi.audience}</div>
-            <div className="mt-1 text-foreground">{audience}</div>
-          </div>
-          <div className="rounded border border-border/45 bg-background/25 p-3">
-            <div className="text-xs uppercase tracking-wide text-muted-foreground">{t.polls.resultsUi.kpis.respondents}</div>
-            <div className="mt-1 text-foreground">
-              {replaceTemplateValues(t.demo.pollsUi.responseRate, {
-                count: poll.response_count ?? 0,
-                total: poll.member_count ?? 0,
-              })}
-            </div>
-          </div>
-          <div className="rounded border border-border/45 bg-background/25 p-3">
-            <div className="text-xs uppercase tracking-wide text-muted-foreground">{t.polls.resultsUi.kpis.questions}</div>
-            <div className="mt-1 text-foreground">{replaceCount(t.demo.pollsUi.questions, getDemoPollQuestionCount(poll))}</div>
-          </div>
-          <div className="rounded border border-border/45 bg-background/25 p-3">
-            <div className="text-xs uppercase tracking-wide text-muted-foreground">{t.polls.resultsUi.kpis.sections}</div>
-            <div className="mt-1 text-foreground">{replaceCount(t.demo.pollsUi.sections, getDemoPollSectionCount(poll))}</div>
-          </div>
-        </div>
-
-        {resultSummary && (
-          <div className="rounded border border-primary/25 bg-primary/5 p-3 text-sm leading-6 text-foreground">
-            {resultSummary}
-          </div>
-        )}
-      </GlowCard>
+  const renderPollCards = (items: GuildPoll[], emptyStatus: GuildPoll['status']) =>
+    items.length > 0 ? (
+      <div className="grid gap-4">
+        {items.map((poll) => (
+          <PollCard
+            key={poll.id}
+            poll={poll}
+            isGM
+            guildSlug="demo"
+            routeBase="/demo"
+            onPublish={onPublish}
+            onClose={onClose}
+            onDelete={onDelete}
+            onDuplicate={onDuplicate}
+          />
+        ))}
+      </div>
+    ) : (
+      renderEmptyState(emptyStatus)
     );
+
+  return (
+    <PageContainer as="main" className="relative z-10 py-4 md:py-5" width="workspace">
+      <div className="space-y-4">
+        <PageHeader
+          className="flex-row items-center justify-between"
+          icon={BarChart3}
+          title={sm('guild.polls.title')}
+          description={`${activePolls.length} ${sm('guild.polls.tab.active').toLowerCase()} • ${closedPolls.length} ${sm('guild.polls.tab.closed').toLowerCase()}`}
+          bordered={false}
+          actions={(
+            <Button type="button" size="sm" onClick={() => navigate('/demo/polls/new')}>
+              <Plus className="h-4 w-4" />
+              {sm('guild.polls.new')}
+            </Button>
+          )}
+        />
+        {polls.length === 0 ? (
+          <EmptyState
+            icon={ClipboardList}
+            title={sm('guild.polls.empty')}
+            className="min-h-[220px]"
+            action={(
+              <Button type="button" size="sm" onClick={() => navigate('/demo/polls/new')}>
+                <Plus className="mr-2 h-4 w-4" />
+                {sm('guild.polls.new')}
+              </Button>
+            )}
+          />
+        ) : (
+          <Tabs
+            value={activeTab}
+            onValueChange={(value) => setActiveTab(value as 'active' | 'draft' | 'closed')}
+            className="space-y-4"
+          >
+            <TabsList className="grid h-auto w-full grid-cols-3 p-1 sm:inline-flex sm:w-auto">
+              <TabsTrigger value="active" onClick={() => setActiveTab('active')} className="min-w-0 px-2 text-xs sm:px-3 sm:text-sm">
+                <span className="truncate">{sm('guild.polls.tab.active')} ({activePolls.length})</span>
+              </TabsTrigger>
+              <TabsTrigger value="draft" onClick={() => setActiveTab('draft')} className="min-w-0 px-2 text-xs sm:px-3 sm:text-sm">
+                <span className="truncate">{sm('guild.polls.tab.draft')} ({draftPolls.length})</span>
+              </TabsTrigger>
+              <TabsTrigger value="closed" onClick={() => setActiveTab('closed')} className="min-w-0 px-2 text-xs sm:px-3 sm:text-sm">
+                <span className="truncate">{sm('guild.polls.tab.closed')} ({closedPolls.length})</span>
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="active" className="mt-0 space-y-3 sm:space-y-4">
+              {renderPollCards(activePolls, 'active')}
+            </TabsContent>
+            <TabsContent value="draft" className="mt-0 space-y-3 sm:space-y-4">
+              {renderPollCards(draftPolls, 'draft')}
+            </TabsContent>
+            <TabsContent value="closed" className="mt-0 space-y-3 sm:space-y-4">
+              {renderPollCards(closedPolls, 'closed')}
+            </TabsContent>
+          </Tabs>
+        )}
+      </div>
+    </PageContainer>
+  );
+};
+
+const demoPollEditorAccessConfig: ResultsAccessConfig = {
+  base_audience: 'eligible_respondents',
+  base_visibility: 'full',
+  rules: [],
+};
+
+const demoPollEditorRespondentRules: RespondentAccessRule[] = [];
+
+const getDemoPollEditorMembers = () =>
+  demoRosterMembers
+    .filter((member) => member.user_id && member.username)
+    .map((member) => ({
+      user_id: member.user_id,
+      username: member.username,
+    }));
+
+const getDemoPollEditorRanks = () =>
+  Array.from(
+    new Map(
+      demoRosterMembers.map((member) => [
+        member.rank_index,
+        {
+          rank_index: member.rank_index,
+          rank_name: demoMemberRankLabels[member.rank_index] ?? member.rank_name ?? String(member.rank_index),
+        },
+      ]),
+    ).values(),
+  ).sort((a, b) => a.rank_index - b.rank_index);
+
+const DemoPollEditor = ({
+  poll,
+  isEditingExisting,
+  onSave,
+}: {
+  poll: GuildPoll | null;
+  isEditingExisting: boolean;
+  onSave: (poll: DemoGuildPoll) => void;
+}) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { t } = useLanguage();
+  const mode = new URLSearchParams(location.search).get('mode');
+  const isMetadataOnly = mode === 'metadata';
+  const isActivePoll = poll?.status === 'active';
+  const [confirmResetDialog, setConfirmResetDialog] = useState(false);
+  const [pendingFullEdit, setPendingFullEdit] = useState<{
+    data: PollFormData;
+    status: GuildPoll['status'];
+  } | null>(null);
+
+  if (isEditingExisting && !poll) return <DemoPollNotFound />;
+
+  const saveResolvedPoll = (data: PollFormData, status: GuildPoll['status'], sourcePoll: GuildPoll | null = poll) => {
+    const savedPoll = buildDemoPollFromForm({
+      form: data,
+      existingPoll: sourcePoll,
+      status,
+    });
+
+    onSave(savedPoll);
+    navigate(status === 'active' ? `/demo/poll/${encodeURIComponent(savedPoll.id)}` : '/demo/polls');
+  };
+
+  const savePoll = async (
+    data: PollFormData,
+    _accessConfig: ResultsAccessConfig,
+    _respondentRules?: RespondentAccessRule[],
+    status: GuildPoll['status'] = poll?.status || 'draft',
+  ) => {
+    const shouldConfirmReset = shouldResetResponsesForFullPollEdit({
+      pollStatus: poll?.status ?? null,
+      editMode: isMetadataOnly ? 'metadata' : 'full',
+      previousData: poll ? demoPollToFormData(poll) : null,
+      nextData: data,
+    });
+
+    if (shouldConfirmReset && poll) {
+      setPendingFullEdit({ data, status });
+      setConfirmResetDialog(true);
+      return;
+    }
+
+    saveResolvedPoll(data, status);
+  };
+
+  const handleConfirmFullEdit = () => {
+    if (!poll || !pendingFullEdit) return;
+
+    const resetPoll = resetDemoPollResponses(poll);
+    setConfirmResetDialog(false);
+    saveResolvedPoll(pendingFullEdit.data, pendingFullEdit.status, resetPoll);
+    setPendingFullEdit(null);
   };
 
   return (
-    <>
-      <PageHeader icon={MessageSquare} title={t.demo.pollsTitle} description={t.demo.pollsDescription} />
-      <Tabs
-        value={activeTab}
-        onValueChange={(value) => setActiveTab(value as 'active' | 'draft' | 'closed')}
-        className="space-y-4"
-      >
-        <TabsList className="grid h-auto w-full grid-cols-3 p-1 sm:inline-flex sm:w-auto">
-          <TabsTrigger value="active" onClick={() => setActiveTab('active')} className="min-w-0 px-2 text-xs sm:px-3 sm:text-sm">
-            <span className="truncate">{t.demo.pollsUi.activeTab} ({activePolls.length})</span>
-          </TabsTrigger>
-          <TabsTrigger value="draft" onClick={() => setActiveTab('draft')} className="min-w-0 px-2 text-xs sm:px-3 sm:text-sm">
-            <span className="truncate">{t.demo.pollsUi.draftTab} ({draftPolls.length})</span>
-          </TabsTrigger>
-          <TabsTrigger value="closed" onClick={() => setActiveTab('closed')} className="min-w-0 px-2 text-xs sm:px-3 sm:text-sm">
-            <span className="truncate">{t.demo.pollsUi.closedTab} ({closedPolls.length})</span>
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="active" className="mt-0 space-y-3">
-          {activePolls.map(renderPollCard)}
-        </TabsContent>
-        <TabsContent value="draft" className="mt-0 space-y-3">
-          {draftPolls.map(renderPollCard)}
-        </TabsContent>
-        <TabsContent value="closed" className="mt-0 space-y-3">
-          {closedPolls.map(renderPollCard)}
-        </TabsContent>
-      </Tabs>
-    </>
+    <PollEditorSurface
+      breadcrumbs={[
+        { label: t.guildNav.polls, href: '/demo/polls' },
+        { label: poll ? t.common.edit : t.common.new },
+      ]}
+      guildName={demoGuild.name}
+      isEditing={Boolean(poll)}
+      isActivePoll={Boolean(isActivePoll)}
+      isMetadataOnly={isMetadataOnly}
+      rosters={demoRosters.map((roster) => ({ id: roster.id, name: roster.name }))}
+      members={getDemoPollEditorMembers()}
+      ranks={getDemoPollEditorRanks()}
+      initialData={poll ? demoPollToFormData(poll) : undefined}
+      initialAccessConfig={demoPollEditorAccessConfig}
+      initialRespondentRules={demoPollEditorRespondentRules}
+      onSave={(data, accessConfig, respondentRules) => savePoll(data, accessConfig, respondentRules, poll?.status || 'draft')}
+      onPublish={isActivePoll ? undefined : (data, accessConfig, respondentRules) => savePoll(data, accessConfig, respondentRules, 'active')}
+      confirmResetDialog={confirmResetDialog}
+      onConfirmResetDialogChange={(open) => {
+        setConfirmResetDialog(open);
+        if (!open) setPendingFullEdit(null);
+      }}
+      onConfirmFullEdit={handleConfirmFullEdit}
+    />
   );
 };
 
@@ -1298,7 +2005,7 @@ const DemoPollNotFound = () => {
   const navigate = useNavigate();
 
   return (
-    <>
+    <PageContainer className="mx-auto max-w-5xl space-y-4 py-4 md:py-5" width="workspace">
       <PageHeader
         icon={MessageSquare}
         title={t.demo.pollsUi.noPoll}
@@ -1313,16 +2020,16 @@ const DemoPollNotFound = () => {
       <GlowCard surface="section" hoverable={false} className="py-8 text-center text-sm text-muted-foreground">
         {t.polls.notFound}
       </GlowCard>
-    </>
+    </PageContainer>
   );
 };
 
-const DemoPollDraftPreview = ({ poll, onFakeAction }: { poll: GuildPoll; onFakeAction?: () => void }) => {
+const DemoPollDraftPreview = ({ poll }: { poll: GuildPoll }) => {
   const navigate = useNavigate();
   const { t } = useLanguage();
 
   return (
-    <>
+    <PageContainer className="mx-auto max-w-5xl space-y-4 py-4 md:py-5" width="workspace">
       <PageHeader
         icon={MessageSquare}
         title={poll.title}
@@ -1333,12 +2040,10 @@ const DemoPollDraftPreview = ({ poll, onFakeAction }: { poll: GuildPoll; onFakeA
               <ArrowLeft className="h-4 w-4" />
               {t.common.back}
             </Button>
-            {onFakeAction && (
-              <Button type="button" size="sm" onClick={onFakeAction}>
-                <Check className="h-4 w-4" />
-                {t.common.publish}
-              </Button>
-            )}
+            <Button type="button" size="sm" onClick={() => navigate(`/demo/polls/${encodeURIComponent(poll.id)}/edit`)}>
+              <Pencil className="h-4 w-4" />
+              {t.common.edit}
+            </Button>
           </>
         )}
       />
@@ -1380,76 +2085,78 @@ const DemoPollDraftPreview = ({ poll, onFakeAction }: { poll: GuildPoll; onFakeA
           ))}
         </div>
       </GlowCard>
-    </>
+    </PageContainer>
   );
 };
 
 const DemoPollDetail = ({
   poll,
-  onFakeAction,
   onSubmit,
 }: {
   poll: GuildPoll | null;
-  onFakeAction: () => void;
   onSubmit: (pollId: string, responses: { questionId: string; value: ResponseValue }[]) => Promise<void>;
 }) => {
   const navigate = useNavigate();
-  const { t, language } = useLanguage();
+  const location = useLocation();
+  const [showResults, setShowResults] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   if (!poll) return <DemoPollNotFound />;
-  if (poll.status === 'draft') return <DemoPollDraftPreview poll={poll} onFakeAction={onFakeAction} />;
-  if (poll.status === 'closed') return <DemoPollResults poll={poll} />;
+  if (poll.status === 'draft') return <DemoPollDraftPreview poll={poll} />;
 
-  const endsAtLabel = poll.ends_at
-    ? formatDateTimeLocalized(poll.ends_at, language, { dateStyle: 'medium', timeStyle: 'short' })
-    : null;
+  const requestedView = new URLSearchParams(location.search).get('view');
+  const isClosed = poll.status === 'closed' || (poll.ends_at ? new Date(poll.ends_at) < new Date() : false);
+  const hasResponded = hasDemoPollResponse(poll);
+  const userCanRespond = true;
+  const userCanViewResults = true;
+  const reviewingClosedResponses = isReadOnlyResponsesView({
+    hasResponded,
+    isClosed,
+    requestedView,
+  });
+  const showResultsPane = shouldShowPollResultsPane({
+    hasResponded,
+    isClosed,
+    isEditing,
+    isGM: true,
+    requestedView,
+    showResults,
+    userCanRespond,
+    userCanViewResults,
+  });
+  const canToggleResults = !isClosed;
+  const canOpenFullResults = reviewingClosedResponses && userCanViewResults;
+  const handleSubmit = async (responses: { questionId: string; value: ResponseValue }[]) => {
+    await onSubmit(poll.id, responses);
+    setShowResults(true);
+    setIsEditing(false);
+  };
 
   return (
-    <>
-      <PageHeader
-        icon={MessageSquare}
-        title={poll.title}
-        description={poll.description}
-        meta={(
-          <>
-            {poll.roster?.name && (
-              <Badge variant="outline" className="border-border/50 bg-card/45 text-foreground">
-                {poll.roster.name}
-              </Badge>
-            )}
-            {endsAtLabel && (
-              <span className="text-xs text-muted-foreground">
-                {t.polls.endsOn}: {endsAtLabel}
-              </span>
-            )}
-          </>
-        )}
-        actions={(
-          <>
-            <Button type="button" variant="outline" size="sm" onClick={() => navigate('/demo/polls')}>
-              <ArrowLeft className="h-4 w-4" />
-              {t.common.back}
-            </Button>
-            <Button type="button" variant="outline" size="sm" onClick={() => navigate(`/demo/poll/${encodeURIComponent(poll.id)}/results`)}>
-              <BarChart3 className="h-4 w-4" />
-              {t.common.results}
-            </Button>
-          </>
-        )}
-      />
-      <PollResponse
-        questions={poll.questions || []}
-        isAnonymous={poll.is_anonymous}
-        onSubmit={(responses) => onSubmit(poll.id, responses)}
-        alreadyResponded={hasDemoPollResponse(poll)}
-      />
-    </>
+    <PollViewSurface
+      poll={poll}
+      hasResponded={hasResponded}
+      isClosed={isClosed}
+      userCanRespond={userCanRespond}
+      userCanViewResults={userCanViewResults}
+      showResultsPane={showResultsPane}
+      showResults={showResults}
+      setShowResults={setShowResults}
+      isEditing={isEditing}
+      setIsEditing={setIsEditing}
+      reviewingClosedResponses={reviewingClosedResponses}
+      canToggleResults={canToggleResults}
+      canOpenFullResults={canOpenFullResults}
+      onBack={() => navigate('/demo/polls')}
+      onOpenFullResults={() => navigate(`/demo/poll/${encodeURIComponent(poll.id)}/results`)}
+      onSubmit={handleSubmit}
+      canUseCohortFilters={true}
+    />
   );
 };
 
 const DemoPollResults = ({ poll }: { poll: GuildPoll | null }) => {
   const navigate = useNavigate();
-  const { t } = useLanguage();
 
   if (!poll) return <DemoPollNotFound />;
   if (poll.status === 'draft') {
@@ -1457,34 +2164,14 @@ const DemoPollResults = ({ poll }: { poll: GuildPoll | null }) => {
   }
 
   return (
-    <>
-      <PageHeader
-        icon={BarChart3}
-        title={poll.title}
-        description={t.common.results}
-        actions={(
-          <>
-            <Button type="button" variant="outline" size="sm" onClick={() => navigate('/demo/polls')}>
-              <ArrowLeft className="h-4 w-4" />
-              {t.common.back}
-            </Button>
-            {poll.status === 'active' && (
-              <Button type="button" size="sm" onClick={() => navigate(`/demo/poll/${encodeURIComponent(poll.id)}`)}>
-                <Pencil className="h-4 w-4" />
-                {hasDemoPollResponse(poll) ? t.polls.reviewMyResponses : t.polls.respond}
-              </Button>
-            )}
-          </>
-        )}
-      />
-      {poll.status === 'active' && !hasDemoPollResponse(poll) ? (
-        <GlowCard surface="section" hoverable={false} className="border-primary/20 bg-primary/5 text-sm text-primary">
-          {t.demo.pollsUi.resultsUnavailable}
-        </GlowCard>
-      ) : (
-        <PollResults poll={poll} variant="full" canUseCohortFilters={false} />
-      )}
-    </>
+    <PollResultsSurface
+      poll={poll}
+      userCanViewResults
+      hasResponded={hasDemoPollResponse(poll)}
+      onBack={() => navigate('/demo/polls')}
+      onReviewMyResponses={() => navigate(`/demo/poll/${encodeURIComponent(poll.id)}?view=responses`)}
+      canUseCohortFilters={true}
+    />
   );
 };
 
@@ -2357,25 +3044,437 @@ const DemoMembers = ({ onFakeAction }: { onFakeAction: () => void }) => {
   );
 };
 
-const DemoSettings = ({ lockDays }: { lockDays: number }) => {
-  const { t } = useLanguage();
+interface DemoSettingsProps {
+  activeSection: SettingsSection;
+  visibleSections: SettingsSection[];
+  onSectionChange: (section: SettingsSection) => void;
+  onFakeAction: () => void;
+}
+
+const DEMO_PERMISSION_TYPES: PermissionType[] = [
+  'manage_wishes',
+  'manage_polls',
+  'manage_rosters',
+  'view_activity_log',
+  'manage_members',
+  'manage_vault',
+  'view_vault_audit',
+  'manage_atlas',
+];
+
+const DemoSettings = ({
+  activeSection,
+  visibleSections,
+  onSectionChange,
+  onFakeAction,
+}: DemoSettingsProps) => {
+  const { t, language } = useLanguage();
+  const [officerRank, setOfficerRank] = useState(DEMO_OFFICER_RANK_THRESHOLD);
+  const [localRosters, setLocalRosters] = useState(() =>
+    demoRosters.map((roster) => ({
+      ...roster,
+      description: roster.id === demoRoster.id ? demoAnalyticsMetadata.description : null,
+      access_rules: [
+        {
+          id: `${roster.id}-officers`,
+          access_type: 'rank' as const,
+          min_rank_index: 0,
+          max_rank_index: DEMO_OFFICER_RANK_THRESHOLD,
+        },
+      ],
+    })),
+  );
+  const rankEntries = useMemo(
+    () =>
+      Object.entries(demoMemberRankLabels)
+        .map(([rank_index, rank_name]) => ({ rank_index: Number(rank_index), rank_name }))
+        .sort((left, right) => left.rank_index - right.rank_index),
+    [],
+  );
+  const guildMembers = useMemo(
+    () =>
+      demoRosterMembers
+        .filter((member) => member.profile)
+        .map((member) => ({
+          user_id: member.profile?.id || member.id,
+          username: member.profile?.username || member.character_name,
+        })),
+    [],
+  );
+  const [localPermissions, setLocalPermissions] = useState<PermissionRule[]>(() =>
+    DEMO_PERMISSION_TYPES.flatMap((permissionType, index) => {
+      const rules: PermissionRule[] = [
+        {
+          id: `demo-permission-${permissionType}-officers`,
+          permission_type: permissionType,
+          access_type: 'rank',
+          min_rank_index: 0,
+          max_rank_index: index < 4 ? DEMO_OFFICER_RANK_THRESHOLD : 0,
+        },
+      ];
+      const member = guildMembers[index % guildMembers.length];
+      if (member && index < 4) {
+        rules.push({
+          id: `demo-permission-${permissionType}-${member.user_id}`,
+          permission_type: permissionType,
+          access_type: 'user',
+          user_id: member.user_id,
+        });
+      }
+      return rules;
+    }),
+  );
+
+  const handleCreateRoster = (input: {
+    name: string;
+    description: string | null;
+    accessRules: Array<{
+      access_type: 'user' | 'rank';
+      user_id?: string;
+      min_rank_index?: number;
+      max_rank_index?: number;
+    }>;
+  }) => {
+    const index = localRosters.length + 1;
+    setLocalRosters((current) => [
+      ...current,
+      {
+        id: `demo-settings-roster-${index}`,
+        name: input.name,
+        is_default: false,
+        hasAccess: true,
+        wishes_locked: false,
+        wishes_lock_at: null,
+        description: input.description,
+        access_rules: input.accessRules.map((rule, ruleIndex) => ({
+          id: `demo-settings-roster-${index}-rule-${ruleIndex}`,
+          ...rule,
+        })),
+      },
+    ]);
+    onFakeAction();
+  };
+
+  const handleUpdateRosterFromSurface = (
+    rosterId: string,
+    input: {
+      name: string;
+      description: string | null;
+      accessRules: Array<{
+        access_type: 'user' | 'rank';
+        user_id?: string;
+        min_rank_index?: number;
+        max_rank_index?: number;
+      }>;
+    },
+  ) => {
+    setLocalRosters((current) =>
+      current.map((roster) =>
+        roster.id === rosterId
+          ? {
+              ...roster,
+              name: input.name,
+              description: input.description,
+              access_rules: input.accessRules.map((rule, ruleIndex) => ({
+                id: `${rosterId}-rule-${ruleIndex}`,
+                ...rule,
+              })),
+            }
+          : roster,
+      ),
+    );
+    onFakeAction();
+  };
+
+  const handleDeleteRosterFromSurface = (rosterId: string) => {
+    setLocalRosters((current) => current.filter((roster) => roster.id !== rosterId || roster.is_default));
+    onFakeAction();
+  };
+
+  const handlePermissionSave = (nextPermissions: PermissionRule[]) => {
+    setLocalPermissions(nextPermissions);
+    onFakeAction();
+  };
+
+  const renderSectionContent = () => {
+    switch (activeSection) {
+      case 'profile':
+        return (
+          <DemoSettingsProfileSection
+            officerRank={officerRank}
+            ranks={rankEntries}
+            onOfficerRankChange={(rank) => {
+              setOfficerRank(rank);
+              onFakeAction();
+            }}
+            onFakeAction={onFakeAction}
+          />
+        );
+      case 'permissions':
+        return (
+          <DemoSettingsPermissionsSection
+            permissions={localPermissions}
+            members={guildMembers}
+            onSave={handlePermissionSave}
+            ranks={rankEntries}
+            officerRankThreshold={DEMO_OFFICER_RANK_THRESHOLD}
+          />
+        );
+      case 'rosters':
+        return (
+          <DemoSettingsRostersSection
+            rosters={localRosters}
+            ranks={rankEntries}
+            members={guildMembers}
+            onCreateRoster={handleCreateRoster}
+            onUpdateRoster={handleUpdateRosterFromSurface}
+            onDeleteRoster={handleDeleteRosterFromSurface}
+          />
+        );
+      case 'activity':
+        return <DemoSettingsActivitySection />;
+      case 'battlenet':
+        return <DemoSettingsBattleNetSection onFakeAction={onFakeAction} />;
+      default:
+        return null;
+    }
+  };
 
   return (
-    <>
-      <PageHeader icon={Shield} title={t.guildNav.settings} description={t.demo.bannerDescription} />
-      <div className="grid gap-3 lg:grid-cols-2">
-        <div className="rounded-md border border-border/50 bg-card/45 p-4">
-          <div className="text-sm font-medium text-foreground">{t.demo.labels.guild}</div>
-          <div className="mt-2 text-lg text-foreground">{demoGuild.name}</div>
-          <div className="text-sm text-muted-foreground">{demoGuild.region} {demoGuild.server}</div>
-        </div>
-        <div className="rounded-md border border-border/50 bg-card/45 p-4">
-          <div className="text-sm font-medium text-foreground">{t.demo.labels.roster}</div>
-          <div className="mt-2 text-lg text-foreground">{demoRoster.name}</div>
-          <div className="text-sm text-warning">{replaceCount(t.demo.labels.lock, lockDays)}</div>
-        </div>
+    <GuildSettingsSurface
+      guild={demoGuild}
+      guildId={null}
+      basePath="/demo"
+      isGM
+      hasSettingsPermission
+      hasVaultAccess
+      activeSection={activeSection}
+      visibleSections={visibleSections}
+      onSectionChange={onSectionChange}
+      contextLabel={resolveSemanticMessage({
+        key: guildSettingsSectionLabelKeys[activeSection],
+        language,
+        translations: t,
+      })}
+    >
+      {renderSectionContent()}
+    </GuildSettingsSurface>
+  );
+};
+
+interface DemoSettingsRank {
+  rank_index: number;
+  rank_name: string;
+}
+
+interface DemoSettingsMember {
+  user_id: string;
+  username: string;
+}
+
+const DemoSettingsProfileSection = ({
+  officerRank,
+  ranks,
+  onOfficerRankChange,
+  onFakeAction,
+}: {
+  officerRank: number;
+  ranks: DemoSettingsRank[];
+  onOfficerRankChange: (rank: number) => void;
+  onFakeAction: () => void;
+}) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [rankLabelDrafts, setRankLabelDrafts] = useState<Record<number, string>>(() => demoMemberRankLabels);
+  const profileGuild = {
+    ...demoGuild,
+    faction: demoGuild.faction.toLowerCase(),
+    avatar_url: null,
+    officer_rank_threshold: officerRank,
+  };
+
+  const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
+    event.currentTarget.value = '';
+    onFakeAction();
+  };
+
+  const handleRankLabelChange = (rankIndex: number, nextValue: string) => {
+    setRankLabelDrafts((current) => ({
+      ...current,
+      [rankIndex]: nextValue,
+    }));
+  };
+
+  const handleRankLabelReset = (rankIndex: number) => {
+    setRankLabelDrafts((current) => ({
+      ...current,
+      [rankIndex]: '',
+    }));
+  };
+
+  return (
+    <GuildProfileSurface
+      guild={profileGuild}
+      ranks={ranks}
+      isGM
+      localOfficerRank={officerRank}
+      rankLabelDrafts={rankLabelDrafts}
+      uploading={false}
+      removing={false}
+      savingOfficerRank={false}
+      savingRankLabels={false}
+      fileInputRef={fileInputRef}
+      onFileSelect={handleFileSelect}
+      onRemoveAvatar={onFakeAction}
+      onOfficerRankChange={onOfficerRankChange}
+      onOfficerRankCommit={onOfficerRankChange}
+      onRankLabelChange={handleRankLabelChange}
+      onRankLabelReset={handleRankLabelReset}
+      onSaveRankLabels={onFakeAction}
+    />
+  );
+};
+
+const DemoSettingsPermissionsSection = ({
+  permissions,
+  members,
+  ranks,
+  officerRankThreshold,
+  onSave,
+}: {
+  permissions: PermissionRule[];
+  members: DemoSettingsMember[];
+  ranks: DemoSettingsRank[];
+  officerRankThreshold: number;
+  onSave: (permissions: PermissionRule[]) => void;
+}) => {
+  return (
+    <GlowCard surface="section">
+      <GuildPermissionsSurface
+        permissions={permissions}
+        members={members}
+        ranks={ranks}
+        officerRankThreshold={officerRankThreshold}
+        loading={false}
+        saving={false}
+        onSave={onSave}
+      />
+    </GlowCard>
+  );
+};
+
+const DemoSettingsRostersSection = ({
+  rosters,
+  ranks,
+  members,
+  onCreateRoster,
+  onUpdateRoster,
+  onDeleteRoster,
+}: {
+  rosters: Array<(typeof demoRosters)[number] & {
+    description?: string | null;
+    access_rules: Array<{
+      id: string;
+      access_type: 'user' | 'rank';
+      user_id?: string;
+      min_rank_index?: number;
+      max_rank_index?: number;
+    }>;
+  }>;
+  ranks: DemoSettingsRank[];
+  members: DemoSettingsMember[];
+  onCreateRoster: Parameters<typeof RosterManagerSurface>[0]['onCreateRoster'];
+  onUpdateRoster: Parameters<typeof RosterManagerSurface>[0]['onUpdateRoster'];
+  onDeleteRoster: (rosterId: string) => void;
+}) => {
+  return (
+    <RosterManagerSurface
+      rosters={rosters}
+      ranks={ranks}
+      members={members}
+      onCreateRoster={onCreateRoster}
+      onUpdateRoster={onUpdateRoster}
+      onDeleteRoster={onDeleteRoster}
+    />
+  );
+};
+
+const DemoSettingsActivitySection = () => {
+  const { t } = useLanguage();
+  const events = [
+    {
+      id: 'demo-activity-wishes',
+      when: '2026-06-30 20:15',
+      user: demoUser.username,
+      action: t.activityLog.updated,
+      details: demoRoster.name,
+    },
+    {
+      id: 'demo-activity-roster',
+      when: '2026-06-30 19:42',
+      user: 'Thorn',
+      action: t.activityLog.rostersUpdated,
+      details: demoRosters[0].name,
+    },
+    {
+      id: 'demo-activity-vault',
+      when: '2026-06-30 18:05',
+      user: demoUser.username,
+      action: t.activityLog.vaultSecretRevealed,
+      details: demoVaultSecrets[0]?.label || t.activityLog.secret,
+    },
+  ];
+  const auditEvents = demoVaultSecrets.slice(0, 3).map((secret, index) => ({
+    id: `demo-vault-audit-${secret.id}`,
+    created_at: new Date(Date.UTC(2026, 5, 30, 18 - index, 5, 0)).toISOString(),
+    actor_username: index === 1 ? 'Thorn' : demoUser.username,
+    action_type: index === 0 ? 'secret_revealed' : 'access_updated',
+    secret_label: secret.label,
+    action_context: { surface: 'guild_vault', reason: 'Demo review' },
+  }));
+
+  return (
+    <GuildActivitySurface
+      showVaultAudit
+      auditEvents={auditEvents}
+      activityLog={(
+      <div className="rounded-xl border border-border/45 bg-card/20">
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead>{t.activityLog.when}</TableHead>
+              <TableHead>{t.activityLog.user}</TableHead>
+              <TableHead>{t.activityLog.action}</TableHead>
+              <TableHead>{t.activityLog.details}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {events.map((event) => (
+              <TableRow key={event.id}>
+                <TableCell className="text-xs text-muted-foreground">{event.when}</TableCell>
+                <TableCell>{event.user}</TableCell>
+                <TableCell>
+                  <Badge variant="outline">{event.action}</Badge>
+                </TableCell>
+                <TableCell className="text-sm text-muted-foreground">{event.details}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
-    </>
+      )}
+    />
+  );
+};
+
+const DemoSettingsBattleNetSection = ({ onFakeAction }: { onFakeAction: () => void }) => {
+  return (
+    <GuildBattleNetSurface
+      isOwnerOrGM
+      syncing={false}
+      renaming={false}
+      onResyncBattlenet={onFakeAction}
+      onRenameGuild={onFakeAction}
+    />
   );
 };
 

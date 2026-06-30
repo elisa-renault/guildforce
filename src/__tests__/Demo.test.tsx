@@ -95,7 +95,7 @@ afterEach(() => {
 });
 
 describe('Demo page', () => {
-  it('renders the public sample guild as a real roster workspace on /demo', () => {
+  it('renders the demo overview as a connected guild overview on /demo', () => {
     render(
       <MemoryRouter initialEntries={['/demo']}>
         <Demo />
@@ -104,19 +104,19 @@ describe('Demo page', () => {
 
     expect(screen.getAllByText(/Astral Vanguard/).length).toBeGreaterThan(0);
     expect(screen.getAllByText('Midnight Mythic Team').length).toBeGreaterThan(0);
-    expect(screen.getByText('Midnight Launch Prep')).toBeInTheDocument();
+    expect(screen.getByText('Welcome, Nyx')).toBeInTheDocument();
+    expect(screen.getByText('My Status')).toBeInTheDocument();
+    expect(screen.getByText('My Wishes')).toBeInTheDocument();
+    expect(screen.getByText('Guild Overview')).toBeInTheDocument();
+    expect(screen.getByText('Active Poll')).toBeInTheDocument();
+    expect(screen.getByText('Quick Access')).toBeInTheDocument();
     expect(screen.queryByText('Demo mode')).not.toBeInTheDocument();
     expect(screen.queryByText('Create my guild workspace')).not.toBeInTheDocument();
-    expect(screen.getByText('Table')).toBeInTheDocument();
-    expect(screen.getByText('Validated Selection')).toBeInTheDocument();
-    expect(screen.getByText('Analytics')).toBeInTheDocument();
-    expect(screen.getByText('Columns')).toBeInTheDocument();
-    expect(screen.getByText('Nyx')).toBeInTheDocument();
-    expect(screen.getByText('Nyxara - Tarren Mill')).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Wishes Table' }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('button', { name: 'Members' }).length).toBeGreaterThan(0);
-    expect(screen.queryByRole('button', { name: 'Polls' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Settings' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /login/i })).not.toBeInTheDocument();
+    expect(supabaseFromMock).not.toHaveBeenCalled();
+    expect(supabaseRpcMock).not.toHaveBeenCalled();
   });
 
   it('supports /demo/roster as the same roster workspace', () => {
@@ -172,7 +172,7 @@ describe('Demo page', () => {
 
   it('opens the local member detail route from the demo roster table', () => {
     render(
-      <MemoryRouter initialEntries={['/demo']}>
+      <MemoryRouter initialEntries={['/demo/roster']}>
         <Demo />
       </MemoryRouter>,
     );
