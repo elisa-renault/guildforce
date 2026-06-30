@@ -1167,10 +1167,9 @@ export const translationsZhTw: Translations = createLocaleTranslations(translati
       },
       takeaways: {
         leader: '{{label}} 以 {{percentage}} 領先（{{margin}}）。',
-        tie: '前段選項接近，沒有明顯領先。',
-        average: '平均分數 {{average}} / {{max}}。',
+        selection: '{{label}} 由 {{count}}/{{total}} 位回覆者選擇。',
+        average: '平均 {{value}}/{{max}}，分布{{dispersion}}。',
         text: '{{count}} 份文字回覆可供檢視。',
-        default: '檢視回覆分布以找出下一步。',
       },
     },
   },
