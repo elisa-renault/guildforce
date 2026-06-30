@@ -62,6 +62,9 @@ const walkFiles = (dir, out = []) => {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const fullPath = path.join(dir, entry.name);
     if (entry.isDirectory()) {
+      if (entry.name === '__tests__') {
+        continue;
+      }
       walkFiles(fullPath, out);
       continue;
     }
