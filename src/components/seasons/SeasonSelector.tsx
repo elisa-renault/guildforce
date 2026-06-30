@@ -1,5 +1,7 @@
-import { useMemo } from 'react';
 import { Archive, CalendarDays, Check, CheckCircle2, ChevronDown, ScrollText } from 'lucide-react';
+import { useMemo } from 'react';
+
+import type { GuildSeason, GuildSeasonState } from '@/types/seasons';
 
 import { Badge } from '@/components/ui/badge';
 import {
@@ -12,7 +14,6 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { interpolateMessage } from '@/i18n/format';
 import { toneBadgeClass, toneTextClass } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
-import type { GuildSeason, GuildSeasonState } from '@/types/seasons';
 
 interface SeasonSelectorProps {
   seasons: GuildSeason[];
@@ -100,16 +101,16 @@ export const SeasonSelector = ({
               !selectedSeason && 'text-muted-foreground',
             )}
           >
-            <span className="flex min-w-0 items-center gap-2">
+            <span className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
               <SelectedIcon
                 className={cn(
                   'h-3.5 w-3.5 flex-shrink-0',
                   selectedSeason?.state === 'active' && 'text-status-success',
                 )}
               />
-              <span className="truncate">{selectedSeason?.name || t.seasons.selectSeason}</span>
+              <span className="min-w-0 flex-1 truncate">{selectedSeason?.name || t.seasons.selectSeason}</span>
               {selectedSeason && (
-                <Badge variant="outline" className={cn('h-5 px-1.5 text-[10px]', getSeasonStateBadgeClass(selectedSeason.state))}>
+                <Badge variant="outline" className={cn('h-5 shrink-0 px-1.5 text-[10px]', getSeasonStateBadgeClass(selectedSeason.state))}>
                   {getStateLabel(selectedSeason.state)}
                 </Badge>
               )}
@@ -130,10 +131,10 @@ export const SeasonSelector = ({
                 <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center">
                   {isSelected && <Check className="h-4 w-4" />}
                 </span>
-                <span className="flex min-w-0 flex-1 items-center gap-2">
+                <span className="grid min-w-0 flex-1 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2">
                   <Icon className={cn('h-3.5 w-3.5 flex-shrink-0', season.state === 'active' && 'text-status-success')} />
-                  <span className="truncate">{season.name}</span>
-                  <Badge variant="outline" className={cn('ml-auto h-5 px-1.5 text-[10px]', getSeasonStateBadgeClass(season.state))}>
+                  <span className="min-w-0 truncate">{season.name}</span>
+                  <Badge variant="outline" className={cn('h-5 shrink-0 px-1.5 text-[10px]', getSeasonStateBadgeClass(season.state))}>
                     {getStateLabel(season.state)}
                   </Badge>
                 </span>

@@ -283,11 +283,13 @@ describe('composition analytics', () => {
     expect(result[0].spellEntries).toEqual([
       expect.objectContaining({
         name: 'Rebirth',
+        description: 'Returns the spirit to the body.',
         covered: true,
         providers: [expect.objectContaining({ classId: 'druid', covered: true })],
       }),
       expect.objectContaining({
         name: 'Raise Ally',
+        description: 'Raises a fallen ally.',
         covered: false,
         providers: [expect.objectContaining({ classId: 'death-knight', covered: false })],
       }),

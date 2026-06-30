@@ -106,11 +106,19 @@ const tokenGradientMap: Record<TokenGroupId, string> = {
 const topRaidEssentialKeys = new Set(['bloodlust', 'combat_res']);
 const topRaidEssentialColor = 'hsl(var(--status-warning))';
 
+export interface RosterAnalyticsMetadata {
+  raidEffects: RaidEffectRow[];
+  compositionAbilities: CompositionAbilityRow[];
+  compositionMappings: CompositionAbilityMappingRow[];
+  wowSpells: WowSpellRow[];
+}
+
 interface RosterAnalyticsProps {
   members: MemberWish[];
   rosterMembers?: Array<{ id: string; name: string }>;
   rosterMemberFilters?: string[] | null;
   onRosterMemberFiltersChange?: (memberIds: string[] | null) => void;
+  metadata?: RosterAnalyticsMetadata;
 }
 
 interface ClassStat {
@@ -175,6 +183,7 @@ export const RosterAnalytics = ({
   rosterMembers = [],
   rosterMemberFilters = null,
   onRosterMemberFiltersChange,
+  metadata,
 }: RosterAnalyticsProps) => {
   const { t, language } = useLanguage();
   const s = (key: Parameters<typeof resolveSemanticMessage>[0]['key']) =>
@@ -194,10 +203,10 @@ export const RosterAnalytics = ({
   const [playersOpen, setPlayersOpen] = useState(false);
   const [wishesOpen, setWishesOpen] = useState(false);
   const [specsOpen, setSpecsOpen] = useState(false);
-  const [raidEffects, setRaidEffects] = useState<RaidEffectRow[]>([]);
-  const [compositionAbilities, setCompositionAbilities] = useState<CompositionAbilityRow[]>([]);
-  const [compositionMappings, setCompositionMappings] = useState<CompositionAbilityMappingRow[]>([]);
-  const [wowSpells, setWowSpells] = useState<WowSpellRow[]>([]);
+  const [raidEffects, setRaidEffects] = useState<RaidEffectRow[]>(metadata?.raidEffects ?? []);
+  const [compositionAbilities, setCompositionAbilities] = useState<CompositionAbilityRow[]>(metadata?.compositionAbilities ?? []);
+  const [compositionMappings, setCompositionMappings] = useState<CompositionAbilityMappingRow[]>(metadata?.compositionMappings ?? []);
+  const [wowSpells, setWowSpells] = useState<WowSpellRow[]>(metadata?.wowSpells ?? []);
   const tokenNames: Record<TokenGroupId, string> = {
     dreadful: t.dashboard.tokenCloth,
     mystic: t.dashboard.tokenLeather,
@@ -206,6 +215,14 @@ export const RosterAnalytics = ({
   };
 
   useEffect(() => {
+    if (metadata) {
+      setRaidEffects(metadata.raidEffects);
+      setCompositionAbilities(metadata.compositionAbilities);
+      setCompositionMappings(metadata.compositionMappings);
+      setWowSpells(metadata.wowSpells);
+      return;
+    }
+
     let isActive = true;
 
     const fetchCompositionMetadata = async () => {
@@ -292,7 +309,7 @@ export const RosterAnalytics = ({
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [metadata]);
 
   const maxWishIndex = wishScopeFilter === 'first_approved' ? 13 : Number(wishScopeFilter);
 
@@ -622,14 +639,39 @@ export const RosterAnalytics = ({
     );
   };
 
-  const renderCoverageSpellList = (spellEntries: CoverageSpellEntry[]) => (
-    <ul className="space-y-1.5 text-xs">
-      {spellEntries.map(entry => (
+  const renderCoverageSpellDetail = (
+    entry: Pick<CoverageSpellEntry, 'name' | 'description' | 'providers' | 'covered'>,
+    key: string,
+  ) => {
+    const bodyText = (entry.description || entry.name).replace(/\s+/g, ' ').trim();
+
+    return (
+      <div
+        key={key}
+        className={`space-y-2 pt-1 text-xs font-normal ${entry.covered ? '' : 'text-muted-foreground/85'}`}
+      >
+        {entry.providers.length > 0 && (
+          <div className="flex flex-wrap justify-start gap-1">
+            {entry.providers.map(renderClassProviderPill)}
+          </div>
+        )}
+        <p className="whitespace-normal break-words font-normal leading-5">
+          {bodyText}
+        </p>
+      </div>
+    );
+  };
+
+  const renderCoverageSpellList = (spellEntries: Array<Pick<CoverageSpellEntry, 'name' | 'providers' | 'covered'>>) => (
+    <ul className="space-y-1.5 text-xs font-normal">
+      {spellEntries.map((entry, index) => (
         <li
-          key={`${entry.spellId}-${entry.name}`}
-          className={`grid min-w-0 grid-cols-[minmax(7.5rem,1fr)_minmax(0,auto)] items-center gap-3 ${entry.covered ? '' : 'text-muted-foreground/85'}`}
+          key={`${entry.name}-${index}`}
+          className={`grid min-w-0 grid-cols-[minmax(7.5rem,1fr)_minmax(0,auto)] items-center gap-3 ${
+            entry.covered ? '' : 'text-muted-foreground/85'
+          }`}
         >
-          <span className="min-w-0 truncate font-medium leading-5">{entry.name}</span>
+          <span className="min-w-0 truncate font-normal leading-5">{entry.name}</span>
           {entry.providers.length > 0 && (
             <span className="flex max-w-[15rem] flex-wrap justify-end gap-1">
               {entry.providers.map(renderClassProviderPill)}
@@ -649,28 +691,31 @@ export const RosterAnalytics = ({
       return renderCoverageSpellList(spellEntries);
     }
 
-    if (spellEntries.length === 1 && spellEntries[0].providers.length > 0) {
-      return (
-        <div className="space-y-2 pt-1 text-xs">
-          <div className="flex flex-wrap justify-start gap-1">
-            {spellEntries[0].providers.map(renderClassProviderPill)}
-          </div>
-          <p className="break-words leading-5">{stat.description || stat.name}</p>
-        </div>
-      );
+    if (spellEntries.length === 1) {
+      return renderCoverageSpellDetail(spellEntries[0], `${spellEntries[0].spellId}-${spellEntries[0].name}`);
     }
 
     if (spellNames.length > 1) {
       return (
-        <ul className="space-y-1 text-xs">
+        <ul className="space-y-1 text-xs font-normal">
           {spellNames.map(spellName => (
-            <li key={spellName} className="break-words">{spellName}</li>
+            <li key={spellName} className="break-words font-normal leading-5">
+              {spellName}
+            </li>
           ))}
         </ul>
       );
     }
 
-    return <p className="break-words text-xs leading-5">{stat.description || stat.name}</p>;
+    return renderCoverageSpellDetail(
+      {
+        name: stat.name,
+        description: stat.description,
+        providers: [],
+        covered: stat.count > 0,
+      },
+      stat.name,
+    );
   };
 
   const getSingleProviderClassColor = (stat: RaidEffectStat | CompositionCoverageStat) => {
@@ -1215,14 +1260,30 @@ export const RosterAnalytics = ({
     interpolateMessage(t.dashboard.activeFilterRange, { value: getRangeFilterLabel(rangeFilter) }),
   ];
 
+  const formatTokenList = (tokens: string[]) => {
+    try {
+      return new Intl.ListFormat(language, { type: 'conjunction', style: 'long' }).format(tokens);
+    } catch {
+      return tokens.join(', ');
+    }
+  };
+
   const tokenRiskDescription = tokenRiskSummary.token && tokenRiskSummary.level !== 'none'
-    ? interpolateMessage(t.dashboard.tokenRiskSummary, {
-        level: t.dashboard.tokenRiskLevels[tokenRiskSummary.level],
-        token: tokenRiskSummary.token.name,
-        count: tokenRiskSummary.token.total,
-        total: tokenRiskSummary.total,
-        percent: Math.round(tokenRiskSummary.percent * 100),
-      })
+    ? tokenRiskSummary.topTokens.length > 1
+      ? interpolateMessage(t.dashboard.tokenRiskSummaryMultiple, {
+          level: t.dashboard.tokenRiskLevels[tokenRiskSummary.level],
+          tokens: formatTokenList(tokenRiskSummary.topTokens.map(token => token.name)),
+          count: tokenRiskSummary.token.total,
+          total: tokenRiskSummary.total,
+          percent: Math.round(tokenRiskSummary.percent * 100),
+        })
+      : interpolateMessage(t.dashboard.tokenRiskSummary, {
+          level: t.dashboard.tokenRiskLevels[tokenRiskSummary.level],
+          token: tokenRiskSummary.token.name,
+          count: tokenRiskSummary.token.total,
+          total: tokenRiskSummary.total,
+          percent: Math.round(tokenRiskSummary.percent * 100),
+        })
     : t.dashboard.tokenRiskNone;
 
   // Calculate totals for KPI bar

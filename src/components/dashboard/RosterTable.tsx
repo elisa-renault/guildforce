@@ -39,6 +39,10 @@ const defaultVisibleColumns: RosterTableColumnId[] = [
   'wish3',
 ];
 
+const formatCharacterRealmSubtitle = (member: MemberWish) => (
+  [member.mainCharacterName, member.realmName].filter(Boolean).join(' - ')
+);
+
 interface RosterTableProps {
   members: MemberWish[];
   loading?: boolean;
@@ -80,6 +84,7 @@ interface RosterTableProps {
   onSelectionStatusChange?: (memberId: string, status: RosterSelectionStatus) => void;
   updatingSelectionMemberId?: string | null;
   onViewHistory?: (member: MemberWish) => void;
+  onOpenMemberWishes?: (member: MemberWish) => void;
   onSortSummaryChange?: (summary: string) => void;
   visibleColumns?: RosterTableColumnId[];
 }
@@ -128,6 +133,7 @@ export const RosterTable = ({
   onSelectionStatusChange,
   updatingSelectionMemberId = null,
   onViewHistory,
+  onOpenMemberWishes,
   onSortSummaryChange,
   visibleColumns = defaultVisibleColumns,
 }: RosterTableProps) => {
@@ -655,6 +661,10 @@ export const RosterTable = ({
           const isOwnRow = member.id === currentUserId;
 
           const handleCardClick = () => {
+            if (onOpenMemberWishes) {
+              onOpenMemberWishes(member);
+              return;
+            }
             if (member.isExternal) return;
             if (regionSlug && serverSlug && guildSlug) {
               const qp = selectedRosterId ? `?rosterId=${encodeURIComponent(selectedRosterId)}` : '';
@@ -784,11 +794,15 @@ export const RosterTable = ({
                   disabled: false,
                 }] : []),
               ];
-              const playerSubtitle = member.mainCharacterName;
+              const playerSubtitle = formatCharacterRealmSubtitle(member);
               const canEditGuildMain = !member.isExternal && (isOwnRow || canManageMembers);
 
               const handleRowClick = () => {
                 // Navigate to member wishes page (read-only view) for all members
+                if (!isEditing && onOpenMemberWishes) {
+                  onOpenMemberWishes(member);
+                  return;
+                }
                 if (!isEditing && regionSlug && serverSlug && guildSlug) {
                   if (member.isExternal) return;
                   const qp = selectedRosterId ? `?rosterId=${encodeURIComponent(selectedRosterId)}` : '';

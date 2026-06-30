@@ -49,6 +49,7 @@ export interface CoverageSpellProvider {
 export interface CoverageSpellEntry {
   spellId: number;
   name: string;
+  description?: string;
   providers: CoverageSpellProvider[];
   covered: boolean;
   sortOrder: number;
@@ -101,6 +102,18 @@ const getMergeableSpellEntryKey = (entry: CoverageSpellEntry): string | null => 
   return `shaman-bloodlust:${getProviderSignature(entry.providers)}`;
 };
 
+const mergeDescriptions = (...descriptions: Array<string | null | undefined>): string | undefined => {
+  const uniqueDescriptions = descriptions
+    .map(description => description?.trim())
+    .filter((description): description is string => Boolean(description))
+    .reduce<string[]>((result, description) => {
+      if (!result.includes(description)) result.push(description);
+      return result;
+    }, []);
+
+  return uniqueDescriptions.length > 0 ? uniqueDescriptions.join('\n\n') : undefined;
+};
+
 export const mergeEquivalentCoverageSpellEntries = (
   entries: CoverageSpellEntry[],
 ): CoverageSpellEntry[] => {
@@ -134,6 +147,7 @@ export const mergeEquivalentCoverageSpellEntries = (
       ...existing,
       spellId: Math.min(existing.spellId, entry.spellId),
       name: `${existing.name} / ${entry.name}`,
+      description: mergeDescriptions(existing.description, entry.description),
       providers: Array.from(providerMap.values()),
       covered: existing.covered || entry.covered,
       sortOrder: Math.min(existing.sortOrder, entry.sortOrder),
@@ -244,6 +258,7 @@ export const buildMajorBuffsDebuffs = <
   const spellEntriesByCoverage = new Map<string, {
     spellId: number;
     name: string;
+    description: string;
     sortOrder: number;
     providers: Map<string, { classId: string; specId: string | null }>;
   }[]>();
@@ -273,6 +288,7 @@ export const buildMajorBuffsDebuffs = <
       spellEntry = {
         spellId: effect.spell_id,
         name: effect.name,
+        description: effect.description,
         sortOrder,
         providers: new Map(),
       };
@@ -280,6 +296,9 @@ export const buildMajorBuffsDebuffs = <
       spellEntriesByCoverage.set(coverageKey, spellEntries);
     }
     spellEntry.sortOrder = Math.min(spellEntry.sortOrder, sortOrder);
+    if (!spellEntry.description && effect.description) {
+      spellEntry.description = effect.description;
+    }
     spellEntry.providers.set(getProviderKey(effect.class_id, effect.spec_id), {
       classId: effect.class_id,
       specId: effect.spec_id,
@@ -335,6 +354,7 @@ export const buildMajorBuffsDebuffs = <
           return {
             spellId: entry.spellId,
             name: entry.name,
+            description: entry.description || undefined,
             sortOrder: entry.sortOrder,
             providers,
             covered: providers.some(provider => provider.covered),

@@ -98,6 +98,10 @@ describe('raid effect analytics', () => {
 
     expect(result.buffs.find((buff) => buff.spellId === 1459)?.count).toBe(1);
     expect(result.debuffs.find((debuff) => debuff.spellId === 8647)?.count).toBe(0);
+    expect(result.buffs.find((buff) => buff.spellId === 1459)?.spellEntries[0]?.description).toBe('Increases Intellect.');
+    expect(result.debuffs.find((debuff) => debuff.spellId === 8647)?.spellEntries[0]?.description).toBe(
+      'Increases physical damage taken.',
+    );
   });
 
   it('counts spec-specific effects only when the wished spec matches', () => {
@@ -172,8 +176,18 @@ describe('raid effect analytics', () => {
       },
     ];
     const bloodlustSpells = [
-      createSpell({ spell_id: 2825, name_en: 'Bloodlust', name_fr: 'Furie sanguinaire' }),
-      createSpell({ spell_id: 32182, name_en: 'Heroism', name_fr: 'Héroïsme' }),
+      createSpell({
+        spell_id: 2825,
+        name_en: 'Bloodlust',
+        name_fr: 'Furie sanguinaire',
+        description_fr: 'Augmente la hâte.',
+      }),
+      createSpell({
+        spell_id: 32182,
+        name_en: 'Heroism',
+        name_fr: 'Héroïsme',
+        description_fr: 'Inspire les alliés.',
+      }),
       createSpell({ spell_id: 80353, name_en: 'Time Warp', name_fr: 'Distorsion temporelle' }),
       createSpell({ spell_id: 264667, name_en: 'Primal Rage', name_fr: 'Rage primordiale' }),
       createSpell({ spell_id: 390386, name_en: 'Fury of the Aspects', name_fr: 'Fureur des aspects' }),
@@ -203,6 +217,7 @@ describe('raid effect analytics', () => {
     expect(result.buffs[0].spellEntries).toEqual([
       expect.objectContaining({
         name: 'Furie sanguinaire / Héroïsme',
+        description: 'Augmente la hâte.\n\nInspire les alliés.',
         covered: false,
         providers: [expect.objectContaining({ classId: 'shaman', covered: false })],
       }),

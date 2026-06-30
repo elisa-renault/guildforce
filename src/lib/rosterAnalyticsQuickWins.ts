@@ -18,6 +18,7 @@ export interface TokenRiskInput {
 
 export interface TokenRiskSummary<Token extends TokenRiskInput = TokenRiskInput> {
   token: Token | null;
+  topTokens: Token[];
   total: number;
   percent: number;
   level: TokenRiskLevel;
@@ -58,6 +59,9 @@ export const getTokenRiskSummary = <Token extends TokenRiskInput>(
     (current, candidate) => (!current || candidate.total > current.total ? candidate : current),
     null,
   );
+  const topTokens = token && token.total > 0
+    ? tokens.filter(candidate => candidate.total === token.total)
+    : [];
   const percent = total > 0 && token ? token.total / total : 0;
   const level: TokenRiskLevel =
     total === 0 || !token || token.total === 0
@@ -68,5 +72,5 @@ export const getTokenRiskSummary = <Token extends TokenRiskInput>(
           ? 'moderate'
           : 'low';
 
-  return { token, total, percent, level };
+  return { token, topTokens, total, percent, level };
 };

@@ -365,6 +365,7 @@ export const buildCompositionCoverage = <
     abilityId: string;
     spellId: number | null;
     name: string;
+    description: string;
     sortOrder: number;
     providers: Map<string, { classId: string; specId: string | null }>;
   }[]>();
@@ -383,6 +384,7 @@ export const buildCompositionCoverage = <
       abilityId: ability.id,
       spellId: ability.spell_id,
       name: text.name,
+      description: text.description,
       sortOrder,
       providers: new Map(),
     });
@@ -491,6 +493,7 @@ export const buildCompositionCoverage = <
         return {
           spellId: entry.spellId ?? 0,
           name: entry.name,
+          description: entry.description || undefined,
           sortOrder: entry.sortOrder,
           providers,
           covered: providers.some(provider => provider.covered),

@@ -41,6 +41,10 @@ const roleConfig: Record<string, { icon: typeof Shield; color: string }> = {
   dps: { icon: Sword, color: 'text-dps' },
 };
 
+const formatCharacterRealmSubtitle = (member: MemberWish) => (
+  [member.mainCharacterName, member.realmName].filter(Boolean).join(' - ')
+);
+
 export const MobileRosterCard = ({
   member,
   isOwnRow,
@@ -61,6 +65,7 @@ export const MobileRosterCard = ({
   const s = (key: SemanticKey, fallback?: string) =>
     resolveSemanticMessage({ key, language: t.lang, translations: t, fallback });
   const manualEntryLabel = s('roster_wishes.manual_entry_label');
+  const characterRealmSubtitle = formatCharacterRealmSubtitle(member);
 
   const getRosterDecisionBadge = (selectionStatus: MemberWish['selectionStatus']) => {
     switch (selectionStatus) {
@@ -261,11 +266,6 @@ export const MobileRosterCard = ({
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-1.5">
             <span className="min-w-0 flex-shrink truncate text-sm font-medium text-foreground">{member.username}</span>
-            {member.mainCharacterName && (
-              <span className="max-w-[42%] shrink-0 truncate text-[11px] text-muted-foreground">
-                {member.mainCharacterName}
-              </span>
-            )}
             {member.isExternal && (
               <span
                 className="inline-flex h-4.5 w-4.5 items-center justify-center rounded-full border border-primary/40 bg-primary/10 text-primary"
@@ -276,6 +276,11 @@ export const MobileRosterCard = ({
               </span>
             )}
           </div>
+          {characterRealmSubtitle && (
+            <div className="mt-0.5 truncate text-[11px] text-muted-foreground">
+              {characterRealmSubtitle}
+            </div>
+          )}
           {extraWishesCount > 0 && (
             <div className="mt-1 flex min-w-0 items-center gap-1.5">
               <Badge variant="outline" className="h-5 shrink-0 border-border/40 px-1.5 text-[10px] text-muted-foreground">

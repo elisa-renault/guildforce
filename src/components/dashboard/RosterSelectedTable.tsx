@@ -49,6 +49,10 @@ const getApprovedWishes = (member: MemberWish) =>
     )
     .sort((a, b) => a.choice_index - b.choice_index);
 
+const formatCharacterRealmSubtitle = (member: MemberWish) => (
+  [member.mainCharacterName, member.realmName].filter(Boolean).join(' - ')
+);
+
 const getWishBucket = (wish: WishChoice): BucketKey => {
   const primarySpecId = wish.spec_ids?.[0];
   const primarySpec = primarySpecId ? getSpecById(primarySpecId) : null;
@@ -211,6 +215,7 @@ const GroupSection = ({
       <div className={cn('gap-2', isMobile ? 'space-y-2' : 'grid md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4')}>
         {members.map(({ member, displayedWishes, hiddenWishCount }) => {
           const isClickable = !member.isExternal;
+          const characterRealmSubtitle = formatCharacterRealmSubtitle(member);
 
           return (
             <GlowCard
@@ -241,9 +246,9 @@ const GroupSection = ({
                       </Badge>
                     )}
                   </div>
-                  {member.mainCharacterName && (
+                  {characterRealmSubtitle && (
                     <div className="mt-0.5 truncate text-[10px] text-muted-foreground">
-                      {member.mainCharacterName}
+                      {characterRealmSubtitle}
                     </div>
                   )}
                 </div>

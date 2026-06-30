@@ -40,9 +40,22 @@ describe('roster analytics quick wins', () => {
       { id: 'c', name: 'C', total: 2 },
     ])).toMatchObject({
       token: { id: 'a' },
+      topTokens: [{ id: 'a' }],
       total: 10,
       percent: 0.5,
       level: 'high',
+    });
+
+    expect(getTokenRiskSummary([
+      { id: 'a', name: 'A', total: 5 },
+      { id: 'b', name: 'B', total: 1 },
+      { id: 'c', name: 'C', total: 5 },
+    ])).toMatchObject({
+      token: { id: 'a' },
+      topTokens: [{ id: 'a' }, { id: 'c' }],
+      total: 11,
+      percent: 5 / 11,
+      level: 'moderate',
     });
 
     expect(getTokenRiskSummary([
@@ -50,6 +63,7 @@ describe('roster analytics quick wins', () => {
       { id: 'b', name: 'B', total: 0 },
     ])).toMatchObject({
       token: { id: 'a' },
+      topTokens: [],
       total: 0,
       percent: 0,
       level: 'none',
