@@ -74,7 +74,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "guildAtlas": "Gildenatlas",
     "guildAtlasNew": "Neues Atlas-Dokument",
     "guildAtlasEdit": "Atlas-Dokument bearbeiten",
-    "demo": "Demo",
+    "demo": "Demo-Seite",
     "notFound": "Seite nicht gefunden"
   },
   "commandPalette": {
