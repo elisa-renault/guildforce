@@ -1054,6 +1054,8 @@ export const translationsKo: Translations = createLocaleTranslations(translation
     addRankRule: '등급 규칙 추가',
     addUserRule: '사용자 추가',
     noAccessWarning: '접근 규칙이 정의되지 않았습니다. GM만 희망을 제출할 수 있습니다.',
+    accessUpdatingTitle: '로스터 접근 권한을 아직 업데이트하는 중입니다',
+    accessUpdatingMessage: 'Battle.net 동기화 또는 로스터 연결이 아직 반영 중일 수 있습니다. 잠시 후 새로고침해 희망 목록을 불러오세요.',
     wishesLockTitle: '희망 잠금',
     wishesLockedStatus: '잠김',
     wishesUnlockedStatus: '열림',

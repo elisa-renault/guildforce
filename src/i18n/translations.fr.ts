@@ -1055,6 +1055,8 @@ export const translationsFr: Translations = {
       addRankRule: 'Ajouter une règle de rang',
       addUserRule: 'Ajouter un utilisateur',
       noAccessWarning: 'Aucune règle d\'accès définie. Seuls les GM pourront renseigner des vœux.',
+      accessUpdatingTitle: 'L’accès au roster est encore en cours de mise à jour',
+      accessUpdatingMessage: 'Votre synchronisation Battle.net ou votre lien de roster est peut-être encore en cours. Actualisez dans un instant pour charger vos vœux.',
       wishesLockTitle: 'Verrouillage des vœux',
       wishesLockedStatus: 'Verrouillé',
       wishesUnlockedStatus: 'Déverrouillé',

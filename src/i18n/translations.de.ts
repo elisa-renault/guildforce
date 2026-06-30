@@ -1014,6 +1014,8 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "addRankRule": "Rangregel hinzuf\u00fcgen",
     "addUserRule": "Benutzer hinzuf\u00fcgen",
     "noAccessWarning": "Keine Zugriffsregeln definiert. Nur GMs k\u00f6nnen W\u00fcnsche einreichen.",
+    "accessUpdatingTitle": "Der Zugriff auf diesen Aufstellung wird noch aktualisiert",
+    "accessUpdatingMessage": "Deine Battle.net-Synchronisierung oder Aufstellungsverkn\u00fcpfung wird m\u00f6glicherweise noch aktualisiert. Aktualisiere gleich erneut, um deine W\u00fcnsche zu laden.",
     "wishesLockTitle": "W\u00fcnsch-Sperre",
     "wishesLockedStatus": "Gesperrt",
     "wishesUnlockedStatus": "Entsperrt",

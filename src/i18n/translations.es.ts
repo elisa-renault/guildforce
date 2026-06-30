@@ -1054,6 +1054,8 @@ export const translationsEs: Translations = createLocaleTranslations(translation
     addRankRule: 'Añadir regla de rango',
     addUserRule: 'Añadir usuario',
     noAccessWarning: 'No hay reglas de acceso definidas. Solo los GM podrán enviar deseos.',
+    accessUpdatingTitle: 'El acceso al roster aún se está actualizando',
+    accessUpdatingMessage: 'Tu sincronización de Battle.net o el vínculo con el roster puede seguir actualizándose. Actualiza en un momento para cargar tus deseos.',
     wishesLockTitle: 'Bloqueo de deseos',
     wishesLockedStatus: 'Bloqueado',
     wishesUnlockedStatus: 'Desbloqueado',

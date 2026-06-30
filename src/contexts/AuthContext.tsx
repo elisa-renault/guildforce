@@ -64,6 +64,7 @@ interface Profile {
   avatar_url: string | null;
   preferred_language: string;
   battlenet_id: string | null;
+  is_syncing: boolean;
 }
 
 interface AuthContextType {

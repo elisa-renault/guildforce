@@ -1020,6 +1020,8 @@ export const translationsPtBr: Translations = createLocaleTranslations(translati
     addUserRule: 'Adicionar regra de usuário',
     noAccessWarning: 'Nenhuma regra de acesso',
     noAccessMessage: 'Somente GM e permissões explícitas poderão acessar.',
+    accessUpdatingTitle: 'O acesso ao roster ainda está atualizando',
+    accessUpdatingMessage: 'Sua sincronização do Battle.net ou vínculo com o roster ainda pode estar em andamento. Atualize em instantes para carregar seus desejos.',
     wishesLockTitle: 'Bloqueio de desejos',
     wishesLockedStatus: 'Desejos bloqueados',
     wishesUnlockedStatus: 'Desejos abertos',

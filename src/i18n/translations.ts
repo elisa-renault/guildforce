@@ -1018,6 +1018,8 @@ export interface Translations {
     addUserRule: string;
     noAccessWarning: string;
     noAccessMessage: string;
+    accessUpdatingTitle: string;
+    accessUpdatingMessage: string;
     wishesLockTitle: string;
     wishesLockedStatus: string;
     wishesUnlockedStatus: string;

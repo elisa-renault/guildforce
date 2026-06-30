@@ -1055,6 +1055,8 @@ export const translationsEn: Translations = {
       addRankRule: 'Add Rank Rule',
       addUserRule: 'Add User',
       noAccessWarning: 'No access rules defined. Only GMs will be able to submit wishes.',
+      accessUpdatingTitle: 'Roster access is still updating',
+      accessUpdatingMessage: 'Your Battle.net sync or roster link may still be catching up. Refresh in a moment to load your wishes.',
       wishesLockTitle: 'Wishes lock',
       wishesLockedStatus: 'Locked',
       wishesUnlockedStatus: 'Unlocked',

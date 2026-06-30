@@ -46,6 +46,7 @@ import { cn } from '@/lib/utils';
 import { resolveCurrentWowSeasonName } from '@/lib/wowSeasonName';
 import { formatRealmDisplayName } from '@/lib/realms';
 import log from '@/lib/logger';
+import { reportClientToastError } from '@/lib/clientErrorReports';
 import { GlowCard } from '@/components/GlowCard';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
@@ -231,6 +232,32 @@ const RosterWishes = () => {
       selectedSeasonId,
       seasonSupportMode,
       error: getErrorDiagnostic(error),
+    });
+  };
+  const getRosterWishFailureMetadata = (context: Record<string, unknown> = {}) => {
+    const activeRoster = rosters.find((roster) => roster.id === selectedRosterId);
+    return {
+      routeSearch: searchParams.toString(),
+      requestedRosterId: searchParams.get('rosterId'),
+      selectedRosterId,
+      selectedSeasonId,
+      hasAccess: activeRoster?.hasAccess ?? null,
+      currentMemberFound: members.some((member) => member.id === user?.id),
+      profileIsSyncing: !!profile?.is_syncing,
+      canManageWishes,
+      isAdminReadOnly,
+      ...context,
+    };
+  };
+  const reportRosterWishClientError = (
+    title: string,
+    description?: string | null,
+    metadata: Record<string, unknown> = {},
+  ) => {
+    void reportClientToastError({
+      title,
+      description,
+      metadata: getRosterWishFailureMetadata(metadata),
     });
   };
 
@@ -515,20 +542,54 @@ const RosterWishes = () => {
 
       // Select requested roster from URL, default roster, or first accessible.
       const requestedRosterId = searchParams.get('rosterId');
-      const requestedRoster = requestedRosterId
+      const hasPersonalEditIntent = searchParams.get('edit') === 'my-wishes';
+      const requestedRosterById = requestedRosterId
         ? rostersWithAccess.find((roster) => roster.id === requestedRosterId)
         : null;
-      const defaultRoster = requestedRoster || rostersWithAccess.find(r => r.is_default) || rostersWithAccess[0];
-      if (defaultRoster && !selectedRosterId) {
-        setSelectedRosterId(defaultRoster.id);
+      const requestedRoster = requestedRosterId
+        ? requestedRosterById && requestedRosterById.hasAccess ? requestedRosterById : null
+        : null;
+      const defaultRoster =
+        requestedRoster ||
+        rostersWithAccess.find(r => r.is_default && r.hasAccess) ||
+        rostersWithAccess.find(r => r.hasAccess);
+      if (defaultRoster) {
         const next = new URLSearchParams(searchParams);
         next.set('rosterId', defaultRoster.id);
-        setSearchParams(next, { replace: true });
-      }
-      if (defaultRoster) {
-        await fetchSeasons(foundGuildId, selectedRosterId || defaultRoster.id);
+        if (hasPersonalEditIntent && requestedRosterId && requestedRosterId !== defaultRoster.id) {
+          next.delete('edit');
+          reportRosterWishClientError(t.rosters.noAccess, null, {
+            event: 'stale_personal_edit_roster_fallback',
+            staleRosterId: requestedRosterId,
+            fallbackRosterId: defaultRoster.id,
+            hasAccess: false,
+          });
+        }
+        if (selectedRosterId !== defaultRoster.id) {
+          setSelectedRosterId(defaultRoster.id);
+        }
+        if (next.toString() !== searchParams.toString()) {
+          setSearchParams(next, { replace: true });
+        }
+        await fetchSeasons(foundGuildId, defaultRoster.id);
       }
       if (!defaultRoster) {
+        const fallbackRoster = requestedRosterById || rostersWithAccess[0] || null;
+        if (selectedRosterId !== (fallbackRoster?.id || null)) {
+          setSelectedRosterId(fallbackRoster?.id || null);
+        }
+        if (hasPersonalEditIntent) {
+          const next = new URLSearchParams(searchParams);
+          next.delete('edit');
+          if (next.toString() !== searchParams.toString()) {
+            setSearchParams(next, { replace: true });
+          }
+          reportRosterWishClientError(t.rosters.noAccess, null, {
+            event: 'personal_edit_no_accessible_roster',
+            staleRosterId: requestedRosterId,
+            hasAccess: false,
+          });
+        }
         setWishesLoading(false);
       }
     } else {
@@ -543,6 +604,12 @@ const RosterWishes = () => {
     setWishesLoading(true);
     try {
       if (!guildId || !selectedRosterId) {
+        setMembers([]);
+        setExternalCandidates([]);
+        return;
+      }
+      const selectedRoster = rosters.find((roster) => roster.id === selectedRosterId);
+      if (selectedRoster && !selectedRoster.hasAccess && !isAdminReadOnly) {
         setMembers([]);
         setExternalCandidates([]);
         return;
@@ -876,7 +943,15 @@ const RosterWishes = () => {
     }
     // Wait for admin check to complete
     if (adminLoading) return;
-    fetchData();
+    fetchData().catch((error: unknown) => {
+      logRosterSeasonError('initial_fetch_failed', error);
+      setLoading(false);
+      setWishesLoading(false);
+      reportRosterWishClientError(t.errors.generic, getErrorMessage(error), {
+        event: 'initial_fetch_failed',
+      });
+      toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
+    });
   }, [user, authLoading, regionSlug, serverSlug, guildSlug, navigate, adminLoading, isGlobalAdmin, rosterSeasonsEnabled]);
 
   useEffect(() => {
@@ -1270,6 +1345,10 @@ const RosterWishes = () => {
     // Check if user has access to this roster
     const currentRoster = rosters.find(r => r.id === selectedRosterId);
     if (!currentRoster?.hasAccess) {
+      reportRosterWishClientError(t.rosters.noAccess, null, {
+        event: 'start_editing_no_roster_access',
+        memberId: member.id,
+      });
       toast({ title: t.rosters.noAccess, variant: 'destructive' });
       return;
     }
@@ -2052,6 +2131,19 @@ const RosterWishes = () => {
 
   // Calculate stats
   const hasPersonalEditIntent = searchParams.get('edit') === 'my-wishes';
+  const currentRoster = rosters.find(r => r.id === selectedRosterId);
+  const currentMember = members.find(m => m.id === user?.id);
+  const personalEditMissingMember = hasPersonalEditIntent
+    && !wishesLoading
+    && canMutateSelectedSeason
+    && !isAdminReadOnly
+    && !currentMember;
+  useEffect(() => {
+    if (!personalEditMissingMember) return;
+    reportRosterWishClientError(t.rosters.accessUpdatingTitle, t.rosters.accessUpdatingMessage, {
+      event: 'personal_edit_missing_current_member',
+    });
+  }, [personalEditMissingMember]);
 
   if (loading) {
     return (
@@ -2062,19 +2154,18 @@ const RosterWishes = () => {
     );
   }
 
-  const currentRoster = rosters.find(r => r.id === selectedRosterId);
   const rosterLockState = resolveWishLockState({
     rosterLocked: currentRoster?.wishes_locked,
     rosterLockAt: currentRoster?.wishes_lock_at,
     memberLocked: false,
   });
-  const currentMember = members.find(m => m.id === user?.id);
   const showPersonalWishEditor = hasPersonalEditIntent
     && !!currentMember
     && editingUserId === currentMember.id;
   const isPersonalEditHandoffPending = hasPersonalEditIntent
     && canMutateSelectedSeason
     && !isAdminReadOnly
+    && wishesLoading
     && (!currentMember || editingUserId !== currentMember.id);
   const privateMemberWishes = currentMember?.wishes.filter((wish) => !!wish.class_id).sort((a, b) => a.choice_index - b.choice_index) || [];
   const editingMember = members.find(m => m.id === editingUserId);
@@ -2403,6 +2494,34 @@ const RosterWishes = () => {
         {isPersonalEditHandoffPending ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
+        ) : personalEditMissingMember ? (
+          <div className={cn('rounded-lg border px-4 py-5', toneCalloutClass('warning'))}>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="space-y-1">
+                <h2 className="text-sm font-semibold text-foreground">{t.rosters.accessUpdatingTitle}</h2>
+                <p className="text-sm text-muted-foreground">{t.rosters.accessUpdatingMessage}</p>
+              </div>
+              <CosmicButton
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setWishesLoading(true);
+                  void fetchWishes().catch((error: unknown) => {
+                    logRosterSeasonError('personal_edit_retry_failed', error);
+                    setWishesLoading(false);
+                    reportRosterWishClientError(t.errors.generic, getErrorMessage(error), {
+                      event: 'personal_edit_retry_failed',
+                    });
+                    toast({ title: t.errors.generic, description: getErrorMessage(error), variant: 'destructive' });
+                  });
+                }}
+                icon={<RefreshCw className="h-3.5 w-3.5" strokeWidth={1.5} />}
+                className="w-full sm:w-auto"
+              >
+                {t.common.refresh}
+              </CosmicButton>
+            </div>
           </div>
         ) : showPersonalWishEditor && currentMember ? (
           <div className="space-y-4">

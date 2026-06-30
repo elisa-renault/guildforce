@@ -3097,6 +3097,16 @@ export type Database = {
         Args: { p_guild_id: string; p_user_id: string }
         Returns: number | null
       }
+      get_roster_access_debug: {
+        Args: { p_roster_id: string; p_user_id: string }
+        Returns: {
+          best_rank_index: number | null
+          has_access: boolean
+          latest_sync_at: string | null
+          profile_is_syncing: boolean
+          source: string
+        }[]
+      }
       has_guild_permission: {
         Args: { p_guild_id: string; p_permission: string; p_user_id: string }
         Returns: boolean

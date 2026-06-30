@@ -1008,6 +1008,8 @@ export const translationsRu: Translations = createLocaleTranslations(translation
     addRankRule: 'Добавить правило ранга',
     addUserRule: 'Добавить участника',
     noAccessWarning: 'Правила доступа не заданы. Отправка пожеланий будет доступна только ГМ.',
+    accessUpdatingTitle: 'Доступ к составу еще обновляется',
+    accessUpdatingMessage: 'Синхронизация Battle.net или связь с составом может еще обновляться. Обновите страницу через несколько секунд, чтобы загрузить пожелания.',
     wishesLockTitle: 'Блокировка пожеланий',
     wishesLockedStatus: 'Заблокировано',
     wishesUnlockedStatus: 'Разблокировано',

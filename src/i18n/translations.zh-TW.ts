@@ -977,6 +977,8 @@ export const translationsZhTw: Translations = createLocaleTranslations(translati
     addUserRule: '新增使用者規則',
     noAccessWarning: '沒有成員可存取此名單',
     noAccessMessage: '新增階級或使用者規則，讓成員可以查看與提交心願。',
+    accessUpdatingTitle: '名單存取權仍在更新',
+    accessUpdatingMessage: '你的 Battle.net 同步或名單連結可能尚未完成。請稍後重新整理以載入心願。',
     wishesLockTitle: '心願鎖定',
     wishesLockedStatus: '心願已鎖定',
     wishesUnlockedStatus: '心願已開放',
