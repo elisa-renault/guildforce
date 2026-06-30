@@ -2882,7 +2882,7 @@ export type Database = {
           wau_users: number
         }[]
       }
-      // Contract unchanged; activity-source semantics are refined in the 20260616093000 migration.
+      // Contract unchanged; activity-source semantics are refined in the 20260616093000 migration, and SQL-only ambiguity fixes keep this shape.
       get_admin_dashboard_timeseries: {
         Args: { p_days?: number }
         Returns: {
