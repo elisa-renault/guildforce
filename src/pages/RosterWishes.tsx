@@ -2237,6 +2237,7 @@ const RosterWishes = () => {
   const personalEditMissingMember = hasPersonalEditIntent
     && !wishesLoading
     && canMutateSelectedSeason
+    && !canManageWishes
     && !isAdminReadOnly
     && !currentMember;
   useEffect(() => {

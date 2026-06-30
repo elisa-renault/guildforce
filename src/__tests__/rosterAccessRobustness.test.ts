@@ -48,6 +48,7 @@ describe('roster access robustness', () => {
 
   it('shows a recoverable state when the current member row is missing after load', () => {
     expect(rosterWishesPage).toContain('const personalEditMissingMember = hasPersonalEditIntent');
+    expect(rosterWishesPage).toContain('&& !canManageWishes');
     expect(rosterWishesPage).toContain('t.rosters.accessUpdatingTitle');
     expect(rosterWishesPage).toContain("event: 'personal_edit_missing_current_member'");
     expect(rosterWishesPage).toContain("event: 'personal_edit_retry_failed'");
