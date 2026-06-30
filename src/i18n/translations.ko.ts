@@ -29,7 +29,7 @@ export const translationsKo: Translations = createLocaleTranslations(translation
     you: '나',
     settings: '설정',
     tipMe: '음료 후원하기',
-    joinDiscord: 'Discord 참여',
+    joinDiscord: '우리 Discord 참여',
     all: '전체',
     refresh: '새로고침',
     confirm: '확인',

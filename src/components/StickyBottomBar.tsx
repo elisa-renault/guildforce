@@ -1,6 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+
 import { BugReportButton } from './BugReportButton';
 import { CookieBanner } from './CookieBanner';
+
+const FLOATING_BUTTON_MARGIN = 16;
 
 /**
  * Sticky container that groups the bug report button and cookie banner
@@ -8,42 +11,63 @@ import { CookieBanner } from './CookieBanner';
  * The bug button remains visible even after the cookie banner is dismissed.
  */
 export const StickyBottomBar: React.FC = () => {
-  const [footerOffset, setFooterOffset] = useState(0);
+  const cookieContainerRef = useRef<HTMLDivElement | null>(null);
+  const [bottomOffset, setBottomOffset] = useState(FLOATING_BUTTON_MARGIN);
 
   useEffect(() => {
-    const footer = document.querySelector('footer');
-    if (!footer) return;
+    let animationFrame = 0;
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry) return;
-        const overlap = entry.isIntersecting ? Math.ceil(entry.intersectionRect.height) : 0;
-        setFooterOffset(overlap);
-      },
-      { threshold: [0, 0.05, 0.2, 0.5, 1] },
-    );
+    const updateOffset = () => {
+      if (animationFrame) return;
 
-    observer.observe(footer);
+      animationFrame = window.requestAnimationFrame(() => {
+        animationFrame = 0;
 
-    return () => observer.disconnect();
+        const footer = document.querySelector<HTMLElement>('footer');
+        const footerRect = footer?.getBoundingClientRect();
+        const footerOverlap = footerRect
+          ? Math.max(0, window.innerHeight - Math.max(footerRect.top, 0))
+          : 0;
+        const cookieRect = cookieContainerRef.current?.getBoundingClientRect();
+        const cookieHeight = cookieRect && cookieRect.height > 0 ? Math.ceil(cookieRect.height) : 0;
+
+        setBottomOffset(FLOATING_BUTTON_MARGIN + footerOverlap + cookieHeight);
+      });
+    };
+
+    updateOffset();
+
+    const resizeObserver = typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(updateOffset)
+      : null;
+
+    const footer = document.querySelector<HTMLElement>('footer');
+    if (footer) resizeObserver?.observe(footer);
+    if (cookieContainerRef.current) resizeObserver?.observe(cookieContainerRef.current);
+
+    window.addEventListener('scroll', updateOffset, { passive: true });
+    window.addEventListener('resize', updateOffset);
+
+    return () => {
+      if (animationFrame) window.cancelAnimationFrame(animationFrame);
+      resizeObserver?.disconnect();
+      window.removeEventListener('scroll', updateOffset);
+      window.removeEventListener('resize', updateOffset);
+    };
   }, []);
-
-  const bugButtonOffset = footerOffset > 0 ? footerOffset + 8 : 0;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
-      {/* Bug button - always visible, positioned top-right of the sticky area */}
+      {/* Bug button - always visible, kept above cookie banner and visible footer. */}
       <div
-        className="absolute bottom-full right-0 pointer-events-none"
-        style={{ marginBottom: bugButtonOffset }}
+        className="fixed right-4 pointer-events-auto"
+        style={{ bottom: bottomOffset }}
       >
-        <div className="m-4 pointer-events-auto">
-          <BugReportButton />
-        </div>
+        <BugReportButton />
       </div>
       
       {/* Cookie banner - only visible when not dismissed */}
-      <div className="pointer-events-auto">
+      <div ref={cookieContainerRef} className="pointer-events-auto">
         <CookieBanner />
       </div>
     </div>

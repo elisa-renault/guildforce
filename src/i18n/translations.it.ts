@@ -29,7 +29,7 @@ export const translationsIt: Translations = createLocaleTranslations(translation
     you: 'Tu',
     settings: 'Impostazioni',
     tipMe: 'Offrimi da bere',
-    joinDiscord: 'Unisciti a Discord',
+    joinDiscord: 'Il nostro Discord',
     all: 'Tutto',
     refresh: 'Aggiorna',
     confirm: 'Conferma',

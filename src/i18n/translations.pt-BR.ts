@@ -30,7 +30,7 @@ export const translationsPtBr: Translations = createLocaleTranslations(translati
     you: 'Você',
     settings: 'Configurações',
     tipMe: 'Pagar uma bebida',
-    joinDiscord: 'Entrar no Discord',
+    joinDiscord: 'Nosso Discord',
     all: 'Todos',
     refresh: 'Atualizar',
     confirm: 'Confirmar',

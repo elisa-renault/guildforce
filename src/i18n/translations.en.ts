@@ -27,7 +27,7 @@ export const translationsEn: Translations = {
       you: 'You',
       settings: 'Settings',
       tipMe: 'Buy me a drink',
-      joinDiscord: 'Join Discord',
+      joinDiscord: 'Join our Discord',
       all: 'All',
       refresh: 'Refresh',
       confirm: 'Confirm',

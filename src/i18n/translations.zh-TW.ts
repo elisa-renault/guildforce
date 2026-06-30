@@ -29,7 +29,7 @@ export const translationsZhTw: Translations = createLocaleTranslations(translati
     you: '你',
     settings: '設定',
     tipMe: '請我喝一杯',
-    joinDiscord: '加入 Discord',
+    joinDiscord: '加入我們的 Discord',
     all: '全部',
     refresh: '重新整理',
     confirm: '確認',

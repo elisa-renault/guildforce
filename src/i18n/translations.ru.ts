@@ -29,7 +29,7 @@ export const translationsRu: Translations = createLocaleTranslations(translation
     you: 'Текущий пользователь',
     settings: 'Настройки',
     tipMe: 'Поддержать проект',
-    joinDiscord: 'Войти в Discord',
+    joinDiscord: 'Наш Discord',
     all: 'Все',
     refresh: 'Обновить',
     confirm: 'Подтвердить',

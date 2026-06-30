@@ -390,7 +390,11 @@ const Profile = () => {
                         </SelectTrigger>
                         <SelectContent className="bg-card border-border">
                           {LANGUAGE_OPTIONS.map((option) => (
-                            <SelectItem key={option.code} value={option.code}>
+                            <SelectItem
+                              key={option.code}
+                              value={option.code}
+                              className="pl-2 [&_[data-select-item-indicator]]:hidden"
+                            >
                               <LanguageDisplayLabel language={option.code} />
                             </SelectItem>
                           ))}
@@ -460,7 +464,11 @@ const Profile = () => {
                     </SelectTrigger>
                     <SelectContent className="bg-card border-border">
                       {LANGUAGE_OPTIONS.map((option) => (
-                        <SelectItem key={option.code} value={option.code}>
+                        <SelectItem
+                          key={option.code}
+                          value={option.code}
+                          className="pl-2 [&_[data-select-item-indicator]]:hidden"
+                        >
                           <LanguageDisplayLabel language={option.code} />
                         </SelectItem>
                       ))}
