@@ -19,16 +19,28 @@ const walkFiles = (dir, out = []) => {
 
 const pageFiles = walkFiles(PAGES_ROOT);
 const missing = [];
+const pageContainerSurfaceMarkers = [
+  'AtlasEditorSurface',
+  'AtlasLibrarySurface',
+  'GuildOverviewSurface',
+  'GuildSettingsSurface',
+  'PollEditorSurface',
+  'PollResultsSurface',
+  'PollViewSurface',
+];
 
 for (const filePath of pageFiles) {
   const source = fs.readFileSync(filePath, 'utf8');
-  if (!source.includes('PageContainer')) {
+  const hasPageContainer = source.includes('PageContainer');
+  const hasPageContainerSurface = pageContainerSurfaceMarkers.some((marker) => source.includes(marker));
+
+  if (!hasPageContainer && !hasPageContainerSurface) {
     missing.push(path.relative(process.cwd(), filePath).replaceAll('\\', '/'));
   }
 }
 
 if (missing.length === 0) {
-  console.log('PageContainer guard passed: all page components reference PageContainer.');
+  console.log('PageContainer guard passed: all page components reference PageContainer or an approved PageContainer surface.');
   process.exit(0);
 }
 
