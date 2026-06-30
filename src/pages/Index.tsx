@@ -1,4 +1,4 @@
-import { Shield } from 'lucide-react';
+import { Eye, Shield } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -121,6 +121,19 @@ const Index = () => {
             >
               {user ? t.common.myGuilds : t.auth.loginWithBattleNet}
             </CosmicButton>
+            {!user && (
+              <div className="w-full max-w-[312px] md:w-auto">
+                <CosmicButton
+                  size="lg"
+                  variant="outline"
+                  className="h-12 w-full px-7 text-base md:h-14 md:min-w-[170px] md:px-8 md:text-lg"
+                  onClick={() => navigate('/demo')}
+                  icon={<Eye className="h-5 w-5" strokeWidth={1.5} />}
+                >
+                  {t.demo.exploreCta}
+                </CosmicButton>
+              </div>
+            )}
           </div>
         </PageContainer>
       </main>

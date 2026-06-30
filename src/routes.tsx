@@ -40,6 +40,7 @@ type AppRoute = {
 };
 
 const Auth = lazy(() => import("./pages/Auth"));
+const Demo = lazy(() => import("./pages/Demo"));
 const GuildList = lazy(() => import("./pages/GuildList"));
 const MemberWishes = lazy(loadMemberWishesPage);
 const Overview = lazy(loadOverviewPage);
@@ -78,6 +79,13 @@ export const appRoutes: AppRoute[] = [
     title: "auth",
     layout: "public",
     hideGlobalNav: true,
+  },
+  {
+    path: "/demo/*",
+    element: <Demo />,
+    title: "demo",
+    layout: "guild-workspace",
+    breadcrumb: [{ labelKey: "demo", href: "/demo" }],
   },
   {
     path: "/guilds",

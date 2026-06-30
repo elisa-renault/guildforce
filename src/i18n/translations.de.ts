@@ -74,6 +74,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "guildAtlas": "Gildenatlas",
     "guildAtlasNew": "Neues Atlas-Dokument",
     "guildAtlasEdit": "Atlas-Dokument bearbeiten",
+    "demo": "Demo",
     "notFound": "Seite nicht gefunden"
   },
   "commandPalette": {
@@ -311,6 +312,216 @@ export const translationsDe: Translations = createLocaleTranslations(translation
     "accountCreated": "Konto erfolgreich erstellt",
     "welcomeBack": "Willkommen zur\u00fcck!",
     "existingAccountsOnly": "Nur f\u00fcr bestehende Konten"
+  },
+  "demo": {
+    "title": "\u00d6ffentliche Roster-Wishlist-Demo",
+    "eyebrow": "Beispiel-Gildenbereich",
+    "subtitle": "Sieh, wie Offiziere Klassen- und Spezialisierungsw\u00fcnsche sammeln, das Roster pr\u00fcfen und L\u00fccken erkennen, bevor du Battle.net verbindest.",
+    "exploreCta": "Demo erkunden",
+    "noLoginRequired": "Keine Battle.net-Anmeldung erforderlich.",
+    "landingSubtitle": "Erkunde Beispiel-Roster, Wishlist, Analysen, Umfragen und Offiziers-Workflows, bevor du Battle.net verbindest.",
+    "authPromptTitle": "Noch nicht bereit f\u00fcr Battle.net?",
+    "authPromptDescription": "Probiere zuerst die \u00f6ffentliche Roster-Wishlist-Demo.",
+    "authPromptCta": "Demo testen",
+    "bannerTitle": "Demo-Modus",
+    "bannerDescription": "Du erkundest eine Beispielgilde. Verbinde Battle.net, um deine Charaktere und Gilde zu synchronisieren.",
+    "bannerCta": "Meinen Gildenbereich erstellen",
+    "nav": {
+      "overview": "\u00dcbersicht",
+      "roster": "Roster-Wishlist",
+      "analytics": "Analysen",
+      "polls": "Umfragen",
+      "forum": "Forum-Vorschau"
+    },
+    "labels": {
+      "guild": "Gilde",
+      "roster": "Roster",
+      "lock": "Wishlist wird in {{days}} Tagen gesperrt",
+      "submitted": "W\u00fcnsche eingereicht",
+      "approved": "Genehmigt",
+      "pending": "Ausstehend",
+      "rejected": "Abgelehnt",
+      "external": "Manuelle Externe",
+      "responses": "{{count}} Antworten",
+      "pinned": "Angeheftet"
+    },
+    "overviewTitle": "Astral Vanguard bereitet Midnight vor",
+    "overviewDescription": "Ein GM sieht sofort, wer zugesagt hat, welche W\u00fcnsche noch gepr\u00fcft werden m\u00fcssen und wo das Team Druck in der Zusammensetzung hat.",
+    "rosterTitle": "Spielerw\u00fcnsche vor Saisonstart pr\u00fcfen",
+    "rosterDescription": "Offiziere vergleichen Zusage, Main-Charakter, priorisierte W\u00fcnsche, Validierung, Kommentare und Roster-Entscheidungen in einer operativen Tabelle.",
+    "analyticsTitle": "Was deinem Roster fehlt",
+    "analyticsDescription": "Diese Demo nutzt lokale Beispieldaten, um Kompositionssignale zu zeigen, die Guildforce ohne weitere Tabelle liefern kann.",
+    "missingTitle": "Fehlende oder schwache Abdeckung",
+    "presentTitle": "Bereits abgedeckt",
+    "alertsTitle": "Kritische Hinweise",
+    "analyticsItems": {
+      "missing": [
+        "Nur eine best\u00e4tigte Quelle f\u00fcr Aura der Hingabe nach Validierung",
+        "Keine Ersatz-Kampfwiederbelebung, falls Bloomshift fehlt",
+        "Der Kette-Token ist f\u00fcr das Launch-Gearing \u00fcberlastet"
+      ],
+      "present": [
+        "Kampfrausch ist durch Schamane- und Rufer-Optionen abgedeckt",
+        "Portal, Raid-Ausdauer und Mystische Ber\u00fchrung sind vorhanden",
+        "Zwei stabile Tanks und f\u00fcnf Heiler-Kandidaten f\u00fcr Progress"
+      ],
+      "alerts": [
+        "5 W\u00fcnsche brauchen vor der Sperre noch Offizierspr\u00fcfung",
+        "2 Spieler sind manuelle externe Eintr\u00e4ge und sollten sp\u00e4ter beansprucht werden"
+      ]
+    },
+    "pollsTitle": "Umfragen als unterst\u00fctzender Workflow",
+    "pollsDescription": "Nutze gezielte Umfragen f\u00fcr Raidtage, Verf\u00fcgbarkeit zur Launch-Woche, Loot-Pr\u00e4ferenzen oder Bench-Komfort.",
+    "pollItems": [
+      {
+        "title": "Verf\u00fcgbarkeitscheck zum Midnight-Launch",
+        "status": "Offen",
+        "description": "Eine aktive rosterweite Abfrage f\u00fcr Raidabende, Launch-Wochen-Extras und Terminrisiken, bevor Offiziere den Saisonplan sperren.",
+        "audience": "Best\u00e4tigte Raider und Trials im Midnight Mythic Team",
+        "resultSummary": "Mittwoch + Sonntag f\u00fchrt aktuell, aber mehrere Trials brauchen noch Offiziers-Follow-up.",
+        "sections": [
+          {
+            "title": "Raidabend-Zusage",
+            "description": "Den Standard-Raidplan vor der Wishlist-Sperre festlegen.",
+            "questions": [
+              {
+                "text": "Welche Raidabende kannst du f\u00fcr die ersten vier Wochen zusagen?",
+                "options": ["Mittwoch + Sonntag", "Donnerstag + Sonntag", "Mittwoch + Donnerstag", "Nur ein fester Abend", "Noch unsicher"]
+              },
+              {
+                "text": "Wie stabil ist dein Zeitplan f\u00fcr den Launch-Monat?",
+                "minLabel": "Nicht stabil",
+                "maxLabel": "Fix geplant"
+              },
+              {
+                "text": "Was sollten Offiziere wissen, bevor deine Raidabende festgelegt werden?",
+                "comments": [
+                  "Mittwoch und Sonntag gehen, aber Donnerstag ist jede zweite Woche blockiert.",
+                  "Die Launch-Woche ist frei; danach brauche ich den Kalender mindestens eine Woche vorher.",
+                  "Ich kann im Progress sitzen, wenn die Komp eine weitere Immunity braucht."
+                ]
+              }
+            ]
+          },
+          {
+            "title": "Launch-Wochen-Extras",
+            "description": "Freiwillige f\u00fcr die Arbeit au\u00dferhalb der Raids finden, die fr\u00fchen Progress oft entscheidet.",
+            "questions": [
+              {
+                "text": "Welche Launch-Wochen-Extras kannst du mitmachen?",
+                "options": ["Normal-Clear", "Heroic-Split", "Mythic+-Gearing", "Crafting-/Material-Farm"]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Trial-Feedback vorbereiten",
+        "status": "Entwurf",
+        "description": "Offiziersentwurf zum Sammeln strukturierter Notizen, bevor Trial-Reviews live gehen.",
+        "audience": "Offiziere und Raidleader",
+        "resultSummary": "Nur Entwurfsvorschau. Noch nicht f\u00fcr Mitglieder ver\u00f6ffentlicht.",
+        "sections": [
+          {
+            "title": "Trial-Bereitschaft",
+            "description": "Review-Notizen zwischen Raidleadern konsistent halten.",
+            "questions": [
+              {
+                "text": "Welche Trial-Gruppe braucht zuerst ein Review?",
+                "options": ["Ranged DPS", "Melee DPS", "Heiler", "Flexible Backups"]
+              },
+              {
+                "text": "Bewerte die aktuelle Trial-Bereitschaft f\u00fcr Heroic in Woche eins.",
+                "minLabel": "Review n\u00f6tig",
+                "maxLabel": "Bereit"
+              },
+              {
+                "text": "Welche Notizen sollen Rollenleads liefern?",
+                "options": ["Anwesenheit", "Mechanische Konstanz", "Kommunikation", "Loot-Erwartungen"]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Loot-, Anwesenheits- und Bench-Regeln",
+        "status": "Ergebnisse geteilt",
+        "description": "Geschlossene anonyme Umfrage, mit der Offiziere Regeln vor dem Progress verfeinern.",
+        "audience": "Berechtigte Raider nach Wishlist-Validierung",
+        "resultSummary": "Mitglieder bevorzugen Roster-Upgrades zuerst, aber Bench-Komfort ist geteilt genug f\u00fcr klarere Regeln.",
+        "sections": [
+          {
+            "title": "Loot-Regeln",
+            "description": "Pr\u00fcfen, ob das Team die Loot-Abw\u00e4gungen der Launch-Woche versteht.",
+            "questions": [
+              {
+                "text": "Welche Loot-Council-Priorit\u00e4t wirkt f\u00fcr die Launch-Woche am fairsten?",
+                "options": ["Roster-Upgrade zuerst", "Beste Anwesenheit zuerst", "Trial-Aufholen gesch\u00fctzt", "Transparenter Roll-Fallback"]
+              },
+              {
+                "text": "Ordne die Gearing-Priorit\u00e4ten, die Offiziere optimieren sollten.",
+                "options": ["Tier-Erwerb", "Waffen-Crafts", "Raid-Verbrauchsg\u00fcter", "Mythic+-Score", "Alt-Split-Abdeckung"]
+              }
+            ]
+          },
+          {
+            "title": "Bench und Anwesenheit",
+            "description": "Regelbereiche finden, die klarer kommuniziert werden m\u00fcssen.",
+            "questions": [
+              {
+                "text": "Wie wohl f\u00fchlst du dich mit Bench, wenn die Komposition es braucht?"
+              },
+              {
+                "text": "Wie klar sind die aktuellen Bench-Regeln?",
+                "minLabel": "Unklar",
+                "maxLabel": "Sehr klar"
+              },
+              {
+                "text": "Was w\u00fcrde Loot- oder Bench-Entscheidungen leichter akzeptierbar machen?",
+                "comments": [
+                  "Eine kurze Notiz nach jedem Raid mit dem Kompositionsgrund w\u00fcrde helfen.",
+                  "Bitte Bench-Priorit\u00e4t vor Invites ver\u00f6ffentlichen, nicht f\u00fcnf Minuten vor Pull.",
+                  "Loot ist okay, wenn dieselbe Logik f\u00fcr Trials und Core-Raider sichtbar ist.",
+                  "Ich m\u00f6chte einen klareren Weg zur\u00fcck ins Roster nach zwei Benches."
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "pollsUi": {
+      "activeTab": "Aktiv",
+      "draftTab": "Entw\u00fcrfe",
+      "closedTab": "Geschlossen",
+      "audience": "Zielgruppe",
+      "responseRate": "{{count}}/{{total}} geantwortet",
+      "questions": "{{count}} Fragen",
+      "sections": "{{count}} Abschnitte",
+      "openPoll": "Umfrage \u00f6ffnen",
+      "viewResults": "Ergebnisse ansehen",
+      "previewDraft": "Entwurf ansehen",
+      "draftNotice": "Dieser Entwurf ist in der Demo sichtbar, um den Offiziers-Workflow zu zeigen. Ver\u00f6ffentlichen und Bearbeiten sind simuliert.",
+      "noPoll": "Demo-Umfrage nicht gefunden",
+      "noPollDescription": "Diese lokale Demo-Route passt zu keiner Beispielumfrage.",
+      "resultsUnavailable": "Ergebnisse sind f\u00fcr aktive Umfragen nach einer lokalen Antwort und f\u00fcr geschlossene Demo-Umfragen verf\u00fcgbar.",
+      "responseSavedTitle": "Demo-Antwort gespeichert",
+      "responseSavedDescription": "Deine Antworten wurden lokal f\u00fcr diese Demo-Sitzung gespeichert.",
+      "demoOnlyBadge": "Demo-Daten"
+    },
+    "forumTitle": "Gilden-Hub-Vorschau",
+    "forumDescription": "Halte Ank\u00fcndigungen, Strategie und Roster-Feedback direkt neben den Planungsdaten.",
+    "forumItems": [
+      { "title": "Midnight-Roster-Ank\u00fcndigung", "category": "Ank\u00fcndigungen" },
+      { "title": "Strategienotizen f\u00fcr den ersten Raid", "category": "Strategie" },
+      { "title": "Roster-Feedback vor Wishlist-Sperre", "category": "Roster" }
+    ],
+    "finalTitle": "Bereit, dein Midnight-Roster vorzubereiten?",
+    "finalDescription": "Verbinde Battle.net und erstelle deinen Gildenbereich in wenigen Minuten.",
+    "continueWithBattleNet": "Mit Battle.net fortfahren",
+    "backHome": "Zur Startseite",
+    "actionToastTitle": "Demo-Aktion",
+    "actionToastDescription": "In der Demo kannst du diese Aktionen nicht testen. Melde dich mit Battle.net an, um Guildforce mit deiner Gilde zu nutzen."
   },
   "guild": {
     "create": "Erstelle eine Gilde",
@@ -645,6 +856,7 @@ export const translationsDe: Translations = createLocaleTranslations(translation
       "high": "Hohes Risiko"
     },
     "tokenRiskSummary": "{{level}}: {{token}} bündelt {{count}} von {{total}} Wünschen ({{percent}}%).",
+    "tokenRiskSummaryMultiple": "{{level}}: {{tokens}} bündeln jeweils {{count}} von {{total}} Wünschen ({{percent}}%).",
     "tokenRiskNone": "Für den aktuellen Analyseumfang kann keine Token-Konzentration berechnet werden.",
     "raidCoverageTitle": "Raid-Abdeckung",
     "raidCoverageDescription": "Fehlende Einträge werden zuerst angezeigt, damit Roster-Lücken schneller auffallen.",

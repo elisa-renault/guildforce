@@ -11,6 +11,9 @@ vi.mock("../pages/Index", () => ({
 vi.mock("../pages/Auth", () => ({
   default: () => <div>Auth Page</div>,
 }));
+vi.mock("../pages/Demo", () => ({
+  default: () => <div>Demo Page</div>,
+}));
 vi.mock("../pages/GuildList", () => ({
   default: () => <div>Guild List Page</div>,
 }));
@@ -51,6 +54,7 @@ describe("appRoutes", () => {
   it("renders essential routes", async () => {
     await renderRoute("/", "Index Page");
     await renderRoute("/auth", "Auth Page");
+    await renderRoute("/demo", "Demo Page");
     await renderRoute("/guilds", "Guild List Page");
     await renderRoute("/guild/eu/tarren-mill/midnight/atlas", "Guild Atlas Page");
     await renderRoute("/guild/eu/tarren-mill/midnight/atlas/new", "Guild Atlas Editor Page");

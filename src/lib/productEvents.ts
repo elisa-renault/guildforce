@@ -13,7 +13,13 @@ export type ProductEventName =
   | 'wish_created'
   | 'poll_voted'
   | 'guild_member_invited'
-  | 'activated_first_action';
+  | 'activated_first_action'
+  | 'demo_started'
+  | 'demo_viewed_roster'
+  | 'demo_viewed_analytics'
+  | 'demo_clicked_fake_action'
+  | 'demo_poll_response_saved'
+  | 'demo_clicked_battlenet_cta';
 
 export type SupabaseProductEventName = Exclude<ProductEventName, 'app_session_started'>;
 

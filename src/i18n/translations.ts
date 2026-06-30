@@ -89,6 +89,7 @@ export interface Translations {
     guildAtlas: string;
     guildAtlasNew: string;
     guildAtlasEdit: string;
+    demo: string;
     notFound: string;
   };
   commandPalette: {
@@ -386,6 +387,105 @@ export interface Translations {
     accountCreated: string;
     welcomeBack: string;
     existingAccountsOnly: string;
+  };
+  // Public demo
+  demo: {
+    title: string;
+    eyebrow: string;
+    subtitle: string;
+    exploreCta: string;
+    noLoginRequired: string;
+    landingSubtitle: string;
+    authPromptTitle: string;
+    authPromptDescription: string;
+    authPromptCta: string;
+    bannerTitle: string;
+    bannerDescription: string;
+    bannerCta: string;
+    nav: {
+      overview: string;
+      roster: string;
+      analytics: string;
+      polls: string;
+      forum: string;
+    };
+    labels: {
+      guild: string;
+      roster: string;
+      lock: string;
+      submitted: string;
+      approved: string;
+      pending: string;
+      rejected: string;
+      external: string;
+      responses: string;
+      pinned: string;
+    };
+    overviewTitle: string;
+    overviewDescription: string;
+    rosterTitle: string;
+    rosterDescription: string;
+    analyticsTitle: string;
+    analyticsDescription: string;
+    missingTitle: string;
+    presentTitle: string;
+    alertsTitle: string;
+    analyticsItems: {
+      missing: string[];
+      present: string[];
+      alerts: string[];
+    };
+    pollsTitle: string;
+    pollsDescription: string;
+    pollItems: Array<{
+      title: string;
+      status: string;
+      description: string;
+      audience: string;
+      resultSummary: string;
+      sections: Array<{
+        title: string;
+        description: string;
+        questions: Array<{
+          text: string;
+          options?: string[];
+          minLabel?: string;
+          maxLabel?: string;
+          comments?: string[];
+        }>;
+      }>;
+    }>;
+    pollsUi: {
+      activeTab: string;
+      draftTab: string;
+      closedTab: string;
+      audience: string;
+      responseRate: string;
+      questions: string;
+      sections: string;
+      openPoll: string;
+      viewResults: string;
+      previewDraft: string;
+      draftNotice: string;
+      noPoll: string;
+      noPollDescription: string;
+      resultsUnavailable: string;
+      responseSavedTitle: string;
+      responseSavedDescription: string;
+      demoOnlyBadge: string;
+    };
+    forumTitle: string;
+    forumDescription: string;
+    forumItems: Array<{
+      title: string;
+      category: string;
+    }>;
+    finalTitle: string;
+    finalDescription: string;
+    continueWithBattleNet: string;
+    backHome: string;
+    actionToastTitle: string;
+    actionToastDescription: string;
   };
   // Guild
   guild: {
@@ -758,6 +858,7 @@ export interface Translations {
       high: string;
     };
     tokenRiskSummary: string;
+    tokenRiskSummaryMultiple: string;
     tokenRiskNone: string;
     raidCoverageTitle: string;
     raidCoverageDescription: string;

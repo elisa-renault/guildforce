@@ -1,4 +1,4 @@
-import { ArrowLeft, Loader2, ChevronDown, Mail } from 'lucide-react';
+import { ArrowLeft, Loader2, ChevronDown, Eye, Mail } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -528,6 +528,21 @@ const Auth = () => {
               >
                 {t.auth.loginWithBattleNet}
               </CosmicButton>
+
+              <button
+                type="button"
+                onClick={() => navigate('/demo')}
+                className="mt-4 flex w-full items-start gap-3 rounded-md border border-border/60 bg-background/35 p-3 text-left transition-colors hover:border-primary/40 hover:bg-primary/10"
+              >
+                <Eye className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <span className="min-w-0 space-y-1">
+                  <span className="block text-sm font-medium text-foreground">{t.demo.authPromptTitle}</span>
+                  <span className="block text-xs leading-5 text-muted-foreground">
+                    {t.demo.authPromptDescription}{' '}
+                    <span className="text-primary">{t.demo.authPromptCta}</span>
+                  </span>
+                </span>
+              </button>
 
               {battleNetDebugInfo && (
                 <div className="mt-4 rounded-md border border-border/60 bg-muted/30 p-3 text-xs text-muted-foreground">

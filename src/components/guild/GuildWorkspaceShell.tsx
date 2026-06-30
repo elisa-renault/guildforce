@@ -39,6 +39,8 @@ export interface GuildWorkspaceContext {
   status?: ReactNode;
 }
 
+type GuildWorkspaceVisibleTab = Exclude<GuildWorkspaceTab, 'wishes' | 'dashboard'>;
+
 export interface GuildWorkspaceShellProps {
   guild: {
     name: string;
@@ -54,12 +56,13 @@ export interface GuildWorkspaceShellProps {
   hasVaultAccess?: boolean;
   context?: GuildWorkspaceContext;
   toolbar?: ReactNode;
+  visibleTabs?: GuildWorkspaceVisibleTab[];
   children: ReactNode;
   className?: string;
 }
 
 interface GuildWorkspaceNavItem {
-  id: Exclude<GuildWorkspaceTab, 'wishes' | 'dashboard'>;
+  id: GuildWorkspaceVisibleTab;
   label: string;
   icon: LucideIcon;
   path: string;
@@ -75,6 +78,26 @@ const normalizeTab = (tab: GuildWorkspaceTab): GuildWorkspaceNavItem['id'] => {
   return tab;
 };
 
+const filterVisibleNavItems = (
+  navItems: GuildWorkspaceNavItem[],
+  visibleTabs?: GuildWorkspaceVisibleTab[],
+) => {
+  const shownItems = navItems.filter((item) => item.show);
+  if (!visibleTabs) return shownItems;
+
+  const visibleTabSet = new Set(visibleTabs);
+  return shownItems.filter((item) => visibleTabSet.has(item.id));
+};
+
+const canShowSettingsTab = (isGM: boolean, resolvedSettingsPermission: boolean) =>
+  isGM || resolvedSettingsPermission;
+
+const canShowVaultTab = (
+  vaultEnabled: boolean,
+  isGM: boolean,
+  resolvedVaultAccess: boolean,
+) => vaultEnabled && (isGM || resolvedVaultAccess);
+
 export const GuildWorkspaceShell = ({
   guild,
   guildId = null,
@@ -84,6 +107,7 @@ export const GuildWorkspaceShell = ({
   hasSettingsPermission = false,
   hasVaultAccess,
   toolbar,
+  visibleTabs,
   children,
   className,
 }: GuildWorkspaceShellProps) => {
@@ -214,8 +238,8 @@ export const GuildWorkspaceShell = ({
     };
   }, [guildId, hasVaultAccess, isGM, userId]);
 
-  const showSettings = isGM || resolvedSettingsPermission;
-  const showVault = vaultEnabled && (isGM || resolvedVaultAccess);
+  const showSettings = canShowSettingsTab(isGM, resolvedSettingsPermission);
+  const showVault = canShowVaultTab(vaultEnabled, isGM, resolvedVaultAccess);
   const guildLocation = [guild.server, guild.region?.toUpperCase()].filter(Boolean).join(' • ');
   const sidebarWidth = sidebarCollapsed ? 64 : 248;
   const expandNavigationLabel = t.guildNav.expandNavigation;
@@ -230,7 +254,7 @@ export const GuildWorkspaceShell = ({
     { id: 'vault', label: t.guildNav.vault, icon: LockKeyhole, path: `${basePath}/vault`, show: showVault },
     { id: 'settings', label: t.guildNav.settings, icon: Settings, path: `${basePath}/settings`, show: showSettings },
   ];
-  const visibleNavItems = navItems.filter((item) => item.show);
+  const visibleNavItems = filterVisibleNavItems(navItems, visibleTabs);
 
   const handleNavigate = (path: string) => {
     startTransition(() => {
