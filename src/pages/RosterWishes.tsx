@@ -667,14 +667,13 @@ const RosterWishes = () => {
       const safeMembers = privateMemberSeason
         ? (membersData || []).filter((member) => member.user_id === user?.id)
         : membersData || [];
-      const needsCurrentUserFallback = hasPersonalEditIntent
+      const shouldEnsureCurrentUserRow = hasPersonalEditIntent
         && !!user
-        && !!selectedRoster?.hasAccess
-        && !safeMembers.some((member) => member.user_id === user.id);
+        && (!selectedRoster || selectedRoster.hasAccess || isAdminReadOnly);
       const userIds = [
         ...new Set([
           ...safeMembers.map(m => m.user_id),
-          ...(needsCurrentUserFallback && user ? [user.id] : []),
+          ...(shouldEnsureCurrentUserRow && user ? [user.id] : []),
         ]),
       ];
 
@@ -905,7 +904,7 @@ const RosterWishes = () => {
         };
       });
 
-      if (needsCurrentUserFallback && user && !mergedMembers.some((member) => member.id === user.id)) {
+      if (shouldEnsureCurrentUserRow && user && !mergedMembers.some((member) => member.id === user.id)) {
         const seasonRow = seasonTableByUserId.get(user.id);
         const selection = selectionsByUserId.get(user.id);
         const fallbackProfile = profilesById.get(user.id) || (profile?.id === user.id ? profile : null);

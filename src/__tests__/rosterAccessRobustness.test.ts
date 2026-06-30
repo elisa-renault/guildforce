@@ -63,8 +63,8 @@ describe('roster access robustness', () => {
   });
 
   it('builds a linked current-user fallback before showing the missing-member callout', () => {
-    expect(rosterWishesPage).toContain('const needsCurrentUserFallback = hasPersonalEditIntent');
-    expect(rosterWishesPage).toContain('!safeMembers.some((member) => member.user_id === user.id)');
+    expect(rosterWishesPage).toContain('const shouldEnsureCurrentUserRow = hasPersonalEditIntent');
+    expect(rosterWishesPage).toContain('(!selectedRoster || selectedRoster.hasAccess || isAdminReadOnly)');
     expect(rosterWishesPage).toContain('const fallbackCache = (rosterCacheData || [])');
     expect(rosterWishesPage).toContain('row.matched_user_id === user.id');
     expect(rosterWishesPage).toContain('mergedMembers = [');
